@@ -22,6 +22,7 @@ export interface SupervisionPeopleSourceOptions {
 		change:
 			| { kind: 'added'; name: string }
 			| { kind: 'removed'; name: string }
+			| { kind: 'replaced'; from: string; to: string }
 	) => void | Promise<void>;
 }
 
@@ -84,7 +85,7 @@ export const createSupervisionPeopleSource = ({
 						supervisor.supervisorConsultantId ===
 						currentConsultantId,
 					canRemove: true,
-					canReplace: false
+					canReplace: true
 				})
 			);
 		},
@@ -107,6 +108,26 @@ export const createSupervisionPeopleSource = ({
 		addPerson: async (candidate, { reason }) => {
 			await apiAddSessionSupervisor(sessionId, candidate.id, reason);
 			await onChanged?.({ kind: 'added', name: candidate.name });
+		},
+		/**
+		 * One step for the counsellor: the old supervisor goes first, so nobody
+		 * keeps reading along after the counsellor chose to change. If adding
+		 * the new person then fails, the removal still stands and is reported,
+		 * and the error reaches the dialog, which reloads the real state.
+		 */
+		replacePerson: async (person, candidate, { reason }) => {
+			await apiRemoveSessionSupervisor(sessionId, Number(person.id));
+			try {
+				await apiAddSessionSupervisor(sessionId, candidate.id, reason);
+			} catch (error) {
+				await onChanged?.({ kind: 'removed', name: person.name });
+				throw error;
+			}
+			await onChanged?.({
+				kind: 'replaced',
+				from: person.name,
+				to: candidate.name
+			});
 		},
 		removePerson: async (person) => {
 			await apiRemoveSessionSupervisor(sessionId, Number(person.id));

@@ -2328,7 +2328,9 @@
 				"createNew": "Neuen Termin anlegen",
 				"openCalendar": "Im Kalender öffnen"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision gewechselt",
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}."
 	},
 	"navigation": {
 		"appointments": "Video - Termine",
@@ -5818,6 +5820,10 @@
 				"remove": {
 					"title": "Supervisor entfernt",
 					"text": "Der Supervisor wurde erfolgreich entfernt."
+				},
+				"replace": {
+					"title": "Supervisor gewechselt",
+					"text": "Der Supervisor wurde erfolgreich gewechselt."
 				}
 			},
 			"error": {

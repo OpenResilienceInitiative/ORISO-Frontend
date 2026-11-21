@@ -147,4 +147,105 @@ describe('createSupervisionPeopleSource', () => {
 			name: 'Selma Bouvier'
 		});
 	});
+
+	describe('replacing the supervisor in one step', () => {
+		const setup = (onChanged = vi.fn()) => {
+			vi.mocked(apiGetSessionSupervisors).mockResolvedValue([
+				supervisor(1, 'patty', 'enc.PATTY')
+			]);
+			const source = createSupervisionPeopleSource({
+				sessionId: 363,
+				agencyId: '42',
+				currentConsultantId: 'me',
+				onChanged
+			});
+			return { source, onChanged };
+		};
+
+		it('lets the counsellor replace every listed supervisor', async () => {
+			const { source } = setup();
+			const [patty] = await source.loadMembers();
+			expect(patty.canReplace).toBe(true);
+			expect(patty.canRemove).toBe(true);
+		});
+
+		it('removes the old supervisor first, then adds the new one, and reports one change', async () => {
+			const order: string[] = [];
+			vi.mocked(apiRemoveSessionSupervisor).mockImplementation(
+				async () => {
+					order.push('remove');
+				}
+			);
+			vi.mocked(apiAddSessionSupervisor).mockImplementation(async () => {
+				order.push('add');
+			});
+			const { source, onChanged } = setup();
+			const [patty] = await source.loadMembers();
+			await source.loadCandidates!();
+
+			await source.replacePerson!(
+				patty,
+				{ id: 'selma', name: 'Selma Bouvier' },
+				{ reason: 'Different focus' }
+			);
+
+			expect(order).toEqual(['remove', 'add']);
+			expect(apiRemoveSessionSupervisor).toHaveBeenCalledWith(363, 1);
+			expect(apiAddSessionSupervisor).toHaveBeenCalledWith(
+				363,
+				'selma',
+				'Different focus'
+			);
+			expect(onChanged).toHaveBeenCalledTimes(1);
+			expect(onChanged).toHaveBeenCalledWith({
+				kind: 'replaced',
+				from: 'Patty Bouvier',
+				to: 'Selma Bouvier'
+			});
+		});
+
+		it('does not add anyone when the removal fails', async () => {
+			vi.mocked(apiRemoveSessionSupervisor).mockRejectedValue(
+				new Error('no')
+			);
+			const { source, onChanged } = setup();
+			const [patty] = await source.loadMembers();
+
+			await expect(
+				source.replacePerson!(
+					patty,
+					{ id: 'selma', name: 'Selma' },
+					{ reason: 'x' }
+				)
+			).rejects.toThrow('no');
+
+			expect(apiAddSessionSupervisor).not.toHaveBeenCalled();
+			expect(onChanged).not.toHaveBeenCalled();
+		});
+
+		it('reports the removal and rethrows when only the new supervisor cannot be added', async () => {
+			vi.mocked(apiRemoveSessionSupervisor).mockResolvedValue(
+				undefined as any
+			);
+			vi.mocked(apiAddSessionSupervisor).mockRejectedValue(
+				new Error('refused')
+			);
+			const { source, onChanged } = setup();
+			const [patty] = await source.loadMembers();
+
+			await expect(
+				source.replacePerson!(
+					patty,
+					{ id: 'selma', name: 'Selma' },
+					{ reason: 'x' }
+				)
+			).rejects.toThrow('refused');
+
+			expect(onChanged).toHaveBeenCalledTimes(1);
+			expect(onChanged).toHaveBeenCalledWith({
+				kind: 'removed',
+				name: 'Patty Bouvier'
+			});
+		});
+	});
 });

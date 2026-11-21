@@ -2281,7 +2281,9 @@
 				"createNew": "ሓድሽ ቆጸራ ፍጠር",
 				"openCalendar": "ኣብ ዓውደ-ኣዋርሕ ክፈት"
 			}
-		}
+		},
+		"supervisionChangedTitle": "ምክትታል ተቐይሩ",
+		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።"
 	},
 	"navigation": {
 		"appointments": "ቪድዮ - ቆጸራታት",
@@ -5770,6 +5772,10 @@
 				"remove": {
 					"title": "ሱፐርቫይዘር ተሰርዙ",
 					"text": "ሱፐርቫይዘር ብዓወት ተሰርዙ።"
+				},
+				"replace": {
+					"title": "ሱፐርቫይዘር ተቐይሩ",
+					"text": "ሱፐርቫይዘር ብዓወት ተቐይሩ።"
 				}
 			},
 			"error": {

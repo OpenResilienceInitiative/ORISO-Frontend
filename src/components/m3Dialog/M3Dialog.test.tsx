@@ -315,4 +315,46 @@ describe('M3Dialog', () => {
 		expect(surface?.className).toContain('m3Dialog__surface');
 		expect(document.querySelector('.m3Dialog--fullScreen')).not.toBeNull();
 	});
+
+	it('keeps outside controls reachable when asked to, and hides the page otherwise', async () => {
+		const withOutside = (reachable: boolean) => (
+			<>
+				<div id="page">
+					<div data-testid="outside">
+						<button type="button">End</button>
+					</div>
+				</div>
+				<M3Dialog
+					title="People"
+					onClose={() => undefined}
+					reachableOutside={
+						reachable
+							? document.getElementById('outside-host')
+							: null
+					}
+				/>
+			</>
+		);
+		const host = document.createElement('div');
+		host.id = 'outside-host';
+		document.body.appendChild(host);
+		const { unmount } = render(withOutside(true), { container: host });
+		await waitFor(() =>
+			expect(screen.getByRole('dialog', { name: 'People' })).toBeTruthy()
+		);
+		// The host is the outside control; it stays visible to assistive technology.
+		await waitFor(() =>
+			expect(host.getAttribute('aria-hidden')).toBeNull()
+		);
+		unmount();
+		host.remove();
+
+		const plainHost = document.createElement('div');
+		document.body.appendChild(plainHost);
+		render(withOutside(false), { container: plainHost });
+		await waitFor(() =>
+			expect(plainHost.getAttribute('aria-hidden')).toBe('true')
+		);
+		plainHost.remove();
+	});
 });

@@ -2306,7 +2306,9 @@
 				"createNew": "Add new appointment",
 				"openCalendar": "Open in calendar"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision changed",
+		"supervisionChangedDescription": "{{name}} now supervises this chat in place of {{from}}."
 	},
 	"navigation": {
 		"appointments": "Video dates",
@@ -5743,6 +5745,10 @@
 				"remove": {
 					"title": "Supervisor Removed",
 					"text": "The supervisor has been successfully removed."
+				},
+				"replace": {
+					"title": "Supervisor changed",
+					"text": "The supervisor has been successfully changed."
 				}
 			},
 			"error": {

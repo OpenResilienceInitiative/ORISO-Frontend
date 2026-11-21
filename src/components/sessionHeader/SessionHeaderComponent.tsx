@@ -1,14 +1,18 @@
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
-import { useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import {
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+	useCallback,
+	useRef
+} from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-	SupervisorManagementDialog,
-	SUPERVISOR_DIALOG_TITLE_ID
-} from './SupervisorManagementDialog';
+import { ManagePeopleDialog } from '../managePeople/ManagePeopleDialog';
+import { createSupervisionPeopleSource } from '../managePeople/supervisionPeopleSource';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -19,8 +23,6 @@ import {
 	apiGetSessionSupervisors,
 	SessionSupervisor
 } from '../../api/apiGetSessionSupervisors';
-import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
-import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
 import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
 import { ConversationNewLinkAction } from '../directInvitation/ConversationNewLinkAction';
@@ -100,8 +102,6 @@ import { GroupChatHeader } from './GroupChatHeader';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTopic } from '../../globalState';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { OrisoTextarea } from '../form/OrisoTextarea';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	useConversationFeatureSettings,
@@ -123,11 +123,6 @@ import {
 	buildSupervisorSystemMessagePayload,
 	type SupervisorSystemMessageKind
 } from './supervisorSystemMessage';
-import {
-	getConsultantLabel,
-	SupervisorConsultantPicker
-} from './SupervisorConsultantPicker';
-import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
@@ -272,14 +267,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const supervisors = hasCurrentSupervisorSnapshot
 		? supervisorSnapshot.supervisors
 		: EMPTY_SUPERVISORS;
-	const supervisorLoadState = hasCurrentSupervisorSnapshot
-		? supervisorSnapshot.state
-		: 'loading';
-	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
 	// Frank 17.11.2026: on desktop the "+" also offers "Beratung übergeben"
 	// to the assigned counsellor — the same audience and dialog as the ⋮
-	// entry (FE#2250). The phone keeps its grey "+" and the ⋮ entry.
+	// entry (FE#2250). On the phone the "+" opens the supervision dialog
+	// full screen; the handover stays in the ⋮ entry.
 	const caseHandover = useCaseHandoverOffer();
 	const plusButtonRef = useRef<HTMLElement | null>(null);
 	const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -302,9 +294,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(open?: () => void) => setSendNewLink(() => open),
 		[]
 	);
-	const [supervisionReason, setSupervisionReason] = useState<string>('');
-	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
-	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 	const supervisorRequestIdRef = useRef(0);
 	const activeSupervisorSessionIdRef = useRef(activeSession.item.id);
 	useEffect(() => {
@@ -314,48 +303,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		sessionAgencyId: activeSession.item?.agencyId,
 		metadataAgencyId: activeSession.agency?.id
 	});
-	const {
-		state: supervisorDirectoryState,
-		consultants: availableConsultants,
-		directoryConsultants,
-		selectedConsultantId,
-		selectedConsultant,
-		setSelectedConsultantId
-	} = useSupervisorConsultantDirectory({
-		isOpen: isSupervisionEnabledForCurrentChat && isSupervisorModalOpen,
-		sessionId: activeSession.item.id,
-		agencyId: supervisorDirectoryAgencyId,
-		currentConsultantId: userData.userId,
-		supervisorState: supervisorLoadState,
-		supervisors,
-		onLoadError: () => {
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.loadConsultants.title'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.loadConsultants.text'
-				),
-				closeable: true,
-				timeout: 5000
-			});
-		}
-	});
-
-	// Prepare Button for add supervisor
-	const addSupervisorButton: ButtonItem = React.useMemo(
-		() => ({
-			label: isAddingSupervisor
-				? translate('sessionHeader.supervisor.modal.adding')
-				: translate('sessionHeader.supervisor.modal.addButton'),
-			function: '',
-			type: BUTTON_TYPES.PRIMARY,
-			disabled: !selectedConsultant || isAddingSupervisor
-		}),
-		[selectedConsultant, isAddingSupervisor, translate]
-	);
-
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -447,23 +394,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
-	// Helper function to get consultant name from supervisor
-	const getSupervisorName = (supervisor: SessionSupervisor): string => {
-		const consultant = directoryConsultants.find(
-			(c) => c.consultantId === supervisor.supervisorConsultantId
-		);
-		if (consultant) {
-			return `${consultant.firstName} ${consultant.lastName}`;
-		}
-		// Fallback to username if consultant not found (shouldn't happen, but just in case)
-		return (
-			supervisor.supervisorUsername || supervisor.supervisorConsultantId
-		);
-	};
-
 	const postSupervisorSystemMessage = async (
 		kind: SupervisorSystemMessageKind,
-		supervisorName: string
+		supervisorName: string,
+		previousName?: string
 	) => {
 		const matrixRoomId = isMatrixRoom(activeSession.rid)
 			? activeSession.rid
@@ -474,7 +408,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		const payload = buildSupervisorSystemMessagePayload(
 			kind,
 			supervisorName,
-			translate
+			translate,
+			previousName
 		);
 		try {
 			const client = matrixClientService?.getClient?.();
@@ -501,144 +436,76 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
-	const handleAddSupervisor = async () => {
-		if (!selectedConsultant || !activeSession.item.id) return;
-		if (!supervisionReason.trim()) {
-			setSupervisionReasonError(true);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.reasonRequired.title'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.reasonRequired.text'
-				),
-				closeable: true,
-				timeout: 5000
-			});
-			return;
-		}
-		setIsAddingSupervisor(true);
-		const selectedConsultantIdForRequest = selectedConsultant.consultantId;
-		const selectedSupervisorName = getConsultantLabel(selectedConsultant);
+	const handleSupervisionChanged = async (
+		change: Parameters<
+			NonNullable<
+				Parameters<typeof createSupervisionPeopleSource>[0]['onChanged']
+			>
+		>[0]
+	) => {
+		const sessionId = activeSession.item.id;
+		if (!sessionId) return;
 		const chatDisplayName =
-			resolveAnonymousChatDisplayName(contact) ||
-			`Session ${activeSession.item.id}`;
-		try {
-			await apiAddSessionSupervisor(
-				activeSession.item.id,
-				selectedConsultantIdForRequest,
-				supervisionReason
-			);
-			await postSupervisorSystemMessage('added', selectedSupervisorName);
-			await loadSupervisors();
-			notifyPracticeSupervisorsChanged();
-			setSelectedConsultantId('');
-			setSupervisionReason('');
-			setSupervisionReasonError(false);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate('sessionHeader.supervisor.success.add.title'),
-				text: `${translate(
-					'sessionHeader.supervisor.success.add.text'
-				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				closeable: true,
-				timeout: 5000
-			});
-			addEventNotification({
-				type: NOTIFICATION_TYPE_SUCCESS,
-				eventType: 'supervisor.added',
-				title: translate('sessionHeader.supervisor.success.add.title'),
-				text: `${translate(
-					'sessionHeader.supervisor.success.add.text'
-				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate('notifications.center.open'),
-				sourceSessionId: activeSession.item.id,
-				category: 'system'
-			});
-			// Close modal after successful add
-			setIsSupervisorModalOpen(false);
-		} catch (error) {
-			// console.error('Failed to add supervisor:', error);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate('sessionHeader.supervisor.error.add.title'),
-				text: translate('sessionHeader.supervisor.error.add.text'),
-				closeable: true,
-				timeout: 5000
-			});
-		} finally {
-			setIsAddingSupervisor(false);
-		}
-	};
-
-	const handleRemoveSupervisor = async (supervisorId: number) => {
-		if (!activeSession.item.id) return;
-		if (
-			!window.confirm(
-				translate('sessionHeader.supervisor.remove.confirm')
-			)
-		) {
-			return;
-		}
-		const supervisorToRemove = supervisors.find(
-			(s) => s.id === supervisorId
+			resolveAnonymousChatDisplayName(contact) || `Session ${sessionId}`;
+		const noteKind: 'add' | 'remove' | 'replace' =
+			change.kind === 'added'
+				? 'add'
+				: change.kind === 'removed'
+					? 'remove'
+					: 'replace';
+		const who =
+			change.kind === 'replaced'
+				? `${change.from} -> ${change.to}`
+				: change.name;
+		// The people dialog has already changed the case; the rest is
+		// non-blocking bookkeeping: the chat's system message, the refresh of
+		// the header and the notification.
+		await postSupervisorSystemMessage(
+			change.kind,
+			change.kind === 'replaced' ? change.to : change.name,
+			change.kind === 'replaced' ? change.from : undefined
 		);
-		const supervisorToRemoveName = supervisorToRemove
-			? getSupervisorName(supervisorToRemove)
-			: String(supervisorId);
-		const chatDisplayName =
-			resolveAnonymousChatDisplayName(contact) ||
-			`Session ${activeSession.item.id}`;
-		try {
-			await apiRemoveSessionSupervisor(
-				activeSession.item.id,
-				supervisorId
-			);
-			await postSupervisorSystemMessage(
-				'removed',
-				supervisorToRemoveName
-			);
-			await loadSupervisors();
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate(
-					'sessionHeader.supervisor.success.remove.title'
-				),
-				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text'
-				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				closeable: true,
-				timeout: 5000
-			});
-			addEventNotification({
-				type: NOTIFICATION_TYPE_SUCCESS,
-				eventType: 'supervisor.removed',
-				title: translate(
-					'sessionHeader.supervisor.success.remove.title'
-				),
-				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text'
-				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate('notifications.center.open'),
-				sourceSessionId: activeSession.item.id,
-				category: 'system'
-			});
-			// Close modal after successful remove
-			setIsSupervisorModalOpen(false);
-		} catch (error) {
-			// console.error('Failed to remove supervisor:', error);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate('sessionHeader.supervisor.error.remove.title'),
-				text: translate('sessionHeader.supervisor.error.remove.text'),
-				closeable: true,
-				timeout: 5000
-			});
-		}
+		await loadSupervisors();
+		notifyPracticeSupervisorsChanged();
+		const title = translate(
+			`sessionHeader.supervisor.success.${noteKind}.title`
+		);
+		const text = `${translate(
+			`sessionHeader.supervisor.success.${noteKind}.text`
+		)} (${who} / ${chatDisplayName})`;
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_SUCCESS,
+			title,
+			text,
+			closeable: true,
+			timeout: 5000
+		});
+		addEventNotification({
+			type: NOTIFICATION_TYPE_SUCCESS,
+			eventType: `supervisor.${change.kind}`,
+			title,
+			text,
+			actionPath: getCanonicalConversationActionPath(),
+			actionLabel: translate('notifications.center.open'),
+			sourceSessionId: sessionId,
+			category: 'system'
+		});
 	};
+	// The source lives as long as the case; it always calls the latest handler.
+	const supervisionChangedRef = useRef(handleSupervisionChanged);
+	supervisionChangedRef.current = handleSupervisionChanged;
+	const supervisionPeopleSource = useMemo(
+		() =>
+			createSupervisionPeopleSource({
+				sessionId: activeSession.item.id,
+				agencyId: supervisorDirectoryAgencyId
+					? String(supervisorDirectoryAgencyId)
+					: null,
+				currentConsultantId: userData?.userId,
+				onChanged: (change) => supervisionChangedRef.current(change)
+			}),
+		[activeSession.item.id, supervisorDirectoryAgencyId, userData?.userId]
+	);
 
 	const sessionView = getViewPathForType(type);
 	const userProfileLink = `/sessions/consultant/${sessionView}/${
@@ -1192,7 +1059,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								!activeSession.isGroup &&
 								!activeSession.isEnquiry,
 							isSupervisor,
-							isMobile: untilL,
 							isSettled: areConversationFeaturesSettled
 						});
 						const canOpenSupervisorModal =
@@ -1492,299 +1358,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 			<CaseHandoverOffer handover={caseHandover} presentation="dialog" />
 
-			{/* Supervisor Management Modal - Rendered via Portal */}
-			{isSupervisionEnabledForCurrentChat &&
-				isSupervisorModalOpen &&
-				createPortal(
-					<SupervisorManagementDialog
-						onClose={() => setIsSupervisorModalOpen(false)}
-					>
-						<div>
-							<div
-								style={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									marginBottom: '20px'
-								}}
-							>
-								<h2
-									id={SUPERVISOR_DIALOG_TITLE_ID}
-									style={{ margin: 0 }}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.title'
-									)}
-								</h2>
-								<button
-									aria-label={translate('app.close')}
-									onClick={() =>
-										setIsSupervisorModalOpen(false)
-									}
-									style={{
-										background: 'none',
-										border: 'none',
-										fontSize: '24px',
-										cursor: 'pointer',
-										color: '#666'
-									}}
-								>
-									×
-								</button>
-							</div>
-
-							{/* Current Supervisors */}
-							<div style={{ marginBottom: '24px' }}>
-								<h3
-									style={{
-										marginBottom: '12px',
-										fontSize: '16px',
-										fontWeight: '600'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.current'
-									)}
-								</h3>
-								<div
-									style={{
-										marginBottom: '8px',
-										fontSize: '12px',
-										color: '#666'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.note'
-									)}
-								</div>
-								{isLoadingSupervisors ? (
-									<div>
-										{translate(
-											'sessionHeader.supervisor.modal.loading'
-										)}
-									</div>
-								) : supervisors.length === 0 ? (
-									<div style={{ color: '#666' }}>
-										{translate(
-											'sessionHeader.supervisor.modal.noSupervisors'
-										)}
-									</div>
-								) : (
-									<div
-										style={{
-											display: 'flex',
-											flexDirection: 'column',
-											gap: '20px',
-											width: '100%'
-										}}
-									>
-										{supervisors.map((supervisor) => (
-											<div
-												key={supervisor.id}
-												style={{
-													display: 'flex',
-													justifyContent:
-														'space-between',
-													alignItems: 'center',
-													padding: '12px',
-													border: '1px solid #ddd',
-													borderRadius: '4px',
-													marginBottom: '8px',
-													backgroundColor: '#fff'
-												}}
-											>
-												<div style={{ flex: 1 }}>
-													<div
-														style={{
-															fontWeight: '500',
-															fontSize: '14px',
-															color: '#3F373F'
-														}}
-													>
-														{getSupervisorName(
-															supervisor
-														)}
-													</div>
-													<div
-														style={{
-															fontSize: '12px',
-															color: '#666',
-															marginTop: '4px'
-														}}
-													>
-														{translate(
-															'sessionHeader.supervisor.modal.added'
-														)}
-														:{' '}
-														{new Date(
-															supervisor.addedDate
-														).toLocaleDateString()}
-													</div>
-													{supervisor.notes && (
-														<div
-															style={{
-																fontSize:
-																	'12px',
-																color: '#666',
-																marginTop:
-																	'8px',
-																fontStyle:
-																	'normal'
-															}}
-														>
-															<strong>
-																{translate(
-																	'sessionHeader.supervisor.modal.reason'
-																)}
-																:
-															</strong>{' '}
-															{supervisor.notes}
-														</div>
-													)}
-												</div>
-												<button
-													onClick={() =>
-														handleRemoveSupervisor(
-															supervisor.id
-														)
-													}
-													style={{
-														padding: '6px 12px',
-														borderRadius: '4px',
-														border: '1px solid #c62828',
-														backgroundColor:
-															'transparent',
-														color: '#c62828',
-														cursor: 'pointer',
-														fontSize: '12px',
-														fontWeight: '500'
-													}}
-													title={translate(
-														'sessionHeader.supervisor.modal.remove'
-													)}
-												>
-													{translate(
-														'sessionHeader.supervisor.modal.remove'
-													)}
-												</button>
-											</div>
-										))}
-									</div>
-								)}
-							</div>
-
-							{/* Add Supervisor */}
-							<div>
-								<h3
-									style={{
-										marginBottom: '12px',
-										fontSize: '16px',
-										fontWeight: '600'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.add'
-									)}
-								</h3>
-								<SupervisorConsultantPicker
-									state={supervisorDirectoryState}
-									consultants={availableConsultants}
-									selectedConsultantId={selectedConsultantId}
-									onChange={setSelectedConsultantId}
-									labels={{
-										loading: translate(
-											'sessionHeader.supervisor.modal.loadingConsultants'
-										),
-										error: translate(
-											'sessionHeader.supervisor.error.loadConsultants.text'
-										),
-										empty: translate(
-											'sessionHeader.supervisor.modal.noConsultants'
-										),
-										select: translate(
-											'sessionHeader.supervisor.modal.selectConsultant'
-										)
-									}}
-								/>
-								{supervisorDirectoryState === 'ready' &&
-									availableConsultants.length > 0 && (
-										<div>
-											<div style={{ width: '100%' }}>
-												<span
-													style={{ display: 'none' }}
-												>
-													{translate(
-														'sessionHeader.supervisor.modal.reasonLabel'
-													)}
-												</span>
-												<OrisoTextarea
-													fullWidth
-													minRows={5}
-													value={supervisionReason}
-													onChange={(e) => {
-														setSupervisionReason(
-															e.target.value
-														);
-														if (
-															supervisionReasonError &&
-															e.target.value.trim()
-														) {
-															setSupervisionReasonError(
-																false
-															);
-														}
-													}}
-													label={translate(
-														'sessionHeader.supervisor.modal.reasonLabel'
-													)}
-													placeholder={translate(
-														'sessionHeader.supervisor.modal.reasonPlaceholder'
-													)}
-													error={
-														supervisionReasonError
-													}
-													sx={{ mt: 0 }}
-												/>
-												{supervisionReasonError && (
-													<div
-														style={{
-															marginTop: '6px',
-															color: '#c62828',
-															fontSize: '12px'
-														}}
-													>
-														{translate(
-															'sessionHeader.supervisor.modal.reasonError'
-														)}
-													</div>
-												)}
-											</div>
-											<div
-												style={{
-													marginTop: '12px',
-													display: 'flex',
-													justifyContent: 'center'
-												}}
-											>
-												<Button
-													item={addSupervisorButton}
-													buttonHandle={
-														handleAddSupervisor
-													}
-													disabled={
-														!selectedConsultant ||
-														!supervisionReason.trim() ||
-														isAddingSupervisor
-													}
-												/>
-											</div>
-										</div>
-									)}
-							</div>
-						</div>
-					</SupervisorManagementDialog>,
-					document.body
-				)}
+			{/* Supervision of this case: the shared "Personen verwalten"
+			    dialog; full screen on the phone. */}
+			{isSupervisionEnabledForCurrentChat && isSupervisorModalOpen && (
+				<ManagePeopleDialog
+					open
+					onClose={() => setIsSupervisorModalOpen(false)}
+					source={supervisionPeopleSource}
+					fullScreen={untilM}
+				/>
+			)}
 
 			{isEndChatOverlayActive && endChatOverlayItem && (
 				<Overlay

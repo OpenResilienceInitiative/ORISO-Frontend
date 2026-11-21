@@ -509,29 +509,22 @@ const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 	);
 	fireEvent.click(add);
 
-	const picker = await screen.findByRole('combobox', {}, { timeout: 15000 });
-	fireEvent.mouseDown(picker);
 	fireEvent.click(
-		await screen.findByRole('option', {
-			name: PRACTICE_CAST.supervisor.displayName
-		})
+		await screen.findByRole(
+			'button',
+			{ name: 'managePeople.add.labelFor' },
+			{ timeout: 15000 }
+		)
 	);
-	expect(
-		screen.queryByRole('option', {
-			name: PRACTICE_CAST.colleague.displayName
-		})
-	).toBeNull();
 	fireEvent.change(
-		screen.getByPlaceholderText(
-			'sessionHeader.supervisor.modal.reasonPlaceholder'
+		await screen.findByPlaceholderText(
+			'managePeople.supervision.reasonPlaceholder'
 		),
 		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
 	);
 	await act(async () => {
 		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'sessionHeader.supervisor.modal.addButton'
-			})
+			screen.getByRole('button', { name: 'managePeople.add.confirm' })
 		);
 	});
 

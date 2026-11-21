@@ -450,6 +450,11 @@ export const ManagePeopleDialog = ({
 		</>
 	);
 
+	// Practice mode keeps its banner reachable while a dialog is open.
+	const practiceControls = open
+		? document.querySelector<HTMLElement>('[data-practice-controls]')
+		: null;
+
 	return (
 		<M3Dialog
 			open={open}
@@ -457,6 +462,7 @@ export const ManagePeopleDialog = ({
 			title={copy('title')}
 			description={copy('description')}
 			closeLabel={translate('app.close')}
+			reachableOutside={practiceControls}
 			fullScreen={fullScreen}
 			width={600}
 			className="managePeople"

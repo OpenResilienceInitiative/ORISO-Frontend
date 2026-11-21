@@ -2307,7 +2307,9 @@
 				"createNew": "Yeni randevu oluştur",
 				"openCalendar": "Takvimde aç"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Süpervizyon değiştirildi",
+		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor."
 	},
 	"navigation": {
 		"appointments": "Video - Tarihler",
@@ -5796,6 +5798,10 @@
 				"remove": {
 					"title": "Süpervizör Kaldırıldı",
 					"text": "Süpervizör başarıyla kaldırıldı."
+				},
+				"replace": {
+					"title": "Süpervizör değiştirildi",
+					"text": "Süpervizör başarıyla değiştirildi."
 				}
 			},
 			"error": {
