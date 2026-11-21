@@ -101,11 +101,19 @@ export const JourneyQuestionPager = ({
 	const { t } = useTranslation();
 	const pages = checkInPages(step);
 	const [index, setIndex] = useState(0);
+	const timer = useRef<number | undefined>(undefined);
+	const touchStart = useRef<number | undefined>(undefined);
+	// A new step is a new questionnaire. Reset during render so the first paint
+	// is question 1, and cancel a one-tap move still waiting from the last step.
+	const [seenStepId, setSeenStepId] = useState(step.id);
+	if (step.id !== seenStepId) {
+		window.clearTimeout(timer.current);
+		setSeenStepId(step.id);
+		setIndex(0);
+	}
 	const page = pages[Math.min(index, pages.length - 1)];
 	const complete = pages.every((candidate) => pageDone(candidate, answers));
 	const isLast = index >= pages.length - 1;
-	const timer = useRef<number | undefined>(undefined);
-	const touchStart = useRef<number | undefined>(undefined);
 
 	useEffect(() => onCompleteChange?.(complete), [complete, onCompleteChange]);
 	useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -121,7 +129,9 @@ export const JourneyQuestionPager = ({
 	const update = (next: StepAnswers) => {
 		onChange(next);
 		// A one-tap answer moves on, after a moment to see what was chosen.
-		// Not while "Etwas anderes" is chosen: the person is typing there.
+		// Choosing again — including "Etwas anderes", where the person is about
+		// to type — cancels a move that was already waiting.
+		window.clearTimeout(timer.current);
 		const typing =
 			page.kind === 'question' &&
 			(next.questions[page.item.id]?.choices ?? []).includes(
@@ -133,9 +143,11 @@ export const JourneyQuestionPager = ({
 			!typing &&
 			isPageAnswered(page, next)
 		) {
-			window.clearTimeout(timer.current);
 			timer.current = window.setTimeout(
-				() => setIndex((current) => current + 1),
+				() =>
+					setIndex((current) =>
+						Math.min(current + 1, pages.length - 1)
+					),
 				ADVANCE_DELAY_MS
 			);
 		}
