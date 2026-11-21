@@ -1,5 +1,8 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { ListItemsResponseInterface } from '../globalState/interfaces';
+import {
+	ListItemInterface,
+	ListItemsResponseInterface
+} from '../globalState/interfaces';
 import {
 	fetchData,
 	FETCH_ERRORS,
@@ -55,6 +58,23 @@ export interface CaseHandoverReason {
 	accessAllowed?: boolean;
 	policyAuthority?: string;
 }
+
+export interface CaseHandoverRowStatus {
+	status: CaseHandoverStatusValue;
+	canViewContent: boolean;
+	hasRequest: boolean;
+}
+
+export interface CaseHandoverCandidate extends ListItemInterface {
+	caseHandoverStatus?: CaseHandoverRowStatus | null;
+}
+
+type CaseHandoverCandidatesResponse = Omit<
+	ListItemsResponseInterface,
+	'sessions'
+> & {
+	sessions: CaseHandoverCandidate[];
+};
 
 export interface CaseHandoverStatus {
 	requestId?: number;
@@ -133,7 +153,7 @@ export const apiGetCaseHandoverCandidates = async ({
 	count?: number;
 	archived?: boolean;
 	signal?: AbortSignal;
-}): Promise<ListItemsResponseInterface> => {
+}): Promise<CaseHandoverCandidatesResponse> => {
 	const params = new URLSearchParams({
 		query,
 		offset: String(offset),

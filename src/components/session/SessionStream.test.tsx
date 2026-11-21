@@ -26,6 +26,7 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
@@ -2961,6 +2962,63 @@ describe('SessionStream Matrix room lifecycle', () => {
 		view.unmount();
 		await act(async () => lateStatus.resolve(grantedHandoverStatus()));
 		expect(mocks.getMatrixRoomMessages).not.toHaveBeenCalled();
+	});
+
+	it('looks up the supervisors again when accepting attached a standing supervisor (#2386)', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		mocks.getSessionSupervisors.mockResolvedValueOnce([]);
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2386,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(2)
+		);
+		expect(mocks.getSessionSupervisors).toHaveBeenLastCalledWith(2386);
+	});
+
+	it('does not look up the supervisors again for another session', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2387,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1);
 	});
 });
 

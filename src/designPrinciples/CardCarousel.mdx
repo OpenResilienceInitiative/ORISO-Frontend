@@ -1,0 +1,93 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design principles/Card carousel" />
+
+# Card carousel: same look on every screen and zoom
+
+The product owner set this as the **baseline** on 2026-11-20 after several
+rounds in which agents "repaired" the waiting-room step cards into something
+else. It applies to every horizontal card row in ORISO: the waiting-room step
+cards (registration, live chat, self-help group information) and any new row of
+cards that tells a story in steps.
+
+**Baseline:** a 1440 × 900 window shows **one and a half cards**. Each card is
+**509 px wide**, its picture **about 372 px high**, the title and two lines of text
+below it. The next card peeks in at the right edge, a round arrow appears when
+the mouse comes near either edge, and the dots under the cards show where you
+are.
+
+- Baseline story:
+  <a href="./?path=/story/entry-flows-waiting-room-after-registrieren--ready-desktop-carousel" target="_top">Waiting room · carousel with arrows and dots (1440)</a>
+- Same component in the live chat and the self-help group:
+  <a href="./?path=/story/live-chat-entry-room--step-waiting" target="_top">Live chat waiting room</a>,
+  <a href="./?path=/story/group-chat-self-help-info--info-gallery-desktop" target="_top">Group information</a>
+
+## The rules
+
+1. **It is a carousel, never a static grid.** Arrows, dots, drag and swipe are
+   part of the design (#2179, #2198). Do not size the cards so that all of
+   them fit side by side: there must always be a next card peeking in. Turning
+   it into a grid needs the product owner.
+2. **Same size on screen at 100 %, 150 % and 200 % zoom.** Width, picture
+   height, text and paddings are a **share of the window** (`vw`), not fixed
+   `px` or `rem`. Zooming changes the number of CSS pixels, not the share, so
+   the card keeps its size on the screen.
+3. **Width is fixed, height adapts.** The horizontal direction scrolls, so the
+   card never gets narrower to make room. The card is exactly as high as the
+   free room between the headline and the bottom bar; the **picture takes what
+   the text leaves and is cropped** — never the text. At 1440 × 900 that is the
+   approved ~372 px picture; a short window (zoom, small laptop, live chat with
+   more buttons under the cards) gets a lower picture, a tall one a taller one.
+4. **Use the space, leave no dead white.** No empty band between the cards,
+   the note and the bar — on phones, tablets, 1440 and 4K alike.
+5. **Tablet upright** shows the same card as when it is turned sideways
+   (sized by the long side, `vmax`); the picture fills the height like on a
+   phone.
+6. **Phones** show one card, the next one peeking in, the picture filling the
+   height (cropped), dots under it; swipe moves the cards.
+7. **Very large screens** (2560, 4K at 100 %) keep the baseline's share
+   (ceiling 90rem), so they look like the 1440 baseline scaled up.
+
+## Describing a layout like this (for people and agents)
+
+When you ask for a layout, describe it in these five parts. Each one is
+measurable, so an agent cannot "interpret" it into something else.
+
+| Part | Ask | Example (this baseline) |
+| --- | --- | --- |
+| Reference | One screenshot at one window size, named as the baseline | "This screenshot at 1440 × 900 is the baseline." |
+| What is fixed | Which size must not change, in which direction | "The card width and picture height stay the same on screen at every zoom." |
+| What may adapt | What gives way when room is short, and how | "When height is short, the picture gets lower and is cropped; the text never." |
+| How many | How much is visible at once, and what scrolls | "One and a half cards visible; the row scrolls sideways with arrows and dots." |
+| Space | What happens to spare space | "No empty band between the note and the button; the cards take that space." |
+
+Say what must **not** happen as well ("never all three side by side",
+"no white field under the cards on a tablet"). Words like *flexible*,
+*responsive* or *not too much scrolling* are not enough on their own: an agent
+fills them with its own idea.
+
+## How it is built
+
+- `src/components/app/registrationLoader/handoverCardSize.ts` — the formulas
+  (`cardWidth`, `cardWidthPortrait`, `fluid()`).
+- `HandoverCarousel` writes the free height of its block into the CSS
+  variable `--handover-block-h`; the card's `height` uses it and the picture
+  is `flex: 1` inside the card.
+- `EntryRoomShell` makes the room as tall as the window under the header
+  (72 px on desktop, 60 px in the one-column layout). (`cqh` does
+  not work here: Chromium resolves it to 0 in this flex layout.)
+- `HoverScrollArrows` and `CarouselDots` are the shared arrows and dots. Reuse
+  them for any new carousel.
+
+## How it is checked
+
+- The waiting-room stories assert the rules: no card cut off behind the bar,
+  three dots, the track scrolls, the hover arrow moves exactly one card and a
+  dot moves the track.
+- Before changing anything here, screenshot 1280, 1366, 1440, 1920, 2560,
+  3840 (4K at 100 %), the 1440 window at 150 % and 200 % zoom, an iPad upright
+  and sideways and phones at 360 and 390 px, and compare against the baseline.
+
+Known gap: a window that is very short after zoom (1366 × 768 at 150 %,
+1440 × 900 at 200 %) has no room left for the cards between headline and bar.
+That needs the column to scroll and is tracked separately.

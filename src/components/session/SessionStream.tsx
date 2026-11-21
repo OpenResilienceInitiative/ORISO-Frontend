@@ -94,6 +94,7 @@ import {
 import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
+import { useSessionSupervisorsRevision } from './sessionSupervisorsRefresh';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
@@ -380,6 +381,10 @@ export const SessionStream = ({
 
 	// Practice only: bumps when the learner adds a supervisor under this case.
 	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+	// #2386: bumps when accepting this enquiry attached a standing supervisor.
+	const sessionSupervisorsRevision = useSessionSupervisorsRevision(
+		activeSession.item?.id
+	);
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -428,7 +433,12 @@ export const SessionStream = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
+	}, [
+		activeSession.item?.id,
+		userData,
+		practiceSupervisorsRevision,
+		sessionSupervisorsRevision
+	]);
 
 	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
 	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;

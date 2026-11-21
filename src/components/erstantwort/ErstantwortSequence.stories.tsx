@@ -127,15 +127,21 @@ export const PlatformDefaults: Story = {
  * history re-renders and nobody should sit through the animation twice.
  */
 export const AllAtOnce: Story = {
-	args: { ...PlatformDefaults.args, skipAnimation: true }
+	args: { ...PlatformDefaults.args, skipAnimation: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByText(/Schön, dass Sie sich gemeldet haben/)
+		).toBeVisible();
+		await expect(
+			canvas.queryByText('Wer Ihre Nachricht liest')
+		).not.toBeInTheDocument();
+	}
 };
 
 /**
- * **Live Chat.** The modality assignment removes what cannot be true there:
- * Live Chat has neither teams nor case handover, so "who reads along" has
- * nothing to render, and it is synchronous, so a reply deadline would be a
- * promise the system cannot keep. The two safety Bausteine stay — they apply
- * everywhere.
+ * **Live Chat.** Live Chat is synchronous, so the preview has no reply
+ * deadline. The two safety Bausteine apply to every modality.
  */
 export const LiveChat: Story = {
 	args: {
@@ -408,23 +414,50 @@ export const Mobile: Story = {
 	globals: phone390Globals
 };
 
+const storedDisclosure = {
+	id: 'whoReadsAlong',
+	headline: 'Wer Ihre Nachricht liest',
+	body: 'Das Beratungsteam hat diesen Hinweis zu Ihrer Anfrage gespeichert.'
+};
+
 /**
  * Frozen content can be read without leaving the chat or opening setup. One
  * complete message: greeting, questions (emergency numbers last, red,
  * collapsed) and goodbye share one bubble (Frank, 15.10.).
  */
 export const CompactFaq: Story = {
-	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
+	args: {
+		bausteine: resolveErstantwortBausteine({
+			rawMessage: `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+				type: SYSTEM_NOTIFICATION_FIRST_RESPONSE,
+				version: ERSTANTWORT_PAYLOAD_VERSION,
+				bausteine: [
+					{
+						id: 'greeting',
+						body: 'Schön, dass Sie sich gemeldet haben.'
+					},
+					storedDisclosure,
+					{
+						id: 'emergencyNumbers',
+						headline: 'Wenn es nicht warten kann',
+						body: 'Telefonseelsorge 0800 111 0 111.'
+					},
+					{ id: 'closing', body: 'Bis bald.' }
+				]
+			})}`,
+			translate,
+			state: OPEN_STATE
+		}).bausteine,
+		skipAnimation: true
+	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const question = await canvas.findByText('Wer Ihre Nachricht liest');
+		const question = await canvas.findByText(storedDisclosure.headline);
 		const detail = question.closest('details');
 		await expect(detail).not.toHaveAttribute('open');
 		await userEvent.click(question);
 		await expect(detail).toHaveAttribute('open');
-		await expect(
-			canvas.getByText(/Ihre Nachricht lesen ausschließlich/)
-		).toBeVisible();
+		await expect(canvas.getByText(storedDisclosure.body)).toBeVisible();
 		await userEvent.click(question);
 		await expect(detail).not.toHaveAttribute('open');
 		// Crisis numbers: last question, collapsed, red with a phone icon.

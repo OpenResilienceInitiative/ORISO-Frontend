@@ -655,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Bazı sohbet verileri bu tarayıcıda kalmış olabilir. Diğer ORISO sekmelerini kapatın.",
+			"retryCleanup": "Tarayıcı temizliğini yeniden dene",
 			"button": "Kapat",
 			"headline": "Caritas Beratung hesabınızı başarıyla sildiniz."
 		}
@@ -4100,6 +4102,10 @@
 				"headline": "Bu davet bağlantısı çalışmıyor.",
 				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
 			}
+		},
+		"stepScroll": {
+			"back": "Önceki adımlar",
+			"forward": "Sonraki adımlar"
 		}
 	},
 	"releaseNote": {
@@ -6039,8 +6045,7 @@
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
 		},
 		"whoReadsAlong": {
-			"headline": "Mesajınızı kim okuyor",
-			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+			"headline": "Mesajınızı kim okuyor"
 		},
 		"responseDeadline": {
 			"headline": "Ne zaman yanıt alacaksınız",
@@ -7942,5 +7947,40 @@
 		"archiveHint": "Listenizden ve etkinliklerinizden kalkması için kaydı arşive taşıyın.",
 		"archived": "Bu kayıt arşivde.",
 		"archiveFailed": "Arşivleme başarısız oldu. Lütfen tekrar deneyin."
+	},
+	"journey": {
+		"question": {
+			"optional": "(isteğe bağlı)",
+			"missing": "Lütfen bu soruyu yanıtlayın.",
+			"textPlaceholder": "Yanıtınız",
+			"other": "Başka bir şey",
+			"otherPlaceholder": "Tam olarak ne?",
+			"choose": "Lütfen seçin",
+			"multiHint": "Birden fazla yanıt seçebilirsiniz"
+		},
+		"rating": {
+			"stars": "{{max}} yıldızdan {{count}}",
+			"stars_one": "{{max}} yıldızdan {{count}}",
+			"stars_other": "{{max}} yıldızdan {{count}}",
+			"untouched": "henüz seçilmedi",
+			"moveHint": "Kaydırıcıyı kendi değerinize getirin."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Kısa bir soru",
+				"arrival": "Geri bildiriminiz"
+			},
+			"send": "Yanıtları gönder",
+			"thanks": "Yanıtlarınız için teşekkürler!",
+			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin.",
+			"anonymous": "Yanıtlarınız danışmanlığınızla bağlantı kurulmadan kaydedilir."
+		},
+		"checkIn": {
+			"progress": "Soru {{current}} / {{total}}",
+			"back": "Önceki soru",
+			"next": "İleri",
+			"skip": "Atla",
+			"done": "Tamam – “İleri” sizi sonraki adıma götürür."
+		}
 	}
 }

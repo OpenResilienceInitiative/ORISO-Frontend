@@ -88,9 +88,8 @@ vi.mock('../../api', async (original) => ({
 	...(await original<any>()),
 	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
 }));
-vi.mock('matrix-js-sdk', async (original) => ({
-	...(await original<any>()),
-	createClient: () => boundary.client
+vi.mock('../../services/browserMatrixSdkClient', () => ({
+	createBrowserMatrixSdkClient: () => boundary.client
 }));
 // jsdom gives every node zero layout, so focus-trap sees no tabbable element
 // and throws on activate (the delete confirmation is the first overlay here).

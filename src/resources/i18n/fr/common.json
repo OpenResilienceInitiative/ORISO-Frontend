@@ -655,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Certaines données de conversation peuvent rester dans ce navigateur. Fermez les autres onglets ORISO.",
+			"retryCleanup": "Réessayer le nettoyage du navigateur",
 			"button": "Fermer",
 			"headline": "Vous avez supprimé avec succès votre compte auprès de Caritas Beratung."
 		}
@@ -4100,6 +4102,10 @@
 				"headline": "Ce lien d'invitation ne fonctionne pas.",
 				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
 			}
+		},
+		"stepScroll": {
+			"back": "Étapes précédentes",
+			"forward": "Étapes suivantes"
 		}
 	},
 	"releaseNote": {
@@ -6039,8 +6045,7 @@
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
 		},
 		"whoReadsAlong": {
-			"headline": "Qui lit votre message",
-			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+			"headline": "Qui lit votre message"
 		},
 		"responseDeadline": {
 			"headline": "Quand vous recevrez une réponse",
@@ -7942,5 +7947,40 @@
 		"archiveHint": "Déplacez l'entrée vers les archives pour qu'elle disparaisse de votre liste et de vos activités.",
 		"archived": "Cette entrée se trouve dans les archives.",
 		"archiveFailed": "L'archivage n'a pas fonctionné. Veuillez réessayer."
+	},
+	"journey": {
+		"question": {
+			"optional": "(facultatif)",
+			"missing": "Veuillez répondre à cette question.",
+			"textPlaceholder": "Votre réponse",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"choose": "Veuillez choisir",
+			"multiHint": "Plusieurs réponses possibles"
+		},
+		"rating": {
+			"stars": "{{count}} étoiles sur {{max}}",
+			"stars_one": "{{count}} étoile sur {{max}}",
+			"stars_other": "{{count}} étoiles sur {{max}}",
+			"untouched": "pas encore choisi",
+			"moveHint": "Déplacez le curseur sur votre valeur."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Une petite question",
+				"arrival": "Votre avis"
+			},
+			"send": "Envoyer les réponses",
+			"thanks": "Merci pour vos réponses !",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant.",
+			"anonymous": "Vos réponses sont enregistrées sans lien avec votre conseil."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} sur {{total}}",
+			"back": "Question précédente",
+			"next": "Suivant",
+			"skip": "Passer",
+			"done": "Terminé – « Suivant » mène à l’étape suivante."
+		}
 	}
 }
