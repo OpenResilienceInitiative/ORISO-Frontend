@@ -10,9 +10,11 @@ import type { ChatComposerFormat } from '../message/chatMessageConfig';
 const Field = ({
 	label,
 	initialContent,
-	onSend
+	onSend,
+	editorHeight
 }: {
 	label: string;
+	editorHeight?: number;
 	initialContent: string;
 	onSend: () => void;
 }) => {
@@ -22,6 +24,7 @@ const Field = ({
 			style={{
 				flex: 1,
 				minWidth: 0,
+				height: editorHeight,
 				border: '1px solid var(--m3-outline-variant)'
 			}}
 		>
@@ -41,9 +44,11 @@ const Harness = ({
 	initialContent,
 	disabledFormats,
 	split,
-	onSend
+	onSend,
+	editorHeight
 }: {
 	initialContent: string;
+	editorHeight?: number;
 	disabledFormats: ChatComposerFormat[];
 	split: boolean;
 	onSend: () => void;
@@ -52,6 +57,7 @@ const Harness = ({
 		<div style={{ display: 'flex', gap: 12, padding: '96px 12px 12px' }}>
 			<Field
 				label="Nachricht"
+				editorHeight={editorHeight}
 				initialContent={initialContent}
 				onSend={onSend}
 			/>
@@ -112,6 +118,50 @@ export const AfterSelection: Story = {
 		await waitFor(() =>
 			expect(field.querySelectorAll('ul > li')).toHaveLength(2)
 		);
+	}
+};
+
+const scrollLines = Array.from(
+	{ length: 16 },
+	(_, index) => `Entwurf, Zeile ${index + 1}.`
+);
+
+export const SelectionFollowsEditorScroll: Story = {
+	args: {
+		editorHeight: 280,
+		initialContent: scrollLines.map((line) => `<p>${line}</p>`).join('')
+	},
+	play: async ({ canvas, canvasElement }) => {
+		const field = await canvas.findByRole('textbox', { name: 'Nachricht' });
+		await userEvent.click(field);
+		const anchor = field.querySelectorAll('p')[4];
+		const from =
+			1 +
+			scrollLines
+				.slice(0, 4)
+				.reduce((offset, line) => offset + line.length + 2, 0);
+		select(field, from, from + 'Entwurf'.length);
+		const bar = await selectionToolbar(canvasElement.ownerDocument);
+		const menu = bar.closest<HTMLElement>(
+			'.composerFormatMenu--selection'
+		)!;
+		await waitFor(() => expect(menu.style.top).not.toBe(''));
+		const originalTextTop = anchor.getBoundingClientRect().top;
+		const originalMenuTop = menu.getBoundingClientRect().top;
+		const originalWindowScroll = window.scrollY;
+
+		field.scrollTop += 48;
+		await waitFor(() =>
+			expect(
+				originalTextTop - anchor.getBoundingClientRect().top
+			).toBeCloseTo(48, 0)
+		);
+		await waitFor(() =>
+			expect(
+				originalMenuTop - menu.getBoundingClientRect().top
+			).toBeCloseTo(48, 0)
+		);
+		expect(window.scrollY).toBe(originalWindowScroll);
 	}
 };
 

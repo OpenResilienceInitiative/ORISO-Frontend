@@ -83,7 +83,33 @@ export const ComposerSelectionFormatMenu = ({
 				editor.commands.setMeta(selectionFormatMenuKey, 'hide');
 			}
 		};
+		// BubbleMenu listens to window scroll. The editor also scrolls independently.
+		let scrollFrame: number | null = null;
+		const updatePositionAfterEditorScroll = () => {
+			if (scrollFrame !== null || !element.isConnected) return;
+
+			scrollFrame = window.requestAnimationFrame(() => {
+				scrollFrame = null;
+				if (
+					editorElement.isConnected &&
+					element.isConnected &&
+					!editor.isDestroyed
+				) {
+					editor.commands.setMeta(
+						selectionFormatMenuKey,
+						'updatePosition'
+					);
+				}
+			});
+		};
 		editorElement.addEventListener('keydown', focusToolbar);
+		editorElement.addEventListener(
+			'scroll',
+			updatePositionAfterEditorScroll,
+			{
+				passive: true
+			}
+		);
 		document.addEventListener('focusin', hideOnOutsideInteraction);
 		document.addEventListener(
 			'pointerdown',
@@ -123,6 +149,11 @@ export const ComposerSelectionFormatMenu = ({
 		);
 		return () => {
 			editorElement.removeEventListener('keydown', focusToolbar);
+			editorElement.removeEventListener(
+				'scroll',
+				updatePositionAfterEditorScroll
+			);
+			if (scrollFrame !== null) window.cancelAnimationFrame(scrollFrame);
 			document.removeEventListener('focusin', hideOnOutsideInteraction);
 			document.removeEventListener(
 				'pointerdown',
