@@ -369,6 +369,22 @@ $room-actions-gap: 12px;
 		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
+	// FE#2344: the counterpart's role under the name ("Supervisor:in"),
+	// the name-and-subtitle pattern of the counselling-centre line
+	// (`messageItem__usernameSubtitle`): 12/500, quieter than the name.
+	&__subtitle {
+		min-width: 0;
+		margin: 0;
+		overflow: hidden;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.4px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	// Figma: Topic Tag — label/medium 12/500/16, `secondary` on `primary-fixed`.
 	&__chip {
 		flex: 0 0 auto;

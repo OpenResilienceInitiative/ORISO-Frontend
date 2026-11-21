@@ -124,6 +124,9 @@ import {
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
+import { enrichSupervisionParticipants } from '../supervisionPanel/supervisionPeople';
+import { SupervisionPeopleContext } from '../supervisionPanel/SupervisionPeopleContext';
+import { useSupervisionPeople } from '../supervisionPanel/useSupervisionPeople';
 import { apiGetConsultant } from '../../api/apiGetConsultant';
 import {
 	computeThreadSummaries,
@@ -2931,7 +2934,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, resolvedMatrixRoomId, messages]
 	);
-	const supervisionParticipants = useMemo(
+	const supervisionRoomParticipants = useMemo(
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -2941,6 +2944,77 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			supervisionRoomUsers
 		]
 	);
+	// FE#2344: the side room's people — name, role and avatar — resolved once
+	// for the header and the side-room messages, so both show each person the
+	// same way (`supervisionPeople.ts`).
+	const supervisionPeopleConsultant = useMemo(
+		() => ({
+			id: activeSession.consultant?.id,
+			matrixUserId: activeSession.item?.consultantMatrixUserId,
+			internalName: markerCounsellorDisplayName,
+			identity: activeSession.consultant
+		}),
+		[
+			activeSession.consultant,
+			activeSession.item?.consultantMatrixUserId,
+			markerCounsellorDisplayName
+		]
+	);
+	const supervisionPeopleSelf = useMemo(
+		() => ({ userId: userData?.userId, identity: userData }),
+		[userData]
+	);
+	const supervisionPeople = useSupervisionPeople({
+		enabled: hasSupervisionSideRoom,
+		agencyId: activeSession.item?.agencyId,
+		consultant: supervisionPeopleConsultant,
+		supervisors: sessionSupervisors,
+		marker: supervisionMarker,
+		self: supervisionPeopleSelf
+	});
+	const supervisionParticipants = useMemo(
+		() =>
+			enrichSupervisionParticipants(
+				supervisionRoomParticipants,
+				supervisionPeople,
+				{
+					consultant: translate(
+						'groupChat.info.subscribers.role.consultant'
+					),
+					supervisor: translate(
+						'groupChat.info.subscribers.role.supervisor'
+					)
+				}
+			),
+		[supervisionRoomParticipants, supervisionPeople, translate]
+	);
+	// The counterpart as the header names it: the person, then their role.
+	const supervisionCounterpartPerson = useMemo(() => {
+		const people = Array.from(supervisionPeople.values());
+		const ownMatrixIds = new Set(
+			[
+				matrixClientService?.getClient?.()?.getUserId?.(),
+				getCurrentMatrixUserId()
+			].filter(Boolean)
+		);
+		const wanted = isSupervisor ? 'consultant' : 'supervisor';
+		return (
+			people.find(
+				(person) =>
+					person.role === wanted &&
+					!ownMatrixIds.has(person.matrixUserId)
+			) ?? null
+		);
+	}, [supervisionPeople, isSupervisor, matrixClientService]);
+	const supervisionHeaderName =
+		supervisionCounterpartPerson?.name || supervisionCounterpartName;
+	const supervisionHeaderRole = supervisionCounterpartPerson
+		? translate(
+				supervisionCounterpartPerson.role === 'supervisor'
+					? 'groupChat.info.subscribers.role.supervisor'
+					: 'groupChat.info.subscribers.role.consultant'
+			)
+		: undefined;
 	// Teamberatung: the room's own members ARE the team — the `team` rule
 	// shows them all and drops only the advice seeker, who is never invited
 	// (`visibleParticipants.ts`).
@@ -2988,9 +3062,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!hasSupervisionSideRoom) {
 			return [];
 		}
-		const supervisorName = isSupervisor
-			? userData?.displayName || userData?.userName || ''
-			: supervisionCounterpartName;
+		// FE#2344: the supervisor as the header names them.
+		const supervisorPerson = Array.from(supervisionPeople.values()).find(
+			(person) => person.role === 'supervisor'
+		);
+		const supervisorName =
+			supervisorPerson?.name ||
+			(isSupervisor
+				? userData?.displayName || userData?.userName || ''
+				: supervisionCounterpartName);
 		return buildSupervisionTimeline(supervisionMessages, {
 			roomId: supervisionRoomId || '',
 			title: translate('supervision.panel.title'),
@@ -3007,6 +3087,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.displayName,
 		userData?.userName,
 		supervisionCounterpartName,
+		supervisionPeople,
 		activeSession.item?.askerMatrixUserId,
 		translate
 	]);
@@ -4652,7 +4733,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<PanelHeader
 						kind="supervision"
 						title={translate('supervision.panel.title')}
-						name={supervisionCounterpartName}
+						name={supervisionHeaderName}
+						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
 						actions={
@@ -4710,7 +4792,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					) : undefined
 				}
 				timeline={
-					<>
+					<SupervisionPeopleContext.Provider
+						value={supervisionPeople}
+					>
 						<MessageTimeline
 							keyPrefix="supervision-"
 							messages={supervisionTimelineMessages}
@@ -4774,14 +4858,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									)}
 								/>
 							))}
-					</>
+					</SupervisionPeopleContext.Provider>
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
 						isTyping={props.isTyping}
 						placeholder={translate(
 							'supervision.panel.composer.placeholder',
-							{ name: supervisionCounterpartName }
+							{ name: supervisionHeaderName }
 						)}
 						handleMessageSendSuccess={handleMessageSendSuccess}
 						onSendError={handleComposerSendError}
