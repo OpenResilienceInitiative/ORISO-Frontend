@@ -37,7 +37,9 @@ const setUp = () => {
 		isFallbackICEServerAllowed: () => false,
 		callEventHandler: { calls },
 		on: vi.fn(),
-		removeAllListeners: vi.fn()
+		removeAllListeners: vi.fn(),
+		// The next test's initialize() hangs up a call this one left running.
+		sendEvent: vi.fn(async () => ({}))
 	} as unknown as MatrixClient;
 	const media = new MediaHandler(client);
 	media.userMediaStreams.push(independent.stream);
@@ -157,6 +159,47 @@ describe('matrixCallService.answerCall', () => {
 		expect(media.userMediaStreams).toEqual([
 			independent.stream,
 			secondLive.stream
+		]);
+	});
+
+	it('keeps media whose tracks a running call took over', async () => {
+		const { media, prompts, independent, incomingCall } = setUp();
+		const first = incomingCall('!first:example.invalid');
+		const second = incomingCall('!second:example.invalid');
+		const firstLate = createVideoStream('first-late');
+		// The second call unmutes video: the SDK registers a new stream U and
+		// copies U's tracks into the feed stream S the call already shows.
+		const upgrade = createVideoStream('second-upgrade');
+		const feedTracks: MediaStreamTrack[] = [];
+		const feedStream = Object.assign(new EventTarget(), {
+			id: 'second-feed',
+			getTracks: () => feedTracks,
+			getAudioTracks: () => [],
+			getVideoTracks: () => feedTracks
+		}) as unknown as MediaStream;
+		Object.defineProperty(second.call, 'state', {
+			value: CallState.Connected
+		});
+		Object.defineProperty(second.call, 'localUsermediaStream', {
+			get: () => feedStream
+		});
+		vi.spyOn(second.call, 'getLocalFeeds').mockReturnValue([
+			{ stream: feedStream } as never
+		]);
+
+		const firstAnswer = matrixCallService.answerCall(first.call, true);
+		first.hangUp();
+		media.userMediaStreams.push(upgrade.stream);
+		feedTracks.push(...upgrade.stream.getTracks());
+		prompts[0].resolve(firstLate.stream);
+		await firstAnswer;
+
+		expect(firstLate.stop).toHaveBeenCalledOnce();
+		expect(upgrade.stop).not.toHaveBeenCalled();
+		expect(independent.stop).not.toHaveBeenCalled();
+		expect(media.userMediaStreams).toEqual([
+			independent.stream,
+			upgrade.stream
 		]);
 	});
 });

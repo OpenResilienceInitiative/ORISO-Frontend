@@ -30,9 +30,10 @@ export interface MatrixCallEventHandlers {
 /**
  * matrix-js-sdk 38.4.0 keeps the camera/microphone stream that arrives after
  * the caller hung up while answer() waited for media permission. Stop the
- * streams this answer() opened if the call ended meanwhile. Streams that a
- * call still running uses (a second incoming call), and the hand-over to a
- * replacement call (glare), stay untouched.
+ * streams this answer() opened if the call ended meanwhile. Streams whose
+ * tracks a call still running uses (a second incoming call, also after a
+ * video unmute), and the hand-over to a replacement call (glare), stay
+ * untouched.
  */
 const releaseLateAnswerMedia = (
 	call: MatrixCall,
@@ -45,17 +46,24 @@ const releaseLateAnswerMedia = (
 	}
 	const media = client.getMediaHandler();
 	const liveCalls = [...(client.callEventHandler?.calls.values() ?? [])];
-	const inUse = new Set(
-		liveCalls
-			.filter(
-				(other) => other !== call && other.state !== CallState.Ended
-			)
-			.map((other) => other.localUsermediaStream)
-	);
-	for (const stream of [...media.userMediaStreams]) {
-		if (!streamsBefore.has(stream) && !inUse.has(stream)) {
-			media.stopUserMediaStream(stream);
+	// A running call may show tracks the SDK copied out of another registered
+	// stream (video unmute), so protect by track, not only by stream identity.
+	const tracksInUse = new Set<MediaStreamTrack>();
+	for (const other of liveCalls) {
+		if (other === call || other.state === CallState.Ended) continue;
+		const streams = [
+			other.localUsermediaStream,
+			...(other.getLocalFeeds?.() ?? []).map((feed) => feed.stream)
+		];
+		for (const stream of streams) {
+			stream?.getTracks().forEach((track) => tracksInUse.add(track));
 		}
+	}
+	for (const stream of [...media.userMediaStreams]) {
+		if (streamsBefore.has(stream)) continue;
+		if (stream.getTracks().some((track) => tracksInUse.has(track)))
+			continue;
+		media.stopUserMediaStream(stream);
 	}
 };
 
