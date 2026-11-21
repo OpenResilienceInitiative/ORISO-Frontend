@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -140,6 +146,38 @@ afterEach(() => {
 });
 
 describe('Login hands over behind one loading screen', () => {
+	it('ignores an old success after the browser restores the form for another submission', async () => {
+		let finishOlder!: () => void;
+		vi.mocked(autoLogin)
+			.mockImplementationOnce(
+				() =>
+					new Promise<void>((resolve) => {
+						finishOlder = resolve;
+					})
+			)
+			.mockReturnValueOnce(new Promise(() => undefined));
+		const reloadUserData = vi.fn().mockResolvedValue(counsellor);
+		const view = signIn(reloadUserData);
+		const older = vi.mocked(autoLogin).mock.calls[0][0];
+		fireEvent(
+			window,
+			Object.assign(new Event('pageshow'), { persisted: true })
+		);
+		expect(older.isCurrentAttempt?.()).toBe(false);
+		fireEvent.keyUp(view.container.querySelector('#passwordInput')!, {
+			key: 'Enter'
+		});
+		expect(autoLogin).toHaveBeenCalledTimes(2);
+		await act(async () => finishOlder());
+		expect(reloadUserData).not.toHaveBeenCalled();
+		expect(redirectToApp).not.toHaveBeenCalled();
+		expect(
+			view.container
+				.querySelector('.loginForm__pane')
+				?.hasAttribute('inert')
+		).toBe(true);
+	});
+
 	it('covers the page from accepted credentials until the document load', async () => {
 		let releaseMatrix: () => void = () => undefined;
 		vi.mocked(autoLogin).mockImplementation((async (props: any) => {

@@ -10,7 +10,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { useAppConfig } from '../../hooks/useAppConfig';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
-import { StageMobileHero } from './StageMobileHero';
+import { StageMobileHero, StageMobileHeroProps } from './StageMobileHero';
 import {
 	Box,
 	Button as MuiButton,
@@ -34,6 +34,8 @@ import {
 import { BuildIdentity, useBuildIdentityOwner } from '../app/BuildIdentity';
 
 interface StageLayoutProps {
+	mobileClaim?: string;
+	inert?: boolean;
 	className?: string;
 	children: ReactNode;
 	stage: ReactNode;
@@ -51,8 +53,7 @@ interface StageLayoutProps {
 	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
-	/** Mobile head presentation — `bar` is the slim 8a brand row. */
-	mobileHero?: 'hero' | 'bar';
+	mobileHero?: StageMobileHeroProps['variant'];
 	/**
 	 * Content at the start of the desktop header row, opposite the language
 	 * and login controls — the waiting area puts the group's topic and name
@@ -66,6 +67,7 @@ interface StageLayoutProps {
 }
 
 export const StageLayout = ({
+	inert,
 	className,
 	children,
 	stage,
@@ -78,6 +80,7 @@ export const StageLayout = ({
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
+	mobileClaim,
 	headerStart,
 	renderHeaderAction
 }: StageLayoutProps) => {
@@ -103,9 +106,10 @@ export const StageLayout = ({
 	const showIdentity = Boolean(platformVersion || getBuildCommit());
 
 	return (
-		<div className={clsx('stageLayout', className)}>
+		<div className={clsx('stageLayout', className)} inert={inert}>
 			<StageMobileHero
 				variant={mobileHero}
+				claim={mobileClaim}
 				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					<SlideOutPresence

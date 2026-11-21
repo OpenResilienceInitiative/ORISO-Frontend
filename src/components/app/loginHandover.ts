@@ -1,4 +1,13 @@
 import { useLayoutEffect, useSyncExternalStore } from 'react';
+import {
+	readLoginCurtain,
+	type LoginHandoverCurtain
+} from './loginHandoverCurtain';
+
+export {
+	captureLoginCurtain,
+	type LoginHandoverCurtain
+} from './loginHandoverCurtain';
 
 /**
  * The login handover (#2272): one calm loading screen from the moment Keycloak accepts
@@ -28,6 +37,7 @@ export const LOGIN_HANDOVER_SPLASH_ID = 'loginHandoverSplash';
 
 interface StoredHandover {
 	at: number;
+	curtain?: LoginHandoverCurtain;
 	background?: string;
 	animation?: { src: string; rect: SnapshotRect };
 	label?: { text: string; rect: SnapshotRect; font: string; color: string };
@@ -51,7 +61,10 @@ export const readPendingLoginHandover = (
 		const parsed = JSON.parse(raw) as StoredHandover;
 		if (typeof parsed?.at !== 'number') return null;
 		const age = now - parsed.at;
-		return age >= 0 && age < LOGIN_HANDOVER_MAX_AGE_MS ? parsed : null;
+		if (age < 0 || age >= LOGIN_HANDOVER_MAX_AGE_MS) return null;
+		const { curtain, ...rest } = parsed;
+		const appearance = readLoginCurtain(curtain);
+		return appearance ? { ...rest, curtain: appearance } : rest;
 	} catch {
 		return null;
 	}
@@ -60,6 +73,7 @@ export const readPendingLoginHandover = (
 const pendingOnLoad =
 	typeof window !== 'undefined' ? readPendingLoginHandover() : null;
 let active = !!pendingOnLoad;
+let sourceCurtain: LoginHandoverCurtain | undefined;
 
 /**
  * The label the login page showed. The app document may speak the profile's
@@ -82,6 +96,10 @@ export const isLoginHandoverActive = () => active;
 
 export const useLoginHandoverActive = () =>
 	useSyncExternalStore(subscribe, isLoginHandoverActive, () => false);
+
+const hasSourceCurtain = () => Boolean(sourceCurtain);
+export const useLoginHandoverSourceCurtain = () =>
+	useSyncExternalStore(subscribe, hasSourceCurtain, () => false);
 
 /**
  * What the screen still waits for once the app is ready: the signed-in
@@ -114,13 +132,17 @@ const clearFinish = () => {
 };
 
 const endIfFinished = () => {
-	if (finishRequested && !finishGrace && holds.size === 0) endLoginHandover();
+	if (finishRequested && !finishGrace && holds.size === 0)
+		clearLoginHandover(true);
 };
 
 /** The credentials were accepted: cover the login page from now on. */
-export const beginLoginHandover = () => {
+export const beginLoginHandover = (options?: {
+	curtain: LoginHandoverCurtain;
+}) => {
 	clearFinish();
 	if (active) return;
+	sourceCurtain = readLoginCurtain(options?.curtain);
 	active = true;
 	emit();
 };
@@ -169,7 +191,7 @@ export const finishLoginHandover = () => {
 	if (finishRequested) return;
 	finishRequested = true;
 	finishCap = window.setTimeout(
-		endLoginHandover,
+		() => clearLoginHandover(true),
 		LOGIN_HANDOVER_FINISH_MAX_WAIT_MS
 	);
 	finishGrace = window.setTimeout(() => {
@@ -237,6 +259,21 @@ const snapshotHandoverScreen = (): Omit<StoredHandover, 'at'> => {
 export const persistLoginHandover = () => {
 	const storage = getStorage();
 	const at = Date.now();
+	if (sourceCurtain) {
+		try {
+			storage?.setItem(
+				LOGIN_HANDOVER_STORAGE_KEY,
+				JSON.stringify({
+					at,
+					background: sourceCurtain.panelColor,
+					curtain: sourceCurtain
+				})
+			);
+			return;
+		} catch {
+			// Try a plain loading mark if storage is full.
+		}
+	}
 	const snapshot = snapshotHandoverScreen();
 	try {
 		storage?.setItem(
@@ -256,15 +293,21 @@ export const persistLoginHandover = () => {
 	}
 };
 
+const getSplash = () => document.getElementById(LOGIN_HANDOVER_SPLASH_ID);
+
+export const isLoginHandoverDocumentCurtain = () =>
+	typeof document !== 'undefined' &&
+	Boolean(getSplash()?.dataset.loginCurtain);
+
 /** Removes the still that `app.html` painted, once React's screen is up. */
 export const removeLoginHandoverSplash = () => {
 	if (typeof document === 'undefined') return;
-	document.getElementById(LOGIN_HANDOVER_SPLASH_ID)?.remove();
+	getSplash()?.remove();
 };
 
-/** The sign-in failed or gave up: show what is underneath now. */
-export const endLoginHandover = () => {
+const clearLoginHandover = (ready: boolean) => {
 	clearFinish();
+	sourceCurtain = undefined;
 	try {
 		getStorage()?.removeItem(LOGIN_HANDOVER_STORAGE_KEY);
 	} catch {
@@ -274,17 +317,34 @@ export const endLoginHandover = () => {
 		const html = document.documentElement;
 		html.classList.remove(LOGIN_HANDOVER_HTML_CLASS);
 		html.style.background = '';
+		Reflect.deleteProperty(window, '__orisoLoginHandover');
+		const curtain =
+			ready && isLoginHandoverDocumentCurtain() ? getSplash() : null;
+		if (
+			curtain &&
+			!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+		) {
+			curtain.dataset.phase = 'revealing';
+			// The same two panels remain in the new document until their 480 ms
+			// opening ends. A timer also cleans up when a tab is hidden mid-reveal.
+			window.setTimeout(() => curtain.remove(), 480);
+		} else {
+			removeLoginHandoverSplash();
+		}
 	}
-	removeLoginHandoverSplash();
 	if (!active) return;
 	active = false;
 	emit();
 };
 
+/** The sign-in failed or gave up: show what is underneath now. */
+export const endLoginHandover = () => clearLoginHandover(false);
+
 /** Test-only: reset the module state between cases. */
 export const resetLoginHandoverForTests = (value = false) => {
 	holds.clear();
 	clearFinish();
+	sourceCurtain = undefined;
 	active = value;
 	emit();
 };
