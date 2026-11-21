@@ -132,6 +132,30 @@ describe('OrisoSelect labelAbove', () => {
 		expect(screen.getByText('Please choose')).toBeTruthy();
 	});
 
+	it('points the combobox at the helper text and marks it invalid', () => {
+		render(
+			<OrisoSelect
+				id="state"
+				label="State"
+				value=""
+				error
+				helperText="Please answer this question."
+				aria-describedby="hint"
+				SelectDisplayProps={{ 'aria-describedby': 'display-hint' }}
+				options={languageOptions}
+			/>
+		);
+		const combo = screen.getByRole('combobox', { name: 'State' });
+		expect(combo.getAttribute('aria-invalid')).toBe('true');
+		const describedBy = combo.getAttribute('aria-describedby') ?? '';
+		expect(describedBy).toContain('hint');
+		expect(describedBy).toContain('display-hint');
+		const helperId = describedBy.trim().split(' ').pop();
+		expect(document.getElementById(helperId ?? '')?.textContent).toBe(
+			'Please answer this question.'
+		);
+	});
+
 	it('shows the chosen option instead of the placeholder', () => {
 		render(
 			<OrisoSelect

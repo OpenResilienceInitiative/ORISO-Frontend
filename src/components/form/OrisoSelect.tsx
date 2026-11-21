@@ -109,10 +109,23 @@ export const OrisoSelect = ({
 	labelAbove = false,
 	placeholder,
 	onChange,
+	SelectDisplayProps,
+	'aria-describedby': ariaDescribedBy,
 	...props
 }: OrisoSelectProps) => {
 	const selectId = useSelectId(id);
 	const labelId = `${selectId}-label`;
+	const helperId = helperText ? `${selectId}-helper` : undefined;
+	const describedBy = [
+		ariaDescribedBy,
+		SelectDisplayProps?.['aria-describedby'],
+		helperId
+	]
+		.filter(
+			(entry): entry is string =>
+				typeof entry === 'string' && entry.length > 0
+		)
+		.join(' ');
 	const placeholderLabel = (selected: string) =>
 		options.find((option) => option.value === selected)?.label ?? (
 			<span className="orisoSelect__placeholder">{placeholder}</span>
@@ -150,6 +163,13 @@ export const OrisoSelect = ({
 				label={labelAbove ? undefined : label}
 				variant="outlined"
 				input={<OutlinedInput label={labelAbove ? undefined : label} />}
+				SelectDisplayProps={{
+					...SelectDisplayProps,
+					'aria-invalid':
+						SelectDisplayProps?.['aria-invalid'] ??
+						(error ? true : undefined),
+					...(describedBy ? { 'aria-describedby': describedBy } : {})
+				}}
 				MenuProps={props.MenuProps ?? orisoSelectMenuProps}
 				{...(labelAbove && placeholder
 					? { displayEmpty: true, renderValue: placeholderLabel }
@@ -166,7 +186,9 @@ export const OrisoSelect = ({
 					</MenuItem>
 				))}
 			</Select>
-			{helperText && <FormHelperText>{helperText}</FormHelperText>}
+			{helperText && (
+				<FormHelperText id={helperId}>{helperText}</FormHelperText>
+			)}
 		</FormControl>
 	);
 };

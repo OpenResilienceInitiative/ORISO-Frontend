@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ErstantwortModuleSequence } from './ErstantwortModuleSequence';
+import { OTHER_OPTION } from './ErstantwortQuestionBlock';
 import type { ErstantwortSection } from './erstantwortModulePayload';
 
 vi.mock('react-i18next', () => ({
@@ -315,5 +316,229 @@ describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 			<ErstantwortModuleSequence sections={[]} />
 		);
 		expect(container.innerHTML).toBe('');
+	});
+
+	it('treats a question id that clashes with an object property as unanswered', () => {
+		const onAnswer = vi.fn();
+		const odd: ErstantwortSection = {
+			id: 'odd',
+			kind: 'questions',
+			display: 'open',
+			trigger: 'withGreeting',
+			questions: [
+				{
+					id: 'constructor',
+					version: 1,
+					type: 'text',
+					required: true,
+					label: 'Was ist passiert?',
+					options: []
+				}
+			]
+		};
+		render(
+			<ErstantwortModuleSequence sections={[odd]} onAnswer={onAnswer} />
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(onAnswer).not.toHaveBeenCalled();
+		expect(
+			screen.getByText('Bitte beantworten Sie diese Frage.')
+		).toBeTruthy();
+	});
+
+	it('focuses a required question whose id contains a quote', () => {
+		const quoted: ErstantwortSection = {
+			id: 'quoted',
+			kind: 'questions',
+			display: 'open',
+			trigger: 'withGreeting',
+			questions: [
+				{
+					id: 'needs"help',
+					version: 1,
+					type: 'text',
+					required: true,
+					label: 'Was ist passiert?',
+					options: []
+				}
+			]
+		};
+		render(
+			<ErstantwortModuleSequence
+				sections={[quoted]}
+				onAnswer={() => undefined}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(document.activeElement).toBe(
+			screen.getByRole('textbox', { name: /Was ist passiert/ })
+		);
+	});
+
+	it('refuses a blank Etwas anderes without dropping the other choices', () => {
+		const onAnswer = vi.fn();
+		const topics: ErstantwortSection = {
+			id: 'topics',
+			kind: 'questions',
+			display: 'open',
+			trigger: 'withGreeting',
+			questions: [
+				{
+					id: 'about',
+					version: 1,
+					type: 'multi',
+					required: false,
+					other: true,
+					label: 'Worum geht es?',
+					options: [
+						{ id: 'family', label: 'Familie' },
+						{ id: 'money', label: 'Geld' }
+					]
+				}
+			]
+		};
+		render(
+			<ErstantwortModuleSequence
+				sections={[topics]}
+				onAnswer={onAnswer}
+			/>
+		);
+		fireEvent.click(screen.getByRole('checkbox', { name: 'Familie' }));
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: 'Etwas anderes' })
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(onAnswer).not.toHaveBeenCalled();
+		expect(
+			screen.getByText('Bitte beantworten Sie diese Frage.')
+		).toBeTruthy();
+		expect(
+			(
+				screen.getByRole('checkbox', {
+					name: 'Familie'
+				}) as HTMLInputElement
+			).checked
+		).toBe(true);
+		const boxes = screen.getAllByRole('checkbox');
+		boxes.forEach((box) => {
+			expect(box.getAttribute('aria-invalid')).toBe('true');
+		});
+	});
+
+	it('clears the error as soon as Etwas anderes has text, then sends it', () => {
+		const onAnswer = vi.fn();
+		const topics: ErstantwortSection = {
+			id: 'topics',
+			kind: 'questions',
+			display: 'open',
+			trigger: 'withGreeting',
+			questions: [
+				{
+					id: 'about',
+					version: 1,
+					type: 'multi',
+					required: false,
+					other: true,
+					label: 'Worum geht es?',
+					options: [
+						{ id: 'family', label: 'Familie' },
+						{ id: 'money', label: 'Geld' }
+					]
+				}
+			]
+		};
+		render(
+			<ErstantwortModuleSequence
+				sections={[topics]}
+				onAnswer={onAnswer}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('checkbox', { name: 'Etwas anderes' })
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(
+			screen.getByText('Bitte beantworten Sie diese Frage.')
+		).toBeTruthy();
+		fireEvent.change(screen.getByRole('textbox', { name: 'Was genau?' }), {
+			target: { value: 'Nachbarschaft' }
+		});
+		expect(
+			screen.queryByText('Bitte beantworten Sie diese Frage.')
+		).toBeNull();
+		expect(
+			screen
+				.getByRole('checkbox', { name: 'Etwas anderes' })
+				.getAttribute('aria-invalid')
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(onAnswer).toHaveBeenCalledWith('topics', [
+			{
+				questionId: 'about',
+				version: 1,
+				value: [OTHER_OPTION],
+				other: 'Nachbarschaft'
+			}
+		]);
+	});
+
+	it('locks the answers while the send is still going out', async () => {
+		let release: () => void = () => undefined;
+		const onAnswer = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					release = resolve;
+				})
+		);
+		render(
+			<ErstantwortModuleSequence
+				sections={[questions]}
+				onAnswer={onAnswer}
+			/>
+		);
+		fireEvent.click(screen.getByRole('radio', { name: '18 oder älter' }));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(
+			(
+				screen.getByRole('radio', {
+					name: '18 oder älter'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(true);
+		expect(
+			screen
+				.getByRole('combobox', { name: /Bundesland/ })
+				.getAttribute('aria-disabled')
+		).toBe('true');
+		expect(
+			(
+				screen.getByRole('checkbox', {
+					name: 'Familie'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(true);
+		expect(
+			(
+				screen.getByRole('textbox', {
+					name: 'Möchten Sie noch etwas sagen?'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(true);
+		release();
+		expect(
+			await screen.findByText('Danke für Ihre Antworten.')
+		).toBeTruthy();
 	});
 });

@@ -52,6 +52,10 @@ export interface ErstantwortQuestionBlockProps {
 
 type Values = Record<string, string | string[]>;
 
+/** Question ids are free text from the payload, so a key such as `constructor` must not read Object.prototype. */
+const own = <T,>(store: Record<string, T>, key: string): T | undefined =>
+	Object.hasOwn(store, key) ? store[key] : undefined;
+
 const isEmpty = (value: string | string[] | undefined) =>
 	Array.isArray(value) ? value.length === 0 : !value?.trim();
 
@@ -86,8 +90,7 @@ export const ErstantwortQuestionBlock: React.FC<
 		(question) => question.type !== 'hint'
 	);
 
-	const setValue = (questionId: string, value: string | string[]) => {
-		setValues((current) => ({ ...current, [questionId]: value }));
+	const clearMissing = (questionId: string) => {
 		setMissing((current) => {
 			if (!current.has(questionId)) return current;
 			const next = new Set(current);
@@ -96,41 +99,60 @@ export const ErstantwortQuestionBlock: React.FC<
 		});
 	};
 
-	/* Unanswered: nothing chosen, or "Etwas anderes" chosen without its text. */
-	const isOpen = (questionId: string) =>
-		isEmpty(values[questionId]) ||
-		(choseOther(values[questionId]) && !others[questionId]?.trim());
+	const setValue = (questionId: string, value: string | string[]) => {
+		setValues((current) => ({ ...current, [questionId]: value }));
+		clearMissing(questionId);
+	};
+
+	const otherBlank = (questionId: string) =>
+		choseOther(own(values, questionId)) && !own(others, questionId)?.trim();
+
+	/* Nothing chosen yet. A blank "Etwas anderes" is a separate problem: the other choices still count. */
+	const isUnanswered = (questionId: string) =>
+		isEmpty(own(values, questionId));
+
+	const blocksSend = (question: ErstantwortQuestion) =>
+		(question.required && isUnanswered(question.id)) ||
+		otherBlank(question.id);
 
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		if (!onAnswer || sending) return;
 		const open = answerable
-			.filter((question) => question.required && isOpen(question.id))
+			.filter(blocksSend)
 			.map((question) => question.id);
 		if (open.length) {
 			setMissing(new Set(open));
-			const first = formRef.current?.querySelector<HTMLElement>(
-				`[data-question-id="${open[0]}"] :is(input, textarea, [role="combobox"])`
-			);
-			first?.focus();
+			const wrapper = Array.from(
+				formRef.current?.querySelectorAll<HTMLElement>(
+					'[data-question-id]'
+				) ?? []
+			).find((node) => node.dataset.questionId === open[0]);
+			wrapper
+				?.querySelector<HTMLElement>(
+					'input:not([aria-hidden="true"]), textarea:not([aria-hidden="true"]), [role="combobox"]'
+				)
+				?.focus();
 			return;
 		}
 		setSending(true);
 		setFailed(false);
 		try {
-			await onAnswer(
-				section.id,
-				answerable
-					.filter((question) => !isOpen(question.id))
-					.map((question) => ({
-						questionId: question.id,
-						version: question.version,
-						value: values[question.id],
-						...(choseOther(values[question.id])
-							? { other: others[question.id].trim() }
-							: {})
-					}))
-			);
+			const answers: ErstantwortAnswer[] = [];
+			for (const question of answerable) {
+				const value = own(values, question.id);
+				if (isUnanswered(question.id) || value === undefined) continue;
+				const otherText = own(others, question.id)?.trim();
+				answers.push({
+					questionId: question.id,
+					version: question.version,
+					value,
+					...(choseOther(value) && otherText
+						? { other: otherText }
+						: {})
+				});
+			}
+			await onAnswer(section.id, answers);
 			setSent(true);
 		} catch {
 			// The answers stay; the person can send again.
@@ -171,11 +193,12 @@ export const ErstantwortQuestionBlock: React.FC<
 	const otherLabel = t('erstantwort.questions.other', 'Etwas anderes');
 	/* The text of "Etwas anderes", right under the choice once it is picked. */
 	const otherField = (question: ErstantwortQuestion) =>
-		choseOther(values[question.id]) ? (
+		choseOther(own(values, question.id)) ? (
 			<OrisoTextField
 				fullWidth
 				size="small"
-				value={others[question.id] ?? ''}
+				disabled={sending}
+				value={own(others, question.id) ?? ''}
 				placeholder={t(
 					'erstantwort.questions.otherPlaceholder',
 					'Was genau?'
@@ -186,12 +209,13 @@ export const ErstantwortQuestionBlock: React.FC<
 						'Was genau?'
 					)
 				}}
-				onChange={(event) =>
+				onChange={(event) => {
 					setOthers((current) => ({
 						...current,
 						[question.id]: event.target.value
-					}))
-				}
+					}));
+					clearMissing(question.id);
+				}}
 			/>
 		) : null;
 	const otherOption = (question: ErstantwortQuestion) =>
@@ -219,7 +243,8 @@ export const ErstantwortQuestionBlock: React.FC<
 					</FormLabel>
 					<OrisoTextarea
 						id={id}
-						value={(values[question.id] as string) ?? ''}
+						disabled={sending}
+						value={(own(values, question.id) as string) ?? ''}
 						error={invalid}
 						helperText={helperText(question)}
 						minRows={3}
@@ -237,13 +262,14 @@ export const ErstantwortQuestionBlock: React.FC<
 				<>
 					<OrisoSelect
 						id={id}
+						disabled={sending}
 						labelAbove
 						placeholder={t(
 							'erstantwort.questions.choose',
 							'Bitte wählen'
 						)}
 						label={labelText(question)}
-						value={(values[question.id] as string) ?? ''}
+						value={(own(values, question.id) as string) ?? ''}
 						error={invalid}
 						helperText={helperText(question)}
 						options={[
@@ -286,7 +312,7 @@ export const ErstantwortQuestionBlock: React.FC<
 					{legend}
 					<RadioGroup
 						name={id}
-						value={(values[question.id] as string) ?? ''}
+						value={(own(values, question.id) as string) ?? ''}
 						aria-labelledby={legendId}
 						aria-describedby={helperId}
 						aria-invalid={invalid || undefined}
@@ -297,7 +323,7 @@ export const ErstantwortQuestionBlock: React.FC<
 								<FormControlLabel
 									key={option.id}
 									value={option.id}
-									control={<Radio />}
+									control={<Radio disabled={sending} />}
 									label={option.label}
 								/>
 							)
@@ -309,9 +335,8 @@ export const ErstantwortQuestionBlock: React.FC<
 			);
 		}
 
-		const selected = Array.isArray(values[question.id])
-			? (values[question.id] as string[])
-			: [];
+		const stored = own(values, question.id);
+		const selected = Array.isArray(stored) ? stored : [];
 		return (
 			<FormControl component="fieldset" error={invalid} fullWidth>
 				{legend}
@@ -327,7 +352,18 @@ export const ErstantwortQuestionBlock: React.FC<
 								label={option.label}
 								control={
 									<Checkbox
+										disabled={sending}
 										checked={selected.includes(option.id)}
+										inputProps={{
+											'aria-invalid':
+												invalid || undefined,
+											...(helperId
+												? {
+														'aria-describedby':
+															helperId
+													}
+												: {})
+										}}
 										onChange={(event) =>
 											setValue(
 												question.id,
