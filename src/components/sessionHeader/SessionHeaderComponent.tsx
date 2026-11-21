@@ -68,7 +68,7 @@ import { logout } from '../logout/logout';
 import { appConfig } from '../../utils/appConfig';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import {
-	isAnonymousMatrixUsername,
+	isLegacyGuestLoginLabel,
 	resolveAnonymousChatDisplayName,
 	resolveAssignedAskerDisplayName
 } from '../../utils/anonymousChatDisplayName';
@@ -731,7 +731,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 			return (
 				contact?.displayName ||
-				(!isAnonymousMatrixUsername(contact?.username)
+				(!isLegacyGuestLoginLabel(contact?.username)
 					? contact?.username
 					: null)
 			);
@@ -739,7 +739,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 		return (
 			resolveAnonymousChatDisplayName(contact) ||
-			(!isAnonymousMatrixUsername(contact?.username)
+			(!isLegacyGuestLoginLabel(contact?.username)
 				? contact?.username
 				: null)
 		);
@@ -751,7 +751,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		? assignedConsultantLabel
 		: headerContactName ||
 			contact?.displayName ||
-			(!isAnonymousMatrixUsername(contact?.username)
+			(!isLegacyGuestLoginLabel(contact?.username)
 				? contact?.username
 				: undefined);
 	/* T4 / FE#1193: the room's participants, latest activity first, live.
