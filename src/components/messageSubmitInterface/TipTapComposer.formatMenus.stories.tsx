@@ -6,6 +6,10 @@ import { Editor } from '@tiptap/core';
 import { TipTapComposer } from './TipTapComposer';
 import { PlatformFormatsProvider } from './__storybook__/PlatformFormatsProvider';
 import type { ChatComposerFormat } from '../message/chatMessageConfig';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 
 const Field = ({
 	label,
@@ -182,6 +186,46 @@ export const SlashCommands: Story = {
 		await expect(args.onSend).not.toHaveBeenCalled();
 		await userEvent.keyboard('{Alt>}{Enter}{/Alt}');
 		await expect(args.onSend).toHaveBeenCalledTimes(1);
+	}
+};
+
+export const SlashCommandsDark: Story = {
+	globals: { scheme: 'dark' },
+	play: async ({ canvas, canvasElement }) => {
+		const document = canvasElement.ownerDocument;
+		const field = await canvas.findByRole('textbox', { name: 'Nachricht' });
+		await userEvent.type(field, '/');
+		const list = await slashList(document);
+		await expect(document.documentElement).toHaveAttribute(
+			'data-oriso-personal-scheme',
+			'dark'
+		);
+		const selected = within(list).getByRole('option', {
+			name: 'Fett',
+			selected: true
+		});
+		const unselected = within(list).getByRole('option', {
+			name: 'Kursiv',
+			selected: false
+		});
+		for (const [option, name] of [
+			[selected, '/fett'],
+			[unselected, '/kursiv']
+		] as const) {
+			const shortcut = within(option).getByText(name);
+			await expect(
+				wcagContrast(
+					getComputedStyle(shortcut).color,
+					effectiveBackground(shortcut)
+				)
+			).toBeGreaterThanOrEqual(4.5);
+		}
+		await userEvent.keyboard('{ArrowDown}');
+		await expect(
+			within(list).getByRole('option', { name: 'Kursiv', selected: true })
+		).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+		await expect(list).not.toBeInTheDocument();
 	}
 };
 

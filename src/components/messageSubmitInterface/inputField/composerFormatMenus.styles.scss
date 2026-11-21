@@ -30,6 +30,10 @@
 		[aria-selected='true'] {
 			color: var(--m3-on-primary-fixed, #410002);
 			background: var(--m3-primary-fixed, #ffdad5);
+
+			.composerFormatMenu__shortcut {
+				color: inherit;
+			}
 		}
 	}
 
