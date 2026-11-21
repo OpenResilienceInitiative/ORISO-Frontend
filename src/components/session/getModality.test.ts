@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
+import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
+import { generatePseudonym } from '../../utils/anonName/engine';
 import { getModality, getModalityIfKnown, Modality } from './getModality';
 
 const asItem = (partial: unknown): ListItemInterface =>
@@ -18,16 +20,53 @@ describe('getModality', () => {
 		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
 	});
 
-	it('keeps the legacy anonymous-username fallback on the active-session shape', () => {
+	/* ORISO-Frontend#2347: anonymity comes from the session's registration
+	   type, never from the shape of the username. */
+	it('treats a guest with a rolled animal User-ID as LIVE_CHAT by its registration type', () => {
+		const handle = toRegistrationUsername(generatePseudonym('de'));
 		const activeSession = {
-			item: { registrationType: 'REGISTERED', postcode: 10115 },
-			user: { username: 'Anonymous-legacy' },
+			item: { registrationType: 'ANONYMOUS', postcode: 10115 },
+			user: { username: handle },
 			isGroup: false,
 			isSession: true
 		};
 
+		expect(handle).not.toMatch(/^(anon_|Anonymous-)/);
 		expect(getModality(activeSession)).toBe(Modality.LIVE_CHAT);
 	});
+
+	it('still treats a legacy anon_N guest as LIVE_CHAT', () => {
+		const item = asItem({
+			session: {
+				registrationType: 'ANONYMOUS',
+				postcode: 10115,
+				askerUserName: 'anon_12'
+			},
+			user: { username: 'anon_12' }
+		});
+
+		expect(getModality(item)).toBe(Modality.LIVE_CHAT);
+	});
+
+	it.each(['anon_fan', 'anonymous_reader', 'Anonymous-Club'])(
+		'does not treat a registered user named %s as LIVE_CHAT',
+		(username) => {
+			const activeSession = {
+				item: {
+					registrationType: 'REGISTERED',
+					postcode: 10115,
+					askerUserName: username
+				},
+				user: { username },
+				isGroup: false,
+				isSession: true
+			};
+
+			expect(getModality(activeSession)).toBe(
+				Modality.AGENCY_COUNSELLING
+			);
+		}
+	);
 
 	it('classifies a registered session as AGENCY_COUNSELLING', () => {
 		const item = asItem({ session: { registrationType: 'REGISTERED' } });
