@@ -277,6 +277,7 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
+import { useSessionSupervisorsRevision } from './sessionSupervisorsRefresh';
 import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
@@ -1106,6 +1107,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Practice only: bumps when the learner adds a supervisor under this case.
 	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+	// #2386: bumps when accepting this enquiry attached a standing supervisor.
+	const sessionSupervisorsRevision = useSessionSupervisorsRevision(
+		activeSession.item?.id
+	);
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -1173,7 +1178,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
 		userData.userId,
-		practiceSupervisorsRevision
+		practiceSupervisorsRevision,
+		sessionSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
