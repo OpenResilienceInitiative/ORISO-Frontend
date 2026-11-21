@@ -333,6 +333,9 @@
 		"format": {
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"description": "Deine Eingaben in dieser Karte sind noch nicht gespeichert. Wenn du die Ansicht schließt, gehen sie verloren."
+			},
 			"back": "Zurück",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
 		},

@@ -1031,6 +1031,12 @@
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
 			"panelMenu": "More options",
+			"discard": {
+				"title": "Discard your input?",
+				"description": "Your input in this card has not been saved. If you close this view, it will be lost.",
+				"keepEditing": "Keep editing",
+				"confirm": "Discard and close"
+			},
 			"cardsPrevious": "Previous conversation format",
 			"cardsNext": "Next conversation format"
 		},
