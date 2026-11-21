@@ -3210,7 +3210,13 @@ export const MessageItemComponent = ({
 					!isSystemNotification && (
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-								<div className="messageItem__avatar">
+								<div
+									className={clsx(
+										'messageItem__avatar',
+										isSupervisorFeedback &&
+											'messageItem__avatar--supervisor'
+									)}
+								>
 									{isSupervisorFeedback ? (
 										// In supervision the role matters more than
 										// the face. The name still stands above.
