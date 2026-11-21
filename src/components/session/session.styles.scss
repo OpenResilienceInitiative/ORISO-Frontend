@@ -49,7 +49,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	// #597: active border when the session/chat chrome is focused/clicked,
 	// but not when the composer text area is selected.
-	&:focus-within:not(:has(.textarea__wrapper-send-message--selected)) {
+	&:focus-within:not(
+			:has(.textarea__wrapper-send-message--selected),
+			:has(.textarea__wrapper-send-message[data-auto-focused])
+		) {
 		@include breakpoint($fromLarge) {
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
 		}

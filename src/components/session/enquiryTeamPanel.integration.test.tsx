@@ -19,6 +19,7 @@ import { Context as ResponsiveContext } from 'react-responsive';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';
 import { MatrixEvent } from 'matrix-js-sdk';
+import { Editor } from '@tiptap/core';
 import { SessionStream } from './SessionStream';
 // Preload the real lazy composer during collection; interaction timers must not
 // measure Vite's first compilation of this large module.
@@ -334,7 +335,6 @@ function openEnquiry(
 		allowDeleting?: boolean;
 		/** Owner the reload reports once the case has left the enquiry state. */
 		reloadedConsultant?: string;
-		width?: number;
 	} = {}
 ) {
 	const status = options.status ?? 1;
@@ -563,6 +563,58 @@ it.each([
 		);
 	}
 );
+
+it('keeps typing announcements independent in the client and supervision composers', async () => {
+	boundary.rooms.set(SUPERVISION, room(SUPERVISION, []));
+	boundary.getSupervisors.mockResolvedValue([
+		{
+			supervisorConsultantId: 'supervisor',
+			matrixRoomId: SUPERVISION
+		}
+	]);
+	const sendTyping = vi
+		.spyOn(chatTransportService, 'sendTyping')
+		.mockResolvedValue(undefined);
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+		status: 2,
+		consultantUsername: 'consultant',
+		supervisionChannel: true
+	});
+	const getEditor = (pane: string) => {
+		const textbox = view.container.querySelector(
+			`${pane} [contenteditable="true"]`
+		);
+		if (
+			!textbox ||
+			!('editor' in textbox) ||
+			!(textbox.editor instanceof Editor)
+		) {
+			throw new Error(`No shared editor in ${pane}`);
+		}
+		return textbox.editor;
+	};
+	const main = await waitFor(() => getEditor('.chatStage__mainPane'));
+	const supervision = await waitFor(() => getEditor('.chatStage__panel'));
+
+	act(() => supervision.commands.insertContent('Interner Entwurf'));
+	expect(sendTyping.mock.calls).toEqual([[SUPERVISION, true]]);
+	act(() => main.commands.insertContent('Nachricht an die Ratsuchende'));
+	expect(sendTyping.mock.calls).toEqual([
+		[SUPERVISION, true],
+		[MAIN, true]
+	]);
+	act(() => supervision.commands.clearContent());
+	await waitFor(() =>
+		expect(sendTyping.mock.calls).toEqual([
+			[SUPERVISION, true],
+			[MAIN, true],
+			[SUPERVISION, false]
+		])
+	);
+	expect(main.getText()).toBe('Nachricht an die Ratsuchende');
+	view.unmount();
+	expect(sendTyping).toHaveBeenLastCalledWith(MAIN, false);
+}, 20000);
 
 it('reports a thread the card really shows, and not one only the URL asks for', async () => {
 	vi.spyOn(document, 'hasFocus').mockReturnValue(true);

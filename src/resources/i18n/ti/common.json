@@ -2044,7 +2044,11 @@
 			},
 			"loadError": "ናይ ዕላል መእተዊ ክጽዓን ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
 			"retry": "ደጊምኩም ፈትኑ",
+			"editFailedTitle": "እቲ ለውጢ ክዕቀብ ኣይከኣለን",
+			"editFailedText": "ጽሑፍካ ኣብ መእተዊ ጽሑፍ ኣሎ። ደጊምካ ፈትን።",
 			"toolbar": {
+				"selectionFormats": "ቅርጺ ናይቲ ዝተመርጸ ጽሑፍ ቀይር",
+				"slashFormats": "ትእዛዛት ቅርጺ",
 				"openTools": "ናብ ኩሎም መሳርሒታት ተመለስ",
 				"closeTools": "ናብ ጽፉፋት መሳርሒታት ቀይር",
 				"more": "ተወሰኽቲ መሳርሒታት",

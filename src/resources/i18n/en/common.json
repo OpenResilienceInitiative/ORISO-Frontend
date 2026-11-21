@@ -2076,7 +2076,11 @@
 			},
 			"loadError": "The chat input could not be loaded. Please try again.",
 			"retry": "Try again",
+			"editFailedTitle": "Could not save the edit",
+			"editFailedText": "Your text is still in the editor. Try again.",
 			"toolbar": {
+				"selectionFormats": "Format selection",
+				"slashFormats": "Formatting commands",
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
 				"more": "More tools",

@@ -8,11 +8,11 @@
 	gap: 2px;
 	min-width: 260px;
 	color: var(--m3-secondary, #4c555f);
-	max-height: 260px;
+	max-height: min(260px, var(--composer-suggestion-height, 260px));
 	overflow-y: auto;
 	padding: 6px;
 	border-radius: 12px;
-	background: #fff;
+	background: var(--m3-surface-container-lowest, #fff);
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.08),
 		0 1px 3px rgba(0, 0, 0, 0.2);
@@ -133,6 +133,8 @@
 
 /* The corner that points at the @, so the list reads as speaking from it. */
 .mentionList__popup {
+	z-index: 4600;
+
 	&[data-placement='top-start'] .mentionList {
 		border-bottom-left-radius: 0;
 	}
