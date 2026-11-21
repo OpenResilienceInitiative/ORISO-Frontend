@@ -656,6 +656,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Некоторые данные чата могли остаться в этом браузере. Закройте другие вкладки ORISO.",
+			"retryCleanup": "Повторить очистку браузера",
 			"button": "Закрыть",
 			"headline": "Вы успешно удалили свой аккаунт в Caritas Beratung."
 		}

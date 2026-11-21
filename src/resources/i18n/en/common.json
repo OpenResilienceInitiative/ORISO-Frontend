@@ -638,6 +638,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Some chat data may remain in this browser. Close any other ORISO tabs.",
+			"retryCleanup": "Retry browser cleanup",
 			"button": "close",
 			"headline": "You have successfully deleted your Caritas Consulting & Help account."
 		}

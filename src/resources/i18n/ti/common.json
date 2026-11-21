@@ -655,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "ገለ ናይ ዕላል ሓበሬታ ኣብዚ መርበብ ሓበሬታ መኽፈቲ ተሪፉ ክህሉ ይኽእል። ካልኦት ክፉታት ናይ ORISO ትቦታት ዕጸዉ።",
+			"retryCleanup": "ሓበሬታ መኽፈቲ መርበብ ንምጽራይ እንደገና ፈትኑ",
 			"button": "ዕፁው",
 			"headline": "ናይ Caritas ምምኽኻር ኣካውንትካ ብዓወት ደምሲስካዮ ኣለኻ።"
 		}
