@@ -231,6 +231,21 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
+	&__teamDiscussionUnread {
+		display: inline-flex;
+		min-width: 18px;
+		height: 18px;
+		align-items: center;
+		justify-content: center;
+		padding: 0 5px;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 1;
+	}
+
 	&__teamDiscussionAction .button__secondary {
 		display: inline-flex;
 		align-items: center;

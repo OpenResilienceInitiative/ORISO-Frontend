@@ -107,6 +107,7 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 	const statusRef = React.useRef(history ? 5 : 1);
 	const requests = React.useRef(0);
 	const [requestCount, setRequestCount] = React.useState(0);
+	const [teamLookupCount, setTeamLookupCount] = React.useState(0);
 	const { pathname } = useLocation();
 	React.useLayoutEffect(() => {
 		const previous = window.fetch;
@@ -151,6 +152,7 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 			if (/\/supervisors$/.test(url) || /\/consultants(?:\?|$)/.test(url))
 				return json([]);
 			if (/\/team-discussion/.test(url)) {
+				setTeamLookupCount((count) => count + 1);
 				if (scenario === 'team-actions' && method === 'POST') {
 					teamCreated = true;
 				}
@@ -221,6 +223,9 @@ function EnquiryRejectionStory({ scenario }: { scenario: Scenario }) {
 									bannedUsers={[]}
 									checkMutedUserForThisSession={() => {}}
 								/>
+								<output hidden data-testid="team-lookup-proof">
+									{teamLookupCount}
+								</output>
 								{scenario !== 'actions' &&
 									scenario !== 'team-actions' && (
 										<output data-testid="rejection-proof">
@@ -359,5 +364,40 @@ export const SeekerReadOnlyHistory: Story = {
 		await expect(
 			within(canvasElement).getAllByRole('status').length
 		).toBeGreaterThan(0);
+	}
+};
+
+/** A confirmed absent team room does not create a team button or room. */
+export const NoTeamRoom: Story = {
+	args: { scenario: 'confirmation' },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				Number(canvas.getByTestId('team-lookup-proof').textContent)
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="enquiry-open-team"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull();
+		const accept = canvas.getByRole('button', {
+			name: /Anfrage annehmen|Accept request/i
+		});
+		const decline = canvas.getByRole('button', {
+			name: /Anfrage ablehnen|Decline request/i
+		});
+		await waitFor(() => {
+			const a = accept.getBoundingClientRect();
+			const b = decline.getBoundingClientRect();
+			const gap =
+				b.top >= a.bottom
+					? b.top - a.bottom
+					: Math.max(b.left - a.right, a.left - b.right);
+			// #2391 owns the decision layout: an 8px gap, decline as a link.
+			expect(Math.round(gap)).toBeGreaterThanOrEqual(8);
+		});
 	}
 };
