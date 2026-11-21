@@ -86,6 +86,7 @@ import { BackPill } from './BackPill';
 import { TopicMedia } from './TopicMedia';
 import { CompactFormatRow } from './CompactFormatRow';
 import { SplitButton } from '../splitButton/SplitButton';
+import { useCreateViewExit } from './useCreateViewExit';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
@@ -115,6 +116,8 @@ import './conversationCreate.styles.scss';
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
+
+const consultantConversationList = '/sessions/consultant/sessionView';
 
 interface CreateConversationFlowProps {
 	/** The counsellor's agencies with their effective group-chat settings. */
@@ -548,14 +551,31 @@ const CreateConversationFlow = ({
 		[agencies, selectedAgency, topics]
 	);
 
+	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
+		hasExtraInput: () =>
+			internalDraft.selectedIds.length > 0 ||
+			internalDraft.name.trim() !== '',
+		isBlocked: () => isSubmitting,
+		onLeave: () =>
+			navigate(
+				editChatId !== null
+					? consultantGroupChatPath(editChatId)
+					: consultantConversationList
+			)
+	});
+
 	const handleBackButton = useCallback(() => {
+		// A running create request cannot be cancelled: stay on the view.
+		if (isSubmitting) {
+			return;
+		}
 		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
-		navigate('/sessions/consultant/sessionView');
-	}, [formatCount, clearError, navigate, step]);
+		navigate(consultantConversationList);
+	}, [formatCount, clearError, navigate, step, isSubmitting]);
 
 	/* The direct link offers every topic of the counsellor's
 	   Beratungsstellen; the id goes to the backend, the name is shown. */
@@ -602,7 +622,7 @@ const CreateConversationFlow = ({
 					: undefined
 			}
 			/* "Fertig": the link now lives in "Gespräche". */
-			onDone={() => navigate('/sessions/consultant/sessionView')}
+			onDone={() => navigate(consultantConversationList)}
 		/>
 	);
 
@@ -843,7 +863,7 @@ const CreateConversationFlow = ({
 	}
 
 	return (
-		<div className="conversationCreate">
+		<div className="conversationCreate" ref={surfaceRef} onInput={onInput}>
 			<PanelHeader
 				title={translate('groupChat.format.panelTitle')}
 				menuLabel={translate('groupChat.format.panelMenu')}
@@ -900,6 +920,7 @@ const CreateConversationFlow = ({
 				renderPicker()
 			)}
 			{directInvitationSetup.dialog}
+			{discardDialog}
 			{createdDirectLink && (
 				<DirectLinkShareDialog
 					open
@@ -907,7 +928,7 @@ const CreateConversationFlow = ({
 					fullScreen={!fromL}
 					onClose={() => {
 						setCreatedDirectLink(undefined);
-						navigate('/sessions/consultant/sessionView');
+						navigate(consultantConversationList);
 					}}
 				/>
 			)}
@@ -921,8 +942,6 @@ const CreateConversationFlow = ({
 		</div>
 	);
 };
-
-const consultantConversationList = '/sessions/consultant/sessionView';
 
 const EditConversationRoute = ({
 	agencyFormats,

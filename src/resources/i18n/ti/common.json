@@ -1238,6 +1238,12 @@
 		"format": {
 			"panelTitle": "ሓድሽ ዝርርብ ፍጠር",
 			"panelMenu": "ተወሳኺ ኣማራጺታት",
+			"discard": {
+				"title": "እቲ ዝኣተኹሞ ይጥፋእ?",
+				"description": "እቲ ኣብዚ ካርድ ዘእተኹምዎ ገና ኣይተዓቀበን። ነዚ ርእይቶ እንተ ዕጽዩ፡ ይጠፍእ።",
+				"keepEditing": "ምዕጋብ ቀጽል",
+				"confirm": "ጥፋእን ዕጾን"
+			},
 			"cardsPrevious": "ዝሓለፈ ቅርጺ ዝርርብ",
 			"cardsNext": "ዝስዕብ ቅርጺ ዝርርብ",
 			"back": "ተመለስ",
