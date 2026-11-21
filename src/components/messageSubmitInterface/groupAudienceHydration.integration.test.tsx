@@ -134,6 +134,17 @@ async function sendPrivateDraft() {
 	return editor;
 }
 
+async function waitForSendToSettle() {
+	const button = screen.getByRole('button', {
+		name: i18n.t('enquiry.write.input.button.title')
+	});
+	// Transport completion precedes the pause that lets the draft clear.
+	await waitFor(
+		() => expect(button.classList.contains('sendButton--empty')).toBe(true),
+		{ timeout: 3000 }
+	);
+}
+
 async function chooseHomer() {
 	fireEvent.click(
 		await screen.findByRole('button', {
@@ -227,6 +238,7 @@ it('blocks a stored technical target until Everyone is deliberately chosen witho
 		})
 	);
 	await waitFor(() => expect(send).toHaveBeenCalledOnce());
+	await waitForSendToSettle();
 	expect(send.mock.calls[0][0].matrixRoomId).toBe(
 		'!storybook-group:example.org'
 	);
@@ -377,6 +389,7 @@ describe('a reviewed voice note (#1805)', () => {
 		});
 		await recordAndSend();
 		await waitFor(() => expect(attachmentSend).toHaveBeenCalledOnce());
+		await waitForSendToSettle();
 		expect(attachmentSend.mock.calls[0][0]).toBe(
 			'!storybook-group:example.org'
 		);
@@ -404,6 +417,7 @@ describe('stale stored recipients in a group session (#1805)', () => {
 		render(<Composer members={[system, homer, marge]} user={asker} />);
 		await sendPrivateDraft();
 		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		await waitForSendToSettle();
 		expect(send.mock.calls[0][0].matrixRoomId).toBe(
 			'!storybook-group:example.org'
 		);
@@ -447,6 +461,7 @@ describe('stale stored recipients in a group session (#1805)', () => {
 			})
 		);
 		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		await waitForSendToSettle();
 		expect(send.mock.calls[0][0].matrixRoomId).toBe(
 			'!synthetic-side:example.org'
 		);
@@ -479,6 +494,7 @@ describe('stale stored recipients in a group session (#1805)', () => {
 			})
 		);
 		await waitFor(() => expect(send).toHaveBeenCalledOnce());
+		await waitForSendToSettle();
 		expect(send.mock.calls[0][0].matrixRoomId).toBe(
 			'!synthetic-side:example.org'
 		);
