@@ -230,6 +230,17 @@ export const orisoSelectSx = {
 	}
 } as const;
 
+/** Label above the field (`OrisoSelect labelAbove`): M3 body-medium, full width, wraps. */
+export const orisoSelectLabelAboveSx = {
+	'mb': '8px',
+	'color': orisoInputColors.onSurface,
+	'fontSize': '15px',
+	'fontWeight': 600,
+	'lineHeight': '21px',
+	'&.Mui-focused': { color: orisoInputColors.onSurface },
+	'&.Mui-error': { color: orisoInputColors.error }
+};
+
 export const orisoSelectMenuProps = {
 	sx: {
 		zIndex: 10001

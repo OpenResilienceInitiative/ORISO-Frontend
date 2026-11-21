@@ -6142,6 +6142,17 @@
 			"dataProtection": "Verilerime ne olur?",
 			"modalityNote": "Danışmanlık nasıl ilerler?",
 			"title": "Sık sorulan sorular"
+		},
+		"questions": {
+			"title": "Birkaç soru",
+			"send": "Yanıtları gönder",
+			"required": "Lütfen bu soruyu yanıtlayın.",
+			"requiredMark": "zorunlu",
+			"thanks": "Yanıtlarınız için teşekkürler.",
+			"choose": "Lütfen seçin",
+			"other": "Başka bir şey",
+			"otherPlaceholder": "Tam olarak ne?",
+			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin."
 		}
 	},
 	"legal": {

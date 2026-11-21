@@ -6162,6 +6162,17 @@
 			"title": "Häufige Fragen",
 			"modalityNote": "Wie läuft die Beratung ab?",
 			"dataProtection": "Was passiert mit meinen Daten?"
+		},
+		"questions": {
+			"title": "Ein paar Fragen",
+			"send": "Antworten senden",
+			"required": "Bitte beantworten Sie diese Frage.",
+			"requiredMark": "Pflichtangabe",
+			"thanks": "Danke für Ihre Antworten.",
+			"choose": "Bitte wählen",
+			"other": "Etwas anderes",
+			"otherPlaceholder": "Was genau?",
+			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal."
 		}
 	},
 	"dpaSign": {

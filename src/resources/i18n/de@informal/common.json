@@ -2532,6 +2532,11 @@
 			"emailSavedNext": "Deine E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlaube Benachrichtigungen in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
+		},
+		"questions": {
+			"required": "Bitte beantworte diese Frage.",
+			"thanks": "Danke für deine Antworten.",
+			"failed": "Das hat nicht geklappt. Deine Antworten sind noch da – versuch es bitte gleich noch einmal."
 		}
 	},
 	"caseHandover": {
