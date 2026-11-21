@@ -63,6 +63,14 @@ describe('focus ring contract', () => {
 		);
 	});
 
+	it('switches the ring to the white text colour on always-dark notifications', () => {
+		expect(
+			read('src/components/notifications/notification.styles.scss')
+		).toMatch(
+			/background-color: rgba\(0, 0, 0, 0\.7\);[^}]*--oriso-focus-ring-color: #\{\$white\};/
+		);
+	});
+
 	it('keeps colours that fail in a scheme out of every outline', () => {
 		const offenders = scssFiles(resolve(root, 'src'))
 			.map((path) => relative(root, path))
