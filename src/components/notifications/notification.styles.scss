@@ -6,6 +6,11 @@
 	padding: $grid-base-two;
 	border-radius: 4px;
 	background-color: rgba(0, 0, 0, 0.7);
+
+	// Always dark in every scheme, with white text: the shared focus ring
+	// (Frontend#1134) follows that text colour here, also for the incoming
+	// call card, which is a `.notification` too.
+	--oriso-focus-ring-color: #{$white};
 	backdrop-filter: blur(2px);
 	animation: flyIn 0.3s ease forwards;
 
