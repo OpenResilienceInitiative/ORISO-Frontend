@@ -31,6 +31,7 @@ import { useActiveListItem } from '../../hooks/useActiveListItem';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
+	selectFamilyFeedSource,
 	TIMELINE_KIND_ORDER,
 	TimelineFamilyFilter,
 	TimelineKindId,
@@ -404,10 +405,13 @@ export const NotificationsCenter = () => {
 		saveTimelineListWidth(next);
 	}, []);
 
-	// Kinds actually present in the VISIBLE feed, in canonical order.
+	// Kinds actually present in the feed, in canonical order — the RAW feed,
+	// not the display-filtered one: a dedicated family chip must stay offered
+	// even when every instance of that kind is individually hidden from
+	// "Alle" by the profile's per-event-type filter (#594).
 	const familiesInFeed = useMemo(
-		() => getFamiliesInFeed(visibleFeed),
-		[visibleFeed]
+		() => getFamiliesInFeed(notificationFeed),
+		[notificationFeed]
 	);
 	// The dialog rows: every kind, "Termine" only once such an event exists
 	// (§5.1), with the visible unread count per kind for the pill badges and
@@ -442,10 +446,40 @@ export const NotificationsCenter = () => {
 		timelineFilter,
 		timelineKinds
 	);
+	// Rows the list can actually show before search/unread narrowing: with a
+	// dedicated family chip that is the family's raw rows, not the display-filtered
+	// feed (#594), otherwise hidden event types would keep triggering paging.
+	const pagingRowCount = useMemo(
+		() =>
+			filterTimelineItems(
+				selectFamilyFeedSource(
+					visibleFeed,
+					notificationFeed,
+					activeFamily
+				),
+				{
+					family: activeFamily,
+					query: '',
+					unreadOnly: false,
+					bundledUnderOther: kindsUnderOther(
+						timelineFilter,
+						timelineKinds
+					)
+				},
+				() => ''
+			).length,
+		[
+			activeFamily,
+			notificationFeed,
+			timelineFilter,
+			timelineKinds,
+			visibleFeed
+		]
+	);
 	// A page can be entirely hidden: keep paging until enough is visible.
 	useEffect(() => {
 		if (
-			visibleFeed.length >= MIN_VISIBLE_TIMELINE_ROWS ||
+			pagingRowCount >= MIN_VISIBLE_TIMELINE_ROWS ||
 			notificationFeed.length === 0 ||
 			!hasOlderNotifications ||
 			isLoadingOlderNotifications ||
@@ -460,7 +494,7 @@ export const NotificationsCenter = () => {
 		loadOlderNotifications,
 		notificationFeed.length,
 		olderNotificationsError,
-		visibleFeed.length
+		pagingRowCount
 	]);
 	// #1200: "Mark all as read" is only actionable while something is unread.
 	// The provider's counter is the server-backed total, so unread activity on
@@ -486,42 +520,48 @@ export const NotificationsCenter = () => {
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
-	const filteredFeed = useMemo(
-		() =>
-			filterTimelineItems(
-				visibleFeed,
-				{
-					family: activeFamily,
-					query: searchQuery,
-					unreadOnly,
-					mentionsOnly,
-					bundledUnderOther: kindsUnderOther(
-						timelineFilter,
-						timelineKinds
-					)
-				},
-				(item) => {
-					const { title, text } = describeActivityEvent(
-						item,
-						translate,
-						i18n.language
-					);
-					return `${title} ${visiblePreview(item.id)?.text || text}`;
-				}
-			),
-		[
+	// The profile display filter narrows Alle. Dedicated family chips read
+	// the raw feed while retaining Dev's Other bundling and localized search.
+	const filteredFeed = useMemo(() => {
+		const sourceFeed = selectFamilyFeedSource(
 			visibleFeed,
-			activeFamily,
-			timelineFilter,
-			timelineKinds,
-			searchQuery,
-			unreadOnly,
-			mentionsOnly,
-			translate,
-			i18n.language,
-			visiblePreview
-		]
-	);
+			notificationFeed,
+			activeFamily
+		);
+		return filterTimelineItems(
+			sourceFeed,
+			{
+				family: activeFamily,
+				query: searchQuery,
+				unreadOnly,
+				mentionsOnly,
+				bundledUnderOther: kindsUnderOther(
+					timelineFilter,
+					timelineKinds
+				)
+			},
+			(item) => {
+				const { title, text } = describeActivityEvent(
+					item,
+					translate,
+					i18n.language
+				);
+				return `${title} ${visiblePreview(item.id)?.text || text}`;
+			}
+		);
+	}, [
+		notificationFeed,
+		visibleFeed,
+		activeFamily,
+		timelineFilter,
+		timelineKinds,
+		searchQuery,
+		unreadOnly,
+		mentionsOnly,
+		translate,
+		i18n.language,
+		visiblePreview
+	]);
 
 	// #1888: selection, #845 auto-read and "next unread" in one hook.
 	const {
