@@ -1064,6 +1064,12 @@
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"title": "Eingaben verwerfen?",
+				"description": "Ihre Eingaben in dieser Karte sind noch nicht gespeichert. Wenn Sie die Ansicht schließen, gehen sie verloren.",
+				"keepEditing": "Weiter bearbeiten",
+				"confirm": "Verwerfen und schließen"
+			},
 			"cardsPrevious": "Vorheriges Gesprächsformat",
 			"cardsNext": "Nächstes Gesprächsformat"
 		},
