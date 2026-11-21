@@ -57,8 +57,14 @@ type EnquiryListResult = { requestedId: number | null } & (
 );
 
 export const WriteEnquiry: React.FC = () => {
-	const { t: translate } = useTranslation();
 	const { sessionId } = useParams<{ sessionId: string }>();
+
+	// A return to the same route must resolve its destination again.
+	return <WriteEnquiryForRoute key={sessionId ?? ''} sessionId={sessionId} />;
+};
+
+const WriteEnquiryForRoute = ({ sessionId }: { sessionId?: string }) => {
+	const { t: translate } = useTranslation();
 	const parsedId = Number(sessionId);
 	const invalidSessionId =
 		sessionId !== undefined &&

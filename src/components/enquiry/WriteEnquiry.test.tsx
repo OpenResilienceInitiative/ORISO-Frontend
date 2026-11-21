@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { STATUS_EMPTY } from '../../globalState/interfaces';
 import { WriteEnquiry } from './WriteEnquiry';
@@ -10,7 +16,19 @@ const fetchSessions = vi.hoisted(() => vi.fn());
 
 vi.mock('../../api', () => ({ apiGetAskerSessionList: fetchSessions }));
 vi.mock('../../globalState', () => ({
-	ActiveSessionProvider: ({ children }: React.PropsWithChildren) => children,
+	ActiveSessionProvider: ({
+		children,
+		activeSession
+	}: React.PropsWithChildren<{
+		activeSession: { item: { id: number } };
+	}>) => (
+		<>
+			<span data-testid="enquiry-destination">
+				{activeSession.item.id}
+			</span>
+			{children}
+		</>
+	),
 	buildExtendedSession: ({ session }: { session: { id: number } }) => ({
 		item: session,
 		consultant: {}
@@ -46,11 +64,27 @@ vi.mock('react-i18next', () => ({
 
 const rawEnquiry = (id: number) => ({ session: { id, status: STATUS_EMPTY } });
 
+const writeRoute = '/sessions/user/view/write';
+
+const EnquiryNavigation = () => {
+	const navigate = useNavigate();
+
+	return (
+		<>
+			<button type="button" onClick={() => navigate(writeRoute + '/19')}>
+				Open enquiry 19
+			</button>
+			<button type="button" onClick={() => navigate(-1)}>
+				Back
+			</button>
+		</>
+	);
+};
+
 const openEnquiry = (id?: number) =>
 	render(
-		<MemoryRouter
-			initialEntries={[`/sessions/user/view/write${id ? '/' + id : ''}`]}
-		>
+		<MemoryRouter initialEntries={[`${writeRoute}${id ? '/' + id : ''}`]}>
+			<EnquiryNavigation />
 			<Routes>
 				<Route
 					path="/sessions/user/view/write/:sessionId?"
@@ -100,4 +134,42 @@ it('lets the asker retry a temporary list failure on the same route', async () =
 	expect(
 		await screen.findByRole('textbox', { name: 'Composer' })
 	).toBeTruthy();
+});
+
+it('waits for the new destination on back navigation and ignores the obsolete lookup', async () => {
+	type SessionList = { sessions: ReturnType<typeof rawEnquiry>[] };
+	const obsolete = Promise.withResolvers<SessionList>();
+	const current = Promise.withResolvers<SessionList>();
+	fetchSessions
+		.mockResolvedValueOnce({ sessions: [rawEnquiry(42)] })
+		.mockReturnValueOnce(obsolete.promise)
+		.mockReturnValueOnce(current.promise);
+
+	openEnquiry();
+	expect(
+		await screen.findByRole('textbox', { name: 'Composer' })
+	).toBeTruthy();
+	expect(screen.getByTestId('enquiry-destination').textContent).toBe('42');
+
+	fireEvent.click(screen.getByRole('button', { name: 'Open enquiry 19' }));
+	expect(screen.getByRole('status').textContent).toBe('Loading');
+
+	fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+	expect(fetchSessions).toHaveBeenCalledTimes(3);
+	expect(screen.getByRole('status').textContent).toBe('Loading');
+	expect(screen.queryByRole('textbox', { name: 'Composer' })).toBeNull();
+
+	await act(async () => {
+		obsolete.resolve({ sessions: [rawEnquiry(19)] });
+	});
+	expect(screen.getByRole('status').textContent).toBe('Loading');
+	expect(screen.queryByTestId('enquiry-destination')).toBeNull();
+
+	await act(async () => {
+		current.resolve({ sessions: [rawEnquiry(48)] });
+	});
+	expect(
+		await screen.findByRole('textbox', { name: 'Composer' })
+	).toBeTruthy();
+	expect(screen.getByTestId('enquiry-destination').textContent).toBe('48');
 });
