@@ -162,6 +162,12 @@ const NewWindowForm = ({
 	return (
 		<Stack
 			data-cy="office-hours-new"
+			sx={{
+				'html[data-oriso-personal-scheme="dark"] & input[type="time"]':
+					{
+						colorScheme: 'dark'
+					}
+			}}
 			direction="row"
 			flexWrap="wrap"
 			gap={1.5}
