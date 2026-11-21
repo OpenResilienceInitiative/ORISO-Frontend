@@ -2459,8 +2459,7 @@
 			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Deine Nachricht liest",
-			"body": "Deine Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Deine Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Du eine Antwort bekommst",
@@ -3167,5 +3166,22 @@
 	"deletedAskerSession": {
 		"archiveHint": "Verschiebe den Eintrag ins Archiv, damit er aus deiner Liste und den Aktivitäten verschwindet.",
 		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuche es erneut."
+	},
+	"journey": {
+		"question": {
+			"missing": "Bitte beantworte diese Frage.",
+			"textPlaceholder": "Deine Antwort"
+		},
+		"rating": {
+			"moveHint": "Beweg den Regler auf deinen Wert."
+		},
+		"chat": {
+			"subtitle": {
+				"arrival": "Deine Rückmeldung"
+			},
+			"thanks": "Danke für deine Antworten!",
+			"failed": "Das hat nicht geklappt. Deine Antworten sind noch da – versuch es bitte gleich noch einmal.",
+			"anonymous": "Deine Antworten werden ohne Bezug zu deiner Beratung gespeichert."
+		}
 	}
 }
