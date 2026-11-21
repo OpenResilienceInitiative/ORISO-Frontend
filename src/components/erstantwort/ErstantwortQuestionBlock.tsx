@@ -104,8 +104,15 @@ export const ErstantwortQuestionBlock: React.FC<
 		clearMissing(questionId);
 	};
 
-	const otherBlank = (questionId: string) =>
-		choseOther(own(values, questionId)) && !own(others, questionId)?.trim();
+	/* Free text may be the letters "__other". Only a choice that offers "Etwas anderes" means that value. */
+	const offersOther = (question: ErstantwortQuestion) =>
+		question.other === true &&
+		(question.type === 'single' || question.type === 'multi');
+
+	const otherBlank = (question: ErstantwortQuestion) =>
+		offersOther(question) &&
+		choseOther(own(values, question.id)) &&
+		!own(others, question.id)?.trim();
 
 	/* Nothing chosen yet. A blank "Etwas anderes" is a separate problem: the other choices still count. */
 	const isUnanswered = (questionId: string) =>
@@ -113,7 +120,7 @@ export const ErstantwortQuestionBlock: React.FC<
 
 	const blocksSend = (question: ErstantwortQuestion) =>
 		(question.required && isUnanswered(question.id)) ||
-		otherBlank(question.id);
+		otherBlank(question);
 
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
@@ -193,11 +200,12 @@ export const ErstantwortQuestionBlock: React.FC<
 	const otherLabel = t('erstantwort.questions.other', 'Etwas anderes');
 	/* The text of "Etwas anderes", right under the choice once it is picked. */
 	const otherField = (question: ErstantwortQuestion) =>
-		choseOther(own(values, question.id)) ? (
+		offersOther(question) && choseOther(own(values, question.id)) ? (
 			<OrisoTextField
 				fullWidth
 				size="small"
 				disabled={sending}
+				error={missing.has(question.id)}
 				value={own(others, question.id) ?? ''}
 				placeholder={t(
 					'erstantwort.questions.otherPlaceholder',
@@ -207,7 +215,12 @@ export const ErstantwortQuestionBlock: React.FC<
 					'aria-label': t(
 						'erstantwort.questions.otherPlaceholder',
 						'Was genau?'
-					)
+					),
+					...(missing.has(question.id)
+						? {
+								'aria-describedby': `${fieldId(question)}-helper`
+							}
+						: {})
 				}}
 				onChange={(event) => {
 					setOthers((current) => ({

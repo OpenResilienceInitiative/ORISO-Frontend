@@ -344,6 +344,57 @@ export const ClosingSurvey: Story = {
 	}
 };
 
+const blankOther = fromEvent([
+	{
+		id: 'topics',
+		kind: 'questions',
+		display: 'open',
+		trigger: 'withGreeting',
+		questions: [
+			{
+				id: 'about',
+				version: 1,
+				type: 'multi',
+				required: false,
+				other: true,
+				label: 'Worum geht es?',
+				options: [
+					{ id: 'family', label: 'Familie' },
+					{ id: 'money', label: 'Geld' }
+				]
+			}
+		]
+	}
+]);
+
+/** A ticked "Etwas anderes" with no text stays on screen, and the text field says why. */
+export const BlankOther: Story = {
+	args: { sections: blankOther },
+	play: async ({ canvasElement, args }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('checkbox', { name: 'Familie' })
+		);
+		await userEvent.click(
+			canvas.getByRole('checkbox', { name: 'Etwas anderes' })
+		);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Antworten senden' })
+		);
+		await expect(args.onAnswer).not.toHaveBeenCalled();
+		await expect(
+			canvas.getByRole('textbox', { name: 'Was genau?' })
+		).toHaveAttribute('aria-invalid', 'true');
+	}
+};
+
+/** The same refusal at phone width. */
+export const PhoneBlankOther: Story = {
+	args: { sections: blankOther },
+	globals: phone390Globals,
+	play: BlankOther.play
+};
+
 /** Phone width, the question block in full. */
 export const PhoneWithQuestionBlock: Story = {
 	args: {

@@ -429,6 +429,46 @@ describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 		boxes.forEach((box) => {
 			expect(box.getAttribute('aria-invalid')).toBe('true');
 		});
+		const otherText = screen.getByRole('textbox', { name: 'Was genau?' });
+		expect(otherText.getAttribute('aria-invalid')).toBe('true');
+		const describedBy = otherText.getAttribute('aria-describedby');
+		expect(describedBy).toBeTruthy();
+		expect(document.getElementById(describedBy!)?.textContent).toContain(
+			'Bitte beantworten Sie diese Frage.'
+		);
+	});
+
+	it('sends the text __other as an ordinary answer', () => {
+		const onAnswer = vi.fn();
+		const note: ErstantwortSection = {
+			id: 'note',
+			kind: 'questions',
+			display: 'open',
+			trigger: 'withGreeting',
+			questions: [
+				{
+					id: 'what',
+					version: 1,
+					type: 'text',
+					required: true,
+					label: 'Was ist passiert?',
+					options: []
+				}
+			]
+		};
+		render(
+			<ErstantwortModuleSequence sections={[note]} onAnswer={onAnswer} />
+		);
+		fireEvent.change(
+			screen.getByRole('textbox', { name: /Was ist passiert/ }),
+			{ target: { value: '__other' } }
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Antworten senden' })
+		);
+		expect(onAnswer).toHaveBeenCalledWith('note', [
+			{ questionId: 'what', version: 1, value: '__other' }
+		]);
 	});
 
 	it('clears the error as soon as Etwas anderes has text, then sends it', () => {
