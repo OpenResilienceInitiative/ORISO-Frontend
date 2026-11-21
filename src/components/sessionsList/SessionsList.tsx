@@ -118,7 +118,12 @@ import {
 } from './timeline/timelineModel';
 import { useTimelineSettings } from '../../hooks/useTimelineSettings';
 import { refetchEnquiryListState } from './refetchEnquiryList';
-import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
+import {
+	createRefreshThrottle,
+	createRoomRefreshQueue,
+	isRoomInSessions,
+	lookUpSessionRooms
+} from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -1028,48 +1033,15 @@ export const SessionsList = ({
 			Always try to get each subscription from the backend because closed
 			group chats still listed as sessions but no longer backed by a room
 			 */
-			Promise.all(
-				rids.map((rid) => {
-					// Get session from api
-					return apiGetSessionRoomsByRoomIds([rid])
-						.then(({ sessions }) => {
-							const session = sessions[0];
-
-							if (!session) {
-								const loadedSession = loadedSessions.find(
-									(s) => s?.chat?.matrixRoomId === rid
-								);
-								// If repetitive group chat reload it by id because groupId has changed
-								if (
-									loadedSession &&
-									getModality(loadedSession) ===
-										Modality.SELF_HELP
-								) {
-									return ['reload', loadedSession.chat.id];
-								}
-								return ['removed', rid];
-							}
-
-							const sessionType = getSessionType(
-								session,
-								userData.userId
-							);
-
-							// If subscription session type has changed add it to remove list for current view
-							if (
-								sessionTypes.indexOf(sessionType) < 0 ||
-								(sessionType === SESSION_TYPE_ARCHIVED &&
-									sessionListTab !==
-										SESSION_LIST_TAB_ARCHIVE) ||
-								(sessionType !== SESSION_TYPE_ARCHIVED &&
-									sessionListTab === SESSION_LIST_TAB_ARCHIVE)
-							) {
-								return ['removed', rid];
-							}
-
-							return ['insert', session];
-						})
-						.catch(() => {
+			// #2480: one batched request for all rooms, with a single-room
+			// fallback inside lookUpSessionRooms.
+			lookUpSessionRooms(rids, (roomIds) =>
+				apiGetSessionRoomsByRoomIds(roomIds)
+			)
+				.then((found) =>
+					rids.map((rid) => {
+						const session = found.get(rid);
+						if (!session) {
 							const loadedSession = loadedSessions.find(
 								(s) => s?.chat?.matrixRoomId === rid
 							);
@@ -1082,55 +1054,84 @@ export const SessionsList = ({
 								return ['reload', loadedSession.chat.id];
 							}
 							return ['removed', rid];
-						});
-				})
-			).then((sessions) => {
-				const updatedSessions = sessions
-					.filter(([event]) => event === 'insert')
-					.map(([, s]) => s);
+						}
 
-				if (updatedSessions.length > 0) {
-					dispatch({
-						type: UPDATE_SESSIONS,
-						sessions: updatedSessions as ListItemInterface[]
-					});
-				}
+						const sessionType = getSessionType(
+							session,
+							userData.userId
+						);
 
-				const removedSessions = sessions
-					.filter(([event]) => event === 'removed')
-					.map(([, rid]) => rid);
+						// If subscription session type has changed add it to remove list for current view
+						if (
+							sessionTypes.indexOf(sessionType) < 0 ||
+							(sessionType === SESSION_TYPE_ARCHIVED &&
+								sessionListTab !== SESSION_LIST_TAB_ARCHIVE) ||
+							(sessionType !== SESSION_TYPE_ARCHIVED &&
+								sessionListTab === SESSION_LIST_TAB_ARCHIVE)
+						) {
+							return ['removed', rid];
+						}
 
-				if (removedSessions.length > 0) {
-					dispatch({
-						type: REMOVE_SESSIONS,
-						ids: removedSessions as string[]
-					});
-				}
+						return ['insert', session];
+					})
+				)
+				.then((sessions) => {
+					const updatedSessions = sessions
+						.filter(([event]) => event === 'insert')
+						.map(([, s]) => s);
 
-				const reloadedSessions = sessions
-					.filter(([event]) => event === 'reload')
-					.map(([, id]) => id as number);
-
-				if (reloadedSessions.length > 0) {
-					Promise.all(
-						reloadedSessions.map((id) => apiGetChatRoomById(id))
-					).then((sessions) => {
+					if (updatedSessions.length > 0) {
 						dispatch({
 							type: UPDATE_SESSIONS,
-							sessions: sessions.reduce<ListItemInterface[]>(
-								(acc, { sessions }) => acc.concat(sessions),
-								[]
-							)
+							sessions: updatedSessions as ListItemInterface[]
 						});
-					});
-				}
-			});
+					}
+
+					const removedSessions = sessions
+						.filter(([event]) => event === 'removed')
+						.map(([, rid]) => rid);
+
+					if (removedSessions.length > 0) {
+						dispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedSessions as string[]
+						});
+					}
+
+					const reloadedSessions = sessions
+						.filter(([event]) => event === 'reload')
+						.map(([, id]) => id as number);
+
+					if (reloadedSessions.length > 0) {
+						Promise.all(
+							reloadedSessions.map((id) => apiGetChatRoomById(id))
+						).then((sessions) => {
+							dispatch({
+								type: UPDATE_SESSIONS,
+								sessions: sessions.reduce<ListItemInterface[]>(
+									(acc, { sessions }) => acc.concat(sessions),
+									[]
+								)
+							});
+						});
+					}
+				});
 		},
 		[dispatch, sessionListTab, sessionTypes, sessions, userData.userId]
 	);
 
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
 	const sessionsRef = useUpdatingRef(sessions);
+
+	// #2480: messages replayed by the Matrix sync arrive in bursts; refresh
+	// their rooms together instead of one request per message.
+	const roomRefreshQueue = useRef(
+		createRoomRefreshQueue((roomIds) => handleRIDsRef.current(roomIds))
+	);
+	useEffect(() => {
+		const queue = roomRefreshQueue.current;
+		return () => queue.cancel();
+	}, []);
 
 	// #1206: one refetch per burst of messages from rooms this list does not know.
 	const unknownRoomThrottle = useRef(createRefreshThrottle());
@@ -1262,7 +1263,7 @@ export const SessionsList = ({
 					s?.session?.matrixRoomId === roomId
 			);
 			if (touchesLoadedSession) {
-				handleRIDsRef.current([roomId]);
+				roomRefreshQueue.current.add(roomId);
 			}
 		};
 
