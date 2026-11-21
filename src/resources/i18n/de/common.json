@@ -1052,7 +1052,9 @@
 				"confirm": "Verwerfen und schließen"
 			},
 			"cardsPrevious": "Vorheriges Gesprächsformat",
-			"cardsNext": "Nächstes Gesprächsformat"
+			"cardsNext": "Nächstes Gesprächsformat",
+			"goToCard": "Zu Gesprächsformat {{position}} von {{total}}",
+			"choose": "Auswählen"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -1092,7 +1094,9 @@
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
 			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"cardShort": "Im Team abstimmen – Chat, Audio, Video.",
+			"infoLabel": "Mehr zu „Interna besprechen“"
 		},
 		"circle": {
 			"addModerator": "Co-Moderator:in hinzufügen",

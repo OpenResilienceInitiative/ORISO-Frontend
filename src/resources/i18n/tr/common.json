@@ -1277,7 +1277,9 @@
 			"back": "Geri",
 			"headerTitle": "Yeni görüşme oluştur",
 			"subtitle": "Sizin ve danışanlar için farklı, özel görüşme formatları sunuyoruz. Seçenekler, kurumlar ve danışma merkeziniz tarafından serbestçe yapılandırılabilir.",
-			"title": "Görüşme formatını seçin"
+			"title": "Görüşme formatını seçin",
+			"goToCard": "{{total}} görüşme biçiminden {{position}}. biçime git",
+			"choose": "Seç"
 		},
 		"internal": {
 			"addPerson": "Kişi ekle",
@@ -1317,7 +1319,9 @@
 			"title": "Dahili görüşme",
 			"togglePersonList": "Kişi listesini aç veya kapat",
 			"tooMany": "En fazla {{max}} kişi seçebilirsiniz.",
-			"vacatedHint": "artık bu danışma merkezinde değil"
+			"vacatedHint": "artık bu danışma merkezinde değil",
+			"cardShort": "Ekipçe uyum – sohbet, ses, görüntü.",
+			"infoLabel": "“Dahili görüşme” hakkında daha fazla"
 		},
 		"circle": {
 			"addModerator": "Yardımcı moderatör ekle",

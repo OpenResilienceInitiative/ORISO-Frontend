@@ -347,8 +347,70 @@ describe('CreateConversationView - created direct link on a phone', () => {
 	it('shows the link when created on a phone from the start', async () => {
 		viewport.fromL = false;
 		renderCreateFlow();
-		fireEvent.click(await screen.findByText('directLink.card.title'));
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'directLink.card.title: groupChat.format.choose'
+			})
+		);
 		await createVideoLink();
 		expect(screen.getByTestId('direct-link-share-dialog')).toBeTruthy();
+	});
+
+	it('animates the pick: the other cards leave, then the step comes in', async () => {
+		viewport.fromL = false;
+		const { container } = renderCreateFlow();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'directLink.card.title: groupChat.format.choose'
+			})
+		);
+		// While leaving, the picker marks the chosen card and stays put …
+		const picker = container.querySelector('.conversationCreate__picker');
+		expect(picker?.getAttribute('data-leaving')).toBe('directLink');
+		expect(
+			container
+				.querySelector('[data-format="directLink"]')
+				?.hasAttribute('data-chosen')
+		).toBe(true);
+		// … then the next step rises in from below.
+		await waitFor(() =>
+			expect(
+				container.querySelector(
+					'.conversationCreate__single.conversationCreate__stepEnter'
+				)
+			).toBeTruthy()
+		);
+	});
+
+	it('switches at once without animation under prefers-reduced-motion', async () => {
+		viewport.fromL = false;
+		const matchMedia = window.matchMedia;
+		window.matchMedia = ((query: string) => ({
+			matches: query.includes('prefers-reduced-motion'),
+			media: query,
+			addEventListener: () => undefined,
+			removeEventListener: () => undefined,
+			addListener: () => undefined,
+			removeListener: () => undefined,
+			onchange: null,
+			dispatchEvent: () => false
+		})) as typeof window.matchMedia;
+		try {
+			const { container } = renderCreateFlow();
+			fireEvent.click(
+				await screen.findByRole('button', {
+					name: 'directLink.card.title: groupChat.format.choose'
+				})
+			);
+			// Same tick: no leaving phase, no enter class.
+			expect(
+				container.querySelector('.conversationCreate__picker')
+			).toBeNull();
+			expect(
+				container.querySelector('.conversationCreate__stepEnter')
+			).toBeNull();
+		} finally {
+			window.matchMedia = matchMedia;
+		}
 	});
 });

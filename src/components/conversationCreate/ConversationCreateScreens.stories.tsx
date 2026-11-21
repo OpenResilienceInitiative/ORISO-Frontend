@@ -15,7 +15,8 @@ import { GroupChatAuthorContentDraft } from '../groupChat/groupChatAuthorContent
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
-import { CompactFormatRow } from './CompactFormatRow';
+import { FormatPickerCard } from './FormatPickerCard';
+import { expectArrowStepsOneCard } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 import { FormatCard } from './FormatCard';
 import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
@@ -342,42 +343,57 @@ const FormatPicker = ({
 						title={t('groupChat.format.title')}
 						subtitle={t('groupChat.format.subtitle')}
 					/>
-					<div
-						className={`conversationCreate__selection${
-							compact
-								? ' conversationCreate__selection--rows'
-								: ''
-						}`}
-					>
+					<div className="conversationCreate__selection">
 						{compact ? (
-							<div className="conversationCreate__rows">
-								<CompactFormatRow
-									icon={<InternalIcon />}
-									title={t('groupChat.internal.title')}
-									subtitle={t('groupChat.internal.subtitle')}
-									image={INTERNAL_CHAT_ARTWORK}
-									onSelect={() => undefined}
-								/>
-								<CompactFormatRow
-									icon={<CircleIcon />}
-									title={t('groupChat.circle.title')}
-									subtitle={t('groupChat.circle.subtitle')}
-									image={getTopicCardArtwork(null)}
-									onSelect={() => undefined}
-								/>
-								<CompactFormatRow
-									icon={<LinkOutlinedIcon />}
-									title={t('directLink.card.title')}
-									subtitle={t('directLink.card.subtitle')}
-									image={FORMAT_ARTWORK.VIDEO}
-									onSelect={() => setStep('directLink')}
-								/>
-							</div>
+							<FormatCardCarousel className="formatCardCarousel--compact">
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<InternalIcon />}
+										title={t('groupChat.internal.title')}
+										subtitle={t(
+											'groupChat.internal.subtitle'
+										)}
+										text={t('groupChat.internal.cardShort')}
+										image={INTERNAL_CHAT_ARTWORK}
+										onSelect={() => undefined}
+									/>
+								</div>
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<CircleIcon />}
+										title={t('groupChat.circle.title')}
+										subtitle={t(
+											'groupChat.circle.subtitle'
+										)}
+										text={t(
+											'groupChat.circle.cardHeadline'
+										)}
+										image={getTopicCardArtwork(null)}
+										onSelect={() => undefined}
+									/>
+								</div>
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<LinkOutlinedIcon />}
+										title={t('directLink.card.title')}
+										subtitle={t('directLink.card.subtitle')}
+										text={t('directLink.card.headline')}
+										image={FORMAT_ARTWORK.VIDEO}
+										onSelect={() => setStep('directLink')}
+									/>
+								</div>
+							</FormatCardCarousel>
 						) : (
 							<FormatCardCarousel>
-								<CircleCard menuOpen={menuOpen} />
-								<InternaCard preset="empty" />
-								{directLinkCard}
+								<div className="formatCardCarousel__slide">
+									<CircleCard menuOpen={menuOpen} />
+								</div>
+								<div className="formatCardCarousel__slide">
+									<InternaCard preset="empty" />
+								</div>
+								<div className="formatCardCarousel__slide">
+									{directLinkCard}
+								</div>
 							</FormatCardCarousel>
 						)}
 					</div>
@@ -682,7 +698,7 @@ export const FormatPickerMobile: Story = {
  * disabled at the ends (Figma 7633-34734).
  */
 export const FormatCardsScrollNarrow: Story = {
-	name: 'Format cards — scroll row with arrow buttons (narrow pane)',
+	name: 'Format cards — edge arrows on hover (narrow pane)',
 	render: () => (
 		<div style={{ background: '#e9e6e6', padding: 16 }}>
 			<div
@@ -699,25 +715,26 @@ export const FormatCardsScrollNarrow: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		const previous = await canvas.findByRole('button', {
-			name: /Vorheriges Gesprächsformat|Previous conversation format|cardsPrevious/
-		});
-		const next = await canvas.findByRole('button', {
-			name: /Nächstes Gesprächsformat|Next conversation format|cardsNext/
-		});
-		await expect(previous).toBeDisabled();
-		await expect(next).toBeEnabled();
-		await userEvent.click(next);
-		await waitFor(() => expect(previous).toBeEnabled());
-		const scroller = canvasElement.querySelector(
-			'.formatCardCarousel__scroller'
-		) as HTMLElement;
-		await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
-		// Keyboard: the arrow is a real button, Enter moves the row back.
-		previous.focus();
-		await userEvent.keyboard('{Enter}');
-		await waitFor(() => expect(previous).toBeDisabled());
+		// The waiting rooms' edge control: no arrow at the start, the right
+		// one fades in near the right edge and moves exactly one card.
+		await expectArrowStepsOneCard(
+			canvasElement,
+			'format-card-carousel-track',
+			'format-card-carousel-arrows'
+		);
+		// The row overflows, so page dots show there is more (touch too).
+		await expect(
+			canvasElement.querySelector('[data-cy="format-card-carousel-dots"]')
+		).toBeTruthy();
+		// Every card has the same height, whatever its content.
+		const heights = new Set(
+			Array.from(
+				canvasElement.querySelectorAll<HTMLElement>(
+					'.formatCardCarousel__slide'
+				)
+			).map((slide) => Math.round(slide.getBoundingClientRect().height))
+		);
+		await expect(heights.size).toBe(1);
 		// No label in the cards is cut off.
 		const cut = Array.from(
 			canvasElement.querySelectorAll<HTMLElement>(
@@ -782,45 +799,62 @@ const OpenCreateView = ({
 						title={t('groupChat.format.title')}
 						subtitle={t('groupChat.format.subtitle')}
 					/>
-					<div
-						className={`conversationCreate__selection${
-							compact
-								? ' conversationCreate__selection--rows'
-								: ''
-						}`}
-					>
+					<div className="conversationCreate__selection">
 						{compact ? (
-							<div className="conversationCreate__rows">
-								<CompactFormatRow
-									icon={<InternalIcon />}
-									title={t('groupChat.internal.title')}
-									subtitle={t('groupChat.internal.subtitle')}
-									image={INTERNAL_CHAT_ARTWORK}
-									onSelect={() => setPhoneStep('internal')}
-								/>
-								<CompactFormatRow
-									icon={<CircleIcon />}
-									title={t('groupChat.circle.title')}
-									subtitle={t('groupChat.circle.subtitle')}
-									image={getTopicCardArtwork(null)}
-									onSelect={() => undefined}
-								/>
-								<CompactFormatRow
-									icon={<LinkOutlinedIcon />}
-									title={t('directLink.card.title')}
-									subtitle={t('directLink.card.subtitle')}
-									image={FORMAT_ARTWORK.VIDEO}
-									onSelect={() => undefined}
-								/>
-							</div>
+							<FormatCardCarousel className="formatCardCarousel--compact">
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<InternalIcon />}
+										title={t('groupChat.internal.title')}
+										subtitle={t(
+											'groupChat.internal.subtitle'
+										)}
+										text={t('groupChat.internal.cardShort')}
+										image={INTERNAL_CHAT_ARTWORK}
+										onSelect={() =>
+											setPhoneStep('internal')
+										}
+									/>
+								</div>
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<CircleIcon />}
+										title={t('groupChat.circle.title')}
+										subtitle={t(
+											'groupChat.circle.subtitle'
+										)}
+										text={t(
+											'groupChat.circle.cardHeadline'
+										)}
+										image={getTopicCardArtwork(null)}
+										onSelect={() => undefined}
+									/>
+								</div>
+								<div className="formatCardCarousel__slide">
+									<FormatPickerCard
+										icon={<LinkOutlinedIcon />}
+										title={t('directLink.card.title')}
+										subtitle={t('directLink.card.subtitle')}
+										text={t('directLink.card.headline')}
+										image={FORMAT_ARTWORK.VIDEO}
+										onSelect={() => undefined}
+									/>
+								</div>
+							</FormatCardCarousel>
 						) : (
 							<FormatCardCarousel>
-								<CircleCard />
-								<InternaCard preset="empty" />
-								<DirectLinkCard
-									topics={TOPICS}
-									onCreate={() => undefined}
-								/>
+								<div className="formatCardCarousel__slide">
+									<CircleCard />
+								</div>
+								<div className="formatCardCarousel__slide">
+									<InternaCard preset="empty" />
+								</div>
+								<div className="formatCardCarousel__slide">
+									<DirectLinkCard
+										topics={TOPICS}
+										onCreate={() => undefined}
+									/>
+								</div>
 							</FormatCardCarousel>
 						)}
 					</div>

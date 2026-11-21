@@ -338,7 +338,9 @@
 				"description": "Deine Eingaben in dieser Karte sind noch nicht gespeichert. Wenn du die Ansicht schließt, gehen sie verloren."
 			},
 			"back": "Zurück",
-			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
+			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar.",
+			"goToCard": "Zu Gesprächsformat {{position}} von {{total}}",
+			"choose": "Auswählen"
 		},
 		"internal": {
 			"subtitle": "mit deinen Kolleg:innen",
@@ -362,7 +364,9 @@
 				"unknown": "Der Raum konnte nicht erstellt werden. Bitte versuche es erneut.",
 				"busy": "Dieser Raum wird gerade erstellt. Bitte warte einen Moment und versuche es dann erneut.",
 				"notAvailable": "Interna mit ausgewählten Personen sind auf dieser Installation noch nicht verfügbar. Es wurde nichts erstellt. Bitte wende dich an den Support."
-			}
+			},
+			"cardShort": "Im Team abstimmen – Chat, Audio, Video.",
+			"infoLabel": "Mehr zu „Interna besprechen“"
 		},
 		"circle": {
 			"cardText": "in deinem Fachbereich initiieren. Einmalig oder regelmäßig: Wähle das passende Medium und teile den Kreis mit den Teilnehmenden.",

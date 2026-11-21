@@ -1040,7 +1040,9 @@
 				"confirm": "Discard and close"
 			},
 			"cardsPrevious": "Previous conversation format",
-			"cardsNext": "Next conversation format"
+			"cardsNext": "Next conversation format",
+			"goToCard": "Go to conversation format {{position}} of {{total}}",
+			"choose": "Select"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -1080,7 +1082,9 @@
 			"title": "Internal discussion",
 			"togglePersonList": "Open or close the person list",
 			"tooMany": "You can select up to {{max}} people.",
-			"vacatedHint": "no longer at this counselling centre"
+			"vacatedHint": "no longer at this counselling centre",
+			"cardShort": "Coordinate as a team – chat, audio, video.",
+			"infoLabel": "More about \"Internal discussion\""
 		},
 		"circle": {
 			"addModerator": "Add co-moderator",
