@@ -36,7 +36,7 @@ export const Help: React.FC<HelpProps> = () => {
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 
 	return (
-		<div className="help">
+		<div className="help" data-tour-target="help-video-call">
 			{isConsultant && (
 				<HelpVideoCall
 					copyLoginLink={copyLoginLink}
