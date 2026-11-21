@@ -139,6 +139,8 @@ type Story = StoryObj<typeof meta>;
 
 const desktop1440 = { viewport: { value: 'desktop1440' } };
 const phone390 = { viewport: { value: 'phone390' } };
+const profileHeaderAvatar =
+	'.profile__icon--avatar [data-testid="counsellor-avatar"]';
 
 const pickAndKeep = async (canvasElement: HTMLElement, name: string) => {
 	const canvas = within(canvasElement);
@@ -170,9 +172,14 @@ export const AdviceSeeker1440: Story = {
 };
 
 export const Counsellor1440: Story = {
-	decorators: [withStage(consultant)],
+	decorators: [withStage({ ...consultant, firstName: 'Kim Maria' })],
 	globals: desktop1440,
-	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'magpie')
+	play: async ({ canvasElement }) => {
+		await pickAndKeep(canvasElement, 'Initialen');
+		await expect(
+			canvasElement.querySelector(profileHeaderAvatar)?.textContent
+		).toBe('KB');
+	}
 };
 
 /** A stored motif is preselected; the default tile clears it again. */
@@ -194,9 +201,7 @@ export const CounsellorWithMotif1440: Story = {
 			expect(
 				within(row).getByRole('radio', { name: 'Standard' })
 			).toHaveAttribute('aria-checked', 'true');
-			expect(
-				canvasElement.querySelector('[data-testid="counsellor-avatar"]')
-			).toBeNull();
+			expect(canvasElement.querySelector(profileHeaderAvatar)).toBeNull();
 		});
 	}
 };
@@ -219,20 +224,16 @@ export const CounsellorWithInitials1440: Story = {
 		const row = await canvas.findByRole('radiogroup', { name: 'Ihr Bild' });
 		const standard = within(row).getByRole('radio', { name: 'Standard' });
 		await expect(standard).toHaveAttribute('aria-checked', 'false');
-		await expect(standard).toHaveAttribute('tabindex', '0');
+		const initials = within(row).getByRole('radio', { name: 'Initialen' });
+		await expect(initials).toHaveAttribute('aria-checked', 'true');
+		await expect(initials).toHaveAttribute('tabindex', '0');
 		await expect(
-			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
-				?.textContent
+			canvasElement.querySelector(profileHeaderAvatar)?.textContent
 		).toBe('KB');
-		await expect(
-			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
-		).not.toBeNull();
 		await userEvent.click(standard);
 		await waitFor(() => {
 			expect(standard).toHaveAttribute('aria-checked', 'true');
-			expect(
-				canvasElement.querySelector('[data-testid="counsellor-avatar"]')
-			).toBeNull();
+			expect(canvasElement.querySelector(profileHeaderAvatar)).toBeNull();
 		});
 	}
 };
@@ -248,14 +249,14 @@ export const Counsellor390: Story = {
 	decorators: [withStage(consultant)],
 	globals: phone390,
 	parameters: { router: { initialPath: '/profile/allgemeines/oeffentlich' } },
-	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'magpie')
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'Initialen')
 };
 
 export const Counsellor834: Story = {
 	decorators: [withStage(consultant)],
 	globals: { viewport: { value: 'tablet834' } },
 	parameters: { router: { initialPath: '/profile/allgemeines/oeffentlich' } },
-	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'magpie')
+	play: ({ canvasElement }) => pickAndKeep(canvasElement, 'Initialen')
 };
 
 export const CounsellorEnglishStress: Story = {

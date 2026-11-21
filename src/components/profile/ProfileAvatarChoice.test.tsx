@@ -101,6 +101,7 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 				.classList.contains('avatarPicker--grid')
 		).toBe(true);
 		expect(tile('Standard').getAttribute('aria-checked')).toBe('true');
+		expect(screen.queryByRole('radio', { name: 'Initialen' })).toBeNull();
 
 		fireEvent.click(tile('magpie'));
 
@@ -166,8 +167,34 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 	});
 });
 
-it('does not label explicit admin initials as Standard, but selects a pending clear', () => {
-	vi.mocked(apiPatchUserData).mockReturnValueOnce(new Promise(() => {}));
+it('lets a supervisor replace a motif with their initials', async () => {
+	const reloadUserData = vi.fn(() => Promise.resolve());
+	renderChoice(
+		{
+			userId: 'supervisor',
+			userName: 'supervisor',
+			displayName: 'ORISO Developer Supervision',
+			grantedAuthorities: COUNSELLOR,
+			isSupervisor: true,
+			avatarKind: 'ICON',
+			avatarId: 'owl'
+		},
+		{ reloadUserData }
+	);
+
+	const initials = tile('Initialen');
+	expect(initials.textContent).toBe('OD');
+	expect(initials.getAttribute('aria-checked')).toBe('false');
+	fireEvent.click(initials);
+
+	await waitFor(() => expect(reloadUserData).toHaveBeenCalled());
+	expect(apiPatchUserData).toHaveBeenCalledWith({
+		avatarKind: 'INITIALS',
+		avatarId: ''
+	});
+});
+
+it('selects stored initials and can switch back to Standard', async () => {
 	renderChoice({
 		userId: 'consultant',
 		userName: 'consultant',
@@ -175,20 +202,21 @@ it('does not label explicit admin initials as Standard, but selects a pending cl
 		avatarKind: 'INITIALS',
 		avatarId: null
 	});
-	expect(
-		screen
-			.getByRole('radio', { name: 'Standard' })
-			.getAttribute('aria-checked')
-	).toBe('false');
-	expect(screen.getByRole('radio', { name: 'Standard' }).tabIndex).toBe(0);
+
+	const standard = tile('Standard');
+	const initials = tile('Initialen');
+	expect(standard.getAttribute('aria-checked')).toBe('false');
+	expect(initials.getAttribute('aria-checked')).toBe('true');
 	expect(
 		screen.getAllByRole('radio').filter((radio) => radio.tabIndex === 0)
-	).toHaveLength(1);
-	const standard = screen.getByRole('radio', { name: 'Standard' });
-	standard.focus();
-	fireEvent.keyDown(standard, { key: 'ArrowRight' });
-	expect(document.activeElement).toBe(screen.getAllByRole('radio')[1]);
+	).toEqual([initials]);
+
+	initials.focus();
+	fireEvent.keyDown(initials, { key: 'ArrowLeft' });
+	expect(document.activeElement).toBe(standard);
 	fireEvent.click(standard);
 	expect(standard.getAttribute('aria-checked')).toBe('true');
-	expect(apiPatchUserData).toHaveBeenLastCalledWith({ avatarId: '' });
+	await waitFor(() =>
+		expect(apiPatchUserData).toHaveBeenLastCalledWith({ avatarId: '' })
+	);
 });

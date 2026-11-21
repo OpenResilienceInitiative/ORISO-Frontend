@@ -2828,7 +2828,8 @@
 		},
 		"avatar": {
 			"label": "Votre image",
-			"default": "Par défaut"
+			"default": "Par défaut",
+			"initials": "Initiales"
 		},
 		"appLanguage": {
 			"info": "Définissez ici la langue de l'application.",

@@ -2802,7 +2802,8 @@
 		},
 		"avatar": {
 			"label": "ስእልኹም",
-			"default": "ነባሪ"
+			"default": "ነባሪ",
+			"initials": "ፊደላት ስም"
 		},
 		"appLanguage": {
 			"info": "ቋንቋ ናይቲ መተግበሪ ኣብዚ ኣቐምጥ።",
