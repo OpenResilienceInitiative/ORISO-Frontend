@@ -10,6 +10,7 @@ import {
 	mockComposerAskerData,
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
+import { COMPOSER_MOBILE_BREAKPOINT } from './inputField/composerResize';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
@@ -250,11 +251,120 @@ export const CompactEmptyComposer: Story = {
 	}
 };
 
+async function expectCompactFirstDrag(
+	canvasElement: HTMLElement,
+	pointerType: 'mouse' | 'touch'
+) {
+	const shell = await waitFor(() => {
+		const node = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!node) throw new Error('composer not mounted');
+		return node;
+	});
+	await waitFor(() =>
+		expect(shell.getBoundingClientRect().height).toBeLessThan(150)
+	);
+	const initial = shell.getBoundingClientRect().height;
+	const handle = shell.querySelector<HTMLButtonElement>('.dragHandle')!;
+	handle.dispatchEvent(
+		new PointerEvent('pointerdown', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType,
+			button: 0,
+			clientY: 100
+		})
+	);
+	if (pointerType === 'touch') {
+		await waitFor(() => {
+			expect(handle).toHaveClass('dragHandle--touched');
+			expect(handle).toHaveFocus();
+		});
+	}
+	await waitFor(() =>
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial)
+		).toBeLessThan(2)
+	);
+	if (pointerType === 'mouse') {
+		const session = shell.closest<HTMLElement>('.session')!;
+		expect(getComputedStyle(shell).borderTopColor).not.toBe(
+			getComputedStyle(session).borderTopColor
+		);
+	}
+	document.dispatchEvent(
+		new PointerEvent('pointermove', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType,
+			clientY: 80
+		})
+	);
+	await waitFor(() =>
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial - 20)
+		).toBeLessThan(2)
+	);
+	document.dispatchEvent(
+		new PointerEvent('pointerup', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType
+		})
+	);
+	if (pointerType === 'touch') {
+		await waitFor(() =>
+			expect(
+				Math.abs(shell.getBoundingClientRect().height - initial - 20)
+			).toBeLessThan(2)
+		);
+	}
+}
+
 /** A first drag starts from the visible compact height without focusing both borders. */
 export const CompactComposerFirstDrag: Story = {
 	name: 'First drag starts at compact height',
 	globals: desktop1440Globals,
 	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		await expectCompactFirstDrag(canvasElement, 'mouse');
+	}
+};
+
+export const CompactComposerFirstTouchDrag: Story = {
+	name: 'First touch drag starts at compact height',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		expect(window.innerWidth).toBeLessThanOrEqual(
+			COMPOSER_MOBILE_BREAKPOINT
+		);
+		await expectCompactFirstDrag(canvasElement, 'touch');
+	}
+};
+
+function ComposerFrameFixture() {
+	const [flush, setFlush] = React.useState(true);
+
+	return (
+		<>
+			<button type="button" onClick={() => setFlush(false)}>
+				Use framed composer
+			</button>
+			<ComposerShell
+				compactHeight
+				autoFocusEditor={false}
+				flushCorner={flush ? 'bottom-left' : undefined}
+			/>
+		</>
+	);
+}
+
+export const CompactComposerFrameChange: Story = {
+	name: 'Framed composer reclamps a manual height',
+	globals: desktop1440Globals,
+	render: () => <ComposerFrameFixture />,
 	play: async ({ canvasElement }) => {
 		const shell = await waitFor(() => {
 			const node = canvasElement.querySelector<HTMLElement>(
@@ -263,43 +373,24 @@ export const CompactComposerFirstDrag: Story = {
 			if (!node) throw new Error('composer not mounted');
 			return node;
 		});
+		shell.querySelector<HTMLButtonElement>('.dragHandle')!.focus();
+		await userEvent.keyboard('{Home}');
 		await waitFor(() =>
-			expect(shell.getBoundingClientRect().height).toBeLessThan(150)
+			expect(
+				Number.parseFloat(
+					shell.style.getPropertyValue('--composer-height')
+				)
+			).toBeLessThan(138)
 		);
-		const initial = shell.getBoundingClientRect().height;
-		const handle = shell.querySelector<HTMLButtonElement>('.dragHandle')!;
-		handle.dispatchEvent(
-			new PointerEvent('pointerdown', {
-				bubbles: true,
-				pointerId: 1,
-				pointerType: 'mouse',
-				button: 0,
-				clientY: 100
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: 'Use framed composer'
 			})
 		);
 		await waitFor(() =>
-			expect(
-				Math.abs(shell.getBoundingClientRect().height - initial)
-			).toBeLessThan(2)
-		);
-		const session = shell.closest<HTMLElement>('.session')!;
-		expect(getComputedStyle(shell).borderTopColor).not.toBe(
-			getComputedStyle(session).borderTopColor
-		);
-		document.dispatchEvent(
-			new PointerEvent('pointermove', {
-				bubbles: true,
-				pointerId: 1,
-				clientY: 80
-			})
-		);
-		await waitFor(() =>
-			expect(
-				Math.abs(shell.getBoundingClientRect().height - initial - 20)
-			).toBeLessThan(2)
-		);
-		document.dispatchEvent(
-			new PointerEvent('pointerup', { bubbles: true, pointerId: 1 })
+			expect(shell.style.getPropertyValue('--composer-height')).toBe(
+				'138px'
+			)
 		);
 	}
 };

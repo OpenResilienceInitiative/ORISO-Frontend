@@ -4117,18 +4117,23 @@ export const MessageSubmitInterfaceComponent = ({
 		[compactHeight, isIdleEmptyComposer, flushCorner, composerHostHeight]
 	);
 
-	// A height chosen in the phone layout may be too small for desktop chrome.
-	// Clamp only when crossing the breakpoint, not when focus changes during a drag.
-	const previousMobileViewport = useRef(isMobileViewport);
-	useEffect(() => {
-		if (previousMobileViewport.current === isMobileViewport) return;
-		previousMobileViewport.current = isMobileViewport;
+	// The frame and viewport budget different amounts of room for the editor.
+	// Apply the new limits when either changes, while focus leaves a drag alone.
+	const composerLayout = isMobileViewport
+		? 'mobile'
+		: flushCorner
+			? 'flush'
+			: 'framed';
+	const previousComposerLayout = useRef(composerLayout);
+	useLayoutEffect(() => {
+		if (previousComposerLayout.current === composerLayout) return;
+		previousComposerLayout.current = composerLayout;
 		setComposerHeight((height) =>
 			height === null
 				? null
 				: clampComposerHeightPure(height, getComposerHeightBounds())
 		);
-	}, [isMobileViewport, getComposerHeightBounds]);
+	}, [composerLayout, getComposerHeightBounds]);
 
 	const clampComposerHeight = useCallback(
 		(height: number) =>
@@ -4156,7 +4161,7 @@ export const MessageSubmitInterfaceComponent = ({
 					),
 					getComposerHeightBounds().maxHeight
 				)
-			: isMobileViewport && isComposerSelected
+			: isMobileViewport && isComposerSelected && composerHeight === null
 				? Math.max(effectiveComposerHeight || composerMinHeight, 140)
 				: effectiveComposerHeight;
 
