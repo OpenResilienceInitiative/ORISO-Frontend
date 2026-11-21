@@ -479,6 +479,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				// T10: no 16 px dock inside the card on the phone — the outer
 				// 16 px padding is the only space to the bottom navigation.
 				bottom: 0;
+				border-top-left-radius: 0 !important;
+				border-top-right-radius: 0 !important;
 			}
 		}
 
@@ -514,9 +516,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			box-sizing: border-box;
 			position: relative;
 
-			// The controls and the field share the same radius at the join.
+			// T31: 4 px bottom corners on the phone (Frank's red boxes).
 			@media screen and (width <= 899px) {
-				border-radius: var(--composer-corner, 4px);
+				border-radius: 0 0 var(--composer-corner, 4px)
+					var(--composer-corner, 4px);
 			}
 
 			// Expanded state on mobile restores the desktop rounded top-left

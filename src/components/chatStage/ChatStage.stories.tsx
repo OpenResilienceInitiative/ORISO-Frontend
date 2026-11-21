@@ -551,7 +551,7 @@ const expectCarimatOrganism = async (
 
 const panelTint = async (canvasElement: HTMLElement) => {
 	// The field border is measured at rest — a selected composer wears the
-	// 2 px `primary-container` focus border instead (#597). A freshly
+	// 2 px `primary` focus border instead (#597, Frontend#1134). A freshly
 	// mounted panel composer may take focus AFTER our first blur (its
 	// autofocus runs a tick later), so the blur is repeated inside the
 	// wait: every retry drops the focus again and the 240 ms `all`
@@ -559,7 +559,7 @@ const panelTint = async (canvasElement: HTMLElement) => {
 	// B2 D-5 — the single blur + 1 s default timeout flaked 1/2).
 	const focusRing = (() => {
 		const hex = getComputedStyle(document.documentElement)
-			.getPropertyValue('--m3-primary-container')
+			.getPropertyValue('--m3-primary')
 			.trim();
 		const n = parseInt(hex.replace('#', ''), 16);
 		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
@@ -928,7 +928,7 @@ export const FocusedComposerPillTakesTheActiveColour: Story = {
 		});
 		const activeBorder = (() => {
 			const hex = getComputedStyle(document.documentElement)
-				.getPropertyValue('--m3-primary-container')
+				.getPropertyValue('--m3-primary')
 				.trim();
 			const n = parseInt(hex.replace('#', ''), 16);
 			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
@@ -2529,7 +2529,8 @@ const expectTruncationIsEllipsis = async (pane: HTMLElement) => {
 	const cut = Array.from(pane.querySelectorAll<HTMLElement>('*')).filter(
 		(el) =>
 			el.children.length === 0 &&
-			el.clientWidth > 0 &&
+			// A 1 px box is the screen-reader-only pattern, not visible text.
+			el.clientWidth > 1 &&
 			el.scrollWidth - el.clientWidth > 1 &&
 			(el.textContent ?? '').trim().length > 0 &&
 			getComputedStyle(el).overflowX === 'hidden'
