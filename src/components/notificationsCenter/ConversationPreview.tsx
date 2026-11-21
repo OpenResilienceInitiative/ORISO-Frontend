@@ -793,6 +793,7 @@ export const ConversationPreview = ({
 								hideSupervisorAudience
 								autoFocusEditor={false}
 								compactHeight
+								inFlowTimelineRef={listRef}
 								draftActionPath={conversationPath}
 								allowDearchive={false}
 								{...access?.composerTarget}

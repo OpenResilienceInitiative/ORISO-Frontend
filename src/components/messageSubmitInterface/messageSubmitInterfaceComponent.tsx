@@ -287,6 +287,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * compact bounds). The phone rests at one line regardless.
 	 */
 	compactHeight?: boolean;
+	/** Message list sharing vertical space with an in-flow composer, such as Activity preview. */
+	inFlowTimelineRef?: React.RefObject<HTMLElement | null>;
 	/**
 	 * T40 (Frank, round 6): dual mode — the composer loses its outer
 	 * frame (border + 24 px radius) and its 16 px inner inset; the field
@@ -515,6 +517,7 @@ export const MessageSubmitInterfaceComponent = ({
 	teamDiscussion = false,
 	feedbackMailIntent = false,
 	compactHeight = false,
+	inFlowTimelineRef,
 	flushCorner,
 	accent = 'default',
 	autoFocusEditor = true,
@@ -566,6 +569,7 @@ export const MessageSubmitInterfaceComponent = ({
 		(event: React.FocusEvent<HTMLDivElement>) => {
 			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
 				clearAutoFocusMark();
+				setIsComposerSelected(false);
 			}
 		},
 		[clearAutoFocusMark]
@@ -682,7 +686,10 @@ export const MessageSubmitInterfaceComponent = ({
 	 * the composer's growth — both published as CSS variables (T41).
 	 */
 	const dockedWrapperRef = useRef<HTMLDivElement | null>(null);
-	const composerHostHeight = useComposerDock(dockedWrapperRef);
+	const composerHostHeight = useComposerDock(
+		dockedWrapperRef,
+		inFlowTimelineRef
+	);
 	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
 		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
@@ -758,6 +765,8 @@ export const MessageSubmitInterfaceComponent = ({
 		pointerId: number;
 		startY: number;
 		startHeight: number;
+		previousHeight: number | null;
+		moved: boolean;
 	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
 	// Only the setter is needed while the audience blur overlay is disabled
@@ -1346,6 +1355,10 @@ export const MessageSubmitInterfaceComponent = ({
 				composerRef.current?.resetTextAlign();
 				focusEditorInput();
 			});
+			// The app's initial cursor is not an explicit request to expand the dock.
+			if (composerCardRef.current?.hasAttribute(AUTO_FOCUS_ATTRIBUTE)) {
+				setIsComposerSelected(false);
+			}
 		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
@@ -4081,17 +4094,41 @@ export const MessageSubmitInterfaceComponent = ({
 		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
+	const isIdleEmptyComposer =
+		isComposerEmpty &&
+		!isComposerSelected &&
+		!isComposerResizing &&
+		!isExpandedComposer &&
+		!isVoiceRecording &&
+		!replyTo &&
+		!editingMessage &&
+		!pendingQuotes?.length &&
+		composerHeight === null;
+
 	const getComposerHeightBounds = useCallback(
 		() =>
 			getComposerHeightBoundsPure({
 				viewportWidth: window.innerWidth,
 				viewportHeight: window.innerHeight,
-				compact: compactHeight,
+				compact: compactHeight || isIdleEmptyComposer,
 				flush: flushCorner !== undefined,
 				hostHeight: composerHostHeight
 			}),
-		[compactHeight, flushCorner, composerHostHeight]
+		[compactHeight, isIdleEmptyComposer, flushCorner, composerHostHeight]
 	);
+
+	// A height chosen in the phone layout may be too small for desktop chrome.
+	// Clamp only when crossing the breakpoint, not when focus changes during a drag.
+	const previousMobileViewport = useRef(isMobileViewport);
+	useEffect(() => {
+		if (previousMobileViewport.current === isMobileViewport) return;
+		previousMobileViewport.current = isMobileViewport;
+		setComposerHeight((height) =>
+			height === null
+				? null
+				: clampComposerHeightPure(height, getComposerHeightBounds())
+		);
+	}, [isMobileViewport, getComposerHeightBounds]);
 
 	const clampComposerHeight = useCallback(
 		(height: number) =>
@@ -4119,7 +4156,9 @@ export const MessageSubmitInterfaceComponent = ({
 					),
 					getComposerHeightBounds().maxHeight
 				)
-			: effectiveComposerHeight;
+			: isMobileViewport && isComposerSelected
+				? Math.max(effectiveComposerHeight || composerMinHeight, 140)
+				: effectiveComposerHeight;
 
 	// A dragged height belongs to one conversation only. Keeping the component
 	// mounted while routing between sessions must not carry that geometry over.
@@ -4149,7 +4188,7 @@ export const MessageSubmitInterfaceComponent = ({
 			? FLUSH_CONTEXT_BAR_RESERVE
 			: 0;
 	useLayoutEffect(() => {
-		if (isExpandedComposer) {
+		if (isExpandedComposer || isComposerResizing) {
 			return;
 		}
 		const input = textareaInputRef.current;
@@ -4192,6 +4231,7 @@ export const MessageSubmitInterfaceComponent = ({
 		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
+		isComposerResizing,
 		isMobileViewport
 	]);
 
@@ -4220,10 +4260,14 @@ export const MessageSubmitInterfaceComponent = ({
 				effectiveComposerHeight ||
 				getComposerHeightBounds().minHeight;
 
+			setComposerHeight(startHeight);
+			target.focus({ preventScroll: true });
 			composerResizeStartRef.current = {
 				pointerId: e.pointerId,
 				startY: e.clientY,
-				startHeight
+				startHeight,
+				previousHeight: composerHeight,
+				moved: false
 			};
 			setIsComposerResizing(true);
 
@@ -4238,6 +4282,7 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 
 				const deltaY = event.clientY - start.startY;
+				if (deltaY !== 0) start.moved = true;
 				setComposerHeight(
 					clampComposerHeight(start.startHeight - deltaY)
 				);
@@ -4257,6 +4302,13 @@ export const MessageSubmitInterfaceComponent = ({
 				try {
 					target.releasePointerCapture(e.pointerId);
 				} catch {}
+				const start = composerResizeStartRef.current;
+				if (
+					start &&
+					(!start.moved || event?.type === 'pointercancel')
+				) {
+					setComposerHeight(start.previousHeight);
+				}
 				composerResizeStartRef.current = null;
 				setIsComposerResizing(false);
 			};
@@ -4267,6 +4319,7 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			clampComposerHeight,
+			composerHeight,
 			effectiveComposerHeight,
 			getComposerHeightBounds,
 			setComposerHeight
@@ -4391,7 +4444,7 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
 								'textarea__wrapper-send-message--resizing',
-							compactHeight &&
+							(compactHeight || isIdleEmptyComposer) &&
 								'textarea__wrapper-send-message--compact',
 							flushCorner &&
 								'textarea__wrapper-send-message--flush',
@@ -4403,8 +4456,13 @@ export const MessageSubmitInterfaceComponent = ({
 						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onFocusCapture={() => setIsComposerSelected(true)}
 						onPointerDownCapture={clearAutoFocusMark}
-						onKeyDownCapture={clearAutoFocusMark}
+						onClickCapture={() => setIsComposerSelected(true)}
+						onKeyDownCapture={() => {
+							clearAutoFocusMark();
+							setIsComposerSelected(true);
+						}}
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
@@ -5131,9 +5189,6 @@ export const MessageSubmitInterfaceComponent = ({
 												!!uploadProgress
 											}
 											maxLength={INPUT_MAX_LENGTH}
-											onFocusChange={
-												setIsComposerSelected
-											}
 											mentionProvider={mentionProvider}
 											isComposerEmpty={isComposerEmpty}
 											onEditLast={handleEditLast}

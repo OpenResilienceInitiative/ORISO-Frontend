@@ -95,17 +95,6 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 16px;
 		}
 
-		// Desktop composer card rests on the chat card's inner bottom edge.
-		// Tablet and mobile keep their existing 16px / safe-area inset.
-		// T44/T46 (review v11 B-1): a FLUSH composer (dual mode, no outer
-		// frame) keeps the 16 px dock at every width — the field carries the
-		// card's corner (28 − 16 = 12 px) and must not sit on the card edge.
-		@include breakpoint($fromDesktopWide) {
-			&:not(:has(.textarea__wrapper-send-message--flush)) {
-				padding-bottom: 0;
-			}
-		}
-
 		// On mobile, ensure no extra spacing and proper positioning
 		@media screen and (width <= 899px) {
 			// `.textarea__inputWrapper` drops to left/right 0 here, so the
@@ -182,7 +171,22 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				overflow: visible;
 				min-height: var(--composer-height, 196px);
 				height: var(--composer-height, 196px);
-				transition: all 240ms ease;
+				transition:
+					height 240ms ease,
+					min-height 240ms ease,
+					border-color 160ms ease;
+
+				@media (prefers-reduced-motion: reduce) {
+					transition: none;
+				}
+
+				&--selected:not(.textarea__wrapper-send-message--flush) {
+					border-color: var(
+						--m3-primary-container,
+						#cc1e1c
+					) !important;
+					border-width: 2px !important;
+				}
 
 				// Handle touched (Figma 1168:38130): the outer frame darkens
 				// while the composer is being resized.
@@ -467,6 +471,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			min-height: 0;
 			transition: all 220ms ease;
 
+			@media (prefers-reduced-motion: reduce) {
+				transition: none;
+			}
+
 			@media screen and (width <= 899px) {
 				left: 0;
 				right: 0;
@@ -545,8 +553,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		// #597: selected composer — text area gets the primary active border
-		&__wrapper-send-message--selected .textarea__input {
+		&__wrapper-send-message--selected.textarea__wrapper-send-message--flush
+			.textarea__input {
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
+		}
+
+		@media screen and (width <= 899px) {
+			&__wrapper-send-message--selected .textarea__input {
+				border: 2px solid var(--m3-primary-container, #cc1e1c);
+			}
 		}
 
 		// Figma 7851:34817 — in the selected state the pale send button gets a

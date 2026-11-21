@@ -590,6 +590,55 @@ export const InteractiveReplyPhone: Story = {
 	}
 };
 
+/** Activity preview shares the editor, but its timeline and composer are in flow. */
+const exercisePreviewComposer = async (canvasElement: HTMLElement) => {
+	await expectOpenedWithoutWriting(canvasElement);
+	await expectComposer(canvasElement);
+	const card = canvasElement.querySelector<HTMLElement>(
+		'.textarea__wrapper-send-message'
+	)!;
+	const editor = canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+	const timeline = canvasElement.querySelector<HTMLElement>(
+		'.conversationPreview__messages'
+	)!;
+	const initial = card.getBoundingClientRect().height;
+	await userEvent.click(editor);
+	await userEvent.type(
+		editor,
+		'Zeile 1{enter}Zeile 2{enter}Zeile 3{enter}Zeile 4{enter}Zeile 5{enter}Zeile 6{enter}Zeile 7{enter}Zeile 8'
+	);
+	await waitFor(() => {
+		expect(card.getBoundingClientRect().height).toBeGreaterThan(
+			initial + 60
+		);
+		expect(editor.clientHeight + 2).toBeGreaterThanOrEqual(
+			editor.scrollHeight
+		);
+	});
+	const grown = card.getBoundingClientRect().height;
+	const handle = within(canvasElement).getByRole('button', {
+		name: /Ziehen, um den Editor zu vergrößern|drag to resize/i
+	});
+	handle.focus();
+	await userEvent.keyboard('{End}');
+	await waitFor(() => {
+		expect(card.getBoundingClientRect().height).toBeGreaterThan(grown + 5);
+		expect(timeline.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+			199
+		);
+	});
+};
+
+export const InteractiveComposerGrowth: Story = {
+	...InteractiveReply,
+	play: async ({ canvasElement }) => exercisePreviewComposer(canvasElement)
+};
+
+export const InteractiveComposerGrowthPhone: Story = {
+	...InteractiveReplyPhone,
+	play: async ({ canvasElement }) => exercisePreviewComposer(canvasElement)
+};
+
 export const InteractiveReact: Story = {
 	decorators: [writablePreview()],
 	args: { roomId: '!preview:oriso', access: access(can()) },

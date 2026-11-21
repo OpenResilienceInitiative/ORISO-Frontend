@@ -49,6 +49,8 @@ describe('calculateAutoComposerHeight', () => {
 		expect(getEffectiveComposerHeight(520, 436, 196)).toBe(520);
 		expect(getEffectiveComposerHeight(300, 436, 196)).toBe(436);
 		expect(getEffectiveComposerHeight(null, 196, 196)).toBeNull();
+		// A compact drag start must not jump when focus raises the default minimum.
+		expect(getEffectiveComposerHeight(140, null, 196)).toBe(140);
 	});
 });
 
