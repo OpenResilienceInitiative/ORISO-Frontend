@@ -20,7 +20,7 @@ import { PanelHeader } from './PanelHeader';
 import type { SecondaryChannel } from './channelSwitcherState';
 import type { StackParticipant } from '../message/participantStack';
 import { STACK_MAX_VISIBLE } from '../message/participantStack';
-import { phone390Globals } from '../message/messageStoryShell';
+import { phone320Globals, phone390Globals } from '../message/messageStoryShell';
 import {
 	CLIENT_MATRIX_ID,
 	CLIENT_NAME,
@@ -512,5 +512,135 @@ export const MenuTriggerDisabled: Story = {
 		).toBeLessThan(1);
 		await userEvent.click(trigger, { pointerEventsCheck: 0 });
 		await expect(canvasElement.querySelector('[role="menu"]')).toBeNull();
+	}
+};
+
+/*
+ * FE#2344 — the people of the supervision chat, named and drawn exactly as
+ * beside their messages: the counsellor's chosen motif, the supervisor's
+ * initials when she picked nothing, each avatar announced with name AND role,
+ * and the counterpart's role as a second line under the name. The live case:
+ * Bart counsels, Mona supervises, the roster holds a namesake of each, so the
+ * login domain tells them apart.
+ */
+const BART_NAME = 'Bart Simpson (openresilience.cc)';
+const MONA_NAME = 'Mona Simpson (trail.ist)';
+const bartWithRole: StackParticipant = {
+	userId: '@bart.simpson_at_openresilience.cc:oriso.invalid',
+	displayName: BART_NAME,
+	firstName: 'Bart',
+	lastName: 'Simpson',
+	roleLabel: 'Berater:in',
+	avatarKind: 'ICON',
+	avatarId: 'dog'
+};
+const monaWithRole: StackParticipant = {
+	userId: '@mona.simpson_at_trail.ist:oriso.invalid',
+	displayName: MONA_NAME,
+	firstName: 'Mona',
+	lastName: 'Simpson',
+	roleLabel: 'Supervisor:in',
+	avatarKind: 'INITIALS',
+	avatarId: null
+};
+
+const expectPeopleWithRoles = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		canvas.getByRole('img', { name: `${BART_NAME}, Berater:in` })
+	).toBeVisible();
+	await expect(
+		canvas.getByRole('img', { name: `${MONA_NAME}, Supervisor:in` })
+	).toBeVisible();
+	// Mona picked no avatar: her initials, as beside her messages.
+	await expect(
+		canvasElement.querySelector(`[data-user-id="${monaWithRole.userId}"]`)!
+			.textContent
+	).toContain('MS');
+	// The channel word stays.
+	await expect(
+		canvasElement.querySelector('[data-cy="panel-header-kind-label"]')!
+			.textContent
+	).toBe('Supervision');
+};
+
+/** Bart's view: Mona is the counterpart, "Supervisor:in" under her name. */
+export const SupervisionPeopleCounsellorView: Story = {
+	name: 'Supervision people — counsellor view (FE#2344)',
+	args: {
+		name: MONA_NAME,
+		subtitle: 'Supervisor:in',
+		participants: [bartWithRole, monaWithRole]
+	},
+	play: async ({ canvasElement }) => {
+		await expectPeopleWithRoles(canvasElement);
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-header-name"]')!
+				.textContent
+		).toBe(MONA_NAME);
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-header-subtitle"]')!
+				.textContent
+		).toBe('Supervisor:in');
+	}
+};
+
+/** Mona's view: Bart is the counterpart, "Berater:in" under his name. */
+export const SupervisionPeopleSupervisorView: Story = {
+	name: 'Supervision people — supervisor view (FE#2344)',
+	args: {
+		name: BART_NAME,
+		subtitle: 'Berater:in',
+		participants: [monaWithRole, bartWithRole]
+	},
+	play: async ({ canvasElement }) => {
+		await expectPeopleWithRoles(canvasElement);
+		await expect(
+			canvasElement.querySelector('[data-cy="panel-header-subtitle"]')!
+				.textContent
+		).toBe('Berater:in');
+	}
+};
+
+/** 320 px: long name and role line truncate, the actions stay usable. */
+export const SupervisionPeoplePhone320: Story = {
+	name: 'Supervision people — phone 320, long name (FE#2344)',
+	globals: phone320Globals,
+	args: {
+		name: 'Maximiliane Rosenthal-Oberhuber (beratung.example.org)',
+		subtitle: 'Supervisor:in',
+		participants: [bartWithRole, monaWithRole],
+		onBack: noop,
+		onClose: undefined,
+		actions: (
+			<button type="button" aria-label="Anrufen">
+				☎
+			</button>
+		)
+	},
+	decorators: [
+		(Story) => (
+			<Host width={320}>
+				<Story />
+			</Host>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const header = headerOf(canvasElement).getBoundingClientRect();
+		for (const cy of ['panel-header-name', 'panel-header-subtitle']) {
+			const element = canvasElement.querySelector<HTMLElement>(
+				`[data-cy="${cy}"]`
+			)!;
+			await expect(
+				element.getBoundingClientRect().right
+			).toBeLessThanOrEqual(header.right + 1);
+		}
+		const call = within(canvasElement).getByRole('button', {
+			name: 'Anrufen'
+		});
+		await expect(call.getBoundingClientRect().right).toBeLessThanOrEqual(
+			header.right + 1
+		);
+		await expect(call.getBoundingClientRect().width).toBeGreaterThan(0);
 	}
 };
