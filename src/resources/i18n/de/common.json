@@ -650,6 +650,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Einige Chatdaten könnten in diesem Browser geblieben sein. Schließen Sie alle anderen ORISO-Tabs.",
+			"retryCleanup": "Browserdaten erneut bereinigen",
 			"button": "Schließen",
 			"headline": "Sie haben Ihren Account bei der Caritas Beratung erfolgreich gelöscht."
 		}

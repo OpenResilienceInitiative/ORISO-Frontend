@@ -4,6 +4,7 @@ import {
 	subscribeRecoveryState
 } from './recoveryReminderState';
 import {
+	deleteHandoffKey,
 	dropHandoffKey,
 	putHandoffKey,
 	readHandoffKey
@@ -264,6 +265,26 @@ export const usePendingRecoveryKey = (userId: string): string | null => {
 export const clearPendingRecoveryKey = (userId: string): void => {
 	forget(userId);
 	notifyRecoveryState();
+};
+
+/** Account deletion waits for the sealing-key transaction and reports storage errors. */
+export const clearDeletedAccountRecoveryKey = async (
+	userId: string
+): Promise<boolean> => {
+	cache.delete(userId);
+	bump(userId);
+	let envelopeRemoved = true;
+	try {
+		localStorage.removeItem(`${PENDING_KEY_PREFIX}${userId}`);
+	} catch {
+		envelopeRemoved = false;
+	}
+	try {
+		notifyRecoveryState();
+	} finally {
+		await deleteHandoffKey(sealId(userId));
+	}
+	return envelopeRemoved;
 };
 
 /**

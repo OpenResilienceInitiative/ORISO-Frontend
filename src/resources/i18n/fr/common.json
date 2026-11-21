@@ -655,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Certaines données de conversation peuvent rester dans ce navigateur. Fermez les autres onglets ORISO.",
+			"retryCleanup": "Réessayer le nettoyage du navigateur",
 			"button": "Fermer",
 			"headline": "Vous avez supprimé avec succès votre compte auprès de Caritas Beratung."
 		}
