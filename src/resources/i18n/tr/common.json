@@ -6035,8 +6035,7 @@
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
 		},
 		"whoReadsAlong": {
-			"headline": "Mesajınızı kim okuyor",
-			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+			"headline": "Mesajınızı kim okuyor"
 		},
 		"responseDeadline": {
 			"headline": "Ne zaman yanıt alacaksınız",

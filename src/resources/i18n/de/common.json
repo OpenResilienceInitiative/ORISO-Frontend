@@ -6087,8 +6087,7 @@
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Ihre Nachricht liest",
-			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Ihre Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Sie eine Antwort erhalten",

@@ -6035,8 +6035,7 @@
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
 		},
 		"whoReadsAlong": {
-			"headline": "Qui lit votre message",
-			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+			"headline": "Qui lit votre message"
 		},
 		"responseDeadline": {
 			"headline": "Quand vous recevrez une réponse",
