@@ -10,9 +10,13 @@ import clsx from 'clsx';
 import FocusTrap from 'focus-trap-react';
 import './overlay.styles';
 import { useTranslation } from 'react-i18next';
-import { ModalContext } from '../../globalState';
+import { ModalContext } from '../../globalState/context/ModalContext';
 import { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import {
+	shouldActivateOverlayFocusTrap,
+	useForeignMuiModalOpen
+} from './useForeignMuiModalOpen';
 import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 
 export const OVERLAY_FUNCTIONS = {
@@ -113,6 +117,7 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	// Derived during render: a copy synced by an effect showed the previous
 	// item for one commit after every change (e.g. a late error alert).
 	const activeOverlay: OverlayItem = props.item ?? props.items[activeStep];
+	const foreignModalOpen = useForeignMuiModalOpen();
 
 	useEffect(() => {
 		document.querySelector('.app')?.classList.add('app--blur');
@@ -167,10 +172,13 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	return (
 		<FocusTrap
 			focusTrapOptions={{ allowOutsideClick: true }}
-			active={
-				props.forceActiveFocusTrap ||
-				activeOverlay.buttonSet?.length > 0
-			}
+			active={shouldActivateOverlayFocusTrap(
+				Boolean(
+					props.forceActiveFocusTrap ||
+						activeOverlay.buttonSet?.length > 0
+				),
+				foreignModalOpen
+			)}
 		>
 			<div
 				className={clsx(
