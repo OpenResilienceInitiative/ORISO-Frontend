@@ -5943,6 +5943,7 @@
 			"title": "Supervision",
 			"systemNotice": "La supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Chat de feedback avec la supervision sur cette consultation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Conseil"

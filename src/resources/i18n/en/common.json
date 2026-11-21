@@ -5890,6 +5890,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback chat with your supervisor about this conversation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Counselling"

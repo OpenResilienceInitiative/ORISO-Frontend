@@ -5917,6 +5917,7 @@
 			"title": "ሱፐርቪዥን",
 			"systemNotice": "ሱፐርቪዥን ብ {{name}}። ካልእ ሱፐርቫይዘር ብቲ ኣብ ጥቓ ምልክት መልእኽቲ ዘሎ ፕላስ ክትሓቱ ትኽእሉ ኢኹም።",
 			"headerLabel": "ሱፐርቪዥን · {{name}}",
+			"menuHint": "ብዛዕባ እዚ ምኽሪ ምስ ሱፐርቪዥን ናይ feedback ቻት",
 			"role": {
 				"supervisor": "ሱፐርቪዥን",
 				"consultant": "ምኽሪ"

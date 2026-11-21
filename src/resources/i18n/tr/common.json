@@ -5943,6 +5943,7 @@
 			"title": "Süpervizyon",
 			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
 			"headerLabel": "Süpervizyon · {{name}}",
+			"menuHint": "Bu danışmanlık hakkında süpervizyonla feedback sohbeti",
 			"role": {
 				"supervisor": "Süpervizyon",
 				"consultant": "Danışmanlık"
