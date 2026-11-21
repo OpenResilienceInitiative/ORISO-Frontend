@@ -24,6 +24,11 @@ export interface StackParticipant {
 	/** The counsellor's chosen avatar (#1046/#1047); absent = no choice made. */
 	avatarKind?: string | null;
 	avatarId?: string | null;
+	/**
+	 * Role shown with the name ("Supervisor:in"), for the tooltip and the
+	 * avatar's accessible name (FE#2344). Absent = name only.
+	 */
+	roleLabel?: string;
 	/** Timestamp (ms) of the participant's last message, if known. */
 	lastActivity?: number;
 }

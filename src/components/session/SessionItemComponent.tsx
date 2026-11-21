@@ -124,6 +124,9 @@ import {
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
+import { enrichSupervisionParticipants } from '../supervisionPanel/supervisionPeople';
+import { SupervisionPeopleContext } from '../supervisionPanel/SupervisionPeopleContext';
+import { useSupervisionPeople } from '../supervisionPanel/useSupervisionPeople';
 import { apiGetConsultant } from '../../api/apiGetConsultant';
 import {
 	computeThreadSummaries,
@@ -234,6 +237,12 @@ import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
 import {
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
+} from '../../utils/anonymousChatDisplayName';
+import { directAvatarChoice } from '../../utils/sessionAvatarChoice';
+import { counsellorChoiceOf } from '../../utils/avatarChoice';
+import {
 	Dialog,
 	Box as MuiBox,
 	Typography as MuiTypography,
@@ -274,6 +283,14 @@ import {
 import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
+/** Someone typing in the room right now (#2387). */
+export interface TypingUser {
+	/** Matrix user id: picks the same name and avatar as their messages. */
+	userId: string;
+	/** Matrix member name, for when the session knows no better one. */
+	name: string;
+}
+
 interface SessionItemProps {
 	/**
 	 * Phone: a side panel (thread, supervision, team) fills the screen instead
@@ -308,7 +325,7 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
-	typingUsers: string[];
+	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
@@ -809,25 +826,42 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		robotSequenceVisibleCount >= robotSystemCards.length;
 	const shouldShowRobotTypingIndicator =
 		shouldShowRobotMessages && !areRobotMessagesComplete;
+	// The same name and avatar as the person's messages (#2387): Matrix only
+	// knows the login, so the asker's session alias wins over it.
 	const otherTypingUsers = useMemo(
 		() =>
-			(props.typingUsers || [])
-				.map((entry) => `${entry || ''}`.trim())
-				.filter(Boolean)
-				.filter(
-					(entry, index, source) => source.indexOf(entry) === index
-				),
-		[props.typingUsers]
+			(props.typingUsers || []).map((user) => {
+				const isSessionAsker =
+					user.userId === activeSession.item?.askerMatrixUserId;
+				// Like MessageItem's isUserMessage: group members who are not
+				// moderators are advice seekers too.
+				const isAsker =
+					isSessionAsker ||
+					(activeSession.isGroup &&
+						!activeSession.item?.moderators?.includes(user.userId));
+				const choice = activeSession.isGroup
+					? null
+					: directAvatarChoice(user.userId, activeSession);
+				const alias = isSessionAsker
+					? resolveAssignedAskerDisplayName(activeSession.user)
+					: null;
+				return {
+					userId: user.userId,
+					name: alias || user.name,
+					choice: isAsker ? choice : counsellorChoiceOf(choice)
+				};
+			}),
+		[props.typingUsers, activeSession]
 	);
 	const shouldShowInlineTypingIndicator = otherTypingUsers.length > 0;
 	const typingIndicatorLabel = useMemo(() => {
 		if (otherTypingUsers.length === 1) {
-			return `${otherTypingUsers[0]} ${translate(
+			return `${otherTypingUsers[0].name} ${translate(
 				'typingIndicator.singleUser.typing'
 			)}`;
 		}
 		if (otherTypingUsers.length === 2) {
-			return `${otherTypingUsers[0]} & ${otherTypingUsers[1]} ${translate(
+			return `${otherTypingUsers[0].name} & ${otherTypingUsers[1].name} ${translate(
 				'typingIndicator.twoUsers.typing'
 			)}`;
 		}
@@ -835,7 +869,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			'typingIndicator.multipleUsers.typing'
 		)}`;
 	}, [otherTypingUsers, translate]);
-	const primaryTypingUser = otherTypingUsers[0] || '';
+	const primaryTypingUser = otherTypingUsers[0];
 	const visibleRobotCards = useMemo(
 		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
 		[robotSequenceVisibleCount, robotSystemCards]
@@ -1690,7 +1724,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		const contactName =
-			getContact(activeSession)?.username ||
+			resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 			translate('sessionList.user.consultantUnknown');
 		// Backfilled replies precede the newest event already observed. Only
 		// replies appended after that boundary are new-arrival notifications.
@@ -2701,8 +2735,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		translate
 	]);
 
+	// The name the chat header shows: the asker's alias, not the login (#2387).
 	const clientDisplayName =
-		getContact(activeSession)?.username ||
+		resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 		translate('sessionList.user.consultantUnknown');
 
 	// Teamberatung words (Frank, 09.09.). The i18n catalogue is on a drift
@@ -2899,7 +2934,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, resolvedMatrixRoomId, messages]
 	);
-	const supervisionParticipants = useMemo(
+	const supervisionRoomParticipants = useMemo(
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -2909,6 +2944,77 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			supervisionRoomUsers
 		]
 	);
+	// FE#2344: the side room's people — name, role and avatar — resolved once
+	// for the header and the side-room messages, so both show each person the
+	// same way (`supervisionPeople.ts`).
+	const supervisionPeopleConsultant = useMemo(
+		() => ({
+			id: activeSession.consultant?.id,
+			matrixUserId: activeSession.item?.consultantMatrixUserId,
+			internalName: markerCounsellorDisplayName,
+			identity: activeSession.consultant
+		}),
+		[
+			activeSession.consultant,
+			activeSession.item?.consultantMatrixUserId,
+			markerCounsellorDisplayName
+		]
+	);
+	const supervisionPeopleSelf = useMemo(
+		() => ({ userId: userData?.userId, identity: userData }),
+		[userData]
+	);
+	const supervisionPeople = useSupervisionPeople({
+		enabled: hasSupervisionSideRoom,
+		agencyId: activeSession.item?.agencyId,
+		consultant: supervisionPeopleConsultant,
+		supervisors: sessionSupervisors,
+		marker: supervisionMarker,
+		self: supervisionPeopleSelf
+	});
+	const supervisionParticipants = useMemo(
+		() =>
+			enrichSupervisionParticipants(
+				supervisionRoomParticipants,
+				supervisionPeople,
+				{
+					consultant: translate(
+						'groupChat.info.subscribers.role.consultant'
+					),
+					supervisor: translate(
+						'groupChat.info.subscribers.role.supervisor'
+					)
+				}
+			),
+		[supervisionRoomParticipants, supervisionPeople, translate]
+	);
+	// The counterpart as the header names it: the person, then their role.
+	const supervisionCounterpartPerson = useMemo(() => {
+		const people = Array.from(supervisionPeople.values());
+		const ownMatrixIds = new Set(
+			[
+				matrixClientService?.getClient?.()?.getUserId?.(),
+				getCurrentMatrixUserId()
+			].filter(Boolean)
+		);
+		const wanted = isSupervisor ? 'consultant' : 'supervisor';
+		return (
+			people.find(
+				(person) =>
+					person.role === wanted &&
+					!ownMatrixIds.has(person.matrixUserId)
+			) ?? null
+		);
+	}, [supervisionPeople, isSupervisor, matrixClientService]);
+	const supervisionHeaderName =
+		supervisionCounterpartPerson?.name || supervisionCounterpartName;
+	const supervisionHeaderRole = supervisionCounterpartPerson
+		? translate(
+				supervisionCounterpartPerson.role === 'supervisor'
+					? 'groupChat.info.subscribers.role.supervisor'
+					: 'groupChat.info.subscribers.role.consultant'
+			)
+		: undefined;
 	// Teamberatung: the room's own members ARE the team — the `team` rule
 	// shows them all and drops only the advice seeker, who is never invited
 	// (`visibleParticipants.ts`).
@@ -2956,9 +3062,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!hasSupervisionSideRoom) {
 			return [];
 		}
-		const supervisorName = isSupervisor
-			? userData?.displayName || userData?.userName || ''
-			: supervisionCounterpartName;
+		// FE#2344: the supervisor as the header names them.
+		const supervisorPerson = Array.from(supervisionPeople.values()).find(
+			(person) => person.role === 'supervisor'
+		);
+		const supervisorName =
+			supervisorPerson?.name ||
+			(isSupervisor
+				? userData?.displayName || userData?.userName || ''
+				: supervisionCounterpartName);
 		return buildSupervisionTimeline(supervisionMessages, {
 			roomId: supervisionRoomId || '',
 			title: translate('supervision.panel.title'),
@@ -2975,6 +3087,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.displayName,
 		userData?.userName,
 		supervisionCounterpartName,
+		supervisionPeople,
 		activeSession.item?.askerMatrixUserId,
 		translate
 	]);
@@ -3835,11 +3948,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									<div className="messageItem__messageWrap">
 										<div className="messageItem__avatar">
 											<UserAvatar
-												username={primaryTypingUser}
-												displayName={primaryTypingUser}
-												firstName={primaryTypingUser}
-												lastName=""
-												userId={`typing-${primaryTypingUser}`}
+												username={
+													primaryTypingUser.name
+												}
+												displayName={
+													primaryTypingUser.name
+												}
+												userId={
+													primaryTypingUser.userId
+												}
+												choice={
+													primaryTypingUser.choice
+												}
 												ring={false}
 											/>
 										</div>
@@ -4079,7 +4199,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													'session__submit-interface--scrolled-up'
 											)}
 											placeholder={getPlaceholder()}
-											typingUsers={props.typingUsers}
 											preselectedFile={draggedFile}
 											handleMessageSendSuccess={
 												handleMessageSendSuccess
@@ -4566,7 +4685,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							placeholder={translate(
 								'message.thread.placeholder'
 							)}
-							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							onSendError={handleComposerSendError}
 							retryRequest={
@@ -4615,7 +4733,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<PanelHeader
 						kind="supervision"
 						title={translate('supervision.panel.title')}
-						name={supervisionCounterpartName}
+						name={supervisionHeaderName}
+						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
 						actions={
@@ -4673,7 +4792,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					) : undefined
 				}
 				timeline={
-					<>
+					<SupervisionPeopleContext.Provider
+						value={supervisionPeople}
+					>
 						<MessageTimeline
 							keyPrefix="supervision-"
 							messages={supervisionTimelineMessages}
@@ -4737,14 +4858,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									)}
 								/>
 							))}
-					</>
+					</SupervisionPeopleContext.Provider>
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
 						isTyping={props.isTyping}
 						placeholder={translate(
 							'supervision.panel.composer.placeholder',
-							{ name: supervisionCounterpartName }
+							{ name: supervisionHeaderName }
 						)}
 						handleMessageSendSuccess={handleMessageSendSuccess}
 						onSendError={handleComposerSendError}
