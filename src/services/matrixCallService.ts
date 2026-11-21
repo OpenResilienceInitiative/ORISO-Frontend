@@ -27,6 +27,38 @@ export interface MatrixCallEventHandlers {
 	onIncomingCall?: (call: MatrixCall) => void;
 }
 
+/**
+ * matrix-js-sdk 38.4.0 keeps the camera/microphone stream that arrives after
+ * the caller hung up while answer() waited for media permission. Stop the
+ * streams this answer() opened if the call ended meanwhile. Streams that a
+ * call still running uses (a second incoming call), and the hand-over to a
+ * replacement call (glare), stay untouched.
+ */
+const releaseLateAnswerMedia = (
+	call: MatrixCall,
+	client: MatrixClient,
+	streamsBefore: Set<MediaStream>
+): void => {
+	const { successor } = call as unknown as { successor?: MatrixCall };
+	if (call.state !== CallState.Ended || successor) {
+		return;
+	}
+	const media = client.getMediaHandler();
+	const liveCalls = [...(client.callEventHandler?.calls.values() ?? [])];
+	const inUse = new Set(
+		liveCalls
+			.filter(
+				(other) => other !== call && other.state !== CallState.Ended
+			)
+			.map((other) => other.localUsermediaStream)
+	);
+	for (const stream of [...media.userMediaStreams]) {
+		if (!streamsBefore.has(stream) && !inUse.has(stream)) {
+			media.stopUserMediaStream(stream);
+		}
+	}
+};
+
 class MatrixCallService {
 	private client: MatrixClient | null = null;
 	private activeCall: MatrixCall | null = null;
@@ -178,9 +210,13 @@ class MatrixCallService {
 			});
 
 			// Answer the call (matrix-js-sdk will request media permissions internally)
+			const streamsBefore = new Set(
+				client.getMediaHandler().userMediaStreams
+			);
 			await this.withCallMedia(client, () =>
 				call.answer(true, isVideoCall)
 			);
+			releaseLateAnswerMedia(call, client, streamsBefore);
 
 			// console.log('✅ Call answered successfully');
 		} catch (error) {
