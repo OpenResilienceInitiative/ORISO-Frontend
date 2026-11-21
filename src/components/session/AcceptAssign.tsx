@@ -473,42 +473,50 @@ export const AcceptAssign = ({
 				<div
 					className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
 				>
-					{activeSession.isEnquiry && (
-						<Button
-							item={buttonItem}
-							disabled={
-								isRequestInProgress || showRejectionConfirmation
-							}
-							buttonHandle={() =>
-								handleButtonClick(activeSession.item.id)
-							}
-							// The button itself, not the wrapper: the team action beside
-							// it must not count as a click on "accept" for a tour.
-							tourTarget="enquiry-accept-button"
-						/>
+					{(activeSession.isEnquiry || canReject) && (
+						<div className="session__decisionActions">
+							{activeSession.isEnquiry && (
+								<Button
+									item={buttonItem}
+									disabled={
+										isRequestInProgress ||
+										showRejectionConfirmation
+									}
+									buttonHandle={() =>
+										handleButtonClick(activeSession.item.id)
+									}
+									// The button itself, not the wrapper: the team action beside
+									// it must not count as a click on "accept" for a tour.
+									tourTarget="enquiry-accept-button"
+								/>
+							)}
+							{canReject && (
+								<Button
+									className="session__declineAction"
+									ariaHasPopup="dialog"
+									item={{
+										label: 'enquiry.rejection.action',
+										type: BUTTON_TYPES.LINK
+									}}
+									disabled={
+										isRequestInProgress ||
+										showRejectionConfirmation
+									}
+									buttonHandle={() => {
+										openedFor.current = {
+											context: contextKey,
+											auth: authIdentity(),
+											epoch: operationEpoch.current
+										};
+										setRejectionError('');
+										setRejectionRetryable(true);
+										setShowRejectionConfirmation(true);
+									}}
+								/>
+							)}
+						</div>
 					)}
 					{secondaryAction}
-					{canReject && (
-						<Button
-							item={{
-								label: 'enquiry.rejection.action',
-								type: BUTTON_TYPES.SECONDARY
-							}}
-							disabled={
-								isRequestInProgress || showRejectionConfirmation
-							}
-							buttonHandle={() => {
-								openedFor.current = {
-									context: contextKey,
-									auth: authIdentity(),
-									epoch: operationEpoch.current
-								};
-								setRejectionError('');
-								setRejectionRetryable(true);
-								setShowRejectionConfirmation(true);
-							}}
-						/>
-					)}
 				</div>
 			)}
 			{showRejectionConfirmation && (
