@@ -302,6 +302,8 @@ const SharedCallKnock = ({
 						...current,
 						cameraOn: !current.cameraOn
 					})),
+				onCameraRetry: live.retry,
+				cameraBlocker: live.cameraBlocker,
 				onSelectDevice: (kind, id) =>
 					setControls((current) => ({
 						...current,

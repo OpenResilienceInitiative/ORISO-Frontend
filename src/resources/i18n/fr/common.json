@@ -6895,7 +6895,12 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro"
+			"micMeter": "Volume de votre micro",
+			"cameraNotice": {
+				"permissionDenied": "Votre caméra est bloquée pour ce site. Autorisez la caméra dans les paramètres du site de votre navigateur (icône de cadenas à côté de l'adresse). L'image apparaît alors sans recharger.",
+				"deviceBusy": "Un autre programme utilise votre caméra. Fermez-le, puis vérifiez à nouveau.",
+				"retry": "Vérifier la caméra à nouveau"
+			}
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",
