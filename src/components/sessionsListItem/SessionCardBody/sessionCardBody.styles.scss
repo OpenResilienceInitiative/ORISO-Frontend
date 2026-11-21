@@ -25,6 +25,12 @@
 		line-height: var(--card-name-line);
 	}
 
+	// Name only (nothing written yet): centred on the avatar instead of level
+	// with its top edge.
+	&--nameOnly &__name {
+		top: calc((var(--card-avatar) - var(--card-name-line)) / 2);
+	}
+
 	// Two classes deep, so the list item's own rules for its slot content
 	// lose regardless of which stylesheet loads last.
 	& &__name > * {
@@ -40,8 +46,15 @@
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: var(--card-preview-lines);
 		box-sizing: border-box;
-		height: var(--card-clip);
-		padding-top: var(--card-name-line);
+
+		// The clip box reaches 2px further left and up (margin out, padding in,
+		// text stays put) so the 2px ring of the first stacked avatar is not cut
+		// off. The extra 2px of height keeps the bottom edge where it was.
+		height: calc(var(--card-clip) + 2px);
+		margin-top: -2px;
+		margin-left: -2px;
+		padding-top: calc(var(--card-name-line) + 2px);
+		padding-left: 2px;
 		overflow: hidden;
 	}
 

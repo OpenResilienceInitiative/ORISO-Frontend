@@ -103,7 +103,8 @@
 		"appointment": {
 			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
 			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
-			"subline": "Wähle einen Tag und danach eine Uhrzeit."
+			"subline": "Wähle einen Tag und danach eine Uhrzeit.",
+			"legendRequest": "Anfrage – deine Beratungsperson bestätigt den Termin"
 		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
@@ -464,6 +465,10 @@
 			"overlay": {
 				"headline": "Du wurdest aus dieser Gruppe entfernt."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "Sobald die Gruppenleitung dich hereinlässt, öffnen sich Chat und Anruf von selbst.",
+			"openSoon": "Die Sitzung läuft. Die Gruppenleitung weiß, dass du wartest, und lässt dich gleich herein."
 		}
 	},
 	"help": {
@@ -670,6 +675,14 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
+		},
+		"selectionReply": {
+			"sendFailed": {
+				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
+			},
+			"blurFailed": {
+				"text": "Die Stelle konnte nicht geschwärzt oder die Schwärzung nicht aufgehoben werden. Bitte versuche es erneut."
+			}
 		}
 	},
 	"notification": {
@@ -718,6 +731,8 @@
 				"notJoined": "Nur lesen, bis dein Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in kannst du hier reagieren, aber nicht schreiben.",
 				"curtained": "Dieser Fall ist für dich gerade nicht einsehbar.",
+				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu deinen Fällen. Darum zeigt die Aktivität sie hier nicht.",
+				"hiddenNotJoined": "Du bist dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
 				"enquiryOpenToAccept": "Diese Anfrage ist noch nicht angenommen. Öffne die Unterhaltung, um sie anzunehmen.",
 				"consentOpenToContinue": "Bitte bestätige zuerst im Chat, wie es weitergeht. Öffne dazu die Unterhaltung.",
 				"actionFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
@@ -733,8 +748,8 @@
 				"text": "Eine Klient:in ist dem Warteraum beigetreten."
 			},
 			"callInvited": {
-				"title": "Einladung zu internem Gruppenanruf",
-				"text": "Du wurdest zu einem internen Gruppenanruf eingeladen."
+				"title": "Einladung zum Anruf",
+				"text": "Du wurdest zu einem Anruf eingeladen."
 			},
 			"appointmentRequested": {
 				"title": "Termin für einen Anruf angefragt",
@@ -753,8 +768,8 @@
 				"text": "Eine Übersicht deiner anstehenden Termine liegt bereit."
 			},
 			"teamDiscussionNew": {
-				"title": "Team-Besprechung",
-				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+				"title": "Team-Chat",
+				"text": "{{senderDisplayName}} hat im Team-Chat geschrieben"
 			},
 			"firstResponseReceived": {
 				"title": "Deine ersten Schritte",
@@ -774,11 +789,14 @@
 			"callKnockRequested": {
 				"text": "Eine Person möchte in deinen Anruf. Tritt dem Anruf bei, um sie einzulassen.",
 				"video": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Videoanruf. Tritt dem Anruf bei, um sie einzulassen."
 				},
 				"audio": {
-					"text": "Eine Person möchte über deinen Direktlink in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
+					"text": "Eine Person möchte über deine Direkteinladung in deinen Audioanruf. Tritt dem Anruf bei, um sie einzulassen."
 				}
+			},
+			"directInvitationRenewalRequested": {
+				"text": "Eine Person möchte einen neuen Link zu deinem Termin."
 			}
 		}
 	},
@@ -841,12 +859,23 @@
 			"registerError": {
 				"overlay": {
 					"headline": "Es ist ein Fehler aufgetreten. Bitte versuche es erneut.",
-					"xReasonAlreadyRegistered": "Du bist bereits mit diesem Thema in der Beratungsstelle registriert."
+					"xReasonAlreadyRegistered": "Du bist bereits mit diesem Thema in der Beratungsstelle registriert.",
+					"badRequest": "Diese Beratungsstelle konnte deine Anfrage nicht anlegen. Bitte wähle eine andere Beratungsstelle oder versuche es später erneut.",
+					"forbidden": "Du kannst bei dieser Beratungsstelle gerade keine neue Beratung anfragen.",
+					"unavailable": "Deine Anfrage konnte gerade nicht gesendet werden. Bitte versuche es in einigen Minuten erneut."
 				}
 			},
 			"registerSuccess": {
 				"overlay": {
 					"headline": "Du hast Dich erfolgreich für ein neues Themenfeld registriert."
+				}
+			},
+			"agency": {
+				"contactPerson": {
+					"support": {
+						"text": "Bitte wende dich an den Support:",
+						"none": "Bitte wende dich an die Plattformverwaltung."
+					}
 				}
 			}
 		},
@@ -865,7 +894,8 @@
 				"activated": {
 					"label": "Deaktiviere Deine Abwesenheit, um eine Nachricht zu hinterlegen oder sie zu bearbeiten."
 				},
-				"label": "Hinterlege eine Abwesenheitsnachricht"
+				"label": "Hinterlege eine Abwesenheitsnachricht",
+				"dateHint": "Ohne Datum gilt die Abwesenheit bis auf Weiteres, bis du sie ausschaltest. Nach dem Bis-Datum bist du automatisch wieder anwesend."
 			},
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
@@ -1081,8 +1111,9 @@
 				"display": {
 					"suffix": " hast Du:"
 				},
-				"prefix": "Deine Zahlen des"
-			}
+				"prefix": "Deine Zahlen für"
+			},
+			"csvHeader": {}
 		},
 		"unsetEmail": {
 			"confirmOverlay": {
@@ -1167,6 +1198,10 @@
 				"cancel": "Abbrechen",
 				"error": "Das Zurücksetzen ist fehlgeschlagen. Bitte versuche es erneut."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Dein Name kann in jeder Beratung anders sein. Deine Beraterin oder dein Berater sieht in der jeweiligen Beratung den Namen, der hier steht.",
+			"usernameShown": "Kein Anzeigename – sichtbar ist dein Benutzername"
 		}
 	},
 	"qrCode": {
@@ -1667,6 +1702,14 @@
 		},
 		"supervision": {
 			"badge": "Supervision – Du liest in diesem Chat mit"
+		},
+		"timeline": {
+			"appointment": {
+				"request": {
+					"taken": "Diese Zeit ist inzwischen belegt. Lehne die Anfrage ab oder schlage im Chat eine andere Zeit vor.",
+					"failed": "Das hat nicht geklappt. Bitte versuche es noch einmal."
+				}
+			}
 		}
 	},
 	"statusOverlay": {
@@ -1919,6 +1962,31 @@
 				"action": "Bitte schließe diesen Tab, um zu Beratung & Hilfe zurückzukehren.",
 				"reason": "Leider bist Du nicht berechtigt diese Seite einzusehen."
 			}
+		},
+		"askerInfo": {
+			"title": "Anrufe startet deine Beratungsperson",
+			"description": "Du kannst hier keinen Anruf starten. Deine Beratungsperson ruft dich zum vereinbarten Termin hier im Gespräch an.",
+			"next": "Dein nächster Termin",
+			"requestHint": "Schreib deiner Beratungsperson im Chat, wann es dir passt.",
+			"requestHintBooking": "Wähle eine freie Zeit deiner Beratungsperson und buch den Termin direkt.",
+			"error": "Der Termin konnte gerade nicht geladen werden. Bitte versuch es später noch einmal.",
+			"booking": {
+				"description": {
+					"video": "Wähle eine freie Zeit deiner Beratungsperson für einen Videoanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson.",
+					"phone": "Wähle eine freie Zeit deiner Beratungsperson für einen Telefonanruf. Mit „Sofort gebucht“ markierte Zeiten stehen gleich fest, Anfragen bestätigt deine Beratungsperson."
+				},
+				"error": "Die freien Zeiten konnten gerade nicht geladen werden. Bitte versuch es später noch einmal.",
+				"none": "Deine Beratungsperson hat in den nächsten zwei Wochen keine freie Zeit.",
+				"taken": "Diese Zeit ist gerade vergeben worden. Bitte wähle eine andere.",
+				"failed": "Der Termin konnte nicht gebucht werden. Bitte versuch es noch einmal.",
+				"booked": "Dein Termin ist gebucht. Deine Beratungsperson wird im Chat benachrichtigt.",
+				"requested": "Deine Anfrage ist gesendet. Sie wartet auf die Bestätigung deiner Beratungsperson."
+			},
+			"nextRequested": "Dein angefragter Termin"
+		},
+		"timeline": {
+			"counsellorCallPendingText": "Nur deine Beraterin oder dein Berater kann den Anruf starten. Du kannst beitreten, sobald sie oder er dich anruft. Bitte warte auf den Anruf.",
+			"leaveRunningCallText": "Deine Beraterin oder dein Berater ruft dich an. Du bist noch in einem anderen Anruf; er wird beendet, wenn du beitrittst."
 		}
 	},
 	"voice": {
@@ -2159,6 +2227,10 @@
 				"disabledAsker": "Supervision wird vom Beratungsteam verwaltet",
 				"disabledMobile": "Supervisor hinzufügen – am Desktop verfügbar",
 				"disabledUnavailable": "Supervisor hinzufügen – hier nicht verfügbar"
+			},
+			"plusMenu": {
+				"supervisionHint": "Eine Kollegin oder ein Kollege schaut mit. Der Fall bleibt bei dir.",
+				"handoverHint": "Der Fall geht ganz an eine Kollegin oder einen Kollegen. Du gibst ihn ab."
 			}
 		}
 	},
@@ -2289,7 +2361,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team-Besprechung",
+		"title": "Team-Chat",
 		"startHint": "Besprechung starten",
 		"postCount": "{{count}} Beiträge",
 		"postCount_one": "1 Beitrag",
@@ -2300,7 +2372,7 @@
 		"placeholder": "Nachricht an das Team …",
 		"send": "Senden",
 		"error": {
-			"open": "Die Team-Besprechung konnte nicht geöffnet werden.",
+			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
@@ -2639,10 +2711,10 @@
 					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
 				},
 				"openTeam": {
-					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+					"intro": "Bei dir ist der Team-Chat aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Team-Chat öffnen“."
 				},
 				"teamReply": {
-					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird der Team-Chat geschlossen."
 				},
 				"accept": {
 					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
@@ -2856,6 +2928,9 @@
 		},
 		"request": {
 			"sameTopicInfo": "Zum gleichen Thema ist immer nur eine Beratung gleichzeitig vorgesehen. Startest du eine Beratung zu einem Thema, das du schon besprichst, wird deine bisherige Berater:in informiert, sobald die neue Beratung angenommen ist. Eine der beiden Beratungen wird dann beendet."
+		},
+		"card": {
+			"convertFirstHint": "Damit du dein Gespräch behältst, legst du zuerst ein Konto an. Danach wählst du die Beratungsstelle."
 		}
 	},
 	"calls": {
@@ -2885,19 +2960,23 @@
 		"card": {
 			"headline": "Ein Link direkt zu dir",
 			"text": "Wer den Link öffnet, landet ohne Umweg bei dir – im Chat, im Audio- oder im Videoanruf.",
-			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut."
+			"createFailed": "Der Link konnte nicht erstellt werden. Bitte versuche es erneut.",
+			"nameHint": "Z. B. „Termin Frau M.“ – so findest du den Link in deiner Übersicht wieder.",
+			"scheduledAtIncomplete": "Bitte gib Datum und Uhrzeit vollständig ein oder leere das Feld."
 		},
 		"share": {
-			"title": "Dein Direktlink ist bereit",
-			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir."
+			"title": "Deine Direkteinladung ist bereit",
+			"description": "Teile Link oder QR-Code. Jede Person bekommt ein eigenes Gespräch mit dir.",
+			"descriptionAppointment": "Teile Link oder QR-Code. Alle, die ihn öffnen, treffen sich mit dir in einem gemeinsamen Gespräch zum Termin.",
+			"descriptionJoin": "Teile Link oder QR-Code. Wer ihn öffnet, kommt in dieses Gespräch dazu."
 		},
 		"entry": {
 			"haveAccount": "Du hast schon ein Konto? Anmelden",
 			"joinFailed": "Das hat nicht geklappt. Bitte versuche es erneut."
 		},
 		"page": {
-			"loadFailed": "Deine Direktlinks konnten nicht geladen werden.",
-			"emptyText": "Einen Direktlink erstellst du unter „Chat erstellen“. Er erscheint danach hier.",
+			"loadFailed": "Deine Direkteinladungen konnten nicht geladen werden.",
+			"emptyText": "Eine Direkteinladung erstellst du unter „Chat erstellen“. Sie erscheint danach hier.",
 			"toggleFailed": "Der Link konnte nicht umgeschaltet werden. Bitte versuche es erneut."
 		},
 		"edit": {
@@ -2925,5 +3004,160 @@
 			"title": "Wir konnten dein Konto nicht prüfen",
 			"text": "Deine Nachricht ist noch nicht gesendet und bleibt im Eingabefeld. Bitte prüfe deine Verbindung und sende sie erneut."
 		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"description": "Wer den Link öffnet, kommt direkt zu dir. Ein Termin ist optional.",
+			"withoutAppointmentHint": "Ohne Termin bekommt jede Person ein eigenes Gespräch. Der Link gilt, bis du ihn löschst.",
+			"knockHint": "Du lässt jede Person selbst herein. Das lässt sich im Anruf ändern.",
+			"newPerson": {
+				"hint": "Diese Person hat noch kein Gespräch mit dir. Im nächsten Schritt erstellst du eine Direkteinladung mit diesem Termin."
+			},
+			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
+			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender.",
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen."
+		},
+		"overview": {
+			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",
+			"noUpcoming": "Keine anstehenden Termine. Gib einer Direkteinladung ein Datum, oder lege in einem Gespräch über ⋮ einen Termin an."
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Dein Termin",
+				"chatNow": "Schreiben kannst du schon jetzt."
+			},
+			"expired": {
+				"text": "Dieser Link gilt nicht mehr. Frag einen neuen an – deine Beratungsperson wird benachrichtigt.",
+				"sent": "Anfrage gesendet. Du bekommst einen neuen Link, sobald deine Beratungsperson ihn schickt.",
+				"failed": "Die Anfrage hat nicht geklappt. Bitte versuch es erneut.",
+				"signedOut": "Dieser Link gilt nicht mehr. Einen neuen Link kannst du anfragen, wenn du angemeldet bist. Ohne Anmeldung wende dich bitte direkt an deine Beratungsperson."
+			},
+			"access": {
+				"guestsOnly": "Dieser Link ist nur für Gäste. Bitte öffne ihn in einem Fenster, in dem du nicht angemeldet bist.",
+				"accountsOnly": "Für diesen Link brauchst du ein Konto. Bitte melde dich an oder registriere dich."
+			},
+			"roomNotEncrypted": "Diese Einladung kann gerade nicht genutzt werden, weil das Gespräch nicht verschlüsselt ist. Bitte wende dich an die Beraterin oder den Berater.",
+			"roomUnavailable": "Die Unterhaltung ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.",
+			"consent": {
+				"description": "Bitte stimme der Datenschutzerklärung der Beratungsstelle zu, bevor du das Gespräch betrittst. Jede Person stimmt für sich selbst zu.",
+				"rejected": "Ohne deine Zustimmung kannst du dieses Gespräch nicht betreten. Du kannst jederzeit noch zustimmen."
+			}
+		},
+		"notice": {
+			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
+		},
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung."
+	},
+	"calendar": {
+		"grip": {
+			"tooManyDays": "Zu viele eigene Tage: höchstens {{max}}. Lösch ältere Ausnahmen."
+		},
+		"scopeHint": {
+			"AGENCY": "Du siehst die Kalender deiner Beratungsstelle. Das legt dein Träger fest.",
+			"TENANT": "Du siehst die Kalender aller Beratungsstellen deines Trägers. Das legt dein Träger fest.",
+			"PLATFORM": "Du siehst die Kalender aller Beratenden der Plattform. Das legt dein Träger fest."
+		},
+		"dialog": {
+			"note": "Notiz (nur für dich sichtbar)",
+			"description": "Wähle Tag, Uhrzeit, Art und die Beratung, zu der der Termin gehört."
+		},
+		"details": {
+			"busyHint": "Aus deinem eigenen Kalender übernommen. ORISO kennt nur die Zeit.",
+			"colleagueHint": "Von Kolleg:innen siehst du nur Zeit und Art."
+		},
+		"syncDialog": {
+			"description": "Deine ORISO-Termine in Outlook, Google oder Apple Kalender – und belegte Zeiten von dort zurück.",
+			"feedTitle": "In deinem Kalender abonnieren",
+			"feedText": "Füge diesen Link in deinem Kalender als Abonnement hinzu. Er zeigt nur „ORISO-Termin“ und die Uhrzeit, keine Namen.",
+			"resetText": "Der alte Link funktioniert sofort nicht mehr. Abonniere danach den neuen Link in deinem Kalender.",
+			"preview": "So erscheint ein Termin in deinem Kalender",
+			"importText": "Füge die private ICS-Adresse deines Outlook- oder Google-Kalenders ein. ORISO übernimmt nur, wann du belegt bist – keine Titel und keine Teilnehmenden.",
+			"importError": "Die Adresse konnte nicht gelesen werden. Bitte prüfe den Link."
+		},
+		"saveFailed": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+		"restoreFailed": "Die Sperrzeit wurde gelöscht und konnte nicht wiederhergestellt werden. Speichere die Serie noch einmal, um die Zeit wieder zu sperren.",
+		"proposal": {
+			"title": "Dein Vorschlag für „{{title}}“",
+			"requestLabel": "{{name}} schlägt vor, deinen Termin {{from}} auf {{to}} zu verschieben",
+			"requestHint": "Bis du antwortest, bleibt der Termin, wo er ist."
+		},
+		"settings": {
+			"switcherHint": "Wird für dich gespeichert."
+		},
+		"slotMenu": {
+			"outsideHours": "Außerhalb deiner Arbeitszeit."
+		},
+		"split": {
+			"empty": "Blende Kalender von Kolleg:innen ein, um deinen Tag daneben zu sehen.",
+			"label": "Dein Tag neben Kolleg:innen"
+		},
+		"workingHours": {
+			"description": "Außerhalb dieser Zeiten ist dein Kalender schattiert. Termine bleiben trotzdem möglich."
+		},
+		"holidays": {
+			"chooseHint": "Bitte wähle ein Bundesland."
+		},
+		"people": {
+			"alwaysMine": "Deine Termine siehst du immer."
+		},
+		"entryMenu": {
+			"withYou": "Du und {{name}}"
+		},
+		"consultationHours": {
+			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+		},
+		"appointmentRequest": {
+			"status": "Angefragt · wartet auf dich",
+			"hint": "Bis du antwortest, ist die Zeit vorgemerkt. Ohne Antwort bis zum Beginn verfällt die Anfrage."
+		},
+		"absence": {
+			"description": "Wähle die Tage, an denen du abwesend bist. Ratsuchende sehen in dieser Zeit deine Abwesenheitsnachricht.",
+			"messageHint": "Ratsuchende sehen diese Nachricht, können dir aber weiterhin schreiben.",
+			"effect": "Nach dem letzten Tag bist du automatisch wieder anwesend. Dieselbe Abwesenheit steht in deinem Profil.",
+			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
+			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
+			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		}
+	},
+	"guestAccountMode": {
+		"entry": {
+			"temporaryNote": "Dein Zugang wird nach dem Gespräch gelöscht. Du kannst ihn später noch behalten.",
+			"accountNote": "Mit einem eigenen Konto kannst du später wiederkommen."
+		},
+		"keep": {
+			"actionDescription": "Dein Konto wird sonst nach dem Gespräch gelöscht.",
+			"text": "Dein Konto wird sonst nach dem Gespräch gelöscht. Leg ein Passwort fest, dann bleibt es erhalten und du kannst dich später wieder anmelden.",
+			"loginName": "Dein Benutzername: {{name}}",
+			"success": "Dein Konto bleibt erhalten.",
+			"recoveryPending": "Dein Konto bleibt erhalten. Um deine Nachrichten auf einem anderen Gerät zu lesen, brauchst du deinen Wiederherstellungsschlüssel.",
+			"error": {
+				"notFound": "Dein Konto wurde nicht gefunden. Bitte melde dich neu an.",
+				"conflict": "Dein Konto wird gerade gelöscht oder ist bereits dauerhaft.",
+				"generic": "Das hat nicht geklappt. Bitte versuch es erneut."
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(du)",
+		"standing": {
+			"hint": "Vom Admin der Beratungsstelle festgelegt. Supervision bleibt immer an: Du kannst die Person wechseln, aber nicht ersatzlos entfernen."
+		},
+		"error": {
+			"add": "Die Person konnte nicht hinzugefügt werden. Bitte versuch es erneut.",
+			"remove": "Die Person konnte nicht entfernt werden. Bitte versuch es erneut.",
+			"replace": "Der Wechsel hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"supervision": {
+			"description": "Supervisor:innen lesen in diesem Fall mit und sprechen mit dir im Supervisions-Chat.",
+			"reasonMissing": "Bitte gib einen Grund an."
+		},
+		"groupChat": {
+			"description": "Sieh, wer diese Gruppe leitet, und teile den Link mit allen, die teilnehmen möchten."
+		}
+	},
+	"deletedAskerSession": {
+		"archiveHint": "Verschiebe den Eintrag ins Archiv, damit er aus deiner Liste und den Aktivitäten verschwindet.",
+		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuche es erneut."
 	}
 }

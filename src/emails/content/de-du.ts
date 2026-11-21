@@ -555,5 +555,19 @@ export const deDu: Record<EmailId, EmailContent> = {
 			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'Vorschlag: Termin verschieben',
+		preheader:
+			'{{proposerName}} schlägt eine neue Zeit für einen deiner Termine vor.',
+		headline: 'Vorschlag: Termin verschieben',
+		paragraphs: [
+			'{{proposerName}} schlägt vor, deinen Termin am {{currentDate}} um {{currentTime}} Uhr auf den {{proposedDate}} um {{proposedTime}} Uhr zu verschieben.',
+			'Du kannst den Vorschlag im Kalender annehmen oder ablehnen. Bis dahin bleibt der Termin, wo er ist.'
+		],
+		cta: { label: 'Im Kalender ansehen', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

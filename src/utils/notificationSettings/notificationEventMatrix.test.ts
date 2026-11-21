@@ -78,6 +78,9 @@ const EXPECTED_ROW: Record<
 	'handover.auto_confirmed': { consultant: 'conversations/handover' },
 	'handover.denied': { consultant: 'conversations/handover' },
 	'call.knock.requested': { consultant: 'timeCritical/call' },
+	'direct_invitation.renewal_requested': {
+		consultant: 'timeCritical/appointment'
+	},
 	'call.invited': {
 		consultant: 'timeCritical/call',
 		asker: 'timeCritical/call'
@@ -131,6 +134,10 @@ const EXPECTED_ROW: Record<
 	'topic_duplicate.started': { consultant: 'conversations/standard' },
 	'service.notice.planned': { consultant: 'conversations/standard' },
 	'session.asker_deleted': { consultant: 'conversations/standard' },
+	'ADDON_NOTIFICATION': {
+		consultant: 'conversations/standard',
+		asker: 'conversations/standard'
+	},
 	'draft.created': { consultant: NONE }
 };
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useRef } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemberAvatarStack, StackMember } from './MemberAvatarStack';
 import { ChatroomMainInteractionIcon } from './ChatroomMainInteractionIcon';
 import './sessionHeader.styles.scss';

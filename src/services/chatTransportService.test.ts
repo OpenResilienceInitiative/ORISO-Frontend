@@ -940,6 +940,139 @@ describe('chatTransportService markRoomAsRead', () => {
 	});
 });
 
+describe('chatTransportService markRoomAsRead dedupe (FE#1802)', () => {
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+	});
+
+	const roomWithEvents = (events: any[], sendReadReceipt: any) => {
+		const client = {
+			getRoom: (roomId: string) =>
+				roomId === ROOM_ID
+					? {
+							getLiveTimeline: () => ({
+								getEvents: () => events
+							})
+						}
+					: null,
+			sendReadReceipt
+		};
+		currentEvents = events;
+		lastClient = client;
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+	};
+	let currentEvents: any[] = [];
+	let lastClient: any = null;
+	const roomWithEventsOnSameClient = (events: any[]) => {
+		currentEvents = events;
+		lastClient.getRoom = (roomId: string) =>
+			roomId === ROOM_ID
+				? {
+						getLiveTimeline: () => ({
+							getEvents: () => currentEvents
+						})
+					}
+				: null;
+	};
+	const event = (id: string, extra: Record<string, unknown> = {}) => ({
+		getId: () => id,
+		...extra
+	});
+
+	it('sends one receipt per latest event, even when asked again while it is in flight', async () => {
+		const first = event('$first');
+		const events: any[] = [first];
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents(events, sendReadReceipt);
+
+		await Promise.all([
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID),
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		]);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		const second = event('$second');
+		events.push(second);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+		expect(sendReadReceipt).toHaveBeenLastCalledWith(second);
+	});
+
+	it('gives a caller that joins an in-flight send the real result of that send', async () => {
+		let failSend!: (error: Error) => void;
+		const sendReadReceipt = vi.fn(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					failSend = reject;
+				})
+		);
+		roomWithEvents([event('$latest')], sendReadReceipt);
+
+		const first = chatTransportService.markRoomAsRead(ROOM_ID);
+		const second = chatTransportService.markRoomAsRead(ROOM_ID);
+		failSend(new Error('offline'));
+
+		await expect(first).resolves.toBe(false);
+		await expect(second).resolves.toBe(false);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+	});
+
+	it('sends the receipt for the newest readable event, not a later one still encrypted or failed', async () => {
+		const readable = event('$readable', {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		});
+		const failed = {
+			getType: () => 'm.room.message',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => true
+		};
+		const stillEncrypted = { getType: () => 'm.room.encrypted' };
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([readable, failed, stillEncrypted], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledWith(readable);
+	});
+
+	it('dedupes by event id and forgets it with the Matrix client (no event kept)', async () => {
+		const sendReadReceipt = vi.fn(() => Promise.resolve());
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+
+		// Same event id, re-read as a new object: no second receipt.
+		roomWithEventsOnSameClient([event('$same')]);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(1);
+
+		// A new client (sign-in again, token refresh) starts from scratch.
+		roomWithEvents([event('$same')], sendReadReceipt);
+		await chatTransportService.markRoomAsRead(ROOM_ID);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries the same event after a failed send', async () => {
+		const latest = event('$latest');
+		const sendReadReceipt = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce(undefined);
+		roomWithEvents([latest], sendReadReceipt);
+
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(false);
+		await expect(
+			chatTransportService.markRoomAsRead(ROOM_ID)
+		).resolves.toBe(true);
+		expect(sendReadReceipt).toHaveBeenCalledTimes(2);
+	});
+});
+
 describe('chatTransportService reply relation (#435)', () => {
 	beforeEach(() => {
 		apiPostMessageEventNotification.mockClear();
@@ -1267,5 +1400,91 @@ describe('explicit feedback metadata after successful Matrix delivery', () => {
 		).rejects.toThrow('Matrix unavailable');
 		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
 		expect(localStorage.length).toBe(0);
+	});
+});
+
+// ORISO-Admin#1518 follow-up: a person removed from a Gesprächskreis must leave
+// its running call even when the removal reached a freshly refreshed Matrix
+// client, whose first sync omits rooms the user was banned from.
+describe('getMyMatrixRoomMembership / onMatrixInitialSync', () => {
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	const clientWith = (
+		rooms: Record<string, string>,
+		synced: boolean
+	): Record<string, unknown> & { emitSync: (state: string) => void } => {
+		const listeners = new Set<(state: string) => void>();
+		return {
+			getRoom: (id: string) =>
+				id in rooms ? { getMyMembership: () => rooms[id] } : null,
+			isInitialSyncComplete: () => synced,
+			on: (_event: string, fn: (state: string) => void) =>
+				listeners.add(fn),
+			off: (_event: string, fn: (state: string) => void) =>
+				listeners.delete(fn),
+			emitSync: (state: string) => listeners.forEach((fn) => fn(state))
+		};
+	};
+
+	it('reports the membership of a known room', () => {
+		const client = clientWith({ [ROOM_ID]: 'ban' }, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'ban'
+		);
+	});
+
+	it('treats a room missing from a completed sync as left', () => {
+		const client = clientWith({}, true);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(chatTransportService.getMyMatrixRoomMembership(ROOM_ID)).toBe(
+			'leave'
+		);
+	});
+
+	it('does not know yet before the first sync', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		expect(
+			chatTransportService.getMyMatrixRoomMembership(ROOM_ID)
+		).toBeNull();
+	});
+
+	it('calls back once when the first sync completes', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn();
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('RECONNECTING');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('PREPARED');
+		client.emitSync('PREPARED');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('also calls back when sync recovers from an error straight to SYNCING', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn(() => true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('ERROR');
+		expect(synced).not.toHaveBeenCalled();
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps waiting while the callback cannot decide yet', () => {
+		const client = clientWith({}, false);
+		setMatrixClientServiceRef({ getClient: () => client } as any);
+		const synced = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
+		chatTransportService.onMatrixInitialSync(synced);
+
+		client.emitSync('PREPARED');
+		client.emitSync('SYNCING');
+		client.emitSync('SYNCING');
+		expect(synced).toHaveBeenCalledTimes(2);
 	});
 });

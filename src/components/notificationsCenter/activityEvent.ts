@@ -1,9 +1,13 @@
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import type { ListItemIdentity } from '../../utils/listItemSelection';
+import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { isGroupChatId } from '../groupChat/consultantGroupChatPath';
 import { getEventDescriptor, isKnownEventType } from './eventDescriptors';
 import { renderEventStrings } from './eventDescriptors/renderEventStrings';
-import { toInterpolationValues } from './notificationActionTarget';
+import {
+	resolveNotificationActionPath,
+	toInterpolationValues
+} from './notificationActionTarget';
 import type { PreviewChannelKind } from './previewCapabilities';
 import { resolvePreviewChannel } from './previewChannel';
 
@@ -80,6 +84,48 @@ export const activityEventCategory = (
 
 export const isMessageActivityEvent = (row: ActivityEventRow): boolean =>
 	activityEventCategory(row) === 'message';
+
+/**
+ * #2226, widened 2026-11-16 (Frank: "die meisten Fenster sichtbar"): every
+ * entry that belongs to a conversation shows it, like a message entry — calls,
+ * appointments, case handovers, supervision changes, "chat finished",
+ * "request accepted". Only an entry that names its room can: without one there
+ * is no conversation to show and the entry keeps its detail view; the same
+ * when this app has not joined that room (see isJoinedMatrixRoom). Showing
+ * never joins a call. The preview's own rules (curtain, session access) still
+ * decide what is visible.
+ */
+/**
+ * #2226 review: whether this app has joined the room, so the preview can show
+ * its messages. An appointment entry may name a room the counsellor's client
+ * does not have yet, or a group that has not started.
+ */
+export const isJoinedMatrixRoom = (roomId: string): boolean =>
+	getMatrixClientService()
+		?.getClient?.()
+		?.getRoom?.(roomId)
+		?.getMyMembership?.() === 'join';
+
+/** Entries that ask for a decision answered in Activity's detail view. */
+const DECISION_EVENT_TYPES = new Set(['case.handover.consent.requested']);
+
+export const showsConversationPreview = (
+	row: ActivityEventRow,
+	isJoinedRoom: (roomId: string) => boolean = isJoinedMatrixRoom
+): boolean => {
+	if (isMessageActivityEvent(row)) return true;
+	if (!isKnownEventType(row?.eventType)) return false;
+	if (getEventDescriptor(row.eventType).belongsToConversation !== true)
+		return false;
+	// A request for the advice seeker's decision keeps its detail view: the
+	// approve/decline buttons live there, the conversation has none (#2275
+	// review).
+	if (DECISION_EVENT_TYPES.has(row.eventType)) return false;
+	// Without a joined room the preview could only say "not available", so the
+	// entry keeps its detail view and "Next notification".
+	const roomId = activityEventRoomId(row);
+	return roomId !== null && isJoinedRoom(roomId);
+};
 
 // Backend ids are positive integers written as digits; anything else is
 // unusable rather than coerced ('1e3', ' 7', '1.5').
@@ -184,3 +230,16 @@ export const activityEventConversation = (
 		threadRootId: channel.threadRootId
 	};
 };
+
+/**
+ * Frank, 2026-11-17: an appointment entry that names no conversation (no
+ * room, path, case or series) leads to the calendar ("Meine Termine"). One
+ * that names its conversation keeps it, joined or not, so a group entry
+ * keeps its join view (#2275 review). Whether a path exists does not depend
+ * on the list it would be built on, hence the empty base path.
+ */
+export const leadsToCalendar = (row: ActivityEventRow): boolean =>
+	isKnownEventType(row?.eventType) &&
+	getEventDescriptor(row.eventType).family === 'appointments' &&
+	activityEventRoomId(row) === null &&
+	resolveNotificationActionPath(row, '') === null;

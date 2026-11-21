@@ -583,7 +583,9 @@ export interface ClosingHandoverContractOptions {
  *
  * The harness announces the new document with a `handover-boot` event on the
  * frame, just before the app's first module would run, so the recording is
- * already watching when the cover appears.
+ * already watching when the cover appears. The old document's cover is
+ * advanced to its end after it starts. The real-time cover and cap are
+ * exercised separately, while the new document plays its real reveal here.
  */
 export const verifyClosingHandover = async (
 	canvasElement: HTMLElement,
@@ -592,12 +594,49 @@ export const verifyClosingHandover = async (
 	const focal: ContractFocal = 'messageField';
 	const frame = await waitFor(() => {
 		const found = options.frame();
-		expect(found?.contentDocument?.readyState).toBe('complete');
+		const source = found?.contentDocument;
+		expect(source?.URL).toBe('about:srcdoc');
+		expect(source?.readyState).toBe('complete');
+		expect(
+			source?.querySelector('[data-closing-handover-source]')
+		).toBeTruthy();
 		return found!;
 	});
 	const oldDocument = frame.contentDocument!;
 	expect(oldDocument.querySelector(ROOT)).toBeNull();
 
+	const press = await waitFor(() => {
+		const found = options.press();
+		expect(found).not.toBeNull();
+		return found!;
+	});
+	const listeners = new AbortController();
+	const once = { once: true, signal: listeners.signal };
+	let sourceCoverFinished = false;
+	let sourceCoverError: unknown;
+	frame.addEventListener(
+		'handover-cover-start',
+		() => {
+			try {
+				const cover = oldDocument.querySelector<HTMLElement>(ROOT);
+				expect(cover?.dataset.closingPhase).toBe('cover');
+				const animations = cover!.getAnimations({ subtree: true });
+				expect(animations.length).toBeGreaterThan(0);
+				for (const animation of animations) {
+					const endTime =
+						animation.effect?.getComputedTiming().endTime;
+					expect(Number.isFinite(endTime)).toBe(true);
+					animation.finish();
+				}
+				sourceCoverFinished = animations.every(
+					(animation) => animation.playState === 'finished'
+				);
+			} catch (error) {
+				sourceCoverError = error;
+			}
+		},
+		once
+	);
 	let next: Document | undefined;
 	let recording: ClosingRecording | undefined;
 	canvasElement.addEventListener(
@@ -607,16 +646,13 @@ export const verifyClosingHandover = async (
 				.document;
 			recording = recordClosing(next, focal);
 		},
-		{ once: true }
+		once
 	);
 
-	const press = await waitFor(() => {
-		const found = options.press();
-		expect(found).not.toBeNull();
-		return found!;
-	});
 	try {
 		await userEvent.click(press);
+		expect(sourceCoverError).toBeUndefined();
+		expect(sourceCoverFinished, 'the source cover finished').toBe(true);
 
 		// The browser really navigated: a different document, not the old one repainted.
 		// The cover plays first, then the page loads: the same margin as every
@@ -740,6 +776,7 @@ export const verifyClosingHandover = async (
 			'the note is used up'
 		).toBeNull();
 	} finally {
+		listeners.abort();
 		recording?.stop();
 	}
 };

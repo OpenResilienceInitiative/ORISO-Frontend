@@ -80,4 +80,25 @@ describe('ChatroomMainInteractionIcon', () => {
 		render(<ChatroomMainInteractionIcon type="nearby" />);
 		expect(screen.queryByRole('button')).toBeNull();
 	});
+
+	it('keeps the active look while pending and ignores clicks', () => {
+		const onAddClick = vi.fn();
+		render(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addPending
+				addLabel="Supervisor verwalten"
+				onAddClick={onAddClick}
+			/>
+		);
+		const button = screen.getByRole('button', {
+			name: 'Supervisor verwalten'
+		});
+		expect(button.getAttribute('aria-disabled')).toBe('true');
+		expect(button.getAttribute('aria-busy')).toBe('true');
+		expect(button.className).not.toContain('--disabled');
+		fireEvent.click(button);
+		expect(onAddClick).not.toHaveBeenCalled();
+	});
 });

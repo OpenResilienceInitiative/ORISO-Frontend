@@ -66,11 +66,15 @@ export const OrisoDatePicker = ({
 		}
 
 		const parsed = dayjs(trimmed, format, true);
-		if (parsed.isValid()) {
-			onChange?.(parsed);
-		} else {
+		const outOfRange =
+			(minDate && parsed.isBefore(minDate, 'day')) ||
+			(maxDate && parsed.isAfter(maxDate, 'day'));
+		if (!parsed.isValid() || outOfRange) {
+			// A refused entry is not left standing: the field only ever shows the date the form holds.
 			setInputText(value ? value.format(format) : '');
+			return;
 		}
+		onChange?.(parsed);
 	};
 
 	const openPicker = (anchor: HTMLElement | null) => {

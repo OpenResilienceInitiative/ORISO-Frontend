@@ -46,3 +46,20 @@
 		}
 	}
 }
+
+/* Planned absence: optional first and last day (ORISO-Frontend#2303). */
+.absenceForm__dates {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	width: 100%;
+	margin: 12px 0 4px;
+}
+
+.absenceForm__status {
+	font-weight: $font-weight-bold;
+}
+
+.absenceForm__error {
+	color: var(--m3-error, #b3261e);
+}

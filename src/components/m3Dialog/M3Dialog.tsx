@@ -3,6 +3,7 @@ import { ReactNode, useId } from 'react';
 import clsx from 'clsx';
 import { CircularProgress, Dialog } from '@mui/material';
 import { CrossMarkIcon } from '../../resources/img/icons';
+import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 import './m3Dialog.styles.scss';
 
 export type M3DialogSeverity = 'info' | 'error';
@@ -118,6 +119,8 @@ export const M3Dialog = ({
 }: M3DialogProps) => {
 	const titleId = useId();
 	const descriptionId = useId();
+	// A standing notice would sit above the dialog and swallow clicks on its buttons.
+	useFloatingSnackbarPresence(open);
 
 	return (
 		<Dialog

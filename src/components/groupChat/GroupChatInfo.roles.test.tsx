@@ -163,6 +163,38 @@ describe('Chat-Info participant roles', () => {
 		room.joined = [];
 	});
 
+	// The server only removes advice seekers (ORISO-Admin#1518 follow-up):
+	// a remove action on a counsellor's row ended in an error.
+	it('offers a moderator the remove action on advice seekers only', async () => {
+		vi.mocked(apiGetChatMembers).mockResolvedValue({
+			members: [
+				{ _id: '@asker:hs', role: 'ADVICE_SEEKER' },
+				{ _id: '@consultant:hs', role: 'CONSULTANT' },
+				{ _id: '@supervisor:hs', role: 'CONSULTANT' }
+			]
+		});
+
+		render(connectedUi(true));
+
+		await waitFor(() =>
+			expect(
+				within(rowOf('Bea')).queryByRole('button', {
+					name: 'groupChat.info.subscribers.menuLabel Bea'
+				})
+			).toBeNull()
+		);
+		expect(
+			within(rowOf('Clara')).queryByRole('button', {
+				name: 'groupChat.info.subscribers.menuLabel Clara'
+			})
+		).toBeNull();
+		expect(
+			within(rowOf('Anna')).getByRole('button', {
+				name: 'groupChat.info.subscribers.menuLabel Anna'
+			})
+		).toBeTruthy();
+	});
+
 	it('still lists everyone by name when the roles cannot be read', async () => {
 		vi.mocked(apiGetChatMembers).mockRejectedValue(new Error('CATCH_ALL'));
 

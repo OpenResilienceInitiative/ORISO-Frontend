@@ -10,12 +10,29 @@ export interface ApiGetAskerSessionListOptions {
 	 * again instead of sharing its answer (OBP 2.1 #3).
 	 */
 	fresh?: boolean;
+	/**
+	 * A failed request rejects instead of resolving to an empty list, so a
+	 * caller that needs the rooms can tell "none" from "not loaded" and
+	 * offer a retry. Never shares a running request.
+	 */
+	strict?: boolean;
 }
 
 export const apiGetAskerSessionList = async (
 	options?: ApiGetAskerSessionListOptions
 ): Promise<any> => {
 	const url = endpoints.askerSessions;
+	if (options?.strict)
+		return fetchData({
+			url: url,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.EMPTY, FETCH_ERRORS.CATCH_ALL]
+		}).catch((error) => {
+			// 204: an asker with no sessions yet. That is an answer, not a
+			// failure (review 4575868929).
+			if (error?.message === FETCH_ERRORS.EMPTY) return { sessions: [] };
+			throw error;
+		});
 
 	// ToDo: We are calling this endpoint on multiple places at the same time which makes the tests flaky
 	// This is a quick fix to prevent multiple calls to the same endpoint and should better be refactored

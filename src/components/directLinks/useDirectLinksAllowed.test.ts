@@ -9,6 +9,7 @@ import {
 	COUNSELLOR_START_PATH,
 	MY_LINKS_SETTINGS_PATH,
 	SETTINGS_OVERVIEW_PATH,
+	useDirectLinkMedia,
 	useDirectLinksAllowed,
 	useDirectLinksAvailability,
 	useDirectLinksRedirect
@@ -90,19 +91,35 @@ describe('useDirectLinksAllowed (#1894)', () => {
 	});
 });
 
+describe('useDirectLinkMedia (#2279)', () => {
+	it('names the media allowed, so a link can follow the Art', () => {
+		given({ featureDirectInviteVideoEnabled: false });
+		expect(
+			renderHook(() => useDirectLinkMedia(true)).result.current
+		).toEqual(['CHAT', 'AUDIO']);
+	});
+
+	it('names none for askers', () => {
+		given({});
+		expect(
+			renderHook(() => useDirectLinkMedia(false)).result.current
+		).toEqual([]);
+	});
+});
+
 describe('useDirectLinksAvailability', () => {
 	it('is not ready while the agencies’ settings load', () => {
 		given(off, [], true);
 		expect(
 			renderHook(() => useDirectLinksAvailability(true)).result.current
-		).toEqual({ allowed: false, ready: false });
+		).toEqual({ allowed: false, media: [], ready: false });
 	});
 
 	it('is ready once they are known', () => {
 		given(off);
 		expect(
 			renderHook(() => useDirectLinksAvailability(true)).result.current
-		).toEqual({ allowed: false, ready: true });
+		).toEqual({ allowed: false, media: [], ready: true });
 	});
 });
 

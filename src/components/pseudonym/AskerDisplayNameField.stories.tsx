@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import {
@@ -37,6 +37,9 @@ export const Editable: Story = {
 	play: async ({ canvasElement }) => {
 		const input = within(canvasElement).getByRole('textbox');
 		await expect(input).toHaveAttribute('autocomplete', 'off');
+		await expect(input).toHaveAttribute('data-1p-ignore', 'true');
+		await expect(input).toHaveAttribute('data-lpignore', 'true');
+		await expect(input).toHaveAttribute('data-bwignore', 'true');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'My session alias');
 		await expect(input).toHaveValue('My session alias');

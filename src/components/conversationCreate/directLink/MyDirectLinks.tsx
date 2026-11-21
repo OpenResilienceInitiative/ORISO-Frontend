@@ -12,6 +12,8 @@ import { Switch } from '../../Switch';
 import { ArtworkImage } from '../ArtworkImage';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { DirectLinkModeChip } from './DirectLinkModeChip';
+import { formatScheduledAt } from './directLinkSchedule';
 import './directLink.styles.scss';
 
 /** How long the check stays on a copied tile. */
@@ -30,6 +32,10 @@ interface MyDirectLinksProps {
 	headerAction?: React.ReactNode;
 	/** #1894: shown instead of the grid while there are no links. */
 	emptyState?: React.ReactNode;
+	/** #2252 / *19: the overview and the calendar name the list "without appointment". */
+	title?: string;
+	/** *19: one line under the title. */
+	description?: string;
 }
 
 /**
@@ -44,9 +50,11 @@ export const MyDirectLinks = ({
 	onCopy = (url) => copyTextToClipboard(url),
 	onEdit,
 	headerAction,
-	emptyState
+	emptyState,
+	title,
+	description
 }: MyDirectLinksProps) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
 	const [copyFailed, setCopyFailed] = useState(false);
 
@@ -75,7 +83,7 @@ export const MyDirectLinks = ({
 			<header className="myDirectLinks__header">
 				<ClockIcon aria-hidden className="myDirectLinks__headerIcon" />
 				<h2 id="myDirectLinksTitle" className="myDirectLinks__title">
-					{t('directLink.list.title')}
+					{title ?? t('directLink.list.title')}
 				</h2>
 				{headerAction && (
 					<div className="myDirectLinks__headerAction">
@@ -83,6 +91,9 @@ export const MyDirectLinks = ({
 					</div>
 				)}
 			</header>
+			{description && (
+				<p className="myDirectLinks__description">{description}</p>
+			)}
 			{copyFailed && (
 				<p role="alert" className="directLinkCopyError">
 					{t('groupChat.shareDialog.copyFailed')}
@@ -121,13 +132,21 @@ export const MyDirectLinks = ({
 								<span className="directLinkTile__name">
 									{link.name}
 								</span>
+								{link.scheduledAt && (
+									<time
+										className="directLinkTile__time"
+										dateTime={link.scheduledAt}
+										data-testid="direct-link-scheduled-at"
+									>
+										{formatScheduledAt(
+											link.scheduledAt,
+											i18n?.language
+										)}
+									</time>
+								)}
 								<span className="directLinkTile__meta">
 									{link.topic}
-									{link.temporary && (
-										<span className="directLinkChip">
-											{t('directLink.temporary')}
-										</span>
-									)}
+									<DirectLinkModeChip link={link} />
 								</span>
 								<div className="directLinkTile__actions">
 									<button

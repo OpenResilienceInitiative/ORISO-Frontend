@@ -10,8 +10,12 @@ vi.mock('../resources/scripts/endpoints', () => ({
 const fetchDataMock = vi.fn();
 vi.mock('./fetchData', () => ({
 	fetchData: (...args: unknown[]) => fetchDataMock(...args),
-	FETCH_METHODS: { GET: 'GET' },
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL', EMPTY: 'EMPTY' }
+	FETCH_METHODS: { GET: 'GET', PUT: 'PUT' },
+	FETCH_ERRORS: {
+		CATCH_ALL: 'CATCH_ALL',
+		EMPTY: 'EMPTY',
+		CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED'
+	}
 }));
 
 const importModule = async () => await import('./apiGetDeletedAskerSessions');
@@ -60,5 +64,42 @@ describe('apiGetDeletedAskerSessions', () => {
 		const { apiGetDeletedAskerSessions } = await importModule();
 
 		await expect(apiGetDeletedAskerSessions()).resolves.toEqual([]);
+	});
+
+	it('asks for the archive tab with archived=true', async () => {
+		fetchDataMock.mockResolvedValue([]);
+		const { apiGetDeletedAskerSessions } = await importModule();
+
+		await apiGetDeletedAskerSessions(undefined, { archived: true });
+
+		expect(fetchDataMock.mock.calls[0][0].url).toBe(
+			'/service/users/sessions/consultants/deleted-askers?archived=true'
+		);
+	});
+});
+
+describe('apiPutDeletedAskerArchive', () => {
+	it('archives the placeholder of the former session', async () => {
+		fetchDataMock.mockResolvedValue({});
+		const { apiPutDeletedAskerArchive } = await import(
+			'./apiPutDeletedAskerArchive'
+		);
+
+		await apiPutDeletedAskerArchive(77);
+
+		expect(fetchDataMock).toHaveBeenCalledWith({
+			url: '/service/users/sessions/consultants/deleted-askers/77/archive',
+			method: 'PUT',
+			responseHandling: ['CATCH_ALL_EXCEPT_UNAUTHORIZED']
+		});
+	});
+
+	it('rejects so the notice can show its error', async () => {
+		fetchDataMock.mockRejectedValue(new Error('404'));
+		const { apiPutDeletedAskerArchive } = await import(
+			'./apiPutDeletedAskerArchive'
+		);
+
+		await expect(apiPutDeletedAskerArchive(77)).rejects.toThrow('404');
 	});
 });

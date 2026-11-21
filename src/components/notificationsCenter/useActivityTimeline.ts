@@ -6,7 +6,7 @@ import {
 } from '../../utils/listItemSelection';
 import {
 	activityEventRouteIdentity,
-	isMessageActivityEvent
+	showsConversationPreview
 } from './activityEvent';
 import { getNextNotificationId } from './notificationQueue';
 
@@ -46,7 +46,8 @@ export interface ActivityTimeline {
  *   the unread filter, where reading would drop it from the list and
  *   cascade-read the feed one selection at a time.
  * - Display, Open and Next all anchor on the same card.
- * - A message card shows its conversation (preview-first, design feedback
+ * - A message card — and since #2226 a call or appointment card that names
+ *   its room — shows its conversation (preview-first, design feedback
  *   2026-07-12); closing it holds while that card stays selected, and a
  *   feed refresh does not reopen it.
  */
@@ -127,7 +128,7 @@ export const useActivityTimeline = ({
 		conversationShown: Boolean(
 			conversationOpen &&
 				selectedEvent &&
-				isMessageActivityEvent(selectedEvent)
+				showsConversationPreview(selectedEvent)
 		),
 		toggleConversation
 	};

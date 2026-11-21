@@ -62,6 +62,7 @@ import {
 } from './useLiveChatAvailabilityLossNotice';
 import { useLiveChatDpaRestrictionNotice } from './useLiveChatDpaRestrictionNotice';
 import { useOpenEnquiryCount } from './useOpenEnquiryCount';
+import { useOpenProposalCount } from './useOpenProposalCount';
 import {
 	ENQUIRY_LIST_PATH,
 	NEW_ENQUIRY_NOTICE_ID,
@@ -73,6 +74,8 @@ export interface NavigationBarProps {
 	routerConfig: any;
 }
 
+/** "Meine Termine": its count is the move proposals waiting (FE#1050). */
+const CALENDAR_PATH = '/booking/events';
 const REGEX_DASH = /\//g;
 const stripLocalePrefix = (label: string) => label.replace(/^\([^)]+\)\s*/, '');
 const hyphenateRailLabel = (label: string, breakAfter: number) => {
@@ -256,6 +259,13 @@ export const NavigationBar = ({
 		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
 	// FE#1435: open enquiries on "Anfragen", visible from every section.
 	const openEnquiryCount = useOpenEnquiryCount(isConsultant);
+	// FE#1050: move proposals waiting for an answer, on "Meine Termine".
+	const openProposalCount = useOpenProposalCount(
+		isConsultant &&
+			(routerConfig?.navigation ?? []).some(
+				(item: { to?: string }) => item?.to === CALENDAR_PATH
+			)
+	);
 	const removeNotificationRef = useRef(
 		notificationsContext?.removeNotification
 	);
@@ -277,8 +287,16 @@ export const NavigationBar = ({
 		'/profile':
 			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
 		'/notifications': visibleUnreadCount,
-		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0
+		[ENQUIRY_LIST_PATH]: openEnquiryCount ?? 0,
+		[CALENDAR_PATH]: openProposalCount ?? 0
 	};
+	/** What the count on an item says, read out with the item's name. */
+	const countKey = (to: string) =>
+		to === ENQUIRY_LIST_PATH
+			? 'sessionList.rail.openEnquiries'
+			: to === CALENDAR_PATH
+				? 'calendar.proposal.navCount'
+				: 'sessionList.rail.unreadCount';
 	const unreadNavTitle = (to: string): string | undefined =>
 		to === '/notifications' && hiddenUnreadInLoadedPages > 0
 			? translate('notifications.displayFilter.badgeHiddenHint', {
@@ -419,21 +437,34 @@ export const NavigationBar = ({
 								const isActive =
 									location.pathname.indexOf(item.to) !== -1;
 								const isHovered = hoveredNavItem === item.to;
-								const unreadCount = Number(
-									pathsToShowUnreadMessageNotification[
-										item.to
-									] || 0
+								const addonBadge = Math.max(
+									0,
+									Number(item.badge) || 0
 								);
-								const showUnreadNav =
-									Object.keys(
-										pathsToShowUnreadMessageNotification
-									).includes(item.to) && unreadCount > 0;
-								const label = translate(item.titleKeys.large);
+								const messageCount = Object.keys(
+									pathsToShowUnreadMessageNotification
+								).includes(item.to)
+									? Number(
+											pathsToShowUnreadMessageNotification[
+												item.to
+											] || 0
+										)
+									: 0;
+								// Unread messages win over an add-on badge on the same item.
+								const showsAddonBadge =
+									messageCount === 0 && addonBadge > 0;
+								const unreadCount = showsAddonBadge
+									? addonBadge
+									: messageCount;
+								const showUnreadNav = unreadCount > 0;
+								const label =
+									item.title ??
+									translate(item.titleKeys.large);
 								const unreadLabel = showUnreadNav
 									? translate(
-											item.to === ENQUIRY_LIST_PATH
-												? 'sessionList.rail.openEnquiries'
-												: 'sessionList.rail.unreadCount',
+											showsAddonBadge
+												? 'addons.badge'
+												: countKey(item.to),
 											{
 												count: unreadCount
 											}
@@ -441,9 +472,10 @@ export const NavigationBar = ({
 									: '';
 								// The Link's aria-label is its whole accessible
 								// name, so the count has to be part of it.
-								const unreadTitle = showUnreadNav
-									? unreadNavTitle(item.to)
-									: undefined;
+								const unreadTitle =
+									showUnreadNav && !showsAddonBadge
+										? unreadNavTitle(item.to)
+										: undefined;
 								const linkLabel = showUnreadNav
 									? [label, unreadLabel, unreadTitle]
 											.filter(Boolean)
@@ -553,7 +585,16 @@ export const NavigationBar = ({
 											handleKeyDownMenu(e, index)
 										}
 										ref={(el) => {
-											ref_menu.current[index] = el;
+											if (el) {
+												ref_menu.current[index] = el;
+											} else {
+												// Items can disappear (add-on apps); keep no stale entries at the end.
+												ref_menu.current.length =
+													Math.min(
+														ref_menu.current.length,
+														index
+													);
+											}
 										}}
 										tabIndex={index === 0 ? 0 : -1}
 									>

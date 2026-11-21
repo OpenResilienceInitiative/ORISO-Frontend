@@ -10,7 +10,7 @@ export type EntryKind = 'group' | 'one-to-one';
 export type TimelineRole = 'counsellor' | 'asker';
 export type TimelineFilter = 'all' | EntryKind;
 
-/** Real API shapes (`ChatOccurrence`, `BookingEventsInterface`), trimmed to what the list needs. */
+/** Real API shapes (`ChatOccurrence`, a conversation's appointment), trimmed to what the list needs. */
 export interface TimelineOccurrence {
 	seriesId: number;
 	occurrenceIndex: number;
@@ -43,6 +43,8 @@ export interface TimelineBooking {
 	askerId?: string;
 	askerName?: string;
 	title?: string;
+	/** FE#2287: the advice seeker asked for this time; the counsellor has not answered. */
+	requested?: true;
 }
 
 export interface TimelineSession {
@@ -78,6 +80,11 @@ export interface FutureEntry {
 	/** The viewer may open the owner-only group settings editor. */
 	canConfigure?: boolean;
 	matrixRoomId?: string;
+	/**
+	 * FE#2287: an advice seeker's request the counsellor has not answered
+	 * yet. Same button, marked "angefragt"; its menu answers or withdraws it.
+	 */
+	requested?: true;
 	/** What the menu actions need from the source record. */
 	occurrence?: {
 		seriesId: number;
@@ -117,6 +124,17 @@ export const hasEnded = (
 	entry: Pick<FutureEntry, 'start' | 'end'>,
 	now: Date
 ): boolean => (entry.end ?? entry.start).getTime() <= now.getTime();
+
+/**
+ * Gone from the future list: an appointment once it has ended, a request
+ * once it has started: unanswered by then it has expired (Frank, 17 Nov).
+ */
+export const isGone = (
+	entry: Pick<FutureEntry, 'start' | 'end' | 'requested'>,
+	now: Date
+): boolean =>
+	hasEnded(entry, now) ||
+	(!!entry.requested && entry.start.getTime() <= now.getTime());
 
 export const buildFutureEntries = ({
 	now,
@@ -182,6 +200,7 @@ export const buildFutureEntries = ({
 			canDuplicate: false,
 			canModerate: session?.canModerate,
 			matrixRoomId: session?.matrixRoomId,
+			...(b.requested ? { requested: true as const } : {}),
 			booking: {
 				id: b.id,
 				appointmentId: b.appointmentId,
@@ -192,7 +211,7 @@ export const buildFutureEntries = ({
 		};
 	});
 	return [...fromOccurrences, ...fromBookings]
-		.filter((entry) => !hasEnded(entry, now))
+		.filter((entry) => !isGone(entry, now))
 		.sort((a, b) => a.start.getTime() - b.start.getTime());
 };
 
@@ -343,11 +362,40 @@ const COMING_SOON = '(kommt bald)';
 export const entryMenu = (
 	entry: Pick<
 		FutureEntry,
-		'kind' | 'canDuplicate' | 'canModerate' | 'canConfigure'
+		'kind' | 'canDuplicate' | 'canModerate' | 'canConfigure' | 'requested'
 	>,
 	role: TimelineRole
 ): EntryMenuItem[] => {
 	const isGroup = entry.kind === 'group';
+	const request = entry.kind === 'one-to-one' && entry.requested === true;
+	if (request && role === 'asker') {
+		// FE#2287: the cancel entry withdraws the advice seeker's request.
+		return [
+			{
+				key: 'cancel',
+				title: 'Anfrage zurückziehen',
+				description: 'Diese Terminanfrage zurückziehen.',
+				disabled: false
+			}
+		];
+	}
+	if (request && entry.canModerate !== false) {
+		// FE#2287: a request is answered, not moved or cancelled.
+		return [
+			{
+				key: 'confirm',
+				title: 'Termin bestätigen',
+				description: 'Die angefragte Zeit wird verbindlich.',
+				disabled: false
+			},
+			{
+				key: 'decline',
+				title: 'Termin ablehnen',
+				description: 'Die Anfrage wird abgelehnt.',
+				disabled: false
+			}
+		];
+	}
 	if (role === 'asker') {
 		return [
 			{

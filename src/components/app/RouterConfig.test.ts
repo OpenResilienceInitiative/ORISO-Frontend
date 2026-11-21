@@ -32,27 +32,12 @@ vi.mock('../conversationCreate/CreateConversationView', () => ({
 vi.mock('../groupChat/GroupChatInfo', () => ({ GroupChatInfo: Stub }));
 vi.mock('../tools/ToolsList', () => ({ ToolsList: Stub }));
 vi.mock('../../containers/overview/overview', () => ({ OverviewPage: Stub }));
-vi.mock('../../containers/bookings/components/Booking/booking', () => ({
-	Booking: Stub
-}));
-vi.mock(
-	'../../containers/bookings/components/BookingCancellation/bookingCancellation',
-	() => ({ BookingCancellation: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingEvents/bookingEvents',
-	() => ({ BookingEvents: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingReschedule/bookingReschedule',
-	() => ({ BookingReschedule: Stub })
-);
 vi.mock('../notificationsCenter/NotificationsCenter', () => ({
 	NotificationsCenter: Stub
 }));
 vi.mock('../draftsCenter/DraftsCenter', () => ({ DraftsCenter: Stub }));
-vi.mock('../directLinks/MyDirectLinksPanel', () => ({
-	MyDirectLinksPage: Stub
+vi.mock('../directLinks/DirectLinksMoved', () => ({
+	DirectLinksMoved: Stub
 }));
 vi.mock('../../resources/img/icons/overview_outline.svg', () => ({
 	ReactComponent: Stub
@@ -133,11 +118,11 @@ describe('RouterConfigConsultant navigation', () => {
 	});
 });
 
-describe('"My direct links" clock entry (#1894)', () => {
-	it('is a rail item with its own page route for counsellors', () => {
+describe('"My direct links" moved into the calendar list (*19)', () => {
+	it('has no rail item any more, the old route stays for bookmarks', () => {
 		const routerConfig = RouterConfigConsultant(settings);
 
-		expect(routerConfig.navigation.map((item) => item.to)).toContain(
+		expect(routerConfig.navigation.map((item) => item.to)).not.toContain(
 			'/direct-links'
 		);
 		expect(routerConfig.profileRoutes).toEqual(

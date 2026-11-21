@@ -1,9 +1,20 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vite-plus/test';
-import { Overlay } from './Overlay';
+import { useState } from 'react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
+
+import { ModalContext } from '../../globalState';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
+import { Overlay } from './Overlay';
 
 vi.mock('focus-trap-react', () => ({
 	default: ({ children }: { children: React.ReactNode }) => <>{children}</>
@@ -58,4 +69,57 @@ it('shows a changed item in the same commit that renders it', async () => {
 	});
 	await Promise.resolve().then(showFailure);
 	expect(await firstCommit).toContain('refresh failed');
+});
+
+const Modals = ({ children }: { children: React.ReactNode }) => {
+	const [overlays, setOverlays] = useState<{ id: string }[]>([]);
+	const [value] = useState(() => ({
+		addOverlay: (overlay) => setOverlays((all) => [...all, overlay]),
+		removeOverlay: (id) =>
+			setOverlays((all) => all.filter((overlay) => overlay.id !== id))
+	}));
+	return (
+		<ModalContext.Provider value={{ ...value, overlays } as never}>
+			{children}
+		</ModalContext.Provider>
+	);
+};
+
+const Screen = ({ dialogOpen }: { dialogOpen: boolean }) => (
+	<Modals>
+		<M3Snackbar message="Standing" testId="standing" yieldToOthers />
+		{dialogOpen && (
+			<Overlay item={{ headline: 'End this anonymous chat?' }} />
+		)}
+	</Modals>
+);
+
+describe('Overlay', () => {
+	beforeEach(() => {
+		const root = document.createElement('div');
+		root.id = 'overlay';
+		document.body.appendChild(root);
+	});
+
+	afterEach(() => {
+		cleanup();
+		document.getElementById('overlay')?.remove();
+	});
+
+	// A standing notice sits above the dialog and swallows clicks on its buttons.
+	it('makes a standing notice step aside until the dialog closes', async () => {
+		const { rerender } = render(<Screen dialogOpen={false} />);
+		expect(screen.getByTestId('standing')).toBeTruthy();
+
+		rerender(<Screen dialogOpen />);
+		expect(
+			await screen.findByText('End this anonymous chat?')
+		).toBeTruthy();
+		await waitFor(() =>
+			expect(screen.queryByTestId('standing')).toBeNull()
+		);
+
+		rerender(<Screen dialogOpen={false} />);
+		expect(await screen.findByTestId('standing')).toBeTruthy();
+	});
 });

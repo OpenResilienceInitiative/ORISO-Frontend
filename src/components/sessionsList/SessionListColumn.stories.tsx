@@ -46,7 +46,9 @@ function DemoCard({
 	postcode,
 	user,
 	subject,
-	team = false
+	team = false,
+	groupStart = true,
+	groupEnd = true
 }: {
 	active?: boolean;
 	beforeActive?: boolean;
@@ -56,6 +58,10 @@ function DemoCard({
 	user: string;
 	subject: string;
 	team?: boolean;
+	/** Grouping flags `SessionsList` sets outside the rail: inactive rows
+	 *  join into one block, the active row stands out as its own card. */
+	groupStart?: boolean;
+	groupEnd?: boolean;
 }) {
 	const displayName = formatMessagePersonName(undefined, user);
 
@@ -65,7 +71,10 @@ function DemoCard({
 				'sessionsListItem',
 				active && 'sessionsListItem--active',
 				beforeActive && 'sessionsListItem--beforeActive',
-				afterActive && 'sessionsListItem--afterActive'
+				afterActive && 'sessionsListItem--afterActive',
+				'sessionsListItem--grouped',
+				groupStart && 'sessionsListItem--groupStart',
+				groupEnd && 'sessionsListItem--groupEnd'
 			]
 				.filter(Boolean)
 				.join(' ')}
@@ -198,6 +207,8 @@ function FullColumnPlayground() {
 				/>
 				<DemoCard
 					active
+					groupStart={false}
+					groupEnd={false}
 					topic="Familienberatung"
 					postcode="12345"
 					user="testuser@example.invalid"
@@ -218,9 +229,9 @@ function FullColumnPlayground() {
 const meta: Meta = {
 	title: 'Components/Session/List/Session list column',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
@@ -478,12 +489,14 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 					) : (
 						<>
 							<DemoCard
+								groupEnd={false}
 								topic="Schuldnerberatung"
 								postcode="55116"
 								user="sonnenblume_47"
 								subject="Mein Vertrag läuft im Oktober aus."
 							/>
 							<DemoCard
+								groupStart={false}
 								topic="Suchtberatung"
 								postcode="80331"
 								user="stiller_fuchs_ali"

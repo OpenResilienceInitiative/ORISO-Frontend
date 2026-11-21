@@ -29,7 +29,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Desktop Activity rail reuses the conversation pills and resize handle. Width is saved in this browser. Drag, double-click or hold the handle to switch; Home/End resize and Up/Down scroll. Below 1200px the normal grouped cards remain.'
+					'Desktop Activity rail reuses the conversation pills and resize handle. Width is saved in this browser. Drag, double-click or hold the handle to switch; Home/End resize and Up/Down scroll. Below 900px the normal grouped cards remain.'
 			}
 		}
 	},

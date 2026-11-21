@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
+import {
+	ReactNode,
+	useEffect,
+	useId,
+	useRef,
+	useSyncExternalStore
+} from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -161,14 +167,14 @@ export interface M3SnackbarProps {
 	 */
 	containerSx?: SxProps<Theme>;
 	/**
-	 * Floating only. A standing notice steps aside while another floating snackbar is open — M3
-	 * shows one at a time, and both would share the same spot — and returns when it closes.
+	 * Floating only. A standing notice steps aside while another floating snackbar or a dialog is
+	 * open — M3 shows one at a time, and both would share the same spot — and returns when it closes.
 	 */
 	yieldToOthers?: boolean;
 	testId?: string;
 }
 
-/* Floating snackbars that are open and do not yield. */
+/* Open dialogs and floating snackbars that do not yield. */
 const openSnackbars = new Set<string>();
 const openSnackbarListeners = new Set<() => void>();
 const notifyOpenSnackbars = () => openSnackbarListeners.forEach((l) => l());
@@ -184,7 +190,8 @@ const anotherSnackbarOpen = () => openSnackbars.size > 0;
  * Tells standing notices (`yieldToOthers`) that something else now occupies the
  * snackbar spot. Every floating snackbar calls it; the stacked host
  * (`M3SnackbarHost`) calls it while it holds anything, so the two systems can
- * never paint over each other.
+ * never paint over each other. A dialog (`Overlay`, `M3Dialog`) calls it while it is open,
+ * because a notice would rest above the dialog's buttons and take their clicks.
  */
 export const useFloatingSnackbarPresence = (active: boolean) => {
 	const id = useId();
@@ -257,10 +264,45 @@ export const M3Snackbar = ({
 		() => false
 	);
 	const shown = open && !(yieldToOthers && othersOpen);
+	const actionRef = useRef<HTMLButtonElement>(null);
+	// The action of a yielding notice usually opens the dialog it then yields to. While the
+	// notice is away its button is unmounted, so the dialog's focus restore has no target
+	// on close and focus would fall to <body>. Remember it and hand focus back on return.
+	const returnFocusToAction = useRef(false);
+	useEffect(() => {
+		if (!shown || !returnFocusToAction.current) return undefined;
+		let frame = 0;
+		const deadline = Date.now() + 1000;
+		const restore = () => {
+			const active = document.activeElement;
+			const lost =
+				!active || active === document.body || !active.isConnected;
+			const insideDialog = !!active?.closest?.(
+				'[role="dialog"], .MuiModal-root'
+			);
+			if (lost && actionRef.current) {
+				returnFocusToAction.current = false;
+				actionRef.current.focus();
+				return;
+			}
+			if ((!lost && !insideDialog) || Date.now() > deadline) {
+				// Somebody else already took focus (or the dialog stays): leave it alone.
+				returnFocusToAction.current = false;
+				return;
+			}
+			frame = requestAnimationFrame(restore);
+		};
+		frame = requestAnimationFrame(restore);
+		return () => cancelAnimationFrame(frame);
+	}, [shown]);
 	const actionButton = action && (
 		<Button
+			ref={actionRef}
 			variant="text"
-			onClick={action.onClick}
+			onClick={(event) => {
+				if (yieldToOthers) returnFocusToAction.current = true;
+				action.onClick?.(event);
+			}}
 			data-testid={action.testId ?? `${testId}-action`}
 			sx={m3SnackbarActionSx}
 		>

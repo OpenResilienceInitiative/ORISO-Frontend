@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useRef, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
@@ -17,6 +17,7 @@ import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
@@ -260,7 +261,8 @@ const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
 	name: draft.topic,
 	topic: draft.topic,
 	medium: draft.medium,
-	temporary: draft.temporary,
+	temporary: draft.guestAccountMode !== 'PERMANENT',
+	guestAccountMode: draft.guestAccountMode,
 	active: true,
 	url: `https://app.oriso.org/l/${['k7m2qx', 'p4tz9a', 'w3nd8r'][index % 3]}`
 });
@@ -370,11 +372,11 @@ const FormatPicker = ({
 								/>
 							</div>
 						) : (
-							<div className="conversationCreate__cards">
+							<FormatCardCarousel>
 								<CircleCard menuOpen={menuOpen} />
 								<InternaCard preset="empty" />
 								{directLinkCard}
-							</div>
+							</FormatCardCarousel>
 						)}
 					</div>
 				</div>
@@ -597,7 +599,10 @@ const SAMPLE_LINKS: DirectLink[] = [
 const createVideoLink = async (canvasElement: HTMLElement) => {
 	const canvas = within(canvasElement);
 	const body = within(document.body);
-	const heading = await canvas.findByRole('heading', { name: 'Direktlink' });
+	// #2252: "Direktlink" is now called "Direkteinladung".
+	const heading = await canvas.findByRole('heading', {
+		name: 'Direkteinladung'
+	});
 	const card = within(heading.closest('section') as HTMLElement);
 	// The split button carries the label on both of its halves.
 	await userEvent.click(
@@ -607,20 +612,20 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 		await body.findByRole('option', { name: 'Schulden' })
 	);
 	await userEvent.click(card.getByRole('button', { name: /Videoanruf/ }));
-	// Calls default to a temporary account.
+	// Calls default to the guest choosing the account (UserService#1662).
 	await expect(
-		card.getByRole('switch', { name: 'Temporäres Konto' })
-	).toBeChecked();
+		card.getByRole('button', { name: 'Gast wählt' })
+	).toBeInTheDocument();
 	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
 	const dialog = await body.findByTestId('direct-link-share-dialog');
 	await expect(
-		await within(dialog).findByAltText('QR-Code zum Direktlink')
+		await within(dialog).findByAltText('QR-Code zur Direkteinladung')
 	).toBeInTheDocument();
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Fertig' })
 	);
 	const list = await canvas.findByRole('region', {
-		name: 'Meine Direktlinks'
+		name: 'Meine Direkteinladungen'
 	});
 	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
 };
@@ -649,10 +654,87 @@ export const FormatPickerDesktopTopicMenu: Story = {
 };
 
 export const FormatPickerMobile: Story = {
+	globals: { viewport: { value: 'phone390' } },
 	render: () => (
 		<MobileShell>
 			<FormatPicker compact />
 		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		// Phone: the rows render (as in the app below 900px) and the intro
+		// paragraph above them is dropped; the rows' own subtitles say it.
+		const subtitle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.conversationCreate__picker--compact .conversationCreate__subtitle'
+			);
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		await expect(getComputedStyle(subtitle).display).toBe('none');
+	}
+};
+
+/**
+ * The cards keep their size and the row scrolls: in a pane too narrow for all
+ * three, the round arrows below move the row one card at a time and are
+ * disabled at the ends (Figma 7633-34734).
+ */
+export const FormatCardsScrollNarrow: Story = {
+	name: 'Format cards — scroll row with arrow buttons (narrow pane)',
+	render: () => (
+		<div style={{ background: '#e9e6e6', padding: 16 }}>
+			<div
+				style={{
+					background: '#fcf9f9',
+					borderRadius: 32,
+					margin: '0 auto',
+					maxWidth: 720,
+					overflow: 'hidden'
+				}}
+			>
+				<FormatPicker compact={false} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const previous = await canvas.findByRole('button', {
+			name: /Vorheriges Gesprächsformat|Previous conversation format|cardsPrevious/
+		});
+		const next = await canvas.findByRole('button', {
+			name: /Nächstes Gesprächsformat|Next conversation format|cardsNext/
+		});
+		await expect(previous).toBeDisabled();
+		await expect(next).toBeEnabled();
+		await userEvent.click(next);
+		await waitFor(() => expect(previous).toBeEnabled());
+		const scroller = canvasElement.querySelector(
+			'.formatCardCarousel__scroller'
+		) as HTMLElement;
+		await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
+		// Keyboard: the arrow is a real button, Enter moves the row back.
+		previous.focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => expect(previous).toBeDisabled());
+		// No label in the cards is cut off.
+		const cut = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.formatCard button, .formatCard [class*="__label"]'
+			)
+		).filter((el) => el.scrollWidth > el.clientWidth);
+		await expect(cut).toHaveLength(0);
+	}
+};
+
+/** Phone width: one card plus a peek of the next one, arrows underneath. */
+export const FormatCardsScrollPhone: Story = {
+	name: 'Format cards — scroll row (phone, 390px)',
+	render: () => (
+		// Edge to edge, like the app on a phone: the panel's own 12px padding
+		// leaves 366px, enough for one 360px card.
+		<div style={{ background: '#fcf9f9', margin: '0 auto', maxWidth: 390 }}>
+			<FormatPicker compact={false} />
+		</div>
 	)
 };
 
@@ -683,7 +765,7 @@ export const DirectLinkFlowMobile: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(
 			await within(canvasElement).findByRole('button', {
-				name: /Direktlink/
+				name: /Direkteinladung/
 			})
 		);
 		await createVideoLink(canvasElement);

@@ -18,6 +18,9 @@ import {
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 
 const dialogProps = vi.fn();
+const navigate = vi.fn();
+
+vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -61,7 +64,8 @@ const recommendation = (note: string | null = null) => ({
 const renderBody = (
 	notice: React.ComponentProps<typeof FurtherCounsellingNoticeBody>['notice'],
 	viewerIsAsker: boolean,
-	messageId = 'msg-1'
+	messageId = 'msg-1',
+	viewerIsAnonymous = false
 ) =>
 	render(
 		<TopicsContext.Provider
@@ -73,6 +77,7 @@ const renderBody = (
 			<FurtherCounsellingNoticeBody
 				notice={notice}
 				viewerIsAsker={viewerIsAsker}
+				viewerIsAnonymous={viewerIsAnonymous}
 				messageId={messageId}
 			/>
 		</TopicsContext.Provider>
@@ -188,5 +193,32 @@ describe('FurtherCounsellingNoticeBody', () => {
 			screen.getByText('furtherCounselling.duplicate.ended[Schulden]')
 		).toBeTruthy();
 		expect(screen.queryByRole('button')).toBeNull();
+	});
+	it('sends an anonymous live-chat person to the account conversion first (FE#2251)', () => {
+		renderBody(recommendation('Schuldnerberatung'), true, 'msg-1', true);
+		expect(screen.getByText('Schuldnerberatung')).toBeTruthy();
+		expect(
+			screen.getByText('furtherCounselling.card.convertFirstHint')
+		).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		);
+		expect(navigate).toHaveBeenCalledWith('/live-chat/convert', {
+			state: { topicId: 7 }
+		});
+		// The request dialog opens after the conversion, never in the live chat.
+		expect(dialogProps).not.toHaveBeenCalled();
+		expect(screen.queryByTestId('new-request-dialog')).toBeNull();
+	});
+
+	it('gives an anonymous person who is not the addressee no button', () => {
+		renderBody(recommendation(), false, 'msg-1', true);
+		expect(
+			screen.queryByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		).toBeNull();
 	});
 });

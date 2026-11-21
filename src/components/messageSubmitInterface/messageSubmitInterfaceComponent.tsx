@@ -98,9 +98,11 @@ import {
 	groupAudienceOptions,
 	resolveMentionCandidates,
 	roomMentionMemberIds,
+	roomMemberMentionDirectory,
 	type AudienceKind,
 	type AudienceOption
 } from './audienceOptions';
+import { mentionDirectorySource } from './mentionDirectorySource';
 import {
 	AUTHORITIES,
 	getContact,
@@ -122,6 +124,11 @@ import {
 } from '../../api';
 import { ComposerContextBar } from './ComposerContextBar';
 import {
+	ComposerPendingQuotes,
+	CONTEXT_BAR_STEP_PX,
+	type ComposerPendingQuote
+} from './ComposerPendingQuotes';
+import {
 	MessageSubmitInfo,
 	MessageSubmitInfoInterface
 } from './MessageSubmitInfo';
@@ -137,13 +144,10 @@ import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
 } from './composerMessageSnapshot';
-import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
 import './emojiPicker.styles';
 import './messageSubmitInterface.styles';
 import clsx from 'clsx';
 import { mobileListView } from '../app/navigationHandler';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
 import {
 	SUPERVISOR_FEEDBACK_PREFIX,
@@ -313,6 +317,19 @@ export interface MessageSubmitInterfaceComponentProps {
 	 */
 	replyTo?: { eventId: string; author: string; text: string } | null;
 	onCancelReply?: () => void;
+	/**
+	 * Selection reply: answers to marked passages collected for the next send.
+	 * Each one shows as its own numbered reply bar above the editor.
+	 */
+	pendingQuotes?: ComposerPendingQuote[];
+	onRemovePendingQuote?: (id: string) => void;
+	/**
+	 * Selection reply: the composer's send while answers are collected. All
+	 * collected passages and the typed text (markdown, '' when none) leave
+	 * as ONE message; the send button is ready even while the editor is
+	 * empty.
+	 */
+	onSendPendingQuotes?: (typedText: string) => void;
 	/**
 	 * Editing (m.replace, #435): when set, the composer prefills this
 	 * message's text and the next send edits it in place instead of sending
@@ -505,6 +522,9 @@ export const MessageSubmitInterfaceComponent = ({
 	threadParentPreview,
 	replyTo,
 	onCancelReply,
+	pendingQuotes,
+	onRemovePendingQuote,
+	onSendPendingQuotes,
 	editingMessage,
 	onCancelEdit,
 	mobileUnreadCount = 0,
@@ -619,6 +639,19 @@ export const MessageSubmitInterfaceComponent = ({
 		reason: Extract<AttachmentFailureReason, 'tooLarge' | 'format'>;
 	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	// An archived chat re-opening before a send. Its own flag: unlike
+	// isRequestInProgress it must not pause draft saving, since the user
+	// can keep typing (or switch chats) meanwhile.
+	const [isDearchiving, setIsDearchiving] = useState(false);
+	const dearchivingRef = useRef(false);
+	const holdWhileDearchiving = (pending: Promise<unknown>) => {
+		dearchivingRef.current = true;
+		setIsDearchiving(true);
+		return pending.finally(() => {
+			dearchivingRef.current = false;
+			setIsDearchiving(false);
+		});
+	};
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<AttachmentUploadControl | null>(null);
 	const [editorState, setEditorState] = useState(EditorState.createEmpty());
@@ -637,7 +670,6 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession.item.status === STATUS_ARCHIVED
 	);
 	const [isTypingActive, setIsTypingActive] = useState(activeSession.isGroup);
-	const [showAppointmentButton, setShowAppointmentButton] = useState(false);
 	const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] =
 		useState(0);
@@ -1096,16 +1128,6 @@ export const MessageSubmitInterfaceComponent = ({
 		resizeTextarea();
 	}, [attachmentSelected]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	useEffect(() => {
-		if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
-			return;
-		}
-
-		if (activeSession.isEmptyEnquiry) {
-			setShowAppointmentButton(userData.appointmentFeatureEnabled);
-		}
-	}, [activeSession?.isEmptyEnquiry, userData]);
-
 	const removeSelectedAttachment = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
 		if (attachmentInput) {
@@ -1127,6 +1149,25 @@ export const MessageSubmitInterfaceComponent = ({
 		setVoicePreviewUrl(null);
 		removeSelectedAttachment();
 	}, [removeSelectedAttachment, voicePreviewUrl]);
+
+	// The card's file right now. A send that settles late clears the card
+	// only if it still shows what that send took (or nothing): a file staged
+	// meanwhile, maybe in another chat, stays.
+	const attachmentSelectedRef = useRef<File | null>(null);
+	attachmentSelectedRef.current = attachmentSelected;
+	// A refused file shows on the card too, without being selected.
+	const attachmentRejectionRef = useRef(attachmentRejection);
+	attachmentRejectionRef.current = attachmentRejection;
+	const cleanupSentAttachment = useCallback(
+		(sent: File | null) => {
+			const staged = attachmentSelectedRef.current;
+			if ((staged && staged !== sent) || attachmentRejectionRef.current) {
+				return;
+			}
+			cleanupAttachment();
+		},
+		[cleanupAttachment]
+	);
 
 	const cleanupVoiceRecorder = useCallback(() => {
 		if (voiceRecordingTimerRef.current) {
@@ -1850,7 +1891,8 @@ export const MessageSubmitInterfaceComponent = ({
 											caption: message,
 											mentionedUserIds:
 												extractMentionedUserIds(
-													composerRef.current?.getHTML()
+													rawMessage ??
+														composerRef.current?.getHTML()
 												)
 										}
 									: {}),
@@ -1916,7 +1958,11 @@ export const MessageSubmitInterfaceComponent = ({
 				// before it is cleared by handleMessageSendSuccess.
 				const mentionedUserIds = retryOfId
 					? retryMentionedUserIds || []
-					: extractMentionedUserIds(composerRef.current?.getHTML());
+					: // The text that is sent, not the composer: it may show
+						// another chat by now (archived chat re-opening).
+						extractMentionedUserIds(
+							rawMessage ?? composerRef.current?.getHTML()
+						);
 				await apiSendMessage(
 					message,
 					sendToRoomWithId,
@@ -1945,7 +1991,7 @@ export const MessageSubmitInterfaceComponent = ({
 						// A retried text send owns no attachment: it must not
 						// drop a voice take that is under review.
 						if (!retryOfId) {
-							cleanupAttachment();
+							cleanupSentAttachment(attachment);
 						}
 						// Reply context is consumed by the send (#435).
 						if (!retryOfId) {
@@ -2004,12 +2050,12 @@ export const MessageSubmitInterfaceComponent = ({
 				handleMessageSendSuccess(
 					preserveComposerOnSuccess || leftChatDuringSend
 				);
-				cleanupAttachment();
+				cleanupSentAttachment(attachment);
 			}
 		},
 		[
 			activeSession,
-			cleanupAttachment,
+			cleanupSentAttachment,
 			draftScope,
 			encryptRoom,
 			hasMessageContent,
@@ -2049,7 +2095,9 @@ export const MessageSubmitInterfaceComponent = ({
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
 				feedbackMailIntent?: boolean;
-			}
+			},
+			/** Leave the composer as it is after the send (it moved on). */
+			keepComposer = false
 		) => {
 			// A file refused on the card has to be dealt with first: sending the
 			// text alone next to it would read as if the file had gone too.
@@ -2073,6 +2121,7 @@ export const MessageSubmitInterfaceComponent = ({
 				!retryOfId && attachment && recordedVoice?.file === attachment
 			);
 			const preserveComposerOnSuccess =
+				keepComposer ||
 				(isRecordedVoiceSend &&
 					hasMessageContent(currentTypedMessage)) ||
 				Boolean(
@@ -2283,9 +2332,13 @@ export const MessageSubmitInterfaceComponent = ({
 			!activeSession.isGroup
 	);
 	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
+	// The chat this composer shows now; a send that settles later checks it
+	// before it clears anything.
+	const shownSessionIdRef = useRef(activeSession.item.id);
+	shownSessionIdRef.current = activeSession.item.id;
 
 	const handleButtonClick = useCallback(() => {
-		if (uploadProgress || isRequestInProgress) {
+		if (uploadProgress || isRequestInProgress || dearchivingRef.current) {
 			return null;
 		}
 		if (retentionGate.gate(() => handleButtonClickRef.current())) {
@@ -2297,6 +2350,11 @@ export const MessageSubmitInterfaceComponent = ({
 			stopVoiceRecording();
 			return null;
 		}
+		// The same guards as every other send: a refused file on the card
+		// blocks it, and so does text past the length limit.
+		if (attachmentRejection) {
+			return null;
+		}
 		if (
 			!recordedVoiceRef.current &&
 			getPlainTextFromComposerValue(getTypedMarkdownMessage()).length >
@@ -2304,14 +2362,82 @@ export const MessageSubmitInterfaceComponent = ({
 		) {
 			return null;
 		}
-
 		if (isSessionArchived && !allowDearchive) {
-			// #1824: never re-open a conversation from outside it.
+			// #1824: never re-open a conversation from outside it. Collected
+			// quotes wait behind the same gate as every other send.
 			return null;
 		}
+		// An active edit goes out as the edit; the queued quotes wait.
+		const isEditing = Boolean(editingMessage || editingMessageId);
+		const sendsQuotes = Boolean(
+			pendingQuotes?.length && onSendPendingQuotes && !isEditing
+		);
+		if (sendsQuotes && !recordedVoiceRef.current && !attachmentSelected) {
+			// Selection reply: every collected passage and the typed text
+			// leave together, as one message.
+			const typed = getTypedMarkdownMessage();
+			const text = hasMessageContent(typed) ? typed : '';
+			const sentFromSessionId = activeSession.item.id;
+			const sendQuotes = () => {
+				onSendPendingQuotes!(text);
+				// Clear only what went out, and only in the chat it went to:
+				// text typed while the chat was re-opening, or another chat
+				// opened meanwhile, stays in the composer and its draft.
+				if (
+					shownSessionIdRef.current !== sentFromSessionId ||
+					getTypedMarkdownMessage() !== typed
+				) {
+					return;
+				}
+				setEditorState(EditorState.createEmpty());
+				setComposerText('');
+				composerRef.current?.clear();
+				void clearDraftMessage();
+			};
+			if (isSessionArchived) {
+				// Re-open first; the draft stays if that fails. A second
+				// press while it runs must not send the quotes twice.
+				holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
+					.then(() => {
+						sendQuotes();
+						reloadActiveSession();
+					})
+					.catch(() => {});
+			} else {
+				sendQuotes();
+			}
+			return null;
+		}
+		// A composer voice note or file still goes as its own message,
+		// right after the collected quotes.
+		const sendQuotesAlone = () => {
+			if (sendsQuotes) {
+				onSendPendingQuotes!('');
+			}
+		};
+
 		if (isSessionArchived) {
-			apiPutDearchive(activeSession.item.id)
-				.then(prepareAndSendMessage)
+			// What goes out is what was typed here when send was pressed: the
+			// person may type on, or open another chat, while this one
+			// re-opens, and that text must neither become this file's caption
+			// nor be cleared by it.
+			const typedAtPress = getTypedMarkdownMessage();
+			const sentFromSessionId = activeSession.item.id;
+			// Hold further presses while the chat re-opens; the send itself
+			// then takes over with isRequestInProgress (prepareAndSendMessage).
+			holdWhileDearchiving(apiPutDearchive(activeSession.item.id))
+				.then(() => {
+					sendQuotesAlone();
+					const movedOn =
+						shownSessionIdRef.current !== sentFromSessionId ||
+						getTypedMarkdownMessage() !== typedAtPress;
+					return prepareAndSendMessage(
+						typedAtPress,
+						undefined,
+						undefined,
+						movedOn
+					);
+				})
 				.then(() => {
 					reloadActiveSession();
 					if (
@@ -2319,6 +2445,13 @@ export const MessageSubmitInterfaceComponent = ({
 					) {
 						// Short timeout to wait for RC events finished
 						setTimeout(() => {
+							// Someone who opened another chat meanwhile
+							// stays there.
+							if (
+								shownSessionIdRef.current !== sentFromSessionId
+							) {
+								return;
+							}
 							if (window.innerWidth >= 900) {
 								navigate(
 									`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}`
@@ -2334,15 +2467,24 @@ export const MessageSubmitInterfaceComponent = ({
 					// console.error(error);
 				});
 		} else {
+			sendQuotesAlone();
 			prepareAndSendMessage().then();
 		}
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		attachmentRejection,
+		attachmentSelected,
+		clearDraftMessage,
+		editingMessage,
+		editingMessageId,
 		getTypedMarkdownMessage,
+		hasMessageContent,
 		navigate,
 		isRequestInProgress,
 		isVoiceRecording,
+		onSendPendingQuotes,
+		pendingQuotes,
 		allowDearchive,
 		isSessionArchived,
 		listPath,
@@ -2659,11 +2801,9 @@ export const MessageSubmitInterfaceComponent = ({
 		return infoData;
 	}, [activeInfo, activeSession, translate, userData]);
 
-	const handleBookingButton = useCallback(() => {
-		navigate('/booking/');
-	}, [navigate]);
-
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	const sessionModality = getModality(activeSession);
+	const isInternalGroup = sessionModality === Modality.INTERNAL_GROUP;
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
 	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
@@ -2810,14 +2950,27 @@ export const MessageSubmitInterfaceComponent = ({
 			userData
 		);
 		const isAskerOnly = hasAskerAuthority && !hasConsultantAuthority;
-		if (isAskerOnly || isAnonymousChat) {
+		const source = mentionDirectorySource({
+			isAskerOnly,
+			modality: sessionModality,
+			agencyId
+		});
+		if (source === 'none') {
 			// Mentions are a counsellor tool; askers and anonymous chats have
 			// no directory by design, not by failure.
 			setAgencyConsultantDirectory(new Map());
 			setMentionDirectoryState('unavailable');
 			return;
 		}
-		if (!agencyId) {
+		if (source === 'room') {
+			// FE#1211: an internal colleague chat has no centre to ask. Its
+			// names are read from the room when the list opens (see
+			// mentionDataRef below), so there is nothing to load here.
+			setAgencyConsultantDirectory(new Map());
+			setMentionDirectoryState('ready');
+			return;
+		}
+		if (source === 'missing') {
 			setAgencyConsultantDirectory(new Map());
 			setMentionDirectoryState('error');
 			apiPostError({
@@ -2852,11 +3005,10 @@ export const MessageSubmitInterfaceComponent = ({
 						}
 						const displayName =
 							`${consultant?.displayName || ''}`.trim();
-						const fallbackName = `${consultant?.firstName || ''} ${
-							consultant?.lastName || ''
-						}`
-							.trim()
-							.replace(/\s+/g, ' ');
+						const fallbackName =
+							`${consultant?.firstName || ''} ${consultant?.lastName || ''}`
+								.trim()
+								.replace(/\s+/g, ' ');
 						// #1998: the list sends the stored, encoded name
 						// ("enc.…"); room members carry the plain one in their
 						// Matrix id, so only the decoded name can match them.
@@ -2902,6 +3054,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.item?.agencyId,
 		activeSession?.agency?.id,
 		isAnonymousChat,
+		sessionModality,
 		userData
 	]);
 
@@ -3668,14 +3821,6 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 	}, [isVoiceRecording, startVoiceRecording, stopVoiceRecording]);
 
-	const bookingButton: ButtonItem = useMemo(
-		() => ({
-			label: translate('message.submit.booking.buttonLabel'),
-			type: BUTTON_TYPES.PRIMARY
-		}),
-		[translate]
-	);
-
 	const isVoiceAttachmentSelected =
 		!!attachmentSelected?.type?.startsWith('audio/');
 
@@ -4004,7 +4149,7 @@ export const MessageSubmitInterfaceComponent = ({
 	// once on mount, so its getCandidates closure reads through this ref to
 	// always see the current agency directory and room membership.
 	const mentionDataRef = useRef({
-		directory: agencyConsultantDirectory,
+		readDirectory: () => agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
 		readMemberIds: (): string[] => [],
 		reachOutsideRoom: false,
@@ -4017,23 +4162,38 @@ export const MessageSubmitInterfaceComponent = ({
 	// component does not re-render while someone types, so a snapshot from
 	// the last render can predate the room's members.
 	const teamMentionRoomId = teamDiscussion ? targetRoomId : undefined;
-	useLoadRoomMembers(teamMentionRoomId);
+	// FE#1211: an internal colleague chat names its people from its own room,
+	// read the same way when the list opens.
+	const internalMentionRoomId =
+		!teamMentionRoomId && isInternalGroup
+			? getMatrixRoomId() || undefined
+			: undefined;
+	const liveMentionRoomId = teamMentionRoomId || internalMentionRoomId;
+	useLoadRoomMembers(liveMentionRoomId);
+	const readLiveMentionRoom = () =>
+		liveMentionRoomId
+			? matrixClientService?.getClient?.()?.getRoom?.(liveMentionRoomId)
+			: undefined;
 	const audienceMentionMemberIds = audienceOptions
 		.filter((option) => option.value !== AUDIENCE_ALL)
 		.map((option) => option.value);
 	mentionDataRef.current = {
-		directory: agencyConsultantDirectory,
+		readDirectory: () =>
+			internalMentionRoomId
+				? roomMemberMentionDirectory(
+						readLiveMentionRoom(),
+						getCurrentMatrixUserId()
+					)
+				: agencyConsultantDirectory,
 		directoryState: mentionDirectoryState,
 		// Intentional mentions (#435): audienceOptions already resolves room
 		// members to their real Matrix user id (option.value is member.userId
 		// for room members — see the audience-options effect above), so only
 		// a *resolved* member id ends up in a mention.
 		readMemberIds: () =>
-			teamMentionRoomId
+			liveMentionRoomId
 				? roomMentionMemberIds(
-						matrixClientService
-							?.getClient?.()
-							?.getRoom?.(teamMentionRoomId),
+						readLiveMentionRoom(),
 						getCurrentMatrixUserId()
 					)
 				: audienceMentionMemberIds,
@@ -4056,10 +4216,10 @@ export const MessageSubmitInterfaceComponent = ({
 			getCheckedLabel: (count: number) =>
 				translate('message.mention.checked', { value: count }),
 			getCandidates: () => {
-				const { directory, readMemberIds, reachOutsideRoom } =
+				const { readDirectory, readMemberIds, reachOutsideRoom } =
 					mentionDataRef.current;
 				return resolveMentionCandidates(
-					directory,
+					readDirectory(),
 					readMemberIds(),
 					reachOutsideRoom
 				);
@@ -4155,7 +4315,19 @@ export const MessageSubmitInterfaceComponent = ({
 	// Keep the existing 196/180px baseline, then grow with the rendered TipTap
 	// content up to fourteen lines. Beyond that the editor scrolls, while the
 	// drag handle can still explicitly make the composer taller.
-	const hasContextBar = Boolean(replyTo || editingMessage);
+	const hasPendingQuotes = Boolean(pendingQuotes?.length);
+	// Every bar beyond the first adds one 32px bar + 4px gap to the reserve.
+	const contextBarCount =
+		(pendingQuotes?.length || 0) +
+		(replyTo ? 1 : 0) +
+		(editingMessage ? 1 : 0);
+	const contextStackExtra =
+		hasPendingQuotes && contextBarCount > 1
+			? (contextBarCount - 1) * CONTEXT_BAR_STEP_PX
+			: 0;
+	const hasContextBar = Boolean(
+		replyTo || editingMessage || hasPendingQuotes
+	);
 	const flushContextBarReserve =
 		flushCorner && hasContextBar && !isMobileViewport
 			? FLUSH_CONTEXT_BAR_RESERVE
@@ -4370,7 +4542,19 @@ export const MessageSubmitInterfaceComponent = ({
 				</div>
 			)}
 
-			<form className="textarea" onSubmit={handleFormSubmit}>
+			<form
+				className="textarea"
+				onSubmit={handleFormSubmit}
+				// On the phone the stacked bars rest above the card, so the
+				// form (not only the card) needs the stack's extra height.
+				style={
+					contextStackExtra
+						? ({
+								'--context-stack-extra': `${contextStackExtra}px`
+							} as React.CSSProperties)
+						: undefined
+				}
+			>
 				<div
 					className={clsx(
 						'textarea__wrapper',
@@ -4385,7 +4569,7 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--ready',
 							(isComposerSelected || isVoiceRecording) &&
 								'textarea__wrapper-send-message--selected',
-							(replyTo || editingMessage) &&
+							hasContextBar &&
 								'textarea__wrapper-send-message--withContextBar',
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
@@ -4417,25 +4601,49 @@ export const MessageSubmitInterfaceComponent = ({
 					>
 						{/* Relations foundation (#435): what the next send refers to.
 						    Inside the card, between drag handle and editor. */}
-						{replyTo && (
-							<ComposerContextBar
-								kind="reply"
-								lead={replyTo.author}
-								quote={replyTo.text}
-								statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
-								cancelLabel={translate('message.reply.cancel')}
-								onCancel={onCancelReply}
-							/>
-						)}
-						{editingMessage && (
-							<ComposerContextBar
-								kind="edit"
-								lead={translate('message.edit.previewLabel')}
-								quote={editingMessage.text}
-								cancelLabel={translate('message.edit.cancel')}
-								onCancel={onCancelEdit}
-							/>
-						)}
+						{(() => {
+							const relationBars = (
+								<>
+									{replyTo && (
+										<ComposerContextBar
+											kind="reply"
+											lead={replyTo.author}
+											quote={replyTo.text}
+											statusLabel={`${translate('message.reply.previewLabel')} ${replyTo.author}`}
+											cancelLabel={translate(
+												'message.reply.cancel'
+											)}
+											onCancel={onCancelReply}
+										/>
+									)}
+									{editingMessage && (
+										<ComposerContextBar
+											kind="edit"
+											lead={translate(
+												'message.edit.previewLabel'
+											)}
+											quote={editingMessage.text}
+											cancelLabel={translate(
+												'message.edit.cancel'
+											)}
+											onCancel={onCancelEdit}
+										/>
+									)}
+								</>
+							);
+							// Selection reply: several bars stack in one
+							// column; a lone reply/edit bar keeps its place.
+							return hasPendingQuotes ? (
+								<ComposerPendingQuotes
+									quotes={pendingQuotes || []}
+									onRemove={onRemovePendingQuote}
+								>
+									{relationBars}
+								</ComposerPendingQuotes>
+							) : (
+								relationBars
+							);
+						})()}
 						{/* Frank (03.11.): on the phone the format tools rest in a
 						    grey box above the card, built like the reply bar. */}
 						{isMobileViewport && !isCompactActionStripOpen && (
@@ -5171,7 +5379,8 @@ export const MessageSubmitInterfaceComponent = ({
 											onSubmitShortcut={() => {
 												if (
 													!uploadProgress &&
-													!isRequestInProgress
+													!isRequestInProgress &&
+													!dearchivingRef.current
 												) {
 													handleButtonClick();
 												}
@@ -5193,31 +5402,23 @@ export const MessageSubmitInterfaceComponent = ({
 								type="submit"
 								onSend={handleButtonClick}
 								state={deriveSendButtonState({
-									hasContent: canSendMessage,
-									isSending: isRequestInProgress,
+									hasContent:
+										canSendMessage ||
+										Boolean(
+											pendingQuotes?.length &&
+												onSendPendingQuotes &&
+												!isEditingAnyMessage &&
+												!attachmentRejection &&
+												!isMessageOverLimit
+										),
+									isSending:
+										isRequestInProgress || isDearchiving,
 									isDisabled:
 										!!uploadProgress || isVoiceRecording
 								})}
 							/>
 						</div>
 					</div>
-					{showAppointmentButton && (
-						<div className="textarea__wrapper-booking">
-							<Headline
-								semanticLevel="5"
-								text={translate(
-									'message.submit.booking.headline'
-								)}
-								className="textarea__wrapper-booking-headline"
-							/>
-							<Button
-								item={bookingButton}
-								isLink={true}
-								buttonHandle={handleBookingButton}
-								customIcon={<CalendarMonthIcon />}
-							/>
-						</div>
-					)}
 				</div>
 				{hasUploadFunctionality && (
 					<input

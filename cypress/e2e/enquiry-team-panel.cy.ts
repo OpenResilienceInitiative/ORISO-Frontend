@@ -551,7 +551,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 
 		cy.get('[data-cy="enquiry-open-team"]')
 			.should('be.visible')
-			.and('contain.text', 'Teambesprechung öffnen');
+			.and('contain.text', 'Team-Chat öffnen');
 		cy.get('.session__acceptance button').should((buttons) => {
 			expect(buttons).to.have.length(3);
 			expect(buttons[0].getAttribute('data-tour-target')).to.equal(

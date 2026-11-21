@@ -16,6 +16,7 @@ import {
 	phone375Globals,
 	tablet820Globals
 } from '../message/messageStoryShell';
+import { revealHoverArrow } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 
 /**
  * The explainer behind "Mehr erfahren" in the self-help waiting room
@@ -146,7 +147,10 @@ export const InfoGalleryTabletSelection: StoryObj = {
 	render: () => (
 		<Box
 			sx={{
-				width: 'min(772px, 100%)',
+				/* Narrow enough that the fluid cards (2026-11-13: they shrink to
+				   fit three across) reach their 12rem floor and the third card
+				   is cut off, so the dots have something to scroll. */
+				width: 'min(500px, 100%)',
 				height: '100vh',
 				mx: 'auto',
 				display: 'flex',
@@ -167,8 +171,18 @@ export const InfoGalleryTabletSelection: StoryObj = {
 				name: `Zu Schritt ${position} von 3`
 			});
 		const end = () => track.scrollWidth - track.clientWidth;
-		const cardCentre = (card: HTMLElement) =>
-			card.offsetLeft + card.offsetWidth / 2;
+		/* In the track's scroll coordinates, from bounding boxes: the track
+		   and its cards are not positioned, so `offsetLeft` would count from
+		   another origin (#2139). */
+		const cardCentre = (card: HTMLElement) => {
+			const box = card.getBoundingClientRect();
+			return (
+				box.left -
+				track.getBoundingClientRect().left +
+				track.scrollLeft +
+				box.width / 2
+			);
+		};
 		const [firstCard, secondCard, thirdCard] =
 			canvas.getAllByRole('listitem');
 		const width = track.clientWidth;
@@ -178,10 +192,19 @@ export const InfoGalleryTabletSelection: StoryObj = {
 
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');
 		await userEvent.click(step(2));
-		// The middle card is already visible at the left snap position.
-		await expect(track.scrollLeft).toBe(0);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// A click on a card while the dot's smooth scroll may still be under
+		// way is a click, not a drag: it must not re-pick the card from a
+		// half-way position (ORISO-Admin#1506).
 		await userEvent.click(canvas.getAllByRole('img')[0]);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// The dot centres the middle card once its scroll has settled.
+		await waitFor(() =>
+			expect(track.scrollLeft).toBeCloseTo(
+				Math.min(end(), Math.max(0, secondCentre - width / 2)),
+				0
+			)
+		);
 		await expect(step(2)).toHaveAttribute('aria-current', 'true');
 
 		await userEvent.click(step(2));
@@ -302,5 +325,25 @@ export const InfoGalleryLaptop: StoryObj = {
 				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Alle Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
 			}
 		}
+	}
+};
+
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
+export const InfoGalleryDesktopHoverArrows: StoryObj = {
+	name: '1b — Info-Galerie: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone375Globals,
+	render: () => <Screen />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
 	}
 };

@@ -12,8 +12,6 @@ export interface AppSettingsInterface {
 	calendarAppUrl?: string;
 	/** App setting to get the link for tools service */
 	budibaseUrl?: string;
-	/** App setting to get the link for appointment service */
-	calcomUrl?: string;
 	/** Feature flag to enable walkthrough (false by default here & true in the theme repo) */
 	enableWalkthrough?: boolean;
 	/** Feature flag to enable the multi tenancy with a single domain ex: lands */
@@ -30,4 +28,10 @@ export interface AppSettingsInterface {
 	documentationEnabled?: boolean;
 	/** Fallback support e-mail (platform admin, global settings); shown when a centre has no chat-reachable admin (#1915). */
 	supportEmail?: string;
+	/** Platform-wide: formats the chat composer does not offer, comma-separated. Never affects rendering. */
+	chatComposerDisabledFormats?: string;
+	/** Platform-wide: widest chat message on desktop, in pixels. Missing means 770. */
+	chatMessageMaxWidthDesktop?: string;
+	/** Platform-wide: characters above which a message collapses; "0" = never. Missing means 300. */
+	chatMessageCollapseThreshold?: string;
 }

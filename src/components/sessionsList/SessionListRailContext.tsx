@@ -15,19 +15,32 @@ import * as React from 'react';
 import { createContext, type ReactNode, useContext } from 'react';
 
 const SessionListRailContext = createContext(false);
+// Opens the rail back to a full column (the rail's search button). Absent
+// where nothing owns the width, so the button is not offered there.
+const SessionListRailWidenContext = createContext<(() => void) | undefined>(
+	undefined
+);
 
 export const SessionListRailProvider = ({
 	rail,
+	onWiden,
 	children
 }: {
 	rail: boolean;
+	onWiden?: () => void;
 	children: ReactNode;
 }) => (
 	<SessionListRailContext.Provider value={rail}>
-		{children}
+		<SessionListRailWidenContext.Provider value={onWiden}>
+			{children}
+		</SessionListRailWidenContext.Provider>
 	</SessionListRailContext.Provider>
 );
 
 /** False outside a provider — every list that never collapses stays a card list. */
 export const useSessionListRail = (): boolean =>
 	useContext(SessionListRailContext);
+
+/** The width owner's "open the column again", if there is one. */
+export const useSessionListRailWiden = (): (() => void) | undefined =>
+	useContext(SessionListRailWidenContext);

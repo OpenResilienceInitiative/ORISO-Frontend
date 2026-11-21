@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { Box, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 import { ConsentSentence } from './ConsentSentence';

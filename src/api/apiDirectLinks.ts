@@ -10,6 +10,12 @@ import {
 	DirectLink,
 	DirectLinkMedium
 } from '../components/conversationCreate/directLink/directLink';
+import {
+	GuestAccountMode,
+	offersTemporaryAccount,
+	readGuestAccountMode
+} from '../components/guestAccountMode/guestAccountMode';
+import type { InvitationAccess } from '../components/directInvitation/invitationModel';
 
 /**
  * Counsellor direct links, ORISO-UserService#1479: the counsellor's own
@@ -28,26 +34,95 @@ export interface DirectLinkDTO {
 	agencyId?: number | null;
 	medium: string;
 	temporary: boolean;
+	/** UserService#1662; wins over `temporary`. */
+	guestAccountMode?: string | null;
 	active: boolean;
 	admission?: 'DIRECT' | 'KNOCK';
 	createDate?: string;
+	/** #2142: informational date and time, ISO instant. */
+	scheduledAt?: string | null;
+	/* #2252 Direkteinladung (UserService CP2). */
+	appointment?: {
+		id: string;
+		startTime: string;
+		endTime: string;
+		status?: 'SCHEDULED' | 'CANCELLED';
+	} | null;
+	validityAfterEndMinutes?: number | null;
+	expiresAt?: string | null;
+	expired?: boolean | null;
+	callOpensAt?: string | null;
+	accessMode?: DirectInvitationAccessMode | null;
+	knock?: boolean | null;
+	sessionId?: number | null;
+	joinsExistingSession?: boolean | null;
 }
 
-export interface CreateDirectLinkBody {
+/** #2252: who may enter, as UserService spells it. */
+export type DirectInvitationAccessMode =
+	| 'GUESTS_ONLY'
+	| 'ACCOUNTS_ONLY'
+	| 'BOTH';
+
+const ACCESS_MODES: Record<InvitationAccess, DirectInvitationAccessMode> = {
+	guests: 'GUESTS_ONLY',
+	accounts: 'ACCOUNTS_ONLY',
+	both: 'BOTH'
+};
+
+export const toAccessMode = (
+	access: InvitationAccess
+): DirectInvitationAccessMode => ACCESS_MODES[access];
+
+export const fromAccessMode = (
+	mode: string | null | undefined
+): InvitationAccess | undefined =>
+	(Object.keys(ACCESS_MODES) as InvitationAccess[]).find(
+		(access) => ACCESS_MODES[access] === mode
+	);
+
+/** #2252: start and end of an appointment, ISO instants. */
+export interface DirectInvitationAppointmentInput {
+	startTime: string;
+	endTime: string;
+}
+
+/** #2252: the appointment and link settings both create bodies share. */
+export interface DirectInvitationSettings {
+	appointment?: DirectInvitationAppointmentInput;
+	/** With an appointment only; 0..2880, default 1440. */
+	validityAfterEndMinutes?: number;
+	accessMode?: DirectInvitationAccessMode;
+	knock?: boolean;
+}
+
+export interface CreateDirectLinkBody extends DirectInvitationSettings {
 	medium: DirectLinkMedium;
 	topicId: number;
 	name?: string;
+	/** Mirror of the mode for a server from before #1662. */
 	temporary?: boolean;
+	/** UserService#1662: wins over `temporary`. */
+	guestAccountMode?: GuestAccountMode;
 	/** Only needed when the counsellor works for more than one Beratungsstelle. */
 	agencyId?: number;
+	/** #2142: informational date and time, ISO instant. */
+	scheduledAt?: string;
 }
 
 /** `UpdateDirectLinkDTO`: absent fields stay unchanged. */
-export interface DirectLinkUpdate {
+export interface DirectLinkUpdate extends DirectInvitationSettings {
 	name?: string;
 	topicId?: number;
+	/** Mirror of the mode for a server from before #1662. */
 	temporary?: boolean;
+	/** UserService#1662: wins over `temporary`; 403 when not allowed. */
+	guestAccountMode?: GuestAccountMode;
 	active?: boolean;
+	/** #2142: a new date and time; absent keeps the old one. */
+	scheduledAt?: string;
+	/** #2142: removes the date and time. */
+	clearScheduledAt?: boolean;
 }
 
 export type CallKnockStatus = 'PENDING' | 'ADMITTED' | 'DECLINED' | 'CANCELLED';
@@ -64,6 +139,22 @@ export interface DirectLinkConversation {
 	knockStatus?: CallKnockStatus | null;
 	/** Let in once (#1479, 91f4c623): the person was admitted to this conversation before. */
 	callAdmitted?: boolean | null;
+	/** #2252: shared by everybody who opened the invitation. */
+	appointmentConversation?: boolean | null;
+	/**
+	 * #2252, shared conversations only: this person has not agreed (ADR-022
+	 * gate 2) themselves yet. Each person agrees on their own.
+	 */
+	consentRequired?: boolean | null;
+	/** #2252: before this no knock is opened; ask again from then. */
+	callOpensAt?: string | null;
+}
+
+/** `CreateSessionDirectInvitationDTO` (#2252): exactly one of appointmentId and appointment. */
+export interface SessionDirectInvitationBody extends DirectInvitationSettings {
+	appointmentId?: string;
+	medium?: DirectLinkMedium;
+	name?: string;
 }
 
 export interface CallKnock {
@@ -73,6 +164,8 @@ export interface CallKnock {
 	medium: DirectLinkMedium;
 	requestedAt: string;
 	decidedAt?: string | null;
+	/** The avatar the person picked (#2237). */
+	avatarId?: string | null;
 }
 
 /* Every call names the statuses it expects: without a `responseHandling`
@@ -85,6 +178,52 @@ const handled = [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE];
 export const isInactiveDirectLinkError = (error: unknown): boolean =>
 	typeof (error as Response)?.status === 'number' &&
 	(error as Response).status === 410;
+
+const reasonOf = async (error: unknown): Promise<string | null> => {
+	if (!(error instanceof Response)) return null;
+	try {
+		const body = await error.clone().json();
+		return typeof body?.reason === 'string' ? body.reason : null;
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * #2252: 410 `DIRECT_LINK_EXPIRED`, an invitation whose validity ended or
+ * whose token "Neuen Link senden" replaced. Check it before
+ * `isInactiveDirectLinkError`, which matches every 410.
+ */
+export const isExpiredDirectLinkError = async (
+	error: unknown
+): Promise<boolean> =>
+	(error as Response)?.status === 410 &&
+	(await reasonOf(error)) === 'DIRECT_LINK_EXPIRED';
+
+/**
+ * #2252: 409 `DIRECT_INVITATION_ROOM_NOT_ENCRYPTED`, an invitation from a 1:1
+ * whose room is not encrypted, so earlier messages would not stay private.
+ */
+export const isRoomNotEncryptedError = async (
+	error: unknown
+): Promise<boolean> =>
+	(error as Response)?.status === 409 &&
+	(await reasonOf(error)) === 'DIRECT_INVITATION_ROOM_NOT_ENCRYPTED';
+
+/** #2252: the only way in a 403 leaves open, else `null`. */
+export const directInvitationAccessError = async (
+	error: unknown
+): Promise<InvitationAccess | null> => {
+	if ((error as Response)?.status !== 403) return null;
+	switch (await reasonOf(error)) {
+		case 'DIRECT_INVITATION_GUESTS_ONLY':
+			return 'guests';
+		case 'DIRECT_INVITATION_ACCOUNTS_ONLY':
+			return 'accounts';
+		default:
+			return null;
+	}
+};
 
 /**
  * That 410 with its reason: the invite page calls such a link paused, and a
@@ -120,6 +259,10 @@ export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
 		return null;
 	}
 	const topic = dto.topicName ?? '';
+	const guestAccountMode = readGuestAccountMode(
+		dto.guestAccountMode,
+		dto.temporary
+	);
 	return {
 		id: String(dto.id),
 		name: dto.name?.trim() || topic,
@@ -127,10 +270,42 @@ export const toDirectLink = (dto: DirectLinkDTO): DirectLink | null => {
 		topicId: dto.topicId,
 		agencyId: dto.agencyId ?? undefined,
 		medium: dto.medium as DirectLinkMedium,
-		temporary: !!dto.temporary,
+		temporary: offersTemporaryAccount(guestAccountMode),
+		guestAccountMode,
 		active: !!dto.active,
-		url: absoluteUrl(dto.url)
+		url: absoluteUrl(dto.url),
+		...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {}),
+		...invitationFields(dto)
 	};
+};
+
+/* #2252: only what the server sent, so a link from before stays as it was. */
+const invitationFields = (dto: DirectLinkDTO): Partial<DirectLink> => {
+	const fields: Partial<DirectLink> = {};
+	const appointment = dto.appointment;
+	if (
+		appointment?.startTime &&
+		appointment.endTime &&
+		appointment.status !== 'CANCELLED'
+	) {
+		fields.appointment = {
+			id: String(appointment.id),
+			start: appointment.startTime,
+			end: appointment.endTime
+		};
+	}
+	if (typeof dto.validityAfterEndMinutes === 'number')
+		fields.validityMinutes = dto.validityAfterEndMinutes;
+	if (dto.expiresAt) fields.expiresAt = dto.expiresAt;
+	if (typeof dto.expired === 'boolean') fields.expired = dto.expired;
+	if (dto.callOpensAt) fields.callOpensAt = dto.callOpensAt;
+	const access = fromAccessMode(dto.accessMode);
+	if (access) fields.access = access;
+	if (typeof dto.knock === 'boolean') fields.knock = dto.knock;
+	if (typeof dto.sessionId === 'number') fields.sessionId = dto.sessionId;
+	if (typeof dto.joinsExistingSession === 'boolean')
+		fields.joinsExistingSession = dto.joinsExistingSession;
+	return fields;
 };
 
 const readable = (value: unknown): DirectLink => {
@@ -141,8 +316,30 @@ const readable = (value: unknown): DirectLink => {
 	return link;
 };
 
+/*
+ * One request at a time: the overview, the request pop-ups and an open
+ * conversation all reload on the same DIRECT_LINKS_CHANGED event (#2252).
+ * Nothing is kept once it has answered, so a later call always reads fresh.
+ * A change forgets a request still running (`notifyDirectLinksChanged`): it
+ * started before the change and would answer with the old links.
+ */
+let ownDirectLinksRunning: Promise<DirectLink[]> | undefined;
+
 /** The caller's own links, newest first, switched-off ones included. */
 export const apiGetOwnDirectLinks = async (): Promise<DirectLink[]> => {
+	if (!ownDirectLinksRunning) {
+		const started = fetchOwnDirectLinks().finally(() => {
+			/* Only free the slot it still holds, not a newer read's. */
+			if (ownDirectLinksRunning === started) {
+				ownDirectLinksRunning = undefined;
+			}
+		});
+		ownDirectLinksRunning = started;
+	}
+	return [...(await ownDirectLinksRunning)];
+};
+
+const fetchOwnDirectLinks = async (): Promise<DirectLink[]> => {
 	let value: unknown;
 	try {
 		value = await fetchData({
@@ -186,6 +383,60 @@ export const apiUpdateDirectLink = async (
 			responseHandling: handled
 		})
 	);
+
+/**
+ * #2252 "Neuen Link senden": a new token for the same appointment; the old
+ * one answers 410 `DIRECT_LINK_EXPIRED` from now on.
+ */
+export const apiRenewDirectInvitation = async (
+	linkId: string,
+	validityAfterEndMinutes?: number
+): Promise<DirectLink> =>
+	readable(
+		await fetchData({
+			url: endpoints.directLinkRenewal(linkId),
+			method: FETCH_METHODS.POST,
+			bodyData: JSON.stringify(
+				validityAfterEndMinutes === undefined
+					? {}
+					: { validityAfterEndMinutes }
+			),
+			responseHandling: handled
+		})
+	);
+
+/**
+ * #2252 "Weitere Personen per Link einladen": an invitation into an existing
+ * 1:1 conversation, bound to one of its appointments.
+ */
+export const apiCreateSessionDirectInvitation = async (
+	sessionId: number,
+	body: SessionDirectInvitationBody
+): Promise<DirectLink> =>
+	readable(
+		await fetchData({
+			url: endpoints.sessionDirectInvitations(sessionId),
+			method: FETCH_METHODS.POST,
+			bodyData: JSON.stringify(body),
+			responseHandling: handled
+		})
+	);
+
+/**
+ * #2252 "Neuen Link anfragen": tells the counsellor. Only a person already in
+ * the invitation's conversation may ask (404 otherwise); works with an
+ * expired or replaced token.
+ */
+export const apiRequestDirectInvitationRenewal = async (
+	token: string
+): Promise<void> => {
+	// 204 on success; every other answer (404, 409, 503) is passed on.
+	await fetchData({
+		url: endpoints.inviteLinkRenewalRequests(token),
+		method: FETCH_METHODS.POST,
+		responseHandling: handled
+	});
+};
 
 /**
  * Opens (or reopens) the signed-in person's own conversation with the link's
@@ -238,5 +489,8 @@ export const apiCancelOwnCallKnock = (knockId: number): Promise<void> =>
    list (clock page or settings) shows it straight away. */
 export const DIRECT_LINKS_CHANGED_EVENT = 'oriso:direct-links-changed';
 
-export const notifyDirectLinksChanged = () =>
+export const notifyDirectLinksChanged = () => {
+	/* The reloads this triggers must read after the change (#2252). */
+	ownDirectLinksRunning = undefined;
 	window.dispatchEvent(new Event(DIRECT_LINKS_CHANGED_EVENT));
+};

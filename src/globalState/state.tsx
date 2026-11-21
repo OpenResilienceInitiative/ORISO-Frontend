@@ -16,6 +16,7 @@ import { KeyboardShortcutsProvider } from '../features/keyboard-shortcuts';
 import { useGlobalShortcuts } from '../features/keyboard-shortcuts/hooks/useGlobalShortcuts';
 import { ShortcutHelpDialog } from '../features/keyboard-shortcuts/components/ShortcutHelpDialog';
 import { CommandPaletteDialog } from '../features/keyboard-shortcuts/components/CommandPaletteDialog';
+import { useLoginHandoverActive } from '../components/app/loginHandover';
 
 function ProviderComposer({ contexts, children }) {
 	return contexts.reduceRight(
@@ -32,7 +33,11 @@ const KeyboardShortcutsShell = ({
 }: {
 	children?: React.ReactNode;
 }) => {
-	useGlobalShortcuts(true);
+	// The window listener ignores `inert`, and the palette is a native modal
+	// that escapes it: no shortcuts while the sign-in handover covers the
+	// page (#2272).
+	const isHandingOver = useLoginHandoverActive();
+	useGlobalShortcuts(!isHandingOver);
 	return (
 		<>
 			{children}
@@ -43,7 +48,8 @@ const KeyboardShortcutsShell = ({
 };
 
 /** Must sit after UserDataProvider so preferences can isolate by userId. */
-const KeyboardShortcutsRoot = ({
+/** Exported for tests. */
+export const KeyboardShortcutsRoot = ({
 	children
 }: {
 	children?: React.ReactNode;

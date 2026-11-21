@@ -9,8 +9,8 @@ import { useAppConfig } from '../../hooks/useAppConfig';
 import { useFurtherCounsellingPrefill } from './useFurtherCounsellingPrefill';
 
 /* FE#1876: the Admin's postcode setting lives in GET /service/settings as
-   { value, readOnly }, like useOverviewPage or calcomUrl. It must reach the
-   dialog through the same AppConfigProvider path those settings take. */
+   { value, readOnly }, like useOverviewPage. It must reach the dialog
+   through the same AppConfigProvider path those settings take. */
 
 const serverSettings = vi.hoisted(() => ({ current: {} as any }));
 

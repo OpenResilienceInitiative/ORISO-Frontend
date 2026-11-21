@@ -5,6 +5,7 @@ import { normalizePreferredLanguage } from '../utils/normalizePreferredLanguage'
 import { FETCH_ERRORS, FETCH_METHODS, fetchData } from './fetchData';
 import { COOKIE_KEY } from '../globalState';
 import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
+import { isRegistrationRef } from '../addons/registrationAddon';
 
 /**
  * Registration creates the chat room and invites every counsellor of the
@@ -95,7 +96,7 @@ export const apiPostRegistration = (
 	onAccountCreated?: () => void
 ): Promise<any> => {
 	removeAllCookies([COOKIE_KEY]);
-	const { displayName, ...registrationData } = data;
+	const { displayName, registrationRef, ...registrationData } = data;
 	const trimmedDisplayName =
 		typeof displayName === 'string' ? displayName.trim() : '';
 	const requestData: RegistrationPayload = {
@@ -105,6 +106,7 @@ export const apiPostRegistration = (
 		data.directLinkToken == null
 			? { displayName: trimmedDisplayName }
 			: {}),
+		...(isRegistrationRef(registrationRef) ? { registrationRef } : {}),
 		...(typeof data.password === 'string' && {
 			password: encodeURIComponent(data.password)
 		}),

@@ -75,6 +75,8 @@ import { markdownToDraft } from 'markdown-draft-js';
 import { convertFromRaw } from 'draft-js';
 import './sessionsListItem.styles';
 import { SessionListItemVideoCall } from './SessionListItemVideoCall';
+import { SessionListItemRunningCall } from './SessionListItemRunningCall';
+import { useRunningCall } from './runningCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
 import {
@@ -96,7 +98,6 @@ import {
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
-import DeleteSession from '../session/DeleteSession';
 import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
@@ -137,6 +138,7 @@ import {
 	toPreviewKindText
 } from './matrixRoomPreview';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
+import { getEnquiryWaitingTime, useMinuteClock } from './enquiryWaitingTime';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -220,6 +222,8 @@ const ConsultingKindIcon = ({
 	/>
 );
 
+const EMPTY_PREVIEW_EVENTS: readonly unknown[] = [];
+
 export const SessionListItemComponent = ({
 	defaultLanguage,
 	itemRef,
@@ -295,11 +299,6 @@ export const SessionListItemComponent = ({
 	);
 	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
-	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
-	// therefore mounted at the component root, not inside the flyout — clicking
-	// the confirm overlay counts as an outside click and closes the flyout, so
-	// anything rendered inside it would unmount mid-confirmation.
-	const openDeleteConfirmRef = React.useRef<(() => void) | null>(null);
 	const dropdownId = `session-list-item-menu-${sessionItem?.id ?? 'inactive'}`;
 	const dropdownLabel = translate('groupChat.info.settings.headline');
 	const [overlayItem, setOverlayItem] = useState(null);
@@ -388,6 +387,11 @@ export const SessionListItemComponent = ({
 				userData?.userName
 			]),
 		[matrixPreviewEvents, userData?.userName]
+	);
+	// Call design S10: a running call shows on the list, not only in the chat.
+	const runningCall = useRunningCall(
+		caseHandoverContentLocked ? EMPTY_PREVIEW_EVENTS : matrixPreviewEvents,
+		matrixRoomId
 	);
 	const matrixSessionPreview = useMemo(
 		() => getLatestMatrixRoomPreview(visibleMatrixPreviewEvents),
@@ -628,7 +632,6 @@ export const SessionListItemComponent = ({
 	const hasChatroomSettingsActions =
 		chatroomSettingsMenu.showArchive ||
 		chatroomSettingsMenu.showDearchive ||
-		chatroomSettingsMenu.showDelete ||
 		chatroomSettingsMenu.showRequestHelp ||
 		chatroomSettingsMenu.showChatSettings;
 
@@ -769,6 +772,11 @@ export const SessionListItemComponent = ({
 			document.removeEventListener('keydown', handleMenuDocumentKeyDown);
 		};
 	}, [flyoutOpen]);
+
+	// FE#2183: an open enquiry tells the counsellor how long the person has
+	// waited instead of the date; the clock only ticks for those cards.
+	const showsWaitingTime = !isAsker && !!activeSession?.isEnquiry;
+	const now = useMinuteClock(showsWaitingTime);
 
 	if (!activeSession) {
 		return null;
@@ -948,27 +956,6 @@ export const SessionListItemComponent = ({
 		setFlyoutOpen(false);
 		setOverlayItem(leaveGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
-	};
-
-	// Closes the menu first, then opens the confirmation that lives outside it.
-	const handleDeleteSession = () => {
-		setFlyoutOpen(false);
-		openDeleteConfirmRef.current?.();
-	};
-
-	// FE#781: mirrors the header menu's post-delete behaviour (SessionMenu's
-	// onSuccessDeleteSession) — the deleted chat leaves the list and the user
-	// lands back on the list instead of a dangling detail route.
-	const handleDeleteSessionSuccess = () => {
-		setFlyoutOpen(false);
-		sessionsDispatch({
-			type: REMOVE_SESSIONS,
-			ids: activeSession.item.matrixRoomId
-				? [activeSession.item.matrixRoomId]
-				: [activeSession.item.id]
-		});
-		mobileListView();
-		navigate(listPath + getSessionListTab());
 	};
 
 	// FE#781 / ADR-016: reuses SessionStream's `teamDiscussion=1` contract so
@@ -1461,11 +1448,10 @@ export const SessionListItemComponent = ({
 								 * Only `showChatSettings` can be true here: the other
 								 * flags need `isSession`, which `buildExtendedSession`
 								 * never sets alongside `isGroup`. That invariant is
-								 * load-bearing — Overlay, LegalLinkModal and
-								 * DeleteSession all live in the main return below, so
-								 * an archive or delete entry surfacing on a group row
-								 * would fire with no confirmation behind it (the
-								 * delete ref would simply be null). Widen the helper
+								 * load-bearing — Overlay and LegalLinkModal live in
+								 * the main return below, so an archive entry surfacing
+								 * on a group row would fire with no confirmation
+								 * behind it. Widen the helper
 								 * for group chats only together with those.
 								 */}
 								{(hasChatroomSettingsActions ||
@@ -1489,7 +1475,6 @@ export const SessionListItemComponent = ({
 										onChatSettings={handleChatSettings}
 										onArchive={handleArchiveSession}
 										onDearchive={handleDearchiveSession}
-										onDelete={handleDeleteSession}
 										onRequestHelp={handleRequestHelp}
 										onLeaveGroup={handleLeaveGroup}
 										legalLinks={legalLinks}
@@ -1542,13 +1527,19 @@ export const SessionListItemComponent = ({
 							}
 							preview={
 								<>
-									<SessionListItemLastMessage
-										lastMessage={
-											displayLastMessage
-												? displayLastMessage
-												: defaultSubjectText
-										}
-									/>
+									{runningCall ? (
+										<SessionListItemRunningCall
+											call={runningCall}
+										/>
+									) : (
+										<SessionListItemLastMessage
+											lastMessage={
+												displayLastMessage
+													? displayLastMessage
+													: defaultSubjectText
+											}
+										/>
+									)}
 									{activeSession.item.attachment && (
 										<SessionListItemAttachment
 											attachment={
@@ -1592,10 +1583,32 @@ export const SessionListItemComponent = ({
 		!autoSelectPostcode &&
 		!isAnonymousChat &&
 		Boolean(postcodeLabel);
-	const cardDate = prettyPrintDate(
-		activeSession.item.messageDate,
-		activeSession.item.createDate
-	);
+	const waitingTime = showsWaitingTime
+		? getEnquiryWaitingTime(
+				convertISO8601ToMSSinceEpoch(activeSession.item.createDate),
+				now
+			)
+		: null;
+	const cardDate = waitingTime
+		? translate(`sessionList.item.waiting.${waitingTime.unit}`, {
+				count: waitingTime.count
+			})
+		: prettyPrintDate(
+				activeSession.item.messageDate,
+				activeSession.item.createDate
+			);
+	// FE#2182: nothing written yet → the body centres the name on the avatar.
+	const hasCardPreview =
+		canShowCaseHandoverAction ||
+		caseHandoverContentLocked ||
+		(!activeSession.isEmptyEnquiry &&
+			Boolean(
+				displayLastMessage ||
+					activeSession.item.lastMessageType ||
+					matrixPreviewLine?.glyphs?.length
+			)) ||
+		!!activeSession.item.attachment ||
+		!!activeSession.item.videoCallMessageDTO;
 
 	return (
 		<div
@@ -1687,7 +1700,13 @@ export const SessionListItemComponent = ({
 					</div>
 					<div className="sessionsListItem__rowRight">
 						{datePlacement === 'corner' && (
-							<div className="sessionsListItem__date">
+							<div
+								className={clsx(
+									'sessionsListItem__date',
+									waitingTime &&
+										'sessionsListItem__date--waiting'
+								)}
+							>
 								{cardDate}
 							</div>
 						)}
@@ -1709,7 +1728,6 @@ export const SessionListItemComponent = ({
 								onChatSettings={handleChatSettings}
 								onArchive={handleArchiveSession}
 								onDearchive={handleDearchiveSession}
-								onDelete={handleDeleteSession}
 								onRequestHelp={handleRequestHelp}
 								legalLinks={legalLinks}
 								agencyId={activeSession?.agency?.id}
@@ -1853,68 +1871,77 @@ export const SessionListItemComponent = ({
 						</div>
 					}
 					preview={
-						<>
-							{/* Figma nodes 115/1139/312: when the case-handover action
+						hasCardPreview ? (
+							<>
+								{/* Figma nodes 115/1139/312: when the case-handover action
 							    button is shown it takes the place of the last-message
 							    preview (the text sits "under" the button). Without a
 							    button the normal last message is shown. */}
-							{!canShowCaseHandoverAction && (
-								<SessionListItemLastMessage
-									lastMessage={
-										caseHandoverContentLocked
-											? translate(
-													'caseHandover.list.hiddenPreview'
-												)
-											: displayLastMessage
-									}
-									glyphs={
-										caseHandoverContentLocked
-											? undefined
-											: matrixPreviewLine?.glyphs
-									}
-									lastMessageType={
-										caseHandoverContentLocked
-											? null
-											: getPreviewLastMessageType(
-													isMatrixBackedSession,
-													activeSession.item
-														.lastMessageType
-												)
-									}
-									language={language}
-									showLanguage={
-										language &&
-										activeSession.isEnquiry &&
-										!activeSession.isEmptyEnquiry
-									}
-									showSpan={activeSession.isEmptyEnquiry}
-								/>
-							)}
-							{!caseHandoverContentLocked &&
-								activeSession.item.attachment && (
-									<SessionListItemAttachment
-										attachment={
-											activeSession.item.attachment
-										}
+								{!canShowCaseHandoverAction && runningCall && (
+									<SessionListItemRunningCall
+										call={runningCall}
 									/>
 								)}
-							{!caseHandoverContentLocked &&
-								activeSession.item.videoCallMessageDTO && (
-									<SessionListItemVideoCall
-										videoCallMessage={
-											activeSession.item
-												.videoCallMessageDTO
+								{!canShowCaseHandoverAction && !runningCall && (
+									<SessionListItemLastMessage
+										lastMessage={
+											caseHandoverContentLocked
+												? translate(
+														'caseHandover.list.hiddenPreview'
+													)
+												: displayLastMessage
 										}
-										listItemUsername={
-											activeSession.user?.username ||
-											activeSession.consultant?.username
+										glyphs={
+											caseHandoverContentLocked
+												? undefined
+												: matrixPreviewLine?.glyphs
 										}
-										listItemAskerRcId={
-											activeSession.item.askerMatrixUserId
+										lastMessageType={
+											caseHandoverContentLocked
+												? null
+												: getPreviewLastMessageType(
+														isMatrixBackedSession,
+														activeSession.item
+															.lastMessageType
+													)
 										}
+										language={language}
+										showLanguage={
+											language &&
+											activeSession.isEnquiry &&
+											!activeSession.isEmptyEnquiry
+										}
+										showSpan={activeSession.isEmptyEnquiry}
 									/>
 								)}
-						</>
+								{!caseHandoverContentLocked &&
+									activeSession.item.attachment && (
+										<SessionListItemAttachment
+											attachment={
+												activeSession.item.attachment
+											}
+										/>
+									)}
+								{!caseHandoverContentLocked &&
+									activeSession.item.videoCallMessageDTO && (
+										<SessionListItemVideoCall
+											videoCallMessage={
+												activeSession.item
+													.videoCallMessageDTO
+											}
+											listItemUsername={
+												activeSession.user?.username ||
+												activeSession.consultant
+													?.username
+											}
+											listItemAskerRcId={
+												activeSession.item
+													.askerMatrixUserId
+											}
+										/>
+									)}
+							</>
+						) : undefined
 					}
 					action={
 						canShowCaseHandoverAction ? (
@@ -2178,20 +2205,6 @@ export const SessionListItemComponent = ({
 					url={legalModal.url}
 					onClose={() => setLegalModal(null)}
 				/>
-			)}
-			{/* FE#781: mounted outside the flyout so the confirmation overlay
-			    survives the menu closing. Renders nothing itself — it only
-			    hands the menu item its opener. */}
-			{chatroomSettingsMenu.showDelete && (
-				<DeleteSession
-					chatId={activeSession.item.id}
-					onSuccess={handleDeleteSessionSuccess}
-				>
-					{(openConfirm) => {
-						openDeleteConfirmRef.current = openConfirm;
-						return null;
-					}}
-				</DeleteSession>
 			)}
 		</div>
 	);

@@ -1,3 +1,9 @@
+import {
+	extractPassageBlurEvents,
+	groupPassageBlurs,
+	PASSAGE_BLUR_EVENT_TYPE,
+	withPassageBlurs
+} from '../selectionReply/passageBlurEvents';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
@@ -34,7 +40,10 @@ import {
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
-import { counterpartReaders } from '../../utils/matrixReadReceipts';
+import {
+	awaitsDecryption,
+	counterpartReaders
+} from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -521,13 +530,23 @@ export const SessionStream = ({
 				// Side-room reactions stay out of the client timeline; the
 				// panel renders its bubbles without reactions.
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
+				// Moderator blurs (#2229): position-only events next to the
+				// message, folded onto it here; a lifted blur is redacted.
+				const passageBlurs = groupPassageBlurs(
+					extractPassageBlurEvents(clientEvents)
+				);
 
 				setMessagesItem({
-					messages: prepareRoomMessages(
-						clientEvents,
-						resolvedMatrixRoomId
+					messages: withPassageBlurs(
+						prepareRoomMessages(clientEvents, resolvedMatrixRoomId),
+						passageBlurs
 					),
-					reactionEvents
+					reactionEvents,
+					passageBlurSenders: new Map(
+						[...passageBlurs.values()]
+							.flat()
+							.map((blur) => [blur.id, blur.senderId])
+					)
 				});
 				setSupervisionMessages(
 					supervisionRoomId
@@ -630,6 +649,63 @@ export const SessionStream = ({
 
 		readActiveSession();
 	}, [readActiveSession, readonly]);
+
+	// FE#1802: a message that arrives while the conversation is open counts as
+	// read only once the person can see it. A hidden tab, or a phone side panel
+	// covering the chat, defers the receipt until the chat is visible again; otherwise the other side would see
+	// "read" for a message nobody looked at.
+	const setSessionReadRef = useRef(setSessionRead);
+	setSessionReadRef.current = setSessionRead;
+	const arrivalReadPendingRef = useRef(false);
+	// Phone: a side panel can cover the main chat while this stays mounted.
+	const mainChatHiddenRef = useRef(false);
+	// A deferred read must not outlive the content access it was earned under
+	// (case-handover curtain).
+	const mayViewContentRef = useRef(mayRequestHistoryKeys);
+	mayViewContentRef.current = mayRequestHistoryKeys;
+	const readArrivedMessages = useCallback(() => {
+		if (!mayViewContentRef.current) {
+			arrivalReadPendingRef.current = false;
+			return;
+		}
+		if (
+			document.visibilityState === 'hidden' ||
+			mainChatHiddenRef.current
+		) {
+			arrivalReadPendingRef.current = true;
+			return;
+		}
+		arrivalReadPendingRef.current = false;
+		setSessionReadRef.current();
+	}, []);
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (arrivalReadPendingRef.current) readArrivedMessages();
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () =>
+			document.removeEventListener(
+				'visibilitychange',
+				handleVisibilityChange
+			);
+	}, [readArrivedMessages]);
+	// A deferred read belongs to one conversation under one content access;
+	// drop it when either changes (not when listeners merely re-attach, e.g.
+	// once the supervision side room is known).
+	const deferredReadRoomId = resolvedChatSession.matrixRoomId;
+	useEffect(
+		() => () => {
+			arrivalReadPendingRef.current = false;
+		},
+		[deferredReadRoomId, mayRequestHistoryKeys]
+	);
+	const handleMainChatHiddenChange = useCallback(
+		(hidden: boolean) => {
+			mainChatHiddenRef.current = hidden;
+			if (!hidden && arrivalReadPendingRef.current) readArrivedMessages();
+		},
+		[readArrivedMessages]
+	);
 
 	const loadAfterCaseHandoverGranted = useCallback(() => {
 		setLoading(true);
@@ -807,6 +883,7 @@ export const SessionStream = ({
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
+		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -834,9 +911,32 @@ export const SessionStream = ({
 					// not a message, but still needs a live refresh so
 					// aggregateReactions() picks it up for other members.
 					eventType !== 'm.reaction' &&
+					// A moderator's blur (#2229) shows for everyone at once.
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
 					eventType !== 'm.room.redaction'
 				) {
 					return;
+				}
+
+				// FE#1802: the receipt was sent once when the conversation
+				// opened; a later message from the other side needs its own,
+				// or its sender keeps seeing "sent" while it is on screen.
+				if (
+					!toStartOfTimeline &&
+					room?.roomId === clientRoomId &&
+					eventType !== 'm.reaction' &&
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
+					eventType !== 'm.room.redaction' &&
+					event?.getSender?.() !== room?.myUserId &&
+					// Only a message the person can read counts; the transport
+					// calls again once decryption succeeds.
+					!awaitsDecryption(event) &&
+					arrivalReadTimer === null
+				) {
+					arrivalReadTimer = window.setTimeout(() => {
+						arrivalReadTimer = null;
+						readArrivedMessages();
+					}, 0);
 				}
 
 				if (toStartOfTimeline) {
@@ -971,6 +1071,8 @@ export const SessionStream = ({
 				window.clearTimeout(earlierRefreshTimer);
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
+			if (arrivalReadTimer !== null)
+				window.clearTimeout(arrivalReadTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
@@ -984,7 +1086,8 @@ export const SessionStream = ({
 		matrixRoomId,
 		matrixClientService,
 		matrixClientGeneration,
-		mayRequestHistoryKeys
+		mayRequestHistoryKeys,
+		readArrivedMessages
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
@@ -1591,6 +1694,7 @@ export const SessionStream = ({
 				</div>
 			)}
 			<SessionItemComponent
+				onMainChatHiddenChange={handleMainChatHiddenChange}
 				mainTimelineSupplement={
 					<>
 						{displayedConsent &&
@@ -1683,6 +1787,7 @@ export const SessionStream = ({
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
+				passageBlurSenders={messagesItem?.passageBlurSenders}
 				supervisionMessages={supervisionMessages}
 				teamMessages={teamMessages}
 				teamRoomId={teamRoomId}

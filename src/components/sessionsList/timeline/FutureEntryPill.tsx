@@ -32,6 +32,18 @@ export interface FutureEntryPillProps {
 	unread?: boolean;
 	onOpen?: (entry: FutureEntry) => void;
 	onAction?: AppointmentAction;
+	/**
+	 * Set: a click, the context menu and a long press hand the pill to the
+	 * host instead (the calendar opens its own entry menu there).
+	 */
+	onPick?: (entry: FutureEntry, anchor: HTMLElement) => void;
+	dataCy?: string;
+	/**
+	 * Set: the host decides which pill starts soon and names it for screen
+	 * readers (the calendar marks the same one in its grid, review
+	 * 4577641949).
+	 */
+	soonLabel?: string | false;
 }
 
 export const FutureEntryPill = ({
@@ -41,7 +53,10 @@ export const FutureEntryPill = ({
 	selected = false,
 	unread = false,
 	onOpen,
-	onAction
+	onAction,
+	onPick,
+	dataCy = 'timeline-entry',
+	soonLabel
 }: FutureEntryPillProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = normalizeTimelineLocale(
@@ -61,9 +76,11 @@ export const FutureEntryPill = ({
 	const swallowClickRef = useRef(false);
 
 	const openMenu = useCallback(() => {
-		const rect = pillRef.current?.getBoundingClientRect();
-		if (rect) setMenuAnchor(rect);
-	}, []);
+		const pill = pillRef.current;
+		if (!pill) return;
+		if (onPick) onPick(entry, pill);
+		else setMenuAnchor(pill.getBoundingClientRect());
+	}, [onPick, entry]);
 	const cancelPress = useCallback(() => {
 		if (pressRef.current) window.clearTimeout(pressRef.current.timer);
 		pressRef.current = null;
@@ -71,6 +88,7 @@ export const FutureEntryPill = ({
 	useEffect(() => cancelPress, [cancelPress]);
 
 	const countdown = entryCountdown(entry, now, locale);
+	const soon = soonLabel === undefined ? countdown.soon : !!soonLabel;
 	const when = countdown.running
 		? t('sessionList.timeline.running')
 		: countdown.label;
@@ -88,10 +106,10 @@ export const FutureEntryPill = ({
 				type="button"
 				className={clsx(
 					'tlp__entry',
-					countdown.soon && 'tlp__entry--soon',
+					soon && 'tlp__entry--soon',
 					selected && 'tlp__entry--selected'
 				)}
-				data-cy="timeline-entry"
+				data-cy={dataCy}
 				data-unmapped={
 					entry.sessionId === undefined ? 'true' : undefined
 				}
@@ -101,7 +119,7 @@ export const FutureEntryPill = ({
 						swallowClickRef.current = false;
 						return;
 					}
-					if (entry.sessionId === undefined) openMenu();
+					if (onPick || entry.sessionId === undefined) openMenu();
 					else onOpen?.(entry);
 				}}
 				onContextMenu={(e) => {
@@ -167,6 +185,8 @@ export const FutureEntryPill = ({
 				<span className="tlp__entryWhen" data-cy="timeline-entry-when">
 					{when}
 				</span>
+				{/* Colour alone does not say it (review 4577641949). */}
+				{soonLabel && <span className="sr-only">{soonLabel}</span>}
 			</button>
 			{menuAnchor && (
 				<EntryMenu
