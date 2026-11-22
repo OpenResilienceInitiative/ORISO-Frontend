@@ -1,0 +1,7 @@
+# ORISO-Frontend#2347: files in src/ that may look at the historical guest
+# login prefixes (`anon_`, `Anonymous-`). One entry per line:
+#   <path relative to the repo root> | <why it may>
+# Keep this list minimal. Code that decides whether someone is a guest must
+# use the session's registrationType / conversationType or the ANONYMOUS
+# authority instead, and never belongs here.
+src/utils/anonymousChatDisplayName.ts | isLegacyGuestLoginLabel: label only, hides a raw legacy anon_N / Anonymous-<ts> login when a better name exists; never decides anonymity

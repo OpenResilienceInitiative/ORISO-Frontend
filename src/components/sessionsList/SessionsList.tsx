@@ -118,7 +118,12 @@ import {
 } from './timeline/timelineModel';
 import { useTimelineSettings } from '../../hooks/useTimelineSettings';
 import { refetchEnquiryListState } from './refetchEnquiryList';
-import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
+import {
+	createRefreshThrottle,
+	createRoomRefreshQueue,
+	isRoomInSessions,
+	lookUpSessionRooms
+} from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -345,6 +350,19 @@ export const SessionsList = ({
 	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
 		useState(false);
 	const [caseHandoverBatchMode, setCaseHandoverBatchMode] = useState(false);
+	const showConsultantToolbarActions =
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const caseHandoverSearch = useCaseHandoverSearch({
+		actorId: userData.userId,
+		enabled: showConsultantToolbarActions,
+		query: sessionToolbarSearch,
+		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+		keepFound: caseHandoverBatchMode,
+		searchOpen: sessionToolbarSearchOpen
+	});
+	const { invalidateRowStatuses: invalidateCaseHandoverRowStatuses } =
+		caseHandoverSearch;
 	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
 	const [caseHandoverWizardStep, setCaseHandoverWizardStep] = useState<
 		'reason' | 'describe'
@@ -1015,48 +1033,15 @@ export const SessionsList = ({
 			Always try to get each subscription from the backend because closed
 			group chats still listed as sessions but no longer backed by a room
 			 */
-			Promise.all(
-				rids.map((rid) => {
-					// Get session from api
-					return apiGetSessionRoomsByRoomIds([rid])
-						.then(({ sessions }) => {
-							const session = sessions[0];
-
-							if (!session) {
-								const loadedSession = loadedSessions.find(
-									(s) => s?.chat?.matrixRoomId === rid
-								);
-								// If repetitive group chat reload it by id because groupId has changed
-								if (
-									loadedSession &&
-									getModality(loadedSession) ===
-										Modality.SELF_HELP
-								) {
-									return ['reload', loadedSession.chat.id];
-								}
-								return ['removed', rid];
-							}
-
-							const sessionType = getSessionType(
-								session,
-								userData.userId
-							);
-
-							// If subscription session type has changed add it to remove list for current view
-							if (
-								sessionTypes.indexOf(sessionType) < 0 ||
-								(sessionType === SESSION_TYPE_ARCHIVED &&
-									sessionListTab !==
-										SESSION_LIST_TAB_ARCHIVE) ||
-								(sessionType !== SESSION_TYPE_ARCHIVED &&
-									sessionListTab === SESSION_LIST_TAB_ARCHIVE)
-							) {
-								return ['removed', rid];
-							}
-
-							return ['insert', session];
-						})
-						.catch(() => {
+			// #2480: one batched request for all rooms, with a single-room
+			// fallback inside lookUpSessionRooms.
+			lookUpSessionRooms(rids, (roomIds) =>
+				apiGetSessionRoomsByRoomIds(roomIds)
+			)
+				.then((found) =>
+					rids.map((rid) => {
+						const session = found.get(rid);
+						if (!session) {
 							const loadedSession = loadedSessions.find(
 								(s) => s?.chat?.matrixRoomId === rid
 							);
@@ -1069,55 +1054,84 @@ export const SessionsList = ({
 								return ['reload', loadedSession.chat.id];
 							}
 							return ['removed', rid];
-						});
-				})
-			).then((sessions) => {
-				const updatedSessions = sessions
-					.filter(([event]) => event === 'insert')
-					.map(([, s]) => s);
+						}
 
-				if (updatedSessions.length > 0) {
-					dispatch({
-						type: UPDATE_SESSIONS,
-						sessions: updatedSessions as ListItemInterface[]
-					});
-				}
+						const sessionType = getSessionType(
+							session,
+							userData.userId
+						);
 
-				const removedSessions = sessions
-					.filter(([event]) => event === 'removed')
-					.map(([, rid]) => rid);
+						// If subscription session type has changed add it to remove list for current view
+						if (
+							sessionTypes.indexOf(sessionType) < 0 ||
+							(sessionType === SESSION_TYPE_ARCHIVED &&
+								sessionListTab !== SESSION_LIST_TAB_ARCHIVE) ||
+							(sessionType !== SESSION_TYPE_ARCHIVED &&
+								sessionListTab === SESSION_LIST_TAB_ARCHIVE)
+						) {
+							return ['removed', rid];
+						}
 
-				if (removedSessions.length > 0) {
-					dispatch({
-						type: REMOVE_SESSIONS,
-						ids: removedSessions as string[]
-					});
-				}
+						return ['insert', session];
+					})
+				)
+				.then((sessions) => {
+					const updatedSessions = sessions
+						.filter(([event]) => event === 'insert')
+						.map(([, s]) => s);
 
-				const reloadedSessions = sessions
-					.filter(([event]) => event === 'reload')
-					.map(([, id]) => id as number);
-
-				if (reloadedSessions.length > 0) {
-					Promise.all(
-						reloadedSessions.map((id) => apiGetChatRoomById(id))
-					).then((sessions) => {
+					if (updatedSessions.length > 0) {
 						dispatch({
 							type: UPDATE_SESSIONS,
-							sessions: sessions.reduce<ListItemInterface[]>(
-								(acc, { sessions }) => acc.concat(sessions),
-								[]
-							)
+							sessions: updatedSessions as ListItemInterface[]
 						});
-					});
-				}
-			});
+					}
+
+					const removedSessions = sessions
+						.filter(([event]) => event === 'removed')
+						.map(([, rid]) => rid);
+
+					if (removedSessions.length > 0) {
+						dispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedSessions as string[]
+						});
+					}
+
+					const reloadedSessions = sessions
+						.filter(([event]) => event === 'reload')
+						.map(([, id]) => id as number);
+
+					if (reloadedSessions.length > 0) {
+						Promise.all(
+							reloadedSessions.map((id) => apiGetChatRoomById(id))
+						).then((sessions) => {
+							dispatch({
+								type: UPDATE_SESSIONS,
+								sessions: sessions.reduce<ListItemInterface[]>(
+									(acc, { sessions }) => acc.concat(sessions),
+									[]
+								)
+							});
+						});
+					}
+				});
 		},
 		[dispatch, sessionListTab, sessionTypes, sessions, userData.userId]
 	);
 
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
 	const sessionsRef = useUpdatingRef(sessions);
+
+	// #2480: messages replayed by the Matrix sync arrive in bursts; refresh
+	// their rooms together instead of one request per message.
+	const roomRefreshQueue = useRef(
+		createRoomRefreshQueue((roomIds) => handleRIDsRef.current(roomIds))
+	);
+	useEffect(() => {
+		const queue = roomRefreshQueue.current;
+		return () => queue.cancel();
+	}, []);
 
 	// #1206: one refetch per burst of messages from rooms this list does not know.
 	const unknownRoomThrottle = useRef(createRefreshThrottle());
@@ -1180,13 +1194,15 @@ export const SessionsList = ({
 			timestamp,
 			refreshEnquiryList,
 			refreshSessionList,
-			sessionId
+			sessionId,
+			changedSessionId
 		}: {
 			roomId?: string;
 			timestamp?: number;
 			refreshEnquiryList?: boolean;
 			refreshSessionList?: boolean;
 			sessionId?: number;
+			changedSessionId?: number;
 		}) => {
 			if (sessionId) {
 				dispatch({
@@ -1197,6 +1213,11 @@ export const SessionsList = ({
 
 			if (refreshEnquiryList && type === SESSION_LIST_TYPES.ENQUIRY) {
 				void refetchEnquiryList();
+			}
+
+			const changedId = changedSessionId ?? sessionId;
+			if (changedId !== undefined) {
+				invalidateCaseHandoverRowStatuses([changedId]);
 			}
 
 			if (refreshSessionList && type === SESSION_LIST_TYPES.MY_SESSION) {
@@ -1242,7 +1263,7 @@ export const SessionsList = ({
 					s?.session?.matrixRoomId === roomId
 			);
 			if (touchesLoadedSession) {
-				handleRIDsRef.current([roomId]);
+				roomRefreshQueue.current.add(roomId);
 			}
 		};
 
@@ -1253,6 +1274,7 @@ export const SessionsList = ({
 	}, [
 		dispatch,
 		handleRIDsRef,
+		invalidateCaseHandoverRowStatuses,
 		refetchEnquiryList,
 		refetchSessionList,
 		sessionsRef,
@@ -1324,9 +1346,6 @@ export const SessionsList = ({
 		loadMoreSessions();
 	}, [loadMoreSessions]);
 
-	const showConsultantToolbarActions =
-		type === SESSION_LIST_TYPES.MY_SESSION &&
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// One source with the create flow: the list must not offer a filter, or an
 	// entry point, for a format this Träger — or every one of the counsellor's
 	// Beratungsstellen — has switched off.
@@ -1347,13 +1366,6 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION ||
 		type === SESSION_LIST_TYPES.ENQUIRY;
 	const visibleUserDrafts = useRemoteDrafts(showMySessionToolbar);
-	const caseHandoverSearch = useCaseHandoverSearch({
-		enabled: showConsultantToolbarActions,
-		query: sessionToolbarSearch,
-		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
-		keepFound: caseHandoverBatchMode,
-		searchOpen: sessionToolbarSearchOpen
-	});
 	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
 	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
 	// A chosen reason that is no longer offered is dropped.
@@ -2253,7 +2265,7 @@ export const SessionsList = ({
 			handleCloseCaseHandoverBatch();
 		}
 	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
-	const handleSubmitCaseHandoverBatch = useCallback(() => {
+	const handleSubmitCaseHandoverBatch = useCallback(async () => {
 		if (
 			caseHandoverSelectedIds.length === 0 ||
 			!caseHandoverReasonCode ||
@@ -2265,16 +2277,21 @@ export const SessionsList = ({
 			return;
 		}
 		setCaseHandoverBatchSummary('');
-		void caseHandoverBatch.submit(
-			caseHandoverSelectedIds,
-			caseHandoverReasonCode,
-			caseHandoverExplanation
-		);
+		try {
+			await caseHandoverBatch.submit(
+				caseHandoverSelectedIds,
+				caseHandoverReasonCode,
+				caseHandoverExplanation
+			);
+		} finally {
+			invalidateCaseHandoverRowStatuses(caseHandoverSelectedIds);
+		}
 	}, [
 		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
 		caseHandoverSelectedIds,
+		invalidateCaseHandoverRowStatuses,
 		translate
 	]);
 	useEffect(() => {
@@ -3309,6 +3326,15 @@ export const SessionsList = ({
 												</p>
 											)}
 											<SessionListItemComponent
+												caseHandoverRowStatus={
+													typeof activeSession.item
+														.id === 'number'
+														? caseHandoverSearch.getRowStatus(
+																activeSession
+																	.item.id
+															)
+														: undefined
+												}
 												defaultLanguage={
 													defaultLanguage
 												}

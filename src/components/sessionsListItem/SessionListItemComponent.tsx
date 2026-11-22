@@ -92,6 +92,8 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
+import type { CandidateRowStatus } from '../sessionsList/caseHandoverRowStatuses';
+import { useSessionCaseHandoverStatus } from './useSessionCaseHandoverStatus';
 import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
@@ -103,12 +105,10 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import {
-	apiGetCaseHandoverStatus,
 	apiPutArchive,
 	apiPutDearchive,
 	apiPutGroupChat,
 	GROUP_CHAT_API,
-	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
@@ -167,6 +167,7 @@ export interface SessionListItemProps {
 	isGroupStart?: boolean;
 	/** Last card of a group: end of the list or right above the active card. */
 	isGroupEnd?: boolean;
+	caseHandoverRowStatus?: CandidateRowStatus;
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
@@ -234,6 +235,7 @@ export const SessionListItemComponent = ({
 	grouped = false,
 	isGroupStart = true,
 	isGroupEnd = true,
+	caseHandoverRowStatus,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
 	onCaseHandoverSelect,
@@ -308,10 +310,6 @@ export const SessionListItemComponent = ({
 		url: string;
 	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-	const [caseHandoverStatus, setCaseHandoverStatus] =
-		useState<CaseHandoverStatus | null>(null);
-	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
-		useState(false);
 	// FE#781: after acceptance the Team-Besprechung entry point only survives
 	// as read-only archive access, so the menu must know whether a discussion
 	// exists. Resolved lazily on menu open (cached per session by the badge
@@ -365,6 +363,14 @@ export const SessionListItemComponent = ({
 		type,
 		sessionListTab
 	});
+	const { status: caseHandoverStatus, loading: caseHandoverStatusLoading } =
+		useSessionCaseHandoverStatus({
+			accessControlled: caseHandoverAccessControlled,
+			actorId: userData.userId,
+			listScope: sessionListTab,
+			sessionId: sessionItem?.id,
+			candidateStatus: caseHandoverRowStatus
+		});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
 	const matrixPreviewEvents = useMatrixSessionEvents(
@@ -522,52 +528,6 @@ export const SessionListItemComponent = ({
 		ready
 	]);
 
-	useEffect(() => {
-		let cancelled = false;
-		if (!caseHandoverAccessControlled || !activeSession?.item?.id) {
-			setCaseHandoverStatus(null);
-			setCaseHandoverStatusLoading(false);
-			return () => {
-				cancelled = true;
-			};
-		}
-
-		setCaseHandoverStatusLoading(true);
-		apiGetCaseHandoverStatus(activeSession.item.id)
-			.then((status) => {
-				if (!cancelled) {
-					setCaseHandoverStatus(status);
-				}
-			})
-			.catch((error) => {
-				if (cancelled) {
-					return;
-				}
-
-				if (error?.message === FETCH_ERRORS.FORBIDDEN) {
-					setCaseHandoverStatus({
-						sessionId: activeSession.item.id,
-						status: 'DENIED',
-						canViewContent: false,
-						clientConsentRequired: false,
-						auditOutcome: 'ACCESS_DENIED'
-					});
-					return;
-				}
-
-				setCaseHandoverStatus(null);
-			})
-			.finally(() => {
-				if (!cancelled) {
-					setCaseHandoverStatusLoading(false);
-				}
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [activeSession?.item?.id, caseHandoverAccessControlled]);
-
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// Non-owner consultant view: drives the read-only menu (no archive/delete).
 	// Both a silent member and an assigned supervisor are non-owners here.
@@ -681,8 +641,7 @@ export const SessionListItemComponent = ({
 	const canShowCaseHandoverAction =
 		caseHandoverCandidate &&
 		!caseHandoverStatusLoading &&
-		(!caseHandoverStatus?.canViewContent ||
-			Boolean(caseHandoverStatus?.requestId));
+		(!caseHandoverStatus?.canViewContent || caseHandoverStatus?.hasRequest);
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;

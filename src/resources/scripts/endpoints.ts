@@ -22,6 +22,8 @@ export const endpoints = {
 		userServiceOrigin +
 		`/service/users/account-invites/${encodeURIComponent(token)}`,
 	agencyConsultants: userServiceOrigin + '/service/users/consultants',
+	// Journeys an advice seeker runs (ADR-036 part E, #2333); read without a login.
+	journeys: userServiceOrigin + '/service/users/journeys',
 	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
 	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
 		agencyServiceOrigin +

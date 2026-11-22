@@ -30,6 +30,10 @@ import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListIte
 import { GroupWaitingRoom } from './GroupWaitingRoom';
 import { getGroupWaitingRoomTopic } from './groupWaitingRoomData';
 import { useGroupWaitingRoomSchedule } from './useGroupWaitingRoomSchedule';
+import { useGroupWaitingAdmission } from '../waitingAdmission/useGroupWaitingAdmission';
+import { markCallAutoJoin } from '../waitingAdmission/callAutoJoin';
+import { useAfterDelay } from '../waitingAdmission/useAfterDelay';
+import { askCallDevicesWhileWaiting } from '../waitingAdmission/askCallDevices';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -200,7 +204,7 @@ const ClientGroupEntryRoom = () => {
 	const { plannedStart, upcomingDates, series, durationMinutes } =
 		useGroupWaitingRoomSchedule(item);
 
-	const handleJoin = useCallback(() => {
+	const join = useCallback(() => {
 		if (!item?.id || joinBusy || joinBlocked) {
 			return false;
 		}
@@ -238,6 +242,35 @@ const ClientGroupEntryRoom = () => {
 				return false;
 			});
 	}, [item, joinBusy, joinBlocked, navigate, session?.rid, notifications, t]);
+
+	/* ORISO-UserService#1747 (flow 2): an audio or video circle's link leads
+	   here, and the person knocks like everyone else (#2237): they agree,
+	   wait, and a moderator in the group's running call lets them in. Only
+	   then is the group joined, and its running call opens by itself
+	   (`callAutoJoin`). Text circles keep "agree and join". */
+	const callGroup = item?.modality === 'VIDEO' || item?.modality === 'AUDIO';
+	const [waitingForAdmission, setWaitingForAdmission] = useState(false);
+	useGroupWaitingAdmission({
+		chatId,
+		enabled: callGroup && waitingForAdmission && !joinBlocked,
+		onAdmitted: () => {
+			if (item?.id) markCallAutoJoin(item.id);
+			void join();
+		}
+	});
+	const waitedAMinute = useAfterDelay(
+		callGroup && waitingForAdmission && active,
+		60_000
+	);
+	const handleJoin = useCallback(() => {
+		if (!callGroup) return join();
+		if (!item?.id || joinBlocked) return false;
+		/* The agreement click is the gesture: camera and microphone are asked
+		   now, not when the call opens (#2237). */
+		askCallDevicesWhileWaiting(item.modality);
+		setWaitingForAdmission(true);
+		return false;
+	}, [callGroup, item, joinBlocked, join]);
 
 	if (!ready) {
 		return <EntryRoomLoading />;
@@ -289,6 +322,17 @@ const ClientGroupEntryRoom = () => {
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
 				joinBlocked={joinBlocked}
+				openBeforeStart={callGroup}
+				admissionWaiting={
+					callGroup && waitingForAdmission
+						? t('groupChat.waitingAdmission.waiting')
+						: undefined
+				}
+				admissionSoon={
+					waitedAMinute
+						? t('groupChat.waitingAdmission.openSoon')
+						: undefined
+				}
 				joinNotice={
 					isRemoved
 						? t('groupChat.removed.overlay.headline')

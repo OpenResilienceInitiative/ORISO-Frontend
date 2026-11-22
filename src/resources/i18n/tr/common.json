@@ -655,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Bazı sohbet verileri bu tarayıcıda kalmış olabilir. Diğer ORISO sekmelerini kapatın.",
+			"retryCleanup": "Tarayıcı temizliğini yeniden dene",
 			"button": "Kapat",
 			"headline": "Caritas Beratung hesabınızı başarıyla sildiniz."
 		}
@@ -1264,6 +1266,12 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
+			"discard": {
+				"title": "Girdiğiniz bilgiler silinsin mi?",
+				"description": "Bu karttaki bilgiler henüz kaydedilmedi. Bu görünümü kapatırsanız kaybolacaklar.",
+				"keepEditing": "Düzenlemeye devam et",
+				"confirm": "Sil ve kapat"
+			},
 			"cardsPrevious": "Önceki görüşme formatı",
 			"cardsNext": "Sonraki görüşme formatı",
 			"back": "Geri",
@@ -4091,6 +4099,10 @@
 				"headline": "Bu davet bağlantısı çalışmıyor.",
 				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
 			}
+		},
+		"stepScroll": {
+			"back": "Önceki adımlar",
+			"forward": "Sonraki adımlar"
 		}
 	},
 	"releaseNote": {
@@ -5934,6 +5946,7 @@
 			"title": "Süpervizyon",
 			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
 			"headerLabel": "Süpervizyon · {{name}}",
+			"menuHint": "Bu danışmanlık hakkında süpervizyonla feedback sohbeti",
 			"role": {
 				"supervisor": "Süpervizyon",
 				"consultant": "Danışmanlık"
@@ -6030,8 +6043,7 @@
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
 		},
 		"whoReadsAlong": {
-			"headline": "Mesajınızı kim okuyor",
-			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+			"headline": "Mesajınızı kim okuyor"
 		},
 		"responseDeadline": {
 			"headline": "Ne zaman yanıt alacaksınız",
@@ -6885,7 +6897,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
-			"micMeter": "Mikrofonunuzun ses düzeyi"
+			"micMeter": "Mikrofonunuzun ses düzeyi",
+			"cameraNotice": {
+				"permissionDenied": "Kameranız bu site için engellendi. Tarayıcınızın site ayarlarında kameraya izin verin (adresin yanındaki kilit simgesi). Görüntü sayfayı yenilemeden görünür.",
+				"deviceBusy": "Kameranızı şu anda başka bir program kullanıyor. Programı kapatın ve tekrar kontrol edin.",
+				"retry": "Kamerayı tekrar kontrol et"
+			}
 		},
 		"ready": {
 			"title": "Kamerayı ve mikrofonu kontrol edin",
@@ -7933,5 +7950,40 @@
 		"archiveHint": "Listenizden ve etkinliklerinizden kalkması için kaydı arşive taşıyın.",
 		"archived": "Bu kayıt arşivde.",
 		"archiveFailed": "Arşivleme başarısız oldu. Lütfen tekrar deneyin."
+	},
+	"journey": {
+		"question": {
+			"optional": "(isteğe bağlı)",
+			"missing": "Lütfen bu soruyu yanıtlayın.",
+			"textPlaceholder": "Yanıtınız",
+			"other": "Başka bir şey",
+			"otherPlaceholder": "Tam olarak ne?",
+			"choose": "Lütfen seçin",
+			"multiHint": "Birden fazla yanıt seçebilirsiniz"
+		},
+		"rating": {
+			"stars": "{{max}} yıldızdan {{count}}",
+			"stars_one": "{{max}} yıldızdan {{count}}",
+			"stars_other": "{{max}} yıldızdan {{count}}",
+			"untouched": "henüz seçilmedi",
+			"moveHint": "Kaydırıcıyı kendi değerinize getirin."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Kısa bir soru",
+				"arrival": "Geri bildiriminiz"
+			},
+			"send": "Yanıtları gönder",
+			"thanks": "Yanıtlarınız için teşekkürler!",
+			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin.",
+			"anonymous": "Yanıtlarınız danışmanlığınızla bağlantı kurulmadan kaydedilir."
+		},
+		"checkIn": {
+			"progress": "Soru {{current}} / {{total}}",
+			"back": "Önceki soru",
+			"next": "İleri",
+			"skip": "Atla",
+			"done": "Tamam – “İleri” sizi sonraki adıma götürür."
+		}
 	}
 }

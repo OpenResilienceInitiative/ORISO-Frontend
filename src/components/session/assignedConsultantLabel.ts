@@ -4,7 +4,7 @@ import {
 	type ExtendedSessionInterface
 } from '../../globalState';
 import type { UserDataInterface } from '../../globalState/interfaces';
-import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
+import { isLegacyGuestLoginLabel } from '../../utils/anonymousChatDisplayName';
 import { isEmailShapedLogin } from '../../utils/isEmailShapedLogin';
 import { isMatrixUserId } from '../../utils/messageMentions';
 import { getModality, Modality } from './getModality';
@@ -40,7 +40,7 @@ export const resolveAssignedConsultantLabel = (
 			value &&
 			!isEmailShapedLogin(value) &&
 			!isMatrixUserId(value) &&
-			!isAnonymousMatrixUsername(value) &&
+			!isLegacyGuestLoginLabel(value) &&
 			!value.startsWith('enc.')
 		) {
 			return value;

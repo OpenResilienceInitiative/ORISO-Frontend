@@ -87,6 +87,20 @@ export const AddWindow: Story = {
 	}
 };
 
+export const DarkTimeInputs: Story = {
+	name: 'Native time fields follow Dark',
+	globals: { scheme: 'dark' },
+	play: async ({ canvasElement }) => {
+		const timeFields = canvasElement.querySelectorAll('input[type="time"]');
+		await expect(timeFields).toHaveLength(2);
+		await waitFor(async () => {
+			for (const field of Array.from(timeFields)) {
+				await expect(getComputedStyle(field).colorScheme).toBe('dark');
+			}
+		});
+	}
+};
+
 export const DeleteWindowUpdatesLinks: Story = {
 	name: 'Deleting a window updates its links',
 	play: async ({ canvasElement }) => {

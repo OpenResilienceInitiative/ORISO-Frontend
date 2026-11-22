@@ -7,7 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
-import { MatrixClient } from 'matrix-js-sdk';
+import { KnownMembership, MatrixClient, Room } from 'matrix-js-sdk';
 import { MessageSubmitInterfaceComponent } from './messageSubmitInterfaceComponent';
 import { MatrixClientService } from '../../services/matrixClientService';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
@@ -154,6 +154,25 @@ afterEach(() => {
 	window.localStorage.clear();
 });
 
+/**
+ * There is no /sync in this harness. After an allowed join, put the joined room
+ * into the client store as sync would — the send waits for exactly that and
+ * refuses to send into a room the client does not hold (P0 plaintext leak).
+ * The room carries no m.room.encryption, like a legacy migration room, so the
+ * SDK sends m.room.message without needing a crypto backend here.
+ */
+function deliverJoinedRoomAsSyncWould() {
+	const client = service?.getClient();
+	if (!client || client.getRoom('!storybook-group:example.org')) return;
+	const room = new Room(
+		'!storybook-group:example.org',
+		client,
+		'@synthetic:example.invalid'
+	);
+	room.updateMyMembership(KnownMembership.Join);
+	client.store.storeRoom(room);
+}
+
 async function prepareJoinFailure(
 	status: number,
 	data: Record<string, unknown>,
@@ -177,11 +196,15 @@ async function prepareJoinFailure(
 			if (path.startsWith('/_matrix/client/v3/join/')) {
 				if (nextJoinFailure === 'network')
 					throw new TypeError('Synthetic network failure');
-				return joinAllowed
-					? Response.json({ room_id: '!storybook-group:example.org' })
-					: Response.json(nextJoinFailure?.data ?? data, {
-							status: nextJoinFailure?.status ?? status
-						});
+				if (joinAllowed) {
+					deliverJoinedRoomAsSyncWould();
+					return Response.json({
+						room_id: '!storybook-group:example.org'
+					});
+				}
+				return Response.json(nextJoinFailure?.data ?? data, {
+					status: nextJoinFailure?.status ?? status
+				});
 			}
 			if (
 				path.startsWith('/_matrix/client/v3/rooms/') &&
