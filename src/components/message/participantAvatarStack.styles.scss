@@ -83,6 +83,12 @@
 		}
 	}
 
+	// FE#2344: the role sits under the name, a step quieter.
+	&__tipRole {
+		display: block;
+		font-weight: 400;
+	}
+
 	&__item[data-open='true'] &__tip {
 		visibility: visible;
 		opacity: 1;

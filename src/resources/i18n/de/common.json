@@ -650,6 +650,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Einige Chatdaten könnten in diesem Browser geblieben sein. Schließen Sie alle anderen ORISO-Tabs.",
+			"retryCleanup": "Browserdaten erneut bereinigen",
 			"button": "Schließen",
 			"headline": "Sie haben Ihren Account bei der Caritas Beratung erfolgreich gelöscht."
 		}
@@ -4116,6 +4118,10 @@
 				"headline": "Dieser Einladungslink funktioniert nicht.",
 				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
 			}
+		},
+		"stepScroll": {
+			"back": "Vorige Schritte",
+			"forward": "Nächste Schritte"
 		}
 	},
 	"releaseNote": {
@@ -5961,6 +5967,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback-Chat mit der Supervision zu dieser Beratung",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Beratung"
@@ -6087,8 +6094,7 @@
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Ihre Nachricht liest",
-			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Ihre Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Sie eine Antwort erhalten",
@@ -6880,7 +6886,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"cameraNotice": {
+				"permissionDenied": "Ihre Kamera ist für diese Seite blockiert. Erlauben Sie die Kamera in den Website-Einstellungen Ihres Browsers (Schloss-Symbol links neben der Adresse). Das Bild erscheint dann ohne Neuladen.",
+				"deviceBusy": "Ihre Kamera wird gerade von einem anderen Programm verwendet. Schließen Sie es und prüfen Sie dann erneut.",
+				"retry": "Kamera erneut prüfen"
+			}
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",
@@ -7928,5 +7939,40 @@
 		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
 		"archived": "Dieser Eintrag ist im Archiv.",
 		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
+	},
+	"journey": {
+		"question": {
+			"optional": "(optional)",
+			"missing": "Bitte beantworten Sie diese Frage.",
+			"textPlaceholder": "Ihre Antwort",
+			"other": "Etwas anderes",
+			"otherPlaceholder": "Was genau?",
+			"choose": "Bitte auswählen",
+			"multiHint": "Mehrere Antworten möglich"
+		},
+		"rating": {
+			"stars": "{{count}} von {{max}} Sternen",
+			"stars_one": "{{count}} von {{max}} Sternen",
+			"stars_other": "{{count}} von {{max}} Sternen",
+			"untouched": "noch nicht gewählt",
+			"moveHint": "Bewegen Sie den Regler auf Ihren Wert."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Eine kurze Frage",
+				"arrival": "Ihre Rückmeldung"
+			},
+			"send": "Antworten senden",
+			"thanks": "Danke für Ihre Antworten!",
+			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal.",
+			"anonymous": "Ihre Antworten werden ohne Bezug zu Ihrer Beratung gespeichert."
+		},
+		"checkIn": {
+			"progress": "Frage {{current}} von {{total}}",
+			"back": "Vorige Frage",
+			"next": "Weiter",
+			"skip": "Überspringen",
+			"done": "Fertig – mit „Weiter“ geht es zum nächsten Schritt."
+		}
 	}
 }

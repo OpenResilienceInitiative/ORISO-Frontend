@@ -29,18 +29,23 @@ import {
  */
 export const LOOKUP_WAIT_MS = 5_000;
 
-export const useGuestRetentionGate = (enabled: boolean) => {
+export const useGuestRetentionGate = (
+	enabled: boolean,
+	temporaryAccount?: boolean
+) => {
 	const { t } = useTranslation();
 	const { addNotification } = useContext(NotificationsContext) ?? {
 		addNotification: () => undefined
 	};
-	const { account, status } = useOwnTemporaryAccount(enabled);
+	// Only the signed-in profile's explicit permanent-account status skips lookup.
+	const checkRetention = enabled && temporaryAccount !== false;
+	const { account, status } = useOwnTemporaryAccount(checkRetention);
 	const [open, setOpen] = useState(false);
 	const pending = useRef<(() => void) | null>(null);
 
 	const gate = useCallback(
 		(proceed: () => void) => {
-			if (!enabled) return false;
+			if (!checkRetention) return false;
 			if (status === 'ready') {
 				if (!needsRetentionAnswer(account)) return false;
 				pending.current = proceed;
@@ -80,7 +85,7 @@ export const useGuestRetentionGate = (enabled: boolean) => {
 				});
 			return true;
 		},
-		[account, addNotification, enabled, status, t]
+		[account, addNotification, checkRetention, status, t]
 	);
 
 	const confirm = useCallback(

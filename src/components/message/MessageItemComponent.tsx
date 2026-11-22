@@ -104,6 +104,7 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { useChatMessageDisplayConfig } from './chatMessageConfig';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
+import { useSupervisionPerson } from '../supervisionPanel/SupervisionPeopleContext';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import clsx from 'clsx';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
@@ -453,6 +454,9 @@ export const MessageItemComponent = ({
 	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
 		useState(false);
 	const consultantContext = useContext(ConsultantListContext);
+	// FE#2344: inside the supervision side room the author is shown exactly
+	// as the panel header shows them (name, role-neutral avatar).
+	const supervisionPerson = useSupervisionPerson(userId);
 	const getComparableRecipientIds = useCallback(
 		(rawValue?: string | null) => {
 			const baseValue = (rawValue || '').trim().toLowerCase();
@@ -2002,6 +2006,7 @@ export const MessageItemComponent = ({
 				})
 			: null;
 	const formattedName =
+		supervisionPerson?.name ??
 		sessionAskerName ??
 		formatMessagePersonName(
 			ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
@@ -2332,7 +2337,9 @@ export const MessageItemComponent = ({
 										isMyMessage={isMyMessage}
 										isUser={isUserMessage()}
 										resolvedDisplayName={
-											sessionAskerName ?? undefined
+											supervisionPerson?.name ??
+											sessionAskerName ??
+											undefined
 										}
 										type={getUsernameType()}
 										subtitle={
@@ -3217,7 +3224,26 @@ export const MessageItemComponent = ({
 											'messageItem__avatar--supervisor'
 									)}
 								>
-									{isSupervisorFeedback ? (
+									{supervisionPerson ? (
+										// FE#2344: the same avatar as in the panel
+										// header; the "Feedback" tag in the bubble
+										// still marks the supervisor's message.
+										<MessageAvatar
+											isGroup={!!activeSession?.isGroup}
+											isSystemNotification={false}
+											userId={userId}
+											username={username}
+											choice={supervisionPerson.choice}
+											displayName={supervisionPerson.name}
+											firstName={
+												supervisionPerson.firstName
+											}
+											lastName={
+												supervisionPerson.lastName
+											}
+											size={AVATAR_SIZES.message}
+										/>
+									) : isSupervisorFeedback ? (
 										// In supervision the role matters more than
 										// the face. The name still stands above.
 										<span className="messageItem__supervisionAvatar">
@@ -3373,27 +3399,36 @@ export const MessageItemComponent = ({
 										userId={userId}
 										username={username}
 										displayName={
+											supervisionPerson?.name ??
 											sessionAskerName ??
 											ownConsultantName?.displayName ??
 											displayName
 										}
 										firstName={
-											ownConsultantName
-												? ownConsultantName.firstName
-												: userData?.firstName
+											supervisionPerson
+												? supervisionPerson.firstName
+												: ownConsultantName
+													? ownConsultantName.firstName
+													: userData?.firstName
 										}
 										lastName={
-											ownConsultantName
-												? ownConsultantName.lastName
-												: userData?.lastName
+											supervisionPerson
+												? supervisionPerson.lastName
+												: ownConsultantName
+													? ownConsultantName.lastName
+													: userData?.lastName
 										}
 										size={AVATAR_SIZES.message}
 										choice={
-											isUserMessage()
-												? chosenAvatarOf(userData)
-												: counsellorChoiceOf(
-														chosenAvatarOf(userData)
-													)
+											supervisionPerson
+												? supervisionPerson.choice
+												: isUserMessage()
+													? chosenAvatarOf(userData)
+													: counsellorChoiceOf(
+															chosenAvatarOf(
+																userData
+															)
+														)
 										}
 									/>
 								</div>

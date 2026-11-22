@@ -1,3 +1,4 @@
+import { mockConsultantShell } from '../support/mockConsultantShell';
 import { endpoints } from '../../src/resources/scripts/endpoints';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 import {
@@ -12,27 +13,40 @@ const TWO_FACTOR_QR_CODE = 'iVBORw0KGgo=';
 const parseBody = (body) =>
 	typeof body === 'string' ? JSON.parse(body) : body;
 
-const prepareInactiveTwoFactorConsultant = (showNag: boolean) => {
-	if (showNag) {
-		cy.willReturn('frontend.settings', {});
+const prepareInactiveTwoFactorConsultant = (required = false) => {
+	const secondFactor = {
+		isActive: false,
+		isEnabled: true,
+		isRequired: required,
+		qrCode: TWO_FACTOR_QR_CODE,
+		secret: TWO_FACTOR_SECRET,
+		type: ''
+	};
+	cy.willReturn('userData', { twoFactorAuth: secondFactor }, true);
+
+	let appConfigured = false;
+	if (required) {
+		cy.fixture('service.users.data').then((users) => {
+			const consultant = users.find(
+				({ userId }) => userId === USER_CONSULTANT
+			);
+			cy.intercept('GET', endpoints.userData, (request) => {
+				request.reply({
+					...consultant,
+					passwordChangeRequired: false,
+					twoFactorAuth: {
+						...secondFactor,
+						isActive: appConfigured,
+						type: appConfigured ? 'APP' : ''
+					}
+				});
+			}).as('usersData');
+		});
 	}
 
-	cy.willReturn(
-		'userData',
-		{
-			twoFactorAuth: {
-				isActive: false,
-				isEnabled: true,
-				qrCode: TWO_FACTOR_QR_CODE,
-				secret: TWO_FACTOR_SECRET,
-				type: ''
-			}
-		},
-		true
-	);
-
-	cy.intercept('PUT', endpoints.twoFactorAuthApp, {
-		statusCode: 204
+	cy.intercept('PUT', endpoints.twoFactorAuthApp, (request) => {
+		appConfigured = true;
+		request.reply({ statusCode: 204 });
 	}).as('putTwoFactorApp');
 	cy.intercept('PUT', endpoints.twoFactorAuthEmail, {
 		statusCode: 204
@@ -41,23 +55,22 @@ const prepareInactiveTwoFactorConsultant = (showNag: boolean) => {
 		statusCode: 204
 	}).as('postTwoFactorEmailCode');
 	cy.intercept('PATCH', endpoints.userData, (req) => {
-		if (parseBody(req.body)?.encourage2fa === false) {
+		if (req.body && parseBody(req.body)?.encourage2fa === false) {
 			req.alias = 'patchEncourage2fa';
 		}
-		req.reply({
-			statusCode: 204
-		});
+		req.reply({ statusCode: 204 });
 	});
 
-	cy.fastLogin({ userId: USER_CONSULTANT });
-	cy.window().then((win) => {
-		if (showNag) {
-			win.localStorage.setItem('2fa', '1');
-		} else {
-			win.localStorage.setItem('2fa', '0');
-		}
-		win.dispatchEvent(new win.Event('devToolbar'));
+	cy.fastLogin({
+		userId: USER_CONSULTANT,
+		waitForSessionList: !required
 	});
+	if (!required) {
+		cy.window().then((win) => {
+			win.localStorage.setItem('2fa', '0');
+			win.dispatchEvent(new win.Event('devToolbar'));
+		});
+	}
 };
 
 describe('two-factor setup dialog', () => {
@@ -71,16 +84,19 @@ describe('two-factor setup dialog', () => {
 
 	beforeEach(() => {
 		mockWebSocket();
+		mockConsultantShell();
 	});
 
 	it('opens from profile security settings and completes email setup', () => {
-		prepareInactiveTwoFactorConsultant(false);
+		prepareInactiveTwoFactorConsultant();
 
 		cy.visit('/profile/einstellungen/sicherheit');
 		cy.contains('Zwei-Faktor-Authentifizierung').should('exist');
-		cy.get('.twoFactorAuth__switch').click();
+		cy.get('.twoFactorAuth__switch [role="switch"]')
+			.parent('label')
+			.click();
 
-		cy.contains('Welche Verbindung möchten Sie verwenden?');
+		cy.contains('Zweiten Faktor wählen');
 		cy.get('.app').should('have.class', 'app--blur');
 		cy.get('.twoFactorSetupDialog__backdrop').should('exist');
 		cy.contains('button', 'E-Mail-Code verwenden').click();
@@ -96,7 +112,7 @@ describe('two-factor setup dialog', () => {
 
 		cy.contains('button', 'Neuen Code senden').click();
 		cy.wait('@putTwoFactorEmail');
-		cy.get('.twoFactorSetupDialog__input input').type('654321');
+		cy.get('#two-factor-setup-otp').type('654321');
 		cy.contains('button', 'Bestätigen').click();
 
 		cy.wait('@postTwoFactorEmailCode')
@@ -110,24 +126,26 @@ describe('two-factor setup dialog', () => {
 		cy.contains('E-Mail-Authentifizierung erfolgreich eingerichtet.');
 	});
 
-	it('opens from the mandatory nag as a forced dialog and completes app setup', () => {
+	it('requires the second factor before granting access and completes app setup', () => {
 		prepareInactiveTwoFactorConsultant(true);
 
-		cy.contains('Schützen Sie nun Ihr Konto').should('exist');
-		cy.contains('button', 'Jetzt schützen').click();
+		cy.get('.accountSetupGate').should('be.visible');
+		cy.get('a[href="/sessions/consultant/sessionPreview"]').should(
+			'not.exist'
+		);
 
-		cy.contains('Welche Verbindung möchten Sie verwenden?');
+		cy.contains('Zweiten Faktor wählen');
 		cy.get('.app').should('have.class', 'app--blur');
 		cy.get('.twoFactorSetupDialog__backdrop').should('exist');
 		cy.get('.twoFactorSetupDialog__close').should('not.exist');
 		cy.contains('button', 'Schließen').should('not.exist');
 
 		cy.contains('button', 'Sicher per App verbinden').click();
-		cy.contains('Installieren Sie Google Authenticator');
-		cy.contains('button', 'Weiter').click();
+		cy.contains('Authenticator-App installieren');
+		cy.contains('button', 'App ist installiert – weiter').click();
 		cy.contains('Manueller Schlüssel');
 		cy.contains('button', 'Weiter').click();
-		cy.get('.twoFactorSetupDialog__input input').type('123456');
+		cy.get('#two-factor-setup-otp').type('123456');
 		cy.contains('button', 'Bestätigen').click();
 
 		cy.wait('@putTwoFactorApp').then(({ request }) => {
@@ -137,6 +155,9 @@ describe('two-factor setup dialog', () => {
 			});
 		});
 		cy.wait('@patchEncourage2fa');
-		cy.contains('App-Authentifizierung erfolgreich eingerichtet.');
+		cy.get('.accountSetupGate').should('not.exist');
+		cy.get('a[href="/sessions/consultant/sessionPreview"]').should(
+			'be.visible'
+		);
 	});
 });

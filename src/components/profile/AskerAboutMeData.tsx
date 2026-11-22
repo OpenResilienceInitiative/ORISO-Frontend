@@ -10,7 +10,8 @@ import { UserDataContext } from '../../globalState';
 import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
 import { EditableData } from '../editableData/EditableData';
 import { Text } from '../text/Text';
-import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
+import { OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { ReactComponent as CheckIllustration } from '../../resources/img/illustrations/check.svg';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { apiDeleteEmail } from '../../api/apiDeleteEmail';
@@ -20,8 +21,12 @@ import { useTranslation } from 'react-i18next';
 import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 import { useAccountEmailCollectionAllowed } from '../../hooks/useAccountEmailCollectionAllowed';
 
+import { useResponsive } from '../../hooks/useResponsive';
+import './askerAboutMeData.styles.scss';
+
 export const AskerAboutMeData = () => {
 	const { t: translate } = useTranslation();
+	const { untilM } = useResponsive();
 
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	/* UserService#1662: a temporary account has no e-mail address until it
@@ -56,18 +61,16 @@ export const AskerAboutMeData = () => {
 			),
 			nestedComponent: (
 				<>
-					<Text
-						text={translate(
+					<p>
+						{translate(
 							'twoFactorAuth.email.change.confirmOverlay.copy.1'
 						)}
-						type="infoLargeStandard"
-					/>
-					<Text
-						text={translate(
+					</p>
+					<p>
+						{translate(
 							'twoFactorAuth.email.change.confirmOverlay.copy.2'
 						)}
-						type="infoLargeStandard"
-					/>
+					</p>
 				</>
 			),
 			buttonSet: [
@@ -110,7 +113,6 @@ export const AskerAboutMeData = () => {
 	const overlayConfirm: OverlayItem = useMemo(
 		() => ({
 			headline: translate('profile.unsetEmail.confirmOverlay.headline'),
-			headlineStyleLevel: '1',
 			copy: translate('profile.unsetEmail.confirmOverlay.copy'),
 			nestedComponent: (
 				<ul className="">
@@ -267,7 +269,7 @@ export const AskerAboutMeData = () => {
 		<div>
 			<div className="profile__content__title">
 				<Headline
-					className="pr--3"
+					className="pr--3 askerAboutMeData__heading"
 					text={translate('profile.data.title.asker')}
 					semanticLevel="5"
 				/>
@@ -337,11 +339,26 @@ export const AskerAboutMeData = () => {
 						(button) =>
 							button.function === OVERLAY_FUNCTIONS.CONFIRM_EDIT
 					)) && (
-					<Overlay
-						className="editableData__overlay"
-						item={overlay}
-						handleOverlay={handleOverlayAction}
-					/>
+					<M3Dialog
+						data-testid="profile-email-dialog"
+						title={overlay.headline}
+						description={overlay.copy}
+						icon={
+							overlay.svg
+								? React.createElement(overlay.svg)
+								: undefined
+						}
+						closable={false}
+						fullScreen={untilM}
+						onClose={() => setOverlay(null)}
+						actions={overlay.buttonSet?.map((button) => ({
+							label: button.label,
+							onClick: () => handleOverlayAction(button.function),
+							primary: button.type === BUTTON_TYPES.PRIMARY
+						}))}
+					>
+						{overlay.nestedComponent}
+					</M3Dialog>
 				)}
 		</div>
 	);

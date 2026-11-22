@@ -94,7 +94,11 @@ export const readHandoffKey = async (id: string): Promise<CryptoKey | null> => {
 	return entry && entry.expiresAt > Date.now() ? entry.key : null;
 };
 
-export const dropHandoffKey = (id: string): void => {
+export const deleteHandoffKey = async (id: string): Promise<void> => {
 	if (typeof indexedDB === 'undefined') return;
-	run('readwrite', (store) => store.delete(id)).catch(() => undefined);
+	await run('readwrite', (store) => store.delete(id));
+};
+
+export const dropHandoffKey = (id: string): void => {
+	void deleteHandoffKey(id).catch(() => undefined);
 };

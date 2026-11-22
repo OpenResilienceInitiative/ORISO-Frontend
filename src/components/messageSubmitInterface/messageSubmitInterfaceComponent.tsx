@@ -2327,7 +2327,8 @@ export const MessageSubmitInterfaceComponent = ({
 	   or file (uploads and pasted files go out through this button too). */
 	const retentionGate = useGuestRetentionGate(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!activeSession.isGroup
+			!activeSession.isGroup,
+		userData?.temporaryAccount
 	);
 	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
 	// The chat this composer shows now; a send that settles later checks it

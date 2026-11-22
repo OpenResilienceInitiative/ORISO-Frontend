@@ -99,6 +99,7 @@ interface Setup {
 	isSupervisor?: boolean;
 	agencyFeaturePolicy?: AgencyConversationPolicy;
 	sessionId?: number;
+	isGroup?: boolean;
 }
 
 const Conversation = ({
@@ -108,7 +109,8 @@ const Conversation = ({
 	isVideoCallAllowed = true,
 	isSupervisor = false,
 	agencyFeaturePolicy = ready(),
-	sessionId = SESSION
+	sessionId = SESSION,
+	isGroup = false
 }: Setup) => (
 	<SessionTypeContext.Provider
 		value={
@@ -124,8 +126,8 @@ const Conversation = ({
 					value={
 						{
 							activeSession: {
-								isSession: true,
-								isGroup: false,
+								isSession: !isGroup,
+								isGroup,
 								isEnquiry: false,
 								rid: ROOM,
 								consultant: { id: 'counsellor' },
@@ -297,6 +299,17 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 
 	it('leaves a request for another conversation alone', () => {
 		openConversation({ sessionId: 7 });
+
+		expect(startedCalls()).toHaveLength(0);
+		expect(addNotification).not.toHaveBeenCalled();
+		expect(location?.state).toEqual(startCallState(SESSION, 'video'));
+	});
+
+	/* FE#2482: in a group chat the group header owns the call buttons and
+	   takes the request (GroupCallStartRequest). The menu must neither start
+	   nor refuse it, and must leave it in the history entry for the header. */
+	it("leaves a group chat's request to the group header", () => {
+		openConversation({ isGroup: true });
 
 		expect(startedCalls()).toHaveLength(0);
 		expect(addNotification).not.toHaveBeenCalled();

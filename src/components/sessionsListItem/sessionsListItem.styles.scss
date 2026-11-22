@@ -108,6 +108,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
+
+				--session-preview-color: var(--m3-on-surface, #1e1e1e);
 				border-color: $list-item-selected-border-color !important;
 			}
 		}
@@ -190,6 +192,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// which `__content--flow` gives back, so nothing moves.
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
+
+			// The open menu keeps this pale card in both schemes.
+			--session-preview-color: var(--black, #1e1e1e);
 			border: $list-item-active-menu-border-width solid
 				$session-light-border !important;
 		}
@@ -916,7 +921,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		align-content: center;
-		color: #1e1e1e;
+		color: var(--session-preview-color, var(--m3-on-surface, #1e1e1e));
 
 		&--aliasMessage {
 			font-style: italic !important;
@@ -1508,6 +1513,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 @mixin session-card-secondary {
 	.sessionsListItem__content {
 		background-color: var(--m3-surface-container-low, #f6f3f3) !important;
+
+		--session-preview-color: var(--m3-on-surface, #1e1e1e);
 
 		&:hover,
 		&:focus,
