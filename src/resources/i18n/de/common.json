@@ -5967,6 +5967,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback-Chat mit der Supervision zu dieser Beratung",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Beratung"

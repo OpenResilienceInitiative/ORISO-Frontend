@@ -1137,6 +1137,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									}}
 									disabled={!supervisionPanel.available}
 									data-cy="session-menu-supervision-panel"
+									// #2228: the hover hint names the channel
+									// as the feedback chat with the supervisor.
+									title={translate(
+										'supervision.panel.menuHint'
+									)}
 								>
 									<SessionMenuItemContent
 										icon={
