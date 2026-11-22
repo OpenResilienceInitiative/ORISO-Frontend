@@ -1590,7 +1590,7 @@ it.each([false, true])(
 	20000
 );
 
-it('does not offer the enquiry team button when lookup confirms there is no team room', async () => {
+it('keeps the enquiry team button when lookup confirms there is no team room, so a click creates it', async () => {
 	let resolveLookup!: (result: null) => void;
 	boundary.getTeam.mockReturnValue(
 		new Promise((resolve) => {
@@ -1603,14 +1603,15 @@ it('does not offer the enquiry team button when lookup confirms there is no team
 	await act(async () => {
 		resolveLookup(null);
 	});
-	await waitFor(() => {
-		expect(
-			screen.queryByRole('button', {
-				name: 'enquiry.teamDiscussion.open'
-			})
-		).toBeNull();
+	// Product decision (21 Nov): open enquiries keep the action; only
+	// accepted cases hide the team entry when no room exists.
+	const action = await screen.findByRole('button', {
+		name: 'enquiry.teamDiscussion.open'
 	});
+	// Seeing the enquiry creates nothing by itself.
 	expect(boundary.open).not.toHaveBeenCalled();
+	fireEvent.click(action);
+	await waitFor(() => expect(boundary.open).toHaveBeenCalled());
 }, 20000);
 
 it('opens an existing team conversation through More without a team-only floating switcher', async () => {

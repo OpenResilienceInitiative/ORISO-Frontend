@@ -3184,10 +3184,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.isEnquiry &&
 		!shouldBlockAnonymousInquiryChat &&
 		!isAnonymousAskerExperience &&
+		// Open enquiries keep the action even without a team room: the click
+		// creates it. The hide-if-no-room rule is for accepted cases only.
 		canOpenTeamSideRoom &&
-		(hasTeamSideRoom ||
-			!props.teamDiscussionResolved ||
-			props.teamDiscussionError) &&
 		!canRenderClientComposer({
 			canWriteMessage,
 			isSupervisor: isSupervisorView,

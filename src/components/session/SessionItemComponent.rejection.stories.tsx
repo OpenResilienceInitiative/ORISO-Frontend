@@ -377,9 +377,11 @@ export const NoTeamRoom: Story = {
 				Number(canvas.getByTestId('team-lookup-proof').textContent)
 			).toBeGreaterThan(0)
 		);
+		// An open enquiry keeps its team action without a room: the click
+		// creates it (product decision, 21 Nov). No team-only switcher.
 		await expect(
 			canvasElement.querySelector('[data-cy="enquiry-open-team"]')
-		).toBeNull();
+		).not.toBeNull();
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
 		).toBeNull();
