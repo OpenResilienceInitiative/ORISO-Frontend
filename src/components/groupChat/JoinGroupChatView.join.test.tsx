@@ -10,6 +10,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 
 /* Every view here runs inside a real router (FE#2483 review). */
 const ROOM_PATH = '/sessions/consultant/sessionView/room/15';
@@ -19,14 +27,6 @@ const render = (ui: React.ReactElement) =>
 			<MemoryRouter initialEntries={[ROOM_PATH]}>{children}</MemoryRouter>
 		)
 	});
-import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi
-} from 'vite-plus/test';
 
 /* The advice seeker's waiting room inside the app hands its join request back
    to the room, so the closing animation keeps the screen covered until the
