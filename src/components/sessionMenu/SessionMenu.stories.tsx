@@ -354,6 +354,10 @@ export const SupervisionUsesCatalogIcon: Story = {
 				'[data-icon-id="ui-icon:supervision-nocirc:400"]'
 			)
 		).not.toBeNull();
+		// #2228: hovering the row says what it opens.
+		const hint = supervision.getAttribute('title') ?? '';
+		await expect(hint).toMatch(/feedback/i);
+		await expect(hint).not.toContain('supervision.panel');
 	}
 };
 

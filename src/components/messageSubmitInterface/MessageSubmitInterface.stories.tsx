@@ -385,7 +385,11 @@ export const TemporaryGuestAskedBeforeFirstMessage: Story = {
 		});
 		return () => resetTemporaryAccount();
 	},
-	render: () => <ComposerShell userData={mockComposerAskerData} />,
+	render: () => (
+		<ComposerShell
+			userData={{ ...mockComposerAskerData, temporaryAccount: true }}
+		/>
+	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const body = within(canvasElement.ownerDocument.body);

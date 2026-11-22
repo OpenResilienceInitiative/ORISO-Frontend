@@ -44,8 +44,10 @@ const send = vi.fn();
 const addNotification = vi.fn();
 let gated: boolean | undefined;
 
-const Inner = ({ enabled }: { enabled: boolean }) => {
-	const { gate, dialog } = useGuestRetentionGate(enabled);
+type AccountProps = { enabled?: boolean; temporaryAccount?: boolean };
+
+const Inner = ({ enabled = true, temporaryAccount }: AccountProps) => {
+	const { gate, dialog } = useGuestRetentionGate(enabled, temporaryAccount);
 	return (
 		<>
 			<button
@@ -61,9 +63,9 @@ const Inner = ({ enabled }: { enabled: boolean }) => {
 	);
 };
 
-const Composer = ({ enabled = true }: { enabled?: boolean }) => (
+const Composer = (props: AccountProps) => (
 	<NotificationsContext.Provider value={{ addNotification } as any}>
-		<Inner enabled={enabled} />
+		<Inner {...props} />
 	</NotificationsContext.Provider>
 );
 
@@ -79,6 +81,17 @@ beforeEach(() => {
 });
 
 describe('useGuestRetentionGate', () => {
+	it('lets a confirmed permanent account send without a retention lookup', () => {
+		resetTemporaryAccount();
+		render(<Composer temporaryAccount={false} />);
+		fireEvent.click(screen.getByText('send'));
+
+		expect(gated).toBe(false);
+		expect(send).toHaveBeenCalledOnce();
+		expect(apiGetTemporaryAccount).not.toHaveBeenCalled();
+		expect(addNotification).not.toHaveBeenCalled();
+	});
+
 	it('asks first, saves the answer, then sends', async () => {
 		vi.mocked(apiPutMessageRetention).mockResolvedValue('saved');
 		render(<Composer />);
@@ -124,13 +137,13 @@ describe('useGuestRetentionGate', () => {
 		expect(gated).toBe(false);
 	});
 
-	it('holds a send until the lookup answers, then asks', async () => {
+	it('holds a confirmed guest’s send until the lookup answers, then asks', async () => {
 		resetTemporaryAccount();
 		vi.mocked(apiGetTemporaryAccount).mockResolvedValue({
 			messageRetention: 'GUEST_DECIDES',
 			keepMessages: null
 		});
-		render(<Composer />);
+		render(<Composer temporaryAccount />);
 		fireEvent.click(screen.getByText('send'));
 		expect(gated).toBe(true);
 		await screen.findByTestId('keep-messages-dialog');
@@ -176,21 +189,24 @@ describe('useGuestRetentionGate', () => {
 		const noticeHasNoTimeout = () =>
 			expect(addNotification.mock.calls[0][0].timeout).toBeUndefined();
 
-		it('holds the send and says so when the lookup fails again', async () => {
-			resetTemporaryAccount(null, 'failed');
-			vi.mocked(apiGetTemporaryAccount).mockRejectedValue(
-				new Error('503')
-			);
-			render(<Composer />);
-			fireEvent.click(screen.getByText('send'));
-			expect(gated).toBe(true);
-			await waitFor(() =>
-				expect(addNotification).toHaveBeenCalledWith(lookupNotice())
-			);
-			noticeHasNoTimeout();
-			expect(send).not.toHaveBeenCalled();
-			expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
-		});
+		it.each([true, undefined])(
+			'holds the send on lookup failure when temporaryAccount is %s',
+			async (temporaryAccount) => {
+				resetTemporaryAccount(null, 'failed');
+				vi.mocked(apiGetTemporaryAccount).mockRejectedValue(
+					new Error('503')
+				);
+				render(<Composer temporaryAccount={temporaryAccount} />);
+				fireEvent.click(screen.getByText('send'));
+				expect(gated).toBe(true);
+				await waitFor(() =>
+					expect(addNotification).toHaveBeenCalledWith(lookupNotice())
+				);
+				noticeHasNoTimeout();
+				expect(send).not.toHaveBeenCalled();
+				expect(screen.queryByTestId('keep-messages-dialog')).toBeNull();
+			}
+		);
 
 		it('holds the send and says so when the lookup takes too long', async () => {
 			vi.useFakeTimers();

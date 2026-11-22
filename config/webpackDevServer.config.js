@@ -18,6 +18,7 @@ function disableHostCheck(proxy) {
 }
 
 function getDevServerConfig(proxy, allowedHost, disableFirewall) {
+	const https = getHttpsConfig();
 	return {
 		// WebpackDevServer 2.4.3 introduced a security fix that prevents remote
 		// websites from potentially accessing local content through DNS rebinding:
@@ -92,7 +93,9 @@ function getDevServerConfig(proxy, allowedHost, disableFirewall) {
 			// remove last slash so user can land on `/test` instead of `/test/`
 			publicPath: paths.publicUrlOrPath.slice(0, -1)
 		},
-		https: getHttpsConfig(),
+		server: https
+			? { type: 'https', options: https === true ? {} : https }
+			: 'http',
 		host,
 		historyApiFallback: {
 			// Paths with dots should still use the history fallback.

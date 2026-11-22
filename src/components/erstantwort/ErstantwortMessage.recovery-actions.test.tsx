@@ -99,6 +99,7 @@ const userData = {
 		isActive: false
 	}
 };
+const accountProtection = german.erstantwort.accountProtection;
 
 const renderMessage = (viewer: object = userData, rawMessage?: string) =>
 	render(
@@ -143,43 +144,61 @@ describe('ErstantwortMessage email action', () => {
 		expect(screen.getByRole('textbox')).toBeTruthy();
 	});
 
-	it('starts 2FA with the backup-key follow-on when Zugang schützen is pressed', () => {
+	it('keeps email setup without the second-factor invitation in a new first answer', () => {
 		renderMessage();
 
-		act(() => {
-			screen.getByRole('button', { name: 'Zugang schützen' }).click();
-		});
-
-		expect(openTwoFactorSettings).toHaveBeenCalledWith({
-			showBackupKey: true
-		});
+		expect(
+			screen.getByRole('button', { name: 'E-Mail-Adresse angeben' })
+		).toBeTruthy();
+		expect(screen.queryByText(accountProtection.headline)).toBeNull();
+		expect(screen.queryByText(accountProtection.body)).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: accountProtection.action })
+		).toBeNull();
+		expect(openTwoFactorSettings).not.toHaveBeenCalled();
 	});
 
-	it('offers a counsellor no button from the advice seeker record (#1844)', () => {
-		const body =
-			'Sie können Ihren Zugang mit einem zweiten Faktor sichern, damit niemand sonst hineinkommt.';
-		renderMessage(
-			{
+	it.each([
+		{ reader: 'the advice seeker', viewer: userData },
+		{
+			reader: 'a counsellor',
+			viewer: {
 				...userData,
 				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
-			},
-			`[SYSTEM_NOTIFICATION]${JSON.stringify({
-				type: 'FIRST_RESPONSE',
-				version: 1,
-				bausteine: [
-					{
-						id: 'accountProtection',
-						body,
-						action: { kind: 'ENABLE_2FA', label: 'Zugang schützen' }
-					}
-				]
-			})}`
-		);
+			}
+		}
+	])(
+		'hides the stored second-factor invitation from $reader and keeps the greeting',
+		({ viewer }) => {
+			const greeting = 'Ihre Nachricht ist bei uns angekommen.';
+			renderMessage(
+				viewer,
+				`[SYSTEM_NOTIFICATION]${JSON.stringify({
+					type: 'FIRST_RESPONSE',
+					version: 1,
+					bausteine: [
+						{ id: 'greeting', body: greeting },
+						{
+							id: 'accountProtection',
+							headline: accountProtection.headline,
+							body: accountProtection.body,
+							action: {
+								kind: 'ENABLE_2FA',
+								label: accountProtection.action
+							}
+						}
+					]
+				})}`
+			);
 
-		// The record stays as the advice seeker read it; only the call to action goes.
-		expect(screen.getByText(body)).toBeTruthy();
-		expect(screen.queryByRole('button')).toBeNull();
-	});
+			expect(screen.getByText(greeting)).toBeTruthy();
+			expect(screen.queryByText(accountProtection.headline)).toBeNull();
+			expect(screen.queryByText(accountProtection.body)).toBeNull();
+			expect(
+				screen.queryByRole('button', { name: accountProtection.action })
+			).toBeNull();
+		}
+	);
 
 	it('edits the actual session alias instead of issuing an ignored account patch', async () => {
 		render(

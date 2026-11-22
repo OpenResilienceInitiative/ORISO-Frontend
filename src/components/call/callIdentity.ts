@@ -37,6 +37,7 @@ import {
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { counsellorInitials } from '../../utils/counsellorAvatar';
 import { LANGUAGE_DATA } from '../../utils/anonName/data';
+import { isLegacyGuestLoginLabel } from '../../utils/anonymousChatDisplayName';
 
 /** The timeline event that carries it. Mirrored in the fork. */
 export const CALL_IDENTITY_EVENT_TYPE = 'org.oriso.call.identity';
@@ -122,14 +123,16 @@ const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 /**
  * A value that is an account handle rather than a name: a Matrix id, an
  * e-mail address, its `_at_` Matrix spelling, an encoded anonymous name or
- * a historical `Anonymous-` / `anon_` login. None of these may reach a tile.
+ * a historical guest login. None of these may reach a tile. Label filter
+ * only — it never decides who is a guest (ORISO-Frontend#2347).
  */
-const LOGIN_LIKE = /@|_at_|^enc\.|^Anonymous-|^anon_/i;
+const LOGIN_LIKE = /@|_at_|^enc\./i;
 
 /** The public display name, or '' when there is none worth showing. */
 export const cleanCallDisplayName = (raw?: string | null): string => {
 	const value = (raw ?? '').replace(/\s+/g, ' ').trim();
-	if (!value || LOGIN_LIKE.test(value)) return '';
+	if (!value || LOGIN_LIKE.test(value) || isLegacyGuestLoginLabel(value))
+		return '';
 	return value;
 };
 

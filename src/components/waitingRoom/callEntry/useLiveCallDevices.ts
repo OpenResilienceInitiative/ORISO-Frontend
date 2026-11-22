@@ -21,6 +21,12 @@ export interface LiveCallDevices {
 	 */
 	cameraMissing: boolean;
 	/**
+	 * Why the camera is missing: blocked for the site, held by another
+	 * program, or not there. The check says so instead of quietly running
+	 * with the microphone alone (Dev, Frank, 2026-11-21).
+	 */
+	cameraBlocker?: CallEntryBlocker;
+	/**
 	 * The browser has answered at least once (a stream or a blocker). Until
 	 * then `cameraMissing` is only the optimistic default, not a finding.
 	 */
@@ -92,7 +98,8 @@ const constraintFor = (deviceId?: string): MediaTrackConstraints | true =>
 export const useLiveCallDevices = (
 	modality: CallModality,
 	controls: LiveCallControls = DEFAULT_CONTROLS,
-	mediaDevices: MediaDevices | undefined = navigator.mediaDevices
+	mediaDevices: MediaDevices | undefined = navigator.mediaDevices,
+	permissions: Permissions | undefined = navigator.permissions
 ): LiveCallDevices => {
 	const [state, setState] = useState<LiveState>({
 		devices: EMPTY,
@@ -122,7 +129,11 @@ export const useLiveCallDevices = (
 		const acquire = async (
 			micId?: string,
 			camId?: string
-		): Promise<{ stream: MediaStream; cameraMissing: boolean }> => {
+		): Promise<{
+			stream: MediaStream;
+			cameraMissing: boolean;
+			cameraError?: unknown;
+		}> => {
 			const audio = constraintFor(micId);
 			if (modality === 'audio') {
 				return {
@@ -152,7 +163,8 @@ export const useLiveCallDevices = (
 						audio,
 						video: false
 					}),
-					cameraMissing: true
+					cameraMissing: true,
+					cameraError: error
 				};
 			}
 		};
@@ -176,8 +188,9 @@ export const useLiveCallDevices = (
 				return;
 			}
 			let cameraMissing: boolean;
+			let cameraError: unknown;
 			try {
-				({ stream, cameraMissing } = await acquireAny());
+				({ stream, cameraMissing, cameraError } = await acquireAny());
 			} catch (error) {
 				if (cancelled) return;
 				setState((s) => ({
@@ -219,11 +232,19 @@ export const useLiveCallDevices = (
 			// An unplugged or revoked webcam: the room shows the animal and
 			// the camera as unavailable; the microphone keeps running, so the
 			// person need not speak again. Choosing a camera asks anew.
+			let cameraBlocker: CallEntryBlocker | undefined = cameraMissing
+				? blockerFor(cameraError)
+				: undefined;
 			live.getVideoTracks().forEach((track) =>
 				track.addEventListener('ended', () => {
 					if (cancelled) return;
 					cameraMissing = true;
-					setState((s) => ({ ...s, cameraMissing: true }));
+					cameraBlocker = 'noDevice';
+					setState((s) => ({
+						...s,
+						cameraMissing: true,
+						cameraBlocker
+					}));
 				})
 			);
 			const tick = () => {
@@ -246,6 +267,7 @@ export const useLiveCallDevices = (
 								stream: live,
 								micLevel,
 								cameraMissing,
+								cameraBlocker,
 								settled: true
 							}
 				);
@@ -283,6 +305,34 @@ export const useLiveCallDevices = (
 		return () =>
 			mediaDevices.removeEventListener('devicechange', onDeviceChange);
 	}, [modality, cameraMissing, mediaDevices, retry]);
+
+	// A camera blocked for the site, then allowed in the browser's site
+	// settings: no device is plugged in, so `devicechange` stays silent, and
+	// the check would run without video until a reload (Dev, Frank,
+	// 2026-11-21). The permission's own change event asks again. Browsers
+	// that cannot report the camera permission keep the switch's retry.
+	useEffect(() => {
+		if (modality !== 'video' || !cameraMissing || !permissions?.query) {
+			return;
+		}
+		let status: PermissionStatus | null = null;
+		let stopped = false;
+		const onChange = () => {
+			if (status?.state === 'granted') retry();
+		};
+		permissions
+			.query({ name: 'camera' as PermissionName })
+			.then((answer) => {
+				if (stopped) return;
+				status = answer;
+				status.addEventListener('change', onChange);
+			})
+			.catch(() => undefined);
+		return () => {
+			stopped = true;
+			status?.removeEventListener('change', onChange);
+		};
+	}, [modality, cameraMissing, permissions, retry]);
 
 	// The switches mute the real tracks, not only the icon.
 	useEffect(() => {

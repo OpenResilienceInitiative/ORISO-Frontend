@@ -1,3 +1,4 @@
+import type { FastLoginArgs } from './commands/helper/fastLogin';
 /// <reference types="cypress" />
 import { LoginArgs } from './commands/mockApi';
 import * as Bluebird from 'cypress/types/bluebird';
@@ -7,7 +8,7 @@ declare global {
 		interface Chainable {
 			login(args?: LoginArgs): Chainable<Element>;
 
-			fastLogin(args?: LoginArgs): Chainable<Element>;
+			fastLogin(args?: FastLoginArgs): Chainable<Element>;
 
 			askerSession(
 				args?: { [key: string]: any },

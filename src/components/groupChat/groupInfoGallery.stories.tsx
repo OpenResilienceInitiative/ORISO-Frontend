@@ -147,9 +147,9 @@ export const InfoGalleryTabletSelection: StoryObj = {
 	render: () => (
 		<Box
 			sx={{
-				/* Narrow enough that the fluid cards (2026-11-13: they shrink to
-				   fit three across) reach their 12rem floor and the third card
-				   is cut off, so the dots have something to scroll. */
+				/* A narrow panel: one and a half cards across (2026-11-20),
+				   the third card out of view, so the dots have something to
+				   scroll. */
 				width: 'min(500px, 100%)',
 				height: '100vh',
 				mx: 'auto',
@@ -187,7 +187,8 @@ export const InfoGalleryTabletSelection: StoryObj = {
 			canvas.getAllByRole('listitem');
 		const width = track.clientWidth;
 		const secondCentre = cardCentre(secondCard);
-		await expect(width).toBeGreaterThan(secondCentre);
+		// One and a half across: card 2's centre sits at the right edge.
+		await expect(width).toBeGreaterThanOrEqual(secondCentre - 2);
 		await expect(width).toBeLessThan(cardCentre(thirdCard));
 
 		await expect(step(1)).toHaveAttribute('aria-current', 'true');

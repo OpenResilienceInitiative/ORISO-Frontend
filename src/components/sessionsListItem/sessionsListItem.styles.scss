@@ -106,6 +106,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
+
+				--session-preview-color: var(--m3-on-surface, #1e1e1e);
 				border-color: $list-item-selected-border-color !important;
 			}
 		}
@@ -201,6 +203,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 					#410001
 				);
 			}
+
+			// The open menu keeps this pale card in both schemes.
+			--session-preview-color: var(--black, #1e1e1e);
 			border: $list-item-active-menu-border-width solid
 				$session-light-border !important;
 		}
@@ -944,7 +949,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		align-content: center;
-		color: var(--session-list-subject-color, #1e1e1e);
+		color: var(
+			--session-list-subject-color,
+			var(--session-preview-color, var(--m3-on-surface, #1e1e1e))
+		);
 
 		&--aliasMessage {
 			font-style: italic !important;
@@ -1539,6 +1547,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		--session-list-username-color: var(--m3-on-surface-variant, #444748);
 		--session-list-subject-color: var(--m3-on-surface, #1a1c1e);
+		--session-preview-color: var(--m3-on-surface, #1e1e1e);
 
 		&:hover,
 		&:focus,

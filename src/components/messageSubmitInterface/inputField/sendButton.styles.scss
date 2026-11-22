@@ -52,6 +52,7 @@
 
 	&--ready &__plane,
 	&--sending &__plane {
+		color: var(--m3-on-primary-container, #fff);
 		transform: rotate(-45deg);
 	}
 

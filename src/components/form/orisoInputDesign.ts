@@ -1,7 +1,6 @@
 // #143: role colours read the runtime --m3-* tokens so tenant seeds reach the
 // form fields; the literal fallbacks keep today's rendering when no palette is
-// injected. Preserve the magenta error fallback when the current route does
-// not supply a dedicated error role.
+// injected. Field-specific error ink takes precedence over the semantic error role.
 export const orisoInputColors = {
 	onSurface: 'var(--m3-on-surface, #1b1b1c)',
 	onSurfaceVariant: 'var(--m3-on-surface-variant, #444748)',

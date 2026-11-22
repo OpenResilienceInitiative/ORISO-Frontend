@@ -1,9 +1,34 @@
+import { mockConsultantShell } from '../support/mockConsultantShell';
 import {
 	closeWebSocketServer,
 	mockWebSocket,
 	startWebSocketServer
 } from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
+
+const emptyStateGroupCenter = (emptyState: HTMLElement) => {
+	const animation = emptyState.querySelector<HTMLElement>(
+		'[data-cy=empty-state-animation]'
+	)!;
+	const illustration = animation.getBoundingClientRect();
+	const headline = emptyState
+		.querySelector('.emptyState__headline')!
+		.getBoundingClientRect();
+	// The artwork scales around its centre, while flexbox centres the layout box.
+	const visualExpansion = (illustration.height - animation.offsetHeight) / 2;
+
+	return (
+		(Math.min(illustration.top + visualExpansion, headline.top) +
+			Math.max(illustration.bottom - visualExpansion, headline.bottom)) /
+		2
+	);
+};
+
+const resizeGrip = () =>
+	cy
+		.get('.sessionsList__resizeHandle--end[role="separator"]')
+		.find('.sessionsList__resizeHandlePill')
+		.should('be.visible');
 
 describe('Session empty states', () => {
 	before(() => {
@@ -16,6 +41,8 @@ describe('Session empty states', () => {
 
 	beforeEach(() => {
 		mockWebSocket();
+		mockConsultantShell();
+		cy.willReturn('consultantSessions', []);
 	});
 
 	it('renders themed one-shot empty states on desktop and mobile', () => {
@@ -73,9 +100,8 @@ describe('Session empty states', () => {
 			);
 			expect($animation.attr('data-secondary-color')).to.equal('#646d78');
 
-			const rect = $animation[0].getBoundingClientRect();
-			expect(Math.round(rect.width)).to.equal(176);
-			expect(Math.round(rect.height)).to.equal(176);
+			expect($animation[0].offsetWidth).to.equal(176);
+			expect($animation[0].offsetHeight).to.equal(176);
 			expect(
 				getComputedStyle($animation.children()[0]).transform
 			).to.contain('0.75');
@@ -132,30 +158,13 @@ describe('Session empty states', () => {
 			'[data-cy=empty-state][data-empty-state=conversation-nothing-to-do]'
 		).then(($emptyState) => {
 			const emptyRect = $emptyState[0].getBoundingClientRect();
-			const animationRect = $emptyState
-				.find('[data-cy=empty-state-animation]')[0]
-				.getBoundingClientRect();
-			const headlineRect = $emptyState
-				.find('.emptyState__headline')[0]
-				.getBoundingClientRect();
-			const groupTop = Math.min(animationRect.top, headlineRect.top);
-			const groupBottom = Math.max(
-				animationRect.bottom,
-				headlineRect.bottom
-			);
-			const groupCenter = groupTop + (groupBottom - groupTop) / 2;
+			const groupCenter = emptyStateGroupCenter($emptyState[0]);
 			const emptyCenter = emptyRect.top + emptyRect.height / 2;
 
 			expect(Math.abs(groupCenter - emptyCenter)).to.be.lessThan(8);
-			expect(Math.round(animationRect.width)).to.equal(176);
 		});
 
-		cy.get('.sessionsList__resizeHandle').should(
-			'have.attr',
-			'data-scrollable',
-			'false'
-		);
-		cy.get('.sessionsList__resizeHandlePill').then(($pillBefore) => {
+		resizeGrip().then(($pillBefore) => {
 			const beforeRect = $pillBefore[0].getBoundingClientRect();
 
 			cy.get('a[href="/sessions/consultant/sessionView"]').click();
@@ -166,12 +175,7 @@ describe('Session empty states', () => {
 			cy.contains('Bitte wählen Sie eine Nachricht aus').should(
 				'not.exist'
 			);
-			cy.get('.sessionsList__resizeHandle').should(
-				'have.attr',
-				'data-scrollable',
-				'false'
-			);
-			cy.get('.sessionsList__resizeHandlePill').should(($pillAfter) => {
+			resizeGrip().should(($pillAfter) => {
 				const afterRect = $pillAfter[0].getBoundingClientRect();
 
 				expect(Math.abs(afterRect.top - beforeRect.top)).to.be.lessThan(
@@ -195,18 +199,13 @@ describe('Session empty states', () => {
 			($emptyState) => {
 				const viewportHeight =
 					$emptyState[0].ownerDocument.defaultView?.innerHeight ?? 0;
-				const animation = $emptyState
-					.find('[data-cy=empty-state-animation]')[0]
-					.getBoundingClientRect();
-				const headline = $emptyState
-					.find('.emptyState__headline')[0]
-					.getBoundingClientRect();
-				const groupTop = Math.min(animation.top, headline.top);
-				const groupBottom = Math.max(animation.bottom, headline.bottom);
-				const groupCenter = groupTop + (groupBottom - groupTop) / 2;
+				const illustration = $emptyState.find(
+					'[data-cy=empty-state-animation]'
+				)[0];
+				const groupCenter = emptyStateGroupCenter($emptyState[0]);
 
-				expect(Math.round(animation.width)).to.equal(176);
-				expect(Math.round(animation.height)).to.equal(176);
+				expect(illustration.offsetWidth).to.equal(176);
+				expect(illustration.offsetHeight).to.equal(176);
 				expect(
 					Math.abs(groupCenter - viewportHeight / 2)
 				).to.be.lessThan(8);
