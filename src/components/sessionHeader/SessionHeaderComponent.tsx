@@ -445,6 +445,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	) => {
 		const sessionId = activeSession.item.id;
 		if (!sessionId) return;
+		// The practice tour's next step points at the supervision panel, which
+		// the open dialog would cover; real cases keep the dialog open.
+		if (
+			change.kind === 'added' &&
+			(isPracticeId(sessionId) ||
+				isPracticeRoomId(activeSession.item.matrixRoomId))
+		) {
+			setIsSupervisorModalOpen(false);
+		}
 		const chatDisplayName =
 			resolveAnonymousChatDisplayName(contact) || `Session ${sessionId}`;
 		const noteKind: 'add' | 'remove' | 'replace' =

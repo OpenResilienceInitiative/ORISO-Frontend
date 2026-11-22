@@ -629,23 +629,22 @@ export const AddASupervisor: Story = {
 				).toBeNull();
 				await userEvent.click(await target('session-supervisor-add'));
 				await userEvent.click(
-					await screen.findByRole('combobox', {}, SLOW)
-				);
-				await userEvent.click(
 					await screen.findByRole(
-						'option',
-						{ name: 'Robin (Übung)' },
+						'button',
+						{ name: 'Robin (Übung) hinzufügen' },
 						SLOW
 					)
 				);
 				await userEvent.type(
-					screen.getByPlaceholderText(
-						'Bitte geben Sie den Grund für die Supervision an...'
+					await screen.findByPlaceholderText(
+						'Warum soll diese Person den Fall supervidieren?'
 					),
 					'Ich möchte mich zum Vorgehen absichern.'
 				);
 				await userEvent.click(
-					screen.getByRole('button', { name: 'Hinzufügen' })
+					screen.getByRole('button', {
+						name: 'Robin (Übung) hinzufügen'
+					})
 				);
 			}
 		);
@@ -740,20 +739,23 @@ export const SupervisorPickerWithKeyboard: Story = {
 			'Open the picker, choose Robin and type the reason with the keyboard',
 			async () => {
 				await userEvent.keyboard('{Enter}');
-				const picker = await screen.findByRole('combobox', {}, SLOW);
-				await tabTo(picker);
-				await userEvent.keyboard('{Enter}');
 				const robin = await screen.findByRole(
-					'option',
-					{ name: 'Robin (Übung)' },
+					'button',
+					{ name: 'Robin (Übung) hinzufügen' },
 					SLOW
 				);
-				await waitFor(() => expect(robin).toHaveFocus(), SLOW);
+				await tabTo(robin);
 				await userEvent.keyboard('{Enter}');
-				await expect(picker).toHaveTextContent('Robin (Übung)');
-				const reason = screen.getByPlaceholderText(
-					'Bitte geben Sie den Grund für die Supervision an...'
+				const reason = await screen.findByPlaceholderText(
+					'Warum soll diese Person den Fall supervidieren?',
+					{},
+					SLOW
 				);
+				await expect(
+					within(screen.getByRole('dialog')).getAllByText(
+						'Robin (Übung)'
+					)[0]
+				).toBeVisible();
 				await tabTo(reason);
 				await userEvent.keyboard(
 					'Ich möchte mich zum Vorgehen absichern.'
