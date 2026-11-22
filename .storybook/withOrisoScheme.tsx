@@ -60,6 +60,9 @@ export const withOrisoScheme = function OrisoSchemeDecorator(
 	useEffect(() => {
 		const { tokens } = computeOrisoPalette({ primary: seed }, active);
 		const root = document.documentElement;
+		if (active !== 'inverted') {
+			root.dataset.orisoPersonalScheme = active;
+		}
 		for (const [name, value] of Object.entries(tokens)) {
 			root.style.setProperty(name, value);
 		}
@@ -80,6 +83,7 @@ export const withOrisoScheme = function OrisoSchemeDecorator(
 			for (const name of Object.keys(tokens)) {
 				root.style.removeProperty(name);
 			}
+			delete root.dataset.orisoPersonalScheme;
 			document.body.style.removeProperty('background-color');
 			document.body.style.removeProperty('color');
 			announce();

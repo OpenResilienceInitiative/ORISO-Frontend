@@ -237,6 +237,7 @@ import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
 import {
+	isLegacyGuestLoginLabel,
 	resolveAnonymousChatDisplayName,
 	resolveAssignedAskerDisplayName
 } from '../../utils/anonymousChatDisplayName';
@@ -703,7 +704,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.filter((value) => value.length > 0);
 		const resolved =
 			resolvedCandidates.find(
-				(value) => !value.toLowerCase().startsWith('anonymous-')
+				(value) => !isLegacyGuestLoginLabel(value)
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
 			return translate('session.waitingMiniGame.robotUsernameFallback');

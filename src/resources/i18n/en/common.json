@@ -5898,6 +5898,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback chat with your supervisor about this conversation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Counselling"
@@ -6816,7 +6817,12 @@
 			"microphone": "Microphone",
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
-			"micMeter": "Your microphone volume"
+			"micMeter": "Your microphone volume",
+			"cameraNotice": {
+				"permissionDenied": "Your camera is blocked for this site. Allow the camera in your browser's site settings (the lock icon next to the address). The picture then appears without reloading.",
+				"deviceBusy": "Another program is using your camera. Close it, then check again.",
+				"retry": "Check camera again"
+			}
 		},
 		"ready": {
 			"title": "Check camera and microphone",
