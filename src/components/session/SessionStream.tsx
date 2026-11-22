@@ -1,3 +1,9 @@
+import {
+	extractPassageBlurEvents,
+	groupPassageBlurs,
+	PASSAGE_BLUR_EVENT_TYPE,
+	withPassageBlurs
+} from '../selectionReply/passageBlurEvents';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
@@ -33,8 +39,13 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import type { TypingUser } from './SessionItemComponent';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
-import { counterpartReaders } from '../../utils/matrixReadReceipts';
+import {
+	awaitsDecryption,
+	counterpartReaders
+} from '../../utils/matrixReadReceipts';
 import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
@@ -54,6 +65,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
+import { useMatrixTyping } from './useMatrixTyping';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
@@ -67,6 +79,10 @@ import {
 } from './caseHandoverHelpers';
 import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
 import {
+	activityEventCaseHandoverRequestId,
+	activityEventSessionId
+} from '../notificationsCenter/activityEvent';
+import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
@@ -78,12 +94,17 @@ import {
 import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
+import { useSessionSupervisorsRevision } from './sessionSupervisorsRefresh';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
+import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
+import { useRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
+import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+const TIMELINE_REFRESH_WINDOW_MS = 120;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -91,20 +112,6 @@ const requestHistoryKeys = (roomId: string) => {
 	if (!isPracticeRoomId(roomId)) {
 		void matrixRoomHistoryKeyTransfer.requestKeys(roomId);
 	}
-};
-
-const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
-	if (!actionPath?.includes('?')) {
-		return null;
-	}
-	const value = new URLSearchParams(actionPath.split('?')[1]).get(
-		'caseHandoverRequestId'
-	);
-	if (!value || !/^\d+$/.test(value)) {
-		return null;
-	}
-	const requestId = Number(value);
-	return Number.isSafeInteger(requestId) ? requestId : null;
 };
 
 interface SessionStreamProps {
@@ -118,8 +125,6 @@ export const SessionStream = ({
 	checkMutedUserForThisSession,
 	bannedUsers
 }: SessionStreamProps) => {
-	const MATRIX_TYPING_TIMEOUT_MS = 3200;
-	const MATRIX_TYPING_TRIGGER_MS = 1000;
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -137,7 +142,7 @@ export const SessionStream = ({
 		channelParam === 'team' || teamDiscussionParam === '1';
 
 	// Migrate legacy notification links to the canonical channel route. The
-	// old standalone TeamDiscussionPanel no longer owns a second timeline.
+	// team room opens as the side-panel channel, like supervision.
 	useEffect(() => {
 		if (teamDiscussionParam !== '1') return;
 		const params = new URLSearchParams(location.search);
@@ -162,6 +167,10 @@ export const SessionStream = ({
 	// instance got removeAllListeners(), so every effect holding room
 	// listeners depends on this generation to re-attach to the new client.
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
+	// The room whose main timeline holds events this device cannot read.
+	const [unreadableRoomId, setUnreadableRoomId] = useState<string | null>(
+		null
+	);
 	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
 	// WP-B2 (ADR-008): the supervision side room is its own timeline. It is
@@ -230,7 +239,7 @@ export const SessionStream = ({
 				) {
 					return false;
 				}
-				return String(item.sourceSessionId) === String(sessionId);
+				return activityEventSessionId(item) === sessionId;
 			}) || null
 		);
 	}, [
@@ -256,10 +265,10 @@ export const SessionStream = ({
 
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
-			caseHandoverRequestIdFromPath(
-				pendingCaseHandoverConsent?.actionPath
-			),
-		[pendingCaseHandoverConsent?.actionPath]
+			pendingCaseHandoverConsent
+				? activityEventCaseHandoverRequestId(pendingCaseHandoverConsent)
+				: null,
+		[pendingCaseHandoverConsent]
 	);
 
 	// A late decision or fallback belongs only to the committed card that started it.
@@ -333,9 +342,9 @@ export const SessionStream = ({
 		teamMessageState.roomId === teamRoomId
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
-	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
-	const matrixTypingTimeoutRef = useRef<number | null>(null);
-	const matrixTypingLastTriggerRef = useRef(0);
+	const [matrixTypingUsers, setMatrixTypingUsers] = useState<TypingUser[]>(
+		[]
+	);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -343,65 +352,16 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
-	const clearMatrixTypingTimeout = useCallback(() => {
-		if (matrixTypingTimeoutRef.current) {
-			window.clearTimeout(matrixTypingTimeoutRef.current);
-			matrixTypingTimeoutRef.current = null;
-		}
-	}, []);
-	const sendMatrixTyping = useCallback(
-		(typing: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			chatTransportService
-				.sendTyping(targetRoomId, typing)
-				.catch(() => {});
-		},
-		[isMatrixSession, matrixRoomId]
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
 	);
-	const handleSessionTyping = useCallback(
-		(isCleared: boolean, targetRoomId = matrixRoomId) => {
-			if (!isMatrixSession || !targetRoomId) {
-				return;
-			}
-			clearMatrixTypingTimeout();
-
-			const cancelTyping = () => {
-				sendMatrixTyping(false, targetRoomId);
-				matrixTypingTimeoutRef.current = null;
-				matrixTypingLastTriggerRef.current = 0;
-			};
-
-			const now = Date.now();
-			if (!isCleared) {
-				if (
-					matrixTypingLastTriggerRef.current +
-						MATRIX_TYPING_TRIGGER_MS <
-					now
-				) {
-					sendMatrixTyping(true, targetRoomId);
-					matrixTypingLastTriggerRef.current = now;
-				}
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					MATRIX_TYPING_TIMEOUT_MS
-				);
-			} else {
-				matrixTypingTimeoutRef.current = window.setTimeout(
-					cancelTyping,
-					250
-				);
-			}
-		},
-		[
-			clearMatrixTypingTimeout,
-			isMatrixSession,
-			matrixRoomId,
-			sendMatrixTyping,
-			MATRIX_TYPING_TIMEOUT_MS,
-			MATRIX_TYPING_TRIGGER_MS
-		]
+	const recoveryStatus = useRecoveryRuntimeStatus(
+		matrixClientService?.getClient()?.getUserId() ?? ''
+	);
+	// The chat's typing rule, shared with the Activity Timeline preview (#1824).
+	const handleSessionTyping = useMatrixTyping(
+		isMatrixSession ? matrixRoomId : null
 	);
 
 	const caseHandoverGateNeeded = useMemo(
@@ -421,6 +381,10 @@ export const SessionStream = ({
 
 	// Practice only: bumps when the learner adds a supervisor under this case.
 	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+	// #2386: bumps when accepting this enquiry attached a standing supervisor.
+	const sessionSupervisorsRevision = useSessionSupervisorsRevision(
+		activeSession.item?.id
+	);
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -469,7 +433,12 @@ export const SessionStream = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
+	}, [
+		activeSession.item?.id,
+		userData,
+		practiceSupervisorsRevision,
+		sessionSupervisorsRevision
+	]);
 
 	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
 	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;
@@ -521,6 +490,12 @@ export const SessionStream = ({
 					: [];
 				// The Teamberatung room, same treatment (FE#514 / ADR-016).
 				const teamEvents = teamRoomId ? loadRoomEvents(teamRoomId) : [];
+				setUnreadableRoomId(
+					resolvedMatrixRoomId &&
+						(clientEvents as any[]).some(isUndecryptedRoomEvent)
+						? resolvedMatrixRoomId
+						: null
+				);
 				if (mayRequestHistoryKeys) {
 					[
 						[resolvedMatrixRoomId, clientEvents],
@@ -570,13 +545,23 @@ export const SessionStream = ({
 				// Side-room reactions stay out of the client timeline; the
 				// panel renders its bubbles without reactions.
 				const reactionEvents = [...extractReactionEvents(clientEvents)];
+				// Moderator blurs (#2229): position-only events next to the
+				// message, folded onto it here; a lifted blur is redacted.
+				const passageBlurs = groupPassageBlurs(
+					extractPassageBlurEvents(clientEvents)
+				);
 
 				setMessagesItem({
-					messages: prepareRoomMessages(
-						clientEvents,
-						resolvedMatrixRoomId
+					messages: withPassageBlurs(
+						prepareRoomMessages(clientEvents, resolvedMatrixRoomId),
+						passageBlurs
 					),
-					reactionEvents
+					reactionEvents,
+					passageBlurSenders: new Map(
+						[...passageBlurs.values()]
+							.flat()
+							.map((blur) => [blur.id, blur.senderId])
+					)
 				});
 				setSupervisionMessages(
 					supervisionRoomId
@@ -679,6 +664,63 @@ export const SessionStream = ({
 
 		readActiveSession();
 	}, [readActiveSession, readonly]);
+
+	// FE#1802: a message that arrives while the conversation is open counts as
+	// read only once the person can see it. A hidden tab, or a phone side panel
+	// covering the chat, defers the receipt until the chat is visible again; otherwise the other side would see
+	// "read" for a message nobody looked at.
+	const setSessionReadRef = useRef(setSessionRead);
+	setSessionReadRef.current = setSessionRead;
+	const arrivalReadPendingRef = useRef(false);
+	// Phone: a side panel can cover the main chat while this stays mounted.
+	const mainChatHiddenRef = useRef(false);
+	// A deferred read must not outlive the content access it was earned under
+	// (case-handover curtain).
+	const mayViewContentRef = useRef(mayRequestHistoryKeys);
+	mayViewContentRef.current = mayRequestHistoryKeys;
+	const readArrivedMessages = useCallback(() => {
+		if (!mayViewContentRef.current) {
+			arrivalReadPendingRef.current = false;
+			return;
+		}
+		if (
+			document.visibilityState === 'hidden' ||
+			mainChatHiddenRef.current
+		) {
+			arrivalReadPendingRef.current = true;
+			return;
+		}
+		arrivalReadPendingRef.current = false;
+		setSessionReadRef.current();
+	}, []);
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (arrivalReadPendingRef.current) readArrivedMessages();
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () =>
+			document.removeEventListener(
+				'visibilitychange',
+				handleVisibilityChange
+			);
+	}, [readArrivedMessages]);
+	// A deferred read belongs to one conversation under one content access;
+	// drop it when either changes (not when listeners merely re-attach, e.g.
+	// once the supervision side room is known).
+	const deferredReadRoomId = resolvedChatSession.matrixRoomId;
+	useEffect(
+		() => () => {
+			arrivalReadPendingRef.current = false;
+		},
+		[deferredReadRoomId, mayRequestHistoryKeys]
+	);
+	const handleMainChatHiddenChange = useCallback(
+		(hidden: boolean) => {
+			mainChatHiddenRef.current = hidden;
+			if (!hidden && arrivalReadPendingRef.current) readArrivedMessages();
+		},
+		[readArrivedMessages]
+	);
 
 	const loadAfterCaseHandoverGranted = useCallback(() => {
 		setLoading(true);
@@ -855,10 +897,19 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let trailingRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
+		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
+		const cancelTrailingRefresh = () => {
+			if (trailingRefreshTimer !== null) {
+				window.clearTimeout(trailingRefreshTimer);
+				trailingRefreshTimer = null;
+			}
+		};
 		const refreshMessages = () => {
+			cancelTrailingRefresh();
 			lastRefreshAt = Date.now();
 			fetchSessionMessages().catch(() => {
 				// keep UI stable if a timeline event races with navigation
@@ -883,9 +934,32 @@ export const SessionStream = ({
 					// not a message, but still needs a live refresh so
 					// aggregateReactions() picks it up for other members.
 					eventType !== 'm.reaction' &&
+					// A moderator's blur (#2229) shows for everyone at once.
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
 					eventType !== 'm.room.redaction'
 				) {
 					return;
+				}
+
+				// FE#1802: the receipt was sent once when the conversation
+				// opened; a later message from the other side needs its own,
+				// or its sender keeps seeing "sent" while it is on screen.
+				if (
+					!toStartOfTimeline &&
+					room?.roomId === clientRoomId &&
+					eventType !== 'm.reaction' &&
+					eventType !== PASSAGE_BLUR_EVENT_TYPE &&
+					eventType !== 'm.room.redaction' &&
+					event?.getSender?.() !== room?.myUserId &&
+					// Only a message the person can read counts; the transport
+					// calls again once decryption succeeds.
+					!awaitsDecryption(event) &&
+					arrivalReadTimer === null
+				) {
+					arrivalReadTimer = window.setTimeout(() => {
+						arrivalReadTimer = null;
+						readArrivedMessages();
+					}, 0);
 				}
 
 				if (toStartOfTimeline) {
@@ -898,11 +972,18 @@ export const SessionStream = ({
 					return;
 				}
 
-				// Coalesce encrypted/metadata bursts, but never drop a clear message:
-				// delayed Matrix decryption mutates the event after its fallback rendered.
-				const now = Date.now();
-				const elapsed = now - lastRefreshAt;
-				if (eventType !== 'm.room.message' && elapsed < 120) {
+				// Read once more at the end of the window for encrypted or metadata
+				// events that arrived since the latest read. Clear messages still
+				// refresh immediately, including after delayed Matrix decryption.
+				const remaining =
+					TIMELINE_REFRESH_WINDOW_MS - (Date.now() - lastRefreshAt);
+				if (eventType !== 'm.room.message' && remaining > 0) {
+					if (trailingRefreshTimer === null) {
+						trailingRefreshTimer = window.setTimeout(
+							refreshMessages,
+							remaining
+						);
+					}
 					return;
 				}
 				refreshMessages();
@@ -918,7 +999,7 @@ export const SessionStream = ({
 				.filter(Boolean) as Array<() => void>;
 			// A deletion (ours included) must show at once, not with the next
 			// unrelated event: refresh when the SDK marks the message redacted.
-			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// Not refreshMessages(): stamping lastRefreshAt would delay an
 			// encrypted message arriving in the same sync batch.
 			const handleRedaction = () => {
 				fetchSessionMessages().catch(() => {
@@ -950,7 +1031,7 @@ export const SessionStream = ({
 				if (receiptRefreshTimer !== null) return;
 				receiptRefreshTimer = window.setTimeout(() => {
 					receiptRefreshTimer = null;
-					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// Not refreshMessages(): stamping lastRefreshAt would delay a
 					// reaction or redaction arriving in the next 120 ms.
 					fetchSessionMessages().catch(() => {
 						// keep UI stable if a receipt races with navigation
@@ -1018,20 +1099,26 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			cancelTrailingRefresh();
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
+			if (arrivalReadTimer !== null)
+				window.clearTimeout(arrivalReadTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// The first service can arrive after polling ends. Client generation
+		// also re-attaches listeners when token refresh replaces the SDK client.
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
 		teamRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
+		matrixClientService,
 		matrixClientGeneration,
-		mayRequestHistoryKeys
+		mayRequestHistoryKeys,
+		readArrivedMessages
 	]);
 
 	const groupChatStoppedOverlay: OverlayItem = useMemo(
@@ -1154,11 +1241,12 @@ export const SessionStream = ({
 			}
 			detachLifecycleListener?.();
 		};
-		// matrixClientGeneration re-attaches after a token-refresh client swap.
+		// Re-attach on the first service publication and on SDK client swaps.
 	}, [
 		isMatrixSession,
 		matrixRoomId,
 		handleMatrixRoomLifecycle,
+		matrixClientService,
 		matrixClientGeneration
 	]);
 
@@ -1203,23 +1291,29 @@ export const SessionStream = ({
 						now - (lastActivity as number) < MATRIX_TYPING_STALE_MS
 					);
 				})
-				.map((member: any) => {
+				.map((member: any): TypingUser => {
 					const matrixUserId = `${member?.userId || ''}`;
 					const matrixUserName = matrixUserId
 						.split(':')[0]
 						.replace(/^@/, '');
-					return (
-						member?.name ||
-						member?.rawDisplayName ||
-						matrixUserName ||
-						matrixUserId
+					// The member name is the login, often encoded like the
+					// message sender's; the session's name is resolved later.
+					const name = decodeUsernameSafely(
+						`${
+							member?.name ||
+							member?.rawDisplayName ||
+							matrixUserName ||
+							matrixUserId
+						}`.trim()
 					);
+					return { userId: matrixUserId, name };
 				})
-				.map((name: string) => name.trim())
-				.filter(Boolean)
 				.filter(
-					(name: string, index: number, source: string[]) =>
-						source.indexOf(name) === index
+					(user: TypingUser, index: number, source: TypingUser[]) =>
+						user.name &&
+						source.findIndex(
+							(other) => other.userId === user.userId
+						) === index
 				);
 
 			setMatrixTypingUsers(nextTypingUsers);
@@ -1338,14 +1432,6 @@ export const SessionStream = ({
 		fetchSessionMessages,
 		matrixClientService
 	]);
-
-	useEffect(
-		() => () => {
-			clearMatrixTypingTimeout();
-			sendMatrixTyping(false);
-		},
-		[clearMatrixTypingTimeout, sendMatrixTyping]
-	);
 
 	useEffect(() => {
 		if (subscribed.current) {
@@ -1645,56 +1731,85 @@ export const SessionStream = ({
 				</div>
 			)}
 			<SessionItemComponent
+				onMainChatHiddenChange={handleMainChatHiddenChange}
 				mainTimelineSupplement={
-					displayedConsent &&
-					caseHandoverRequestIdFromPath(
-						displayedConsent.actionPath
-					) !== null && (
-						<CaseHandoverConversation
-							sessionId={activeSession.item.id}
-							conversationType={notificationConversationType(
-								activeSession
+					<>
+						{displayedConsent &&
+							activityEventCaseHandoverRequestId(
+								displayedConsent
+							) !== null && (
+								<CaseHandoverConversation
+									sessionId={activeSession.item.id}
+									conversationType={notificationConversationType(
+										activeSession
+									)}
+									key={String(activeSession.item?.id)}
+									status={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status.status
+											: undefined
+									}
+									auditOutcome={
+										displayedConsent.id ===
+										confirmedConsent?.notification.id
+											? confirmedConsent.status
+													.auditOutcome
+											: undefined
+									}
+									consentGranted={
+										displayedConsent.params
+											?.clientConsent === 'OPT_OUT'
+									}
+									mode={
+										displayedConsentMode === 'NONE' ||
+										displayedConsentMode === 'OPT_OUT'
+											? displayedConsentMode
+											: 'OPT_IN'
+									}
+									isSubmitting={caseHandoverConsentSubmitting}
+									error={caseHandoverConsentError}
+									timestamp={formatToHHMM(
+										String(
+											new Date(
+												displayedConsent.createdAt
+											).getTime()
+										)
+									)}
+									onApprove={() =>
+										handleCaseHandoverConsentDecision(true)
+									}
+									onDecline={() =>
+										handleCaseHandoverConsentDecision(false)
+									}
+								/>
 							)}
-							key={String(activeSession.item?.id)}
-							status={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.status
-									: undefined
-							}
-							auditOutcome={
-								displayedConsent.id ===
-								confirmedConsent?.notification.id
-									? confirmedConsent.status.auditOutcome
-									: undefined
-							}
-							consentGranted={
-								displayedConsent.params?.clientConsent ===
-								'OPT_OUT'
-							}
-							mode={
-								displayedConsentMode === 'NONE' ||
-								displayedConsentMode === 'OPT_OUT'
-									? displayedConsentMode
-									: 'OPT_IN'
-							}
-							isSubmitting={caseHandoverConsentSubmitting}
-							error={caseHandoverConsentError}
-							timestamp={formatToHHMM(
-								String(
-									new Date(
-										displayedConsent.createdAt
-									).getTime()
-								)
+						{(recoveryStatus === 'needs-recovery-key' ||
+							unreadableRoomId ===
+								resolvedChatSession.matrixRoomId) &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.isGroup &&
+							mayRequestHistoryKeys &&
+							!!resolvedChatSession.matrixRoomId && (
+								<HistoryAskCard
+									key={resolvedChatSession.matrixRoomId}
+									roomId={resolvedChatSession.matrixRoomId}
+									unreadable={
+										unreadableRoomId ===
+										resolvedChatSession.matrixRoomId
+									}
+								/>
 							)}
-							onApprove={() =>
-								handleCaseHandoverConsentDecision(true)
-							}
-							onDecline={() =>
-								handleCaseHandoverConsentDecision(false)
-							}
-						/>
-					)
+						{isConsultant && (
+							<HistoryRequestApprovals
+								key={resolvedChatSession.matrixRoomId}
+								roomId={resolvedChatSession.matrixRoomId}
+							/>
+						)}
+					</>
 				}
 				mainTimelineSupplementTime={
 					displayedConsent
@@ -1709,6 +1824,7 @@ export const SessionStream = ({
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
+				passageBlurSenders={messagesItem?.passageBlurSenders}
 				supervisionMessages={supervisionMessages}
 				teamMessages={teamMessages}
 				teamRoomId={teamRoomId}

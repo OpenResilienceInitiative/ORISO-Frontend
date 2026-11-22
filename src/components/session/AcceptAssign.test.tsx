@@ -4,6 +4,7 @@ import {
 	cleanup,
 	fireEvent,
 	render,
+	renderHook,
 	screen,
 	waitFor
 } from '@testing-library/react';
@@ -59,7 +60,8 @@ vi.mock('../../api/counsellingDpaFailure', () => ({
 	getCounsellingDpaFailure: () => null
 }));
 vi.mock('./getModality', () => ({
-	getModality: () => 'REGISTERED',
+	getModality: (session: { item?: { conversationType?: string } }) =>
+		session.item?.conversationType ?? 'REGISTERED',
 	Modality: { LIVE_CHAT: 'LIVE_CHAT' }
 }));
 vi.mock('./sessionHelpers', () => ({ SESSION_LIST_TAB: {} }));
@@ -103,8 +105,14 @@ vi.mock('../overlay/Overlay', () => ({
 }));
 
 const { apiEnquiryAcceptance } = await import('../../api');
+const { apiAcceptAnonymousEnquiry } = await import(
+	'../../api/apiAcceptAnonymousEnquiry'
+);
 const { ActiveSessionContext } = await import('../../globalState');
 const { AcceptAssign } = await import('./AcceptAssign');
+const { useSessionSupervisorsRevision } = await import(
+	'./sessionSupervisorsRefresh'
+);
 
 const renderAccept = (
 	activeSession: object = { item: { id: 76 }, isEnquiry: true }
@@ -125,6 +133,7 @@ const renderAccept = (
 afterEach(() => {
 	cleanup();
 	vi.mocked(apiEnquiryAcceptance).mockReset();
+	vi.mocked(apiAcceptAnonymousEnquiry).mockReset();
 	watcher.start.mockReset();
 	watcher.running = true;
 });
@@ -163,6 +172,65 @@ describe('AcceptAssign', () => {
 				'session.anonymous.takenByOtherConsultant.overlay.headline'
 			)
 		);
+	});
+
+	it.each([
+		[
+			'LIVE_CHAT_QUEUE_NOT_FIRST',
+			'session.anonymous.queueNotFirst.headline'
+		],
+		[null, 'session.anonymous.takenByOtherConsultant.overlay.headline']
+	])(
+		'explains an anonymous accept conflict with reason %s',
+		async (reason, headline) => {
+			vi.mocked(apiAcceptAnonymousEnquiry).mockRejectedValue(
+				new Response(null, {
+					status: 409,
+					headers: reason ? { 'X-Reason': reason } : undefined
+				})
+			);
+			renderAccept({
+				item: { id: 76, conversationType: 'LIVE_CHAT' },
+				isEnquiry: true
+			});
+			fireEvent.click(screen.getByText('enquiry.acceptButton.known'));
+
+			expect(apiAcceptAnonymousEnquiry).toHaveBeenCalledWith(76);
+			await waitFor(() =>
+				expect(screen.getByTestId('overlay-headline').textContent).toBe(
+					headline
+				)
+			);
+		}
+	);
+
+	it('asks the open conversation to look up its supervisors again once the accept returns (#2386)', async () => {
+		const { result } = renderHook(() => useSessionSupervisorsRevision(76));
+		const before = result.current;
+		vi.mocked(apiEnquiryAcceptance).mockResolvedValue(undefined as any);
+		renderAccept();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		);
+
+		// The server attaches the standing supervisor inside the accept
+		// request; the room routing that follows may still be loading.
+		await waitFor(() => expect(result.current).not.toBe(before));
+	});
+
+	it('does not announce a supervisor change when accepting fails', async () => {
+		const { result } = renderHook(() => useSessionSupervisorsRevision(76));
+		const before = result.current;
+		vi.mocked(apiEnquiryAcceptance).mockRejectedValue(new Error('boom'));
+		renderAccept();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		);
+
+		await screen.findByRole('dialog');
+		expect(result.current).toBe(before);
 	});
 
 	it('watches an open enquiry for a colleague taking it over', () => {

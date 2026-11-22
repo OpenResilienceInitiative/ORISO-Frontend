@@ -1,34 +1,29 @@
 import * as React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
-import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
-import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
-import { ReactComponent as ArrowUpIcon } from '../../../resources/img/icons/keyboard_arrow_up.svg';
-import { ReactComponent as ArrowDownIcon } from '../../../resources/img/icons/keyboard_arrow_down.svg';
-import {
-	NOTIFICATION_TONE_IDS,
-	SoundId
-} from '../../../utils/notificationSettings/model';
-import {
-	previewNotificationSound,
-	soundAssetFor
-} from '../../../utils/notificationSettings/soundPlayback';
+import { SoundId } from '../../../utils/notificationSettings/model';
+import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
 import { EMAIL_PREFERENCES_PATH } from '../../../utils/emailPreferencesReturn';
 import {
 	AREA_KINDS,
 	BannerMode,
-	clampVolume,
 	DISABLED_AREAS,
 	KindConfig,
 	NOTIFICATION_AREAS,
 	NotificationArea,
 	NotificationConfig,
-	NotificationKind,
-	VOLUME_STEP
+	NotificationKind
 } from '../../../utils/notificationSettings/notificationConfig';
+import {
+	rowAvailability,
+	type NotificationRole,
+	visibleAreas
+} from '../../../utils/notificationSettings/notificationChannelCapability';
+import { OrisoSelect } from '../../form/OrisoSelect';
+import { ToneControls } from './ToneControls';
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
@@ -38,12 +33,14 @@ import './notificationConfigDialog.styles.scss';
 const KindRow = ({
 	area,
 	kind,
+	role,
 	value,
 	onChange,
 	onPreview
 }: {
 	area: NotificationArea;
 	kind: NotificationKind;
+	role: NotificationRole | undefined;
 	value: KindConfig;
 	onChange: (
 		area: NotificationArea,
@@ -54,144 +51,93 @@ const KindRow = ({
 	onPreview: (soundId: SoundId, volume: number) => void;
 }) => {
 	const { t } = useTranslation();
-	const hasSound = value.sound !== 'none' && !!soundAssetFor(value.sound);
+	// #778: a channel that will fire once a producer exists is disabled and
+	// says why; rows that can never fire for this role are not rendered.
+	const { bannerEnabled, soundEnabled, reasonKey } = rowAvailability(
+		role,
+		area,
+		kind
+	);
+	const bannerOff = !bannerEnabled;
+	const soundOff = !soundEnabled;
+	const reasonUid = useId();
+	const reasonId = reasonKey ? `notif-reason-${reasonUid}` : undefined;
 	return (
-		<div className="notifConfig__row" data-cy={`notif-row-${area}-${kind}`}>
+		<div
+			className={
+				'notifConfig__row' +
+				(reasonKey ? ' notifConfig__row--unavailable' : '')
+			}
+			data-cy={`notif-row-${area}-${kind}`}
+		>
 			<label className="notifConfig__label">
 				{t(`profile.notifications.config.kind.${kind}`)}
 			</label>
-			<div className="notifConfig__rowControls">
-				{/* Volume up/down — the react-sounds volume, per kind. */}
-				<div
-					className="notifConfig__volume"
-					data-cy={`notif-volume-${area}-${kind}`}
-				>
-					<button
-						type="button"
-						className="notifConfig__volumeBtn"
-						aria-label={t('profile.notifications.config.volumeUp')}
-						disabled={value.volume >= 1}
-						onClick={() =>
-							onChange(
-								area,
-								kind,
-								'volume',
-								clampVolume(value.volume + VOLUME_STEP)
-							)
-						}
-						data-cy={`notif-volume-up-${area}-${kind}`}
-					>
-						<ArrowUpIcon aria-hidden="true" />
-					</button>
-					<button
-						type="button"
-						className="notifConfig__volumeBtn"
-						aria-label={t(
-							'profile.notifications.config.volumeDown'
-						)}
-						disabled={value.volume <= 0}
-						onClick={() =>
-							onChange(
-								area,
-								kind,
-								'volume',
-								clampVolume(value.volume - VOLUME_STEP)
-							)
-						}
-						data-cy={`notif-volume-down-${area}-${kind}`}
-					>
-						<ArrowDownIcon aria-hidden="true" />
-					</button>
-				</div>
-
-				<div className="notifConfig__selectWrap">
-					{/* Icon lives INSIDE the field (left), per the Figma: a
-					    chosen tone → a play button to hear it; no sound →
-					    the crossed-out (muted) icon, not clickable. */}
-					{hasSound ? (
-						<button
-							type="button"
-							className="notifConfig__fieldIcon notifConfig__fieldIcon--play"
-							aria-label={t('profile.notifications.config.play')}
-							onClick={() => onPreview(value.sound, value.volume)}
-							data-cy={`notif-play-${area}-${kind}`}
-						>
-							<PlayCircleIcon aria-hidden="true" />
-						</button>
-					) : (
-						<span
-							className="notifConfig__fieldIcon notifConfig__fieldIcon--mute"
-							aria-hidden="true"
-							data-cy={`notif-muted-${area}-${kind}`}
-						>
-							<NotificationAudioOffIcon />
-						</span>
-					)}
-					<select
-						className="notifConfig__select"
-						aria-label={t(
-							`profile.notifications.config.kind.${kind}`
-						)}
-						value={value.sound}
-						onChange={(e) =>
-							onChange(
-								area,
-								kind,
-								'sound',
-								e.target.value as SoundId
-							)
-						}
-					>
-						<option value="none">
-							{t('profile.notifications.config.noSound')}
-						</option>
-						<option value="ring">
-							{t('profile.notifications.config.ringTone')}
-						</option>
-						{NOTIFICATION_TONE_IDS.map((id, index) => (
-							<option key={id} value={id}>
-								{t('profile.notifications.config.tone', {
-									number: index + 1
-								})}
-							</option>
-						))}
-					</select>
-				</div>
-			</div>
+			<ToneControls
+				sound={value.sound}
+				volume={value.volume}
+				label={t(`profile.notifications.config.kind.${kind}`)}
+				disabled={soundOff}
+				describedBy={reasonId}
+				cySuffix={`${area}-${kind}`}
+				onSoundChange={(sound) => onChange(area, kind, 'sound', sound)}
+				onVolumeChange={(volume) =>
+					onChange(area, kind, 'volume', volume)
+				}
+				onPreview={onPreview}
+			/>
 			<div className="notifConfig__channels">
 				{/* Banner: off / temporary / persistent (requireInteraction —
 				    Chromium only; Firefox/Safari fall back to temporary). */}
-				<label className="notifConfig__banner">
-					<span>
-						{t('profile.notifications.config.banner.label')}
-					</span>
-					<select
-						className="notifConfig__bannerSelect"
-						value={value.banner}
-						onChange={(e) =>
-							onChange(
-								area,
-								kind,
-								'banner',
-								e.target.value as BannerMode
+				<OrisoSelect
+					className="notifConfig__banner"
+					label={t('profile.notifications.config.banner.label')}
+					value={value.banner}
+					disabled={bannerOff}
+					fullWidth={false}
+					size="small"
+					sx={{ minWidth: 220 }}
+					inputProps={{
+						'aria-describedby': bannerOff ? reasonId : undefined,
+						'data-cy': `notif-banner-${area}-${kind}`
+					}}
+					onChange={(e) =>
+						onChange(
+							area,
+							kind,
+							'banner',
+							e.target.value as BannerMode
+						)
+					}
+					options={[
+						{
+							value: 'off',
+							label: t('profile.notifications.config.banner.off')
+						},
+						{
+							value: 'temporary',
+							label: t(
+								'profile.notifications.config.banner.temporary'
+							)
+						},
+						{
+							value: 'persistent',
+							label: t(
+								'profile.notifications.config.banner.persistent'
 							)
 						}
-						data-cy={`notif-banner-${area}-${kind}`}
-					>
-						<option value="off">
-							{t('profile.notifications.config.banner.off')}
-						</option>
-						<option value="temporary">
-							{t('profile.notifications.config.banner.temporary')}
-						</option>
-						<option value="persistent">
-							{t(
-								'profile.notifications.config.banner.persistent'
-							)}
-						</option>
-					</select>
-				</label>
+					]}
+				/>
 			</div>
+			{reasonKey && (
+				<p
+					id={reasonId}
+					className="notifConfig__reason"
+					data-cy={`notif-reason-${area}-${kind}`}
+				>
+					{t(reasonKey)}
+				</p>
+			)}
 		</div>
 	);
 };
@@ -216,8 +162,13 @@ export interface NotificationConfigViewProps {
 	onPreview: (soundId: SoundId, volume: number) => void;
 	/** False when the settings screen has no email panel for this user. */
 	showEmailLink?: boolean;
-	/** Only a counsellor's live-chat messages use the Live-Chat row (FE#1470). */
-	showLiveChatRow?: boolean;
+	/**
+	 * Whose events the rows can fire: rows that never fire for the role are
+	 * hidden, rows without a producer yet are disabled with a reason. Undefined
+	 * (user data still loading) shows every row live, without the counsellor-only
+	 * Live-Chat row (FE#1470).
+	 */
+	role: NotificationRole | undefined;
 }
 
 export const NotificationConfigView = ({
@@ -228,9 +179,16 @@ export const NotificationConfigView = ({
 	onChange,
 	onPreview,
 	showEmailLink = true,
-	showLiveChatRow = false
+	role
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
+	const areas = visibleAreas(
+		role,
+		NOTIFICATION_AREAS,
+		(area) => AREA_KINDS[area]
+	);
+	// A tab that is empty for this role is not offered; fall back to the first.
+	const shownArea = areas.includes(activeArea) ? activeArea : areas[0];
 	return (
 		<div className="notifConfig" data-cy="notif-config">
 			<p className="notifConfig__intro">
@@ -251,18 +209,18 @@ export const NotificationConfigView = ({
 			)}
 
 			<div className="notifConfig__tabs" role="tablist">
-				{NOTIFICATION_AREAS.map((area) => {
+				{areas.map((area) => {
 					const disabled = DISABLED_AREAS.includes(area);
 					return (
 						<button
 							key={area}
 							type="button"
 							role="tab"
-							aria-selected={area === activeArea}
+							aria-selected={area === shownArea}
 							disabled={disabled}
 							className={
 								'notifConfig__tab' +
-								(area === activeArea
+								(area === shownArea
 									? ' notifConfig__tab--active'
 									: '') +
 								(disabled ? ' notifConfig__tab--disabled' : '')
@@ -277,14 +235,19 @@ export const NotificationConfigView = ({
 			</div>
 
 			<div className="notifConfig__rows">
-				{AREA_KINDS[activeArea]
-					.filter((kind) => showLiveChatRow || kind !== 'liveChat')
+				{AREA_KINDS[shownArea]
+					.filter(
+						(kind) =>
+							rowAvailability(role, shownArea, kind)
+								.visibility !== 'hidden'
+					)
 					.map((kind) => (
 						<KindRow
 							key={kind}
-							area={activeArea}
+							area={shownArea}
 							kind={kind}
-							value={config[activeArea][kind]}
+							role={role}
+							value={config[shownArea][kind]}
 							onChange={onChange}
 							onPreview={onPreview}
 						/>
@@ -293,7 +256,7 @@ export const NotificationConfigView = ({
 
 			{/* Feature-signal dummy (FE#590): alarm-clock mode micro-survey.
 			    Votes are a UI demo — the backend vote API is US#544. */}
-			{activeArea === 'timeCritical' && <WeckerSignalCard />}
+			{shownArea === 'timeCritical' && <WeckerSignalCard />}
 		</div>
 	);
 };
@@ -351,7 +314,7 @@ interface NotificationConfigDialogProps {
 	onClose: () => void;
 	/** False when the settings screen has no email panel for this user. */
 	showEmailLink?: boolean;
-	showLiveChatRow?: boolean;
+	role: NotificationRole | undefined;
 }
 
 export const NotificationConfigDialog = ({
@@ -360,7 +323,7 @@ export const NotificationConfigDialog = ({
 	onConfirm,
 	onClose,
 	showEmailLink = true,
-	showLiveChatRow = false
+	role
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -456,7 +419,7 @@ export const NotificationConfigDialog = ({
 					onChange={handleChange}
 					onPreview={handlePreview}
 					showEmailLink={showEmailLink}
-					showLiveChatRow={showLiveChatRow}
+					role={role}
 				/>
 			</M3Dialog>
 			<M3Dialog

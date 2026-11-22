@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -10,6 +16,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
+import { TenantContext } from '../../globalState';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import type { CallEntryRoomProps } from '../waitingRoom/callEntry/CallEntryRoom';
 import { DirectLinkCallEntry } from './DirectLinkCallEntry';
@@ -44,9 +51,33 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 		onJoin,
 		signedIn,
 		hidePassword,
-		consent
+		consent,
+		usernameEditable,
+		askPostcode,
+		onDeviceStateChange,
+		accountChoice
 	}: CallEntryRoomProps) => (
 		<>
+			{accountChoice && (
+				<button onClick={accountChoice.onToggle}>
+					{accountChoice.temporary
+						? 'guestAccountMode.entry.withAccount'
+						: 'guestAccountMode.entry.withoutAccount'}
+				</button>
+			)}
+			<button
+				onClick={() =>
+					onDeviceStateChange?.({
+						micOn: false,
+						cameraOn: true,
+						selection: {}
+					})
+				}
+			>
+				Mute
+			</button>
+			<div>{askPostcode ? 'asks postcode' : 'no postcode'}</div>
+			<div>{usernameEditable ? 'typed names' : 'generated names'}</div>
 			<div>
 				{signedIn
 					? 'existing account'
@@ -60,6 +91,7 @@ vi.mock('../waitingRoom/callEntry/CallEntryRoom', () => ({
 					onJoin?.({
 						username: 'test-guest',
 						password: 'secret-123',
+						postcode: '10115',
 						identity: {
 							displayName: 'Test Guest',
 							animalLabel: 'owl',
@@ -84,7 +116,20 @@ vi.mock('../app/AuthenticatedApp', () => ({
 	)
 }));
 vi.mock('./SharedCallGuest', () => ({
-	SharedCallGuest: () => <div>call-only entry</div>
+	SharedCallGuest: ({
+		deviceChoice
+	}: {
+		deviceChoice?: { controls: { micOn: boolean; cameraOn: boolean } };
+	}) => (
+		<>
+			<div>call-only entry</div>
+			<div>
+				{deviceChoice
+					? `mic ${deviceChoice.controls.micOn ? 'on' : 'off'}, camera ${deviceChoice.controls.cameraOn ? 'on' : 'off'}`
+					: 'no device choice'}
+			</div>
+		</>
+	)
 }));
 vi.mock('../anonymousChat/entryRoom/EntryRoomShell', () => ({
 	EntryRoomShell: ({ children }: { children: React.ReactNode }) => (
@@ -107,6 +152,45 @@ const call: InviteLinkContext = {
 	temporaryAccount: true,
 	hidePasswordField: true
 };
+
+const renderWithSettings = (settings: Record<string, boolean>) =>
+	render(
+		<TenantContext.Provider
+			value={
+				{ tenant: { settings }, setTenant: () => undefined } as never
+			}
+		>
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+			/>
+		</TenantContext.Provider>
+	);
+
+describe('the User-ID of a call guest', () => {
+	afterEach(cleanup);
+
+	it('can be typed where the counselling name rule allows it', async () => {
+		renderWithSettings({});
+		await screen.findByText('typed names');
+	});
+
+	it.each([
+		'featureDisplayNameEditable',
+		'featureDisplayNameEditableAgencyCounsellingEnabled'
+	])('is generated only when %s is off', async (setting) => {
+		renderWithSettings({ [setting]: false });
+		await screen.findByText('generated names');
+	});
+
+	it('follows the counselling rule, not the live chat one', async () => {
+		renderWithSettings({
+			featureDisplayNameEditableLiveChatEnabled: false
+		});
+		await screen.findByText('typed names');
+	});
+});
 
 describe('entry before a shared call', () => {
 	beforeEach(() => {
@@ -181,5 +265,310 @@ describe('entry before a shared call', () => {
 			'/login?returnTo=%2Finvite%2Fshared-token'
 		);
 		expect(screen.queryByText('temporary account')).toBeNull();
+	});
+});
+
+describe('the postcode of a call guest (ORISO-Frontend#1795)', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	it('is not asked of a temporary account, which keeps the placeholder', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ open: vi.fn() }}
+			/>
+		);
+		await screen.findByText('no postcode');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(apiPostRegistration).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({ postcode: '00000' }),
+			false,
+			undefined,
+			expect.any(Function)
+		);
+	});
+
+	it('is asked of a registered account and sent along', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="direct-token"
+				context={{
+					...call,
+					linkKind: undefined,
+					temporaryAccount: false,
+					hidePasswordField: false
+				}}
+				modality="video"
+				deps={{ open: vi.fn() }}
+			/>
+		);
+		await screen.findByText('asks postcode');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await vi.waitFor(() =>
+			expect(apiPostRegistration).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					postcode: '10115',
+					temporary: false
+				}),
+				false,
+				undefined,
+				expect.any(Function)
+			)
+		);
+	});
+
+	it('is not asked of a signed-in person', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="direct-token"
+				context={{ ...call, temporaryAccount: false }}
+				modality="video"
+				signedIn
+			/>
+		);
+		await screen.findByText('no postcode');
+	});
+});
+
+/*
+ * FE#2209 live test (16 Nov): the guest picked a lamb before entering, the
+ * counsellor's knock card showed a frog and the call a fox. The pick was
+ * never stored; every surface derived its own animal.
+ */
+describe('the animal a call guest picks before entering', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	it('is stored on the new account before the call opens', async () => {
+		const order: string[] = [];
+		vi.mocked(apiPostRegistration).mockImplementation(async () => {
+			order.push('register');
+		});
+		const saveAvatar = vi.fn(async () => {
+			order.push('avatar');
+		});
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(saveAvatar).toHaveBeenCalledWith('owl');
+		expect(order).toEqual(['register', 'avatar']);
+	});
+
+	it('does not keep the guest out of the call when storing it fails', async () => {
+		const saveAvatar = vi.fn(async () => {
+			throw new Error('offline');
+		});
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+	});
+
+	// PR #2271 review: a stalled save would otherwise hold the guest on the
+	// entry page until the 30 s request timeout.
+	it('does not hold the guest at the door for a save that stalls', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const saveAvatar = vi.fn(() => new Promise<never>(() => undefined));
+			render(
+				<DirectLinkCallEntry
+					token="shared-token"
+					context={call}
+					modality="video"
+					deps={{ saveAvatar }}
+				/>
+			);
+			fireEvent.click(
+				await screen.findByRole('button', { name: 'Agree and enter' })
+			);
+			await waitFor(() => expect(saveAvatar).toHaveBeenCalled());
+			await vi.advanceTimersByTimeAsync(5_000);
+			await screen.findByText('call-only entry');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("leaves a signed-in person's own animal alone", async () => {
+		const saveAvatar = vi.fn();
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				signedIn
+				deps={{ saveAvatar }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(saveAvatar).not.toHaveBeenCalled();
+	});
+
+	it('hands the device choice from the check on to the call', async () => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar: vi.fn() }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('mic on, camera on');
+	});
+
+	// PR #2271 review: the device controls stay usable while registration and
+	// the avatar save run, so a mute in that wait has to reach the call.
+	it('hands on a mute made while the account is still being created', async () => {
+		let finishRegistration: () => void = () => undefined;
+		vi.mocked(apiPostRegistration).mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					finishRegistration = resolve;
+				})
+		);
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={call}
+				modality="video"
+				deps={{ saveAvatar: vi.fn() }}
+			/>
+		);
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Agree and enter' })
+		);
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		fireEvent.click(screen.getByRole('button', { name: 'Mute' }));
+		finishRegistration();
+		await screen.findByText('mic off, camera on');
+	});
+});
+
+/* UserService#1662: the entry offers what the link's guest account mode allows. */
+describe('the guest account mode of the link', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+	});
+	afterEach(cleanup);
+
+	const registered = () =>
+		vi.mocked(apiPostRegistration).mock.calls[0][1] as Record<
+			string,
+			unknown
+		>;
+
+	const enter = async (context: InviteLinkContext) => {
+		render(
+			<DirectLinkCallEntry
+				token="shared-token"
+				context={context}
+				modality="video"
+			/>
+		);
+		await screen.findByText('Department consent');
+	};
+
+	it('lets the guest choose, starting without an account', async () => {
+		await enter({ ...call, guestAccountMode: 'GUEST_CHOOSES' });
+		expect(screen.getByText('temporary account')).toBeTruthy();
+		expect(screen.getByText('no postcode')).toBeTruthy();
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'guestAccountMode.entry.withAccount'
+			})
+		);
+		expect(screen.getByText('new account')).toBeTruthy();
+		expect(screen.getByText('asks postcode')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({
+			temporary: false,
+			postcode: '10115'
+		});
+	});
+
+	it('registers a temporary account when the guest stays without one', async () => {
+		await enter({ ...call, guestAccountMode: 'GUEST_CHOOSES' });
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: true });
+	});
+
+	it('offers only an account for PERMANENT', async () => {
+		await enter({
+			...call,
+			temporaryAccount: false,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(
+			screen.queryByRole('button', {
+				name: /guestAccountMode.entry/
+			})
+		).toBeNull();
+		expect(screen.getByText('new account')).toBeTruthy();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: false });
+	});
+
+	it('offers only a temporary account for TEMPORARY', async () => {
+		await enter({ ...call, guestAccountMode: 'TEMPORARY' });
+		expect(
+			screen.queryByRole('button', {
+				name: /guestAccountMode.entry/
+			})
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Agree and enter' })
+		);
+		await screen.findByText('call-only entry');
+		expect(registered()).toMatchObject({ temporary: true });
 	});
 });

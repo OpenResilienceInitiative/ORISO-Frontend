@@ -25,10 +25,9 @@ import {
 import { apiCreateGroupChat } from '../../api/apiGroupChatSettings';
 import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import {
-	apiGetTenantConsultantList,
-	Consultant,
-	fetchAgencyConsultantList
-} from '../../api/apiGetAgencyConsultantList';
+	InternalChatColleague,
+	loadInternalChatColleagues
+} from './internal/loadInternalChatColleagues';
 import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import {
 	conversationAgency,
@@ -77,9 +76,8 @@ vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ fromL: true })
 }));
 vi.mock('../../hooks/useSession', () => ({ useSession: vi.fn() }));
-vi.mock('../../api/apiGetAgencyConsultantList', () => ({
-	apiGetTenantConsultantList: vi.fn(),
-	fetchAgencyConsultantList: vi.fn()
+vi.mock('./internal/loadInternalChatColleagues', () => ({
+	loadInternalChatColleagues: vi.fn()
 }));
 vi.mock('../../api/apiGetAgenciesByIds', () => ({
 	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
@@ -128,13 +126,10 @@ const colleague = (
 	consultantId: string,
 	firstName: string,
 	agencyIds: number[]
-): Consultant => ({
+): InternalChatColleague => ({
 	consultantId,
-	firstName,
-	lastName: 'Test',
-	displayName: firstName,
-	username: firstName.toLowerCase(),
-	agencies: agencyIds.map((id) => ({ id }))
+	displayName: `${firstName} Test`,
+	agencies: agencyIds.map((id) => ({ id, name: `Centre ${id}` }))
 });
 
 const sameCentre = colleague('c-same', 'Anna', [5]);
@@ -185,11 +180,7 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			read: vi.fn(),
 			ready: true
 		} as any);
-		vi.mocked(fetchAgencyConsultantList).mockResolvedValue([sameCentre]);
-		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
-			sameCentre,
-			otherCentre
-		]);
+		vi.mocked(loadInternalChatColleagues).mockResolvedValue([sameCentre]);
 		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: []
 		} as any);
@@ -210,7 +201,7 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			expect(within(menu).getByText('Anna Test')).toBeTruthy()
 		);
 		expect(within(menu).queryByText('Boris Test')).toBeNull();
-		expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5');
+		expect(loadInternalChatColleagues).toHaveBeenCalledWith(5);
 		expect(
 			screen.getByText('groupChat.internal.scope.AGENCY', {
 				exact: false
@@ -222,16 +213,30 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 		'offers the whole directory for the scope %s',
 		async (scope) => {
 			tenantState.tenant = tenantWithScope(scope);
+			const boris: InternalChatColleague =
+				scope === 'PLATFORM'
+					? { ...otherCentre, tenantName: 'Another organisation' }
+					: otherCentre;
+			vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+				sameCentre,
+				boris
+			]);
 			renderView();
 
 			const menu = await openPersonMenu();
 
 			await waitFor(() =>
-				expect(within(menu).getByText('Boris Test')).toBeTruthy()
+				expect(
+					within(menu).getByText(
+						boris.tenantName
+							? 'Boris Test (Another organisation)'
+							: 'Boris Test'
+					)
+				).toBeTruthy()
 			);
 			expect(within(menu).getByText('Anna Test')).toBeTruthy();
 			expect(
-				screen.getByText('groupChat.internal.scope.TENANT', {
+				screen.getByText(`groupChat.internal.scope.${scope}`, {
 					exact: false
 				})
 			).toBeTruthy();
@@ -240,6 +245,10 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 
 	it('sends the picked colleague to a dedicated room and nobody else', async () => {
 		tenantState.tenant = tenantWithScope('TENANT');
+		vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+			sameCentre,
+			otherCentre
+		]);
 		vi.mocked(apiCreateInternalSubsetChat).mockResolvedValue({
 			matrixRoomId: '!room:matrix.test',
 			chatId: 321,
@@ -343,10 +352,10 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 
 	it('drops the refusal of one centre when another centre is chosen', async () => {
 		tenantState.tenant = tenantWithScope();
-		vi.mocked(fetchAgencyConsultantList).mockImplementation(
-			(agencyId: string) =>
+		vi.mocked(loadInternalChatColleagues).mockImplementation(
+			(agencyId: number) =>
 				Promise.resolve(
-					agencyId === '5'
+					agencyId === 5
 						? [sameCentre]
 						: [colleague('c-six', 'Cem', [6])]
 				)
@@ -390,10 +399,10 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 	describe('a create request that is still pending', () => {
 		const startPendingCreate = async () => {
 			tenantState.tenant = tenantWithScope();
-			vi.mocked(fetchAgencyConsultantList).mockImplementation(
-				(agencyId: string) =>
+			vi.mocked(loadInternalChatColleagues).mockImplementation(
+				(agencyId: number) =>
 					Promise.resolve(
-						agencyId === '5'
+						agencyId === 5
 							? [sameCentre]
 							: [colleague('c-six', 'Cem', [6])]
 					)
@@ -477,10 +486,11 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 
 	it('never lets a late answer for the previous centre replace the list of the current one', async () => {
 		tenantState.tenant = tenantWithScope();
-		let answerFirstCentre: (list: Consultant[]) => void = () => undefined;
-		vi.mocked(fetchAgencyConsultantList).mockImplementation(
-			(agencyId: string) =>
-				agencyId === '5'
+		let answerFirstCentre: (list: InternalChatColleague[]) => void = () =>
+			undefined;
+		vi.mocked(loadInternalChatColleagues).mockImplementation(
+			(agencyId: number) =>
+				agencyId === 5
 					? new Promise((resolve) => {
 							answerFirstCentre = resolve as never;
 						})
@@ -496,14 +506,14 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			await screen.findByRole('option', { name: 'Agency Five' })
 		);
 		await waitFor(() =>
-			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5')
+			expect(loadInternalChatColleagues).toHaveBeenCalledWith(5)
 		);
 		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
 		fireEvent.click(
 			await screen.findByRole('option', { name: 'Agency Six' })
 		);
 		await waitFor(() =>
-			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('6')
+			expect(loadInternalChatColleagues).toHaveBeenCalledWith(6)
 		);
 
 		// The slow answer for centre five arrives last.
@@ -518,9 +528,9 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 
 	it('shows no colleague of the previous centre while the new list loads', async () => {
 		tenantState.tenant = tenantWithScope();
-		vi.mocked(fetchAgencyConsultantList).mockImplementation(
-			(agencyId: string) =>
-				agencyId === '5'
+		vi.mocked(loadInternalChatColleagues).mockImplementation(
+			(agencyId: number) =>
+				agencyId === 5
 					? Promise.resolve([sameCentre])
 					: new Promise(() => undefined)
 		);
@@ -534,7 +544,7 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 			await screen.findByRole('option', { name: 'Agency Five' })
 		);
 		await waitFor(() =>
-			expect(fetchAgencyConsultantList).toHaveBeenCalledWith('5')
+			expect(loadInternalChatColleagues).toHaveBeenCalledWith(5)
 		);
 		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
 		fireEvent.click(
@@ -553,7 +563,7 @@ it('opens the real Internal create flow from fresh canonical policy despite lega
 		reload: async () => {},
 		read: () => {}
 	});
-	vi.mocked(fetchAgencyConsultantList).mockResolvedValue([sameCentre]);
+	vi.mocked(loadInternalChatColleagues).mockResolvedValue([sameCentre]);
 	tenantState.tenant = {
 		settings: {
 			featureGroupChatV2Enabled: false,

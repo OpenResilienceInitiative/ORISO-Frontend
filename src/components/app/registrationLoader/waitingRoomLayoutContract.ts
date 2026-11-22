@@ -1,11 +1,18 @@
+import {
+	expectedCardWidthRange,
+	expectedSmCardWidthPx,
+	rootFontPx
+} from './handoverCardSize';
+
 /** The stage splits the page from this width on (MUI `lg`). */
 const STAGE_SPLIT_PX = 1200;
 /**
- * One card size in every room, the live chat's (#1735; Frank, 2026-10-16:
- * "proportions must come from live chat"). From the theme's `sm` (520 px) up
- * 372 px, below it 300 px.
+ * One card size in every room (#1735). Below the theme's `sm` (520 px)
+ * 18.75rem; from `sm` up a share of the window (same look at any zoom), at
+ * most one and a half across; the height fills the free room and crops the
+ * motif, so no card is cut off behind the bar and the cards stay a carousel
+ * with arrows and dots (Frank, 2026-11-20), see `handoverCardSize`.
  */
-const CARD_WIDTH = { xs: 300, sm: 372 };
 const CARD_SM_PX = 520;
 
 export interface WaitingRoomLayoutOptions {
@@ -71,14 +78,35 @@ const checkCards = (
 	if (!cards.length) {
 		return options.cards ? 'the card carousel is missing' : null;
 	}
-	const viewport = canvasElement.ownerDocument.defaultView!.innerWidth;
-	const expected = viewport >= CARD_SM_PX ? CARD_WIDTH.sm : CARD_WIDTH.xs;
-	const wrong = cards.find(
-		(card) => Math.round(card.getBoundingClientRect().width) !== expected
-	);
-	return wrong
-		? `card is ${Math.round(wrong.getBoundingClientRect().width)}px wide, expected ${expected}px`
-		: null;
+	const doc = canvasElement.ownerDocument;
+	const viewport = doc.defaultView!.innerWidth;
+	const { min, max } = expectedCardWidthRange(doc, viewport, CARD_SM_PX);
+	const widths = cards.map((card) => card.getBoundingClientRect().width);
+	if (widths.some((w) => Math.abs(w - widths[0]) > 1)) {
+		return `cards differ in width: ${widths.map(Math.round).join(', ')}px`;
+	}
+	const width = widths[0];
+	if (width < min - 1 || width > max + 1) {
+		return `card is ${Math.round(width)}px wide, expected ${Math.round(min)}–${Math.round(max)}px`;
+	}
+	if (viewport >= CARD_SM_PX) {
+		// The fluid formula, recomputed: a share of the window, at most one
+		// and a half across the carousel block.
+		const block = cards[0].closest('[data-cy="handover-carousel"]')
+			?.parentElement?.parentElement;
+		if (block) {
+			const expected = expectedSmCardWidthPx(
+				block.clientWidth,
+				doc.defaultView!.innerWidth,
+				rootFontPx(doc),
+				doc.defaultView!.innerHeight
+			);
+			if (Math.abs(width - expected) > 2) {
+				return `card is ${Math.round(width)}px wide, the fluid size here is ${Math.round(expected)}px`;
+			}
+		}
+	}
+	return null;
 };
 
 const checkStageColour = (canvasElement: HTMLElement): string | null => {

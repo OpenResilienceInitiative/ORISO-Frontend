@@ -20,6 +20,16 @@ import {
 } from './NotificationChoiceCard';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import {
+	DEFAULT_FIRST_TONE,
+	NotificationBrowserDialog
+} from './NotificationBrowserDialog';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { AREA_KINDS } from '../../utils/notificationSettings/notificationConfig';
+import {
+	NOTIFICATION_TONE_IDS,
+	type SoundId
+} from '../../utils/notificationSettings/model';
+import {
 	getAuthenticatedAccountIdentity,
 	subscribeToAuthenticatedTenant
 } from '../../utils/authenticatedTenant';
@@ -63,6 +73,11 @@ export const NotificationSetup = ({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
+	const [browserDialogOpen, setBrowserDialogOpen] = useState(false);
+	// Only used to re-render: the permission itself is read live below.
+	const [, setPermissionCheck] = useState(0);
+	const browserBlocked =
+		browserSupported && Notification.permission === 'denied';
 	const [failedEmailReadback, setFailedEmailReadback] = useState<{
 		choice: NotificationChoice;
 		operation: number;
@@ -83,6 +98,7 @@ export const NotificationSetup = ({
 		setPending(null);
 		setBusy(false);
 		setAwaitingBrowser(false);
+		setBrowserDialogOpen(false);
 		setError(null);
 		setFailedEmailReadback(null);
 	}, []);
@@ -110,26 +126,44 @@ export const NotificationSetup = ({
 		});
 	}, [reset]);
 
+	// The person may lift a browser block in the browser settings and come
+	// back to this page: read the permission again on return.
+	useEffect(() => {
+		if (!browserSupported) return;
+		const recheck = () => setPermissionCheck((count) => count + 1);
+		const onVisibility = () => {
+			if (document.visibilityState !== 'hidden') recheck();
+		};
+		window.addEventListener('focus', recheck);
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => {
+			window.removeEventListener('focus', recheck);
+			document.removeEventListener('visibilitychange', onVisibility);
+		};
+	}, [browserSupported]);
+
+	/** Resolves true only when the browser opt-in really completed. */
 	const finish = async (
 		choice: NotificationChoice,
 		acceptedOperation?: number
-	) => {
+	): Promise<boolean> => {
 		const resuming =
 			acceptedOperation !== undefined &&
 			acceptedEmailOperation.current === acceptedOperation &&
 			continuation.current === acceptedOperation;
-		if (acceptedOperation !== undefined && !resuming) return;
+		if (acceptedOperation !== undefined && !resuming) return false;
 		if (
 			(!resuming && choice !== 'BROWSER' && !isEmailEnabled) ||
 			(choice !== 'EMAIL' && !browserSupported)
 		)
-			return;
+			return false;
 		const operation = acceptedOperation ?? ++continuation.current;
 		if (!resuming) acceptedEmailOperation.current = null;
 		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
 		setFailedEmailReadback(null);
+		let completed = false;
 		try {
 			if (
 				resuming ||
@@ -147,14 +181,14 @@ export const NotificationSetup = ({
 							}
 						}
 					});
-					if (!current() || !latestEmailEnabled.current) return;
+					if (!current() || !latestEmailEnabled.current) return false;
 					acceptedEmailOperation.current = operation;
 					onEmailAccepted?.();
-					if (!current()) return;
+					if (!current()) return false;
 				}
 				try {
 					const saved = await reloadUserData();
-					if (!current()) return;
+					if (!current()) return false;
 					if (
 						!saved?.email ||
 						!saved?.emailNotifications?.emailNotificationsEnabled ||
@@ -171,7 +205,7 @@ export const NotificationSetup = ({
 							t('erstantwort.notificationChoice.refreshFailed')
 						);
 					}
-					return;
+					return false;
 				}
 			}
 			if (
@@ -181,20 +215,30 @@ export const NotificationSetup = ({
 			) {
 				// OS prompts need a fresh user gesture after the async email save.
 				setAwaitingBrowser(true);
-				return;
+				setBrowserDialogOpen(true);
+				return false;
 			}
 			if (choice !== 'EMAIL' && !browserActive) {
 				await optInToBrowserNotifications();
-				if (!current()) return;
+				if (!current()) return false;
 				setAwaitingBrowser(false);
+				completed = Notification.permission === 'granted';
 				if (Notification.permission !== 'granted') {
-					setError(t('erstantwort.notificationChoice.browserDenied'));
-					return;
+					// A blocked site never shows the permission prompt again;
+					// the person has to lift the block in the address bar.
+					setError(
+						t(
+							Notification.permission === 'denied'
+								? 'erstantwort.notificationChoice.browserBlockedHelp'
+								: 'erstantwort.notificationChoice.browserDenied'
+						)
+					);
+					return false;
 				}
 			}
 			if (current()) onDone?.();
 		} catch {
-			if (!current()) return;
+			if (!current()) return false;
 			setError(t('erstantwort.notificationChoice.saveFailed'));
 		} finally {
 			if (current()) {
@@ -202,6 +246,7 @@ export const NotificationSetup = ({
 				setBusy(false);
 			}
 		}
+		return completed;
 	};
 
 	const choose = (choice: NotificationChoice) => {
@@ -217,7 +262,60 @@ export const NotificationSetup = ({
 		if (choice !== 'BROWSER' && !userData?.email) {
 			setPending(choice);
 			setEmailOpen(true);
+		} else if (choice === 'BROWSER' && !browserActive) {
+			// The tone and the one permission click live in a dialog.
+			setBrowserDialogOpen(true);
 		} else void finish(choice);
+	};
+
+	/** The tone the account already uses for new conversation messages. */
+	const storedTone = (): SoundId | undefined => {
+		const sound =
+			notificationSettingsStore.getState().settings.notificationConfig
+				.conversations?.standard?.sound;
+		return sound && [...NOTIFICATION_TONE_IDS, 'none'].includes(sound)
+			? sound
+			: undefined;
+	};
+
+	/** Keep the chosen tone for the conversation and request areas. */
+	const rememberTone = (tone: SoundId) => {
+		const { notificationConfig } =
+			notificationSettingsStore.getState().settings;
+		const next = { ...notificationConfig };
+		(['requests', 'conversations'] as const).forEach((area) => {
+			next[area] = { ...next[area] };
+			AREA_KINDS[area].forEach((kind) => {
+				next[area][kind] = { ...next[area][kind], sound: tone };
+			});
+		});
+		notificationSettingsStore.updateSettings({
+			notificationConfig: next
+		});
+	};
+
+	const confirmBrowser = (tone: SoundId, changed: boolean) => {
+		// No await before the permission request: it needs this click.
+		const run = finish('BROWSER');
+		// finish() starts a new operation synchronously, before its first await.
+		const operation = continuation.current;
+		void run
+			.then((completed) => {
+				// Another account or tenant may be active by now.
+				if (!completed || continuation.current !== operation) return;
+				// A tone is kept only when the browser said yes, and only a
+				// tone the person actually changed replaces their settings.
+				if (
+					Notification.permission === 'granted' &&
+					changed &&
+					tone !== storedTone()
+				)
+					rememberTone(tone);
+			})
+			.finally(() => {
+				if (continuation.current === operation)
+					setBrowserDialogOpen(false);
+			});
 	};
 
 	const acceptedEmailActive =
@@ -241,15 +339,23 @@ export const NotificationSetup = ({
 					busy={busy || emailOpen}
 				/>
 			)}
-			{awaitingBrowser && (
-				<button
-					type="button"
-					className="erstantwort__action"
-					disabled={busy}
-					onClick={() => void finish('BROWSER')}
-				>
-					{t('erstantwort.notificationChoice.enableBrowser')}
-				</button>
+			{awaitingBrowser && !browserDialogOpen && (
+				<>
+					<p role="status">
+						{t('erstantwort.notificationChoice.emailSavedNext')}
+					</p>
+					<button
+						type="button"
+						className="erstantwort__action"
+						disabled={busy}
+						onClick={() => setBrowserDialogOpen(true)}
+					>
+						{t('erstantwort.notificationChoice.enableBrowser')}
+					</button>
+				</>
+			)}
+			{browserBlocked && !error && (
+				<p>{t('erstantwort.notificationChoice.browserBlockedHelp')}</p>
 			)}
 			{isBrowserEnabled && !browserSupported && (
 				<p>{t('erstantwort.notificationChoice.browserUnsupported')}</p>
@@ -293,8 +399,19 @@ export const NotificationSetup = ({
 					})}
 				</p>
 			)}
+			{browserDialogOpen && (
+				<NotificationBrowserDialog
+					emailJustSaved={awaitingBrowser}
+					blocked={browserBlocked}
+					busy={busy}
+					initialTone={storedTone() ?? DEFAULT_FIRST_TONE}
+					onClose={() => setBrowserDialogOpen(false)}
+					onConfirm={confirmBrowser}
+				/>
+			)}
 			{emailOpen && isEmailEnabled && (
 				<ErstantwortEmailOverlay
+					userName={userData?.userName}
 					onClose={() => {
 						continuation.current += 1;
 						setEmailOpen(false);

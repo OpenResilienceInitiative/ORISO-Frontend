@@ -6,7 +6,9 @@ import {
 	SessionTypeContext,
 	UserDataContext,
 	hasUserAuthority,
-	ActiveSessionContext
+	ActiveSessionContext,
+	NotificationsContext,
+	NOTIFICATION_TYPE_WARNING
 } from '../../../globalState';
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
@@ -31,7 +33,12 @@ import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
 import { getModality, Modality } from '../../session/getModality';
+import { RoomNextAppointmentSlot } from '../../sessionsList/timeline/RoomNextAppointmentSlot';
 import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
+import { ManagePeopleDialog } from '../../managePeople/ManagePeopleDialog';
+import { createInternalChatPeopleSource } from '../../managePeople/internalChatPeopleSource';
+import { canInviteToInternalChat } from './internalChatInvite';
+import { GroupCallStartRequest } from './GroupCallStartRequest';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -47,17 +54,25 @@ interface GroupChatHeaderProps {
 	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
 	 */
 	hideTopic?: boolean;
+	/**
+	 * D7 (Frank, 05.09.2026): on the phone the composer's action bar leads
+	 * with the back arrow (T16), so the header renders no second one — the
+	 * same rule as the 1:1 header in `SessionHeaderComponent`.
+	 */
+	hideBackButton?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
 	bannedUsers,
-	hideTopic = false
+	hideTopic = false,
+	hideBackButton = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const { matrixClientService } = useMatrixClient();
 
 	// MATRIX: room members + per-member latest activity (#1193 Job 1).
@@ -172,6 +187,26 @@ export const GroupChatHeader = ({
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
+	);
+
+	// ORISO-Frontend#2023: the "+" brings colleagues into a running internal chat.
+	const [isManagePeopleOpen, setIsManagePeopleOpen] = useState(false);
+	const canInvite = canInviteToInternalChat({
+		isInternalGroup: getModality(activeSession) === Modality.INTERNAL_GROUP,
+		isConsultant,
+		isActive: Boolean(activeSession.item.active),
+		isJoinView: isJoinGroupChatView
+	});
+	const participantsRef = useRef(activeSession.item.participants);
+	participantsRef.current = activeSession.item.participants;
+	const internalChatPeopleSource = useMemo(
+		() =>
+			createInternalChatPeopleSource({
+				chatId: activeSession.item.id,
+				getParticipants: () => participantsRef.current,
+				currentConsultantId: userData?.userId
+			}),
+		[activeSession.item.id, userData?.userId]
 	);
 
 	// Use CallManager for group calls (same as SessionMenu)
@@ -305,6 +340,30 @@ export const GroupChatHeader = ({
 		featureVideoCallsGroupChatsEnabled !== false;
 
 	const isActive = activeSession.item.active;
+	// The same checks that show the header's call buttons below.
+	const canStartGroupCall =
+		Boolean(isActive) && !isJoinGroupChatView && isConsultant;
+	const callButtonsRef = useRef<HTMLDivElement>(null);
+	const offerGroupCall = (kind: 'video' | 'audio') => {
+		const buttons = Array.from(
+			callButtonsRef.current?.querySelectorAll<HTMLButtonElement>(
+				'button'
+			) ?? []
+		);
+		// Video comes first when both are shown.
+		(kind === 'video' || !isVideoCallsEnabled
+			? buttons[0]
+			: buttons[1]
+		)?.focus();
+	};
+	const refuseGroupCall = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('directLink.entry.callsDisabled'),
+			text: '',
+			closeable: true,
+			announce: 'status'
+		});
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
@@ -329,14 +388,16 @@ export const GroupChatHeader = ({
 	return (
 		<div className="sessionInfo">
 			<div className="sessionInfo__headerWrapper">
-				<Link
-					to={listPath + sessionTabPath}
-					onClick={mobileListView}
-					className="sessionInfo__backButton"
-					aria-label={t('app.back')}
-				>
-					<BackIcon />
-				</Link>
+				{!hideBackButton && (
+					<Link
+						to={listPath + sessionTabPath}
+						onClick={mobileListView}
+						className="sessionInfo__backButton"
+						aria-label={t('app.back')}
+					>
+						<BackIcon />
+					</Link>
+				)}
 				<div className="sessionInfo__username sessionInfo__username--deactivate sessionInfo__username--groupChat">
 					<div className="sessionInfo__titleRow" ref={titleRowRef}>
 						<div className="sessionInfo__memberStack">
@@ -347,10 +408,24 @@ export const GroupChatHeader = ({
 								type="internal"
 								showAddIcon={isActive && !isJoinGroupChatView}
 								addLabel={t(
-									'sessionHeader.supervisor.add.disabledUnavailable'
+									canInvite
+										? 'managePeople.internalChat.title'
+										: 'sessionHeader.supervisor.add.disabledUnavailable'
 								)}
 								addTooltip={false}
+								onAddClick={
+									canInvite
+										? () => setIsManagePeopleOpen(true)
+										: undefined
+								}
 							/>
+							{canInvite && isManagePeopleOpen && (
+								<ManagePeopleDialog
+									open
+									onClose={() => setIsManagePeopleOpen(false)}
+									source={internalChatPeopleSource}
+								/>
+							)}
 							<MemberAvatarStack
 								members={stackMembers}
 								measureRef={titleRowRef}
@@ -374,11 +449,22 @@ export const GroupChatHeader = ({
 					)}
 				</div>
 
+				{canStartGroupCall && (
+					<GroupCallStartRequest
+						sessionId={activeSession.item.id}
+						video={isVideoCallsEnabled}
+						audio={isAudioCallsEnabled}
+						start={(isVideo) => void handleStartVideoCall(isVideo)}
+						offer={offerGroupCall}
+						refuse={refuseGroupCall}
+					/>
+				)}
 				{isActive &&
 					!isJoinGroupChatView &&
 					(isAudioCallsEnabled || isVideoCallsEnabled) &&
 					isConsultant && (
 						<div
+							ref={callButtonsRef}
 							className="sessionInfo__videoCallButtons"
 							data-cy="session-header-video-call-buttons"
 							data-tour-target="groupchat-call-button"
@@ -412,6 +498,8 @@ export const GroupChatHeader = ({
 					bannedUsers={bannedUsers}
 				/>
 			</div>
+			{/* ADR-021: the next date of the series, below the header line. */}
+			<RoomNextAppointmentSlot />
 		</div>
 	);
 };

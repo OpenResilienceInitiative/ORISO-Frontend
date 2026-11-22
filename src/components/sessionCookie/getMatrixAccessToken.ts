@@ -1,4 +1,5 @@
-import { createClient, MatrixClient } from 'matrix-js-sdk';
+import type { MatrixClient } from 'matrix-js-sdk';
+import { createBrowserMatrixSdkClient } from '../../services/browserMatrixSdkClient';
 import { endpoints } from '../../resources/scripts/endpoints';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from '../../api/fetchData';
@@ -17,6 +18,8 @@ import {
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
 import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
+import { installSendRoomGuard } from '../../services/matrixSendRoomGuard';
+import { MatrixBootstrapThrottledError } from '../../services/matrixBootstrapRetry';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -103,7 +106,7 @@ const getOrCreateRequestedDeviceId = (): string => {
 	return deviceId;
 };
 
-const getCurrentAuthSubject = (): string | null => {
+export const getCurrentAuthSubject = (): string | null => {
 	try {
 		const keycloakToken = getValueFromCookie('keycloak');
 		if (!keycloakToken) {
@@ -251,43 +254,61 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 	return fetchData({
 		url: matrixTokenUrl(requestedDeviceId),
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE],
 		recoverOnPublicAuthRoute: false
-	}).then((response) => {
-		if (requestedGeneration !== deviceBootstrapGeneration) {
-			throw new Error('Matrix device changed during token bootstrap');
-		}
-		if (getCurrentAuthSubject() !== requestedSubject) {
-			throw new Error('Matrix session changed during token bootstrap');
-		}
-		const homeserverUrl = getMatrixHomeserverUrl();
-		if (!homeserverUrl) {
-			throw new Error(
-				'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
-			);
-		}
-		if (!response.accessToken || !response.userId || !response.deviceId) {
-			throw new Error(
-				'Matrix login did not return a device-bound access token'
-			);
-		}
+	})
+		.catch((error: unknown) => {
+			if (!(error instanceof Response)) throw error;
+			const delay = error.headers.get('Retry-After');
+			if (error.status === 429 && delay && /^\d+$/.test(delay)) {
+				const retryAfterMs = Number(delay) * 1000;
+				if (retryAfterMs > 0 && retryAfterMs <= 2_147_483_647) {
+					throw new MatrixBootstrapThrottledError(retryAfterMs);
+				}
+			}
+			throw new Error(FETCH_ERRORS.CATCH_ALL);
+		})
+		.then((response) => {
+			if (requestedGeneration !== deviceBootstrapGeneration) {
+				throw new Error('Matrix device changed during token bootstrap');
+			}
+			if (getCurrentAuthSubject() !== requestedSubject) {
+				throw new Error(
+					'Matrix session changed during token bootstrap'
+				);
+			}
+			const homeserverUrl = getMatrixHomeserverUrl();
+			if (!homeserverUrl) {
+				throw new Error(
+					'REACT_APP_MATRIX_HOMESERVER_URL is not configured'
+				);
+			}
+			if (
+				!response.accessToken ||
+				!response.userId ||
+				!response.deviceId
+			) {
+				throw new Error(
+					'Matrix login did not return a device-bound access token'
+				);
+			}
 
-		return {
-			accessToken: response.accessToken,
-			deviceGeneration: requestedGeneration,
-			userId: response.userId,
-			deviceId: getOrCreateMatrixDeviceId(
-				response.userId,
-				response.deviceId
-			),
-			homeserverUrl,
-			expiresInMs: response.expiresInMs,
-			uiaPassword: response.uiaPassword,
-			...(requestedSubject
-				? { authenticatedSubject: requestedSubject }
-				: {})
-		};
-	});
+			return {
+				accessToken: response.accessToken,
+				deviceGeneration: requestedGeneration,
+				userId: response.userId,
+				deviceId: getOrCreateMatrixDeviceId(
+					response.userId,
+					response.deviceId
+				),
+				homeserverUrl,
+				expiresInMs: response.expiresInMs,
+				uiaPassword: response.uiaPassword,
+				...(requestedSubject
+					? { authenticatedSubject: requestedSubject }
+					: {})
+			};
+		});
 };
 
 export const getMatrixAccessToken = (
@@ -381,26 +402,34 @@ export const clearPersistedMatrixDeviceId = (userId: string): void => {
 // Helper function to create Matrix client with stored credentials
 export const createMatrixClient = (
 	loginData: MatrixLoginData,
-	onSdkError?: (...messages: unknown[]) => void
+	onSdkError?: (...messages: unknown[]) => void,
+	isStartupActive?: () => boolean
 ): MatrixClient => {
 	const baseLogger = getMatrixClientLogger();
-	const client = createClient({
-		baseUrl: loginData.homeserverUrl,
-		accessToken: loginData.accessToken,
-		userId: loginData.userId,
-		deviceId: loginData.deviceId,
-		fallbackICEServerAllowed: true,
-		logger: onSdkError
-			? createMatrixErrorAwareLogger(baseLogger, onSdkError)
-			: baseLogger,
-		// #437 key backup + recovery: the SDK pulls the secret-storage key
-		// through this callback during setup/recovery flows (one-shot in-memory
-		// cache, never persisted).
-		cryptoCallbacks: {
-			getSecretStorageKey: (keys, name) =>
-				secretStorageKeyCallback(client, keys, name)
-		}
-	});
+	const client = createBrowserMatrixSdkClient(
+		{
+			baseUrl: loginData.homeserverUrl,
+			accessToken: loginData.accessToken,
+			userId: loginData.userId,
+			deviceId: loginData.deviceId,
+			fallbackICEServerAllowed: true,
+			logger: onSdkError
+				? createMatrixErrorAwareLogger(baseLogger, onSdkError)
+				: baseLogger,
+			// #437 key backup + recovery: the SDK pulls the secret-storage key
+			// through this callback during setup/recovery flows (one-shot in-memory
+			// cache, never persisted).
+			cryptoCallbacks: {
+				getSecretStorageKey: (keys, name) =>
+					secretStorageKeyCallback(client, keys, name)
+			}
+		},
+		isStartupActive
+	);
+	// P0: the SDK sends in the clear into a room its store does not hold yet
+	// (fresh client after a token refresh / device recovery, or before the
+	// first sync). Every client must wait for the synced room or refuse.
+	installSendRoomGuard(client);
 
 	if (
 		!loginData.isAnonymous &&

@@ -253,6 +253,51 @@ export const VideoUserIdTooShort: Story = {
 	}
 };
 
+export const VideoUserIdGeneratedOnly: Story = {
+	name: 'Video · User-ID generated only',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		initialUsername: 'not-a-suggestion',
+		usernameEditable: false
+	},
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The Träger allows no typed names; the suggest buttons still work.
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="username"]'
+		);
+		await expect(field).toHaveAttribute('readonly');
+		const suggest = canvas.getByRole('button', { name: 'User-ID' });
+		await expect(suggest).toBeEnabled();
+		await userEvent.click(suggest);
+		await waitFor(() =>
+			expect(field?.value).toMatch(/^[a-z0-9_]+_[1-9][0-9]{3}$/)
+		);
+	}
+};
+
+export const VideoPostcodeForRegisteredLink: Story = {
+	name: 'Video · postcode for a registered direct link (#1795)',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', askPostcode: true },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// The gate waits for five digits; the field says what it is for.
+		await expectProgress(canvasElement, 75);
+		await expect(
+			canvas.getByText('Noch offen: Postleitzahl')
+		).toBeVisible();
+		const field = canvasElement.querySelector<HTMLInputElement>(
+			'input[autocomplete="postal-code"]'
+		);
+		await userEvent.type(field as HTMLInputElement, '10115');
+		await waitFor(() => expect(field?.value).toBe('10115'));
+		await expectProgress(canvasElement, 100);
+	}
+};
+
 export const VideoUserIdTaken: Story = {
 	name: 'Video · User-ID already taken',
 	globals: desktop1440Globals,
@@ -302,6 +347,79 @@ export const VideoChangeAvatar: Story = {
 				'eule_mika_4821'
 			)
 		);
+	}
+};
+
+/**
+ * UserService#1662, "Gast wählt": the guest joins without an account by
+ * default (temporary, password hidden, no postcode) or creates one. The
+ * stage plays the part of `DirectLinkCallEntry`, which keeps the choice.
+ */
+const AccountChoiceStage = (
+	args: CallEntryRoomProps & { startWithAccount?: boolean }
+) => {
+	const { startWithAccount = false, ...room } = args;
+	const [temporary, setTemporary] = useState(!startWithAccount);
+	return (
+		<CallEntryRoom
+			{...room}
+			hidePassword={temporary}
+			askPostcode={!temporary}
+			accountChoice={{
+				temporary,
+				onToggle: () => setTemporary((current) => !current)
+			}}
+		/>
+	);
+};
+
+export const VideoGuestChoosesWithoutAccount: Story = {
+	name: 'Video · guest chooses · without account (default, #1662)',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		).toBeVisible();
+		await expect(
+			canvasElement.querySelector('input[autocomplete="postal-code"]')
+		).toBeNull();
+		await gateOpens(canvasElement);
+	}
+};
+
+export const VideoGuestChoosesWithAccount: Story = {
+	name: 'Video · guest chooses · account chosen (#1662)',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		);
+		await expect(
+			canvas.getByRole('button', { name: 'Ohne Konto beitreten' })
+		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('input[autocomplete="postal-code"]')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const VideoGuestChoosesPhone: Story = {
+	name: 'Video · guest chooses · phone (#1662)',
+	globals: phone390Globals,
+	args: { ...base, modality: 'video', initialMicHeard: true, micLevel: 0.55 },
+	render: (args) => <AccountChoiceStage {...args} />,
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await expect(
+			canvas.getByRole('button', { name: 'Konto anlegen' })
+		).toBeVisible();
 	}
 };
 

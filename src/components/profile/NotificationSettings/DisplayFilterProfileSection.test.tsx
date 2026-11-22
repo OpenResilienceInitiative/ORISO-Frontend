@@ -114,6 +114,29 @@ describe('DisplayFilterProfileSection', () => {
 		resetCounsellorAgencyFormatsForTests();
 	});
 
+	it('shows the upgrade notice only for newer account data', () => {
+		renderSection();
+		const hint = 'notifications.displayFilter.readOnlyHint';
+		const control = () =>
+			checkbox('display-filter-profile-timeline-show-system');
+
+		expect(control().disabled).toBe(true);
+		expect(screen.queryByText(hint)).toBeNull();
+
+		act(() => attach(DEFAULT_DISPLAY_FILTERS));
+		expect(control().disabled).toBe(false);
+		expect(screen.queryByText(hint)).toBeNull();
+
+		act(() =>
+			attach({
+				...DEFAULT_DISPLAY_FILTERS,
+				version: DEFAULT_DISPLAY_FILTERS.version + 1
+			})
+		);
+		expect(control().disabled).toBe(true);
+		expect(screen.getByText(hint)).toBeTruthy();
+	});
+
 	it('renders the three sections with their kinds and no auto-read for Anfragen', () => {
 		attach(DEFAULT_DISPLAY_FILTERS);
 		renderSection();
@@ -295,9 +318,6 @@ describe('DisplayFilterProfileSection', () => {
 				checkbox('display-filter-profile-sessions-show-circle')
 			).toBeFalsy()
 		);
-		expect(
-			checkbox('display-filter-profile-sessions-show-futureTimeline')
-		).toBeFalsy();
 		expect(
 			checkbox('display-filter-profile-sessions-show-internalGroup')
 		).toBeTruthy();

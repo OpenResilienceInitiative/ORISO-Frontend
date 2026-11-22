@@ -205,9 +205,9 @@ function SessionsListToolbarPlayground({
 const meta: Meta = {
 	title: 'Components/Session/List/SessionsListToolbar',
 	tags: ['autodocs'],
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
@@ -709,6 +709,11 @@ function SupervisionChipFilterDemo({
 							<RuntimeSessionCard
 								session={row.raw}
 								index={index}
+								// No row is open here, so all rows form one
+								// block, as `SessionsList` groups them.
+								grouped
+								isGroupStart={index === 0}
+								isGroupEnd={index === visibleRows.length - 1}
 							/>
 						</div>
 					))}
@@ -964,6 +969,7 @@ export const DirectLinksChip: Story = {
 			'[data-cy="sessions-list-chip-direct-links"]'
 		);
 		await expect(chip).not.toBeNull();
-		await expect(chip!.textContent).toContain('Direktlinks');
+		// #2252: "Direktlink" is now called "Direkteinladung".
+		await expect(chip!.textContent).toContain('Direkteinladungen');
 	}
 };

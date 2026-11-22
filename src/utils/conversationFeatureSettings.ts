@@ -71,3 +71,13 @@ export const resolveConversationAgencyId = (
 	const id = assignments[0]?.id;
 	return validId(id) ? id : undefined;
 };
+
+/** Supervision for one chat: master switch plus the anonymous / 1:1 restriction. */
+export const isSupervisionEnabledForChat = (
+	features: Partial<TenantDataSettingsInterface> | undefined,
+	isAnonymousChat: boolean
+): boolean =>
+	features?.featureSupervisionEnabled !== false &&
+	(isAnonymousChat
+		? features?.featureSupervisionAnonymousChatsEnabled !== false
+		: features?.featureSupervisionOneOnOneChatsEnabled !== false);

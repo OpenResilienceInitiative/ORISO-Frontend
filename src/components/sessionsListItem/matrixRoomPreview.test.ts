@@ -83,6 +83,21 @@ describe('filterVisibleMatrixPreviewEvents', () => {
 });
 
 describe('getLatestMatrixRoomPreview', () => {
+	it('names a captioned file by its file name, not by its caption', () => {
+		expect(
+			getLatestTimedMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.file',
+						body: 'Bitte Seite 2 lesen',
+						filename: 'befund.pdf'
+					},
+					42
+				)
+			])
+		).toEqual({ kind: 'file', text: 'befund.pdf', ts: 42 });
+	});
 	it('keeps the timestamp for a separately contracted side-room preview', () => {
 		expect(
 			getLatestTimedMatrixRoomPreview([
@@ -550,5 +565,151 @@ describe('preview line of the list card: glyphs, not words', () => {
 		expect(
 			toListPreviewLine({ kind: 'encrypted', text: null }, translate)
 		).toEqual({ glyphs: [], text: 'Verschlüsselte Nachricht' });
+	});
+});
+
+describe('answers to marked passages in the list preview (#2202)', () => {
+	const answers = (extra: Record<string, unknown> = {}) =>
+		event(
+			'm.room.message',
+			{
+				'msgtype': 'm.text',
+				'body': '> drei Mahnungen\nDie sortieren wir.',
+				'org.oriso.passage_replies': [
+					{
+						event_id: '$m1',
+						excerpt: 'drei Mahnungen',
+						text: 'Die sortieren wir.'
+					}
+				],
+				...extra
+			},
+			10
+		);
+
+	it('shows the first written answer, not the quote fallback', () => {
+		expect(getLatestMatrixRoomPreview([answers()])).toEqual({
+			kind: 'text',
+			text: 'Die sortieren wir.'
+		});
+	});
+
+	it('prefers the text typed beside the answers', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({ 'org.oriso.passage_replies_text': 'Bis morgen.' })
+			])
+		).toEqual({ kind: 'text', text: 'Bis morgen.' });
+	});
+
+	it('shows the composer text for an added bare quote', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': '> drei Mahnungen\n\nBis morgen.',
+					'org.oriso.passage_replies': [
+						{ event_id: '$m1', excerpt: 'drei Mahnungen' }
+					],
+					'org.oriso.passage_replies_text': 'Bis morgen.'
+				})
+			])
+		).toEqual({ kind: 'text', text: 'Bis morgen.' });
+	});
+
+	it('does not show an older message when a bare quote is sent on its own', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': '> drei Mahnungen',
+					'org.oriso.passage_replies': [
+						{ event_id: '$m1', excerpt: 'drei Mahnungen' }
+					]
+				})
+			])
+		).toEqual({ kind: 'text', text: 'drei Mahnungen' });
+	});
+
+	it('treats a collected excerpt as literal text, including markup', () => {
+		const excerpt = '<img src="https://attacker.invalid/tracker"> <x>';
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': `> ${excerpt}`,
+					'org.oriso.passage_replies': [{ event_id: '$m1', excerpt }]
+				})
+			])
+		).toEqual({ kind: 'text', text: excerpt });
+	});
+
+	it('reads a voice-only answer as a voice message with its length', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'org.oriso.passage_replies': [
+						{
+							event_id: '$m1',
+							excerpt: 'drei Mahnungen',
+							audio: {
+								file: {
+									url: 'mxc://hs/clip',
+									key: { k: 'k' },
+									iv: 'iv',
+									hashes: { sha256: 'h' }
+								},
+								mimetype: 'audio/webm',
+								duration_ms: 48000
+							}
+						}
+					]
+				})
+			])
+		).toEqual({ kind: 'voice', text: null, durationMs: 48000 });
+	});
+});
+
+describe('moderator blur in the list preview (#2229)', () => {
+	const message = {
+		...event(
+			'm.room.message',
+			{ msgtype: 'm.text', body: 'Ich wohne in der Hauptstraße 5' },
+			10
+		),
+		getId: () => '$msg'
+	};
+	const blur = (redacted = false) => ({
+		...event(
+			'org.oriso.passage_blur',
+			{
+				'm.relates_to': {
+					rel_type: 'org.oriso.passage_blur',
+					event_id: '$msg'
+				},
+				'start': 13,
+				'length': 17
+			},
+			20,
+			'@mod:example.org'
+		),
+		getId: () => '$blur',
+		isRedacted: () => redacted
+	});
+
+	it('never shows the text of a message that has a blur', () => {
+		const preview = getLatestMatrixRoomPreview([message, blur()]);
+		expect(preview).toEqual({ kind: 'blurred', text: null });
+		expect(
+			toListPreviewLine(preview, (key) =>
+				key === 'sessionList.preview.blurred'
+					? 'Nachricht mit geschwärzter Stelle'
+					: key
+			).text
+		).toBe('Nachricht mit geschwärzter Stelle');
+	});
+
+	it('shows the text again once the blur was lifted', () => {
+		expect(getLatestMatrixRoomPreview([message, blur(true)])).toEqual({
+			kind: 'text',
+			text: 'Ich wohne in der Hauptstraße 5'
+		});
 	});
 });

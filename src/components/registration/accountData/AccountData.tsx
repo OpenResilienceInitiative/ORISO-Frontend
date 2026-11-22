@@ -73,12 +73,12 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
-import { AskerDisplayNameField } from '../../pseudonym/AskerDisplayNameField';
 import {
 	isAskerDisplayNameTypingAllowed,
 	isContextEmailCollectionAllowed
 } from '../../../utils/askerAccountPolicy';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
+import { usePrivacyNoticeGuard } from '../privacyNotice/usePrivacyNoticeGuard';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
 export const AccountData: FC<{
@@ -180,16 +180,6 @@ export const AccountData: FC<{
 		conversationType
 	);
 	const username = aliasEditable ? typedUsername : generatedUsername;
-	const [displayName, setDisplayName] = useState(
-		restoredDraft?.displayName ?? ''
-	);
-	const [generatedDisplayName, setGeneratedDisplayName] = useState(
-		restoredDraft?.generatedDisplayName || identity.displayName
-	);
-	const effectiveDisplayName =
-		conversationType === 'AGENCY_COUNSELLING'
-			? (aliasEditable ? displayName : generatedDisplayName).trim()
-			: '';
 
 	const emailVisible =
 		isContextEmailCollectionAllowed(tenant?.settings, conversationType) &&
@@ -225,6 +215,13 @@ export const AccountData: FC<{
 	   there is something to consent to. Seeded from the same predicate the
 	   label uses, so the far more common unconfigured case — which issues no
 	   request at all — is never disabled, not even for one frame. */
+	/* A centre with no stored privacy notice gets a warning dialog before the
+	   box is ticked (ORISO-AgencyService#366). */
+	const {
+		guardToggle: guardPrivacyNoticeToggle,
+		dialog: privacyNoticeDialog
+	} = usePrivacyNoticeGuard(agency?.id, mainTopic?.id);
+
 	/* The complete input state the label's answer must match — derived during
 	   render, in the same one place the label derives it, so the two cannot
 	   drift and no input can be forgotten from the comparison. */
@@ -341,8 +338,6 @@ export const AccountData: FC<{
 	/* Keep the draft current on every change so stepper navigation is lossless. */
 	useEffect(() => {
 		setAccountDataDraft({
-			displayName,
-			generatedDisplayName,
 			generatedUsername,
 			identity,
 			username: typedUsername,
@@ -354,8 +349,6 @@ export const AccountData: FC<{
 			passwordMinted
 		});
 	}, [
-		displayName,
-		generatedDisplayName,
 		generatedUsername,
 		identity,
 		typedUsername,
@@ -393,8 +386,7 @@ export const AccountData: FC<{
 		isUsernameLongEnough &&
 		isPasswordValid &&
 		password === repeatPassword &&
-		emailFeedback.isSatisfied &&
-		effectiveDisplayName.length <= 255;
+		emailFeedback.isSatisfied;
 
 	useEffect(() => {
 		if (
@@ -408,7 +400,6 @@ export const AccountData: FC<{
 			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
 			onChange({
-				displayName: effectiveDisplayName || undefined,
 				username,
 				password,
 				// Clear an address previously committed by this step, rather than
@@ -419,7 +410,6 @@ export const AccountData: FC<{
 			setDisabledNextButton(true);
 		}
 	}, [
-		effectiveDisplayName,
 		username,
 		password,
 		repeatPassword,
@@ -541,10 +531,14 @@ export const AccountData: FC<{
 						checked={dataProtectionChecked}
 						disabled={!isConsentSentenceResolved}
 						onChange={() =>
-							setAcceptedConsentBinding(
+							guardPrivacyNoticeToggle(
+								() =>
+									setAcceptedConsentBinding(
+										dataProtectionChecked
+											? null
+											: currentConsentBinding
+									),
 								dataProtectionChecked
-									? null
-									: currentConsentBinding
 							)
 						}
 						label={
@@ -579,6 +573,7 @@ export const AccountData: FC<{
 			dataProtectionChecked,
 			isConsentSentenceResolved,
 			currentConsentBinding,
+			guardPrivacyNoticeToggle,
 			agency,
 			mainTopic
 		]
@@ -587,6 +582,7 @@ export const AccountData: FC<{
 
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
+			{privacyNoticeDialog}
 			<Box
 				sx={{
 					display: 'flex',
@@ -738,55 +734,6 @@ export const AccountData: FC<{
 					)
 				}}
 			/>
-			{conversationType === 'AGENCY_COUNSELLING' && (
-				<Box sx={{ mt: gap('20px') }}>
-					{aliasEditable && (
-						<Typography
-							component="p"
-							variant="body2"
-							sx={{ mb: 1 }}
-						>
-							{t('registration.account.displayName.optional')}
-						</Typography>
-					)}
-					<AskerDisplayNameField
-						value={
-							aliasEditable ? displayName : generatedDisplayName
-						}
-						onChange={setDisplayName}
-						editable={aliasEditable}
-					/>
-					<Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-						<IdentitySuggestButton
-							icon={genDiceIcon}
-							label={t(
-								'registration.account.displayName.suggest'
-							)}
-							onClick={() => {
-								const next =
-									generatePseudonym(locale).displayName;
-								setGeneratedDisplayName(next);
-								setDisplayName(next);
-							}}
-						/>
-						{aliasEditable && (
-							<IdentitySuggestButton
-								icon={genUserIcon}
-								label={t(
-									'registration.account.displayName.useUsername'
-								)}
-								onClick={() => {
-									setDisplayName('');
-									setGeneratedDisplayName(
-										identity.displayName
-									);
-								}}
-							/>
-						)}
-					</Box>
-				</Box>
-			)}
-
 			{emailVisible && (
 				<OrisoTextField
 					value={email}

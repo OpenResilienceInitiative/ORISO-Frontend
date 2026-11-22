@@ -1,6 +1,6 @@
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { GroupInfoGallery } from './entryRoom/GroupInfoGallery';
@@ -13,8 +13,10 @@ import {
 } from '../../globalState/provider/LegalLinksProvider';
 import {
 	desktop1440Globals,
-	phone375Globals
+	phone375Globals,
+	tablet820Globals
 } from '../message/messageStoryShell';
+import { revealHoverArrow } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 
 /**
  * The explainer behind "Mehr erfahren" in the self-help waiting room
@@ -139,6 +141,157 @@ export const InfoGalleryMobile: StoryObj = {
 	}
 };
 
+export const InfoGalleryTabletSelection: StoryObj = {
+	name: 'Tablet — visible card and current step agree',
+	globals: tablet820Globals,
+	render: () => (
+		<Box
+			sx={{
+				/* A narrow panel: one and a half cards across (2026-11-20),
+				   the third card out of view, so the dots have something to
+				   scroll. */
+				width: 'min(500px, 100%)',
+				height: '100vh',
+				mx: 'auto',
+				display: 'flex',
+				flexDirection: 'column'
+			}}
+		>
+			<GroupInfoGallery onBack={() => undefined} />
+		</Box>
+	),
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		const track = canvas.getByRole('list');
+		const step = (position: number) =>
+			canvas.getByRole('button', {
+				name: `Zu Schritt ${position} von 3`
+			});
+		const end = () => track.scrollWidth - track.clientWidth;
+		/* In the track's scroll coordinates, from bounding boxes: the track
+		   and its cards are not positioned, so `offsetLeft` would count from
+		   another origin (#2139). */
+		const cardCentre = (card: HTMLElement) => {
+			const box = card.getBoundingClientRect();
+			return (
+				box.left -
+				track.getBoundingClientRect().left +
+				track.scrollLeft +
+				box.width / 2
+			);
+		};
+		const [firstCard, secondCard, thirdCard] =
+			canvas.getAllByRole('listitem');
+		const width = track.clientWidth;
+		const secondCentre = cardCentre(secondCard);
+		// One and a half across: card 2's centre sits at the right edge.
+		await expect(width).toBeGreaterThanOrEqual(secondCentre - 2);
+		await expect(width).toBeLessThan(cardCentre(thirdCard));
+
+		await expect(step(1)).toHaveAttribute('aria-current', 'true');
+		await userEvent.click(step(2));
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// A click on a card while the dot's smooth scroll may still be under
+		// way is a click, not a drag: it must not re-pick the card from a
+		// half-way position (ORISO-Admin#1506).
+		await userEvent.click(canvas.getAllByRole('img')[0]);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		// The dot centres the middle card once its scroll has settled.
+		await waitFor(() =>
+			expect(track.scrollLeft).toBeCloseTo(
+				Math.min(end(), Math.max(0, secondCentre - width / 2)),
+				0
+			)
+		);
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+		await userEvent.click(step(2));
+		await userEvent.tab();
+		await expect(step(3)).toHaveFocus();
+		let activationSettled = !('onscrollend' in track);
+		track.addEventListener(
+			'scrollend',
+			() => {
+				activationSettled = true;
+			},
+			{ once: true }
+		);
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => {
+			expect(track.scrollLeft).toBeCloseTo(end(), 0);
+			expect(activationSettled).toBe(true);
+		});
+		await expect(step(3)).toHaveAttribute('aria-current', 'true');
+		await expect(step(3)).toHaveFocus();
+
+		const settledPosition = track.scrollLeft;
+		const keepingThirdVisible = Math.floor(
+			(width + cardCentre(thirdCard) - settledPosition) / 2
+		);
+		try {
+			// A width change can move the native snap position while keeping
+			// the chosen card visible. That move belongs to the resize.
+			track.style.width = `${keepingThirdVisible}px`;
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(keepingThirdVisible);
+				expect(track.scrollLeft).not.toBe(settledPosition);
+			});
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(cardCentre(thirdCard) - track.scrollLeft).toBeLessThan(
+				track.clientWidth
+			);
+			await expect(step(3)).toHaveAttribute('aria-current', 'true');
+
+			// A later real scroll can arrive without a wheel, touch or key
+			// event on this track, for example when using a scrollbar.
+			track.scrollTo({ left: 0, behavior: 'instant' });
+			await waitFor(() => {
+				expect(track.scrollLeft).toBe(0);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
+		}
+		await waitFor(() => expect(track.clientWidth).toBe(width));
+
+		await userEvent.click(step(2));
+		await expect(step(2)).toHaveAttribute('aria-current', 'true');
+		const keepingSecondVisible = Math.floor((width + secondCentre) / 2);
+		const clippingSecond = Math.floor(
+			(cardCentre(firstCard) + secondCentre) / 2
+		);
+		try {
+			// First shrink the track while it still contains card 2's centre.
+			track.style.width = `${keepingSecondVisible}px`;
+			await waitFor(() =>
+				expect(track.clientWidth).toBe(keepingSecondVisible)
+			);
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve())
+				)
+			);
+			await expect(step(2)).toHaveAttribute('aria-current', 'true');
+
+			// Narrow it past the selected card so the visible card owns the dot.
+			track.style.width = `${clippingSecond}px`;
+			await waitFor(() => {
+				expect(track.clientWidth).toBe(clippingSecond);
+				expect(step(1)).toHaveAttribute('aria-current', 'true');
+			});
+		} finally {
+			track.style.removeProperty('width');
+		}
+	}
+};
+
 /* A common laptop is shorter than 1440 × 900: the cards keep their height,
    and since #1689 nothing stands under them any more — the dates have their
    own view behind the bar's "Alle Termine". */
@@ -173,5 +326,25 @@ export const InfoGalleryLaptop: StoryObj = {
 				story: 'Nur die drei Karten (Frank, 19.10.: die Termine liefen in die Karten). Die Termine stehen jetzt hinter „Alle Termine“ in der Leiste; „Zurück zum Countdown“ ist ein sichtbarer Knopf.'
 			}
 		}
+	}
+};
+
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
+export const InfoGalleryDesktopHoverArrows: StoryObj = {
+	name: '1b — Info-Galerie: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone375Globals,
+	render: () => <Screen />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
 	}
 };

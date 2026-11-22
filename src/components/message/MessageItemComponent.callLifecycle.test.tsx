@@ -21,7 +21,8 @@ vi.mock('../../services/CallManager', () => ({
 	callManager: callManagerSpies
 }));
 vi.mock('../../api/apiCallState', () => ({
-	apiCallState: vi.fn(() => new Promise(() => {}))
+	apiCallState: vi.fn(() => new Promise(() => {})),
+	apiCallStateRead: vi.fn(() => new Promise(() => {}))
 }));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: { loadAnimation: () => ({}) } }));
@@ -222,5 +223,30 @@ describe('the durable call action in an actual message row', () => {
 		expect(screen.queryByRole('button')).toBeNull();
 		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
 		expect(callManagerSpies.startCall).not.toHaveBeenCalled();
+	});
+
+	it('offers no call join in the embedded Activity Timeline preview (#1824)', () => {
+		const activeSession = mockActiveSession1on1();
+		render(
+			<MessageContextShell activeSession={activeSession}>
+				<MessageItemComponent
+					{...mockMessageItemComponentProps({
+						rid: activeSession.rid,
+						callLifecycle: {
+							callId: 'embedded-call',
+							roomRef: activeSession.rid,
+							callRoomId: '!embedded-media:oriso.invalid',
+							callType: 'video',
+							state: 'running',
+							participants: []
+						}
+					})}
+					previewMode="interactive"
+				/>
+			</MessageContextShell>
+		);
+
+		expect(screen.queryByRole('button')).toBeNull();
+		expect(callManagerSpies.joinExistingCall).not.toHaveBeenCalled();
 	});
 });

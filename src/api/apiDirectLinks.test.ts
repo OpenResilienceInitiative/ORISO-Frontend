@@ -10,6 +10,7 @@ import {
 	apiUpdateDirectLink,
 	DIRECT_LINKS_CHANGED_EVENT,
 	isInactiveDirectLinkError,
+	isPausedDirectLinkError,
 	notifyDirectLinksChanged,
 	toDirectLink
 } from './apiDirectLinks';
@@ -46,9 +47,25 @@ describe('toDirectLink', () => {
 			agencyId: 11,
 			medium: 'VIDEO',
 			temporary: true,
+			guestAccountMode: 'GUEST_CHOOSES',
 			active: false,
 			url: 'https://app.example/invite/abc'
 		});
+	});
+
+	/* UserService#1662: the mode wins over the old switch, which follows it. */
+	it('reads the guest account mode and derives the temporary mirror from it', () => {
+		const link = toDirectLink({
+			...dto,
+			temporary: true,
+			guestAccountMode: 'PERMANENT'
+		});
+		expect(link?.guestAccountMode).toBe('PERMANENT');
+		expect(link?.temporary).toBe(false);
+		expect(
+			toDirectLink({ ...dto, guestAccountMode: 'TEMPORARY' })
+				?.guestAccountMode
+		).toBe('TEMPORARY');
 	});
 
 	it('makes a relative entry URL absolute on the current host', () => {
@@ -58,6 +75,16 @@ describe('toDirectLink', () => {
 
 	it('names an unnamed link after its topic', () => {
 		expect(toDirectLink({ ...dto, name: undefined }).name).toBe('Schulden');
+	});
+
+	it('carries the date and time the counsellor noted (#2142)', () => {
+		expect(
+			toDirectLink({ ...dto, scheduledAt: '2026-11-20T13:30:00Z' })
+				.scheduledAt
+		).toBe('2026-11-20T13:30:00Z');
+		expect(toDirectLink({ ...dto, scheduledAt: null })).not.toHaveProperty(
+			'scheduledAt'
+		);
 	});
 
 	it('drops entries with an unknown medium', () => {
@@ -89,6 +116,71 @@ describe('apiGetOwnDirectLinks', () => {
 	it('passes other failures on', async () => {
 		vi.mocked(fetchData).mockRejectedValue(new Error('boom'));
 		await expect(apiGetOwnDirectLinks()).rejects.toThrow('boom');
+	});
+
+	/* #2252 review: the overview, the request pop-ups and the open
+	   conversation all reload on one DIRECT_LINKS_CHANGED event. */
+	it('shares one request between callers while it is running', async () => {
+		vi.mocked(fetchData).mockClear();
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(fetchData).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			})
+		);
+
+		const all = Promise.all([
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks(),
+			apiGetOwnDirectLinks()
+		]);
+		answer([dto]);
+		const results = await all;
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(results.map((links) => links.map((link) => link.id))).toEqual([
+			['7'],
+			['7'],
+			['7']
+		]);
+		/* Each caller gets its own array to keep. */
+		expect(results[0]).not.toBe(results[1]);
+	});
+
+	it('asks again once the earlier request has finished', async () => {
+		vi.mocked(fetchData).mockClear();
+		vi.mocked(fetchData).mockResolvedValue([dto]);
+		await apiGetOwnDirectLinks();
+		await apiGetOwnDirectLinks();
+		expect(fetchData).toHaveBeenCalledTimes(2);
+	});
+
+	/* #2252 review: a read started before a renewal answers with the old
+	   links; a reload after the change must not join it. */
+	it('asks again after a change while an older request is still running', async () => {
+		vi.mocked(fetchData).mockClear();
+		const answers: ((value: unknown) => void)[] = [];
+		vi.mocked(fetchData).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					answers.push(resolve);
+				})
+		);
+
+		const before = apiGetOwnDirectLinks();
+		notifyDirectLinksChanged();
+		const after = apiGetOwnDirectLinks();
+		/* The older read answers first; it must not free the newer one's
+		   slot, so a third caller still shares the newer read. */
+		answers[0]([{ ...dto, name: 'Alt' }]);
+		await before;
+		const third = apiGetOwnDirectLinks();
+		answers[1]([{ ...dto, name: 'Neu' }]);
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+		expect((await before)[0].name).toBe('Alt');
+		expect((await after)[0].name).toBe('Neu');
+		expect((await third)[0].name).toBe('Neu');
 	});
 });
 
@@ -191,6 +283,36 @@ describe('the person’s side', () => {
 			isInactiveDirectLinkError(new Response('', { status: 404 }))
 		).toBe(false);
 		expect(isInactiveDirectLinkError(new Error('CATCH_ALL'))).toBe(false);
+	});
+
+	it('recognises a paused link by the reason of its 410', async () => {
+		const refused = (body: string, status = 410) =>
+			new Response(body, { status });
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}')
+			)
+		).resolves.toBe(true);
+		await expect(
+			isPausedDirectLinkError(refused('{"reason":"INVITE_LINK_PAUSED"}'))
+		).resolves.toBe(false);
+		await expect(isPausedDirectLinkError(refused(''))).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(
+				refused('{"reason":"DIRECT_LINK_INACTIVE"}', 404)
+			)
+		).resolves.toBe(false);
+		await expect(
+			isPausedDirectLinkError(new Error('CATCH_ALL'))
+		).resolves.toBe(false);
+	});
+
+	it('reads the reason without using the response up', async () => {
+		const response = new Response('{"reason":"DIRECT_LINK_INACTIVE"}', {
+			status: 410
+		});
+		await isPausedDirectLinkError(response);
+		expect(response.bodyUsed).toBe(false);
 	});
 });
 

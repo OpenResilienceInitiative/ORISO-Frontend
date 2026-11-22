@@ -410,6 +410,9 @@ export const StopWaiting: Story = {
 			)
 		);
 		await expect(body.getByTestId('knock-wait-join')).toBeEnabled();
+		// "Nicht mehr warten" is gone; its focus moved on, not to the page,
+		// so Escape below reaches the dialog at once (#2038 CI).
+		await expect(body.getByTestId('knock-wait-join')).toHaveFocus();
 		await expect(joinCalls()).toHaveLength(0);
 		await expect(knockRequests()).toContainEqual(
 			expect.stringMatching(/^DELETE .*\/call-knocks\/mine\/\d+$/)

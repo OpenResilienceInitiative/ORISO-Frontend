@@ -26,6 +26,7 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
@@ -77,6 +78,7 @@ const mocks = vi.hoisted(() => {
 		suspendedRender: null as Promise<unknown> | null,
 		suspendedRenders: 0,
 		clientChangeListeners: [] as ((client: unknown) => void)[],
+		matrixServicePublished: true,
 		matrixClientService: {
 			getClient: () => null,
 			onClientChange: (listener: (client: unknown) => void) => {
@@ -88,7 +90,8 @@ const mocks = vi.hoisted(() => {
 				};
 			}
 		} as any,
-		requestHistoryKeys: vi.fn(() => Promise.resolve(true))
+		requestHistoryKeys: vi.fn(() => Promise.resolve(true)),
+		recoveryStatus: 'ok' as string
 	};
 });
 
@@ -145,6 +148,7 @@ vi.mock('../../services/chatTransportService', () => ({
 				_roomId: string,
 				listener: (event: any, room: any, toStart: boolean) => void
 			) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.timelineListeners.push(listener);
 				return () => {
 					const index = mocks.timelineListeners.indexOf(listener);
@@ -153,6 +157,7 @@ vi.mock('../../services/chatTransportService', () => ({
 			}
 		),
 		onMatrixRedaction: vi.fn((_roomId: string, listener: () => void) => {
+			if (!mocks.matrixServicePublished) return null;
 			mocks.redactionListeners.push(listener);
 			return () => {
 				const index = mocks.redactionListeners.indexOf(listener);
@@ -168,6 +173,7 @@ vi.mock('../../services/chatTransportService', () => ({
 		}),
 		onMatrixRoomLifecycle: vi.fn(
 			(_roomId: string, listener: (change: any) => void) => {
+				if (!mocks.matrixServicePublished) return null;
 				mocks.lifecycleListeners.push(listener);
 				return mocks.detachLifecycle;
 			}
@@ -185,7 +191,8 @@ vi.mock(
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
-				requestKeys: mocks.requestHistoryKeys
+				requestKeys: mocks.requestHistoryKeys,
+				getPendingApprovals: () => []
 			}
 		};
 	}
@@ -223,17 +230,24 @@ vi.mock(
 			typeof import('../../globalState/context/MatrixClientContext')
 		>()),
 		useMatrixClient: () => ({
-			matrixClientService: mocks.matrixClientService
+			matrixClientService: mocks.matrixServicePublished
+				? mocks.matrixClientService
+				: null
 		})
 	})
 );
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
-		if (
-			props.mainTimelineSupplement?.props?.sessionId ===
-			mocks.suspendedSessionId
-		) {
+		const supplement = props.mainTimelineSupplement;
+		const supplementChildren = React.Children.toArray(
+			supplement?.props?.children
+		) as any[];
+		const supplementSessionId =
+			supplement?.props?.sessionId ??
+			supplementChildren.find((child) => child?.props?.sessionId)?.props
+				?.sessionId;
+		if (supplementSessionId === mocks.suspendedSessionId) {
 			mocks.suspendedRenders++;
 			throw mocks.suspendedRender;
 		}
@@ -244,6 +258,21 @@ vi.mock('./SessionItemComponent', () => ({
 	}
 }));
 
+vi.mock('../../services/recoveryReminderState', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../services/recoveryReminderState')
+	>()),
+	useRecoveryRuntimeStatus: () => mocks.recoveryStatus
+}));
+vi.mock('../historyRequest/HistoryAskCard', () => ({
+	HistoryAskCard: (props: { roomId: string; unreadable?: boolean }) => (
+		<div
+			data-testid="history-ask-card"
+			data-room={props.roomId}
+			data-unreadable={String(props.unreadable)}
+		/>
+	)
+}));
 vi.mock('./CaseHandoverGate', () => ({
 	CaseHandoverGate: () => <div data-testid="case-handover-gate" />
 }));
@@ -434,6 +463,87 @@ const emitLifecycle = (change: any) => {
 	});
 };
 
+describe('SessionStream history request card', () => {
+	beforeEach(() => {
+		mocks.recoveryStatus = 'needs-recovery-key';
+	});
+	afterEach(cleanup);
+
+	it('shows the ask card to an advice seeker in a one-to-one chat', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen.getByTestId('history-ask-card').getAttribute('data-room')
+		).toBe(ROOM_ID);
+	});
+
+	it('shows history recovery alongside consent identified from event params', async () => {
+		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+			new Error('NO_MATCH')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(screen.getByTestId('history-ask-card')).toBeTruthy();
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
+	});
+
+	it('marks the card readable when every loaded event can be read', () => {
+		renderSessionStream({ isGroup: false });
+		expect(
+			screen
+				.getByTestId('history-ask-card')
+				.getAttribute('data-unreadable')
+		).toBe('false');
+	});
+
+	it('marks the card unreadable when a loaded event could not be decrypted', async () => {
+		mocks.getMatrixRoomMessages.mockImplementation((roomId: string) =>
+			roomId === ROOM_ID ? [{ isDecryptionFailure: () => true }] : []
+		);
+		try {
+			renderSessionStream({ isGroup: false });
+			await waitFor(() =>
+				expect(
+					screen
+						.getByTestId('history-ask-card')
+						.getAttribute('data-unreadable')
+				).toBe('true')
+			);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+		}
+	});
+
+	it('hides it in a group chat, where the reason would reach every member', () => {
+		renderSessionStream({ isGroup: true });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it from a counsellor, who cannot approve their own request', () => {
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData as any
+		});
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+
+	it('hides it while the recovery key is not missing', () => {
+		mocks.recoveryStatus = 'ok';
+		renderSessionStream({ isGroup: false });
+		expect(screen.queryByTestId('history-ask-card')).toBeNull();
+	});
+});
+
 describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
@@ -470,6 +580,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		mocks.receiptListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
 		mocks.sessionItemProps = null;
+		mocks.recoveryStatus = 'ok';
 		mocks.suspendedSessionId = null;
 		mocks.suspendedRender = null;
 		mocks.suspendedRenders = 0;
@@ -529,6 +640,23 @@ describe('SessionStream Matrix room lifecycle', () => {
 			})
 		).toBeTruthy();
 		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+	});
+
+	it('shows the consent card for an event that names its request and session in params (#1888)', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1482',
+					eventType: 'case.handover.consent.requested',
+					params: { sourceSessionId: 1, caseHandoverRequestId: 11 },
+					actionPath: '/sessions/user/view/session/1'
+				}
+			]
+		});
+		expect(
+			await screen.findByTestId('case-handover-inline-consent')
+		).toBeTruthy();
 	});
 
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
@@ -1397,6 +1525,61 @@ describe('SessionStream Matrix room lifecycle', () => {
 		});
 	});
 
+	it('hydrates a mounted live chat when the first Matrix service arrives after the listener timeout', async () => {
+		const options = {
+			isGroup: false,
+			notificationFeed: [],
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 1,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2,
+					conversationType: 'LIVE_CHAT'
+				}
+			}
+		};
+		const existingMessage = {
+			getType: () => 'm.room.message',
+			getSender: () => '@counsellor:example.org',
+			getId: () => '$during-throttle',
+			getTs: () => 1000,
+			getContent: () => ({ msgtype: 'm.text', body: 'First reply' }),
+			isRedacted: () => false
+		};
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		mocks.matrixServicePublished = false;
+		try {
+			const view = renderSessionStream(options);
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(11_000);
+			});
+			expect(mocks.timelineListeners).toHaveLength(0);
+			expect(mocks.lifecycleListeners).toHaveLength(0);
+
+			// Initialization already happened before the provider exposed the
+			// service, so no later client-change notification will wake us.
+			mocks.getMatrixRoomMessages.mockImplementation(() => [
+				existingMessage
+			]);
+			mocks.matrixServicePublished = true;
+			view.rerender(sessionStreamElement(options));
+
+			expect(mocks.timelineListeners).toHaveLength(1);
+			expect(mocks.lifecycleListeners).toHaveLength(1);
+			expect(mocks.sessionItemProps?.messages).toEqual([
+				expect.objectContaining({ message: 'First reply' })
+			]);
+		} finally {
+			mocks.getMatrixRoomMessages.mockImplementation(() => []);
+			mocks.matrixServicePublished = true;
+			vi.useRealTimers();
+		}
+	});
+
 	it('re-attaches room listeners after a token refresh swaps the Matrix client', async () => {
 		renderSessionStream({ isGroup: true });
 
@@ -1473,6 +1656,139 @@ describe('SessionStream Matrix room lifecycle', () => {
 
 		unmount();
 		expect(mocks.detachLifecycle).toHaveBeenCalled();
+	});
+
+	describe('coalesced live timeline refresh', () => {
+		const emitTimelineEvent = (type: string) => {
+			const room = {
+				roomId: ROOM_ID,
+				myUserId: '@me:matrix.example.org'
+			};
+			const event = {
+				getType: () => type,
+				getSender: () => room.myUserId
+			};
+			act(() =>
+				mocks.timelineListeners.forEach((listener) =>
+					listener(event, room, false)
+				)
+			);
+		};
+		const advance = (ms: number) =>
+			act(async () => {
+				await vi.advanceTimersByTimeAsync(ms);
+			});
+
+		beforeEach(() => {
+			vi.useFakeTimers({
+				toFake: ['Date', 'setTimeout', 'clearTimeout']
+			});
+		});
+
+		afterEach(() => {
+			cleanup();
+			vi.useRealTimers();
+		});
+
+		it('refreshes once more when a second metadata event arrives in the window', async () => {
+			renderSessionStream({ isGroup: true });
+			await advance(120);
+			expect(mocks.timelineListeners).toHaveLength(1);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+
+			emitTimelineEvent('m.reaction');
+			await advance(20);
+			emitTimelineEvent('m.reaction');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+			await advance(99);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+
+			await advance(1);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+			await advance(120);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+		});
+
+		it('cancels a pending refresh when navigation replaces the room', async () => {
+			const view = renderSessionStream({ isGroup: true });
+			await advance(120);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+			emitTimelineEvent('m.reaction');
+			emitTimelineEvent('m.reaction');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+
+			const nextRoom = '!other:matrix.example.org';
+			const nextSession = {
+				rid: nextRoom,
+				isGroup: true,
+				isSession: false,
+				item: { id: 2, matrixRoomId: nextRoom, active: true, status: 2 }
+			};
+			mocks.resolveSession.mockReturnValue({
+				isMatrixSession: true,
+				matrixRoomId: nextRoom,
+				sessionId: 2
+			});
+			try {
+				view.rerender(
+					sessionStreamElement({
+						isGroup: true,
+						activeSession: nextSession
+					})
+				);
+				await advance(0);
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledWith(
+					nextRoom,
+					Infinity
+				);
+				const readsAfterNavigation =
+					mocks.getMatrixRoomMessages.mock.calls.length;
+				await advance(120);
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+					readsAfterNavigation
+				);
+			} finally {
+				mocks.resolveSession.mockReturnValue({
+					isMatrixSession: true,
+					matrixRoomId: ROOM_ID,
+					sessionId: 1
+				});
+			}
+		});
+
+		it('refreshes clear messages and redactions immediately during the window', async () => {
+			renderSessionStream({ isGroup: true });
+			await advance(120);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+			emitTimelineEvent('m.reaction');
+			emitTimelineEvent('m.reaction');
+
+			emitTimelineEvent('m.room.message');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+			act(() =>
+				mocks.redactionListeners.forEach((listener) => listener())
+			);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 3
+			);
+
+			await advance(120);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 3
+			);
+		});
 	});
 
 	it('refreshes a clear message when delayed decryption lands inside the coalescing window', async () => {
@@ -1579,6 +1895,222 @@ describe('SessionStream Matrix room lifecycle', () => {
 				mocks.getMatrixRoomMessages.mock.calls.length
 			).toBeGreaterThan(callsBefore)
 		);
+	});
+
+	describe('read receipt for messages that arrive while the conversation is open (FE#1802)', () => {
+		const me = '@me:example.org';
+		const room = { roomId: ROOM_ID, myUserId: me };
+		const messageFrom = (sender: string) => ({
+			getType: () => 'm.room.message',
+			getSender: () => sender,
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		});
+		const setVisibility = (state: 'visible' | 'hidden') => {
+			Object.defineProperty(document, 'visibilityState', {
+				configurable: true,
+				get: () => state
+			});
+		};
+		const emitLive = (event: any, toStart = false) =>
+			act(() =>
+				mocks.timelineListeners.forEach((listener) =>
+					listener(event, room, toStart)
+				)
+			);
+		const openConversation = async () => {
+			renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+		};
+
+		afterEach(() => {
+			delete (document as any).visibilityState;
+			mocks.resolveSession.mockImplementation(() => ({
+				isMatrixSession: true,
+				matrixRoomId: ROOM_ID,
+				sessionId: 1
+			}));
+		});
+
+		it('marks the room read when the other side writes', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom('@peer:example.org'));
+
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('marks read only once a peer message is decrypted, never for one that failed', async () => {
+			setVisibility('visible');
+			await openConversation();
+			const peer = '@peer:example.org';
+
+			emitLive({
+				getType: () => 'm.room.encrypted',
+				getSender: () => peer
+			});
+			emitLive({
+				getType: () => 'm.room.message',
+				getSender: () => peer,
+				isEncrypted: () => true,
+				isDecryptionFailure: () => true
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			emitLive(messageFrom(peer));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('does not mark read for its own message or older history', async () => {
+			setVisibility('visible');
+			await openConversation();
+
+			emitLive(messageFrom(me));
+			emitLive(messageFrom('@peer:example.org'), true);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('waits while a phone side panel hides the conversation, then marks read on return', async () => {
+			setVisibility('visible');
+			await openConversation();
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(true));
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			act(() => mocks.sessionItemProps.onMainChatHiddenChange(false));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('drops a deferred read when the conversation changes before the tab is visible again', async () => {
+			setVisibility('visible');
+			const view = renderSessionStream({ isGroup: true });
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+			mocks.resolveSession.mockImplementation((session: any) => ({
+				isMatrixSession: true,
+				matrixRoomId: session?.item?.matrixRoomId ?? ROOM_ID,
+				sessionId: session?.item?.id ?? 1
+			}));
+			view.rerender(
+				sessionStreamElement({
+					isGroup: true,
+					activeSession: {
+						rid: '!other:example.org',
+						isGroup: true,
+						isSession: true,
+						item: {
+							id: 2,
+							matrixRoomId: '!other:example.org',
+							active: true,
+							status: 2,
+							conversationType: 'AGENCY_COUNSELLING'
+						}
+					} as any
+				})
+			);
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+		});
+
+		it('keeps a deferred read when the same conversation re-attaches for its supervision room', async () => {
+			const supervisors = deferred<any[]>();
+			mocks.getSessionSupervisors.mockReturnValueOnce(
+				supervisors.promise
+			);
+			setVisibility('visible');
+			renderSessionStream({
+				isGroup: false,
+				userData: consultantUserData,
+				activeSession: {
+					rid: ROOM_ID,
+					isGroup: false,
+					isSession: true,
+					item: {
+						id: 1,
+						matrixRoomId: ROOM_ID,
+						active: true,
+						status: 2
+					}
+				} as any
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(1));
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalled()
+			);
+			await passCoalescingWindow();
+			mocks.readActiveSession.mockClear();
+
+			setVisibility('hidden');
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			await act(async () => {
+				supervisors.resolve([
+					{
+						id: 7,
+						supervisorConsultantId: 'someone-else',
+						matrixRoomId: '!supervision:example.org'
+					}
+				]);
+			});
+			await waitFor(() => expect(mocks.timelineListeners.length).toBe(2));
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
+
+		it('waits until the tab is visible again before marking read', async () => {
+			setVisibility('visible');
+			await openConversation();
+			setVisibility('hidden');
+
+			emitLive(messageFrom('@peer:example.org'));
+			await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+			expect(mocks.readActiveSession).not.toHaveBeenCalled();
+
+			setVisibility('visible');
+			act(() => {
+				document.dispatchEvent(new Event('visibilitychange'));
+			});
+			await waitFor(() =>
+				expect(mocks.readActiveSession).toHaveBeenCalledTimes(1)
+			);
+		});
 	});
 
 	it('counts only the asker receipt for a counsellor message in a 1:1 (FE#1802, ADR-002)', async () => {
@@ -2430,6 +2962,63 @@ describe('SessionStream Matrix room lifecycle', () => {
 		view.unmount();
 		await act(async () => lateStatus.resolve(grantedHandoverStatus()));
 		expect(mocks.getMatrixRoomMessages).not.toHaveBeenCalled();
+	});
+
+	it('looks up the supervisors again when accepting attached a standing supervisor (#2386)', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		mocks.getSessionSupervisors.mockResolvedValueOnce([]);
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2386,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(2)
+		);
+		expect(mocks.getSessionSupervisors).toHaveBeenLastCalledWith(2386);
+	});
+
+	it('does not look up the supervisors again for another session', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2387,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1);
 	});
 });
 

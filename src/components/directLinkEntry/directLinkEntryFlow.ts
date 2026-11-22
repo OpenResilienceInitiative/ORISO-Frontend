@@ -1,9 +1,11 @@
 import {
+	apiCancelOwnCallKnock,
 	apiStartDirectLinkConversation,
 	CallKnockStatus,
 	DirectLinkConversation
 } from '../../api/apiDirectLinks';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import { apiGetConsultingType } from '../../api/apiGetConsultingType';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { redirectToApp } from '../registration/autoLogin';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
@@ -34,6 +36,41 @@ export const directLinkMediumOf = (
 	if (!context?.admission) return null;
 	const medium = context.chatType as DirectLinkMedium;
 	return DIRECT_LINK_MEDIA_TYPES.includes(medium) ? medium : null;
+};
+
+/** How long the arrival page waits for the form of counselling before it lets the server decide. */
+export const CALLS_ALLOWED_READ_MS = 5_000;
+
+/**
+ * Whether the link's form of counselling has calls (#2012), for a person who
+ * has no session yet: the server allows a call only where the consulting type
+ * says `isVideoCallAllowed === true`, so an audio or video link of any other
+ * one would end in a refusal at "Beitreten". A link without a form of
+ * counselling, a read that fails or a read that does not answer in time counts
+ * as allowed — the server decides then.
+ */
+export const directLinkCallsAllowed = async (
+	context: InviteLinkContext,
+	timeoutMs = CALLS_ALLOWED_READ_MS
+): Promise<boolean> => {
+	if (context.consultingTypeId == null) return true;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const gaveUp = new Promise<null>((resolve) => {
+		timer = setTimeout(() => resolve(null), timeoutMs);
+	});
+	try {
+		const consultingType = await Promise.race([
+			apiGetConsultingType({
+				consultingTypeId: context.consultingTypeId
+			}).catch(() => null),
+			gaveUp
+		]);
+		return consultingType
+			? consultingType.isVideoCallAllowed === true
+			: true;
+	} finally {
+		clearTimeout(timer);
+	}
 };
 
 export const PENDING_KNOCK_KEY = 'oriso.directLinkKnock';
@@ -232,6 +269,23 @@ export const rememberAdmittedConversation = (sessionId: number) => {
 export const wasAdmittedTo = (sessionId: number | null | undefined) =>
 	sessionId != null && readAdmitted().includes(sessionId);
 
+/**
+ * P0 Direkteinladung: a person who knocked on this call and is not let in yet
+ * is waiting in the knock dialog. The call that the counsellor starts must not
+ * also ring them: "Annehmen" would open the call without admission and end in
+ * "Call access denied" (403).
+ */
+export const isKnockingOnCall = (
+	pending: PendingKnock | null,
+	callRoomIds: Array<string | null | undefined>
+): boolean =>
+	Boolean(
+		pending &&
+			pending.status !== 'ADMITTED' &&
+			pending.matrixRoomId &&
+			callRoomIds.includes(pending.matrixRoomId)
+	);
+
 /** The call notice in the feed knows only the room: it must not skip the knock. */
 export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 	Boolean(roomId) &&
@@ -239,23 +293,43 @@ export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 		(link) => link?.matrixRoomId === roomId && link.medium !== 'CHAT'
 	);
 
+/** How long entering the chat waits for withdrawing a call knock. */
+export const CANCEL_KNOCK_WAIT_MS = 3000;
+
 export interface OpenDirectLinkDeps {
 	start?: typeof apiStartDirectLinkConversation;
 	redirect?: (sessionId: number) => void;
+	cancelKnock?: typeof apiCancelOwnCallKnock;
+	/**
+	 * #2252: the person chose "Zum Chat" before the call opened. The knock
+	 * gates only the call; the chat works at once, so no call knock goes along.
+	 */
+	chatFirst?: boolean;
+	/**
+	 * #2252: a person in a shared conversation agrees for themselves. Asked
+	 * when the server says this person has not agreed yet; resolves once the
+	 * agreement is recorded. Until then the person does not enter.
+	 */
+	consent?: (conversation: DirectLinkConversation) => Promise<void>;
 }
 
 /**
  * The signed-in person opens (or reopens) their conversation through the
- * link and enters the app on it. For a call the knock goes along.
+ * link and enters the app on it. For a call the knock goes along, unless
+ * the person chose the chat first.
  */
 export const openDirectLinkConversation = async (
 	token: string,
 	{
 		start = apiStartDirectLinkConversation,
-		redirect = (sessionId) => redirectToApp(undefined, { sessionId })
+		redirect = (sessionId) => redirectToApp(undefined, { sessionId }),
+		cancelKnock = apiCancelOwnCallKnock,
+		chatFirst = false,
+		consent
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
+	if (conversation.consentRequired && consent) await consent(conversation);
 	rememberDirectLinkSession(conversation.sessionId, {
 		token,
 		medium: conversation.medium,
@@ -265,8 +339,24 @@ export const openDirectLinkConversation = async (
 		rememberAdmittedConversation(conversation.sessionId);
 	}
 	const knock = pendingKnockFrom(token, conversation);
-	if (knock) rememberPendingKnock(knock);
+	if (knock && !chatFirst) rememberPendingKnock(knock);
 	else forgetPendingKnock();
+	/* The server knocks as soon as the call window is open, also when the
+	   person came for the chat: withdraw that knock so the counsellor is not
+	   asked to let in someone who is not waiting. An admission stays (the
+	   server cancels only a pending knock); the call in the chat knocks anew. */
+	if (knock && chatFirst && knock.status === 'PENDING') {
+		/* Best effort, and bounded: a hanging request must not hold the
+		   person outside the chat. The server ends an abandoned knock itself. */
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		await Promise.race([
+			cancelKnock(knock.knockId).catch(() => undefined),
+			new Promise<void>((resolve) => {
+				timer = setTimeout(resolve, CANCEL_KNOCK_WAIT_MS);
+			})
+		]);
+		clearTimeout(timer);
+	}
 	redirect(conversation.sessionId);
 	return conversation;
 };

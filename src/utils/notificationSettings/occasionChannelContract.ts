@@ -17,8 +17,7 @@ import {
 } from '../../components/notificationsCenter/eventDescriptors/registry';
 import type { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
 import {
-	areaForFamily,
-	kindForEvent,
+	areaKindForEvent,
 	type NotificationArea,
 	type NotificationKind
 } from './notificationConfig';
@@ -96,7 +95,10 @@ const BROWSER_ASSOCIATIONS: Record<
 	'smtp-test': { kind: 'unmapped' },
 	'anruf-erinnerung': { kind: 'unmapped' },
 	'anruf-einladung': { kind: 'unmapped' },
-	'anruf-verpasst': { kind: 'unmapped' }
+	'anruf-verpasst': { kind: 'unmapped' },
+	// FE#1050: the approver sees the proposal in the calendar and the
+	// "Meine Termine" count; no browser event exists for it.
+	'calendar-move-proposal': { kind: 'unmapped' }
 };
 
 /**
@@ -191,14 +193,14 @@ export const resolveEventChannelContract = (
 	const descriptor = getEventDescriptor(eventType);
 	const family = options.family ?? descriptor.family ?? 'system';
 	const role = recipientRole === 'user' ? 'asker' : recipientRole;
-	const kind = kindForEvent(
+	const { area, kind } = areaKindForEvent(
 		family,
 		eventType || '',
 		options.mentioned === true
 	);
 	const browser = {
 		family,
-		area: areaForFamily(family),
+		area,
 		// FE#1470: a counsellor's live-chat messages have their own row.
 		kind:
 			kind === 'standard' &&

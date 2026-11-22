@@ -1,18 +1,32 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
 	apiDeleteUserDraft,
-	apiGetUserDrafts,
-	IUserDraftItem
-} from '../../api';
+	type IUserDraftItem
+} from '../../api/apiUserDrafts';
+import { useRemoteDrafts } from '../../hooks/useRemoteDrafts';
 import {
-	hasDraftContent,
-	REMOTE_DRAFT_INDEX_SCOPE
-} from '../../services/draftStore';
+	getDraftNavigationScope,
+	toDraftResumePath
+} from '../../services/draftNavigation';
+import {
+	getDraftAuthSessionIdentity,
+	getDraftCryptographyForWindow,
+	registerDraftCryptographyFrame,
+	subscribeDraftCryptographyForWindow
+} from '../../services/draftCryptographyWindow';
 import { useResponsive } from '../../hooks/useResponsive';
 import './draftsCenter.styles';
+import { isComposerFullscreenMessage } from '../../utils/embeddedComposerFullscreen';
 
 const formatRelativeTime = (timestamp?: string | null) => {
 	if (!timestamp) {
@@ -49,38 +63,6 @@ const getDraftPreviewText = (rawText?: string | null) => {
 		.trim();
 };
 
-const withEmbeddedNotificationsParam = (
-	path: string,
-	draftScopeKey?: string | null
-) => {
-	if (!path) {
-		return null;
-	}
-	const [basePath, queryString = ''] = path.split('?');
-	const query = new URLSearchParams(queryString);
-	query.set('embeddedNotifications', '1');
-	if (draftScopeKey) {
-		// Force iframe navigation when users switch between drafts in the same chat context.
-		query.set('draftScopeKey', draftScopeKey);
-	} else {
-		query.delete('draftScopeKey');
-	}
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
-
-const withDraftScopeParam = (path: string, draftScopeKey?: string | null) => {
-	if (!path || !draftScopeKey) {
-		return path;
-	}
-	const [basePath, queryString = ''] = path.split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	query.set('draftScopeKey', draftScopeKey);
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
-
 export const DraftsCenter = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -88,40 +70,42 @@ export const DraftsCenter = () => {
 	const [selectedDraftKey, setSelectedDraftKey] = useState<string | null>(
 		null
 	);
-	const [refreshToken, setRefreshToken] = useState(0);
-	const [drafts, setDrafts] = useState<IUserDraftItem[]>([]);
-
-	useEffect(() => {
-		const intervalId = window.setInterval(() => {
-			setRefreshToken((token) => token + 1);
-		}, 60000);
-		return () => {
-			window.clearInterval(intervalId);
-		};
+	const embeddedFrameRef = useRef<HTMLIFrameElement | null>(null);
+	const unregisterFrame = useRef<(() => void) | null>(null);
+	const setEmbeddedFrame = useCallback((frame: HTMLIFrameElement | null) => {
+		unregisterFrame.current?.();
+		embeddedFrameRef.current = frame;
+		unregisterFrame.current = frame
+			? registerDraftCryptographyFrame(frame)
+			: null;
 	}, []);
+	const [embeddedFullscreen, setEmbeddedFullscreen] = useState(false);
 
 	useEffect(() => {
-		let isMounted = true;
-		const loadRemoteDrafts = async () => {
-			const response = await apiGetUserDrafts(0, 200).catch(() => null);
-			if (!isMounted) {
+		const onMessage = (event: MessageEvent) => {
+			if (
+				event.origin !== window.location.origin ||
+				event.source !== embeddedFrameRef.current?.contentWindow ||
+				!isComposerFullscreenMessage(event.data)
+			) {
 				return;
 			}
-			const visibleDrafts =
-				response?.items?.filter(
-					(entry) =>
-						entry.scopeKey !== REMOTE_DRAFT_INDEX_SCOPE &&
-						// #976: zero-content rows from older builds are not drafts.
-						hasDraftContent(entry.text)
-				) || [];
-			setDrafts(visibleDrafts);
+			setEmbeddedFullscreen(event.data.expanded);
 		};
-
-		void loadRemoteDrafts();
-		return () => {
-			isMounted = false;
-		};
-	}, [refreshToken]);
+		window.addEventListener('message', onMessage);
+		return () => window.removeEventListener('message', onMessage);
+	}, []);
+	const drafts = useRemoteDrafts();
+	const draftOwner = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftAuthSessionIdentity,
+		() => null
+	);
+	const draftCryptography = useSyncExternalStore(
+		subscribeDraftCryptographyForWindow,
+		getDraftCryptographyForWindow,
+		() => null
+	);
 
 	useEffect(() => {
 		if (!selectedDraftKey && drafts.length > 0) {
@@ -141,16 +125,13 @@ export const DraftsCenter = () => {
 			drafts.find((entry) => entry.scopeKey === selectedDraftKey) || null,
 		[drafts, selectedDraftKey]
 	);
-	const embeddedChatPath = useMemo(
-		() =>
-			selectedDraft?.actionPath
-				? withEmbeddedNotificationsParam(
-						selectedDraft.actionPath,
-						selectedDraft.scopeKey
-					)
-				: null,
-		[selectedDraft?.actionPath, selectedDraft?.scopeKey]
-	);
+	const embeddedChatPath = selectedDraft
+		? toDraftResumePath(selectedDraft, true)
+		: null;
+	// A replaced frame starts collapsed and never posts `false`.
+	useEffect(() => {
+		setEmbeddedFullscreen(false);
+	}, [embeddedChatPath]);
 	const getNextDraftKey = useCallback(
 		(currentKey: string | null): string | null => {
 			if (!drafts.length) {
@@ -170,10 +151,8 @@ export const DraftsCenter = () => {
 
 	const handleOpenDraft = useCallback(
 		(entry: IUserDraftItem) => {
-			if (!entry.actionPath) {
-				return;
-			}
-			navigate(withDraftScopeParam(entry.actionPath, entry.scopeKey));
+			const path = toDraftResumePath(entry);
+			if (path) navigate(path);
 		},
 		[navigate]
 	);
@@ -190,9 +169,8 @@ export const DraftsCenter = () => {
 	);
 
 	const handleDeleteDraft = useCallback((entry: IUserDraftItem) => {
-		apiDeleteUserDraft(entry.scopeKey).then(() =>
-			setRefreshToken((token) => token + 1)
-		);
+		const scope = getDraftNavigationScope(entry);
+		if (scope) void apiDeleteUserDraft(scope);
 	}, []);
 
 	const handleNextDraft = useCallback(() => {
@@ -215,7 +193,15 @@ export const DraftsCenter = () => {
 				<div className="draftsCenter__list">
 					{drafts.length === 0 ? (
 						<div className="draftsCenter__empty">
-							{translate('drafts.center.empty')}
+							{draftOwner && !draftCryptography ? (
+								<Link to="/profile/einstellungen/sicherheit">
+									{translate(
+										'profile.encryption.recover.cta'
+									)}
+								</Link>
+							) : (
+								translate('drafts.center.empty')
+							)}
 						</div>
 					) : (
 						drafts.map((entry) => (
@@ -299,9 +285,16 @@ export const DraftsCenter = () => {
 								</button>
 							</div>
 							{embeddedChatPath && (
-								<div className="draftsCenter__embeddedSession">
+								<div
+									className={`draftsCenter__embeddedSession ${
+										embeddedFullscreen
+											? 'draftsCenter__embeddedSession--fullscreen'
+											: ''
+									}`}
+								>
 									<iframe
-										key={selectedDraft.scopeKey}
+										ref={setEmbeddedFrame}
+										key={embeddedChatPath}
 										title={translate(
 											'drafts.center.embeddedTitle'
 										)}

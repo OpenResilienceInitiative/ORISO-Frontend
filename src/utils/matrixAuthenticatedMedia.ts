@@ -28,7 +28,7 @@
  *     `MatrixClient`, whose token is by definition the one the homeserver
  *     accepts, and whose `baseUrl` is where that token is valid.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getMatrixClientService } from '../services/matrixClientRegistry';
 
 /** Path of the authenticated download endpoint, for tests and assertions. */
@@ -131,16 +131,19 @@ export const createAuthenticatedMatrixMediaObjectUrl = async (
  * Object URL for a piece of unencrypted Matrix media, or `null` while it is
  * loading, when `mxcUrl` is `null` (the caller does not want it fetched yet —
  * an unrevealed guest image must not be requested at all), or when the fetch
- * failed.
+ * failed. A failure also calls `onFailure`, for a caller that must not wait on.
  *
  * The object URL is revoked on unmount and whenever the URI changes, so a long
  * chat does not accumulate blobs.
  */
 export const useAuthenticatedMatrixMediaUrl = (
 	mxcUrl?: string | null,
-	mimeType?: string
+	mimeType?: string,
+	onFailure?: () => void
 ): string | null => {
 	const [objectUrl, setObjectUrl] = useState<string | null>(null);
+	const onFailureRef = useRef(onFailure);
+	onFailureRef.current = onFailure;
 
 	useEffect(() => {
 		if (!isMxcUri(mxcUrl)) {
@@ -163,6 +166,7 @@ export const useAuthenticatedMatrixMediaUrl = (
 			.catch(() => {
 				if (!cancelled) {
 					setObjectUrl(null);
+					onFailureRef.current?.();
 				}
 			});
 

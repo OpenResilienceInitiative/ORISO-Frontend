@@ -4,7 +4,7 @@ import { Box, Button, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { Loading } from '../../app/Loading';
-import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { getGroupInviteLoginProps } from './groupInviteEntryState';
 import './groupInviteLoading.styles.scss';
 
 interface InviteStageProps {
@@ -26,8 +26,7 @@ const InviteStage = ({
 		showLegalLinks={true}
 		showLoginLink={true}
 		showRegistrationLink={false}
-		loginParams={new URLSearchParams({ gcid, aid }).toString()}
-		loginState={INVITE_LOGIN_STATE}
+		{...getGroupInviteLoginProps(gcid, aid)}
 		stage={stage}
 		mobileHero="bar"
 	>

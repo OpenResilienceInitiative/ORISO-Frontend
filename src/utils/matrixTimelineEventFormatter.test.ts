@@ -9,8 +9,10 @@ import {
 } from './callLifecycleMessage';
 import {
 	formatMatrixTimelineEvent,
-	extractReactionEvents
+	extractReactionEvents,
+	passageReplyAudioAttachment
 } from './matrixTimelineEventFormatter';
+import { voiceDurationMsFromFileName } from './voiceMessageFileName';
 
 const makeEvent = (content: Record<string, unknown>) => ({
 	getType: () => 'm.room.message',
@@ -423,5 +425,153 @@ describe('formatMatrixTimelineEvent missing-key marker (#1827)', () => {
 			'Nachricht verschlüsselt'
 		);
 		expect(formatted.undecryptableReason).toBeUndefined();
+	});
+});
+
+describe('a file with a caption (MSC2530)', () => {
+	const fileEvent = (content: Record<string, unknown>) =>
+		formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.file',
+				file: { url: 'mxc://hs/file' },
+				info: { mimetype: 'application/pdf', size: 2048 },
+				...content
+			}),
+			null,
+			'encrypted'
+		);
+
+	it('shows the body as text and keeps the name on the file', () => {
+		const message = fileEvent({
+			body: 'Bitte Seite 2 lesen',
+			filename: 'befund.pdf'
+		});
+
+		expect(message?.msg).toBe('Bitte Seite 2 lesen');
+		expect(message?.attachments?.[0]).toMatchObject({
+			title: 'befund.pdf',
+			hasCaption: true
+		});
+		expect(message?.file?.name).toBe('befund.pdf');
+	});
+
+	it('marks no caption when body and filename are the same', () => {
+		const message = fileEvent({
+			body: 'befund.pdf',
+			filename: 'befund.pdf'
+		});
+
+		expect(message?.attachments?.[0].title).toBe('befund.pdf');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+
+	it.each([
+		[{ filename: { bad: true }, body: 'safe.pdf' }, 'safe.pdf'],
+		[{ filename: 42, body: { bad: true } }, ''],
+		[{ filename: 'safe.pdf', body: 42 }, 'safe.pdf']
+	])('uses only string filenames and bodies: %j', (content, expected) => {
+		const message = fileEvent(content);
+		expect(message?.attachments?.[0].title).toBe(expected);
+		expect(message?.file?.name).toBe(expected);
+		expect(typeof message?.msg).toBe('string');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+
+	it('reads an older event without a filename as before', () => {
+		const message = fileEvent({ body: 'befund.pdf' });
+
+		expect(message?.attachments?.[0].title).toBe('befund.pdf');
+		expect(message?.attachments?.[0].hasCaption).toBeUndefined();
+	});
+});
+
+describe('answered passages (ADR-022, #2202)', () => {
+	const clip = {
+		url: 'mxc://hs/clip',
+		key: {
+			alg: 'A256CTR',
+			ext: true,
+			k: 'k',
+			key_ops: ['encrypt', 'decrypt'],
+			kty: 'oct'
+		},
+		iv: 'iv',
+		hashes: { sha256: 'h' },
+		v: 'v2'
+	};
+	const content = {
+		'msgtype': 'm.text',
+		'body': '> drei Mahnungen\nSchauen wir an.\n\nBis morgen.',
+		'org.oriso.passage_replies': [
+			{
+				event_id: '$client:hs',
+				author: 'Lena',
+				excerpt: 'drei Mahnungen',
+				text: 'Schauen wir an.'
+			},
+			{
+				event_id: '$client:hs',
+				author: 'Lena',
+				excerpt: 'Amtsgericht',
+				audio: { file: clip, mimetype: 'audio/webm', duration_ms: 4200 }
+			}
+		],
+		'org.oriso.passage_replies_text': 'Bis morgen.'
+	};
+
+	it('renders the answers from the list and only the typed text as the message', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent(content),
+			null,
+			'encrypted'
+		);
+		expect(formatted.msg).toBe('Bis morgen.');
+		expect(formatted.passageReplies).toHaveLength(2);
+		expect(formatted.passageReplies[0]).toMatchObject({
+			eventId: '$client:hs',
+			excerpt: 'drei Mahnungen',
+			text: 'Schauen wir an.'
+		});
+		expect(formatted.passageReplies[1].audio.file.url).toBe(
+			'mxc://hs/clip'
+		);
+		expect(formatted.replyToEventId).toBeUndefined();
+	});
+
+	it('renders a collected quote and separate composer text without a raw fallback', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				'msgtype': 'm.text',
+				'body': '> drei Mahnungen\n\nDie schauen wir uns an.',
+				'org.oriso.passage_replies': [
+					{
+						event_id: '$client:hs',
+						author: 'Lena',
+						excerpt: 'drei Mahnungen'
+					}
+				],
+				'org.oriso.passage_replies_text': 'Die schauen wir uns an.'
+			}),
+			null,
+			'encrypted'
+		);
+		expect(formatted.msg).toBe('Die schauen wir uns an.');
+		expect(formatted.passageReplies).toMatchObject([
+			{ eventId: '$client:hs', excerpt: 'drei Mahnungen' }
+		]);
+	});
+
+	it('turns a clip into an encrypted voice attachment with its length', () => {
+		const voice = passageReplyAudioAttachment({
+			file: clip as any,
+			mimetype: 'audio/webm',
+			durationMs: 4200
+		});
+		expect(voice.attachment).toMatchObject({
+			mxcUrl: 'mxc://hs/clip',
+			encryptedFile: clip,
+			mediaType: 'audio/webm'
+		});
+		expect(voiceDurationMsFromFileName(voice.file.name)).toBe(4000);
 	});
 });

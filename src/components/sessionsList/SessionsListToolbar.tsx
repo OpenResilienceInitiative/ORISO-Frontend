@@ -343,6 +343,8 @@ const FilterChip = ({
 	);
 };
 
+const SEARCH_PANEL_CLOSE_MS = 120;
+
 export const SessionsListToolbar = ({
 	translate,
 	searchValue,
@@ -546,6 +548,33 @@ export const SessionsListToolbar = ({
 	React.useEffect(() => {
 		onSearchOpenChange?.(showSearchDropdown);
 	}, [onSearchOpenChange, showSearchDropdown]);
+	// The panel stays mounted for its closing motion.
+	const [searchPanelMounted, setSearchPanelMounted] = React.useState(false);
+	React.useEffect(() => {
+		if (isSearchViewOpen) {
+			setSearchPanelMounted(true);
+			return undefined;
+		}
+		const timer = window.setTimeout(
+			() => setSearchPanelMounted(false),
+			SEARCH_PANEL_CLOSE_MS
+		);
+		return () => window.clearTimeout(timer);
+	}, [isSearchViewOpen]);
+	const searchPanelClosing = !isSearchViewOpen && searchPanelMounted;
+	const keepClosedOnFocusRef = React.useRef(false);
+	const closeSearchOnEscape = (event: React.KeyboardEvent) => {
+		if (event.key !== 'Escape' || !isSearchViewOpen) {
+			return;
+		}
+		event.stopPropagation();
+		setIsSearchViewOpen(false);
+		// The field is where the search started; returning there must not reopen it.
+		if (document.activeElement !== searchInputRef.current) {
+			keepClosedOnFocusRef.current = true;
+			searchInputRef.current?.focus();
+		}
+	};
 	const reopenSearchIfActive = React.useCallback(() => {
 		setIsSearchViewOpen(true);
 	}, []);
@@ -680,11 +709,17 @@ export const SessionsListToolbar = ({
 
 	return (
 		<div className="sessionsListToolbar" data-cy="sessions-list-toolbar">
-			<div className="sessionsListToolbar__search" ref={searchRootRef}>
+			{/* Escape bubbles here from the field and from the panel's controls. */}
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+			<div
+				className="sessionsListToolbar__search"
+				ref={searchRootRef}
+				onKeyDown={closeSearchOnEscape}
+			>
 				<div
 					className={clsx('sessionsListToolbar__searchInner', {
 						'sessionsListToolbar__searchInner--attached':
-							showSearchDropdown
+							showSearchDropdown || searchPanelClosing
 					})}
 				>
 					{/* Frank 2026-09-16: the display-filter button lives in the
@@ -778,7 +813,13 @@ export const SessionsListToolbar = ({
 							)}
 							value={searchValue}
 							onChange={(e) => onSearchChange(e.target.value)}
-							onFocus={() => setIsSearchViewOpen(true)}
+							onFocus={() => {
+								if (keepClosedOnFocusRef.current) {
+									keepClosedOnFocusRef.current = false;
+									return;
+								}
+								setIsSearchViewOpen(true);
+							}}
 							onClick={reopenSearchIfActive}
 							onKeyDown={(event) => {
 								if (event.key === 'Enter') {
@@ -823,8 +864,9 @@ export const SessionsListToolbar = ({
 						</div>
 					)}
 				</div>
-				{showSearchDropdown && (
+				{(showSearchDropdown || searchPanelClosing) && (
 					<SessionSearchPanel
+						closing={searchPanelClosing}
 						labels={{
 							refineHint: translate(
 								'sessionList.toolbar.search.refineHint'

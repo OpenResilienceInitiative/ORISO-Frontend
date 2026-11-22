@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+	formatOverflowCount,
 	resolveParticipantStack,
 	STACK_MAX_VISIBLE,
 	type StackParticipant
@@ -88,5 +89,32 @@ describe('resolveParticipantStack (room header avatar row, FE#1193)', () => {
 		);
 		expect(stack.visible).toHaveLength(2);
 		expect(stack.overflow).toBe(1);
+	});
+});
+
+describe('overflow list', () => {
+	const people = Array.from({ length: 5 }, (_, i) => ({
+		userId: `@u${i}:x`,
+		displayName: `U${i}`
+	}));
+
+	it('hands out the folded people in stack order', () => {
+		const stack = resolveParticipantStack(people, 2);
+		expect(stack.overflow).toBe(3);
+		expect(stack.hidden.map((p) => p.userId)).toEqual([
+			'@u2:x',
+			'@u3:x',
+			'@u4:x'
+		]);
+	});
+
+	it('has nothing hidden when everyone fits', () => {
+		expect(resolveParticipantStack(people, 5).hidden).toEqual([]);
+	});
+
+	it('writes the count, capped at 99+', () => {
+		expect(formatOverflowCount(1)).toBe('+1');
+		expect(formatOverflowCount(99)).toBe('+99');
+		expect(formatOverflowCount(100)).toBe('99+');
 	});
 });

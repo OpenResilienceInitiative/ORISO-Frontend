@@ -124,6 +124,66 @@ describe('useDirectLinkKnock', () => {
 		expect(readPendingKnock()).toBeNull();
 	});
 
+	it('reports a switched-off link when knocking again gets a 410 (#2012)', async () => {
+		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
+		const start = vi
+			.fn()
+			.mockRejectedValue(new Response('', { status: 410 }));
+		const { result } = renderHook(() =>
+			useDirectLinkKnock(
+				{ ...knock, status: 'DECLINED' as const },
+				{ getKnock, start },
+				10
+			)
+		);
+		expect(result.current.inactive).toBe(false);
+		act(() => result.current.knockAgain());
+		await waitFor(() => expect(result.current.gone).toBe(true));
+		expect(result.current.inactive).toBe(true);
+	});
+
+	it.each([
+		['DIRECT_LINK_INACTIVE', true],
+		['INVITE_LINK_PAUSED', false]
+	])(
+		'tells a paused link from a 410 by its reason: %s',
+		async (reason, paused) => {
+			const start = vi
+				.fn()
+				.mockRejectedValue(
+					new Response(JSON.stringify({ reason }), { status: 410 })
+				);
+			const { result } = renderHook(() =>
+				useDirectLinkKnock({ ...knock, status: 'DECLINED' }, {
+					getKnock: vi.fn(() => new Promise(() => undefined)),
+					cancelKnock: vi.fn(),
+					start
+				} as never)
+			);
+			act(() => result.current.knockAgain());
+			await waitFor(() => expect(result.current.gone).toBe(true));
+			expect(result.current.inactive).toBe(true);
+			expect(result.current.paused).toBe(paused);
+		}
+	);
+
+	it('does not report an inactive link for another refusal', async () => {
+		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
+		const start = vi
+			.fn()
+			.mockRejectedValue(new Response('', { status: 403 }));
+		const { result } = renderHook(() =>
+			useDirectLinkKnock(
+				{ ...knock, status: 'DECLINED' as const },
+				{ getKnock, start },
+				10
+			)
+		);
+		act(() => result.current.knockAgain());
+		await waitFor(() => expect(result.current.gone).toBe(true));
+		expect(result.current.inactive).toBe(false);
+	});
+
 	it('lets the person in when the link no longer asks for a knock', async () => {
 		const getKnock = vi.fn().mockResolvedValue(answer('DECLINED'));
 		const start = vi.fn().mockResolvedValue({

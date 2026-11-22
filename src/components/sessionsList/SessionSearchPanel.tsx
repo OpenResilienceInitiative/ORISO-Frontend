@@ -100,6 +100,8 @@ export interface SessionSearchPanelLabels {
 
 interface SessionSearchPanelProps {
 	labels: SessionSearchPanelLabels;
+	/** Folding back into the search bar: visible, no longer usable. */
+	closing?: boolean;
 	activeTab: SessionSearchTab;
 	onTabChange: (tab: SessionSearchTab) => void;
 	archiveOnly: boolean;
@@ -224,6 +226,7 @@ const PersonAvatar = ({ person }: { person: SessionSearchPersonOption }) => (
 
 export const SessionSearchPanel = ({
 	labels,
+	closing = false,
 	activeTab,
 	onTabChange,
 	archiveOnly,
@@ -293,7 +296,10 @@ export const SessionSearchPanel = ({
 
 	return (
 		<div
-			className="sessionsListToolbar__searchModal"
+			className={clsx('sessionsListToolbar__searchModal', {
+				'sessionsListToolbar__searchModal--closing': closing
+			})}
+			inert={closing}
 			data-cy="session-search-panel"
 		>
 			<div className="sessionsListToolbar__searchRefineHint">

@@ -22,7 +22,12 @@ import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
  */
 export const apiPutSessionConsent = (
 	sessionId: number | string,
-	legalVersionId: number
+	/**
+	 * `null`: the platform text, which has no version. Accepted only for a
+	 * confirmed member of a shared Direkteinladung conversation (#2252),
+	 * stored as "agreed, no version".
+	 */
+	legalVersionId: number | null
 ): Promise<void> =>
 	fetchData({
 		url: `${endpoints.sessionBase}/${sessionId}/consent`,

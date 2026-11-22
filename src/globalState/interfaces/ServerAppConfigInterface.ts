@@ -5,6 +5,9 @@ export type ServerAppConfigInterface = {
 interface ServerAppConfigCustomInterface {
 	mainTenantSubdomainForSingleDomainMultitenancy?: ServerAppConfigValueInterface<string>;
 	supportEmail?: ServerAppConfigValueInterface<string>;
+	chatComposerDisabledFormats?: ServerAppConfigValueInterface<string>;
+	chatMessageMaxWidthDesktop?: ServerAppConfigValueInterface<string>;
+	chatMessageCollapseThreshold?: ServerAppConfigValueInterface<string>;
 	releaseToggles: Record<string, string>;
 }
 

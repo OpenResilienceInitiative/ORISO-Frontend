@@ -2,6 +2,37 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { refetchEnquiryListState } from './refetchEnquiryList';
 
 describe('refetchEnquiryListState', () => {
+	it('does not advance two feed offsets after loading one page from each', async () => {
+		const setCurrentOffset = vi.fn();
+		await refetchEnquiryListState({
+			fetchPage: async () => ({
+				sessions: Array.from({ length: 30 }, (_, i) => i),
+				total: 60,
+				nextOffset: 15
+			}),
+			pageSize: 15,
+			replaceSessions: vi.fn(),
+			setTotalItems: vi.fn(),
+			setCurrentOffset
+		});
+		expect(setCurrentOffset).toHaveBeenCalledWith(0);
+	});
+
+	it('keeps the requested window after a refresh with deduplicated rows', async () => {
+		const setCurrentOffset = vi.fn();
+		await refetchEnquiryListState({
+			fetchPage: async () => ({
+				sessions: [1, 2],
+				total: 60,
+				nextOffset: 45
+			}),
+			pageSize: 15,
+			replaceSessions: vi.fn(),
+			setTotalItems: vi.fn(),
+			setCurrentOffset
+		});
+		expect(setCurrentOffset).toHaveBeenCalledWith(30);
+	});
 	it('clears a previously visible queue when both enquiry feeds return EMPTY', async () => {
 		const replaceSessions = vi.fn();
 		const setTotalItems = vi.fn();

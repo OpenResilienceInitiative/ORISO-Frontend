@@ -1,4 +1,5 @@
 import * as React from 'react';
+import clsx from 'clsx';
 import {
 	SESSION_CARD_GEOMETRY,
 	SessionCardGeometry,
@@ -36,6 +37,7 @@ export const SessionCardBody = ({
 	const { bodyRef, trailingRef } = useReservedTrailingWidth();
 	const style = {
 		'--card-avatar': `${geometry.avatar}px`,
+		'--card-avatar-width': `${geometry.avatarWidth ?? geometry.avatar}px`,
 		'--card-gap': `${geometry.gap}px`,
 		'--card-name-line': `${geometry.nameLine}px`,
 		'--card-preview-line': `${geometry.previewLine}px`,
@@ -46,8 +48,15 @@ export const SessionCardBody = ({
 		'--card-body': `${sessionCardBodyHeight(geometry)}px`
 	} as React.CSSProperties;
 
+	// FE#2182: with nothing under the name yet, the name is centred on the avatar.
+	const nameOnly = !preview && !action;
+
 	return (
-		<div className="sessionCard" ref={bodyRef} style={style}>
+		<div
+			className={clsx('sessionCard', nameOnly && 'sessionCard--nameOnly')}
+			ref={bodyRef}
+			style={style}
+		>
 			<div className="sessionCard__name">{name}</div>
 			<div className="sessionCard__flow">
 				<div className="sessionCard__flowInner">

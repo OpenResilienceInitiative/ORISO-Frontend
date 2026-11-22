@@ -20,6 +20,7 @@ import {
 	mobileListView
 } from '../app/navigationHandler';
 import { UserDataContext, useTenant, useTenantState } from '../../globalState';
+import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Loading } from '../app/Loading';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
@@ -45,6 +46,11 @@ import {
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { normalizeGroupChatLanguages } from '../groupChat/groupChatAuthorContent';
 import { useSession } from '../../hooks/useSession';
+import { canEditGroupChatSettings } from '../groupChat/groupChatHelpers';
+import {
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../groupChat/consultantGroupChatPath';
 import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import {
 	AgencyFormatSource,
@@ -59,16 +65,28 @@ import {
 import { filterTopicsForAgencies, getAgencyTopicIds } from './agencyTopics';
 import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import { FORMAT_ARTWORK } from '../../resources/img/formats';
-import { DirectLinkCreateCard } from './directLink/DirectLinkCreateCard';
+import {
+	DirectLinkCreateCard,
+	useDirectInvitationSetup
+} from './directLink/DirectLinkCreateCard';
+import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import {
+	formatPresetRange,
+	fromInvitationPresetState,
+	MEDIUM_FOR_KIND
+} from '../directInvitation/invitationModel';
+import { DirectLink } from './directLink/directLink';
 import { getDirectLinkMedia } from './directLink/directLinkAvailability';
 import { RowMenu } from './RowMenu';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { ScreenIntro } from './ScreenIntro';
 import { BackPill } from './BackPill';
 import { TopicMedia } from './TopicMedia';
 import { CompactFormatRow } from './CompactFormatRow';
 import { SplitButton } from '../splitButton/SplitButton';
+import { useCreateViewExit } from './useCreateViewExit';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
@@ -79,7 +97,10 @@ import {
 } from './circle/CircleSettingsView';
 import { useInternalSubsetChatSubmit } from './useInternalSubsetChatSubmit';
 import { resolveRecipientScope } from './internal/recipientScope';
-import { loadInternalChatColleagues } from './internal/loadInternalChatColleagues';
+import {
+	InternalChatColleague,
+	loadInternalChatColleagues
+} from './internal/loadInternalChatColleagues';
 import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
 import './conversationCreate.styles.scss';
 
@@ -96,13 +117,18 @@ import './conversationCreate.styles.scss';
  * chosen on its card.
  */
 
+const consultantConversationList = '/sessions/consultant/sessionView';
+
 interface CreateConversationFlowProps {
 	/** The counsellor's agencies with their effective group-chat settings. */
 	agencyFormats: AgencyFormatSource[];
+	/** The route passes an edit session only after checking its scope and owner. */
+	editSession?: ExtendedSessionInterface;
 }
 
 const CreateConversationFlow = ({
-	agencyFormats
+	agencyFormats,
+	editSession
 }: CreateConversationFlowProps) => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -117,18 +143,8 @@ const CreateConversationFlow = ({
 		useInternalSubsetChatSubmit();
 	const recipientScope = resolveRecipientScope(tenantData);
 
-	// Edit mode is driven by the route params: the create route has none, the
-	// edit route (RouterConfig) carries /:groupId/:sessionId/editGroupChat.
-	const { groupId: editRoomId, sessionId: editSessionIdParam } = useParams<{
-		groupId: string;
-		sessionId: string;
-	}>();
-	const isEditMode = Boolean(editSessionIdParam);
-	const editChatId = editSessionIdParam ? Number(editSessionIdParam) : null;
-	const { session: editSession } = useSession(
-		isEditMode ? (editRoomId ?? null) : null,
-		editChatId ?? undefined
-	);
+	const editChatId = editSession?.item?.id ?? null;
+	const isEditMode = editChatId !== null;
 
 	const duplicateOccurrence = (
 		location.state as {
@@ -140,6 +156,13 @@ const CreateConversationFlow = ({
 			};
 		} | null
 	)?.duplicateOccurrence;
+	/* The calendar's "Neue Person per Direkteinladung …" hands over its slot
+	   and Art: the Direkteinladung opens with that appointment (one
+	   invitation flow, door A from the calendar). */
+	const invitationPreset = useMemo(
+		() => fromInvitationPresetState(location.state),
+		[location.state]
+	);
 
 	const availability = getConversationFormatAvailability(
 		tenantData,
@@ -186,9 +209,6 @@ const CreateConversationFlow = ({
 	// updateChat rewrites all of them from the payload, so a schedule-only edit
 	// must resubmit the existing content verbatim.
 	const editPrefill = useMemo<CircleSettingsPrefill | undefined>(() => {
-		if (!isEditMode) {
-			return undefined;
-		}
 		const item = editSession?.item;
 		if (!item) {
 			return undefined;
@@ -212,26 +232,29 @@ const CreateConversationFlow = ({
 				consultantIds: draft.consultantIds.filter(
 					(consultantId) => consultantId !== userData?.userId
 				),
-				agencyId: draft.agencyId
+				agencyId: draft.agencyId,
+				guestAccountMode: draft.guestAccountMode
 			};
 		} catch {
 			// Invalid persisted start etc. — keep the form gated (no prefill).
 			return undefined;
 		}
-	}, [isEditMode, editSession, userData?.userId]);
+	}, [editSession, userData?.userId]);
 
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
 			? 'circle'
-			: withDirectLink(
-					resolveInitialStep(
-						availability,
+			: invitationPreset && directLinkOffered
+				? 'directLink'
+				: withDirectLink(
+						resolveInitialStep(
+							availability,
+							availableFormats,
+							Boolean(duplicateOccurrence)
+						),
 						availableFormats,
-						Boolean(duplicateOccurrence)
-					),
-					availableFormats,
-					Boolean(duplicateOccurrence) && availability.circle
-				)
+						Boolean(duplicateOccurrence) && availability.circle
+					)
 	);
 
 	useEffect(() => {
@@ -281,6 +304,9 @@ const CreateConversationFlow = ({
 				}
 			: undefined
 	);
+	/* Lives here, not in the card: the card is remounted when the window
+	   crosses the phone breakpoint, and the link just made must stay up. */
+	const [createdDirectLink, setCreatedDirectLink] = useState<DirectLink>();
 	const [pickerTopic, setPickerTopic] = useState('');
 	const [pickerTopicMenuOpen, setPickerTopicMenuOpen] = useState(false);
 	const [topics, setTopics] = useState<TenantAgenciesTopicsInterface[]>([]);
@@ -298,9 +324,9 @@ const CreateConversationFlow = ({
 	>([]);
 	// The colleagues the Interna picker may offer, narrowed to the recipient
 	// scope (#1772).
-	const [internalColleagues, setInternalColleagues] = useState<Consultant[]>(
-		[]
-	);
+	const [internalColleagues, setInternalColleagues] = useState<
+		InternalChatColleague[]
+	>([]);
 	const [consultantsLoadFailed, setConsultantsLoadFailed] = useState(false);
 
 	// Once the edited series has loaded, preselect its agency so the settings
@@ -436,11 +462,7 @@ const CreateConversationFlow = ({
 			return;
 		}
 		const isCurrent = () => colleaguesLoadRef.current === load;
-		loadInternalChatColleagues({
-			scope: recipientScope,
-			agencyId: selectedAgency,
-			currentUserId: userData?.userId
-		})
+		loadInternalChatColleagues(selectedAgency)
 			.then((colleagues) => {
 				if (isCurrent()) {
 					setInternalColleagues(colleagues);
@@ -451,17 +473,17 @@ const CreateConversationFlow = ({
 					setConsultantsLoadFailed(true);
 				}
 			});
-	}, [
-		availability.internal,
-		recipientScope,
-		selectedAgency,
-		userData?.userId
-	]);
+	}, [availability.internal, selectedAgency]);
 
 	useEffect(() => {
 		loadInternalColleagues();
 		return invalidateColleaguesLoad;
-	}, [invalidateColleaguesLoad, loadInternalColleagues]);
+	}, [
+		invalidateColleaguesLoad,
+		loadInternalColleagues,
+		recipientScope,
+		userData?.userId
+	]);
 
 	const loadTopics = useCallback(() => {
 		if (!availability.circle && !directLinkOffered) {
@@ -505,7 +527,15 @@ const CreateConversationFlow = ({
 		[availableConsultants]
 	);
 	const internalPeople = useMemo(
-		() => toPeople(internalColleagues),
+		() =>
+			internalColleagues.map(
+				({ consultantId, displayName, tenantName }) => ({
+					id: consultantId,
+					label: tenantName
+						? `${displayName} (${tenantName})`
+						: displayName
+				})
+			),
 		[internalColleagues]
 	);
 
@@ -521,14 +551,31 @@ const CreateConversationFlow = ({
 		[agencies, selectedAgency, topics]
 	);
 
+	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
+		hasExtraInput: () =>
+			internalDraft.selectedIds.length > 0 ||
+			internalDraft.name.trim() !== '',
+		isBlocked: () => isSubmitting,
+		onLeave: () =>
+			navigate(
+				editChatId !== null
+					? consultantGroupChatPath(editChatId)
+					: consultantConversationList
+			)
+	});
+
 	const handleBackButton = useCallback(() => {
+		// A running create request cannot be cancelled: stay on the view.
+		if (isSubmitting) {
+			return;
+		}
 		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
-		navigate('/sessions/consultant/sessionView');
-	}, [formatCount, clearError, navigate, step]);
+		navigate(consultantConversationList);
+	}, [formatCount, clearError, navigate, step, isSubmitting]);
 
 	/* The direct link offers every topic of the counsellor's
 	   Beratungsstellen; the id goes to the backend, the name is shown. */
@@ -550,16 +597,32 @@ const CreateConversationFlow = ({
 			})),
 		[agencies]
 	);
+	/* #2252: the Direkteinladung dialog lives here, beside the share
+	   dialog, so a layout switch that remounts the card keeps it open. */
+	const directInvitationSetup = useDirectInvitationSetup({
+		topics: directLinkTopics,
+		agencies: directLinkAgencies,
+		compact: !fromL,
+		onCreated: setCreatedDirectLink,
+		preset: invitationPreset
+	});
 	const renderDirectLinkCard = () => (
 		<DirectLinkCreateCard
+			onCreated={setCreatedDirectLink}
+			onDraft={directInvitationSetup.start}
 			topics={directLinkTopics}
 			agencies={directLinkAgencies}
 			media={directLinkMedia}
 			compact={!fromL}
 			topicsLoadFailed={topicsLoadFailed}
 			onRetryTopics={loadTopics}
+			initialMedium={
+				invitationPreset?.kind
+					? MEDIUM_FOR_KIND[invitationPreset.kind]
+					: undefined
+			}
 			/* "Fertig": the link now lives in "Gespräche". */
-			onDone={() => navigate('/sessions/consultant/sessionView')}
+			onDone={() => navigate(consultantConversationList)}
 		/>
 	);
 
@@ -751,11 +814,11 @@ const CreateConversationFlow = ({
 				}`}
 			>
 				{fromL ? (
-					<div className="conversationCreate__cards">
+					<FormatCardCarousel>
 						{availability.circle && circleCard}
 						{availability.internal && renderInternalCard()}
 						{directLinkOffered && renderDirectLinkCard()}
-					</div>
+					</FormatCardCarousel>
 				) : (
 					<div className="conversationCreate__rows">
 						{availability.internal && (
@@ -795,42 +858,54 @@ const CreateConversationFlow = ({
 		</div>
 	);
 
+	if (editChatId !== null && !editPrefill) {
+		return <Navigate to={consultantGroupChatPath(editChatId)} replace />;
+	}
+
 	return (
-		<div className="conversationCreate">
+		<div className="conversationCreate" ref={surfaceRef} onInput={onInput}>
 			<PanelHeader
 				title={translate('groupChat.format.panelTitle')}
 				menuLabel={translate('groupChat.format.panelMenu')}
 				menuDisabled
 			/>
 			{step === 'circle' ? (
-				isEditMode && !editPrefill ? (
-					// Never render the settings form before the series has
-					// hydrated: an un-hydrated submit would wipe the chat.
-					<Loading />
-				) : (
-					<CircleSettingsView
-						agencyOptions={agencyOptionsFor('circle')}
-						selectedAgency={selectedAgency}
-						onAgencyChange={setSelectedAgency}
-						activeLanguages={activeLanguages}
-						translationAvailable={isGroupChatTranslationAvailable(
-							tenantData
-						)}
-						prefill={isEditMode ? editPrefill : circlePrefill}
-						topicOptions={
-							topicOptions.length ? topicOptions : undefined
-						}
-						editChatId={editChatId}
-						people={people}
-						compact={!fromL}
-					/>
-				)
+				<CircleSettingsView
+					agencyOptions={agencyOptionsFor('circle')}
+					selectedAgency={selectedAgency}
+					onAgencyChange={setSelectedAgency}
+					activeLanguages={activeLanguages}
+					translationAvailable={isGroupChatTranslationAvailable(
+						tenantData
+					)}
+					prefill={isEditMode ? editPrefill : circlePrefill}
+					topicOptions={
+						topicOptions.length ? topicOptions : undefined
+					}
+					editChatId={editChatId}
+					people={people}
+					compact={!fromL}
+				/>
 			) : step === 'directLink' ? (
 				<div
 					className={`conversationCreate__single${
 						fromL ? '' : ' conversationCreate__single--compact'
 					}`}
 				>
+					{invitationPreset && (
+						<p
+							className="conversationCreate__cardText"
+							role="status"
+							data-testid="invitation-preset-note"
+						>
+							{translate('directInvitation.fromCalendar', {
+								range: formatPresetRange(
+									invitationPreset,
+									i18n.language
+								)
+							})}
+						</p>
+					)}
 					{renderDirectLinkCard()}
 				</div>
 			) : step === 'internal' ? (
@@ -844,6 +919,19 @@ const CreateConversationFlow = ({
 			) : (
 				renderPicker()
 			)}
+			{directInvitationSetup.dialog}
+			{discardDialog}
+			{createdDirectLink && (
+				<DirectLinkShareDialog
+					open
+					link={createdDirectLink}
+					fullScreen={!fromL}
+					onClose={() => {
+						setCreatedDirectLink(undefined);
+						navigate(consultantConversationList);
+					}}
+				/>
+			)}
 			{/* Figma: the back control is a mobile-only affordance. */}
 			{!fromL && (
 				<BackPill
@@ -855,7 +943,43 @@ const CreateConversationFlow = ({
 	);
 };
 
+const EditConversationRoute = ({
+	agencyFormats,
+	roomId,
+	chatId
+}: {
+	agencyFormats: AgencyFormatSource[];
+	roomId: string;
+	chatId: number;
+}) => {
+	const { userData } = useContext(UserDataContext);
+	// The group lookup carries the current chat owner. Omitting the
+	// individual session ID also rules out its numeric and handover fallbacks.
+	const { session, ready } = useSession(roomId, undefined, chatId);
+	if (!ready) return <Loading />;
+	if (
+		!session?.isGroup ||
+		session.item?.id !== chatId ||
+		session.item.matrixRoomId !== roomId
+	) {
+		return <Navigate to={consultantConversationList} replace />;
+	}
+	if (!canEditGroupChatSettings(session, userData)) {
+		return <Navigate to={consultantGroupChatPath(chatId)} replace />;
+	}
+	return (
+		<CreateConversationFlow
+			agencyFormats={agencyFormats}
+			editSession={session}
+		/>
+	);
+};
+
 export const CreateConversationView = () => {
+	const { groupId, sessionId } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
 	const { tenant: tenantData, isLoading } = useTenantState();
 	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
 		useCounsellorAgencyFormats();
@@ -880,8 +1004,21 @@ export const CreateConversationView = () => {
 		!availability.circle &&
 		getDirectLinkMedia(tenantData, agencyFormats).length === 0
 	) {
-		return <Navigate to="/sessions/consultant/sessionView" replace />;
+		return <Navigate to={consultantConversationList} replace />;
 	}
 
+	if (sessionId !== undefined) {
+		if (!groupId || !isGroupChatId(sessionId)) {
+			return <Navigate to={consultantConversationList} replace />;
+		}
+		return (
+			<EditConversationRoute
+				key={`${groupId}/${sessionId}`}
+				agencyFormats={agencyFormats}
+				roomId={groupId}
+				chatId={Number(sessionId)}
+			/>
+		);
+	}
 	return <CreateConversationFlow agencyFormats={agencyFormats} />;
 };

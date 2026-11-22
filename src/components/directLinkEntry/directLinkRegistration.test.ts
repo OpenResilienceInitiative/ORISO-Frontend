@@ -39,10 +39,55 @@ describe('directLinkRegistration (ORISO-UserService#1486)', () => {
 		expect(
 			directLinkRegistration(
 				context(false),
-				{ username: 'gast-1', password: 'Secret-123!' },
+				{
+					username: 'gast-1',
+					password: 'Secret-123!',
+					postcode: '10115'
+				},
 				'en',
 				'token-9'
 			).temporary
 		).toBe(false);
+	});
+
+	it('sends the postcode the person entered on a registered link (#1795)', () => {
+		expect(
+			directLinkRegistration(
+				context(false),
+				{
+					username: 'gast-1',
+					password: 'Secret-123!',
+					postcode: '10115'
+				},
+				'de',
+				'token-9'
+			).postcode
+		).toBe('10115');
+	});
+
+	it('keeps the placeholder for a temporary account, whatever was typed', () => {
+		expect(
+			directLinkRegistration(
+				context(true),
+				{
+					username: 'gast-1',
+					password: 'Secret-123!',
+					postcode: '10115'
+				},
+				'de',
+				'token-9'
+			).postcode
+		).toBe('00000');
+	});
+
+	it('never sends the placeholder for a registered link without a postcode', () => {
+		expect(() =>
+			directLinkRegistration(
+				context(false),
+				{ username: 'gast-1', password: 'Secret-123!' },
+				'de',
+				'token-9'
+			)
+		).toThrow(/postcode/i);
 	});
 });

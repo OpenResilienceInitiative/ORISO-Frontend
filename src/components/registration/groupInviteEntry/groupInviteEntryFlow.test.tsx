@@ -76,6 +76,19 @@ vi.mock('../../../api', async (importOriginal) => ({
 		Promise.resolve({ sessions: [{ session: { id: 211 } }] })
 }));
 
+/* UserService#1662: the circle's guest account mode, read before the entry
+   shows. Links without an invite token ask nothing (the old entry). */
+let circleMode: string | Promise<never> = 'GUEST_CHOOSES';
+const apiGetGroupInviteContext = vi.fn(() =>
+	typeof circleMode === 'string'
+		? Promise.resolve({ guestAccountMode: circleMode })
+		: circleMode
+);
+vi.mock('../../../api/apiGetGroupInviteContext', () => ({
+	apiGetGroupInviteContext: (...args: unknown[]) =>
+		(apiGetGroupInviteContext as any)(...args)
+}));
+
 const redirectToApp = vi.fn();
 const redirectToLogin = vi.fn();
 const addNotification = vi.fn();
@@ -200,6 +213,8 @@ const lastStage = () => stageProps[stageProps.length - 1];
 
 beforeEach(() => {
 	stepPick = null;
+	circleMode = 'GUEST_CHOOSES';
+	apiGetGroupInviteContext.mockClear();
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
 	autoLoginWithDeadline.mockClear();
@@ -261,6 +276,33 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
 	});
 
+	it('keeps a signed multi-topic circle invite when signing in from the steps', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] }
+		});
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().showLoginLink).toBe(true);
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the circle invite when an agency is missing', () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBe('gcid=19.q2Vx8mK4TzJ1bR7n');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('keeps the ordinary registration sign-in free of invite state', () => {
+		renderAt('?gcid=invalid');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(lastStage().loginParams).toBeUndefined();
+		expect(lastStage().loginState).toBeUndefined();
+	});
+
 	it('joining registers at the group agency and hands the link on to the entry room', async () => {
 		renderAt('?gcid=19&aid=19');
 
@@ -291,6 +333,8 @@ describe('newcomer entry for a self-help group link', () => {
 
 	it('hands the invite token from the link on with the group', async () => {
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 
 		fireEvent.click(primary());
 
@@ -414,6 +458,8 @@ describe('newcomer entry for a self-help group link', () => {
 
 	it('a link with an invite token still registers a temporary account, and "Konto anlegen" a permanent one', async () => {
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 		fireEvent.click(primary());
 		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
 		const [, temporaryBody] = apiPostRegistration.mock
@@ -425,6 +471,8 @@ describe('newcomer entry for a self-help group link', () => {
 		clearRegistrationSubmitting();
 		apiPostRegistration.mockClear();
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 		fireEvent.click(secondary());
 		fireEvent.click(primary());
 		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
@@ -623,6 +671,8 @@ describe('a broken invite link fails safely (#921)', () => {
 				Promise.reject(refusal(status, reason))
 			);
 			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+			// UserService#1662: the entry waits for the circle's mode.
+			await screen.findByTestId('account-data');
 
 			fireEvent.click(primary());
 
@@ -644,6 +694,8 @@ describe('a broken invite link fails safely (#921)', () => {
 				Promise.reject(refusal(status))
 			);
 			renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+			// UserService#1662: the entry waits for the circle's mode.
+			await screen.findByTestId('account-data');
 
 			fireEvent.click(primary());
 
@@ -658,6 +710,8 @@ describe('a broken invite link fails safely (#921)', () => {
 			Promise.reject(refusal(403, 'DPA_NEW_COUNSELLING_NOT_ALLOWED'))
 		);
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		// UserService#1662: the entry waits for the circle's mode.
+		await screen.findByTestId('account-data');
 
 		fireEvent.click(primary());
 
@@ -752,5 +806,116 @@ describe('a temporary join whose sign-in fails after the account exists (#1941)'
 
 		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
 		expect(loginRetry()).toBeNull();
+	});
+});
+
+describe('UserService#1662: the Gesprächskreis entry follows the circle’s guest account mode', () => {
+	const signedLink = '?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19';
+	const registered = async () => {
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		return body;
+	};
+	const multiTopic = {
+		agency: { ...agency, topicIds: [17, 18] },
+		mainTopic: grief,
+		zipcode: '00000',
+		username: 'ente_yuki_7984',
+		password: 'Minted-in-the-test-1'
+	};
+
+	it('waits for the mode instead of offering a way the server may refuse', () => {
+		circleMode = new Promise<never>(() => undefined);
+		renderAt(signedLink);
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="group-invite-loading"]')
+		).not.toBeNull();
+		expect(apiGetGroupInviteContext).toHaveBeenCalledWith(
+			19,
+			'19',
+			'q2Vx8mK4TzJ1bR7n'
+		);
+	});
+
+	it('TEMPORARY: only "Der Gruppe beitreten" without an account, no "Konto anlegen"', async () => {
+		circleMode = 'TEMPORARY';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('true');
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		fireEvent.click(primary());
+		expect((await registered()).temporary).toBe(true);
+	});
+
+	it('PERMANENT: only an account with a password, no "Ohne Konto beitreten"', async () => {
+		circleMode = 'PERMANENT';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('false');
+		expect(primary().textContent).toBe('registration.register');
+		expect(
+			screen.queryByTestId('registration-footer-secondary')
+		).toBeNull();
+		fireEvent.click(primary());
+		expect((await registered()).temporary).toBe(false);
+	});
+
+	it('GUEST_CHOOSES: opens without an account and offers "Konto anlegen"', async () => {
+		circleMode = 'GUEST_CHOOSES';
+		renderAt(signedLink);
+
+		const account = await screen.findByTestId('account-data');
+		expect(account.dataset.temporary).toBe('true');
+		expect(secondary().textContent).toBe('Konto anlegen');
+	});
+
+	it('the four-step fallback offers no temporary join for PERMANENT', async () => {
+		circleMode = 'PERMANENT';
+		renderAt(signedLink, multiTopic);
+
+		await waitFor(() =>
+			expect(apiGetGroupInviteContext).toHaveBeenCalled()
+		);
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="button-register"]')
+			).not.toBeNull()
+		);
+		expect(
+			document.querySelector('[data-cy="button-temporary-join"]')
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+		expect((await registered()).temporary).not.toBe(true);
+	});
+
+	it('the four-step fallback joins temporarily for TEMPORARY, with no toggle', async () => {
+		circleMode = 'TEMPORARY';
+		renderAt(signedLink, multiTopic);
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="button-register"]')
+					?.textContent
+			).toContain('registration.account.temporary.join')
+		);
+		expect(
+			document.querySelector('[data-cy="button-temporary-join"]')
+		).toBeNull();
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+		expect((await registered()).temporary).toBe(true);
 	});
 });

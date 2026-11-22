@@ -11,6 +11,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { GroupChatSeries } from '../groupChatSeries';
+import { getGroupWaitingRoomSchedule } from './groupWaitingRoomData';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 const apiPatchUserData = vi.fn(() => Promise.resolve());
@@ -432,6 +433,62 @@ describe('GroupWaitingRoom – dates and calendar', () => {
 
 	afterEach(cleanup);
 
+	it('shows and exports each projected duration when the dates cannot form a series', () => {
+		const starts = WEEKLY.slice(0, 2);
+		const durations = [60, 90];
+		const schedule = getGroupWaitingRoomSchedule(
+			{
+				startDateWithTime: START.toISOString(),
+				chatInterval: 'WEEKLY',
+				repeatCount: 2,
+				duration: 60
+			},
+			starts.map((start, occurrenceIndex) => ({
+				seriesId: 15,
+				occurrenceIndex,
+				start: start.toISOString(),
+				originalStart: start.toISOString(),
+				duration: durations[occurrenceIndex],
+				modality: 'TEXT' as const
+			})),
+			NOW
+		);
+		render(
+			<GroupWaitingRoom
+				{...schedule}
+				eventId={15}
+				rules={[]}
+				active={false}
+				onJoin={vi.fn()}
+				nowMs={NOW}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('group-entry-dates'));
+		expect(screen.queryByTestId('group-upcoming-series')).toBeNull();
+		const buttons = screen.getAllByTestId('group-upcoming-date-add');
+		const ends = starts.map(
+			(start, index) =>
+				new Date(start.getTime() + durations[index] * 60_000)
+		);
+		const format = new Intl.DateTimeFormat('de', {
+			hour: '2-digit',
+			minute: '2-digit'
+		});
+		buttons.forEach((button, index) =>
+			expect(button.textContent).toContain(
+				`${format.format(starts[index])} – ${format.format(ends[index])}`
+			)
+		);
+		fireEvent.click(buttons[1]);
+		const outlook = document.querySelector<HTMLAnchorElement>(
+			'a[href*="outlook.live.com"]'
+		);
+		expect(outlook).toBeTruthy();
+		expect(new URL(outlook.href).searchParams.get('enddt')).toBe(
+			ends[1].toISOString()
+		);
+	});
+
 	it('offers this date and the other dates above "Beitreten" before the start', () => {
 		renderDates();
 		expect(bar().contains(screen.getByTestId('group-entry-calendar'))).toBe(
@@ -833,5 +890,51 @@ describe('entryRoomClockHeight', () => {
 
 	it('gives the rhythm line under the headline its height', () => {
 		expect(entryRoomClockHeight(1440, 950, 46)).toBe(554);
+	});
+});
+
+/* Frank, 2026-11-12: after a minute of waiting in a running group the person
+   no longer sees a greyed-out button, but that the session is open and they
+   will be let in shortly (#2237). */
+describe('GroupWaitingRoom — let in shortly (#2237)', () => {
+	afterEach(cleanup);
+
+	it('replaces the button with the note once the person waited a minute', () => {
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				plannedStart={new Date(NOW)}
+				durationMinutes={90}
+				eventId={15}
+				active
+				onJoin={vi.fn()}
+				nowMs={NOW}
+				admissionWaiting="waiting"
+				rules={[]}
+				admissionSoon="Die Sitzung läuft. Sie werden gleich hereingelassen."
+			/>
+		);
+		expect(screen.queryByTestId('group-entry-join')).toBeNull();
+		expect(
+			screen.getByTestId('group-entry-admission-soon').textContent
+		).toBe('Die Sitzung läuft. Sie werden gleich hereingelassen.');
+	});
+
+	it('keeps the button in the first minute', () => {
+		render(
+			<GroupWaitingRoom
+				topicName="Trauerbegleitung"
+				plannedStart={new Date(NOW)}
+				durationMinutes={90}
+				eventId={15}
+				active
+				onJoin={vi.fn()}
+				nowMs={NOW}
+				admissionWaiting="waiting"
+				rules={[]}
+			/>
+		);
+		expect(screen.getByTestId('group-entry-join')).toBeTruthy();
+		expect(screen.queryByTestId('group-entry-admission-soon')).toBeNull();
 	});
 });

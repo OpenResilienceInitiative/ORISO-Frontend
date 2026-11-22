@@ -33,17 +33,15 @@ describe('GroupCardParticipants — production shared stack (#1806)', () => {
 			);
 			expect(
 				container.querySelectorAll('[data-cy="participant-avatar"]')
-			).toHaveLength(Math.min(2, count));
-			expect(
-				container.querySelector(
-					'[data-user-id="@person-0:example.org"]'
-				)
-			).not.toBeNull();
-			const overflow = container.querySelector(
-				'[data-cy="participant-overflow"]'
+			).toHaveLength(count > 3 ? 0 : count);
+			const crowd = container.querySelector(
+				'[data-cy="group-card-crowd"]'
 			);
-			if (count > 2) expect(overflow?.textContent).toBe(`+${count - 2}`);
-			else expect(overflow).toBeNull();
+			if (count > 3) expect(crowd?.textContent).toBe(`${count}`);
+			else expect(crowd).toBeNull();
+			expect(
+				container.querySelector('[data-cy="participant-overflow"]')
+			).toBeNull();
 		}
 	);
 

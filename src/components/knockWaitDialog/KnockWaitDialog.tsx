@@ -1,6 +1,13 @@
 import * as React from 'react';
 import './knockWaitDialog.styles.scss';
-import { ReactNode, useCallback, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useId,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircularProgress, useMediaQuery } from '@mui/material';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -128,6 +135,23 @@ export const KnockWaitDialog = ({
 	const [rejected, setRejected] = useState(false);
 	const isCall = variant === 'call';
 	const of = (call: string, group: string) => (isCall ? call : group);
+	const surfaceId = useId();
+
+	/* "Nicht mehr warten" goes away with the wait it ends. Focus that went
+	   with it lands on "Jetzt beitreten", not on the page behind the dialog,
+	   where Escape and Tab would do nothing until the focus trap noticed. */
+	const wasKnocking = useRef(knocking);
+	useLayoutEffect(() => {
+		const ended = wasKnocking.current && !knocking;
+		wasKnocking.current = knocking;
+		if (!ended || phase !== 'ready') return;
+		const active = document.activeElement;
+		if (active && active !== document.body) return;
+		document
+			.getElementById(surfaceId)
+			?.querySelector<HTMLButtonElement>('.m3Dialog__action--primary')
+			?.focus();
+	}, [knocking, phase, surfaceId]);
 
 	const acceptConsent = useCallback(() => {
 		if (busy || !onAcceptConsent) return;
@@ -361,6 +385,7 @@ export const KnockWaitDialog = ({
 					? 'knockWaitDialog knockWaitDialog--sheet'
 					: 'knockWaitDialog'
 			}
+			id={surfaceId}
 			data-testid="knock-wait-dialog"
 		>
 			{body}

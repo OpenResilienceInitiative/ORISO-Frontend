@@ -44,9 +44,9 @@ describe('internal subset chat messages', () => {
 		}
 	);
 
-	it('words PLATFORM like TENANT while only the Träger directory can be listed', () => {
+	it('explains when participating organisations are included', () => {
 		expect(recipientScopeHintKey('PLATFORM')).toBe(
-			recipientScopeHintKey('TENANT')
+			'groupChat.internal.scope.PLATFORM'
 		);
 	});
 

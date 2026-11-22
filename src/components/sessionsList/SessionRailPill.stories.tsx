@@ -36,6 +36,7 @@ const RAIL_MARK_COPY: SessionRailMarkLabels = {
 	videoCall: 'Videoanruf',
 	audioCall: 'Audioanruf',
 	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 
@@ -187,9 +188,9 @@ function MixedRail() {
 const meta: Meta<typeof SessionRailPill> = {
 	title: 'Components/Session/List/Session rail pill',
 	component: SessionRailPill,
+	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'centered',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',

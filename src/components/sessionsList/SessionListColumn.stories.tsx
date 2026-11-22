@@ -46,7 +46,9 @@ function DemoCard({
 	postcode,
 	user,
 	subject,
-	team = false
+	team = false,
+	groupStart = true,
+	groupEnd = true
 }: {
 	active?: boolean;
 	beforeActive?: boolean;
@@ -56,6 +58,10 @@ function DemoCard({
 	user: string;
 	subject: string;
 	team?: boolean;
+	/** Grouping flags `SessionsList` sets outside the rail: inactive rows
+	 *  join into one block, the active row stands out as its own card. */
+	groupStart?: boolean;
+	groupEnd?: boolean;
 }) {
 	const displayName = formatMessagePersonName(undefined, user);
 
@@ -65,7 +71,10 @@ function DemoCard({
 				'sessionsListItem',
 				active && 'sessionsListItem--active',
 				beforeActive && 'sessionsListItem--beforeActive',
-				afterActive && 'sessionsListItem--afterActive'
+				afterActive && 'sessionsListItem--afterActive',
+				'sessionsListItem--grouped',
+				groupStart && 'sessionsListItem--groupStart',
+				groupEnd && 'sessionsListItem--groupEnd'
 			]
 				.filter(Boolean)
 				.join(' ')}
@@ -129,10 +138,14 @@ function DemoCard({
 						</div>
 					) : (
 						<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-							<img
-								src={nearbyConversationIcon}
-								alt="Mail"
-								className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							<span
+								className="sessionsListItem__consultingTypeIcon--kindIcon"
+								aria-hidden="true"
+								style={
+									{
+										'--kind-icon-url': `url("${nearbyConversationIcon}")`
+									} as React.CSSProperties
+								}
 							/>
 							<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 								Mail
@@ -194,6 +207,8 @@ function FullColumnPlayground() {
 				/>
 				<DemoCard
 					active
+					groupStart={false}
+					groupEnd={false}
 					topic="Familienberatung"
 					postcode="12345"
 					user="testuser@example.invalid"
@@ -216,7 +231,6 @@ const meta: Meta = {
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
-		backgrounds: { default: 'gray' },
 		design: [
 			{
 				type: 'figma',
@@ -243,7 +257,10 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const grayGalleryBackground = { backgrounds: { value: 'gray' } };
+
 export const ToolbarAndCards: Story = {
+	globals: grayGalleryBackground,
 	render: () => <FullColumnPlayground />
 };
 
@@ -279,6 +296,7 @@ function ToolbarCreateChatColumn() {
 }
 
 export const ToolbarCreateChatAndCards: Story = {
+	globals: grayGalleryBackground,
 	render: () => <ToolbarCreateChatColumn />,
 	play: async ({ canvasElement }) => {
 		const createActions = canvasElement.querySelectorAll(
@@ -300,7 +318,10 @@ export const ToolbarCreateChatAndCards: Story = {
 
 export const ToolbarCreateChatOnPhone: Story = {
 	...ToolbarCreateChatAndCards,
-	globals: { viewport: { value: 'phone390', isRotated: false } }
+	globals: {
+		...grayGalleryBackground,
+		viewport: { value: 'phone390', isRotated: false }
+	}
 };
 
 /**
@@ -337,6 +358,7 @@ function EmptyColumn() {
 }
 
 export const EmptyWithSideHairlines: Story = {
+	globals: grayGalleryBackground,
 	render: () => <EmptyColumn />
 };
 
@@ -371,6 +393,7 @@ const RAIL_DEMO_COPY = {
 	videoCall: 'Videoanruf',
 	audioCall: 'Audioanruf',
 	directLink: 'Direktlink',
+	appointment: 'Nächster Termin: Fr 30. Okt 18:00',
 	unread: 'Ungelesen'
 };
 
@@ -424,8 +447,7 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 				style={{
 					flex: '0 0 auto',
 					width,
-					position: 'relative',
-					background: '#fff'
+					position: 'relative'
 				}}
 				data-cy="snap-column"
 				data-list-mode={rail ? 'rail' : 'expanded'}
@@ -473,12 +495,14 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 					) : (
 						<>
 							<DemoCard
+								groupEnd={false}
 								topic="Schuldnerberatung"
 								postcode="55116"
 								user="sonnenblume_47"
 								subject="Mein Vertrag läuft im Oktober aus."
 							/>
 							<DemoCard
+								groupStart={false}
 								topic="Suchtberatung"
 								postcode="80331"
 								user="stiller_fuchs_ali"
@@ -497,7 +521,9 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 				style={{
 					flex: 1,
 					margin: `0 ${STAGE_LAYOUT.CARD_MARGIN}px`,
-					background: '#fff',
+					// Test instrument showing the measured width, outside the product column.
+					background: 'var(--m3-surface)',
+					color: 'var(--m3-on-surface)',
 					borderRadius: 16,
 					display: 'grid',
 					placeItems: 'center',

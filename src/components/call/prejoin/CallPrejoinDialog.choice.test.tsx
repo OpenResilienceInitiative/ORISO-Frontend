@@ -13,7 +13,8 @@ import type { CallJoinHooks } from '../../directLinkEntry/callMessageKnock';
 
 const device = vi.hoisted(() => ({
 	controls: { micOn: true, cameraOn: true, selection: {} },
-	cameraAvailable: true
+	cameraAvailable: true,
+	initial: undefined as { selection: object } | undefined
 }));
 
 vi.mock('../../knockWaitDialog/KnockWaitDialog', () => ({
@@ -25,18 +26,27 @@ vi.mock('../../knockWaitDialog/KnockWaitDialog', () => ({
 	)
 }));
 vi.mock('../../waitingRoom/callEntry/useCallDeviceCheck', () => ({
-	useCallDeviceCheck: () => ({
-		check: { devices: { microphone: [], camera: [] } },
-		controls: device.controls,
-		cameraAvailable: device.cameraAvailable,
-		retry: vi.fn()
-	})
+	useCallDeviceCheck: (
+		_modality: string,
+		options?: { initial?: { selection: object } }
+	) => {
+		device.initial = options?.initial;
+		return {
+			check: { devices: { microphone: [], camera: [] } },
+			controls: device.controls,
+			cameraAvailable: device.cameraAvailable,
+			retry: vi.fn()
+		};
+	}
 }));
 
 const { CallPrejoinDialog } = await import('./CallPrejoinDialog');
-const { forgetAllJoinMedia, peekJoinMedia, rememberJoinMedia } = await import(
-	'./callPrejoin'
-);
+const {
+	forgetAllJoinMedia,
+	keepDeviceChoice,
+	peekJoinMedia,
+	rememberJoinMedia
+} = await import('./callPrejoin');
 
 const ROOM = '!room:oriso';
 
@@ -69,6 +79,16 @@ const dialog = (onJoin: (hooks: CallJoinHooks) => unknown) => (
 );
 
 describe('CallPrejoinDialog and the choice it keeps', () => {
+	it('opens on the devices an earlier check picked for this room', () => {
+		const selection = { microphone: 'headset' };
+		keepDeviceChoice(ROOM, 'video', {
+			controls: { micOn: true, cameraOn: true, selection },
+			cameraAvailable: true
+		});
+		render(dialog(vi.fn()));
+		expect(device.initial?.selection).toEqual(selection);
+	});
+
 	afterEach(() => {
 		cleanup();
 		forgetAllJoinMedia();

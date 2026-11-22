@@ -459,10 +459,24 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		return storybookJsonResponse(storybookTopics);
 	}
 
-	// A centre with no legal text of its own: the client shows its catalogue
-	// consent sentence. A story about authored or missing text sets its own.
+	// No shipped catalogue in stories: the topic step keeps its built-in clusters.
+	if (url.pathname === '/service/topic-groups') {
+		return storybookJsonResponse({ data: { items: [] } });
+	}
+
+	// A centre with a stored privacy text but no consent sentence of its own: the
+	// client shows its catalogue consent sentence. Ticking the consent box then
+	// raises no "no privacy notice stored" warning (ORISO-AgencyService#366). A
+	// story about authored or missing text sets its own.
 	if (/^\/service\/agencies\/\d+\/topics\/\d+\/legal$/.test(url.pathname)) {
-		return storybookJsonResponse({ dpp: null, imprint: null });
+		return storybookJsonResponse({
+			dpp: {
+				content:
+					'{"de":"<p>Datenschutzerklärung der Beratungsstelle</p>"}',
+				consentText: null
+			},
+			imprint: null
+		});
 	}
 
 	// Every username a story types is free; a taken name is the story's own fixture.
@@ -499,6 +513,16 @@ const storybookApiResponse = (url: URL, method: string): Response | null => {
 		url.pathname.includes('/service/conversations/consultants/enquiries/')
 	) {
 		return storybookEmptyResponse();
+	}
+
+	// The "Meine Termine" nav badge (FE#1050) counts the move proposals
+	// waiting for the counsellor; by default none. Calendar stories answer
+	// with their own requests.
+	if (
+		url.pathname === '/service/users/calendar/proposals' &&
+		method === 'GET'
+	) {
+		return storybookJsonResponse({ sent: [], received: [] });
 	}
 
 	if (
@@ -1007,6 +1031,11 @@ const preview: Preview = {
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
 				},
+				desktop1024: {
+					name: 'Desktop 1024 (small laptop, split window)',
+					styles: { width: '1024px', height: '768px' },
+					type: 'desktop'
+				},
 				desktop1280: {
 					name: 'Desktop 1280',
 					styles: { width: '1280px', height: '800px' },
@@ -1015,6 +1044,11 @@ const preview: Preview = {
 				desktop1366: {
 					name: 'Desktop 1366 (common laptop)',
 					styles: { width: '1366px', height: '768px' },
+					type: 'desktop'
+				},
+				desktop1280x720: {
+					name: 'Desktop 1920 at 150 % zoom (1280×720 CSS px)',
+					styles: { width: '1280px', height: '720px' },
 					type: 'desktop'
 				},
 				desktop1440: {
@@ -1026,25 +1060,26 @@ const preview: Preview = {
 					name: 'Desktop 1920 (full HD)',
 					styles: { width: '1920px', height: '1080px' },
 					type: 'desktop'
+				},
+				desktop2560: {
+					name: 'Desktop 2560 (QHD, 1440p)',
+					styles: { width: '2560px', height: '1440px' },
+					type: 'desktop'
+				},
+				desktop3840: {
+					name: 'Desktop 3840 (4K UHD)',
+					styles: { width: '3840px', height: '2160px' },
+					type: 'desktop'
 				}
 			}
 		},
+		// Storybook 9+ format: named options here, the active one in `globals.backgrounds`.
 		backgrounds: {
-			default: 'light',
-			values: [
-				{
-					name: 'light',
-					value: '#ffffff'
-				},
-				{
-					name: 'dark',
-					value: '#1a1a1a'
-				},
-				{
-					name: 'gray',
-					value: '#f5f5f5'
-				}
-			]
+			options: {
+				light: { name: 'light', value: '#ffffff' },
+				dark: { name: 'dark', value: '#1a1a1a' },
+				gray: { name: 'gray', value: '#f5f5f5' }
+			}
 		}
 	},
 	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },

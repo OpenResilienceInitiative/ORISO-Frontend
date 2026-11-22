@@ -1,5 +1,12 @@
 // @vitest-environment oriso-jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { logout } from '../components/logout/logout';
 import { appConfig, setAppConfig } from '../utils/appConfig';
 import {

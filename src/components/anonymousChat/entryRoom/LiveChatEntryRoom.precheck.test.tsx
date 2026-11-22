@@ -30,8 +30,9 @@ vi.mock('../../../api/apiGetTenantTheming', () => ({
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
+const navigation = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', () => ({
-	useNavigate: () => vi.fn()
+	useNavigate: () => navigation
 }));
 vi.mock('./EntryRoomShell', () => ({
 	EntryRoomShell: ({ children }: { children: React.ReactNode }) => (
@@ -79,7 +80,7 @@ const nameCards = () => screen.queryAllByRole('radio');
 const closedHeadline = () =>
 	screen.queryByText('Der Live-Chat ist gerade geschlossen.');
 
-let redeem: ReturnType<typeof vi.fn<() => Promise<number>>>;
+let redeem: ReturnType<typeof vi.fn<(userId: string) => Promise<number>>>;
 const renderInvite = () =>
 	render(
 		<LiveChatEntryRoom
@@ -92,7 +93,7 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	vi.clearAllMocks();
 	sessionStorage.clear();
-	redeem = vi.fn(() => Promise.resolve(42));
+	redeem = vi.fn((_userId: string) => Promise.resolve(42));
 });
 afterEach(() => {
 	cleanup();
@@ -100,6 +101,39 @@ afterEach(() => {
 });
 
 describe('LiveChatEntryRoom — who is live, before anything is created', () => {
+	it('opens normal registration when nobody is live before redeeming', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		renderInvite();
+		await flush(1000);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /Anfrage an eine Beratungsstelle schreiben/
+			})
+		);
+		expect(navigation).toHaveBeenCalledWith('/registration');
+		expect(redeem).not.toHaveBeenCalled();
+	});
+	it('keeps an already redeemed guest when choosing written counselling', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+			status: 'NEW',
+			numAvailableConsultants: 0,
+			peopleAhead: 1
+		} as never);
+		sessionStorage.setItem('anonymous-pseudonym-name-42', 'guest');
+		render(<LiveChatEntryRoom sessionId={42} topicSlug="U25" />);
+		await flush(4000);
+		await flush(4000);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: /Anfrage an eine Beratungsstelle schreiben/
+			})
+		);
+		expect(navigation).toHaveBeenCalledWith('/live-chat/convert', {
+			state: { topicId: undefined }
+		});
+	});
+
 	it('uses the link tenant for the name rule when the landing tenant differs', async () => {
 		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
 		vi.mocked(apiGetPublicTenantById).mockResolvedValue({
@@ -176,6 +210,49 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 			42,
 			expect.any(AbortSignal)
 		);
+	});
+
+	/* ORISO-Frontend#2346: the User-ID on the card is the login, not a label
+	   on an `anon_N` account. */
+	it('joins under the User-ID on the chosen card', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		renderInvite();
+		await flush();
+
+		const chosen = nameCards()[0].textContent ?? '';
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+
+		expect(redeem).toHaveBeenCalledTimes(1);
+		const userId = redeem.mock.calls[0][0];
+		expect(userId).toMatch(/^[a-z0-9_]{1,25}_[1-9][0-9]{3}$/);
+		expect(chosen).toContain(userId);
+	});
+
+	it('offers fresh names when the chosen User-ID was taken meanwhile', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		redeem.mockRejectedValueOnce(new Response('', { status: 409 }));
+		renderInvite();
+		await flush();
+
+		const firstOffer = nameCards().map((card) => card.textContent);
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+
+		const taken = redeem.mock.calls[0][0];
+		expect(apiPutSessionData).not.toHaveBeenCalled();
+		const secondOffer = nameCards().map((card) => card.textContent);
+		expect(secondOffer).not.toEqual(firstOffer);
+		expect(secondOffer.join(' ')).not.toContain(taken);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+
+		expect(redeem).toHaveBeenCalledTimes(2);
+		expect(redeem.mock.calls[1][0]).not.toBe(taken);
+		expect(apiPutSessionData).toHaveBeenCalledWith(42, {
+			displayName: expect.any(String)
+		});
 	});
 
 	/* The last positive sample can be seconds old. Right before an account and

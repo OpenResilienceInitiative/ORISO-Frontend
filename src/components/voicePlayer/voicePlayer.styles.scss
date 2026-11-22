@@ -91,6 +91,25 @@
 		--voice-player-toggle-size: 44px;
 	}
 
+	// In the composer the player is not a message yet: a slim pill that sits
+	// next to its round discard button, recording and review alike.
+	&--composer {
+		--voice-player-tile-height: 18px;
+		--voice-player-toggle-size: 32px;
+
+		width: fit-content;
+		min-width: 0;
+
+		.voicePlayer__row {
+			gap: 10px;
+		}
+
+		&.voicePlayer--bubble-incoming {
+			padding: 6px 14px 6px 6px;
+			border-radius: 22px;
+		}
+	}
+
 	// -- play / pause -------------------------------------------------------
 
 	&__toggle {
@@ -108,6 +127,19 @@
 		&:focus-visible {
 			outline: 2px solid var(--m3-on-surface, #1a1c1e);
 			outline-offset: 2px;
+		}
+	}
+
+	&__spinner {
+		width: 14px;
+		height: 14px;
+		border: 2px solid currentColor;
+		border-right-color: transparent;
+		border-radius: 50%;
+		animation: voicePlayerSpin 0.8s linear infinite;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
 		}
 	}
 
@@ -172,11 +204,23 @@
 			background: var(--m3-primary, #a5000a);
 		}
 
+		// The tile being recorded right now.
+		&--live {
+			animation: voice-player-tile-live 1.2s ease-in-out infinite;
+		}
+
 		&:hover,
 		&:focus-visible {
 			outline: 2px solid var(--m3-on-surface, #1a1c1e);
 			outline-offset: 1px;
 		}
+	}
+
+	// While recording the tiles only show progress, nothing to click on.
+	&--recording &__tile {
+		display: block;
+		cursor: default;
+		outline: none;
 	}
 
 	&__clock {
@@ -199,6 +243,16 @@
 	&--bubble-none &__meta,
 	&--bubble-none &__ringRemaining {
 		opacity: 0.7;
+	}
+
+	// A sent note in the chat: as long as the bubble allows, whatever its length.
+	&--fill {
+		width: 360px;
+
+		.voicePlayer__tiles {
+			flex: 1 1 0;
+			grid-auto-columns: minmax(4px, 1fr);
+		}
 	}
 
 	// -- ring variant -------------------------------------------------------
@@ -266,5 +320,67 @@
 		font-weight: 400;
 		line-height: 15px;
 		opacity: 0.75;
+	}
+}
+
+@keyframes voice-player-tile-live {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.voicePlayer__tile--live {
+		animation: none;
+	}
+}
+
+.voiceNoteRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: fit-content;
+	max-width: 100%;
+	min-width: 0;
+
+	&:focus {
+		outline: none;
+	}
+
+	// A real button with a comfortable touch target (#1142).
+	&__discard {
+		flex: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		font-size: 20px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--m3-surface-container-highest, #e4e2e2);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+	}
+}
+
+@keyframes voicePlayerSpin {
+	to {
+		transform: rotate(360deg);
 	}
 }

@@ -36,6 +36,7 @@ const titleKey = (notice: FurtherCounsellingNotice) =>
 interface NoticeArgs {
 	notice: FurtherCounsellingNotice;
 	viewerIsAsker: boolean;
+	viewerIsAnonymous?: boolean;
 	messageId: string;
 	compact?: boolean;
 }
@@ -44,6 +45,7 @@ interface NoticeArgs {
 const NoticeInStream = ({
 	notice,
 	viewerIsAsker,
+	viewerIsAnonymous,
 	messageId,
 	compact
 }: NoticeArgs) => {
@@ -60,6 +62,7 @@ const NoticeInStream = ({
 					<FurtherCounsellingNoticeBody
 						notice={notice}
 						viewerIsAsker={viewerIsAsker}
+						viewerIsAnonymous={viewerIsAnonymous}
 						messageId={messageId}
 					/>
 				</CaseHandoverSystemMessageCard>
@@ -98,6 +101,8 @@ const meta = {
 					'FE#1876. A counsellor recommends further counselling from the session menu; the room shows this card.',
 					'',
 					'Only the advice seeker gets **Beratungsstelle finden**, which opens the request dialog with the topic preselected and the postcode per the platform setting. Afterwards the card says **Anfrage gestellt** and stays usable. The card is drawn only for a counsellor-sent event.',
+					'',
+					'FE#2251: in an anonymous live chat (only when the counselling centre switched it on) the person first keeps the conversation by creating an account; **Beratungsstelle finden** leads to that conversion, which then opens the request dialog with the topic.',
 					'',
 					'The two same-topic notices are plain text for everyone. The chat notices stay formal in both German variants.'
 				].join('\n')
@@ -147,6 +152,33 @@ export const AskerPhone390: Story = {
 	name: 'Asker — phone 390',
 	globals: phone390Globals,
 	args: { compact: true, messageId: 'story-recommendation-phone' }
+};
+
+export const AnonymousLiveChatPerson: Story = {
+	name: 'Live chat — anonymous person (account first)',
+	args: {
+		viewerIsAnonymous: true,
+		messageId: 'story-recommendation-live-chat'
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByText(NOTE)).toBeVisible();
+		await expect(
+			canvas.getByText(/zuerst ein Konto an|first create an account/)
+		).toBeVisible();
+		await expect(findButton(canvasElement)).toBeEnabled();
+	}
+};
+
+export const AnonymousLiveChatPersonPhone390: Story = {
+	tags: ['device-regression'],
+	name: 'Live chat — anonymous person, phone 390',
+	globals: phone390Globals,
+	args: {
+		compact: true,
+		viewerIsAnonymous: true,
+		messageId: 'story-recommendation-live-chat-phone'
+	}
 };
 
 export const CounsellorWithNote: Story = {

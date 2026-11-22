@@ -64,6 +64,13 @@
 		justify-content: space-between;
 	}
 
+	/* #2142: optional name and date/time, once the medium is chosen. */
+	&__details {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
 	&__temporaryText {
 		color: var(--m3-on-surface, #1b1b1c);
 		display: flex;
@@ -191,6 +198,14 @@
 		margin: 0;
 	}
 
+	/* *19: one line under the title in the calendar's "Links ohne Termin". */
+	&__description {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+		margin: -4px 0 0;
+	}
+
 	/* Column count follows the pane; a tile left alone in the last row widens (see .directLinkTile). */
 	&__grid {
 		display: grid;
@@ -206,6 +221,11 @@
 
 		@container my-direct-links (width >= 680px) {
 			grid-template-columns: repeat(3, minmax(0, 1fr));
+
+			/* Exactly two tiles share the row equally instead of 1 + a double-width one. */
+			&:has(> :nth-child(2):last-child) {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
 		}
 	}
 
@@ -318,6 +338,13 @@
 		overflow-wrap: break-word;
 	}
 
+	/* #2142: the date and time the counsellor noted. */
+	&__time {
+		color: var(--m3-on-surface, #1a1c1e);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
 	&__meta {
 		align-items: center;
 		color: var(--m3-on-surface-variant, #444748);
@@ -351,26 +378,9 @@
 			@include wide-tile;
 		}
 
-		&:last-child:nth-child(3n + 2) {
+		&:last-child:nth-child(3n + 2):not(:nth-child(2)) {
 			grid-column: span 2;
 		}
-	}
-}
-
-/* Three formats side by side: the cards share the row instead of wrapping. */
-.conversationCreate__picker:has(.directLinkCard) {
-	padding-inline: clamp(0px, calc((100% - 1146px) / 2), 128px);
-
-	.conversationCreate__cards {
-		flex-wrap: nowrap;
-		gap: 24px;
-	}
-
-	.formatCard {
-		flex: 1 1 0;
-		max-width: 360px;
-		min-width: 0;
-		width: auto;
 	}
 }
 

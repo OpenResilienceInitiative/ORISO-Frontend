@@ -27,6 +27,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	min-width: 0;
 	background-color: var(--m3-surface-container-lowest, #ffffff);
 	overflow: hidden;
+
+	// `hidden` still lets focus / `scrollIntoView` scroll the card itself, which
+	// shifts header, timeline and composer up and leaves a blank strip below
+	// the composer. `clip` forbids programmatic scrolling; browsers without it
+	// keep the `hidden` line above.
+	overflow: clip;
 	box-sizing: border-box;
 	transition: border-color 160ms ease;
 

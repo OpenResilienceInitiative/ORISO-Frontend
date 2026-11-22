@@ -57,12 +57,16 @@ const renderNotice = ({
 	raw,
 	senderId,
 	viewer,
-	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID
+	consultantMatrixUserId = MOCK_CONSULTANT_MATRIX_ID,
+	previewMode,
+	conversationType = 'AGENCY_COUNSELLING'
 }: {
 	raw: string;
 	senderId: string;
 	viewer: 'asker' | 'consultant';
 	consultantMatrixUserId?: string;
+	previewMode?: 'read' | 'interactive';
+	conversationType?: 'AGENCY_COUNSELLING' | 'LIVE_CHAT';
 }) =>
 	render(
 		<MemoryRouter>
@@ -101,8 +105,7 @@ const renderNotice = ({
 											...mockActiveSession1on1(),
 											item: {
 												...mockActiveSession1on1().item,
-												conversationType:
-													'AGENCY_COUNSELLING',
+												conversationType,
 												consultantMatrixUserId
 											}
 										},
@@ -118,6 +121,7 @@ const renderNotice = ({
 										messageTime: '1',
 										t: null
 									})}
+									previewMode={previewMode}
 									handleDecryptionErrors={() => {}}
 									handleDecryptionSuccess={() => {}}
 									e2eeParams={mockE2eeParams() as any}
@@ -153,7 +157,50 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 		).toBeTruthy();
 		// Never the raw JSON payload.
 		expect(document.body.textContent).not.toContain('topicId');
+		// A 1:1 advice seeker already has an account: no conversion step.
+		expect(
+			screen.queryByText('furtherCounselling.card.convertFirstHint')
+		).toBeNull();
 	});
+
+	it('sends a live chat person to the account conversion first, though the account carries the advice seeker authority (FE#2251)', () => {
+		// Dev, 17 Nov: a live chat guest from an invite link is a plain user
+		// (AUTHORIZATION_USER_DEFAULT), never ANONYMOUS_DEFAULT.
+		renderNotice({
+			raw: recommendation,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker',
+			conversationType: 'LIVE_CHAT'
+		});
+		expect(
+			screen.getByText('furtherCounselling.card.convertFirstHint')
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', {
+				name: 'furtherCounselling.card.findAgency'
+			})
+		).toBeTruthy();
+	});
+
+	it.each(['interactive', 'read'] as const)(
+		'shows the card without its button in the Activity Timeline (%s preview), which must not leave the Timeline (#1824)',
+		(previewMode) => {
+			renderNotice({
+				raw: recommendation,
+				senderId: MOCK_CONSULTANT_MATRIX_ID,
+				viewer: 'asker',
+				previewMode
+			});
+			expect(
+				screen.getByText('furtherCounselling.card.title')
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', {
+					name: 'furtherCounselling.card.findAgency'
+				})
+			).toBeNull();
+		}
+	);
 
 	it('shows the counsellor the same card without the button', () => {
 		renderNotice({
@@ -230,4 +277,40 @@ describe('MessageItemComponent — further counselling notices (FE#1876)', () =>
 		).toBeTruthy();
 		expect(document.body.textContent).not.toContain('newSessionId');
 	});
+});
+
+describe('MessageItemComponent — "Neuen Link senden" notice (#2252)', () => {
+	const renewed = `[SYSTEM_NOTIFICATION]${JSON.stringify({
+		type: 'DIRECT_INVITATION_RENEWED',
+		url: 'https://app.example/invite/new'
+	})}`;
+
+	it('links the new invitation in the conversation', () => {
+		renderNotice({
+			raw: renewed,
+			senderId: MOCK_CONSULTANT_MATRIX_ID,
+			viewer: 'asker'
+		});
+		expect(
+			screen
+				.getByRole('link', { name: 'https://app.example/invite/new' })
+				.getAttribute('href')
+		).toBe('https://app.example/invite/new');
+	});
+
+	it.each(['interactive', 'read'] as const)(
+		'shows the new link as plain text in the Activity Timeline (%s preview), which must not leave the Timeline',
+		(previewMode) => {
+			renderNotice({
+				raw: renewed,
+				senderId: MOCK_CONSULTANT_MATRIX_ID,
+				viewer: 'asker',
+				previewMode
+			});
+			expect(
+				screen.getByText('https://app.example/invite/new')
+			).toBeTruthy();
+			expect(screen.queryByRole('link')).toBeNull();
+		}
+	);
 });

@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 import i18n from '../../i18n';
 import { AccountData } from './accountData/AccountData';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
@@ -18,7 +22,12 @@ import { EmailNotification } from '../profile/EmailNotifications';
 import { TwoFactorSetupDialog } from '../twoFactorAuth/TwoFactorSetupDialog';
 
 type FixtureProps = {
-	surface: 'registration' | 'selfHelp' | 'profile' | 'otp' | 'removal';
+	surface:
+		| 'registration'
+		| 'selfHelp'
+		| 'profile'
+		| 'otp'
+		| 'profileWithEmail2fa';
 	editable: boolean;
 	collectionAllowed: boolean;
 	accountEligible: boolean;
@@ -42,7 +51,7 @@ const AccountPolicyFixture = ({
 	});
 	const user = accountPolicyUser({
 		email: storedEmail || undefined,
-		...(surface === 'removal'
+		...(surface === 'profileWithEmail2fa'
 			? {
 					twoFactorAuth: {
 						isActive: true,
@@ -68,7 +77,6 @@ const AccountPolicyFixture = ({
 				}}
 			>
 				<ModalProvider>
-					{surface === 'removal' && <div id="overlay" />}
 					<Box sx={{ width: 'min(520px, 100%)', mx: 'auto', p: 2 }}>
 						{surface === 'registration' ||
 						surface === 'selfHelp' ? (
@@ -80,7 +88,7 @@ const AccountPolicyFixture = ({
 										: 'AGENCY_COUNSELLING'
 								}
 							/>
-						) : surface === 'removal' ? (
+						) : surface === 'profileWithEmail2fa' ? (
 							<AskerAboutMeData />
 						) : surface === 'profile' ? (
 							<EmailNotification />
@@ -118,44 +126,32 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const OptionalAlias: Story = {
+/** #2210: registration asks for no display name — that is offered in the chat (ADR-018). */
+export const NoDisplayNameAtRegistration: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const alias = canvas.getByLabelText(i18n.t('profile.data.displayName'));
-		const login = canvas.getByLabelText(
-			i18n.t('registration.account.username.label')
-		);
-		const before = login.getAttribute('value');
-		await expect(alias).toHaveValue('');
-		await userEvent.type(alias, 'My chosen name');
-		await expect(alias).toHaveValue('My chosen name');
-		await expect(login).toHaveValue(before);
+		await expect(
+			canvas.queryByLabelText(i18n.t('profile.data.displayName'))
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', {
+				name: i18n.t('registration.account.displayName.suggest')
+			})
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.getByLabelText(i18n.t('registration.account.username.label'))
+		).toBeVisible();
 	}
 };
-export const GeneratedOnlyAlias: Story = {
+export const GeneratedOnlyLogin: Story = {
 	args: { editable: false },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const alias = canvas.getByLabelText(i18n.t('profile.data.displayName'));
-		const login = canvas.getByLabelText(
-			i18n.t('registration.account.username.label')
-		);
-		const initialAlias = (alias as HTMLInputElement).value;
-		await expect(alias).toHaveAttribute('readonly');
-		await expect(login).toHaveAttribute('readonly');
-		await expect(alias).not.toHaveValue('');
-		await userEvent.type(alias, 'Cannot type');
-		await expect(alias).toHaveValue(initialAlias);
-		await userEvent.click(
-			canvas.getByRole('button', {
-				name: i18n.t('registration.account.displayName.suggest')
-			})
-		);
-		await expect(alias).not.toHaveValue('');
 		await expect(
-			canvas.queryByRole('button', {
-				name: i18n.t('registration.account.displayName.useUsername')
-			})
+			canvas.getByLabelText(i18n.t('registration.account.username.label'))
+		).toHaveAttribute('readonly');
+		await expect(
+			canvas.queryByLabelText(i18n.t('profile.data.displayName'))
 		).not.toBeInTheDocument();
 	}
 };
@@ -233,7 +229,7 @@ export const NewEmailNotAllowed: Story = {
 /** Confirmation only: no delete request or irreversible action is performed. */
 export const StoredEmailRemovalConfirmation: Story = {
 	args: {
-		surface: 'removal',
+		surface: 'profileWithEmail2fa',
 		accountEligible: false,
 		storedEmail: 'existing@example.test'
 	},
@@ -247,17 +243,57 @@ export const StoredEmailRemovalConfirmation: Story = {
 				name: i18n.t('profile.unsetEmail.confirmOverlay.button.confirm')
 			})
 		);
-		await waitFor(() =>
-			expect(
-				host.getByRole('heading', {
-					name: i18n.t('profile.unsetEmail.confirmOverlay.headline')
-				})
-			).toBeVisible()
-		);
-		await expect(
-			host.getByText(
-				i18n.t('twoFactorAuth.email.delete.confirmOverlay.copy')
-			)
-		).toBeVisible();
+		const dialog = await host.findByRole('dialog', {
+			name: i18n.t('profile.unsetEmail.confirmOverlay.headline')
+		});
+		await waitFor(async () => {
+			await expect(dialog).toBeVisible();
+			await expect(
+				within(dialog).getByText(
+					i18n.t('twoFactorAuth.email.delete.confirmOverlay.copy')
+				)
+			).toBeVisible();
+		});
 	}
+};
+
+export const StoredEmailEditConfirmationDark: Story = {
+	args: {
+		surface: 'profileWithEmail2fa',
+		storedEmail: 'existing@example.test'
+	},
+	globals: { scheme: 'dark' },
+	play: async ({ canvasElement }) => {
+		const host = within(canvasElement.ownerDocument.body);
+		await userEvent.click(
+			within(canvasElement).getByLabelText(
+				i18n.t('profile.data.edit.button.edit')
+			)
+		);
+		const dialog = await host.findByRole('dialog', {
+			name: i18n.t('twoFactorAuth.email.change.confirmOverlay.title')
+		});
+		await waitFor(async () => {
+			await expect(dialog).toBeVisible();
+			for (const line of ['1', '2']) {
+				const warning = within(dialog).getByText(
+					i18n.t(
+						`twoFactorAuth.email.change.confirmOverlay.copy.${line}`
+					)
+				);
+				await expect(warning).toBeVisible();
+				await expect(
+					wcagContrast(
+						getComputedStyle(warning).color,
+						effectiveBackground(warning)
+					)
+				).toBeGreaterThanOrEqual(4.5);
+			}
+		});
+	}
+};
+
+export const StoredEmailEditConfirmationLight: Story = {
+	...StoredEmailEditConfirmationDark,
+	globals: { scheme: 'light' }
 };

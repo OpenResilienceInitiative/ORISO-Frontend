@@ -16,7 +16,7 @@ const ROOM = '!call:oriso.example';
 describe('outgoing call startup ownership', () => {
 	const createRoom = vi.fn();
 	const sendEvent = vi.fn();
-	const invite = vi.fn();
+	const getStateEvent = vi.fn();
 	const leave = vi.fn();
 	const forget = vi.fn();
 	const sendMessage = vi.fn();
@@ -28,7 +28,7 @@ describe('outgoing call startup ownership', () => {
 			'REACT_APP_MATRIXRTC_MEMBERSHIP_READER_USER_ID',
 			'@reader:oriso.example'
 		);
-		invite.mockResolvedValue(undefined);
+		getStateEvent.mockResolvedValue({ membership: 'invite' });
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
 		leave.mockResolvedValue(undefined);
 		forget.mockResolvedValue(undefined);
@@ -37,7 +37,10 @@ describe('outgoing call startup ownership', () => {
 			createRoom,
 			sendEvent,
 			sendMessage,
-			invite,
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
+			getStateEvent,
 			leave,
 			forget,
 			getUserId: () => '@caller:oriso.example',
@@ -188,7 +191,7 @@ describe('outgoing call startup ownership', () => {
 		callManager.startCall(SOURCE, true, false);
 		callManager.endCall(false);
 		resolveRoom({ room_id: ROOM });
-		await vi.waitFor(() => expect(invite).toHaveBeenCalled());
+		await vi.waitFor(() => expect(getStateEvent).toHaveBeenCalled());
 		await Promise.resolve();
 		expect(callManager.getCurrentCall()).toBeNull();
 		expect(sendEvent).not.toHaveBeenCalled();
@@ -228,7 +231,7 @@ describe('outgoing call startup ownership', () => {
 			true
 		);
 		resolveRoom({ room_id: ROOM });
-		await vi.waitFor(() => expect(invite).toHaveBeenCalled());
+		await vi.waitFor(() => expect(getStateEvent).toHaveBeenCalled());
 		await Promise.resolve();
 		expect(callManager.getCurrentCall()?.callId).toBe('new-call');
 		expect(sendEvent).not.toHaveBeenCalled();
@@ -314,16 +317,17 @@ describe('outgoing call startup ownership', () => {
 		/*
 		 * The other half of the cleanup, and the half the caller cannot do.
 		 *
-		 * Past `createRoom` three things can throw: the membership reader may
-		 * be unconfigured, its invite can reject, and `inviteSessionMembers`
-		 * throws if any invite failed. Each threw before the room id was
+		 * Reader membership verification and the fallback participant invites
+		 * can fail after creation. The failure occurs before the room id is
 		 * returned, so the caller's `elementCallRoomId` stayed undefined and
 		 * its own cleanup could not run — every retry left another JOINED room
 		 * carrying the plaintext call/source binding and a name that reads
 		 * "Group call for <session room>".
 		 */
 		createRoom.mockResolvedValue({ room_id: ROOM });
-		invite.mockRejectedValue(new Error('reader cannot be invited'));
+		getStateEvent.mockRejectedValue(
+			new Error('reader membership cannot be read')
+		);
 		vi.stubGlobal('alert', vi.fn());
 
 		callManager.startCall(SOURCE, true, true);
@@ -373,7 +377,10 @@ describe('outgoing call startup ownership', () => {
 			createRoom,
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
-			invite,
+			getCapabilities: vi
+				.fn()
+				.mockResolvedValue({ 'm.room_versions': { default: '12' } }),
+			getStateEvent,
 			leave: otherLeave,
 			forget: otherForget,
 			getUserId: () => '@someone-else:oriso.example',
@@ -487,7 +494,10 @@ describe('outgoing call startup ownership', () => {
 				createRoom,
 				sendEvent,
 				sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
-				invite,
+				getCapabilities: vi.fn().mockResolvedValue({
+					'm.room_versions': { default: '12' }
+				}),
+				getStateEvent,
 				leave: otherLeave,
 				forget: otherForget,
 				getUserId: () => '@someone-else:oriso.example',

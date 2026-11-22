@@ -41,7 +41,12 @@ import {
 
 /* ---------- The browser's devices, faked ---------- */
 
-type DeviceCase = 'ok' | 'permissionDenied' | 'noCamera' | 'noMicrophone';
+type DeviceCase =
+	| 'ok'
+	| 'permissionDenied'
+	| 'noCamera'
+	| 'noMicrophone'
+	| 'cameraBlocked';
 
 const LABELS: [MediaDeviceKind, string, string][] = [
 	['videoinput', 'cam-1', 'FaceTime HD-Kamera'],
@@ -59,6 +64,7 @@ const LABELS: [MediaDeviceKind, string, string][] = [
 const fakeMediaDevices = (which: DeviceCase) => {
 	const tracks: MediaStreamTrack[] = [];
 	const contexts: AudioContext[] = [];
+	const state = { cameraAllowed: false };
 	const refuse = (name: string) =>
 		Promise.reject(new DOMException(name, name));
 	const mediaDevices = {
@@ -66,6 +72,9 @@ const fakeMediaDevices = (which: DeviceCase) => {
 			if (which === 'permissionDenied') return refuse('NotAllowedError');
 			if (which === 'noMicrophone') return refuse('NotFoundError');
 			if (video && which === 'noCamera') return refuse('NotFoundError');
+			// Allowed again in the browser's site settings: see `allowCamera`.
+			if (video && which === 'cameraBlocked' && !state.cameraAllowed)
+				return refuse('NotAllowedError');
 			const context = new AudioContext();
 			contexts.push(context);
 			const own = context.createMediaStreamDestination().stream;
@@ -106,7 +115,7 @@ const fakeMediaDevices = (which: DeviceCase) => {
 		addEventListener: () => undefined,
 		removeEventListener: () => undefined
 	} as unknown as MediaDevices;
-	return { mediaDevices, tracks, contexts };
+	return { mediaDevices, tracks, contexts, state };
 };
 
 let fake: ReturnType<typeof fakeMediaDevices> | undefined;
@@ -469,9 +478,16 @@ export const CallNoCamera: Story = {
 		const p = page(canvasElement);
 		await userEvent.click(await callJoin(canvasElement));
 		await expectSettled(canvasElement);
+		// No camera is not a dead switch: it asks the browser again
+		// ("Kamera erneut suchen"), e.g. after the camera was allowed.
+		const camera = p.getByTestId('toggle-camera');
+		await waitFor(() => expect(camera).toBeEnabled());
+		const before = fake!.tracks.length;
+		await userEvent.click(camera);
 		await waitFor(() =>
-			expect(p.getByTestId('toggle-camera')).toBeDisabled()
+			expect(fake!.tracks.length).toBeGreaterThan(before)
 		);
+		await expectSettled(canvasElement);
 		await userEvent.click(p.getByTestId('knock-wait-join'));
 		await waitFor(() => expect(args.onJoin).toHaveBeenCalledTimes(1));
 		await expect(peekJoinMedia(runningCall.roomRef)).toEqual({
@@ -479,6 +495,43 @@ export const CallNoCamera: Story = {
 			video_enabled: false,
 			microphoneLabel: 'MacBook Pro-Mikrofon'
 		});
+	}
+};
+
+/**
+ * Dev, 21 Nov (Frank): the camera was blocked for the site. The check must
+ * say so, not run silently with the microphone; once the camera is allowed
+ * in the browser, "Kamera erneut prüfen" shows the picture without a reload.
+ */
+export const CallCameraBlocked: Story = {
+	...callMessage,
+	name: 'Call · camera blocked, then allowed',
+	globals: desktop1440Globals,
+	beforeEach: withDevices('cameraBlocked'),
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await callJoin(canvasElement));
+		await expectSettled(canvasElement);
+		const notice = await p.findByTestId('camera-notice');
+		await expect(notice).toHaveAttribute(
+			'data-blocker',
+			'permissionDenied'
+		);
+		await expect(p.getByTestId('toggle-camera')).toBeEnabled();
+
+		fake!.state.cameraAllowed = true;
+		await userEvent.click(within(notice).getByRole('button'));
+		await expectLivePreview(canvasElement);
+		await waitFor(() =>
+			expect(
+				fake!.tracks.some(
+					(t) => t.kind === 'video' && t.readyState === 'live'
+				)
+			).toBe(true)
+		);
+		await waitFor(() =>
+			expect(p.queryByTestId('camera-notice')).toBeNull()
+		);
 	}
 };
 
@@ -552,6 +605,46 @@ export const CircleMicOffDone: Story = {
 	}
 };
 
+export const CircleHeadsetKeptOnReopen: Story = {
+	name: 'Circle · headset picked, "Fertig", reopened: still the headset',
+	globals: desktop1440Globals,
+	parameters: circleParameters,
+	beforeEach: withDevices('ok'),
+	render: () => <CircleLobby layout="desktop" />,
+	play: async ({ canvasElement }) => {
+		const p = page(canvasElement);
+		await userEvent.click(await circleOption(canvasElement));
+		await expectSettled(canvasElement);
+		await expectLivePreview(canvasElement);
+		await userEvent.click(p.getByTestId('device-picker-microphone'));
+		await userEvent.click(
+			await p.findByRole('menuitem', { name: 'Jabra Evolve2 Headset' })
+		);
+		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
+		await expectClosed(canvasElement);
+
+		// Opened again: the check opens on the headset picked before
+		// (CodeRabbit on #2028, #2037), not on the default.
+		await userEvent.click(await circleOption(canvasElement));
+		await expectSettled(canvasElement);
+		await expect(
+			await p.findByRole('button', {
+				name: 'Mikrofon: Jabra Evolve2 Headset'
+			})
+		).toBeVisible();
+		await userEvent.click(p.getByRole('button', { name: 'Fertig' }));
+		await expectClosed(canvasElement);
+		await expect(peekJoinMedia(GROUP_STAGE_ROOM_ID)).toEqual({
+			audio_enabled: true,
+			video_enabled: true,
+			microphoneLabel: 'Jabra Evolve2 Headset',
+			cameraLabel: 'FaceTime HD-Kamera'
+		});
+		// Back in the unchanged pre-lobby.
+		await expectWaitingRoomLayout(canvasElement, { frame: 'card' });
+	}
+};
+
 export const CircleDevicesOkPhone: Story = {
 	name: 'Circle · device check open · phone 390',
 	globals: phone390Globals,
@@ -590,11 +683,15 @@ export const CircleNoCameraPhone: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(await circleOption(canvasElement));
 		await expectSettled(canvasElement);
+		// No camera: the switch asks again ("Kamera erneut suchen").
 		await waitFor(() =>
 			expect(
 				page(canvasElement).getByTestId('toggle-camera')
-			).toBeDisabled()
+			).toBeEnabled()
 		);
+		await expect(
+			page(canvasElement).queryByTestId('camera-notice')
+		).toBeNull();
 	}
 };
 

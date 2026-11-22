@@ -22,6 +22,7 @@ export const DISABLED_AREAS: ReadonlyArray<NotificationArea> = [];
 
 export const NOTIFICATION_KINDS = [
 	'new',
+	'teamDiscussion',
 	'standard',
 	'liveChat',
 	'mention',
@@ -36,8 +37,10 @@ export const AREA_KINDS: Record<
 	NotificationArea,
 	ReadonlyArray<NotificationKind>
 > = {
-	requests: ['new', 'standard', 'mention'],
-	conversations: ['new', 'standard', 'liveChat', 'mention', 'handover'],
+	// "Team-Besprechung" (team-only side discussion of an open enquiry) lives
+	// with the enquiry, so its @-mentions are Anfrage mentions too.
+	requests: ['new', 'teamDiscussion', 'standard', 'mention'],
+	conversations: ['standard', 'liveChat', 'mention', 'handover'],
 	timeCritical: ['call', 'appointment']
 };
 
@@ -83,16 +86,21 @@ const kind = (partial: Partial<KindConfig> = {}): KindConfig => ({
 });
 
 const areaDefaults = (): Record<NotificationKind, KindConfig> => ({
-	new: kind(),
+	// Events that need attention get one short tone (ton-2, 0.3 s; selectable in the UI) out of the box (#1211);
+	// 'standard' (ongoing chatter) stays silent. Stored user choices still win.
+	new: kind({ sound: 'ton-2' }),
+	// Counsellor-only row (the Anfragen tab); same short tone the old
+	// Gespräche "Neue Anfrage" row had for team posts (#1857).
+	teamDiscussion: kind({ sound: 'ton-2' }),
 	standard: kind(),
 	// A live-chat seeker is waiting right now, so this row rings out of the
 	// box (FE#1470). Only a counsellor's live-chat messages land here.
 	liveChat: kind({ sound: 'ton-1', email: false }),
-	mention: kind({ email: false }),
-	handover: kind(),
+	mention: kind({ sound: 'ton-2', email: false }),
+	handover: kind({ sound: 'ton-2' }),
 	// Calls keep ringing out of the box — the dedicated ring tone.
 	call: kind({ sound: 'ring', email: false }),
-	appointment: kind()
+	appointment: kind({ sound: 'ton-2' })
 });
 
 export const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
@@ -111,6 +119,12 @@ const isArea = (v: unknown): v is NotificationArea =>
 const isKind = (v: unknown): v is NotificationKind =>
 	NOTIFICATION_KINDS.includes(v as NotificationKind);
 
+/** Tones the dialog no longer offers play as the short default (Frank, 2 Nov). */
+const RETIRED_SOUNDS: ReadonlyArray<string> = ['chime', 'ding', 'soft'];
+
+export const parseStoredSound = (sound: string): SoundId =>
+	RETIRED_SOUNDS.includes(sound) ? 'ton-2' : (sound as SoundId);
+
 /** Tolerant parse: keep known area/kind values, fall back to defaults otherwise. */
 export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 	const source = (raw ?? {}) as Record<string, any>;
@@ -119,7 +133,17 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 		const areaSrc = (source[area] ?? {}) as Record<string, any>;
 		result[area] = {} as Record<NotificationKind, KindConfig>;
 		for (const kindName of NOTIFICATION_KINDS) {
-			const kindSrc = (areaSrc[kindName] ?? {}) as Record<string, any>;
+			// The team discussion used to share Gespräche → "Neue Anfrage":
+			// carry a saved choice of that row over to the new row once. After
+			// the first save the new row has its own stored value.
+			const legacy =
+				area === 'requests' && kindName === 'teamDiscussion'
+					? source.conversations?.new
+					: undefined;
+			const kindSrc = (areaSrc[kindName] ?? legacy ?? {}) as Record<
+				string,
+				any
+			>;
 			const fallback = DEFAULT_NOTIFICATION_CONFIG[area][kindName];
 			result[area][kindName] = {
 				// legacy boolean (pre-3-state) parses tolerantly
@@ -133,7 +157,7 @@ export const parseNotificationConfig = (raw: unknown): NotificationConfig => {
 							: fallback.banner,
 				sound:
 					typeof kindSrc.sound === 'string'
-						? (kindSrc.sound as SoundId)
+						? parseStoredSound(kindSrc.sound)
 						: fallback.sound,
 				email:
 					typeof kindSrc.email === 'boolean'
@@ -172,9 +196,11 @@ export const areaForFamily = (family: string): NotificationArea => {
 /** Arrival events — something genuinely NEW begins (row "Neu"). */
 const NEW_KIND_EVENTS: ReadonlyArray<string> = [
 	'request.new',
-	'team.discussion.new',
 	'waiting_room.client.joined'
 ];
+
+/** A post in an enquiry's team discussion (Team-Besprechung). */
+export const TEAM_DISCUSSION_EVENT = 'team.discussion.new';
 
 export const kindForEvent = (
 	family: string,
@@ -199,14 +225,32 @@ export const kindForEvent = (
 	return 'standard';
 };
 
+/** The settings row (tab + kind) one concrete event is governed by. */
+export const areaKindForEvent = (
+	family: string,
+	eventType: string,
+	isMention: boolean
+): { area: NotificationArea; kind: NotificationKind } =>
+	eventType === TEAM_DISCUSSION_EVENT
+		? {
+				area: 'requests',
+				kind: isMention ? 'mention' : 'teamDiscussion'
+			}
+		: {
+				area: areaForFamily(family),
+				kind: kindForEvent(family, eventType, isMention)
+			};
+
 /** The configured banner/sound/email/volume entry for one concrete event. */
 export const soundSettingForEvent = (
 	config: NotificationConfig,
 	family: string,
 	eventType: string,
 	isMention: boolean
-): KindConfig =>
-	config[areaForFamily(family)][kindForEvent(family, eventType, isMention)];
+): KindConfig => {
+	const { area, kind } = areaKindForEvent(family, eventType, isMention);
+	return config[area][kind];
+};
 
 /** Immutably set one field of one area+kind. */
 export const setKindField = <K extends keyof KindConfig>(

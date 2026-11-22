@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vite-plus/test';
 
 import {
 	CALL_IDENTITY_EVENT_TYPE,
+	animalNameOf,
 	type CallIdentity,
 	ownCallIdentity
 } from './callIdentity';
@@ -34,21 +35,24 @@ const ON_THE_WIRE = {
 		file: 'fox.svg',
 		bg: '#165E83',
 		ink: '#ffffff',
-		name: 'ruhiger Fuchs 432'
+		name: 'ruhiger Fuchs 432',
+		role: 'asker'
 	},
 	motif: {
 		kind: 'motif',
 		file: 'owl.svg',
 		bg: '#a5000a',
 		ink: '#ffffff',
-		name: 'Beratung Nord'
+		name: 'Beratung Nord',
+		role: 'counsellor'
 	},
 	initials: {
 		kind: 'initials',
 		bg: '#a5000a',
 		ink: '#ffffff',
 		initials: 'SP',
-		name: 'Susanne Pfeiffer'
+		name: 'Susanne Pfeiffer',
+		role: 'counsellor'
 	}
 } as const;
 
@@ -116,10 +120,10 @@ describe('the record that crosses into the call', () => {
 			isConsultant: false,
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
-		// Stated as the value, not only as the absence of a pattern: an
-		// assertion that `undefined` is not a Matrix id passes for a host
-		// that publishes no name at all, which is the state this replaces.
-		expect(identity.name).toBe('anon');
+		// Call design S1: not the login name either. Without a public name an
+		// advice seeker is called by their animal.
+		expect(identity.name).toBe(animalNameOf(identity.file));
+		expect(identity.name).toMatch(/^\p{Lu}/u);
 		expect(identity.name).not.toMatch(/^@[^:\s]+:[^\s]+$/);
 	});
 
@@ -144,41 +148,52 @@ describe('the record that crosses into the call', () => {
 	});
 
 	/*
-	 * And the case that can actually fail.
-	 *
-	 * The test above passes whatever the legal name does, because a display
-	 * name wins ahead of it either way — so it pins nothing. `IdentitySource`
-	 * allows `firstName` and `lastName` with no display name at all, which is
-	 * the shape a counsellor record takes before their public name is set,
-	 * and that is where `resolvePreferredName` would reach the legal name if
-	 * this ever passed it four arguments instead of two.
+	 * The case that can actually fail: a counsellor record with legal name
+	 * parts and no public name. The call names them by role, never by the
+	 * legal name and never by the login name (call design S1).
 	 */
-	it('says nothing at all rather than a counsellor´s legal name', () => {
+	it('names a counsellor by role rather than by a legal or login name', () => {
 		const identity = ownCallIdentity({
-			userId: '@berater:oriso.test',
-			userData: { firstName: 'Susanne', lastName: 'Pfeiffer' },
+			userId: '@krusty.clown_at_openresilience.cc:oriso.test',
+			userData: {
+				firstName: 'Susanne',
+				lastName: 'Pfeiffer',
+				userName: 'krusty.clown_at_openresilience.cc'
+			},
 			isConsultant: true,
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
-		expect('name' in identity).toBe(false);
+		expect(identity.name).toBe('Beratung');
+		expect(identity.role).toBe('counsellor');
 		// The letters are a different exposure and stay: two initials on a
 		// coloured circle are what the chat shows this counsellor too.
 		expect(identity.initials).toBe('SP');
 	});
 
 	/*
-	 * Absent, not empty. The fork reads a missing `name` as "we were not
-	 * told" and keeps the display name it has; an empty string would be a
-	 * name of nothing, and a key present with `undefined` is neither.
+	 * Always a name, so the fork never falls back to the local part of the
+	 * Matrix id (`shownNameFor`), which is the raw login name.
 	 */
-	it('leaves the field off entirely when there is no name', () => {
+	it('always names an advice seeker, by their animal when nothing else', () => {
 		const identity = ownCallIdentity({
 			userId: '@anon:oriso.test',
 			userData: {},
 			isConsultant: false,
 			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
 		});
-		expect('name' in identity).toBe(false);
+		expect(identity.name).toBeTruthy();
+		expect(identity.name).toBe(animalNameOf(identity.file));
+		expect(identity.role).toBe('asker');
+	});
+
+	it('refuses a display name that is only a login name', () => {
+		const identity = ownCallIdentity({
+			userId: '@hugo:oriso.test',
+			userData: { displayName: 'hugo.simpson_at_trail.ist' },
+			isConsultant: false,
+			brand: { primary: '#a5000a', onPrimary: '#ffffff' }
+		});
+		expect(identity.name).toBe(animalNameOf(identity.file));
 	});
 
 	it('never spells a colour the way the rest of the app does', () => {

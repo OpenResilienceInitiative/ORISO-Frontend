@@ -3,7 +3,7 @@ import type { Consultant } from '../../../api/apiGetAgencyConsultantList';
 /**
  * Who a counsellor may pick for an internal chat (Functionality Access
  * setting `internalGroupChat.recipientScope`, ORISO-TenantService#321):
- * the counselling centre only, the whole Träger, or the whole platform.
+ * the counselling centre only, the whole Träger, or participating Träger.
  */
 export type InternalChatRecipientScope = 'AGENCY' | 'TENANT' | 'PLATFORM';
 
@@ -45,9 +45,7 @@ interface ScopeFilterInput {
  *   Fail closed: a colleague whose centres are not delivered is dropped, so a
  *   directory that does not fill them yields an empty picker (the "no
  *   colleagues" state) and never an offer of people from other centres.
- * - TENANT / PLATFORM: the directory as delivered. The directory the
- *   Frontend can read is the Träger's; a platform-wide directory does not
- *   exist yet, so PLATFORM lists the same people as TENANT for now.
+ * - TENANT / PLATFORM: the directory as delivered.
  */
 export const filterColleaguesForScope = ({
 	scope,

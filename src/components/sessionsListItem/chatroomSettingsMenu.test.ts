@@ -25,7 +25,7 @@ const consultantSession = (
 	isAgencyCounselling: true,
 	teamDiscussionFeatureEnabled: true,
 	hasExistingTeamDiscussion: false,
-	isGroupChatOwner: false,
+	canEditGroupChatSettings: false,
 	isGroupChatActive: false,
 	hasMatrixRoom: true,
 	isGroupChatSubscribed: false,
@@ -41,7 +41,7 @@ const ownedGroupChat = (
 	consultantSession({
 		isSession: false,
 		isGroup: true,
-		isGroupChatOwner: true,
+		canEditGroupChatSettings: true,
 		isAgencyCounselling: false,
 		...overrides
 	});
@@ -112,43 +112,32 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		});
 	});
 
-	describe('delete — must mirror the session header menu (SessionMenu.tsx)', () => {
-		it('is offered to the assigned consultant on an active session', () => {
+	describe('delete — never offered (ORISO-Admin#1518)', () => {
+		// Deleting hard-deleted the chat for the advice seeker too and could
+		// deactivate their account. Counsellors archive instead; the advice
+		// seeker keeps the whole history until they delete it themselves.
+		const everyRole: ChatroomSettingsMenuInput[] = [
+			consultantSession(),
+			consultantSession({ isArchiveTab: true }),
+			consultantSession({ isSupervisorView: true }),
+			consultantEnquiry(),
+			consultantSession({ isAsker: true, isConsultant: false }),
+			ownedGroupChat()
+		];
+
+		it('exposes no delete flag for any role or list', () => {
+			everyRole.forEach((input) => {
+				expect(
+					getChatroomSettingsMenuVisibility(input)
+				).not.toHaveProperty('showDelete');
+			});
+		});
+
+		it('keeps archive as the counsellor’s way to tidy the list', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(consultantSession())
-					.showDelete
+					.showArchive
 			).toBe(true);
-		});
-
-		it('is withheld on an enquiry', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(consultantEnquiry())
-					.showDelete
-			).toBe(false);
-		});
-
-		it('is withheld from a supervisor observing someone else’s session', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isSupervisorView: true })
-				).showDelete
-			).toBe(false);
-		});
-
-		it('is withheld from the asker', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isAsker: true, isConsultant: false })
-				).showDelete
-			).toBe(false);
-		});
-
-		it('is withheld when the item is not a session', () => {
-			expect(
-				getChatroomSettingsMenuVisibility(
-					consultantSession({ isSession: false })
-				).showDelete
-			).toBe(false);
 		});
 	});
 
@@ -221,7 +210,10 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld while the group chat is running', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatActive: true })
+					ownedGroupChat({
+						isGroupChatActive: true,
+						canEditGroupChatSettings: false
+					})
 				).showChatSettings
 			).toBe(false);
 		});
@@ -229,7 +221,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld from a consultant who does not own the group chat', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					ownedGroupChat({ isGroupChatOwner: false })
+					ownedGroupChat({ canEditGroupChatSettings: false })
 				).showChatSettings
 			).toBe(false);
 		});
@@ -255,7 +247,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		it('is withheld on a one-to-one session, which has no group settings', () => {
 			expect(
 				getChatroomSettingsMenuVisibility(
-					consultantSession({ isGroupChatOwner: true })
+					consultantSession({ canEditGroupChatSettings: true })
 				).showChatSettings
 			).toBe(false);
 		});
@@ -273,7 +265,6 @@ describe('getChatroomSettingsMenuVisibility', () => {
 				getChatroomSettingsMenuVisibility(ownedGroupChat());
 			expect(visibility.showArchive).toBe(false);
 			expect(visibility.showDearchive).toBe(false);
-			expect(visibility.showDelete).toBe(false);
 			expect(visibility.showRequestHelp).toBe(false);
 		});
 	});
@@ -297,7 +288,6 @@ describe('getChatroomSettingsMenuVisibility', () => {
 					'showArchive',
 					'showChatSettings',
 					'showDearchive',
-					'showDelete',
 					'showLeaveGroup',
 					'showRequestHelp'
 				]);

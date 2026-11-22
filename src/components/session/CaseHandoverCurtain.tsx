@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetCaseHandoverStatus,
@@ -9,6 +16,8 @@ import {
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
 import { FETCH_ERRORS } from '../../api/fetchData';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { ActiveSessionContext } from '../../globalState/provider/ActiveSessionProvider';
 import { CaseHandoverReasonList } from '../caseHandover/CaseHandoverReasonList';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import {
@@ -29,10 +38,10 @@ import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { SessionTopic } from '../sessionHeader/SessionTopic';
 import {
 	activateCaseHandoverActor,
-	clearCaseHandoverOperation,
 	clearCaseHandoverOperationIfMatches,
 	getCaseHandoverOperation,
-	getOrCreateCaseHandoverOperation
+	getOrCreateCaseHandoverOperation,
+	isCaseHandoverActorActive
 } from '../caseHandover/caseHandoverOperationStore';
 
 /**
@@ -403,6 +412,7 @@ export const CaseHandoverCurtain = ({
 	topicLabel
 }: CaseHandoverCurtainProps) => {
 	const { t: translate } = useTranslation();
+	const activeSessionContext = useContext(ActiveSessionContext);
 	const [step, setStep] = useState<CaseHandoverCurtainStep>('intro');
 	const {
 		reasons,
@@ -467,12 +477,42 @@ export const CaseHandoverCurtain = ({
 		return step;
 	}, [canReclaim, status?.status, step]);
 
+	const applyMutationStatus = (
+		nextStatus: CaseHandoverStatus,
+		isCurrentRequest: () => boolean
+	) => {
+		const current = isCurrentRequest();
+		if (nextStatus.sessionId !== sessionId) {
+			if (current) setError(translate('caseHandover.error.failed'));
+			return false;
+		}
+		if (current) onStatusChange(nextStatus);
+		if (isCaseHandoverActorActive(actorId)) {
+			messageEventEmitter.emit({ changedSessionId: sessionId });
+		}
+		return current;
+	};
+
 	const handleReclaim = () => {
+		if (isSubmitting) return;
 		setIsSubmitting(true);
 		setError('');
+		const requestIdentity = {};
+		activeRequestRef.current = requestIdentity;
+		const isCurrentRequest = () =>
+			activeRequestRef.current === requestIdentity;
+
 		apiReclaimCaseHandover(sessionId)
-			.then(onStatusChange)
+			.then((nextStatus) => {
+				if (!applyMutationStatus(nextStatus, isCurrentRequest)) return;
+				void activeSessionContext
+					?.refreshActiveSession?.()
+					.catch(() => {
+						// Reclaim already succeeded. Keep its granted access on refresh failure.
+					});
+			})
 			.catch((reclaimError) => {
+				if (!isCurrentRequest()) return;
 				setError(
 					reclaimError?.message === FETCH_ERRORS.CONFLICT
 						? translate('caseHandover.curtain.reclaim.unavailable')
@@ -481,7 +521,11 @@ export const CaseHandoverCurtain = ({
 							: translate('caseHandover.error.failed')
 				);
 			})
-			.finally(() => setIsSubmitting(false));
+			.finally(() => {
+				if (!isCurrentRequest()) return;
+				activeRequestRef.current = null;
+				setIsSubmitting(false);
+			});
 	};
 
 	const handleSubmit = () => {
@@ -517,15 +561,11 @@ export const CaseHandoverCurtain = ({
 			operation.operationId
 		)
 			.then((nextStatus) => {
-				if (!isCurrentRequest()) {
-					return;
-				}
-				if (nextStatus.sessionId !== requestSessionId) {
-					setError(translate('caseHandover.error.failed'));
-					return;
-				}
-				onStatusChange(nextStatus);
-				clearCaseHandoverOperation(operation);
+				if (!applyMutationStatus(nextStatus, isCurrentRequest)) return;
+				clearCaseHandoverOperationIfMatches(
+					operation,
+					operation.operationId
+				);
 			})
 			.catch(async (requestError) => {
 				if (!isCurrentRequest()) {

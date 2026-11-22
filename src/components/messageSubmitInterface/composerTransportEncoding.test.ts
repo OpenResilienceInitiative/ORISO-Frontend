@@ -67,6 +67,12 @@ const TOOLBAR_OUTPUT: Array<{
 		expectRendered: /<blockquote>/
 	},
 	{
+		// #2135 battle test: `---` showed in the composer, vanished on send.
+		action: 'horizontalRule',
+		composerHtml: '<p style="text-align: left;">Oben</p><hr><p>Unten</p>',
+		expectRendered: /<hr \/>|<hr>/
+	},
+	{
 		action: 'codeBlock',
 		composerHtml: '<pre><code>Text</code></pre>',
 		expectRendered: /<pre><code>Text<\/code><\/pre>/
@@ -208,6 +214,54 @@ describe('composer formatting survives the transport round trip', () => {
 
 			expect(rendered).toBe(
 				'<input type="checkbox" disabled="disabled" />'
+			);
+		});
+	});
+
+	/**
+	 * #2135 — empty lines between paragraphs are shown, so empty lines at the
+	 * very start or end would show as a blank band inside the bubble. They are
+	 * dropped on send; the ones between paragraphs stay.
+	 */
+	describe('blank lines at the edges of a message (#2135)', () => {
+		const empty = '<p style="text-align: left;"></p>';
+		const brEmpty = '<p style="text-align: left;"><br></p>';
+
+		it('drops leading and trailing empty paragraphs', () => {
+			const markup = composerHtmlToTransportMarkup(
+				`${empty}${brEmpty}<p style="text-align: left;">Hallo</p>${empty}${brEmpty}`
+			);
+
+			expect(markup).toBe('[[align:left]]<p>Hallo</p>[[/align]]');
+		});
+
+		it('keeps empty paragraphs between text', () => {
+			const markup = composerHtmlToTransportMarkup(
+				`<p>Eins</p>${empty}${empty}<p>Zwei</p>${empty}`
+			);
+
+			expect(markup).toBe(
+				'<p>Eins</p>[[align:left]]<p></p>[[/align]][[align:left]]<p></p>[[/align]]<p>Zwei</p>'
+			);
+		});
+
+		it('keeps a <br>-only paragraph between text through a round trip', () => {
+			const once = composerHtmlToTransportMarkup(
+				`<p>Eins</p>${brEmpty}<p>Zwei</p>`
+			);
+			const twice = composerHtmlToTransportMarkup(
+				transportMarkupToComposerHtml(once)
+			);
+
+			expect(once).toBe(
+				'<p>Eins</p>[[align:left]]<p><br></p>[[/align]]<p>Zwei</p>'
+			);
+			expect(twice).toBe(once);
+		});
+
+		it('leaves a message of only empty lines empty', () => {
+			expect(composerHtmlToTransportMarkup(`${empty}${brEmpty}`)).toBe(
+				''
 			);
 		});
 	});

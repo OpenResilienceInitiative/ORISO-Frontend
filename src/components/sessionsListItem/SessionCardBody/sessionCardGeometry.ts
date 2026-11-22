@@ -1,6 +1,8 @@
 /** Single source for the card body's numbers; the stylesheet reads them as custom properties. */
 export interface SessionCardGeometry {
 	avatar: number;
+	/** A group's overlapping stack is wider than one avatar; the text wraps its last circle. */
+	avatarWidth?: number;
 	gap: number;
 	nameLine: number;
 	previewLine: number;
@@ -32,6 +34,7 @@ export const SESSION_CARD_GEOMETRY: SessionCardGeometry = {
  */
 export const sessionCardPreviewIndents = (g: SessionCardGeometry): number[] => {
 	const r = g.avatar / 2;
+	const stack = (g.avatarWidth ?? g.avatar) - g.avatar;
 	// The avatar is level with the name, so its centre sits `nameLine - r`
 	// above the first preview line.
 	const centreY = r - g.nameLine;
@@ -41,8 +44,9 @@ export const sessionCardPreviewIndents = (g: SessionCardGeometry): number[] => {
 		r + Math.sqrt(Math.max(0, r * r - dy * dy)) + g.gap
 	);
 	const step = first - second;
-	return Array.from({ length: g.previewLines }, (_, line) =>
-		line === 0 ? first : second - step * (line - 1)
+	return Array.from(
+		{ length: g.previewLines },
+		(_, line) => stack + (line === 0 ? first : second - step * (line - 1))
 	);
 };
 

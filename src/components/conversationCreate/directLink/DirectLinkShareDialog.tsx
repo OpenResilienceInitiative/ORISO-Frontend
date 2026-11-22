@@ -10,6 +10,7 @@ import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { copyTextToClipboard } from '../../../utils/clipboardHelpers';
 import { DirectLink } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { DirectLinkModeChip } from './DirectLinkModeChip';
 import './directLink.styles.scss';
 
 interface DirectLinkShareDialogProps {
@@ -61,7 +62,15 @@ export const DirectLinkShareDialog = ({
 			closeLabel={t('app.close')}
 			icon={<LinkOutlinedIcon />}
 			title={t('directLink.share.title')}
-			description={t('directLink.share.description')}
+			description={t(
+				/* #2252: an invitation into a 1:1 joins that conversation; one
+				   with an appointment meets in one shared conversation. */
+				link.joinsExistingSession
+					? 'directLink.share.descriptionJoin'
+					: link.appointment
+						? 'directLink.share.descriptionAppointment'
+						: 'directLink.share.description'
+			)}
 			className="directLinkShareDialog"
 			data-testid="direct-link-share-dialog"
 			actions={[
@@ -78,11 +87,7 @@ export const DirectLinkShareDialog = ({
 					{t(`directLink.medium.${link.medium.toLowerCase()}`)} ·{' '}
 					{link.topic}
 				</span>
-				{link.temporary && (
-					<span className="directLinkChip">
-						{t('directLink.temporary')}
-					</span>
-				)}
+				<DirectLinkModeChip link={link} />
 			</div>
 			{qr && (
 				<img

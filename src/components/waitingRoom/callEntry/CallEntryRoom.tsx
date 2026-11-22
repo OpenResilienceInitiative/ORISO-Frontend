@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { WaitingRoomBar } from '../WaitingRoomBar';
@@ -19,6 +19,7 @@ import {
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
 import { CallEntryIdentity } from './CallEntryIdentity';
+import { isDirectLinkPostcodeMissing } from '../../directLinkEntry/directLinkPostcode';
 import {
 	useWaitingRoomConsent,
 	WaitingRoomConsentPanel
@@ -49,6 +50,8 @@ export interface CallEntryAccount {
 	username: string;
 	password: string;
 	identity: Pseudonym;
+	/** Only when the room asked for it (`askPostcode`, #1795). */
+	postcode?: string;
 }
 
 /** A level above this once means the microphone demonstrably hears. */
@@ -118,9 +121,25 @@ export interface CallEntryRoomProps {
 	 * but the field and its suggest button are not shown.
 	 */
 	hidePassword?: boolean;
+	/**
+	 * `false` when the Träger allows no typed names: the account creation
+	 * accepts only a generated User-ID then (ORISO-UserService#1494).
+	 */
+	usernameEditable?: boolean;
+	/**
+	 * A registered direct-link account enters a postcode for statistics
+	 * (ORISO-Frontend#1795); the gate waits for five digits.
+	 */
+	askPostcode?: boolean;
 	/** An existing account only needs the device and consent checks. */
 	signedIn?: boolean;
 	loginLink?: React.ReactNode;
+	/**
+	 * UserService#1662: the link lets the guest choose between joining
+	 * without an account (temporary) and creating one. The caller owns the
+	 * choice; password field and postcode follow it.
+	 */
+	accountChoice?: { temporary: boolean; onToggle: () => void };
 }
 
 /**
@@ -161,10 +180,13 @@ export const CallEntryRoom = ({
 	playTone,
 	checkUsername,
 	hidePassword = false,
+	usernameEditable = true,
+	askPostcode = false,
 	signedIn = false,
-	loginLink
+	loginLink,
+	accountChoice
 }: CallEntryRoomProps) => {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
 		() =>
 			initialIdentity ?? generatePseudonym(i18n.resolvedLanguage ?? 'de')
@@ -175,6 +197,15 @@ export const CallEntryRoom = ({
 	const [password, setPassword] = useState(() =>
 		hidePassword && !initialPassword ? generatePassword() : initialPassword
 	);
+	const [postcode, setPostcode] = useState('');
+	/* UserService#1662: when the guest switches to "without an account" and
+	   the platform hides that password, the account still needs one that
+	   meets the rules; a typed-but-weak one would block the gate unseen. */
+	useEffect(() => {
+		if (hidePassword && !allPasswordCriteriaPass(password)) {
+			setPassword(generatePassword());
+		}
+	}, [hidePassword, password]);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
 	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
@@ -206,6 +237,16 @@ export const CallEntryRoom = ({
 	useEffect(() => {
 		onDeviceStateChange?.({ micOn, cameraOn, selection });
 	}, [onDeviceStateChange, micOn, cameraOn, selection]);
+
+	// Typing closed while the room is open: a typed User-ID would be refused
+	// at the end, and the field can no longer correct it.
+	const wasEditable = useRef(usernameEditable);
+	useEffect(() => {
+		if (wasEditable.current && !usernameEditable) {
+			setUsername(toRegistrationUsername(identity));
+		}
+		wasEditable.current = usernameEditable;
+	}, [usernameEditable, identity]);
 
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
@@ -243,7 +284,15 @@ export const CallEntryRoom = ({
 		{
 			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
-		}
+		},
+		...(askPostcode
+			? [
+					{
+						done: !isDirectLinkPostcodeMissing(true, postcode),
+						missing: copy.missingPostcode
+					}
+				]
+			: [])
 	];
 	const conditions = [
 		...(signedIn ? [] : accountConditions),
@@ -334,6 +383,42 @@ export const CallEntryRoom = ({
 							data-testid="call-entry-identity-column"
 							sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
 						>
+							{/* UserService#1662: the choice comes first, so the fields it
+							    adds or removes appear below it and the button stays put. */}
+							{accountChoice && (
+								<Box
+									data-testid="call-entry-account-choice"
+									sx={{ mb: 2 }}
+								>
+									<Typography
+										sx={{
+											...registrationScreenIntroSx,
+											fontSize: 14
+										}}
+									>
+										{t(
+											accountChoice.temporary
+												? 'guestAccountMode.entry.temporaryNote'
+												: 'guestAccountMode.entry.accountNote'
+										)}
+									</Typography>
+									<Button
+										onClick={accountChoice.onToggle}
+										sx={{
+											mt: 0.5,
+											px: 0,
+											textTransform: 'none',
+											color: registrationMd3.primary
+										}}
+									>
+										{t(
+											accountChoice.temporary
+												? 'guestAccountMode.entry.withAccount'
+												: 'guestAccountMode.entry.withoutAccount'
+										)}
+									</Button>
+								</Box>
+							)}
 							<CallEntryIdentity
 								modality={modality}
 								identity={identity}
@@ -345,6 +430,10 @@ export const CallEntryRoom = ({
 								hidePassword={hidePassword}
 								usernameFeedback={usernameFeedback}
 								onUsernameBlur={() => setUsernameBlurred(true)}
+								usernameEditable={usernameEditable}
+								askPostcode={askPostcode}
+								postcode={postcode}
+								onPostcodeChange={setPostcode}
 							/>
 							{loginLink}
 						</Box>
@@ -465,7 +554,12 @@ export const CallEntryRoom = ({
 						}
 						beforeEnter={mayJoin}
 						onEnter={() =>
-							onJoin?.({ username, password, identity })
+							onJoin?.({
+								username,
+								password,
+								identity,
+								...(askPostcode ? { postcode } : {})
+							})
 						}
 						closing={closing ?? undefined}
 						label={copy.join[modality]}

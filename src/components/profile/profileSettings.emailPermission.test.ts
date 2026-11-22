@@ -28,6 +28,9 @@ vi.mock('./BrowserNotifications', () => ({
 	BrowserNotification: () => null
 }));
 vi.mock('./Locale', () => ({ Locale: () => null }));
+vi.mock('../timelineSettings/TimelineSettings', () => ({
+	TimelineSettings: () => null
+}));
 vi.mock('../directLinks/MyDirectLinksPanel', () => ({
 	MyLinksSettings: () => null
 }));

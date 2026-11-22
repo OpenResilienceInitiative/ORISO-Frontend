@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -121,7 +121,7 @@ const PolicyFixture = ({ state }: { state: State }) => {
 					<MessageItemComponent
 						{...mockMessageItemComponentProps({
 							userId: CLIENT_MATRIX_ID,
-							readOnly: true,
+							previewMode: 'read',
 							message: '',
 							attachments: [
 								{

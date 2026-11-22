@@ -1,9 +1,14 @@
 name: PR base check
 
-# Feature work lands on `dev`. Only `dev` itself may go to `main` (release).
-# `pre-dev` is the Pre-Dev server's branch and never a PR target.
-# GitHub's default branch is still `main`, so a PR opened without choosing a
-# base silently targets the wrong branch — this check makes that visible.
+# Feature work lands on `dev`. Only `dev` itself, or a release branch cut from
+# it, may go to `main`. `pre-dev` is the Pre-Dev server's branch and never a PR
+# target. GitHub's default branch is still `main`, so a PR opened without
+# choosing a base silently targets the wrong branch — this check makes that
+# visible.
+#
+# Release PRs into `main` use `release/frontend-<x.y.z>`, matching
+# RELEASE_PREFIX in release-image.yml, not `dev` directly: the release branch is
+# `dev` merged with `main`, so it is never the same ref as `dev`.
 
 on:
   pull_request:
@@ -15,7 +20,7 @@ jobs:
   base:
     runs-on: ubuntu-latest
     steps:
-      - name: PR targets dev (or dev → main for a release)
+      - name: PR targets dev, or dev / a release branch targets main
         env:
           BASE: ${{ github.base_ref }}
           HEAD: ${{ github.head_ref }}
@@ -26,9 +31,15 @@ jobs:
             echo "Base is dev — ok."
             exit 0
           fi
-          if [ "$BASE" = "main" ] && [ "$HEAD" = "dev" ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
-            echo "Release PR dev → main — ok."
-            exit 0
+          if [ "$BASE" = "main" ] && [ "$HEAD_REPO" = "$THIS_REPO" ]; then
+            if [ "$HEAD" = "dev" ]; then
+              echo "Release PR dev → main — ok."
+              exit 0
+            fi
+            if printf '%s' "$HEAD" | grep -Eq '^release/frontend-[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "Release PR $HEAD → main — ok."
+              exit 0
+            fi
           fi
-          echo "::error title=Wrong base branch::This PR targets '$BASE'. Feature PRs go to 'dev'; only this repository's own 'dev' may go to 'main', and 'pre-dev' is never a target. Change the base branch in the PR header (Edit → base: dev)."
+          echo "::error title=Wrong base branch::This PR targets '$BASE' from '$HEAD'. Feature PRs go to 'dev'; only this repository's own 'dev' or a 'release/frontend-<x.y.z>' branch may go to 'main', and 'pre-dev' is never a target. Change the base branch in the PR header (Edit → base: dev)."
           exit 1

@@ -26,20 +26,24 @@ describe('formatMessagePersonName', () => {
 		);
 	});
 
-	it('humanizes technical usernames with underscores', () => {
+	// #1494: the bubble showed "free bee frankie" while the session list and
+	// the chat header showed "free_bee_frankie_821" for the same person.
+	it('keeps an advice seeker User-ID in full (#1494)', () => {
 		expect(formatMessagePersonName(undefined, 'free_bee_frankie_821')).toBe(
-			'free bee frankie'
+			'free_bee_frankie_821'
 		);
 	});
 
-	it('humanizes technical display names too', () => {
+	it('keeps a counsellor User-ID in full when no display name is set (#1494)', () => {
+		expect(formatMessagePersonName(undefined, 'kweber_4417')).toBe(
+			'kweber_4417'
+		);
+	});
+
+	it('keeps a display name exactly as written', () => {
 		expect(formatMessagePersonName('free_bee_frankie_821', undefined)).toBe(
-			'free bee frankie'
+			'free_bee_frankie_821'
 		);
-	});
-
-	it('strips the numeric suffix even when a single word remains', () => {
-		expect(formatMessagePersonName(undefined, 'user_821')).toBe('user');
 	});
 
 	it('leaves user-configured display names with punctuation untouched', () => {
@@ -52,7 +56,7 @@ describe('formatMessagePersonName', () => {
 	it('strips matrix domain and @ prefix', () => {
 		expect(
 			formatMessagePersonName(undefined, '@free_bee_frankie_821:oriso.de')
-		).toBe('free bee frankie');
+		).toBe('free_bee_frankie_821');
 	});
 
 	it('keeps only the local part of email-style identifiers', () => {
@@ -275,9 +279,9 @@ describe('anonymous User-IDs (#1209)', () => {
 		).toBe('freundliche Katze Mika');
 	});
 
-	it('still humanises technical consultant usernames', () => {
+	it('shows a counsellor User-ID as the chat header does (#1494)', () => {
 		expect(formatMessagePersonName(undefined, 'ruhiges_Yak_Kim_234')).toBe(
-			'ruhiges Yak Kim'
+			'ruhiges_Yak_Kim_234'
 		);
 	});
 });
@@ -322,7 +326,7 @@ describe('display name over real name (#1486)', () => {
 				'Karina',
 				'Perez'
 			)
-		).toBe('ruhiges Yak Kim');
+		).toBe('ruhiges_Yak_Kim_234');
 	});
 
 	it('uses the real name only when there is no name and no anchor at all', () => {
@@ -368,9 +372,9 @@ describe('display name over real name (#1486)', () => {
 		expect(formatMessagePersonName(undefined, encoded)).toBe('anon_132');
 	});
 
-	it('humanises a decoded technical name like any other', () => {
+	it('shows a decoded User-ID in full like any other', () => {
 		expect(
 			formatMessagePersonName(encodeUsername('trout_milan_8303'))
-		).toBe('trout milan');
+		).toBe('trout_milan_8303');
 	});
 });

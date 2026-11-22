@@ -10,7 +10,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { Provider as JotaiProvider } from 'jotai';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
 	afterEach,
 	beforeEach,
@@ -60,20 +60,48 @@ vi.mock('../app/navigationHandler', () => ({
 
 const userData = { userId: 'recipient-1', userName: 'recipient' } as any;
 
-const renderAt = (path: string) =>
+const renderAt = (path: string, asker = false) =>
 	render(
 		<JotaiProvider>
-			<UserDataContext.Provider value={{ userData } as any}>
+			<UserDataContext.Provider
+				value={
+					{
+						userData: asker
+							? {
+									...userData,
+									grantedAuthorities: [
+										'AUTHORIZATION_USER_DEFAULT'
+									]
+								}
+							: userData
+					} as any
+				}
+			>
 				<SessionTypeContext.Provider
 					value={{
 						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
+						path: asker
+							? '/sessions/user/view'
+							: '/sessions/consultant/sessionView'
 					}}
 				>
 					<MemoryRouter initialEntries={[path]}>
+						{asker && (
+							<Link to="/sessions/user/view/session/41?rejectedEnquiry=1">
+								Open rejected enquiry
+							</Link>
+						)}
 						<Routes>
 							<Route
 								path="/sessions/consultant/sessionView/session/:sessionId"
+								element={<SessionView />}
+							/>
+							<Route
+								path="/sessions/user/view/session/:sessionId"
+								element={<SessionView />}
+							/>
+							<Route
+								path="/sessions/consultant/sessionView/chat/:chatId"
 								element={<SessionView />}
 							/>
 							<Route
@@ -145,6 +173,7 @@ describe('SessionView case handover route boundary', () => {
 				undefined,
 				41,
 				undefined,
+				false,
 				false
 			)
 		);
@@ -158,8 +187,69 @@ describe('SessionView case handover route boundary', () => {
 				undefined,
 				41,
 				undefined,
+				false,
 				false
 			)
+		);
+		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+	});
+
+	it('requires the exact rejected session only on the marked asker detail route', () => {
+		renderAt('/sessions/user/view/session/41?rejectedEnquiry=1', true);
+
+		expect(useSession).toHaveBeenCalledWith(
+			undefined,
+			41,
+			undefined,
+			true,
+			true
+		);
+		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+	});
+
+	it('unmounts the prior conversation while the marked rejection loads at the same case route', async () => {
+		const priorSession = {
+			item: { id: 41, status: 2 },
+			isGroup: false
+		} as never;
+		const useSessionMount: typeof useSession = (
+			_room,
+			_id,
+			_chat,
+			_reconcile,
+			requireRejected
+		) => {
+			const [session] = React.useState(() =>
+				requireRejected ? null : priorSession
+			);
+			return {
+				session,
+				ready: session !== null,
+				reload: vi.fn(),
+				read: vi.fn()
+			};
+		};
+		vi.mocked(useSession).mockImplementation(useSessionMount);
+		renderAt('/sessions/user/view/session/41', true);
+		await screen.findByTestId('session-stream');
+
+		fireEvent.click(
+			screen.getByRole('link', { name: 'Open rejected enquiry' })
+		);
+
+		expect(screen.queryByTestId('session-stream')).toBeNull();
+		expect(screen.getByTestId('loading')).toBeTruthy();
+	});
+
+	it('loads a group by chat id without looking up a case with the same number', () => {
+		renderAt('/sessions/consultant/sessionView/chat/41');
+
+		expect(useSession).toHaveBeenCalledWith(
+			undefined,
+			undefined,
+			41,
+			false,
+			false
 		);
 		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
 	});
@@ -183,5 +273,109 @@ describe('SessionView case handover route boundary', () => {
 		expect(mobileDetailView).toHaveBeenCalled();
 		unmount();
 		expect(mobileListView).toHaveBeenCalled();
+	});
+});
+
+describe('SessionView topic duplicate route boundary', () => {
+	const roomId = '!old:matrix.example';
+	const path = `/sessions/consultant/sessionView/${encodeURIComponent(roomId)}/41`;
+	const markedPath = `${path}?topicDuplicate=1`;
+	const renderMarked = (initialPath: string) =>
+		render(
+			<JotaiProvider>
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								...userData,
+								grantedAuthorities: [
+									'AUTHORIZATION_CONSULTANT_DEFAULT'
+								]
+							}
+						} as never
+					}
+				>
+					<SessionTypeContext.Provider
+						value={{
+							type: SESSION_LIST_TYPES.MY_SESSION,
+							path: '/sessions/consultant/sessionView'
+						}}
+					>
+						<MemoryRouter initialEntries={[initialPath]}>
+							<Link to={markedPath}>Open strict room</Link>
+							<Routes>
+								<Route
+									path="/sessions/consultant/sessionView/session/:sessionId"
+									element={<SessionView />}
+								/>
+								<Route
+									path="/sessions/consultant/sessionView/:groupId/:sessionId"
+									element={<SessionView />}
+								/>
+								<Route
+									path="/notifications"
+									element={<div data-testid="timeline" />}
+								/>
+							</Routes>
+						</MemoryRouter>
+					</SessionTypeContext.Provider>
+				</UserDataContext.Provider>
+			</JotaiProvider>
+		);
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		responsive.fromL = true;
+	});
+	afterEach(cleanup);
+
+	it('recovers the exact room binding on a cold route and returns to Timeline if unavailable', async () => {
+		vi.mocked(useSession).mockReturnValue({
+			session: null,
+			ready: true,
+			reload: vi.fn(),
+			read: vi.fn()
+		});
+		renderMarked(markedPath);
+		expect(vi.mocked(useSession).mock.calls[0][0]).toEqual({
+			roomId,
+			caseId: 41
+		});
+		expect(await screen.findByTestId('timeline')).toBeTruthy();
+	});
+
+	it.each([
+		'/sessions/consultant/sessionView/session/41?topicDuplicate=1&caseHandoverRequestId=501',
+		`${path}?topicDuplicate=1&topicDuplicate=1`
+	])(
+		'does not mount an invalid or overloaded strict route',
+		async (initialPath) => {
+			renderMarked(initialPath);
+			expect(await screen.findByTestId('timeline')).toBeTruthy();
+			expect(useSession).not.toHaveBeenCalled();
+			expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
+		}
+	);
+
+	it('clears the prior conversation before loading the same case in strict mode', async () => {
+		const useSessionMount: typeof useSession = (room) => {
+			const [session] = React.useState(() =>
+				typeof room === 'string'
+					? ({ item: { id: 41, status: 2 }, isGroup: false } as never)
+					: null
+			);
+			return {
+				session,
+				ready: session !== null,
+				reload: vi.fn(),
+				read: vi.fn()
+			};
+		};
+		vi.mocked(useSession).mockImplementation(useSessionMount);
+		renderMarked(path);
+		await screen.findByTestId('session-stream');
+		fireEvent.click(screen.getByRole('link', { name: 'Open strict room' }));
+		expect(screen.queryByTestId('session-stream')).toBeNull();
+		expect(screen.getByTestId('loading')).toBeTruthy();
 	});
 });

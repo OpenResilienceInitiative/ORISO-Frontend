@@ -1,5 +1,6 @@
 import * as React from 'react';
 import WebOutlined from '@mui/icons-material/WebOutlined';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
 import { ReactComponent as DevicesIcon } from '../../resources/img/icons/devices.svg';
 import { useEffect, useState } from 'react';
@@ -134,8 +135,24 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 								/>
 							)}
 						</span>
-						<span className="notificationChoiceCard__label">
-							{option.label}
+						<span className="notificationChoiceCard__head">
+							<span className="notificationChoiceCard__label">
+								{option.label}
+							</span>
+							{currentSelection === option.choice && (
+								<span
+									className="notificationChoiceCard__check"
+									data-testid="notificationChoice-check"
+								>
+									<CheckCircleOutline
+										fontSize="small"
+										aria-hidden
+									/>
+									{t(
+										'erstantwort.notificationChoice.optionActive'
+									)}
+								</span>
+							)}
 						</span>
 						{option.hint && (
 							<span className="notificationChoiceCard__hint">

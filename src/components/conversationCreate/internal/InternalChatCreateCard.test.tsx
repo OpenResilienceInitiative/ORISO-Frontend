@@ -48,8 +48,7 @@ describe('InternalChatCreateCard (#1772)', () => {
 	it.each([
 		['AGENCY', 'AGENCY'],
 		['TENANT', 'TENANT'],
-		// No platform-wide directory yet: the Träger wording, not a promise.
-		['PLATFORM', 'TENANT']
+		['PLATFORM', 'PLATFORM']
 	] as const)(
 		'names the scope %s next to the picker (wording %s)',
 		(scope, wording) => {

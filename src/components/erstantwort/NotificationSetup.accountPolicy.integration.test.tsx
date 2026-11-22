@@ -258,7 +258,12 @@ it('does not continue an email subscription revoked while the server write is pe
 	vi.mocked(apiPatchUserData).mockReturnValueOnce(write.promise);
 	setup();
 	await chooseBoth();
-	fireEvent.click(screen.getByRole('button', { name: 'revoke' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'revoke',
+			hidden: true
+		})
+	);
 	await act(async () => write.resolve());
 	expect(continueBrowser()).toBeNull();
 	expect(requestPermission).not.toHaveBeenCalled();
@@ -343,7 +348,12 @@ it('keeps a pending first-reply email save through an unrelated account reload',
 	vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
 	setup(true);
 	await openFirstReplyEmail();
-	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'reload',
+			hidden: true
+		})
+	);
 	expect(screen.getByTestId('capability').textContent).toBe('true');
 	await act(async () => write.resolve());
 	expect(
@@ -412,7 +422,12 @@ it('does not restore the first-reply form or refresh an obsolete write after col
 	vi.mocked(apiPutEmail).mockReturnValueOnce(write.promise);
 	setup(true);
 	await openFirstReplyEmail();
-	fireEvent.click(screen.getByRole('button', { name: 'revoke' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'revoke',
+			hidden: true
+		})
+	);
 	fireEvent.click(screen.getByRole('button', { name: 'restore' }));
 	expect(screen.queryByRole('textbox')).toBeNull();
 	await act(async () => write.resolve());
@@ -441,7 +456,12 @@ it.each(['actor', 'tenant', 'actor A→B→A'] as const)(
 				if (change === 'actor A→B→A') signIn();
 			}
 		});
-		fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'reload',
+				hidden: true
+			})
+		);
 		await waitFor(() =>
 			expect(screen.getByTestId('capability').textContent).toBe('true')
 		);
@@ -583,7 +603,12 @@ it('does not apply an old accepted-email readback failure to a newer auth-genera
 		signIn('other');
 		signIn();
 	});
-	fireEvent.click(screen.getByRole('button', { name: 'reload' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'reload',
+			hidden: true
+		})
+	);
 	await waitFor(() =>
 		expect(screen.getByTestId('capability').textContent).toBe('true')
 	);

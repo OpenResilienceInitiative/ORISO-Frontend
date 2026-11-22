@@ -17,11 +17,14 @@ export interface ChatAttachment {
 	type: 'image' | 'file';
 	description?: string;
 	mediaType?: string;
+	/** Original attachment size in bytes, when supplied by the sender. */
 	size?: number;
 	width?: number;
 	height?: number;
 	encryptedFile?: MatrixEncryptedFile;
 	mediaCheckState?: 'blocked';
+	/** The message text is a caption to show with the file, not its name. */
+	hasCaption?: boolean;
 }
 
 export interface ChatFile {

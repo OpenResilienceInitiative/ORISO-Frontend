@@ -1,5 +1,12 @@
 // @vitest-environment oriso-jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { transitionMotion } from '../transitionMotion';
 import { CLOSING_FOCAL_SELECTOR, resolveFocalPoint } from './closingFocal';
 

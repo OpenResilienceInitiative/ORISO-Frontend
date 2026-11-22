@@ -1,16 +1,22 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	directLinkCallsAllowed,
 	directLinkMediumOf,
 	directLinkSessionOf,
 	isDirectLinkCallRoom,
 	directLinkReturnPath,
 	loginPathForDirectLink,
+	CANCEL_KNOCK_WAIT_MS,
 	openDirectLinkConversation,
 	readPendingKnock
 } from './directLinkEntryFlow';
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
+vi.mock('../../api/apiGetConsultingType', () => ({
+	apiGetConsultingType: vi.fn()
+}));
+const { apiGetConsultingType } = await import('../../api/apiGetConsultingType');
 
 beforeEach(() => {
 	sessionStorage.clear();
@@ -89,6 +95,152 @@ describe('openDirectLinkConversation', () => {
 		expect(isDirectLinkCallRoom('!other:oriso')).toBe(false);
 	});
 
+	it('keeps a chat-first opening out of the call knock (#2252)', async () => {
+		const redirect = vi.fn();
+		const cancelKnock = vi.fn().mockResolvedValue(undefined);
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				matrixRoomId: '!room:oriso',
+				medium: 'VIDEO',
+				admission: 'KNOCK',
+				created: true,
+				knockId: 21,
+				knockStatus: 'PENDING'
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(readPendingKnock()).toBeNull();
+		/* The counsellor is not left with a person who is not waiting. */
+		expect(cancelKnock).toHaveBeenCalledWith(21);
+		expect(redirect).toHaveBeenCalledWith(9);
+		/* A later call in this conversation still knocks through the link. */
+		expect(directLinkSessionOf(9)).toEqual({
+			token: 'tok',
+			medium: 'VIDEO',
+			matrixRoomId: '!room:oriso'
+		});
+	});
+
+	it('keeps an admission when the chat comes first, and still enters if the cancel fails', async () => {
+		const redirect = vi.fn();
+		const cancelKnock = vi.fn().mockRejectedValue(new Error('down'));
+		const started = {
+			sessionId: 9,
+			medium: 'AUDIO',
+			admission: 'KNOCK',
+			created: false,
+			knockId: 21
+		};
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				...started,
+				knockStatus: 'ADMITTED',
+				callAdmitted: true
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(cancelKnock).not.toHaveBeenCalled();
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				...started,
+				knockStatus: 'PENDING'
+			}),
+			redirect,
+			cancelKnock,
+			chatFirst: true
+		});
+		expect(readPendingKnock()).toBeNull();
+		expect(redirect).toHaveBeenCalledTimes(2);
+	});
+
+	it('does not wait long on a hanging knock cancel before entering the chat', async () => {
+		vi.useFakeTimers();
+		try {
+			const redirect = vi.fn();
+			const opening = openDirectLinkConversation('tok', {
+				start: vi.fn().mockResolvedValue({
+					sessionId: 9,
+					medium: 'VIDEO',
+					admission: 'KNOCK',
+					created: true,
+					knockId: 21,
+					knockStatus: 'PENDING'
+				}),
+				redirect,
+				cancelKnock: vi.fn(() => new Promise<void>(() => undefined)),
+				chatFirst: true
+			});
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(redirect).not.toHaveBeenCalled();
+			await vi.advanceTimersByTimeAsync(CANCEL_KNOCK_WAIT_MS);
+			await opening;
+			expect(redirect).toHaveBeenCalledWith(9);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('asks a joiner of a shared conversation for consent before entering (#2252)', async () => {
+		const redirect = vi.fn();
+		let agree: () => void = () => undefined;
+		const consent = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					agree = resolve;
+				})
+		);
+		const opening = openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				matrixRoomId: '!room:oriso',
+				medium: 'VIDEO',
+				admission: 'KNOCK',
+				created: false,
+				knockId: 21,
+				knockStatus: 'PENDING',
+				appointmentConversation: true,
+				consentRequired: true
+			}),
+			redirect,
+			consent
+		});
+		await vi.waitFor(() => expect(consent).toHaveBeenCalled());
+		expect(consent.mock.calls[0]).toEqual([
+			expect.objectContaining({ sessionId: 9 })
+		]);
+		/* Not in yet: no redirect and no knock handed to the app. */
+		expect(redirect).not.toHaveBeenCalled();
+		expect(readPendingKnock()).toBeNull();
+		agree();
+		await opening;
+		expect(redirect).toHaveBeenCalledWith(9);
+		expect(readPendingKnock()).toMatchObject({ knockId: 21 });
+	});
+
+	it('enters at once when the person has agreed before', async () => {
+		const redirect = vi.fn();
+		const consent = vi.fn();
+		await openDirectLinkConversation('tok', {
+			start: vi.fn().mockResolvedValue({
+				sessionId: 9,
+				medium: 'CHAT',
+				admission: 'DIRECT',
+				created: false,
+				appointmentConversation: true,
+				consentRequired: false
+			}),
+			redirect,
+			consent
+		});
+		expect(consent).not.toHaveBeenCalled();
+		expect(redirect).toHaveBeenCalledWith(9);
+	});
+
 	it('enters nothing when the link refuses', async () => {
 		const redirect = vi.fn();
 		await expect(
@@ -116,5 +268,41 @@ describe('sign-in return path', () => {
 		expect(directLinkReturnPath('/invite/x/../../profile')).toBeNull();
 		expect(directLinkReturnPath('https://evil.example')).toBeNull();
 		expect(directLinkReturnPath(null)).toBeNull();
+	});
+});
+
+describe('directLinkCallsAllowed (#2012)', () => {
+	const link = context('VIDEO', 'KNOCK');
+
+	it('allows calls only where the consulting type says so', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			isVideoCallAllowed: true
+		} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			isVideoCallAllowed: false
+		} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(false);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({} as never);
+		expect(await directLinkCallsAllowed(link)).toBe(false);
+	});
+
+	it('leaves the decision to the server when it cannot read', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValue(null as never);
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockRejectedValue(new Error('down'));
+		expect(await directLinkCallsAllowed(link)).toBe(true);
+		vi.mocked(apiGetConsultingType).mockClear();
+		expect(
+			await directLinkCallsAllowed({ ...link, consultingTypeId: null })
+		).toBe(true);
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+	});
+
+	it('gives up on a read that does not answer', async () => {
+		vi.mocked(apiGetConsultingType).mockReturnValue(
+			new Promise(() => undefined)
+		);
+		expect(await directLinkCallsAllowed(link, 20)).toBe(true);
 	});
 });

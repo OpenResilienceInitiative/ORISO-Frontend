@@ -1,8 +1,87 @@
 {
+	"addons": {
+		"loadError": "This add-on could not be loaded.",
+		"notAvailable": "This add-on is not available.",
+		"panel": {
+			"region": "Side panel: {{title}}",
+			"close": "Close"
+		},
+		"calendar": {
+			"source": "From the add-on “{{title}}”",
+			"allDay": "All day",
+			"kind": {
+				"appointment": "Appointment",
+				"deadline": "Deadline",
+				"reminder": "Reminder"
+			}
+		},
+		"badge": "Updates: {{count}}"
+	},
+	"askerInfo": {
+		"noPrivacyNotice": {
+			"title": "No privacy notice stored",
+			"text": "This counselling centre has not stored a privacy notice. The person may have consented knowing this. The centre is responsible for it. Only counsellors see this note."
+		}
+	},
+	"liveChatConversion": {
+		"title": "Keep your conversation",
+		"intro": "Create a password for this account. Your Live Chat stays with you.",
+		"keyHelp": "Save this recovery key somewhere safe. You need it and your password to read this conversation on a new device.",
+		"keySaved": "I have saved my recovery key",
+		"password": "Password",
+		"passwordHelp": "At least 16 characters",
+		"repeat": "Repeat password",
+		"submit": "Create my account",
+		"readyTitle": "Your account is ready",
+		"loginName": "Your login name:",
+		"readyHelp": "Your Live Chat stays in this account. You can now start a written request.",
+		"startRequest": "Start a written request",
+		"saveError": "The account could not be saved. Please retry with the same password.",
+		"statusError": "Account status is unavailable. Reload to try again.",
+		"unavailable": "This account cannot be converted. Please contact your counsellor.",
+		"recoveryIntro": "First prepare the recovery key for your existing conversation. This keeps your messages accessible on a new device.",
+		"pending": "A previous attempt is pending. Use the same password to finish it.",
+		"recoveryError": "The recovery key is not available yet. Retry, or enter the key you saved previously.",
+		"historyError": "Your chat history could not be secured yet. Please try again.",
+		"fallbackKeyHelp": "Your account is ready, but your chat history could not be linked to your password yet. Save this recovery key: you need it to read this conversation on a new device.",
+		"existingKey": "Previously saved recovery key (if needed)",
+		"prepare": "Prepare recovery key",
+		"accountChanged": "The signed-in account changed. Reload to continue safely.",
+		"expiredTitle": "This Live Chat session has expired",
+		"expiredHelp": "If you already created a password, sign in with it. Otherwise this conversation can no longer be converted here; a new registration starts a separate conversation.",
+		"signInAgain": "Sign in again with this login name and your new password.",
+		"newRegistration": "Start a new registration",
+		"ownAccountHelp": "You can start a written request from this account."
+	},
 	"groupCardParticipants": {
 		"loading": "Loading participants …",
+		"crowd": "{{count}} participants",
 		"unavailable": "Participants could not be loaded.",
-		"empty": "No participants."
+		"empty": "No participants.",
+		"memberCount": "Chat members: {{count}}"
+	},
+	"timelineSettings": {
+		"title": "Appointments in the conversation list",
+		"description": "How the list shows upcoming appointments. Applies on all devices.",
+		"scrollModel": {
+			"legend": "Scrolling",
+			"panes": "Two areas: the future above, the past below",
+			"single": "One timeline: the future opens only when you keep pulling past “Now”"
+		},
+		"reveal": {
+			"legend": "When appointments are coming up, show",
+			"none": "Nothing",
+			"next": "The next appointment",
+			"half": "Half the list",
+			"most": "Almost everything"
+		},
+		"pastDate": {
+			"legend": "Date on past conversations",
+			"corner": "In the corner of the card",
+			"line": "In its own line",
+			"off": "Do not show"
+		},
+		"writeFailed": "The setting could not be saved. Please try again."
 	},
 	"menuEffects": {
 		"title": "Menu appearance",
@@ -82,7 +161,9 @@
 			"new": "New Look!"
 		},
 		"wait": "Please wait",
-		"logo": "Logo"
+		"logo": "Logo",
+		"scrollPrevious": "Previous",
+		"scrollNext": "Next"
 	},
 	"appointments": {
 		"copy": {
@@ -162,6 +243,29 @@
 		}
 	},
 	"attachments": {
+		"composer": {
+			"group": "Attachment: {{name}}",
+			"remove": "Remove {{name}}",
+			"cancel": "Cancel",
+			"retry": "Send again",
+			"chooseAnother": "Choose another file",
+			"captionHint": "The text goes out as the file's caption.",
+			"progressLabel": "Sending {{name}}",
+			"status": {
+				"preparing": "Getting ready …",
+				"uploading": "Uploading",
+				"finishing": "Sending …"
+			},
+			"error": {
+				"tooLarge": "This file is {{size}}. The limit is {{limit}} MB. Nothing was uploaded.",
+				"format": "This file format is not allowed. You can use jpg, png, pdf, docx, xlsx, webm, ogg and mp3.",
+				"serverTooLarge": "The server refuses this file as too large. File and text stay here.",
+				"network": "The connection dropped. File and text stay here.",
+				"service": "The service is not available right now. File and text stay here.",
+				"cancelled": "Cancelled. File and text stay here.",
+				"other": "Sending did not work. File and text stay here."
+			}
+		},
 		"download": {
 			"label": "Download",
 			"aria": "Download {{name}}"
@@ -169,7 +273,7 @@
 		"error": {
 			"format": {
 				"headline": "Your file could not be sent.",
-				"message": "our file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
+				"message": "Your file could not be sent. Allowed are images (jpg and png), and documents (docx and pdf). Please try again."
 			},
 			"other": {
 				"headline": "There was an error uploading the file.",
@@ -199,6 +303,18 @@
 				"png": "PNG",
 				"xlsx": "XLSX"
 			}
+		},
+		"gate": {
+			"check": "Check and open",
+			"checking": "Checking for viruses …",
+			"checkingImage": "Checking the image …",
+			"checkVirus": "Virus scan",
+			"checkImage": "Image analysis: safe and within the guidelines?",
+			"decrypt": "Decrypt",
+			"decrypting": "Decrypting …",
+			"encryptedHint": "End-to-end encrypted",
+			"loadFailed": "The file could not be loaded",
+			"retry": "Try again"
 		},
 		"mediaCheck": {
 			"unchecked": "Image from anonymous chat – not yet checked",
@@ -246,7 +362,10 @@
 			"pickDay": "Please choose a day in the calendar first.",
 			"subline": "Choose a day and then a time.",
 			"times": "Available times",
-			"weekdays": "S,M,T,W,T,F,S"
+			"weekdays": "S,M,T,W,T,F,S",
+			"legendInstant": "Booked at once",
+			"legendRequest": "Request – your counsellor confirms the appointment",
+			"requestTime": "Request"
 		},
 		"availability": {
 			"description": "Indicate your general availability here so that people seeking advice can book appointments with you.",
@@ -322,9 +441,6 @@
 		"assignedCalendars": {
 			"iframeTitle": "Assigned calendars"
 		},
-		"calcom": {
-			"loading": "Loading {{calLink}}"
-		},
 		"reschedule": {
 			"iframeTitle": "Reschedule appointment"
 		},
@@ -353,7 +469,8 @@
 		"participants": {
 			"label": "Participants: {{names}}",
 			"more": "{{count}} more participants",
-			"more_one": "1 more participant"
+			"more_one": "1 more participant",
+			"moreList": "More participants ({{count}})"
 		},
 		"panel": {
 			"channelOptions": "Switch channel",
@@ -419,6 +536,7 @@
 		"absent": {
 			"message": " is absent"
 		},
+		"assignedLabel": "Your counsellor",
 		"jobTitle": "Consultant"
 	},
 	"date": {
@@ -520,6 +638,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Some chat data may remain in this browser. Close any other ORISO tabs.",
+			"retryCleanup": "Retry browser cleanup",
 			"button": "close",
 			"headline": "You have successfully deleted your ORISO account."
 		}
@@ -540,6 +660,32 @@
 		"successOverlay": {
 			"button": "ok",
 			"headline": "You have deleted the chat successfully."
+		}
+	},
+	"historyRequest": {
+		"ask": {
+			"title": "Earlier messages are not readable here",
+			"intro": "You signed in on a new device, so your earlier messages in this conversation are locked. You can ask your counsellor to unlock them.",
+			"button": "Ask to read earlier messages",
+			"waiting": "Request sent. Your counsellor has to approve it; the messages appear here afterwards. If nothing happens, send the request again.",
+			"done": "Your earlier messages are readable again.",
+			"failed": "The request could not be sent. Please try again.",
+			"dialog": {
+				"title": "Ask to read earlier messages",
+				"description": "Your counsellor will see what you write and will decide whether to unlock this conversation for you.",
+				"label": "What was in this conversation?",
+				"cancel": "Cancel",
+				"send": "Send request"
+			}
+		},
+		"card": {
+			"title": "Request to read this conversation again",
+			"intro": "The person in this conversation signed in on a new device and cannot read the earlier messages. They wrote:",
+			"approve": "Release conversation",
+			"decline": "Decline",
+			"origin": "Asked by {{user}} on a new device ({{device}}), {{time}}. This device is not verified yet, so release only if you expect this request.",
+			"failed": "The keys could not be sent. Please try again.",
+			"needsCrossSigning": "This device is not verified yet, so it cannot release keys. Verify this device first, then try again."
 		}
 	},
 	"e2ee": {
@@ -605,7 +751,7 @@
 	},
 	"enquiry": {
 		"teamDiscussion": {
-			"open": "Open team discussion"
+			"open": "Open team chat"
 		},
 		"acceptButton": {
 			"anonymous": "Start chat",
@@ -756,22 +902,6 @@
 			"addThis": "Add this date to your calendar",
 			"shareHintSeries": "Calendar links for your website: all dates as a series, without an invitation link or automatic updates."
 		},
-		"futureTimeline": {
-			"appointmentFallback": "Appointment",
-			"ariaLabel": "Future timeline",
-			"commandError": "The occurrence could not be changed. Please try again.",
-			"duplicate": "Duplicate as one-off",
-			"empty": "No upcoming events.",
-			"groupChatFallback": "Group chat",
-			"hide": "Hide future events",
-			"loadMore": "Load three more months",
-			"loadError": "Some future events could not be loaded.",
-			"loading": "Loading future events…",
-			"now": "Now",
-			"revealAriaLabel": "Reveal future timeline",
-			"show": "Show future events",
-			"skip": "Skip occurrence"
-		},
 		"roles": {
 			"CO_MODERATOR": "Co-moderator",
 			"OWNER": "Owner",
@@ -902,7 +1032,15 @@
 			"subtitle": "We offer different specialised conversation formats for you and the advice seekers. The selection is freely configurable by the organisations and your counselling centre.",
 			"title": "Choose conversation format",
 			"panelTitle": "Create new conversation",
-			"panelMenu": "More options"
+			"panelMenu": "More options",
+			"discard": {
+				"title": "Discard your input?",
+				"description": "Your input in this card has not been saved. If you close this view, it will be lost.",
+				"keepEditing": "Keep editing",
+				"confirm": "Discard and close"
+			},
+			"cardsPrevious": "Previous conversation format",
+			"cardsNext": "Next conversation format"
 		},
 		"internal": {
 			"addPerson": "Add person",
@@ -921,6 +1059,8 @@
 			},
 			"nameLabel": "Internal name",
 			"noColleagues": "No colleagues to choose from",
+			"searchPeople": "Search for a person",
+			"noMatchingPeople": "No matching people found.",
 			"personCount_one": "{{count}} person added",
 			"personCount_other": "{{count}} people added",
 			"privateRoomHint": "A separate encrypted room is created for the selected people only.",
@@ -931,7 +1071,8 @@
 			},
 			"scope": {
 				"AGENCY": "You can pick colleagues from your counselling centre.",
-				"TENANT": "You can pick colleagues from your organisation."
+				"TENANT": "You can pick colleagues from your organisation.",
+				"PLATFORM": "You can choose colleagues from your own organisation and other participating organisations."
 			},
 			"selectPerson": "Select {{name}}",
 			"subtitle": "with your colleagues",
@@ -1030,6 +1171,7 @@
 			"subscribers": {
 				"empty": "no participants available",
 				"headline": "Participants",
+				"protectedName": "Participant {{number}}",
 				"menuLabel": "Options for {{name}}",
 				"role": {
 					"asker": "Advice seeker",
@@ -1253,7 +1395,8 @@
 				"headline": "How we treat each other",
 				"subline": "Read it once – then you are in."
 			},
-			"devices": "Camera & microphone"
+			"devices": "Camera & microphone",
+			"waitingForAdmission": "Signed in"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1361,6 +1504,10 @@
 			"overlay": {
 				"headline": "You were removed from this group."
 			}
+		},
+		"waitingAdmission": {
+			"waiting": "As soon as the group leader lets you in, the chat and the call open by themselves.",
+			"openSoon": "The session is running. The host knows you are waiting and will let you in shortly."
 		}
 	},
 	"help": {
@@ -1794,7 +1941,8 @@
 				"confirmLabel": "Confirm new password",
 				"submitLabel": "Save password",
 				"success": "Your password has been changed successfully. You can now log in.",
-				"invalidToken": "This link is invalid or has expired. Please request a new one."
+				"invalidToken": "This link is invalid or has expired. Please request a new one.",
+				"requestNewLink": "Request a new link"
 			}
 		},
 		"magicLink": {
@@ -1980,6 +2128,8 @@
 			}
 		},
 		"mention": {
+			"check": "Also select {{name}}",
+			"checked": "Selected: {{value}}. Click beside the list to insert.",
 			"notInChat": "not in chat",
 			"empty": "No one found",
 			"unavailable": "The list could not be loaded",
@@ -2094,7 +2244,40 @@
 			"previewLabel": "Replying to",
 			"cancel": "Discard reply",
 			"quoteLabel": "In reply to",
-			"quoteUnknown": "Earlier message"
+			"quoteUnknown": "Earlier message",
+			"jumpToQuote": "Jump to the quoted passage from {{author}}"
+		},
+		"selectionReply": {
+			"blur": "Blur",
+			"blurredLabel": "Blurred passage",
+			"blurredBy": "Blurred by {{name}}",
+			"removeBlur": "Remove blur",
+			"removeBlurLabel": "Blurred passage – remove blur",
+			"blurBar": "Actions for the blurred passage",
+			"toolbar": "Actions for the marked passage",
+			"reply": "Reply",
+			"replyVoice": "Reply with a voice message",
+			"startThread": "Thread",
+			"dialog": "Reply to the passage marked from {{author}}",
+			"cancel": "Cancel",
+			"inputLabel": "Reply to the marked passage",
+			"placeholder": "Write a reply …",
+			"placeholderWithVoice": "Add text if you like …",
+			"addToComposer": "Add to message",
+			"sendNow": "Send now",
+			"keys": "↵ add to message · {{sendKey}} ↵ send now · Esc cancel",
+			"pendingLead": "{{number}} · {{author}}",
+			"pendingStatus": "Reply {{number}} to {{author}}, collected for the next message",
+			"remove": "Remove reply {{number}}",
+			"voiceDuration": "Voice message {{duration}}",
+			"sendFailed": {
+				"title": "Answers not sent",
+				"text": "Your answers to the marked passages are still collected. Please send them again."
+			},
+			"blurFailed": {
+				"title": "Blur not saved",
+				"text": "The passage could not be blurred, or the blur could not be removed. Please try again."
+			}
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
@@ -2109,6 +2292,20 @@
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
+		},
+		"appointmentNotice": {
+			"title": {
+				"created": "Appointment scheduled",
+				"moved": "Appointment moved",
+				"cancelled": "Appointment cancelled"
+			},
+			"by": "by {{name}}",
+			"before": "Before:",
+			"after": "New:",
+			"action": {
+				"createNew": "Add new appointment",
+				"openCalendar": "Open in calendar"
+			}
 		}
 	},
 	"navigation": {
@@ -2124,12 +2321,21 @@
 		},
 		"consultant": {
 			"enquiries": "Requests",
+			"inboxState": {
+				"empty": "No requests",
+				"allOpened": "All requests opened",
+				"unopened": "{{count}} unopened requests",
+				"unopened_one": "{{count}} unopened request",
+				"overdue": "Overdue requests",
+				"overdueUnopened": "Overdue requests, {{count}} unopened requests",
+				"overdueUnopened_one": "Overdue requests, {{count}} unopened request"
+			},
 			"sessions": {
 				"large": "My consultations",
 				"nav": "Chats",
 				"small": "Messages"
 			},
-			"directLinks": "My direct links"
+			"directLinks": "Appointments & direct invitations"
 		},
 		"activity": "Timeline",
 		"language": "Language",
@@ -2155,10 +2361,10 @@
 				"open": "Open chat"
 			},
 			"mention": {
-				"title": "Mention in the team discussion",
+				"title": "Mention in the team chat",
 				"from": "From {{name}}",
 				"several": "{{count}} new mentions",
-				"open": "Open team discussion"
+				"open": "Open team chat"
 			},
 			"handover": {
 				"title": "New case handover",
@@ -2315,6 +2521,10 @@
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
 			},
+			"topicDuplicateStarted": {
+				"title": "Another counselling session on the same topic",
+				"text": "Another counselling session has started on the same topic. Please agree together which session should continue."
+			},
 			"counselorRenamed": {
 				"title": "Counsellor renamed",
 				"text": "The counsellor's display name has changed."
@@ -2364,12 +2574,12 @@
 				}
 			},
 			"caseHandoverConsentDeclined": {
-				"title": "Case handover declined",
-				"text": "Client consent was declined. Content visibility remains locked."
+				"title": "Consent declined",
+				"text": "The person seeking advice declined consent. You can check your current access in the conversation."
 			},
 			"caseHandoverOfferSent": {
 				"title": "Case handover offer sent",
-				"text": "The offer is waiting for the colleague's answer. It can be withdrawn as long as the handover is not complete."
+				"text": "You offered to hand over the case to a colleague."
 			},
 			"caseHandoverOfferDeclined": {
 				"title": "Case handover offer declined",
@@ -2381,7 +2591,7 @@
 			},
 			"caseHandoverOfferReceived": {
 				"title": "Case handover offer",
-				"text": "{{fromConsultantName}} wants to hand this consultation over to you. Review the request before opening the conversation.",
+				"text": "{{fromConsultantName}} sent you an offer to take over this consultation.",
 				"coAccess": {
 					"title": "Temporary access offer",
 					"text": "{{fromConsultantName}} offers you temporary access to this consultation. The current counsellor stays responsible."
@@ -2420,19 +2630,19 @@
 				"text": "A client has joined the waiting room."
 			},
 			"callInvited": {
-				"title": "Invitation to internal group call",
-				"text": "You have been invited to an internal group call."
+				"title": "Call invitation",
+				"text": "You have been invited to a call."
 			},
 			"callKnockRequested": {
 				"title": "Someone is knocking",
 				"text": "Someone wants to join your call. Join the call to let them in.",
 				"video": {
 					"title": "Someone is knocking – video call",
-					"text": "Someone wants to join your video call through your direct link. Join the call to let them in."
+					"text": "Someone wants to join your video call through your direct invitation. Join the call to let them in."
 				},
 				"audio": {
 					"title": "Someone is knocking – audio call",
-					"text": "Someone wants to join your audio call through your direct link. Join the call to let them in."
+					"text": "Someone wants to join your audio call through your direct invitation. Join the call to let them in."
 				}
 			},
 			"appointmentRequested": {
@@ -2452,8 +2662,8 @@
 				"text": "A briefing of your upcoming appointments is ready."
 			},
 			"teamDiscussionNew": {
-				"title": "Team discussion",
-				"text": "{{senderDisplayName}} posted in the team discussion"
+				"title": "Team chat",
+				"text": "{{senderDisplayName}} posted in the team chat"
 			},
 			"firstResponseReceived": {
 				"title": "Your first steps",
@@ -2466,6 +2676,18 @@
 			"serviceNoticePlanned": {
 				"title": "Scheduled maintenance",
 				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
+			},
+			"sessionAskerDeleted": {
+				"title": "Deleted advice seeker",
+				"text": "A chat with an advice seeker was deleted. Personal data and messages are no longer available."
+			},
+			"addonNotification": {
+				"title": "New add-on notice",
+				"text": "An add-on has a new notice."
+			},
+			"directInvitationRenewalRequested": {
+				"title": "New link requested",
+				"text": "Someone asks for a new link to your appointment."
 			}
 		},
 		"error": "failed",
@@ -2495,6 +2717,8 @@
 			"systemTag": "System notification",
 			"messageTag": "Message notification",
 			"unreadFilter": "Unread",
+			"mentionsFilter": "Mentions",
+			"openCalendar": "Open calendar",
 			"showPreview": "Show conversation preview",
 			"showDetails": "Show details",
 			"next": "Next notification",
@@ -2518,7 +2742,23 @@
 				"loadingOlder": "Loading older messages …",
 				"loadOlderFailed": "Older messages could not be loaded.",
 				"retryLoadOlder": "Try again",
-				"historyStart": "Start of the conversation"
+				"historyStart": "Start of the conversation",
+				"markRead": "Mark conversation as read",
+				"openToReply": "Open the conversation to reply",
+				"sendFailed": "Sending failed. Your text is kept.",
+				"composerPlaceholder": "Write a reply …",
+				"markedRead": "Marked as read",
+				"archivedOpenToReply": "This conversation is archived. Open the conversation to reply.",
+				"notJoined": "Read only until your join is confirmed and the room has loaded.",
+				"supervisorNoComposer": "As supervisor you can react here, but not write.",
+				"teamClosed": "The team chat is closed.",
+				"curtained": "This case is not visible to you right now.",
+				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
+				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",
+				"backToConversation": "Back to the conversation",
+				"enquiryOpenToAccept": "This enquiry has not been accepted yet. Open the conversation to accept it.",
+				"consentOpenToContinue": "Please confirm how to continue in the chat first. Open the conversation to do so.",
+				"actionFailed": "That did not work. Please try again."
 			},
 			"loadOlder": "Load older activity",
 			"loadingOlder": "Loading older activity…",
@@ -2610,12 +2850,27 @@
 		},
 		"data": {
 			"agency": {
-				"adminContact": {
-					"error": "The admins of this counselling centre could not be loaded. Please try again later.",
-					"fallbackName": "Centre admin",
-					"link": "Contact the counselling centre admin",
-					"none": "No admin is reachable by chat – please contact the platform administration.",
-					"supportEmail": "Support address:"
+				"contactPerson": {
+					"title": "Contact person",
+					"deputy": "Deputy",
+					"traegerDefault": "Default contact person of the organisation",
+					"alsoCounsellor": "also a counsellor",
+					"startChat": "Start chat",
+					"startChatWith": "Start a chat with {{name}}",
+					"fallback": {
+						"heading": "No contact person set yet — these admins are responsible:",
+						"agencyAdmins": "Admins of the counselling centre",
+						"tenantAdmins": "Admins of the organisation"
+					},
+					"support": {
+						"heading": "No contact person set yet.",
+						"text": "Please contact support:",
+						"none": "Please contact the platform administration."
+					},
+					"traegerContactEmail": "General contact address of the organisation",
+					"loading": "Loading the contact person …",
+					"loadError": "The contact person could not be loaded right now.",
+					"chatFallbackName": "Centre contact person"
 				},
 				"label": "Beratungsstelle",
 				"registrationLink": {
@@ -2703,7 +2958,10 @@
 						"label": "Close"
 					},
 					"headline": "An error has occurred. Please try again.",
-					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center."
+					"xReasonAlreadyRegistered": "You are already registered with this topic at the counseling center.",
+					"badRequest": "This counselling centre could not create your request. Please choose another centre or try again later.",
+					"forbidden": "You cannot request a new counselling at this centre right now.",
+					"unavailable": "Your request could not be sent just now. Please try again in a few minutes."
 				}
 			},
 			"registerSuccess": {
@@ -2754,7 +3012,13 @@
 					"label": "Deactivate your absence to leave a message or edit it."
 				},
 				"label": "Deposit an out of office message",
-				"title": "My absence"
+				"title": "My absence",
+				"from": "Absent from (optional)",
+				"until": "Absent until (optional)",
+				"dateHint": "Without a date the absence lasts until further notice, until you switch it off. After the end date you are present again automatically.",
+				"planned": "Planned from {{start}}",
+				"activeUntil": "Absent up to and including {{end}}",
+				"invalidRange": "The end date is before the start date."
 			},
 			"liveChat": {
 				"title": "My Live-Chat availability",
@@ -2845,7 +3109,7 @@
 		"noContent": "Not specified",
 		"notifications": {
 			"appointmentNotificationEnabled": {
-				"description": "An appointment was scheduled, postponed or cancelled",
+				"description": "An appointment was scheduled, postponed or cancelled, or a move was proposed",
 				"title": "Appointments"
 			},
 			"description": "We will inform you by e-mail when you have received a new message.",
@@ -2925,6 +3189,8 @@
 				"intro": "Choose your notification sounds for each area seperately.",
 				"emailNote": "Emails are sent only if you do not respond within five minutes after the event.",
 				"noSound": "No Sound Selected",
+				"defaultSound": "Default",
+				"legacySound": "Earlier tone",
 				"tone": "Sound #{{number}}",
 				"sendByEmail": "Send by Email",
 				"confirm": "Confirm",
@@ -2941,6 +3207,7 @@
 				},
 				"kind": {
 					"new": "New request",
+					"teamDiscussion": "Team chat",
 					"standard": "Standard notification",
 					"liveChat": "Live chat message",
 					"mention": "@ Mention",
@@ -2951,7 +3218,11 @@
 				"play": "Preview sound",
 				"volumeUp": "Louder",
 				"volumeDown": "Quieter",
+				"unavailable": {
+					"notSentYet": "This notification is not available yet."
+				},
 				"showBanner": "Show banner",
+				"systemTone": "Tone for system notices",
 				"ringTone": "Ring tone",
 				"wecker": {
 					"title": "Alarm-clock mode (planned)",
@@ -3076,26 +3347,35 @@
 					"label": "Download Excel file"
 				},
 				"filename": "Statistics online consulting",
-				"title": "You can download your statistics for your selected consulting period here:"
+				"title": "You can download your statistics for your selected consulting period here:",
+				"total": "Total"
 			},
 			"csvHeader": {
-				"numberOfAppointments": "Appointments booked",
+				"numberOfAppointments": "Appointments held",
 				"numberOfAssignedSessions": "Consultations accepted",
+				"numberOfCancelledAppointments": "Appointments cancelled",
+				"numberOfChatAppointments": "of which chat",
+				"numberOfOnsiteAppointments": "of which on site",
+				"numberOfPhoneAppointments": "of which phone",
 				"numberOfSentMessages": "Messages written",
 				"numberOfSessionsWhereConsultantWasActive": "Active consulting",
+				"numberOfVideoAppointments": "of which video",
+				"period": "Period",
 				"videoCallDuration": "Duration of video calls in minutes:seconds"
 			},
 			"period": {
-				"currentMonth": "current month",
-				"currentYear": "current year",
+				"currentMonth": "this month",
+				"currentWeek": "this week",
+				"currentYear": "this year",
 				"display": {
 					"default": "DD.MM.JJJJ - DD.MM.JJJJ",
 					"prefix": "In the period from ",
 					"suffix": " you have:"
 				},
 				"lastMonth": "last month",
-				"lastYear": "past year",
-				"prefix": "Your numbers of the"
+				"lastWeek": "last week",
+				"lastYear": "last year",
+				"prefix": "Your numbers for"
 			},
 			"title": "My statistics"
 		},
@@ -3188,6 +3468,13 @@
 				"cancel": "Cancel",
 				"error": "Reset failed. Please try again."
 			}
+		},
+		"askerDisplayName": {
+			"description": "Your name can differ in each counselling conversation. Your counsellor sees the name shown here for that conversation.",
+			"conversation": "Counselling",
+			"usernameShown": "No display name – your username is shown",
+			"edit": "Change display name for {{name}}",
+			"inputLabel": "Display name for {{name}}"
 		}
 	},
 	"qrCode": {
@@ -3243,7 +3530,7 @@
 		"names": {
 			"agency": "Practice agency",
 			"topic": "Practice",
-			"teamRoom": "Team discussion (practice)",
+			"teamRoom": "Team chat (practice)",
 			"supervisionRoom": "Supervision (practice)"
 		}
 	},
@@ -3363,6 +3650,12 @@
 			}
 		},
 		"dataProtection": {
+			"noNotice": {
+				"title": "No privacy notice stored",
+				"body": "This counselling centre has not stored a privacy notice. The centre is responsible for it. You can still continue if you choose to do so knowingly.",
+				"cancel": "Go back",
+				"continue": "Continue anyway"
+			},
 			"cookieNotice": "For authentication and navigation, this website uses cookies.",
 			"machineTranslated": "Machine-translated — the original version ({{language}}) is the legally binding one.",
 			"unrenderable": "The consent text of this counselling centre cannot be displayed at the moment. Please try again later or contact the counselling centre.",
@@ -3771,6 +4064,10 @@
 				"headline": "This invitation link does not work.",
 				"body": "The link is incomplete, or the group no longer exists. Please ask the person who sent you the link for a new one."
 			}
+		},
+		"stepScroll": {
+			"back": "Previous steps",
+			"forward": "Next steps"
 		}
 	},
 	"releaseNote": {
@@ -3805,6 +4102,7 @@
 			"open": "Hand over consultation",
 			"loadForbidden": "You are not authorised to load eligible colleagues.",
 			"loadError": "The handover form could not be loaded.",
+			"loading": "Loading the handover form …",
 			"submitError": "The handover request could not be sent.",
 			"conflict": "This consultation already has an open handover offer, or it has changed. Check the current state before sending a new offer.",
 			"status": {
@@ -4199,6 +4497,10 @@
 			}
 		},
 		"anonymous": {
+			"queueNotFirst": {
+				"headline": "Another guest is first in line",
+				"text": "An earlier request in this queue must be accepted first."
+			},
 			"takenByOtherConsultant": {
 				"button": {
 					"label": "Close"
@@ -4346,12 +4648,18 @@
 		"item": {
 			"sessionType": {
 				"liveChat": "Live Chat",
-				"selfHelp": "Peer support group",
+				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
-				"directLinkChat": "Direct link"
+				"directLinkChat": "Direct invitation"
+			},
+			"waiting": {
+				"minutes": "waiting {{count}} min",
+				"hours": "waiting {{count}} h",
+				"weeks_one": "waiting {{count}} week",
+				"weeks_other": "waiting {{count}} weeks"
 			}
 		},
 		"createChat": {
@@ -4376,7 +4684,8 @@
 			},
 			"registered": {
 				"tab": "Initial inquiries"
-			}
+			},
+			"blurred": "Message with a blurred passage"
 		},
 		"reloadButton": {
 			"label": "Reload"
@@ -4449,7 +4758,7 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
-				"directLinks": "Direct links",
+				"directLinks": "Direct invitations",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",
@@ -4476,13 +4785,70 @@
 			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"expand": "Expand consultations list",
 			"collapse": "Collapse consultations list to enlarge the chat",
-			"scrollAriaLabel": "Drag to scroll the list."
+			"scrollAriaLabel": "Drag to scroll the list.",
+			"futureAriaLabel": "Upcoming appointments: drag down to show them, Up and Down move between stops."
 		},
 		"rail": {
 			"unreadCount": "{{count}} new messages",
 			"unreadCount_one": "{{count}} new message",
 			"openEnquiries": "{{count}} open requests",
 			"openEnquiries_one": "{{count}} open request"
+		},
+		"timeline": {
+			"now": "Now",
+			"running": "in progress",
+			"upcoming": "Upcoming appointments",
+			"nextAppointment": "Next appointment: {{date}}",
+			"appointment": {
+				"create": "Add appointment",
+				"dialog": {
+					"createTitle": "Add appointment",
+					"moveTitle": "Move appointment",
+					"description": "The appointment belongs to this conversation. A notice appears in the conversation.",
+					"createAction": "Add",
+					"moveAction": "Move",
+					"date": "Date",
+					"start": "Start",
+					"end": "End",
+					"error": {
+						"incomplete": "Please choose a date and time.",
+						"past": "The appointment must be in the future.",
+						"order": "The end must be after the start.",
+						"conflict": "This appointment can no longer be changed: it was cancelled or the conversation has ended.",
+						"failed": "The appointment could not be saved. Please try again."
+					}
+				},
+				"notice": {
+					"created": "Appointment scheduled: {{date}}",
+					"moved": "Appointment moved to: {{date}}",
+					"cancelled": "Appointment cancelled: {{date}}",
+					"requested": "Appointment requested: {{date}} – waiting for confirmation",
+					"confirmed": "Appointment confirmed: {{date}}",
+					"declined": "Appointment request declined: {{date}}",
+					"withdrawn": "Appointment request withdrawn: {{date}}",
+					"expired": "Appointment request expired: {{date}} – it was not answered before it began"
+				},
+				"noticeFailed": {
+					"title": "Notice not sent",
+					"text": "The appointment is saved, but the notice in the conversation could not be sent."
+				},
+				"cancelFailed": {
+					"title": "Appointment not cancelled",
+					"text": "The appointment could not be cancelled. Please try again."
+				},
+				"request": {
+					"marker": "Requested",
+					"failedTitle": "Request not answered",
+					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
+					"failed": "That did not work. Please try again."
+				}
+			}
+		},
+		"deletedAsker": {
+			"title": "Deleted advice seeker",
+			"hint": "This chat was deleted. Personal data and messages are no longer available.",
+			"preview": "Chat was deleted",
+			"previewArchived": "Deleted · in archive"
 		}
 	},
 	"statusOverlay": {
@@ -4994,6 +5360,12 @@
 		"timeline": {
 			"join": "Join call",
 			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"counsellorCallPending": "The call has not started yet",
+			"counsellorCallPendingText": "Only your counsellor can start the call. You can join as soon as they call you. Please wait for the call.",
+			"leaveRunningCallTitle": "End the current call and join?",
+			"leaveRunningCallText": "Your counsellor is calling you. You are still in another call; it ends when you join.",
+			"leaveRunningCallStay": "Stay in the call",
+			"leaveRunningCallJoin": "End and join",
 			"endedElsewhere": "This call has already ended.",
 			"video": {
 				"running": "Video call in progress",
@@ -5013,6 +5385,43 @@
 			"rejectCall": "Reject call",
 			"startCall": "Start audio call",
 			"startVideoCall": "Start video call"
+		},
+		"askerInfo": {
+			"title": "Your counsellor starts calls",
+			"description": "You cannot start a call here. Your counsellor will call you in this conversation at the agreed appointment.",
+			"next": "Your next appointment",
+			"medium": {
+				"video": "Video call",
+				"phone": "Phone call",
+				"onsite": "On site",
+				"chat": "Chat"
+			},
+			"none": "No appointment has been set up for this conversation yet.",
+			"requestHint": "Write to your counsellor in the chat when it suits you.",
+			"requestHintBooking": "Choose a free time of your counsellor and book the appointment directly.",
+			"request": "Request an appointment",
+			"loading": "Loading the appointment …",
+			"error": "The appointment could not be loaded right now. Please try again later.",
+			"booking": {
+				"title": "Book an appointment",
+				"description": {
+					"video": "Choose a free time of your counsellor for a video call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests.",
+					"phone": "Choose a free time of your counsellor for a phone call. Times marked \"Booked at once\" are fixed straight away; your counsellor confirms requests."
+				},
+				"loading": "Loading free times …",
+				"error": "The free times could not be loaded right now. Please try again later.",
+				"none": "Your counsellor has no free time in the next two weeks.",
+				"writeInChat": "Write in the chat",
+				"back": "Back",
+				"confirm": "Book appointment",
+				"taken": "This time has just been taken. Please choose another one.",
+				"failed": "The appointment could not be booked. Please try again.",
+				"booked": "Your appointment is booked. Your counsellor is notified in the chat.",
+				"limit": "An appointment is already booked for this conversation.",
+				"confirmRequest": "Request appointment",
+				"requested": "Your request has been sent. It is waiting for your counsellor to confirm it."
+			},
+			"nextRequested": "Your requested appointment"
 		},
 		"incomingCall": {
 			"description": "calls...",
@@ -5069,6 +5478,7 @@
 		"label": "Voice message",
 		"play": "Play voice message",
 		"pause": "Pause voice message",
+		"loading": "Loading voice message",
 		"timeline": "Timeline",
 		"jumpTo": "Jump to {{time}}",
 		"aria": "Voice message, {{duration}}, play",
@@ -5141,6 +5551,17 @@
 		"introduction": {
 			"title": "Introduction",
 			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		},
+		"launcherSwitch": {
+			"title": "Show the tour button",
+			"label": {
+				"on": "On",
+				"off": "Off"
+			},
+			"hint": {
+				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
+				"off": "Off: the “?” button is hidden. You can still find your tours here."
+			}
 		}
 	},
 	"anonymousChat": {
@@ -5353,6 +5774,11 @@
 			"status": {
 				"on": "Supervision on",
 				"off": "Supervision off"
+			},
+			"plusMenu": {
+				"menuLabel": "Add or hand over",
+				"supervisionHint": "A colleague watches along. The case stays with you.",
+				"handoverHint": "The case moves to a colleague. You hand it over completely."
 			}
 		}
 	},
@@ -5466,6 +5892,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback chat with your supervisor about this conversation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Counselling"
@@ -5502,7 +5929,7 @@
 		}
 	},
 	"teamDiscussion": {
-		"title": "Team discussion",
+		"title": "Team chat",
 		"startHint": "Start discussion",
 		"postCount": "{{count}} posts",
 		"postCount_one": "1 post",
@@ -5513,7 +5940,7 @@
 		"placeholder": "Message to the team …",
 		"send": "Send",
 		"error": {
-			"open": "The team discussion could not be opened.",
+			"open": "The team chat could not be opened.",
 			"send": "The message could not be sent."
 		}
 	},
@@ -5553,7 +5980,18 @@
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
 			"enableBrowser": "Enable browser notifications",
+			"dialog": {
+				"title": "Turn on browser notifications",
+				"description": "Pick the sound you will hear, then allow notifications in your browser.",
+				"stayInBrowser": "This works as long as ORISO stays open in this browser on this device.",
+				"toneLabel": "Notification sound",
+				"tone": "Sound {{number}}",
+				"noTone": "No sound"
+			},
 			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"optionActive": "Active",
+			"browserBlockedHelp": "Browser notifications are blocked for this site. Click the lock icon in the address bar, open the site settings, set Notifications to Allow or choose Reset, then try again.",
+			"emailSavedNext": "Your email address is saved. One step left: allow notifications in your browser.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"active": "Enabled: {{channel}}",
 			"bothSetup": "Set up both",
@@ -5581,8 +6019,7 @@
 			"body": "Thank you for getting in touch. Your message has reached us."
 		},
 		"whoReadsAlong": {
-			"headline": "Who reads your message",
-			"body": "Only the trained staff of the responsible counselling centre read your message. Everyone there is bound by confidentiality."
+			"headline": "Who reads your message"
 		},
 		"responseDeadline": {
 			"headline": "When you will get a reply",
@@ -5609,6 +6046,8 @@
 			"headline": "Notification by e-mail",
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
+			"dialogTitle": "Secure your access",
+			"dialogDescription": "Leave an e-mail address so you can reset your password later and hear when a reply is there. The content of the counselling never appears in that e-mail.",
 			"saveFailed": "Saving failed. Please try again.",
 			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support.",
 			"refreshFailed": "Your email address is saved. Your current settings could not be loaded.",
@@ -5828,12 +6267,12 @@
 					"intro": "A practice request is waiting in the list. Click it to open it."
 				},
 				"openTeam": {
-					"title": "Open the team discussion",
-					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+					"title": "Open the team chat",
+					"intro": "The team chat is switched on for you: use it to check with your team before you accept. Click “Open team chat”."
 				},
 				"teamReply": {
 					"title": "Reply in the team",
-					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team chat is closed."
 				},
 				"accept": {
 					"title": "Accept the request",
@@ -5874,6 +6313,13 @@
 					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
 				}
 			}
+		},
+		"launcher": {
+			"eyebrow": "Help",
+			"title": "Tours",
+			"open": "Open tours",
+			"close": "Close tours",
+			"manage": "Manage tours"
 		}
 	},
 	"weekday": {
@@ -6140,6 +6586,7 @@
 		},
 		"share": {
 			"signInToJoin": "Sign in to join this call.",
+			"guestCallTitle": "Conversation",
 			"conversationMember": "You are already part of this conversation. Join the call from its chat.",
 			"openConversations": "Open my conversations",
 			"joinForbidden": "You cannot join this call through this link.",
@@ -6151,11 +6598,6 @@
 				"label": "Knock first",
 				"on": "Guests wait until you let them in. Switching it off lets everyone waiting in at once.",
 				"off": "Guests enter the call directly, without waiting."
-			},
-			"temporaryAccount": {
-				"label": "Temporary account",
-				"on": "Guests get a guest account that is deleted after the call.",
-				"off": "Guests sign in with their own account or create one."
 			},
 			"linkLabel": "Link to the call",
 			"copy": "Copy",
@@ -6176,6 +6618,10 @@
 			"region": "People waiting",
 			"someone": "Someone",
 			"wantsIn": "wants to join the call",
+			"waitingFor_one": "waiting for 1 min",
+			"waitingFor_other": "waiting for {{count}} min",
+			"waitingFor": "waiting for {{count}} min",
+			"justArrived": "just arrived",
 			"admit": "Let in",
 			"decline": "Decline",
 			"admitAll": "Let everyone in",
@@ -6189,6 +6635,13 @@
 			"label": "Knock first",
 			"on": "Guests wait until you let them in.",
 			"off": "Guests enter the call directly, without waiting."
+		},
+		"list": {
+			"running": "In progress",
+			"runningWithCount": "In progress — {{count}} in the call"
+		},
+		"floating": {
+			"move": "Move the call"
 		}
 	},
 	"form": {
@@ -6358,7 +6811,12 @@
 			"microphone": "Microphone",
 			"micOn": "Unmute microphone",
 			"micOff": "Mute microphone",
-			"micMeter": "Your microphone volume"
+			"micMeter": "Your microphone volume",
+			"cameraNotice": {
+				"permissionDenied": "Your camera is blocked for this site. Allow the camera in your browser's site settings (the lock icon next to the address). The picture then appears without reloading.",
+				"deviceBusy": "Another program is using your camera. Close it, then check again.",
+				"retry": "Check camera again"
+			}
 		},
 		"ready": {
 			"title": "Check camera and microphone",
@@ -6400,7 +6858,8 @@
 			"noteLabel": "Note from the counsellor",
 			"findAgency": "Find a counselling centre",
 			"requested": "Request sent",
-			"topicUnknown": "another topic"
+			"topicUnknown": "another topic",
+			"convertFirstHint": "To keep your conversation, you first create an account. Then you choose the counselling centre."
 		},
 		"duplicate": {
 			"startedTitle": "Further counselling on the same topic",
@@ -6422,17 +6881,25 @@
 		}
 	},
 	"directLink": {
+		"postcode": {
+			"helper": "For statistics only. The postcode does not choose the agency or the counsellor – the link decides that.",
+			"invalid": "Please enter your five-digit postcode."
+		},
 		"card": {
-			"title": "Direct link",
+			"title": "Direct invitation",
 			"subtitle": "For people seeking advice",
 			"headline": "A link straight to you",
 			"text": "Whoever opens the link reaches you directly – in a chat, an audio call or a video call.",
 			"topicLabel": "Choose topic",
 			"mediumLabel": "Kind of contact",
-			"temporary": "Temporary account",
 			"temporaryHint": "The account is deleted after the conversation.",
 			"create": "Create link",
-			"createFailed": "The link could not be created. Please try again."
+			"createFailed": "The link could not be created. Please try again.",
+			"name": "Name (optional)",
+			"nameHint": "E.g. \"Appointment Ms M.\" – helps you find the link in your overview.",
+			"scheduledAt": "Date and time (optional)",
+			"scheduledAtHint": "For orientation only – the link also works before and after.",
+			"scheduledAtIncomplete": "Please enter the full date and time, or clear the field."
 		},
 		"medium": {
 			"chat": "Chat",
@@ -6442,44 +6909,49 @@
 		"temporary": "Temporary",
 		"copy": "Copy link",
 		"share": {
-			"title": "Your direct link is ready",
+			"title": "Your direct invitation is ready",
 			"description": "Share the link or the QR code. Every person gets their own conversation with you.",
+			"descriptionAppointment": "Share the link or the QR code. Everyone who opens it meets you in one shared conversation for the appointment.",
+			"descriptionJoin": "Share the link or the QR code. Whoever opens it joins this conversation.",
 			"copied": "Copied",
 			"share": "Share",
-			"qrAlt": "QR code for the direct link",
+			"qrAlt": "QR code for the direct invitation",
 			"done": "Done",
-			"linkLabel": "Direct link"
+			"linkLabel": "Direct invitation"
 		},
 		"list": {
-			"title": "My direct links",
+			"title": "My direct invitations",
 			"qr": "Show QR code",
 			"active": "{{name}} active",
 			"edit": "Edit {{name}}"
 		},
 		"entry": {
 			"inactive": "This link is no longer active.",
+			"callsDisabled": "Calls are not available in this counselling.",
 			"haveAccount": "Already have an account? Sign in",
 			"joinFailed": "That did not work. Please try again."
 		},
 		"page": {
-			"loadFailed": "Your direct links could not be loaded.",
-			"create": "Create a new direct link in “Create chat”",
-			"emptyHeadline": "There are no direct links yet",
-			"emptyText": "You create a direct link in “Create chat”. It then appears here.",
-			"loading": "Loading direct links",
+			"loadFailed": "Your direct invitations could not be loaded.",
+			"create": "Create a new direct invitation in “Create chat”",
+			"emptyHeadline": "There are no direct invitations yet",
+			"emptyText": "You create a direct invitation in “Create chat”. It then appears here.",
+			"loading": "Loading direct invitations",
 			"retry": "Try again",
-			"toggleFailed": "The link could not be switched. Please try again."
+			"toggleFailed": "The link could not be switched. Please try again.",
+			"toggleFailedTitle": "Not switched"
 		},
 		"edit": {
-			"title": "Edit direct link",
+			"title": "Edit direct invitation",
 			"cancel": "Cancel",
 			"save": "Save",
 			"name": "Name",
 			"nameRequired": "Please enter a name.",
 			"topic": "Topic",
 			"mediumFixed": "The type of contact cannot be changed",
-			"temporaryHint": "Applies only to people who open the link from now on.",
-			"failed": "The change could not be saved. Please try again."
+			"failed": "The change could not be saved. Please try again.",
+			"scheduledAt": "Date and time",
+			"clearScheduledAt": "Remove"
 		}
 	},
 	"dashboard": {
@@ -6494,8 +6966,7 @@
 		},
 		"circles": {
 			"title": "Upcoming self-help circles",
-			"participants": "{{count}} participants",
-			"participants_one": "{{count}} participant"
+			"assignedCounsellors": "Counselling team: {{count}}"
 		}
 	},
 	"temporaryAccount": {
@@ -6526,6 +6997,907 @@
 		"lookupFailed": {
 			"title": "We could not check your account",
 			"text": "Your message has not been sent yet and stays in the input field. Please check your connection and send it again."
+		}
+	},
+	"directInvitation": {
+		"dialog": {
+			"roomNotEncrypted": "No invitation link can be created for this conversation because it is not encrypted.",
+			"createTitle": "Create direct invitation",
+			"editTitle": "Edit direct invitation",
+			"description": "Whoever opens the link comes straight to you. An appointment is optional.",
+			"createAction": "Create",
+			"saveAction": "Save",
+			"withAppointment": "With appointment",
+			"withAppointmentHint": "Everyone who opens the link meets in one shared conversation. The appointment also appears in your calendar.",
+			"withoutAppointmentHint": "Without an appointment, each person gets their own conversation. The link works until you delete it.",
+			"inviteOthers": "Invite more people by link",
+			"inviteOthersHint": "For example an interpreter. Invited people only see messages written after they joined.",
+			"inviteOthersMediumOff": "Direct invitations are not enabled for this type. Choose another type to invite more people.",
+			"validity": {
+				"label": "Valid after the appointment ends",
+				"hint": "After that, guests lose access and the conversation is archived.",
+				"end": "Until the appointment ends",
+				"minutes_one": "{{count}} minute",
+				"minutes_other": "{{count}} minutes",
+				"hours_one": "{{count}} hour",
+				"hours_other": "{{count}} hours",
+				"less": "Shorter",
+				"more": "Longer"
+			},
+			"access": {
+				"label": "Who may enter?",
+				"guests": "Guests only",
+				"accounts": "Accounts only",
+				"both": "Both"
+			},
+			"knock": "Knock first",
+			"knockHint": "You let each person in yourself. You can change this during the call.",
+			"newPerson": {
+				"option": "New person by direct invitation …",
+				"hint": "This person has no conversation with you yet. In the next step you create a direct invitation with this appointment.",
+				"action": "Continue to direct invitation"
+			},
+			"linkFailedTitle": "Invitation link not created",
+			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
+			"appointmentSaved": "The appointment is saved."
+		},
+		"overview": {
+			"title": "Appointments & direct invitations",
+			"upcoming": "Upcoming appointments",
+			"withoutAppointment": "Direct invitations without appointment",
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"time": "{{start}}–{{end}}",
+			"validUntil": "Link valid until {{date}}",
+			"knockOn": "Knock first",
+			"knockOff": "Enter directly",
+			"oneToOne": "1:1 conversation with {{name}}",
+			"copy": "Copy link for {{name}}",
+			"copied": "Copied",
+			"qr": "Show QR code for {{name}}",
+			"edit": "Edit {{name}}",
+			"copyFailed": "The link could not be copied.",
+			"emptyHeadline": "No appointments or direct invitations yet",
+			"emptyText": "Create a direct invitation, with or without an appointment. It then appears here.",
+			"create": "Create direct invitation",
+			"noUpcoming": "No upcoming appointments. Give a direct invitation a date, or add an appointment in a conversation via ⋮.",
+			"noLinks": "No direct invitations without appointment.",
+			"appointmentName": "Appointment",
+			"copyFailedTitle": "Not copied",
+			"expired": "Expired invitations",
+			"sendNewLink": "Send a new link for {{name}}",
+			"appointmentsFailed": "The appointments could not be loaded.",
+			"appointmentsRetry": "Reload"
+		},
+		"entry": {
+			"beforeStart": {
+				"title": "Your appointment",
+				"with": "with {{name}}",
+				"time": "{{start}}–{{end}}",
+				"waitingRoom": "The waiting room opens at {{time}}, 15 minutes before the start.",
+				"chatNow": "You can already write now.",
+				"openChat": "Open chat"
+			},
+			"expired": {
+				"title": "Link expired",
+				"text": "This link is no longer valid. Request a new one; your counsellor will be notified.",
+				"request": "Request a new link",
+				"sent": "Request sent. You will get a new link as soon as your counsellor sends it.",
+				"failed": "The request did not go through. Please try again.",
+				"failedTitle": "Request not sent",
+				"signedOut": "This link is no longer valid. You can request a new link once you are signed in. Without signing in, please contact your counsellor directly.",
+				"signIn": "Sign in to request a new link"
+			},
+			"access": {
+				"guestsOnly": "This link is for guests only. Please open it in a window where you are not signed in.",
+				"accountsOnly": "You need an account for this link. Please sign in or register."
+			},
+			"roomNotEncrypted": "This invitation cannot be used right now because the conversation is not encrypted. Please contact your counsellor.",
+			"roomUnavailable": "The conversation cannot be reached right now. Please try again in a moment.",
+			"consent": {
+				"description": "Please agree to the counselling centre's privacy policy before you enter the conversation. Everybody agrees for themselves.",
+				"rejected": "Without your agreement you cannot enter this conversation. You can still agree at any time."
+			}
+		},
+		"notice": {
+			"title": "New link requested",
+			"text": "{{name}} would like a new link for “{{invitation}}”.",
+			"someone": "Someone",
+			"send": "Send new link",
+			"failed": "The new link could not be created. Please try again.",
+			"failedTitle": "New link not created"
+		},
+		"conversation": {
+			"sendNewLink": "Send new link"
+		},
+		"renewed": {
+			"title": "New link",
+			"text": "Here is the new link to the appointment:",
+			"validUntil": "The new link to the appointment works until {{date}}:"
+		},
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
+	},
+	"calendar": {
+		"bandLoading": "Loading: {{names}}",
+		"colleagueLoadingShort": "loading …",
+		"zoomOut": "Zoom out",
+		"zoomIn": "Zoom in",
+		"zoomLabel": "Zoom",
+		"bandHint": "“Side by side” shows single entries.",
+		"bandUnknown": "Not loaded: {{names}}",
+		"bandFree": "Free: {{names}}",
+		"bandBusy": "Busy: {{names}}",
+		"bandSome": "{{busy}} of {{total}} busy",
+		"bandOne": "{{name}} busy",
+		"colleagueFailedShort": "not loaded",
+		"colleagueFailed": "The calendar of {{names}} could not be loaded, so it cannot be said when everyone is free.",
+		"chatUnavailable": "The chat for this appointment could not be opened.",
+		"conversationsFailedAsker": "Your conversations could not be loaded, so an appointment cannot take you to its chat.",
+		"create": "New appointment",
+		"today": "Today",
+		"previous": "Previous",
+		"next": "Next",
+		"viewSwitch": "View",
+		"views": {
+			"day": "Day",
+			"week": "Week",
+			"month": "Month",
+			"list": "List",
+			"threeDays": "3 days",
+			"workWeek": "Work week",
+			"split": "Side by side"
+		},
+		"upcoming": "Up next",
+		"upcomingEmpty": "No upcoming appointments",
+		"calendars": "Calendars",
+		"myCalendar": "My calendar",
+		"scopeHint": {
+			"AGENCY": "You see the calendars of your counselling centre. Your organisation sets this.",
+			"TENANT": "You see the calendars of all counselling centres of your organisation. Your organisation sets this.",
+			"PLATFORM": "You see the calendars of all counsellors on the platform. Your organisation sets this."
+		},
+		"colleaguesEmpty": "No colleague calendars visible.",
+		"sync": "Calendar sync",
+		"kinds": {
+			"video": "Video",
+			"phone": "Phone",
+			"onsite": "On site",
+			"chat": "Chat"
+		},
+		"types": {
+			"group": "Group date",
+			"blocker": "Blocked",
+			"busy": "Busy",
+			"colleague": "Busy",
+			"absence": "Absent"
+		},
+		"noEvents": "No appointments in this period",
+		"loading": "Loading appointments",
+		"error": {
+			"title": "The appointments could not be loaded.",
+			"retry": "Try again"
+		},
+		"dialog": {
+			"createTitle": "New entry",
+			"description": "Choose the day, time, kind and the conversation the appointment belongs to.",
+			"conversation": "Conversation",
+			"kind": "Kind",
+			"date": "Date",
+			"start": "Start",
+			"end": "End",
+			"note": "Note (only you see it)",
+			"save": "Create",
+			"saveAnyway": "Create anyway",
+			"conflict": "Overlaps with: {{list}}",
+			"error": {
+				"incomplete": "Please choose a date and time.",
+				"past": "The entry must be in the future.",
+				"order": "The end must be after the start.",
+				"conversation": "Please choose the conversation this appointment belongs to.",
+				"colleague": "Please choose a colleague."
+			},
+			"entryKind": "Kind of entry",
+			"tabs": {
+				"appointment": "Appointment",
+				"blocker": "Blocked time",
+				"absence": "Absence"
+			},
+			"withWhom": "Appointment with",
+			"withConversation": "Advice seeker",
+			"withColleague": "Colleague",
+			"colleague": "Colleague",
+			"colleagueHint": "The appointment goes into the internal chat of the two of you. If there is none yet, it is created.",
+			"colleagueDescription": "Choose the day, time, kind and the colleague.",
+			"onsiteOnly": "No internal chat is allowed with this colleague. Only an on-site appointment is possible."
+		},
+		"details": {
+			"start": {
+				"video": "Start video",
+				"phone": "Start call",
+				"chat": "Open chat"
+			},
+			"join": {
+				"video": "Join video call",
+				"phone": "Go to call",
+				"chat": "Open chat"
+			},
+			"move": "Move",
+			"cancel": "Cancel appointment",
+			"remove": "Remove block",
+			"address": "Address",
+			"colleague": "Calendar of {{name}}",
+			"busyHint": "Taken from your own calendar. ORISO only knows the time.",
+			"colleagueHint": "Of colleagues you only see time and kind."
+		},
+		"moved": "Moved to {{date}}. The advice seeker is notified.",
+		"movePast": "An appointment cannot be moved into the past.",
+		"moveConflict": {
+			"title": "Move anyway?",
+			"confirm": "Move anyway"
+		},
+		"soon": "Starts soon",
+		"blockerMoved": "Block moved to {{date}}.",
+		"cancelled": "Appointment cancelled. The advice seeker is notified.",
+		"cancelAsk": {
+			"title": "Cancel the appointment?",
+			"description": "{{name}}, {{time}}. {{name}} is told at once that the appointment is cancelled.",
+			"keep": "Keep it",
+			"confirm": "Cancel appointment"
+		},
+		"created": "Appointment created: {{date}}",
+		"undo": "Undo",
+		"syncDialog": {
+			"title": "Connect Outlook or Google",
+			"description": "Your ORISO appointments in Outlook, Google or Apple Calendar – and busy times back from there.",
+			"feedTitle": "Subscribe in your calendar",
+			"feedText": "Add this link to your calendar as a subscription. It only shows “ORISO-Termin” and the time, no names.",
+			"copy": "Copy link",
+			"copied": "Link copied",
+			"lastFetched": "Last fetched: {{date}}",
+			"neverFetched": "Not fetched yet",
+			"reset": "Reset link",
+			"resetTitle": "Reset the link?",
+			"resetText": "The old link stops working at once. Subscribe to the new link in your calendar afterwards.",
+			"resetAction": "Reset",
+			"preview": "How an appointment appears in your calendar",
+			"refreshHint": "Outlook and Google refresh subscriptions only every few hours. ORISO is the live source.",
+			"importTitle": "Take over busy times",
+			"importText": "Paste the private ICS address of your Outlook or Google calendar. ORISO only takes over when you are busy – no titles and no attendees.",
+			"importField": "ICS address",
+			"importSave": "Take over",
+			"importRemove": "Remove",
+			"importStatus": "Connected to {{host}}, last synced {{date}}",
+			"importError": "The address could not be read. Please check the link.",
+			"importConnected": "Connected to {{host}}. The first sync is running."
+		},
+		"filterLabel": "Show",
+		"facets": {
+			"video": "Video",
+			"phone": "Phone",
+			"onsite": "On site",
+			"chat": "Chat",
+			"group": "Group dates",
+			"blocker": "Blocked times"
+		},
+		"slotMenu": {
+			"label": "Add",
+			"as": "Add as",
+			"blockerNow": "added at once",
+			"outsideHours": "Outside your working hours.",
+			"who": "With whom",
+			"whoPlaceholder": "With whom? Search a name",
+			"conversations": "Conversations",
+			"noneFound": "No conversation found."
+		},
+		"blocker": {
+			"menuItem": "Blocked time",
+			"title": "Block time",
+			"description": "No appointments are given in this time. Colleagues only see “Blocked”.",
+			"allDay": "All day",
+			"repeat": "Repeat on",
+			"until": "Up to and including",
+			"save": "Block",
+			"tooMany": "Too many repetitions: at most {{max}} blocked times at once. Please choose an earlier last day.",
+			"clockGap": "One repetition falls into the clock change. Please choose another time.",
+			"count": "{{count}} blocked times will be added.",
+			"count_one": "{{count}} blocked time will be added.",
+			"conflicts": "Overlaps with {{count}} appointments.",
+			"conflicts_one": "Overlaps with {{count}} appointment.",
+			"created": "{{count}} blocked times added",
+			"created_one": "{{count}} blocked time added",
+			"createdSingle": "Time blocked: {{date}}",
+			"workHint": "Always the same times, such as evenings and weekends?",
+			"weekly": "Weekly …"
+		},
+		"saveFailed": "That did not work. Please try again.",
+		"restoreFailed": "The blocked time was removed and could not be restored. Save the series again to block the time again.",
+		"blockerRemoved": "Blocked time removed.",
+		"allDay": "all day",
+		"entryMenu": {
+			"back": "Back",
+			"cancel": "Cancel appointment",
+			"show": "Go to appointment",
+			"showSub": "Show and highlight it in the calendar",
+			"chat": "Go to chat",
+			"conflicts": "Overlaps with another entry.",
+			"date": "Day",
+			"from": "From",
+			"groupHint": "A group date. Change it in the group.",
+			"invalid": "The end is before the start.",
+			"join": "Join",
+			"label": "Actions for {{title}}",
+			"move": "Move …",
+			"propose": "Propose a new time …",
+			"proposeHint": "{{name}} has to confirm. Until then the appointment stays where it is.",
+			"remove": "Remove",
+			"saveMove": "Move",
+			"sendProposal": "Send proposal",
+			"to": "To",
+			"withYou": "You and {{name}}",
+			"startSub": "with {{name}}",
+			"chatSub": "Open the conversation with {{name}}",
+			"joinSub": "Open the video conference",
+			"moveSub": "Change day and time",
+			"proposeSub": "{{name}} has to confirm",
+			"cancelSub": "{{name}} gets a message",
+			"reason": "Reason (optional)"
+		},
+		"fullscreen": "Full screen",
+		"fullscreenExit": "Exit full screen (Esc)",
+		"jump": {
+			"label": "Go to a day",
+			"today": "Today",
+			"tomorrow": "Tomorrow",
+			"dayAfterTomorrow": "Day after tomorrow",
+			"nextMonday": "Next Monday",
+			"inTwoWeeks": "In two weeks",
+			"date": "Date",
+			"go": "Show"
+		},
+		"kindsMenu": {
+			"label": "What to show",
+			"hint": "Kinds you switch off are hidden in the calendar and in the list.",
+			"all": "Show everything",
+			"customised": "Some kinds are hidden.",
+			"blocker": "Blocked and busy times"
+		},
+		"monthMenu": {
+			"label": "Enter for this day",
+			"allDay": "All day",
+			"allDays": "All {{days}} days, all day",
+			"withTime": "With a time …",
+			"appointment": "Add appointment …",
+			"appointmentHint": "opens the day; drag the time there",
+			"range": "{{from}} – {{to}} ({{days}} days)"
+		},
+		"peek": {
+			"hint": "Click opens the actions"
+		},
+		"people": {
+			"bar": "People in the calendar",
+			"hint": "Pointing highlights, a click hides",
+			"label": "Show calendars",
+			"alwaysMine": "You always see your own dates.",
+			"sameTenant": "same organisation",
+			"wholeAgency": "Show the whole counselling centre",
+			"split": "View side by side",
+			"me": "Me",
+			"meAvatar": "me",
+			"more": "More …"
+		},
+		"proposal": {
+			"label": "Move",
+			"waiting": "awaiting confirmation",
+			"waitingFor": "waiting for {{name}}",
+			"title": "Your proposal for “{{title}}”",
+			"hint": "Waiting for {{name}}. Until then the appointment stays where it is.",
+			"withdraw": "Withdraw",
+			"sent": "Proposal sent: {{date}}. {{name}} has to confirm.",
+			"withdrawn": "Proposal withdrawn.",
+			"open": "Open requests",
+			"proposed": "Proposed: {{date}}",
+			"from": "Proposed by {{name}}",
+			"someone": "A colleague",
+			"change": "{{from}} → {{to}}",
+			"requestLabel": "{{name}} proposes to move your appointment from {{from}} to {{to}}",
+			"requestMenu": "Move proposed",
+			"requestHint": "Until you answer, the appointment stays where it is.",
+			"accept": "Accept",
+			"acceptHint": "The appointment moves to the new time",
+			"acceptLabel": "Accept the proposal from {{name}}: {{from}} to {{to}}",
+			"decline": "Decline",
+			"declineHint": "The appointment stays as it is",
+			"declineLabel": "Decline the proposal from {{name}}: the appointment stays at {{from}}",
+			"declined": "Proposal declined. The appointment stays at {{date}}.",
+			"noLongerValid": "This proposal no longer applies. The appointment has changed or is over.",
+			"navCount": "{{count}} open requests",
+			"navCount_one": "{{count}} open request",
+			"reason": "Reason: {{reason}}"
+		},
+		"quick": {
+			"freeUnavailable": "Free times are not available right now.",
+			"freeLoading": "Loading free times …",
+			"close": "Close quick entry",
+			"date": "Day",
+			"duration": "Duration",
+			"gaps": {
+				"when": "day and start",
+				"kind": "which kind",
+				"who": "with whom"
+			},
+			"halfHour": "30 min",
+			"hint": "Pick a kind, set day and start, or tap a free time.",
+			"hour": "1 h",
+			"kind": "Kind",
+			"missing": "Still missing: {{list}}.",
+			"more": "More details …",
+			"placeholder": "With whom? e.g. “mutige_eule” or “Thu 2pm”",
+			"save": "Add",
+			"saving": "Saving …",
+			"slot": "Length of the free time",
+			"time": "Start",
+			"title": "Quick entry",
+			"who": "With whom",
+			"freeNext": "Next free",
+			"lengthHours": "{{hours}} h",
+			"lengthMinutes": "{{minutes}} min",
+			"lengthBoth": "{{hours}} h {{minutes}} min",
+			"lengths": {
+				"30": "30 min",
+				"45": "45 min",
+				"60": "1 h",
+				"90": "1½ h",
+				"120": "2 h"
+			},
+			"ready": "{{noun}} with {{name}}",
+			"outsideHours": "outside working hours"
+		},
+		"search": {
+			"placeholder": "Search",
+			"clear": "Clear search",
+			"empty": "Nothing found.",
+			"results": "Search results"
+		},
+		"settings": {
+			"freeDays": "Add days off …",
+			"freeDaysHint": "Holiday, bridge day; public holidays are under working hours",
+			"label": "Calendar settings",
+			"workingHours": "Working hours",
+			"switcher": "Choose the view",
+			"switcherMenu": "as a menu",
+			"switcherDigits": "as buttons",
+			"switcherHint": "Saved for you.",
+			"grips": "Drag working hours and break",
+			"gripsSub": "Show the grips in the calendar",
+			"sync": "Connect Outlook or Google",
+			"repeatBlocker": "Repeating blocked time",
+			"switcherMenuSub": "One button, the views in its menu",
+			"switcherDigitsSub": "All views side by side"
+		},
+		"side": {
+			"resize": "Drag to make the list wider or narrower; double-click folds it in or out, Up and Down scroll it",
+			"label": "Appointments: search and lists",
+			"now": "Now"
+		},
+		"split": {
+			"empty": "Show colleagues' calendars to see your day next to theirs.",
+			"choose": "Choose colleagues",
+			"free": "all free",
+			"label": "Your day next to colleagues",
+			"oneDay": "1 day",
+			"range": "Days side by side",
+			"threeDays": "3 days"
+		},
+		"viewMenu": "View: {{view}}",
+		"header": {
+			"new": "New",
+			"newEntry": "New entry",
+			"shared": "Dates"
+		},
+		"when": {
+			"running": "now",
+			"inMinutes": "in {{count}} min",
+			"today": "today {{time}}",
+			"tomorrow": "tomorrow {{time}}",
+			"weekday": "{{day}} {{time}}"
+		},
+		"workingHours": {
+			"breakOn": "{{day}}: break",
+			"break": "Break",
+			"breakFrom": "{{day}}: break from",
+			"breakInvalid": "A break has to lie within the working hours and end after it starts.",
+			"breakTo": "{{day}}: break until",
+			"change": "Change",
+			"cleared": "Working hours removed.",
+			"description": "Outside these hours your calendar is shaded. Appointments are still possible.",
+			"from": "Start on {{day}}",
+			"holidays": "Public holidays off",
+			"holidaysHint": "Public holidays are shaded like days off.",
+			"invalid": "On one day the end is before the start.",
+			"none": "No working hours set",
+			"save": "Save",
+			"saved": "Working hours saved: {{hours}}.",
+			"set": "Set",
+			"summary": "Working hours {{hours}}",
+			"title": "Set working hours",
+			"to": "End on {{day}}",
+			"tooMany": "Working hours hold at most {{max}} time windows a week; this change was not saved.",
+			"copyMonday": "Use Monday's hours and pause for all working days"
+		},
+		"grip": {
+			"weekOnly": "Only partly saved: the hours for {{weekdays}} changed, but {{date}} did not.",
+			"weekUndone": "Nothing changed: {{date}} could not be saved, so {{weekdays}} keep their previous hours.",
+			"tooManyDays": "Too many days with their own hours: at most {{max}}. Delete older exceptions.",
+			"pauseMovedWeek": "Break {{weekdays}} now {{start}}–{{end}}.",
+			"pauseMovedDay": "Break on {{date}} now {{start}}–{{end}}.",
+			"pauseDeletedWeek": "Break {{weekdays}} deleted.",
+			"pauseDeletedDay": "Break on {{date}} deleted.",
+			"pauseScope": "Applies",
+			"pauseMoveHint": "same length",
+			"pauseMove": "Move the break to {{start}}–{{end}}",
+			"pauseDelete": "Delete the break",
+			"pauseTitle": "Break {{start}}–{{end}}",
+			"pauseMenu": "Change the break",
+			"pauseLabel": "Move the {{what}} on {{date}}, now {{time}}. Arrow keys change it by 15 minutes, Delete removes or moves the break.",
+			"pauseCrossed": "Delete or move the break …",
+			"ghostPauseEnd": "Break until {{time}}",
+			"ghostPauseStart": "Break from {{time}}",
+			"pauseEnd": "End of the break",
+			"pauseStart": "Start of the break",
+			"always": "Always {{weekdays}}",
+			"alwaysHint": "as a rule in the working hours",
+			"end": "End of work",
+			"forget": "Forget the remembered choice",
+			"forgotten": "Dragging the working hours asks again.",
+			"ghostEnd": "End {{time}}",
+			"ghostStart": "Start {{time}}",
+			"instead": "instead of {{time}} · {{date}}",
+			"label": "Move {{what}} on {{date}}, now {{time}}. Arrow keys change it by 15 minutes.",
+			"menuLabel": "Change {{what}}",
+			"onlyThisDay": "Only on this day",
+			"remember": "Remember my choice",
+			"rememberHint": "Do not ask again; reset with ⋮ at the top right",
+			"rememberedDay": "Dragging working hours: “Only on this day” is remembered",
+			"rememberedWeek": "Dragging working hours: “Always” is remembered",
+			"savedDay": "{{what}} on {{date}}: {{time}}. Applies to this day only.",
+			"savedWeek": "{{what}} {{weekdays}}: {{time}}. Applies every week from now on.",
+			"start": "Start of work",
+			"title": "{{what}} {{time}} · drag to change",
+			"titleException": "{{what}} {{time}} (this day only) · drag to change",
+			"weekdays": {
+				"0": "on Sundays",
+				"1": "on Mondays",
+				"2": "on Tuesdays",
+				"3": "on Wednesdays",
+				"4": "on Thursdays",
+				"5": "on Fridays",
+				"6": "on Saturdays"
+			}
+		},
+		"holidays": {
+			"choose": "Choose a federal state",
+			"chooseHint": "Please choose a federal state.",
+			"label": "Public holiday: {{name}}",
+			"names": {
+				"allSaints": "All Saints' Day",
+				"ascension": "Ascension Day",
+				"assumption": "Assumption Day",
+				"boxingDay": "Boxing Day",
+				"childrensDay": "World Children's Day",
+				"christmasDay": "Christmas Day",
+				"corpusChristi": "Corpus Christi",
+				"easterMonday": "Easter Monday",
+				"easterSunday": "Easter Sunday",
+				"epiphany": "Epiphany",
+				"goodFriday": "Good Friday",
+				"labourDay": "Labour Day",
+				"newYear": "New Year's Day",
+				"reformationDay": "Reformation Day",
+				"repentanceDay": "Day of Repentance and Prayer",
+				"unityDay": "German Unity Day",
+				"whitMonday": "Whit Monday",
+				"whitSunday": "Whit Sunday",
+				"womensDay": "International Women's Day"
+			},
+			"next": "Next public holiday: {{name}}, {{date}}",
+			"region": "Federal state",
+			"regions": {
+				"BB": "Brandenburg",
+				"BE": "Berlin",
+				"BW": "Baden-Württemberg",
+				"BY": "Bavaria",
+				"HB": "Bremen",
+				"HE": "Hessen",
+				"HH": "Hamburg",
+				"MV": "Mecklenburg-Western Pomerania",
+				"NI": "Lower Saxony",
+				"NW": "North Rhine-Westphalia",
+				"RP": "Rhineland-Palatinate",
+				"SH": "Schleswig-Holstein",
+				"SL": "Saarland",
+				"SN": "Saxony",
+				"ST": "Saxony-Anhalt",
+				"TH": "Thuringia"
+			}
+		},
+		"sheet": {
+			"full": "Fold the list down",
+			"half": "Pull the list all the way up",
+			"keys": "Enter changes the height; the arrow keys pull the list up or down. Dragging works too.",
+			"open": "Pull up the list"
+		},
+		"conversationsFailed": "The conversations could not be loaded, so appointments cannot be linked to one.",
+		"nouns": {
+			"video": "Video appointment",
+			"phone": "Phone appointment",
+			"onsite": "On-site appointment",
+			"chat": "Chat appointment",
+			"group": "Group appointment",
+			"blocker": "Blocked time",
+			"busy": "Busy"
+		},
+		"viewSettings": {
+			"title": "View · Calendar",
+			"description": "Which appointment kinds the calendar shows, which get a button in the kind row and when you receive e-mails.",
+			"kindsHeading": "Appointment kinds",
+			"showColumn": "In calendar",
+			"legendShow": "Appointments of this kind appear in the calendar and in the list.",
+			"pillColumn": "As button",
+			"legendPill": "The kind has a button in the row above “Up next”.",
+			"legendEmail": "E-mail for booked, moved and cancelled appointments. Applies to all appointment kinds together, as in your profile.",
+			"showKind": "In calendar: {{kind}}",
+			"pillKind": "As button: {{kind}}",
+			"pillMenu": "Choose button: {{kind}}"
+		},
+		"bandCard": {
+			"label": "Who is busy",
+			"back": "Back to the list",
+			"busy": "Busy",
+			"free": "Free",
+			"nobodyFree": "Nobody is free.",
+			"show": "View calendar",
+			"showLabel": "View the calendar of {{name}}",
+			"ownerOnly": "Only {{name}} can change this.",
+			"all": "Everyone side by side",
+			"create": "Add at this time"
+		},
+		"links": {
+			"title": "Links without an appointment",
+			"hint": "Invitation links you can share: copy them or show a QR code."
+		},
+		"consultationHours": {
+			"title": "Consultation hours",
+			"description": "In these hours advice seekers can book an appointment with you themselves. They are separate from your working hours.",
+			"save": "Save consultation hours",
+			"saved": "Consultation hours saved",
+			"empty": "Without consultation hours, advice seekers cannot book an appointment.",
+			"none": "No consultation hours set",
+			"autoAccept": "Confirm bookings automatically",
+			"autoAcceptOn": "After the notice period an appointment is booked at once; short-notice bookings are requests.",
+			"autoAcceptOff": "Every booking is a request that you confirm.",
+			"noticeDays": "Notice",
+			"noticeDaysHint": "Within these days before the appointment a booking becomes a request.",
+			"noticeDaysOption": "{{count}} days",
+			"noticeDaysOption_one": "{{count}} day",
+			"slotMinutes": "Length of an appointment",
+			"minutes": "{{count}} min",
+			"invalid": "The end must be after the start.",
+			"loadFailed": "Could not be loaded. Try again",
+			"overlaps": "The times overlap another consultation window on this day."
+		},
+		"appointmentRequest": {
+			"status": "Requested · waiting for you",
+			"from": "Request from {{name}}",
+			"menu": "Appointment requested",
+			"hint": "Until you answer, the time is held. Without an answer by its start, the request expires.",
+			"confirm": "Confirm",
+			"confirmHint": "The appointment is booked",
+			"decline": "Decline",
+			"declineHint": "The time becomes free again",
+			"confirmed": "Appointment confirmed: {{date}}.",
+			"declined": "Appointment request declined: {{date}}."
+		},
+		"absence": {
+			"description": "Choose the days you are away. During that time advice seekers see your absence message.",
+			"from": "From",
+			"until": "Until",
+			"message": "Absence message",
+			"messageHint": "Advice seekers see this message but can still write to you.",
+			"effect": "After the last day you are present again automatically. The same absence shows in your profile.",
+			"save": "Add absence",
+			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
+			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
+			"saved": "Absence added. It also shows in your profile."
+		},
+		"meeting": {
+			"accept": "Accept",
+			"decline": "Decline",
+			"accepted": "Appointment accepted.",
+			"declined": "Appointment declined.",
+			"cancelled": "Appointment cancelled.",
+			"cancelAsk": "{{name}}, {{time}}. The appointment leaves both calendars.",
+			"cancelSub": "Also leaves {{name}}'s calendar",
+			"chatSub": "Internal chat with {{name}}",
+			"pendingInvited": "{{name}} invites you. Please accept or decline.",
+			"pendingSent": "Requested. Waiting for {{name}}.",
+			"confirmed": "Confirmed with {{name}}."
+		},
+		"autoAccept": {
+			"menu": "Accept appointments automatically …",
+			"menuHint": "From which colleagues",
+			"title": "Accept appointments automatically",
+			"description": "Appointments from these colleagues are fixed in your calendar at once.",
+			"colleagues": "Colleagues",
+			"search": "Search names",
+			"hint": "Appointments from everyone else wait until you accept them.",
+			"save": "Save",
+			"saved": "List saved."
+		}
+	},
+	"guestAccountMode": {
+		"label": "Guest account",
+		"menuLabel": "Choose guest account",
+		"option": {
+			"TEMPORARY": "Delete after the session",
+			"GUEST_CHOOSES": "Guest chooses",
+			"PERMANENT": "Permanent"
+		},
+		"hint": {
+			"TEMPORARY": "New guests get an account that is deleted after the conversation.",
+			"GUEST_CHOOSES": "New guests choose when they join: without an account or with their own account.",
+			"PERMANENT": "New guests create their own account."
+		},
+		"newGuestsOnly": "Applies only to people who open the link from now on.",
+		"entry": {
+			"withoutAccount": "Join without an account",
+			"withAccount": "Create an account",
+			"temporaryNote": "Your access is deleted after the conversation. You can still keep it later.",
+			"accountNote": "With your own account you can come back later."
+		},
+		"keep": {
+			"action": "Keep account",
+			"actionDescription": "Otherwise your account is deleted after the conversation.",
+			"title": "Keep account",
+			"text": "Otherwise your account is deleted after the conversation. Set a password and it stays, and you can sign in again later.",
+			"loginName": "Your username: {{name}}",
+			"password": "Password",
+			"repeat": "Repeat password",
+			"mismatch": "The passwords do not match.",
+			"submit": "Keep account",
+			"cancel": "Cancel",
+			"success": "Your account stays.",
+			"recoveryPending": "Your account stays. To read your messages on another device, you need your recovery key.",
+			"error": {
+				"badRequest": "The password does not meet the requirements.",
+				"forbidden": "This invitation does not let you keep the account.",
+				"notFound": "Your account was not found. Please sign in again.",
+				"conflict": "Your account is being deleted or is already permanent.",
+				"generic": "That did not work. Please try again."
+			}
+		}
+	},
+	"managePeople": {
+		"self": "(you)",
+		"loading": "Loading…",
+		"working": "Working…",
+		"retry": "Try again",
+		"cancel": "Cancel",
+		"search": "Search by name or organisation",
+		"noMatches": "Nobody matches this search.",
+		"otherPerson": "Choose someone else",
+		"since": "Since {{date}}",
+		"role": {
+			"owner": "Owner",
+			"coModerator": "Co-moderator"
+		},
+		"standing": {
+			"badge": "Permanently assigned",
+			"hint": "Set by the agency admin. Supervision stays on, so this person can be replaced but not simply removed.",
+			"noReplacement": "Set by the agency admin. Nobody else at this counselling centre can take over at the moment."
+		},
+		"add": {
+			"action": "Add",
+			"labelFor": "Add {{name}}",
+			"confirm": "Add {{name}}"
+		},
+		"remove": {
+			"action": "Remove",
+			"labelFor": "Remove {{name}}",
+			"confirm": "Really remove?"
+		},
+		"replace": {
+			"action": "Replace",
+			"labelFor": "Replace {{name}}",
+			"title": "Who should take over from {{name}}?",
+			"confirm": "Replace with {{name}}",
+			"pick": "Choose",
+			"pickLabelFor": "Choose {{name}}"
+		},
+		"error": {
+			"members": "The list could not be loaded.",
+			"candidates": "The available people could not be loaded.",
+			"add": "This person could not be added. Please try again.",
+			"remove": "This person could not be removed. Please try again.",
+			"replace": "The replacement did not work. Please try again.",
+			"refused": "This person can no longer be added here. Their organisation or this chat does not allow it. The list has been updated."
+		},
+		"supervision": {
+			"title": "Manage supervision",
+			"description": "Supervisors read along in this case and talk to you in the supervision chat.",
+			"membersTitle": "Current supervision",
+			"emptyMembers": "This case has no supervisor yet.",
+			"addTitle": "Add a supervisor",
+			"emptyCandidates": "Nobody else at this counselling centre is marked as a supervisor. The agency admin decides who is.",
+			"reasonLabel": "Reason for supervision",
+			"reasonPlaceholder": "Why should this person supervise the case?",
+			"reasonMissing": "Please enter a reason.",
+			"added": "{{name}} now supervises this case."
+		},
+		"internalChat": {
+			"title": "Manage people",
+			"description": "Everyone in this internal chat can bring in colleagues.",
+			"membersTitle": "In this chat",
+			"emptyMembers": "Nobody is in this chat yet.",
+			"addTitle": "Add a colleague",
+			"addNote": "New people see messages from the moment they join, not the earlier ones.",
+			"emptyCandidates": "No other colleagues can be added to this chat.",
+			"added": "{{name}} was added to this chat."
+		},
+		"groupChat": {
+			"title": "Manage people",
+			"description": "See who runs this group, and share the link with people who want to join.",
+			"membersTitle": "Moderation",
+			"emptyMembers": "Nobody moderates this group yet.",
+			"addTitle": "Add a co-moderator",
+			"emptyCandidates": "No other colleagues can be added to this group.",
+			"inviteTitle": "Invite people",
+			"inviteDescription": "Advice seekers join through this link or QR code.",
+			"added": "{{name}} now co-moderates this group."
+		}
+	},
+	"deletedAskerSession": {
+		"notice": {
+			"title": "This chat was deleted",
+			"deletedOn": "Deleted on {{date}}",
+			"text": "The advice seeker's personal data and messages are no longer available."
+		},
+		"archiveHint": "Move the entry to the archive so it leaves your list and your activity.",
+		"archived": "This entry is in the archive.",
+		"archiveFailed": "Archiving did not work. Please try again."
+	},
+	"journey": {
+		"question": {
+			"optional": "(optional)",
+			"missing": "Please answer this question.",
+			"textPlaceholder": "Your answer",
+			"other": "Something else",
+			"otherPlaceholder": "What exactly?",
+			"choose": "Please choose",
+			"multiHint": "You can choose more than one"
+		},
+		"rating": {
+			"stars": "{{count}} of {{max}} stars",
+			"stars_one": "{{count}} of {{max}} stars",
+			"stars_other": "{{count}} of {{max}} stars",
+			"untouched": "not chosen yet",
+			"moveHint": "Move the slider to your value."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "A short question",
+				"arrival": "Your feedback"
+			},
+			"send": "Send answers",
+			"thanks": "Thank you for your answers!",
+			"failed": "That did not work. Your answers are still here – please try again in a moment.",
+			"anonymous": "Your answers are stored without a link to your counselling."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} of {{total}}",
+			"back": "Previous question",
+			"next": "Next",
+			"skip": "Skip",
+			"done": "Done – “Next” takes you to the next step."
 		}
 	}
 }

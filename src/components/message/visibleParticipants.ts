@@ -231,6 +231,8 @@ export interface VisibleParticipantRuleInput {
 	selfIsSupervisor?: boolean;
 	askerIds: (string | null | undefined)[];
 	consultant?: ConsultantIdentitySource | null;
+	/** Explicit public label for the registered asker view. */
+	consultantDisplayName?: string;
 	consultantMatrixUserId?: string | null;
 	self: ParticipantIdentity;
 }
@@ -256,6 +258,7 @@ export const buildVisibleParticipantRules = ({
 	selfIsSupervisor,
 	askerIds,
 	consultant,
+	consultantDisplayName,
 	consultantMatrixUserId,
 	self
 }: VisibleParticipantRuleInput): VisibleParticipantRules => {
@@ -296,6 +299,7 @@ export const buildVisibleParticipantRules = ({
 						consultant.consultantId
 					],
 					displayName:
+						consultantDisplayName ||
 						marker?.counsellorDisplayName ||
 						consultant.displayName ||
 						undefined

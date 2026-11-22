@@ -11,6 +11,7 @@ import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/a
 import { appConfig } from '../utils/appConfig';
 import { RequestLog } from '../utils/requestCollector';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
+import { traceHeaders } from '../utils/observability/traceparent';
 
 const nodeEnv: string = process.env.NODE_ENV as string;
 const isLocalDevelopment = nodeEnv === 'development';
@@ -111,6 +112,7 @@ interface FetchDataProps {
 	timeout?: number;
 	signal?: AbortSignal;
 	recoverOnPublicAuthRoute?: boolean;
+	referrerPolicy?: ReferrerPolicy;
 	/**
 	 * Set only by the anonymous retry below. A second 401 is the end of the
 	 * road: it rejects, and it does not log anyone out or leave the page.
@@ -130,6 +132,7 @@ export const fetchData = ({
 	timeout,
 	signal,
 	recoverOnPublicAuthRoute = true,
+	referrerPolicy,
 	isStaleAuthRetry = false
 }: FetchDataProps): Promise<any> =>
 	new Promise((resolve, reject) => {
@@ -156,6 +159,7 @@ export const fetchData = ({
 				timeout,
 				signal,
 				recoverOnPublicAuthRoute: false,
+				referrerPolicy,
 				isStaleAuthRetry: true
 			});
 
@@ -190,6 +194,7 @@ export const fetchData = ({
 			...authorization,
 			'X-CSRF-TOKEN': csrfToken,
 			...headersData,
+			...traceHeaders(url),
 			...localDevelopmentHeader
 		};
 
@@ -213,6 +218,7 @@ export const fetchData = ({
 			method: method,
 			headers: cleanHeaders,
 			credentials: 'include',
+			referrerPolicy,
 			body: bodyData,
 			signal: controller.signal
 		});

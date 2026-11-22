@@ -1,5 +1,6 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-import { Direction, MatrixEvent, Room } from 'matrix-js-sdk';
+import { awaitsDecryption } from '../utils/matrixReadReceipts';
+import { ClientEvent, Direction, MatrixEvent, Room } from 'matrix-js-sdk';
 import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
 	apiPostMessageEventNotification,
@@ -13,14 +14,13 @@ import {
 import { getMatrixClientService } from './matrixClientRegistry';
 import type {
 	MatrixClientService,
-	MatrixFileMessageOptions
+	MatrixFileMessageOptions,
+	OutgoingPassageReply
 } from './matrixClientService';
+import type { PassageRepliesFallbackLabels } from '../components/selectionReply/passageReplyContent';
 
 // A failed decrypt has synthetic clear type m.room.message, while its wire
 // event remains encrypted. It still needs a refresh after a later key restore.
-const awaitsTimelineDecryption = (event: MatrixEvent): boolean =>
-	event.getType() === 'm.room.encrypted' ||
-	(event.isEncrypted?.() === true && event.isDecryptionFailure?.() === true);
 
 export interface ChatTransportSession {
 	rid?: string | null;
@@ -37,10 +37,13 @@ export interface ResolvedChatTransportSession {
 }
 
 export interface SendTextMessageOptions {
-	roomIdOrSessionId: string | number;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	roomIdOrSessionId?: string | number;
 	message: string;
-	sendMailNotification: boolean;
-	isEncrypted: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	sendMailNotification?: boolean;
+	/** @deprecated unused by the Matrix transport; callers may omit it. */
+	isEncrypted?: boolean;
 	sessionId?: number;
 	matrixRoomId?: string;
 	threadRootId?: string | null;
@@ -56,6 +59,18 @@ export interface SendTextMessageOptions {
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
 	feedbackMailIntent?: boolean;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendPassageRepliesOptions {
+	matrixRoomId: string;
+	replies: OutgoingPassageReply[];
+	/** Composer text sent beside the answers (markdown, '' when none). */
+	typedText: string;
+	labels: PassageRepliesFallbackLabels;
+	supervisorMessage?: boolean;
+	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -76,6 +91,14 @@ export interface SendReactionOptions {
 export interface RemoveReactionOptions {
 	matrixRoomId: string;
 	reactionEventId: string;
+	matrixClientServiceOverride?: MatrixClientService | null;
+}
+
+export interface SendPassageBlurOptions {
+	matrixRoomId: string;
+	targetEventId: string;
+	start: number;
+	length: number;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -210,6 +233,47 @@ class ChatTransportService {
 		return { success: true, event_id: response.event_id };
 	}
 
+	/**
+	 * Answers to several marked passages as one message (ADR-022). Announced
+	 * like any other message: metadata only, never the content (FE-H01).
+	 */
+	public async sendPassageReplies({
+		matrixRoomId,
+		replies,
+		typedText,
+		labels,
+		supervisorMessage,
+		senderDisplayName,
+		teamDiscussion,
+		matrixClientServiceOverride
+	}: SendPassageRepliesOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageReplies(
+			matrixRoomId,
+			replies,
+			typedText,
+			labels
+		);
+
+		apiPostMessageEventNotification({
+			roomId: matrixRoomId,
+			matrixRoom: true,
+			threadRootId: null,
+			supervisorMessage: !!supervisorMessage,
+			senderDisplayName: senderDisplayName || null,
+			teamDiscussion: !!teamDiscussion,
+			mentionedUserIds: null,
+			matrixEventId: response?.event_id || null
+		}).catch(() => undefined);
+
+		return { success: true, event_id: response?.event_id };
+	}
+
 	/** Edit a previously sent message (m.replace), same relations mechanic as reply/thread. */
 	public async editTextMessage({
 		matrixRoomId,
@@ -274,6 +338,29 @@ class ChatTransportService {
 		return { success: true, event_id: response.event_id };
 	}
 
+	/** Blur a passage of a message (#2229); lift it with redactMessage. */
+	public async sendPassageBlur({
+		matrixRoomId,
+		targetEventId,
+		start,
+		length,
+		matrixClientServiceOverride
+	}: SendPassageBlurOptions): Promise<any> {
+		const matrixClientService =
+			matrixClientServiceOverride || getMatrixClientService();
+		if (!matrixClientService?.getClient()) {
+			return Promise.reject(new Error('Matrix client not initialized'));
+		}
+
+		const response = await matrixClientService.sendPassageBlur(
+			matrixRoomId,
+			targetEventId,
+			{ start, length }
+		);
+
+		return { success: true, event_id: response?.event_id };
+	}
+
 	/** Delete a message by redacting the Matrix event (#827). */
 	public async redactMessage({
 		matrixRoomId,
@@ -300,18 +387,23 @@ class ChatTransportService {
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
 		const matrixClientService = getMatrixClientService();
+		if (!matrixClientService) {
+			throw new Error('Matrix client not initialized');
+		}
 		const matrixSenderUserId =
 			options.feedbackMailIntent && !options.teamDiscussion
-				? matrixClientService?.getClient()?.getUserId() || null
+				? matrixClientService.getClient()?.getUserId() || null
 				: null;
-		const response = await matrixClientService?.sendFileMessage(
+		const response = await matrixClientService.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
 				abortController: options.abortController,
 				uploadProgress: options.uploadProgress,
 				threadRootId: options.threadRootId,
-				replyToEventId: options.replyToEventId
+				replyToEventId: options.replyToEventId,
+				caption: options.caption,
+				mentionedUserIds: options.mentionedUserIds
 			}
 		);
 
@@ -333,6 +425,9 @@ class ChatTransportService {
 				supervisorMessage: !!options.supervisorMessage,
 				teamDiscussion: !!options.teamDiscussion,
 				senderDisplayName: options.senderDisplayName || null,
+				mentionedUserIds: options.mentionedUserIds?.length
+					? options.mentionedUserIds
+					: null,
 				matrixEventId: response?.event_id || null
 			}).catch(() => undefined);
 
@@ -508,7 +603,7 @@ class ChatTransportService {
 
 			if (
 				detached ||
-				!awaitsTimelineDecryption(event) ||
+				!awaitsDecryption(event) ||
 				pendingDecryptions.has(event)
 			) {
 				return;
@@ -518,7 +613,7 @@ class ChatTransportService {
 				decryptedEvent: MatrixEvent,
 				error?: Error
 			) => {
-				if (error || awaitsTimelineDecryption(decryptedEvent)) {
+				if (error || awaitsDecryption(decryptedEvent)) {
 					return;
 				}
 				clearPendingDecryption(event);
@@ -534,7 +629,7 @@ class ChatTransportService {
 				timeout
 			});
 			event.on('Event.decrypted' as any, handleDecrypted as any);
-			if (!awaitsTimelineDecryption(event)) {
+			if (!awaitsDecryption(event)) {
 				handleDecrypted(event);
 			}
 		};
@@ -554,7 +649,7 @@ class ChatTransportService {
 				error ||
 				pendingDecryptions.has(decryptedEvent) ||
 				decryptedEvent?.getRoomId?.() !== matrixRoomId ||
-				awaitsTimelineDecryption(decryptedEvent)
+				awaitsDecryption(decryptedEvent)
 			) {
 				return;
 			}
@@ -568,7 +663,7 @@ class ChatTransportService {
 		// still need a clear-content refresh when their asynchronous decrypt ends.
 		const cachedRoom = matrixClient.getRoom?.(matrixRoomId);
 		for (const event of cachedRoom?.timeline ?? []) {
-			if (awaitsTimelineDecryption(event)) {
+			if (awaitsDecryption(event)) {
 				handleTimeline(event, cachedRoom, true);
 			}
 		}
@@ -581,6 +676,43 @@ class ChatTransportService {
 				clearPendingDecryption
 			);
 		};
+	}
+
+	/**
+	 * This user's current membership in a Matrix room on the current client
+	 * (`join`, `leave`, `ban`, ...). Complements onMatrixRoomLifecycle, which
+	 * reports changes only.
+	 *
+	 * A room absent after the client's first sync counts as `leave`: the sync
+	 * filter does not include left rooms, so a room the user was banned from
+	 * before a client refresh never appears on the new client. Before that
+	 * first sync the answer is unknown (null); see onMatrixInitialSync.
+	 */
+	public getMyMatrixRoomMembership(matrixRoomId: string): string | null {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return null;
+		const room = client.getRoom?.(matrixRoomId);
+		if (room) return room.getMyMembership?.() ?? null;
+		return client.isInitialSyncComplete?.() ? 'leave' : null;
+	}
+
+	/**
+	 * Calls back when the current Matrix client has a usable sync: PREPARED
+	 * after the first sync, or SYNCING (also what the SDK emits when it
+	 * recovers from ERROR). Keeps calling back on later syncs while the
+	 * callback returns false; stops once it returns anything else. Returns a
+	 * function that stops waiting.
+	 */
+	public onMatrixInitialSync(callback: () => boolean | void): () => void {
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return () => {};
+		const handleSync = (state: string): void => {
+			if (state !== 'PREPARED' && state !== 'SYNCING') return;
+			if (callback() === false) return;
+			client.off(ClientEvent.Sync, handleSync);
+		};
+		client.on(ClientEvent.Sync, handleSync);
+		return () => client.off(ClientEvent.Sync, handleSync);
 	}
 
 	/**
@@ -703,25 +835,61 @@ class ChatTransportService {
 	 * Safe no-op when the Matrix client or room is not available —
 	 * there is no legacy fallback transport.
 	 */
-	public async markRoomAsRead(matrixRoomId: string): Promise<void> {
+	public async markRoomAsRead(matrixRoomId: string): Promise<boolean> {
 		const matrixClient = getMatrixClientService()?.getClient?.();
 		if (!matrixClient || !matrixRoomId) {
-			return;
+			return false;
 		}
 
 		const room = matrixClient.getRoom?.(matrixRoomId);
 		const events = room?.getLiveTimeline?.()?.getEvents?.() || [];
-		const latestEvent = events[events.length - 1];
-		if (!latestEvent) {
-			return;
+		// FE#1802: a receipt covers everything up to its event, so it targets
+		// the newest event the person can read — never one still encrypted or
+		// failed to decrypt, which the person only sees as a placeholder.
+		const receiptEvent = [...events]
+			.reverse()
+			.find((event: any) => !awaitsDecryption(event));
+		if (!receiptEvent) {
+			return false;
 		}
 
-		try {
-			await (matrixClient as any).sendReadReceipt(latestEvent);
-		} catch {
-			// keep UI responsive; the receipt is retried on the next read
+		// FE#1802: live events replayed on opening a room ask again for the
+		// same latest event; one receipt per event is enough. A caller that
+		// joins an in-flight send gets that send's real result.
+		// Only the event id is kept, per Matrix client: no decrypted event
+		// outlives its client (sign-out, token refresh).
+		const receiptEventId: string | undefined = receiptEvent.getId?.();
+		const rooms =
+			this.receiptsByClient.get(matrixClient as object) ?? new Map();
+		this.receiptsByClient.set(matrixClient as object, rooms);
+		const known = rooms.get(matrixRoomId);
+		if (receiptEventId && known?.eventId === receiptEventId) {
+			return known.result;
 		}
+
+		const result = (async () => {
+			try {
+				await (matrixClient as any).sendReadReceipt(receiptEvent);
+				return true;
+			} catch {
+				// keep UI responsive; the receipt is retried on the next read
+				if (rooms.get(matrixRoomId)?.eventId === receiptEventId) {
+					rooms.delete(matrixRoomId);
+				}
+				return false;
+			}
+		})();
+		if (receiptEventId) {
+			rooms.set(matrixRoomId, { eventId: receiptEventId, result });
+		}
+		return result;
 	}
+
+	/** Event id a read receipt was sent (or is being sent) for, per client and room. */
+	private readonly receiptsByClient = new WeakMap<
+		object,
+		Map<string, { eventId: string; result: Promise<boolean> }>
+	>();
 }
 
 export const chatTransportService = new ChatTransportService();

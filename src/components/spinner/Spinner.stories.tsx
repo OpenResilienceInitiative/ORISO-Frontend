@@ -2,7 +2,7 @@ import * as React from 'react';
 import { expect, within } from 'storybook/test';
 import { LiveChatChecking } from '../anonymousChat/entryRoom/LiveChatChecking';
 import { Loading } from '../app/Loading';
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Spinner } from './Spinner';
 
 const meta = {

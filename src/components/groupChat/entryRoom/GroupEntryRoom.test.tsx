@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -57,8 +58,20 @@ vi.mock('../../../api', () => ({
 	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' },
 	FETCH_ERRORS: { USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT' }
 }));
+const waiting = vi.hoisted(() => ({ status: 'WAITING' as string }));
+vi.mock('../../../api/apiGroupWaitingRoom', () => ({
+	apiWaitInGroupChat: vi.fn(() =>
+		Promise.resolve({ id: 77, status: waiting.status })
+	)
+}));
+vi.mock('../../../api/apiDirectLinks', () => ({
+	apiCancelOwnCallKnock: vi.fn(() => Promise.resolve())
+}));
 vi.mock('../../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
+}));
+vi.mock('../../../api/apiGetChatOccurrences', () => ({
+	apiGetChatOccurrences: vi.fn()
 }));
 vi.mock('../useGroupChatAuthorContent', () => ({
 	useGroupChatAuthorContent: () => ({
@@ -81,10 +94,19 @@ vi.mock('./GroupWaitingRoom', () => ({
 		active: boolean;
 		joinBlocked?: boolean;
 		joinNotice?: string;
+		plannedStart: Date | null;
 		onJoin: () => unknown;
+		admissionWaiting?: string;
+		openBeforeStart?: boolean;
 	}) => (
-		<div data-testid="waiting-room">
+		<div
+			data-testid="waiting-room"
+			data-planned={props.plannedStart?.toISOString()}
+		>
 			{props.joinNotice && <p role="alert">{props.joinNotice}</p>}
+			{props.admissionWaiting && (
+				<p data-testid="admission-waiting">{props.admissionWaiting}</p>
+			)}
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
 			<button
@@ -105,6 +127,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 const { GroupEntryRoom } = await import('./GroupEntryRoom');
+const { apiGetChatOccurrences } = await import(
+	'../../../api/apiGetChatOccurrences'
+);
+const { apiWaitInGroupChat } = await import('../../../api/apiGroupWaitingRoom');
 const { apiPutGroupChat, apiGetAskerSessionList } = await import(
 	'../../../api'
 );
@@ -132,7 +158,7 @@ const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
 						element={<GroupEntryRoom />}
 					/>
 					<Route
-						path="/sessions/consultant/sessionView/session/:sessionId"
+						path="/sessions/consultant/sessionView/chat/:chatId"
 						element={<div data-testid="counsellor-group" />}
 					/>
 					<Route
@@ -161,7 +187,7 @@ const roomFor = (userData: unknown) => (
 					element={<GroupEntryRoom />}
 				/>
 				<Route
-					path="/sessions/consultant/sessionView/session/:sessionId"
+					path="/sessions/consultant/sessionView/chat/:chatId"
 					element={<div data-testid="counsellor-group" />}
 				/>
 			</Routes>
@@ -178,6 +204,60 @@ describe('GroupEntryRoom', () => {
 		vi.clearAllMocks();
 		sessionState.ready = true;
 		sessionState.item = { ...sessionState.item, active: false };
+		delete (sessionState.item as Record<string, unknown>).modality;
+		waiting.status = 'WAITING';
+	});
+
+	/* ORISO-UserService#1747 flow 2: someone who came through a video or
+	   audio circle's invitation link knocks like everyone else (#2237). The
+	   room used to join at once, so the moderator never saw them. */
+	it('knocks in a video circle instead of joining, and joins once let in', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'VIDEO'
+		};
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiWaitInGroupChat).toHaveBeenCalledWith(15)
+		);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+		expect(await screen.findByTestId('admission-waiting')).toBeTruthy();
+	});
+
+	it('joins the video circle and opens the chat after the moderator let the person in', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'AUDIO'
+		};
+		waiting.status = 'ADMITTED';
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/user/view/!room%3Aoriso/15',
+				{ replace: true }
+			)
+		);
+	});
+
+	it('keeps "agree and join" for a text circle', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'TEXT'
+		};
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
+		);
+		expect(apiWaitInGroupChat).not.toHaveBeenCalled();
 	});
 
 	it('feeds the room from the chat: topic and agency come from the item', async () => {
@@ -186,6 +266,72 @@ describe('GroupEntryRoom', () => {
 		expect(room.textContent).toContain('Trauerbegleitung');
 		expect(room.textContent).toContain('Caritas Berlin');
 	});
+
+	it('uses the next server occurrence when the first date was cancelled', async () => {
+		const original = sessionState.item;
+		const savedStart = new Date(Date.now() + 86_400_000).toISOString();
+		const nextStart = new Date(Date.now() + 8 * 86_400_000).toISOString();
+		sessionState.item = {
+			...sessionState.item,
+			startDateWithTime: savedStart,
+			chatInterval: 'WEEKLY',
+			repeatCount: 2
+		};
+		vi.mocked(apiGetChatOccurrences).mockResolvedValueOnce([
+			{
+				seriesId: 15,
+				occurrenceIndex: 1,
+				start: nextStart,
+				originalStart: nextStart,
+				duration: 90,
+				modality: 'TEXT'
+			}
+		]);
+
+		try {
+			renderRoom();
+			const room = await screen.findByTestId('waiting-room');
+			await waitFor(() => expect(room.dataset.planned).toBe(nextStart));
+		} finally {
+			sessionState.item = original;
+		}
+	});
+
+	it.each([
+		[404, true],
+		[501, true],
+		[503, false],
+		[403, false]
+	] as const)(
+		'handles unavailable occurrence data (HTTP %s) without leaving the room',
+		async (status, legacy) => {
+			const original = sessionState.item;
+			const savedStart = new Date(Date.now() + 86_400_000).toISOString();
+			sessionState.item = {
+				...original,
+				startDateWithTime: savedStart,
+				chatInterval: 'WEEKLY',
+				repeatCount: 2
+			};
+			const load = Promise.withResolvers<never>();
+			vi.mocked(apiGetChatOccurrences).mockReturnValueOnce(load.promise);
+			try {
+				renderRoom();
+				const room = await screen.findByTestId('waiting-room');
+				expect(room.dataset.planned).toBeUndefined();
+				await act(async () => {
+					load.reject(new Response(null, { status }));
+					await load.promise.catch(() => {});
+				});
+				expect(room.dataset.planned).toBe(
+					legacy ? savedStart : undefined
+				);
+				expect(navigate).not.toHaveBeenCalled();
+			} finally {
+				sessionState.item = original;
+			}
+		}
+	);
 
 	it('hides the topic until the client has agreed to the privacy statement', async () => {
 		renderRoom(CLIENT);
@@ -247,6 +393,55 @@ describe('GroupEntryRoom', () => {
 
 		await expect(joinResult.value as Promise<unknown>).resolves.toBe(false);
 		expect(navigate).not.toHaveBeenCalled();
+	});
+
+	it('holds the registered join and shows the existing removal notice for a fresh banned participant', async () => {
+		const { apiGetGroupChatInfo } = await import('../../../api');
+		const reply =
+			Promise.withResolvers<
+				Awaited<ReturnType<typeof apiGetGroupChatInfo>>
+			>();
+		vi.mocked(apiGetGroupChatInfo).mockReturnValueOnce(reply.promise);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom({ ...CLIENT_AGREED, userId: 'asker-id' });
+
+		const join = await screen.findByText('join');
+		expect(join.hasAttribute('disabled')).toBe(true);
+		expect(screen.queryByRole('alert')).toBeNull();
+		reply.resolve({
+			active: true,
+			id: 15,
+			matrixRoomId: '!room:oriso',
+			callerBanState: 'BANNED'
+		} as Awaited<ReturnType<typeof apiGetGroupChatInfo>>);
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
+		expect(join.hasAttribute('disabled')).toBe(true);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
+	it('lets the authoritative join reject a ban when the older read gives no caller state', async () => {
+		const { apiGetGroupChatInfo } = await import('../../../api');
+		vi.mocked(apiGetGroupChatInfo).mockResolvedValueOnce({
+			id: 15,
+			active: true,
+			matrixRoomId: '!room:oriso'
+		});
+		vi.mocked(apiPutGroupChat).mockRejectedValueOnce(
+			new Error('USER_BANNED_FROM_CHAT')
+		);
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom({ ...CLIENT_AGREED, userId: 'asker-id' });
+
+		const join = await screen.findByText('join');
+		await waitFor(() => expect(join.hasAttribute('disabled')).toBe(false));
+		expect(screen.queryByRole('alert')).toBeNull();
+		fireEvent.click(join);
+		expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join');
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'groupChat.removed.overlay.headline'
+		);
 	});
 
 	// #1923: a banned asker got "an error occurred" and could press join again.

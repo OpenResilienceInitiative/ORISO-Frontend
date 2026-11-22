@@ -24,6 +24,11 @@ export interface StackParticipant {
 	/** The counsellor's chosen avatar (#1046/#1047); absent = no choice made. */
 	avatarKind?: string | null;
 	avatarId?: string | null;
+	/**
+	 * Role shown with the name ("Supervisor:in"), for the tooltip and the
+	 * avatar's accessible name (FE#2344). Absent = name only.
+	 */
+	roleLabel?: string;
 	/** Timestamp (ms) of the participant's last message, if known. */
 	lastActivity?: number;
 }
@@ -32,7 +37,13 @@ export interface ParticipantStack {
 	visible: StackParticipant[];
 	/** Count folded into the "+N" chip; 0 when everyone fits. */
 	overflow: number;
+	/** The people behind the "+N" chip, in stack order (the list it opens). */
+	hidden: StackParticipant[];
 }
+
+/** "+12"; from 100 on "99+", so the chip never outgrows its place. */
+export const formatOverflowCount = (count: number) =>
+	count > 99 ? '99+' : `+${count}`;
 
 /** Legacy/default presentation, retained for existing consumers. */
 export const STACK_AVATAR_SIZE = 40;
@@ -89,10 +100,11 @@ export const resolveParticipantStack = (
 
 	const limit = Math.max(0, Math.floor(maxVisible));
 	if (ordered.length <= limit) {
-		return { visible: ordered, overflow: 0 };
+		return { visible: ordered, overflow: 0, hidden: [] };
 	}
 	return {
 		visible: ordered.slice(0, limit),
-		overflow: ordered.length - limit
+		overflow: ordered.length - limit,
+		hidden: ordered.slice(limit)
 	};
 };

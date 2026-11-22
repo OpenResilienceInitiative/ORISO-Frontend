@@ -3,6 +3,7 @@
  * #576 — permission gating for OS notifications: no popup without browser
  * permission + user opt-in, and the Safari-safe requestPermission wrapper.
  */
+import { recordBrowserNotificationsChoice } from './notificationSettings/browserMasterSwitch';
 import {
 	afterEach,
 	beforeEach,
@@ -83,11 +84,19 @@ describe('sendNotification permission gate', () => {
 		expect(constructed).toHaveLength(0);
 	});
 
-	it('does NOT create one when the user opt-in toggle is off', () => {
+	it('does NOT create one when the user switched the toggle off', () => {
 		stubNotification('granted');
-		// default localStorage → enabled: false
+		saveBrowserNotificationsSettings({ enabled: false });
 		sendNotification('Hallo', { showAlways: true });
 		expect(constructed).toHaveLength(0);
+	});
+
+	// FE#1211 (Frank, 18 Nov): on once the browser allows it, until the user
+	// decides otherwise in this browser.
+	it('creates one by default once the browser granted permission', () => {
+		stubNotification('granted');
+		sendNotification('Hallo', { showAlways: true });
+		expect(constructed).toHaveLength(1);
 	});
 
 	it('persistent banner mode sets requireInteraction on the OS popup', () => {
@@ -214,6 +223,7 @@ describe('sendNotification permission gate', () => {
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: false }
 		});
+		recordBrowserNotificationsChoice(false);
 
 		sendNotification('Hallo', { showAlways: true });
 
@@ -233,8 +243,9 @@ describe('sendNotification permission gate', () => {
 
 	it('ignores the store while the legacy panel is the routed one', () => {
 		stubNotification('granted');
-		// Nothing the user could have switched on: the cross-device panel is
-		// not rendered, so its state must not decide.
+		// The cross-device panel is not rendered, so its state must not
+		// decide; the legacy switch, here switched off, does.
+		saveBrowserNotificationsSettings({ enabled: false });
 		notificationSettingsStore.updateSettings({
 			browserNotifications: { enabled: true }
 		});

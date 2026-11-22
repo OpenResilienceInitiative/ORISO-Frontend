@@ -1,0 +1,32 @@
+// ORISO-Frontend#1159: neutral avatar of a deleted advice seeker — no
+// initials, nothing that points to the person.
+.deletedAskerAvatar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-highest, #e4e2e2);
+	color: var(--m3-on-surface-variant, #534341);
+
+	svg {
+		width: 22px;
+		height: 22px;
+
+		path {
+			fill: currentColor;
+		}
+	}
+
+	&--header {
+		width: 40px;
+		height: 40px;
+
+		svg {
+			width: 18px;
+			height: 18px;
+		}
+	}
+}

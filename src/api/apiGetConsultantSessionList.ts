@@ -118,7 +118,13 @@ const mergeEnquiryFeeds = (
 	 * actually answered — with an empty registered feed the anonymous feed
 	 * carries the only valid envelope. */
 	const base = registered ?? anonymous ?? ({} as ListItemsResponseInterface);
-	return { ...base, sessions: merged };
+	// Both feeds use the same offset/count window. Pagination must continue
+	// while either feed has another window, regardless of merged row count.
+	return {
+		...base,
+		sessions: merged,
+		total: Math.max(feedTotal(registered), feedTotal(anonymous))
+	};
 };
 
 const feedTotal = (feed: ListItemsResponseInterface | null): number =>

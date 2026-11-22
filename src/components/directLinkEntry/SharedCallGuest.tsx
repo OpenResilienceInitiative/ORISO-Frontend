@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,7 +9,11 @@ import {
 import { apiJoinSharedCall } from '../../api/apiJoinSharedCall';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { callManager } from '../../services/CallManager';
-import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import { ownAskerAvatar } from '../../utils/avatarChoice';
+import {
+	type DeviceChoice,
+	keepDeviceChoice
+} from '../call/prejoin/callPrejoin';
 import { Loading } from '../app/Loading';
 import { KnockWaitDialog } from '../knockWaitDialog/KnockWaitDialog';
 import type {
@@ -45,16 +49,35 @@ const entryError = (error: unknown): Entry => {
 	};
 };
 
-/** A running-call guest has no conversation view or source-room membership. */
+/** Before any choice: nothing is switched on behind the person's back. */
+const MUTED: DeviceChoice = {
+	controls: { micOn: false, cameraOn: false, selection: {} },
+	cameraAvailable: true
+};
+
+/**
+ * A running-call guest has no conversation view or source-room membership.
+ *
+ * `deviceChoice` is what the guest chose on the link's page. The knock wait
+ * opens with it, and whatever it says when the guest is let in goes into the
+ * call, which opens without Element Call's own lobby (FE#2209).
+ */
 export const SharedCallGuest = ({
 	token,
-	modality
+	modality,
+	deviceChoice
 }: {
 	token: string;
 	modality: CallModality;
+	deviceChoice?: DeviceChoice;
 }) => {
 	const { t } = useTranslation();
 	const [entry, setEntry] = useState<Entry>({ state: 'opening' });
+	// The latest choice, read when the seat arrives; never a reason to re-enter.
+	const choice = useRef<DeviceChoice | null>(deviceChoice ?? null);
+	const keepChoice = useCallback((next: DeviceChoice) => {
+		choice.current = next;
+	}, []);
 	const [attempt, setAttempt] = useState(0);
 	const retry = () => {
 		setEntry({ state: 'opening' });
@@ -93,6 +116,12 @@ export const SharedCallGuest = ({
 					return;
 				}
 				callId = result.seat.callId;
+				if (choice.current)
+					keepDeviceChoice(
+						result.seat.callRoomId,
+						result.seat.medium === 'VIDEO' ? 'video' : 'audio',
+						choice.current
+					);
 				const joined = await callManager.joinSharedCall(
 					result.seat,
 					abort.signal
@@ -186,6 +215,8 @@ export const SharedCallGuest = ({
 			<SharedCallKnock
 				modality={modality}
 				phase={entry.knock.phase}
+				initialChoice={choice.current ?? MUTED}
+				onChoice={keepChoice}
 				onCancel={() => {
 					setEntry({ state: 'closed' });
 					void apiCancelOwnCallKnock(entry.knock.knockId).catch(
@@ -215,24 +246,35 @@ export const SharedCallGuest = ({
 const SharedCallKnock = ({
 	modality,
 	phase,
+	initialChoice,
+	onChoice,
 	...actions
 }: {
 	modality: CallModality;
 	phase: Knock['phase'];
+	initialChoice: DeviceChoice;
+	onChoice: (choice: DeviceChoice) => void;
 	onCancel: () => void;
 	onKnockAgain: () => void;
 	onClose: () => void;
 }) => {
 	const { userData } = useContext(UserDataContext) ?? {};
 	const name = userData?.userName ?? '';
-	// Confirm the actual mic/camera in Element Call's lobby. During the knock
-	// wait the preview starts muted, so no previous off choice is reversed.
-	const [controls, setControls] = useState<CallDeviceControls>({
-		micOn: false,
-		cameraOn: false,
-		selection: {}
-	});
+	// The choice from the link's page; what it says on admission is what the
+	// call starts with, since the call no longer asks again (FE#2209).
+	const [controls, setControls] = useState<CallDeviceControls>(
+		initialChoice.controls
+	);
 	const live = useLiveCallDevices(modality, controls);
+	const cameraAvailable = !live.cameraMissing;
+	useEffect(() => {
+		onChoice({
+			controls,
+			cameraAvailable,
+			blocker: live.blocker,
+			devices: live.devices
+		});
+	}, [onChoice, controls, cameraAvailable, live.blocker, live.devices]);
 	return (
 		<KnockWaitDialog
 			variant="call"
@@ -241,7 +283,8 @@ const SharedCallKnock = ({
 			media={{
 				modality,
 				name,
-				avatar: generateAvatarForUser(userData?.userId || name),
+				// The animal picked on the link's page, as the call shows it (FE#2209).
+				avatar: ownAskerAvatar(userData?.userId || name, userData),
 				devices: live.devices,
 				selection: controls.selection,
 				stream: live.stream,
@@ -259,6 +302,8 @@ const SharedCallKnock = ({
 						...current,
 						cameraOn: !current.cameraOn
 					})),
+				onCameraRetry: live.retry,
+				cameraBlocker: live.cameraBlocker,
 				onSelectDevice: (kind, id) =>
 					setControls((current) => ({
 						...current,

@@ -5,6 +5,7 @@ import type {
 import type {
 	CallDevice,
 	CallDeviceControls,
+	CallDeviceSelection,
 	CallEntryBlocker,
 	CallModality
 } from '../../waitingRoom/callEntry/callEntryTypes';
@@ -124,18 +125,28 @@ export const joinMediaFrom = ({
  * The choice waits here, per room, until that room's call is ready to take
  * it (`GroupCallWidget`). In memory only: a reload starts afresh.
  */
-const chosen = new Map<string, { media: JoinMedia; cameraSwitch?: boolean }>();
+const chosen = new Map<
+	string,
+	{
+		media: JoinMedia;
+		cameraSwitch?: boolean;
+		selection: CallDeviceSelection;
+	}
+>();
 
 /**
  * @param cameraSwitch The camera switch itself, in a video check. `media` says
  * what the call gets, which is "off" for a camera that was not available too.
+ * @param selection The devices picked in the check, for the next check to open
+ * on: by id, which holds here, in the page that asked for them.
  */
 export const rememberJoinMedia = (
 	roomRef: string,
 	media: JoinMedia | null,
-	cameraSwitch?: boolean
+	cameraSwitch?: boolean,
+	selection: CallDeviceSelection = {}
 ) => {
-	if (media) chosen.set(roomRef, { media, cameraSwitch });
+	if (media) chosen.set(roomRef, { media, cameraSwitch, selection });
 	else chosen.delete(roomRef);
 };
 
@@ -151,25 +162,28 @@ export const peekCameraSwitch = (
 	return entry && (entry.cameraSwitch ?? true);
 };
 
+/** The devices the last check for that room picked. */
+export const peekDeviceSelection = (
+	roomRef: string | null | undefined
+): CallDeviceSelection => (roomRef && chosen.get(roomRef)?.selection) || {};
+
+/** What a device check says now: switches, devices and what blocks it. */
+export interface DeviceChoice {
+	controls: CallDeviceControls;
+	cameraAvailable: boolean;
+	blocker?: CallEntryBlocker;
+	/** What the check found: the choice names its devices by label. */
+	devices?: {
+		microphone: readonly CallDevice[];
+		camera: readonly CallDevice[];
+	};
+}
+
 /** Keeps what a device check (`useCallDeviceCheck`) says now for that room. */
 export const keepDeviceChoice = (
 	roomRef: string,
 	modality: CallModality,
-	{
-		controls,
-		cameraAvailable,
-		blocker,
-		devices
-	}: {
-		controls: CallDeviceControls;
-		cameraAvailable: boolean;
-		blocker?: CallEntryBlocker;
-		/** What the check found: the choice names its devices by label. */
-		devices?: {
-			microphone: readonly CallDevice[];
-			camera: readonly CallDevice[];
-		};
-	}
+	{ controls, cameraAvailable, blocker, devices }: DeviceChoice
 ) =>
 	rememberJoinMedia(
 		roomRef,
@@ -188,7 +202,8 @@ export const keepDeviceChoice = (
 				controls.selection.camera
 			)
 		}),
-		modality === 'video' ? controls.cameraOn : undefined
+		modality === 'video' ? controls.cameraOn : undefined,
+		controls.selection
 	);
 
 /** Once: a later call in the same room starts as calls always did. */
@@ -207,13 +222,14 @@ export const forgetAllJoinMedia = () => chosen.clear();
 export const initialControlsFor = (
 	modality: CallModality,
 	remembered: CallDeviceState | null,
-	cameraSwitch?: boolean
+	cameraSwitch?: boolean,
+	selection: CallDeviceSelection = {}
 ): CallDeviceControls => ({
 	micOn: remembered?.audio_enabled ?? true,
 	cameraOn:
 		modality === 'video' &&
 		(cameraSwitch ?? remembered?.video_enabled ?? true),
-	selection: {}
+	selection
 });
 
 /**

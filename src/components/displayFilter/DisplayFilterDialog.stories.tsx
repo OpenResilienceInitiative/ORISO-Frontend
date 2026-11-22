@@ -195,18 +195,46 @@ export const RequestsWithoutAutoRead: Story = {
  * A newer app version saved these settings: everything inert, hint shown —
  * the E-Mail column too, although it writes the profile.
  */
-const readOnlyArgs = { readOnly: true, emailSection: 'timeline' as const };
+const readOnlyArgs = {
+	canWrite: false,
+	readOnly: true,
+	emailSection: 'timeline' as const
+};
 export const ReadOnly: Story = {
 	args: readOnlyArgs,
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
+		const upgradeHint = await dialog.findByText(STORY_LABELS.readOnlyHint);
+		await waitFor(() => expect(upgradeHint).toBeVisible());
 		await expect(
 			await dialog.findByRole('button', { name: 'E-Mail: Nachrichten' })
 		).toBeDisabled();
 		await expect(
 			dialog.getByRole('button', { name: 'E-Mail wählen: Nachrichten' })
 		).toBeDisabled();
+	}
+};
+
+export const WaitingForSync: Story = {
+	args: {
+		canWrite: false,
+		columns: SESSION_COLUMNS,
+		kinds: SESSION_KINDS,
+		labels: SESSION_STORY_LABELS
+	},
+	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
+	play: async ({ canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		const dialog = within(await body.findByRole('dialog'));
+		await expect(
+			dialog.queryByText(SESSION_STORY_LABELS.readOnlyHint)
+		).not.toBeInTheDocument();
+		await expect(
+			dialog.getByRole('radio', { name: 'Icons' })
+		).toBeDisabled();
+		await expect(dialog.getByTestId('display-filter-reset')).toBeDisabled();
+		await expect(dialog.getByTestId('display-filter-done')).toBeEnabled();
 	}
 };
 

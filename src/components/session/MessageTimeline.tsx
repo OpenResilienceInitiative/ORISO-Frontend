@@ -58,6 +58,12 @@ export interface MessageTimelineProps {
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
 	onReplyDirect?: (message: MessageItem) => void;
+	/** Selection reply: jump from a reply's quote back to the quoted passage. */
+	onJumpToReplyQuote?: (message: MessageItem) => void;
+	/** Selection reply: jump from one answered passage back to it. */
+	onJumpToPassage?: MessageItemProps['onJumpToPassage'];
+	/** Moderators: blurred passages offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Own messages only — the timeline applies the ownership gate. */
 	onEditDirect?: (message: MessageItem) => void;
 	/** Own messages only — the timeline applies the ownership gate. */
@@ -65,8 +71,8 @@ export interface MessageTimelineProps {
 	reactionsFor?: (messageId: string) => AggregatedReaction[];
 	onReact?: (messageId: string, key: string) => void;
 	onUnreact?: (reactionEventId: string) => void;
-	/** #420: Activity Timeline preview — the real rows, nothing that writes. */
-	readOnly?: boolean;
+	/** #420 / #1824: rows in the Activity Timeline preview (see MessageItemComponent). */
+	previewMode?: MessageItemProps['previewMode'];
 }
 
 const never = () => false;
@@ -96,12 +102,15 @@ export const MessageTimeline = ({
 	onOpenThread,
 	resolveReplyQuote,
 	onReplyDirect,
+	onJumpToReplyQuote,
+	onJumpToPassage,
+	canRemovePassageBlur,
 	onEditDirect,
 	onDeleteDirect,
 	reactionsFor,
 	onReact,
 	onUnreact,
-	readOnly = false
+	previewMode
 }: MessageTimelineProps) => {
 	const { t: translate } = useTranslation();
 	const supplementIndex =
@@ -171,6 +180,17 @@ export const MessageTimeline = ({
 									? () => onReplyDirect(message)
 									: undefined
 							}
+							onJumpToReplyQuote={
+								onJumpToReplyQuote && message.replyToEventId
+									? () => onJumpToReplyQuote(message)
+									: undefined
+							}
+							onJumpToPassage={
+								message.passageReplies?.length
+									? onJumpToPassage
+									: undefined
+							}
+							canRemovePassageBlur={canRemovePassageBlur}
 							onEditDirect={
 								own && onEditDirect
 									? () => onEditDirect(message)
@@ -189,7 +209,7 @@ export const MessageTimeline = ({
 							}
 							onUnreact={onUnreact}
 							encryptionBroke={broke}
-							readOnly={readOnly}
+							previewMode={previewMode}
 						/>
 						{broke &&
 							(showDecryptionCardFor

@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
+import { useGroupCallerBan } from '../useGroupCallerBan';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
@@ -24,15 +25,15 @@ import {
 	UserDataContext
 } from '../../../globalState';
 import { getCounsellingDpaNotification } from '../../../utils/counsellingDpaNotification';
-import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
-import {
-	getGroupSeries,
-	getGroupUpcomingDates,
-	getGroupWaitingRoomTopic
-} from './groupWaitingRoomData';
+import { getGroupWaitingRoomTopic } from './groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './useGroupWaitingRoomSchedule';
+import { useGroupWaitingAdmission } from '../waitingAdmission/useGroupWaitingAdmission';
+import { markCallAutoJoin } from '../waitingAdmission/callAutoJoin';
+import { useAfterDelay } from '../waitingAdmission/useAfterDelay';
+import { askCallDevicesWhileWaiting } from '../waitingAdmission/askCallDevices';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import {
@@ -80,7 +81,7 @@ export const GroupEntryRoom = () => {
 		);
 	}
 
-	return <ClientGroupEntryRoom />;
+	return <ClientGroupEntryRoom key={chatIdParam} />;
 };
 
 /* The frame stands while the group loads, so the waiting room after
@@ -161,6 +162,16 @@ const ClientGroupEntryRoom = () => {
 
 	const item = session?.item;
 	const active = Boolean(item?.active);
+	const callerBan = useGroupCallerBan({
+		askerId: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			? userData.userId
+			: undefined,
+		chatId: item?.id,
+		roomId: item?.matrixRoomId || session?.rid,
+		active
+	});
+	const isRemoved = removed || callerBan === 'BANNED';
+	const joinBlocked = isRemoved || callerBan === 'PENDING';
 
 	useEffect(() => {
 		if (!item?.id) {
@@ -190,16 +201,11 @@ const ClientGroupEntryRoom = () => {
 		groupChatRulesTranslations: item?.groupChatRulesTranslations
 	});
 
-	const upcomingDates = useMemo(() => getGroupUpcomingDates(item), [item]);
-	const series = useMemo(() => getGroupSeries(item), [item]);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(item);
 
-	const plannedStart = useMemo(
-		() => (item ? getGroupChatPlannedStart(item) : null),
-		[item]
-	);
-
-	const handleJoin = useCallback(() => {
-		if (!item?.id || joinBusy) {
+	const join = useCallback(() => {
+		if (!item?.id || joinBusy || joinBlocked) {
 			return false;
 		}
 		setJoinBusy(true);
@@ -235,7 +241,36 @@ const ClientGroupEntryRoom = () => {
 				// The person stays: the closing animation need not wait for a chat.
 				return false;
 			});
-	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
+	}, [item, joinBusy, joinBlocked, navigate, session?.rid, notifications, t]);
+
+	/* ORISO-UserService#1747 (flow 2): an audio or video circle's link leads
+	   here, and the person knocks like everyone else (#2237): they agree,
+	   wait, and a moderator in the group's running call lets them in. Only
+	   then is the group joined, and its running call opens by itself
+	   (`callAutoJoin`). Text circles keep "agree and join". */
+	const callGroup = item?.modality === 'VIDEO' || item?.modality === 'AUDIO';
+	const [waitingForAdmission, setWaitingForAdmission] = useState(false);
+	useGroupWaitingAdmission({
+		chatId,
+		enabled: callGroup && waitingForAdmission && !joinBlocked,
+		onAdmitted: () => {
+			if (item?.id) markCallAutoJoin(item.id);
+			void join();
+		}
+	});
+	const waitedAMinute = useAfterDelay(
+		callGroup && waitingForAdmission && active,
+		60_000
+	);
+	const handleJoin = useCallback(() => {
+		if (!callGroup) return join();
+		if (!item?.id || joinBlocked) return false;
+		/* The agreement click is the gesture: camera and microphone are asked
+		   now, not when the call opens (#2237). */
+		askCallDevicesWhileWaiting(item.modality);
+		setWaitingForAdmission(true);
+		return false;
+	}, [callGroup, item, joinBlocked, join]);
 
 	if (!ready) {
 		return <EntryRoomLoading />;
@@ -279,16 +314,27 @@ const ClientGroupEntryRoom = () => {
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
 				series={series}
-				durationMinutes={item.duration}
+				durationMinutes={durationMinutes}
 				eventId={item.id}
 				welcomeText={authorContent.hintMessage || undefined}
 				rules={authorContent.rules}
 				active={active}
 				onJoin={handleJoin}
 				joinBusy={joinBusy}
-				joinBlocked={removed}
+				joinBlocked={joinBlocked}
+				openBeforeStart={callGroup}
+				admissionWaiting={
+					callGroup && waitingForAdmission
+						? t('groupChat.waitingAdmission.waiting')
+						: undefined
+				}
+				admissionSoon={
+					waitedAMinute
+						? t('groupChat.waitingAdmission.openSoon')
+						: undefined
+				}
 				joinNotice={
-					removed
+					isRemoved
 						? t('groupChat.removed.overlay.headline')
 						: joinFailed
 							? t(

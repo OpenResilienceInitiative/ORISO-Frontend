@@ -10,6 +10,7 @@ import {
 	ActiveSessionContext
 } from '../../globalState';
 import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
+import { useGroupCallerBan } from './useGroupCallerBan';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -23,7 +24,8 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { logout } from '../logout/logout';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { startCallState, type CallKind } from '../call/startCallIntent';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 import './joinChat.styles';
 import { Headline } from '../headline/Headline';
@@ -42,16 +44,16 @@ import {
 import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
-import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { CallPrejoinDialog } from '../call/prejoin/CallPrejoinDialog';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
-import {
-	getGroupSeries,
-	getGroupUpcomingDates,
-	getGroupWaitingRoomTopic
-} from './entryRoom/groupWaitingRoomData';
+import { getGroupWaitingRoomTopic } from './entryRoom/groupWaitingRoomData';
+import { useGroupWaitingRoomSchedule } from './entryRoom/useGroupWaitingRoomSchedule';
+import { useGroupWaitingAdmission } from './waitingAdmission/useGroupWaitingAdmission';
+import { markCallAutoJoin } from './waitingAdmission/callAutoJoin';
+import { useAfterDelay } from './waitingAdmission/useAfterDelay';
+import { askCallDevicesWhileWaiting } from './waitingAdmission/askCallDevices';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -102,6 +104,19 @@ export const JoinGroupChatView = ({
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [removedByServer, setRemovedByServer] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	const callerBan = useGroupCallerBan({
+		askerId:
+			isAsker &&
+			!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+				? userData.userId
+				: undefined,
+		chatId: activeSession.item.id,
+		roomId: activeSession.item.matrixRoomId || activeSession.rid,
+		active: Boolean(activeSession.item.active)
+	});
+	const joinBlockedByBan =
+		removedByServer || callerBan === 'BANNED' || callerBan === 'PENDING';
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
@@ -126,12 +141,39 @@ export const JoinGroupChatView = ({
 		[translate]
 	);
 
+	/* Frank, 21 Nov 2026 ("Call direkt starten"): the moderator of an audio
+	   or video circle starts its call from the waiting room. The chat starts
+	   on the way (`START`), then the conversation's own call button takes the
+	   request (`startCallIntent`) with all its checks. The knock and admit of
+	   the people waiting stay as they are. */
+	const moderatorCallKind: CallKind | undefined =
+		activeSession.item.modality === 'VIDEO'
+			? 'video'
+			: activeSession.item.modality === 'AUDIO'
+				? 'audio'
+				: undefined;
+	const navigate = useNavigate();
+	const location = useLocation();
+	// Where the moderator is now: a START answer only hands the call request
+	// to the room it was pressed in (CodeRabbit on FE#2483).
+	const whereNow = React.useRef({
+		key: location.key,
+		chatId: activeSession.item.id
+	});
+	whereNow.current = { key: location.key, chatId: activeSession.item.id };
+
 	const startButtonItem: ButtonItem = useMemo(
 		() => ({
-			label: translate('groupChat.join.button.label.start'),
+			label: translate(
+				moderatorCallKind === 'video'
+					? 'videoCall.button.startVideoCall'
+					: moderatorCallKind === 'audio'
+						? 'videoCall.button.startCall'
+						: 'groupChat.join.button.label.start'
+			),
 			type: BUTTON_TYPES.PRIMARY
 		}),
-		[translate]
+		[translate, moderatorCallKind]
 	);
 
 	const [buttonItem, setButtonItem] = useState(joinButtonItem);
@@ -257,6 +299,7 @@ export const JoinGroupChatView = ({
 	   keeps the screen covered until it has settled and the session has been
 	   reloaded; `false` says the person stays (ORISO-Frontend#1737). */
 	const handleButtonClick = (): Promise<unknown> | false => {
+		if (joinBlockedByBan) return false;
 		if (bannedUsers.includes(userData.userName)) {
 			setOverlayItem(bannedUserOverlay);
 			setOverlayActive(true);
@@ -271,8 +314,33 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
+		const pressedIn = { key: location.key, chatId: activeSession.item.id };
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
-			.then(() => reloadActiveSession())
+			.then(() => {
+				const stillHere =
+					whereNow.current.key === pressedIn.key &&
+					whereNow.current.chatId === pressedIn.chatId;
+				if (
+					groupChatApiCall === GROUP_CHAT_API.START &&
+					moderatorCallKind &&
+					stillHere
+				)
+					navigate(
+						{
+							pathname: location.pathname,
+							search: location.search,
+							hash: location.hash
+						},
+						{
+							replace: true,
+							state: startCallState(
+								activeSession.item.id,
+								moderatorCallKind
+							)
+						}
+					);
+				return reloadActiveSession();
+			})
 			.catch((error) => {
 				// #1923: the server refuses a banned member with a reason.
 				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT) {
@@ -303,6 +371,39 @@ export const JoinGroupChatView = ({
 			});
 	};
 
+	/* #2237 (Frank, 2026-11-12): in an audio or video group the advice seeker
+	   agrees while waiting, even before the start, and then waits. A
+	   moderator in the group's running call sees them and lets them in; that
+	   click is the only one: the group is joined here and its running call
+	   joins by itself once the chat is open (`callAutoJoin`). Text groups
+	   keep "agree and join". */
+	const callGroup =
+		isAsker &&
+		(activeSession.item.modality === 'VIDEO' ||
+			activeSession.item.modality === 'AUDIO');
+	const [waitingForAdmission, setWaitingForAdmission] = useState(false);
+	useGroupWaitingAdmission({
+		chatId: activeSession.item.id,
+		enabled: callGroup && waitingForAdmission && !joinBlockedByBan,
+		onAdmitted: () => {
+			markCallAutoJoin(activeSession.item.id);
+			void handleButtonClick();
+		}
+	});
+	const waitedAMinute = useAfterDelay(
+		callGroup && waitingForAdmission && Boolean(activeSession.item.active),
+		60_000
+	);
+	const handleRoomJoin = (): Promise<unknown> | false => {
+		if (!callGroup) return handleButtonClick();
+		if (joinBlockedByBan) return false;
+		/* The consent click is the gesture: camera and microphone are asked
+		   now, not when the call opens (#2237). */
+		askCallDevicesWhileWaiting(activeSession.item.modality);
+		setWaitingForAdmission(true);
+		return false;
+	};
+
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setOverlayActive(false);
@@ -331,7 +432,8 @@ export const JoinGroupChatView = ({
 			activeSession.item.groupChatRulesTranslations
 	});
 	const groupChatRules = authorContent.rules;
-	const plannedStart = getGroupChatPlannedStart(activeSession.item);
+	const { plannedStart, upcomingDates, series, durationMinutes } =
+		useGroupWaitingRoomSchedule(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
@@ -392,7 +494,6 @@ export const JoinGroupChatView = ({
 	   room in the app must look like the one behind the link). The moderator
 	   gets her own words and "Chat starten" (#1689). Internal team chats keep
 	   the plain view below: no clock, no rules (#979). */
-	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	if (isAsker || showRules) {
 		const item = activeSession.item;
 		const topic =
@@ -419,19 +520,35 @@ export const JoinGroupChatView = ({
 					agencyName={item.assignedAgencies?.[0]?.name}
 					agencyId={item.assignedAgencies?.[0]?.id}
 					plannedStart={plannedStart}
-					upcomingDates={getGroupUpcomingDates(item)}
-					series={getGroupSeries(item)}
-					durationMinutes={item.duration}
+					upcomingDates={upcomingDates}
+					series={series}
+					durationMinutes={durationMinutes}
 					eventId={item.id}
 					welcomeText={authorContent.hintMessage || undefined}
 					rules={groupChatRules}
 					active={Boolean(item.active)}
 					joinBlocked={
-						removedByServer ||
+						joinBlockedByBan ||
 						bannedUsers.includes(userData.userName)
 					}
-					onJoin={handleButtonClick}
+					joinNotice={
+						callerBan === 'BANNED'
+							? translate('groupChat.removed.overlay.headline')
+							: undefined
+					}
+					onJoin={handleRoomJoin}
 					joinBusy={isRequestInProgress}
+					openBeforeStart={callGroup}
+					admissionWaiting={
+						callGroup && waitingForAdmission
+							? translate('groupChat.waitingAdmission.waiting')
+							: undefined
+					}
+					admissionSoon={
+						waitedAMinute
+							? translate('groupChat.waitingAdmission.openSoon')
+							: undefined
+					}
 					onDeviceCheck={
 						offerDeviceCheck
 							? () => setCheckingDevices(true)
@@ -519,7 +636,7 @@ export const JoinGroupChatView = ({
 						<div className="joinChat__actionsStart">
 							<GroupChatCalendarMenu
 								start={plannedStart}
-								durationMinutes={activeSession.item.duration}
+								durationMinutes={durationMinutes}
 								eventId={activeSession.item.id}
 							/>
 						</div>

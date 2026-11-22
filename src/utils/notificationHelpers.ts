@@ -8,6 +8,10 @@ import { BannerMode } from './notificationSettings/notificationConfig';
 import { resolveEventChannelContract } from './notificationSettings/occasionChannelContract';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
+import {
+	effectiveBrowserNotificationsEnabled,
+	recordBrowserNotificationsChoice
+} from './notificationSettings/browserMasterSwitch';
 
 type ExtraNotificationOptions = {
 	showAlways?: boolean;
@@ -155,14 +159,20 @@ export const sendNotification = (
 	if (usesCrossDevicePanel()) {
 		// Master opt-in. The per-type choice is the banner channel of the
 		// event's config row, applied further down.
-		if (!settings.browserNotifications?.enabled) {
+		if (
+			!effectiveBrowserNotificationsEnabled(
+				Boolean(settings.browserNotifications?.enabled)
+			)
+		) {
 			return;
 		}
 	} else {
 		const legacyType = LEGACY_TYPE_BY_FAMILY[family];
 		const legacyAllows = legacyType
 			? isBrowserNotificationTypeEnabled(legacyType)
-			: browserNotificationsSettings().enabled;
+			: effectiveBrowserNotificationsEnabled(
+					browserNotificationsSettings().enabled
+				);
 		if (!legacyAllows) {
 			return;
 		}
@@ -236,6 +246,9 @@ export const saveBrowserNotificationsSettings = (settings: {
 	}
 	const next = { ...currentSettings, ...settings };
 	localStorage.setItem('BROWSER_NOTIFICATIONS', JSON.stringify(next));
+	if (settings.enabled !== undefined) {
+		recordBrowserNotificationsChoice(settings.enabled);
+	}
 
 	// Keep the store in step (#1211) so the choice survives the release toggle
 	// being switched on later: the cross-device panel then shows what the user
@@ -261,8 +274,11 @@ export const browserNotificationsSettings = (): {
 export const isBrowserNotificationTypeEnabled = (
 	type: 'initialEnquiry' | 'newMessage'
 ) => {
+	// FE#1211: on by default once the browser allows it; a type the user
+	// never touched counts as on.
 	return (
-		browserNotificationsSettings().enabled &&
-		browserNotificationsSettings()[type]
+		effectiveBrowserNotificationsEnabled(
+			browserNotificationsSettings().enabled
+		) && browserNotificationsSettings()[type] !== false
 	);
 };

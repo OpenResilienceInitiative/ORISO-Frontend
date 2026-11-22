@@ -1,19 +1,20 @@
 // Timeline / notifications page — Figma "App.Oriso → Zeitstrahl | Timeline"
 // (nodes 7576-22889 / 7582-27615). Shares the conversation page interaction
 // pattern: resizable list column + vertical dragger + detail surface.
-// Palette mirrors the M3 ORISO tokens (orisoInputDesign.ts):
-//   primary          #a5000a   on-primary        #ffffff
-//   primary-container#ffdad7   selected surface  #ffecef
-//   surface          #fcf9f9   surface-container #f1eeee
-//   on-surface       #1b1b1c   on-surface-variant#444748
-//   secondary        #4c555f   outline-variant   #c4c7c7
+// Timeline card palette: Figma App.Oriso 7574:39299 / 7574:39661.
+// Keep event glyphs dynamic; the shared card state owns their colours.
+
+@import './timelinePillAction';
 
 .notificationsCenter {
 	display: flex;
 	flex-direction: row;
 	height: 100%;
 	min-height: 0;
-	background: #fcf9f9;
+
+	// The column grey, so the handle gap draws no line next to content;
+	// only the empty page draws its white divider (Frank, 2026-11-16).
+	background: var(--m3-surface-container-high, #eae7e8);
 
 	&--empty {
 		flex: 1;
@@ -30,9 +31,65 @@
 		flex-direction: column;
 		min-height: 0;
 		flex-shrink: 0;
-		padding: 16px 20px 16px 16px;
+
+		// The gutters of "Gespräche": 24 px above the search, 12 px each
+		// side, so list, grip and detail sit 24 px apart (Frank, 2026-11-17).
+		padding: 24px 12px 16px;
 		gap: 4px;
 		background: var(--m3-surface-container-high, #eae7e8);
+	}
+
+	// Only the desktop collapsed mode adopts the shared conversation rail.
+	&__listColumn--rail {
+		box-sizing: border-box;
+		padding: 16px;
+
+		.notificationsCenter__toolbar {
+			display: none;
+		}
+		.notificationsCenter__list {
+			padding: 0;
+			flex-shrink: 0;
+		}
+		.notificationsCenter__list > div {
+			flex-shrink: 0;
+		}
+		.notificationsCenter__pagination {
+			padding: 8px 0 4px;
+			button {
+				width: 48px;
+				height: 48px;
+				padding: 12px;
+			}
+			svg {
+				width: 24px;
+				height: 24px;
+				fill: currentcolor;
+			}
+		}
+	}
+
+	&__railIcon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--m3-secondary, #4c555f);
+
+		// Override only the avatar's full-size glyph rule; keep event paint intact.
+		.sessionRailPill & svg {
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
+		}
+	}
+
+	&__visuallyHidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	// Reuses the conversation page toolbar (search pill + filter chips,
@@ -41,6 +98,15 @@
 		padding: 0;
 		background: transparent;
 
+		// #2226: the search pill sits on the same gutter as in Conversations
+		// (6 px on phones, 12 px from large). Below 900 px the column pads
+		// 16 px, from 900 px it pads 12 px like Conversations.
+		margin: 0 -10px;
+
+		@include breakpoint($fromLarge) {
+			margin: 0;
+		}
+
 		.sessionsListToolbar__search {
 			margin-bottom: 8px;
 			max-width: none;
@@ -48,6 +114,21 @@
 
 		.sessionsListToolbar__chipsScroll {
 			margin-bottom: 8px;
+		}
+
+		// "Nur Text": the icon-only "mark all read" takes the 28 px of the
+		// text pills beside it.
+		.filterChipRow--dense .sessionsListToolbar__chip--iconOnly {
+			min-width: 28px;
+			min-height: 28px;
+			width: 28px;
+			height: 28px;
+			padding: 0;
+
+			svg {
+				width: 18px;
+				height: 18px;
+			}
 		}
 	}
 
@@ -60,7 +141,6 @@
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		padding-right: 2px;
 		scrollbar-width: none;
 
 		&::-webkit-scrollbar {
@@ -123,9 +203,9 @@
 		gap: 12px;
 		text-align: left;
 		padding: 16px 20px;
-		border: 1px solid #ffffff;
+		border: 1px solid var(--white, #ffffff);
 		border-radius: 0;
-		background: #eae7e8;
+		background: var(--m3-surface-container-high, #eae7e8);
 		cursor: pointer;
 		position: relative;
 		box-sizing: border-box;
@@ -136,7 +216,7 @@
 			box-shadow 140ms ease;
 
 		&:hover {
-			background: #f0e7e7;
+			background: var(--m3-hover-layer, #f9eff0);
 		}
 
 		&:focus-visible {
@@ -152,7 +232,8 @@
 		border-top-right-radius: 32px;
 	}
 
-	&__listRow:last-child:not(.notificationsCenter__listRow--active)
+	// Pagination controls may follow the last visible row.
+	&__listRow--last:not(.notificationsCenter__listRow--active)
 		.notificationsCenter__card {
 		border-bottom-left-radius: 32px;
 		border-bottom-right-radius: 32px;
@@ -182,8 +263,8 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		border: 1px solid #dcd9d9;
-		background: #ffffff;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		background: var(--m3-surface-container-lowest, #ffffff);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -206,7 +287,7 @@
 		flex: 1;
 		min-height: 14px;
 		margin-top: 2px;
-		border-left: 3px dotted #a9acac;
+		border-left: 3px dotted var(--m3-tertiary-container, #9ba4b0);
 	}
 
 	&__cardContent {
@@ -226,7 +307,7 @@
 	&__cardTitle {
 		font-size: 15px;
 		font-weight: 600;
-		color: #1b1b1c;
+		color: var(--m3-secondary, #4c555f);
 	}
 
 	// Figma: supporting text with the timestamp right-aligned on the same line.
@@ -241,7 +322,9 @@
 		flex: 1;
 		min-width: 0;
 		font-size: 13px;
-		color: #444748;
+
+		// Figma muted text fails AA on the gray group surface (4.27:1).
+		color: var(--m3-on-surface-variant, #444748);
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -250,7 +333,9 @@
 
 	&__cardTime {
 		font-size: 12px;
-		color: #6b7280;
+
+		// Use the accessible neutral role on gray; selected white cards use Figma muted text.
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 	}
 
@@ -286,7 +371,7 @@
 	// Active card (Figma: white surface, red border, fully rounded).
 	// Selecting a card grows it in subtly (same easing as the toolbar chips).
 	&__card--active {
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 2px solid var(--m3-primary, #a5000a);
 		border-radius: 28px;
 		padding: 15px 19px;
@@ -295,7 +380,7 @@
 		transform-origin: center left;
 
 		&:hover {
-			background: #ffffff;
+			background: var(--m3-surface-container-lowest, #ffffff);
 			border-color: var(--m3-primary, #a5000a);
 		}
 
@@ -306,10 +391,10 @@
 			color: var(--m3-on-primary, #ffffff);
 
 			svg {
-				fill: #ffffff;
+				fill: currentcolor;
 
 				path {
-					fill: #ffffff;
+					fill: currentcolor;
 				}
 			}
 		}
@@ -320,16 +405,31 @@
 		}
 
 		.notificationsCenter__cardTitle {
-			color: #1b1b1c;
+			color: var(--m3-on-primary-fixed, #410001);
+		}
+
+		.notificationsCenter__cardTitleRow {
+			// Room for the 48 px "⋮" button and 8 px of air.
+			padding-right: 56px;
+			min-height: 32px;
+			align-items: center;
 		}
 
 		.notificationsCenter__cardText {
+			color: var(--m3-on-tertiary-fixed, #141c25);
 			-webkit-line-clamp: 3;
 			padding-right: 24px;
 		}
 
+		// The content column runs as tall as the icon column, so the time
+		// sits on the bottom padding instead of floating above it.
+		.notificationsCenter__cardContent {
+			align-self: stretch;
+		}
+
 		.notificationsCenter__cardTime--footer {
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			margin-top: auto;
+			color: var(--m3-secondary-container, #646d78);
 			font-weight: 600;
 		}
 
@@ -338,39 +438,53 @@
 		}
 	}
 
-	// "..." actions on the active card.
+	// "⋮" actions on the active card: the round button of the Gespräche
+	// cards (sessionsListItem__menuIcon), its right edge on the text edge of
+	// the card, level with the title (Frank, 2026-11-17).
 	&__cardMenu {
 		position: absolute;
-		top: 10px;
-		right: 10px;
+		top: 12px;
+
+		// Card border 2 + padding 19 = the text edge.
+		right: 21px;
 	}
 
-	// The expander reserves its own column, so keep the menu inside the card.
+	// The expander (46) and the row gap (8) sit right of the card.
 	&__listRow--withExpander &__cardMenu {
-		right: 62px;
+		right: calc(21px + 46px + 8px);
 	}
 
-	// Figma: white oval with a soft red-tinted ring around the "..." glyph.
 	&__cardMenuButton {
 		appearance: none;
-		width: 44px;
-		height: 28px;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
-		border-radius: 999px;
-		background: #ffffff;
-		color: #444748;
+		width: 48px;
+		height: 32px;
+		padding: 0;
+		box-sizing: border-box;
+
+		// The soft red ring of the Figma card: a white border would vanish
+		// on the white selected card.
+		border: 1px solid var(--m3-on-primary-container, #ffe2de);
+		border-radius: 32px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-on-surface, #1b1b1c);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+		transition:
+			border-color 160ms ease,
+			background-color 160ms ease;
 
 		svg {
-			width: 18px;
-			height: 18px;
+			width: 24px;
+			height: 24px;
+			fill: currentcolor;
 		}
 
+		// The theme's hover layer, like the rail's search button.
 		&:hover {
-			background: var(--m3-primary-fixed, #ffdad7);
+			background: var(--m3-hover-layer, #f9eff0);
 		}
 
 		&:focus-visible {
@@ -415,7 +529,9 @@
 		flex: 1;
 		min-width: 0;
 		min-height: 0;
-		padding: 16px 16px 16px 20px;
+
+		// As in "Gespräche": 24 px around the card, 12 px towards the grip.
+		padding: 24px 24px 24px 12px;
 		display: flex;
 		background-color: #eae7e8;
 	}
@@ -432,6 +548,61 @@
 		border-radius: 32px;
 		background: #ffffff;
 		overflow: hidden;
+	}
+
+	// The focus ring follows the pane the counsellor works in (Frank,
+	// 2026-11-16): a light ring while the list has the focus, the red one
+	// once she clicks into the preview.
+	&:not(.notificationsCenter--detailFocused)
+		.notificationsCenter__detailCard {
+		border-color: var(--m3-primary-fixed, #ffdad7);
+	}
+
+	// Preview focused: the selected card steps back to the accent and its
+	// side pill turns light; hover still shows the primary pill.
+	&--detailFocused {
+		.notificationsCenter__card--active {
+			background: var(--m3-hover-layer, #f9eff0);
+			border-color: var(--m3-primary-fixed, #ffdad7);
+		}
+
+		.notificationsCenter__expander {
+			background: var(--m3-primary-fixed, #ffdad7);
+			color: var(--m3-primary, #a5000a);
+
+			&:hover,
+			&:focus-visible {
+				background: var(--m3-primary-hover, #7e0008);
+				color: var(--m3-on-primary, #ffffff);
+			}
+		}
+	}
+
+	// Empty desktop page: two panes like Conversations, no card on the
+	// right, and the white divider only here (Frank, 2026-11-16).
+	&--emptySplit {
+		flex: 1;
+		min-width: 0;
+
+		.notificationsCenter__listColumn {
+			justify-content: center;
+		}
+
+		.sessionsList__resizeHandle--end::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: calc(50% - 0.5px);
+			width: 1px;
+			background: #fff;
+			pointer-events: none;
+		}
+	}
+
+	&__detail--empty {
+		align-items: center;
+		justify-content: center;
 	}
 
 	&__detailCard--embedded {
@@ -498,6 +669,15 @@
 		text-align: left;
 	}
 
+	// Why the entry's conversation is not shown here (2026-11-16).
+	&__detailHint {
+		margin: 12px 0 0;
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--m3-on-surface-variant, #4c555f);
+		text-align: left;
+	}
+
 	&__detailActions {
 		display: flex;
 		gap: 12px;
@@ -508,42 +688,25 @@
 
 	// Figma: big red pill "View Conversation" with expand glyph.
 	&__openButton {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		min-height: 56px;
-		padding: 0 32px;
-		border: none;
-		border-radius: 999px;
-		background: var(--m3-primary, #a5000a);
-		color: var(--m3-on-primary, #ffffff);
-		font-size: 16px;
-		font-weight: 600;
-
 		// #876: the status-page action is a link; it must look like the button.
-		text-decoration: none;
-		cursor: pointer;
-		transition: background-color 140ms ease;
+		@include timeline-pill-action(56px, 0 32px, 16px, 10px);
 
 		svg {
 			width: 18px;
 			height: 18px;
-			fill: currentcolor;
 		}
+	}
 
-		// `open-in-new-tab.svg` ships a black 0.9 fill; follow the label colour.
-		svg path {
-			fill: currentcolor;
-			fill-opacity: 1;
-		}
+	// "Zum Kalender" beside the conversation action: outlined, like the
+	// event bar's secondary action.
+	&__openButton--secondary {
+		border: 1px solid var(--m3-outline-variant, #c4c7c7);
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-secondary, #4c555f);
 
 		&:hover {
-			background: var(--m3-primary-hover, #7e0008);
-			color: var(--m3-on-primary, #ffffff);
-		}
-
-		&:focus-visible {
-			@include list-item-focus-treatment;
+			background: var(--m3-hover-layer, #f9eff0);
+			color: var(--m3-primary, #a5000a);
 		}
 	}
 
@@ -646,10 +809,14 @@
 // Below the desktop breakpoint the timeline is a single full-width list and
 // opening a notification navigates directly (no in-page detail).
 // stylelint-disable-next-line media-feature-range-notation
-@media (max-width: 1200px) {
+@media (max-width: 899px) {
 	.notificationsCenter {
+		// Keep the filter strip's intrinsic width inside the scroll container.
+		min-width: 0;
+
 		&__listColumn {
 			flex: 1;
+			min-width: 0;
 			width: auto;
 			padding: 16px;
 		}

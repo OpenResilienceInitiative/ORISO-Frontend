@@ -7,7 +7,6 @@ import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import DoorFrontOutlinedIcon from '@mui/icons-material/DoorFrontOutlined';
-import HistoryToggleOffOutlinedIcon from '@mui/icons-material/HistoryToggleOffOutlined';
 import QrCode2OutlinedIcon from '@mui/icons-material/QrCode2Outlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
@@ -18,6 +17,8 @@ import {
 	type CallShareSettings,
 	type WebShare
 } from './callShareSettings';
+import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
+import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import './callShare.scss';
 
 export interface CallSharePanelProps {
@@ -33,15 +34,17 @@ export interface CallSharePanelProps {
 	/** The content changed height (QR shown or hidden); the popover re-anchors. */
 	onContentResize?: () => void;
 	/**
-	 * Platform or Träger forbids temporary accounts: the toggle is not shown
-	 * at all (Frank, 28 Oct), rather than shown disabled.
+	 * UserService#1662: the guest account modes platform and Träger allow.
+	 * A forbidden mode is not offered at all (Frank, 28 Oct), rather than
+	 * shown disabled. Absent: all three.
 	 */
-	temporaryAccountAllowed?: boolean;
+	allowedGuestAccountModes?: readonly GuestAccountMode[];
 }
 
 /**
  * The content of the call share surface (#1794), the same in the desktop
- * popover and the phone bottom sheet: two toggles, the link with Copy, a QR
+ * popover and the phone bottom sheet: the knock toggle and the guest account
+ * select (UserService#1662), the link with Copy, a QR
  * code and the phone's own share menu, then two plain sentences on lifetime
  * and consent. Copy and link field follow the self-help share dialog
  * (`GroupChatShareDialog`), the surface follows the call menu (plate 5b).
@@ -55,7 +58,7 @@ export const CallSharePanel = ({
 	onCopy = (value) => copyLinkToClipboard(value),
 	defaultQrOpen = false,
 	onContentResize,
-	temporaryAccountAllowed = true
+	allowedGuestAccountModes
 }: CallSharePanelProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -100,19 +103,9 @@ export const CallSharePanel = ({
 	};
 
 	const toggles: {
-		key: keyof CallShareSettings;
+		key: 'knock';
 		icon: React.ReactNode;
-	}[] = [
-		{ key: 'knock', icon: <DoorFrontOutlinedIcon /> },
-		...(temporaryAccountAllowed
-			? [
-					{
-						key: 'temporaryAccount' as const,
-						icon: <HistoryToggleOffOutlinedIcon />
-					}
-				]
-			: [])
-	];
+	}[] = [{ key: 'knock', icon: <DoorFrontOutlinedIcon /> }];
 
 	return (
 		<div
@@ -182,6 +175,16 @@ export const CallSharePanel = ({
 					);
 				})}
 			</ul>
+			<GuestAccountModeSelect
+				className="callShare__guestAccount"
+				size="compact"
+				showHint={false}
+				value={settings.guestAccountMode}
+				allowed={allowedGuestAccountModes}
+				onChange={(guestAccountMode) =>
+					onSettingsChange({ ...settings, guestAccountMode })
+				}
+			/>
 			{/* Frank, 28 Oct: a change applies to the link already shared. */}
 			<p className="callShare__settingsHint">
 				{t('calls.share.settingsLive')}

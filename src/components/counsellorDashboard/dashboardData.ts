@@ -65,7 +65,9 @@ export const upcomingCirclesFrom = (
 						topic: chat.topic,
 						when: formatCircleWhen(next, locale),
 						medium: mediumOf(chat.modality),
-						participants: chat.participants?.length ?? 0
+						// The series roster contains assigned counsellors, not
+						// the advice seekers who join its Matrix room.
+						assignedCounsellors: chat.participants?.length ?? 0
 					},
 					at: next.getTime()
 				}

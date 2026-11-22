@@ -561,5 +561,19 @@ export const ru: Record<EmailId, EmailContent> = {
 			'Это письмо намеренно не содержит темы, имён или сведений об участниках.',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'Предложение перенести встречу',
+		preheader:
+			'{{proposerName}} предлагает новое время для одной из Ваших встреч.',
+		headline: 'Предложение перенести встречу',
+		paragraphs: [
+			'{{proposerName}} предлагает перенести Вашу встречу с {{currentDate}} в {{currentTime}} на {{proposedDate}} в {{proposedTime}}.',
+			'Вы можете принять или отклонить предложение в календаре. До тех пор встреча остаётся на месте.'
+		],
+		cta: { label: 'Открыть в календаре', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

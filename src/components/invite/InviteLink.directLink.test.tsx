@@ -77,6 +77,13 @@ vi.mock('../../api/apiFinishAnonymousConversation', () => ({
 vi.mock('../../api/apiGetInviteLinkContext', () => ({
 	apiGetInviteLinkContext: vi.fn(() => Promise.reject(new Error('none')))
 }));
+/* Real consulting types are served by another service; calls are allowed
+   unless a test says otherwise. */
+vi.mock('../../api/apiGetConsultingType', () => ({
+	apiGetConsultingType: vi.fn(() =>
+		Promise.resolve({ id: 3, isVideoCallAllowed: true })
+	)
+}));
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
 	assignInviteSessionDisplayName: vi.fn(),
@@ -110,9 +117,14 @@ const i18nMock = vi.hoisted(() => {
 		'anonymousChat.pseudonym.continueWithSelection': 'Weiter mit Auswahl',
 		'liveChat.entry.staff.headline': 'Sie sind als Beraterin angemeldet.',
 		'inviteLink.error.title': 'This invite link can no longer be used',
+		'directLink.entry.inactive': 'Dieser Link ist nicht mehr aktiv.',
+		'directLink.entry.callsDisabled': 'Anrufe sind nicht möglich.',
 		'inviteLink.paused': 'Dieser Link ist aktuell pausiert.',
 		'directLink.entry.haveAccount': 'Sie haben schon ein Konto? Anmelden',
 		'inviteLink.resume.retry': 'Erneut versuchen',
+		'registration.zipcode.label': 'Ihre Postleitzahl',
+		'guestAccountMode.entry.withAccount': 'Konto anlegen',
+		'guestAccountMode.entry.withoutAccount': 'Ohne Konto beitreten',
 		'registration.accountCreated.retry':
 			'Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
 	};
@@ -153,6 +165,7 @@ const { apiStartDirectLinkConversation } = await import(
 	'../../api/apiDirectLinks'
 );
 const { hasActiveAuthSession } = await import('../auth/auth');
+const { apiGetConsultingType } = await import('../../api/apiGetConsultingType');
 const { readPendingKnock } = await import(
 	'../directLinkEntry/directLinkEntryFlow'
 );
@@ -190,6 +203,11 @@ const renderInvite = () =>
 		</GlobalComponentContext.Provider>
 	);
 
+const typePostcode = (value: string) =>
+	fireEvent.change(screen.getByLabelText('Ihre Postleitzahl'), {
+		target: { value }
+	});
+
 const directContext = (chatType: string) => ({
 	tenantId: 1,
 	agencyId: 7,
@@ -211,7 +229,17 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		sessionStorage.clear();
 		vi.mocked(hasActiveAuthSession).mockReturnValue(false);
 		vi.mocked(apiPostRegistration).mockResolvedValue(undefined);
+		/* clearAllMocks keeps queued one-time results of an unused mock. */
+		vi.mocked(apiStartDirectLinkConversation).mockReset();
+		vi.mocked(apiGetInviteLinkContext)
+			.mockReset()
+			.mockImplementation(() => Promise.reject(new Error('none')));
+		vi.mocked(apiGetConsultingType)
+			.mockReset()
+			.mockResolvedValue({ id: 3, isVideoCallAllowed: true } as any);
 	});
+
+	afterEach(cleanup);
 
 	it('takes a signed-in person straight into their own chat', async () => {
 		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
@@ -304,6 +332,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		renderInvite();
 
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		const login = screen.getByRole('link', {
 			name: 'Sie haben schon ein Konto? Anmelden'
 		});
@@ -327,13 +356,59 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 				mainTopicId: '11',
 				// ORISO-UserService#1486: the link and its temporary flag go along.
 				directLinkToken: 'token-123',
-				temporary: false
+				temporary: false,
+				postcode: '10115'
 			}),
 			false,
 			tenantValue.tenant,
 			expect.any(Function)
 		);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
+	});
+
+	it('asks a registered chat guest for the postcode and waits for it (#1795)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		const next = screen.getByRole('button', {
+			name: 'Weiter mit Auswahl'
+		}) as HTMLButtonElement;
+		typePostcode('1011');
+		fireEvent.click(next);
+		await waitFor(() =>
+			expect(
+				screen
+					.getByLabelText('Ihre Postleitzahl')
+					.getAttribute('aria-invalid')
+			).toBe('true')
+		);
+		expect(apiPostRegistration).not.toHaveBeenCalled();
+	});
+
+	it('does not ask a temporary chat guest, who keeps the placeholder (#1795)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+			...directContext('CHAT'),
+			temporaryAccount: true
+		} as any);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 46,
+			medium: 'CHAT',
+			admission: 'DIRECT',
+			created: true
+		});
+		renderInvite();
+		await screen.findByLabelText('User-ID');
+		expect(screen.queryByLabelText('Ihre Postleitzahl')).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		expect(vi.mocked(apiPostRegistration).mock.calls[0][1]).toMatchObject({
+			postcode: '00000',
+			temporary: true
+		});
 	});
 
 	it('hides the password of a temporary chat guest when the platform says so', async () => {
@@ -370,6 +445,79 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		expect(body.password.length).toBeGreaterThan(8);
 	});
 
+	describe('guest account mode (UserService#1662)', () => {
+		const startChat = () =>
+			vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+				sessionId: 47,
+				medium: 'CHAT',
+				admission: 'DIRECT',
+				created: true
+			});
+
+		it('lets the guest choose: no account by default, an account after the toggle', async () => {
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+				...directContext('CHAT'),
+				guestAccountMode: 'GUEST_CHOOSES'
+			} as any);
+			startChat();
+			renderInvite();
+			await screen.findByLabelText('User-ID');
+			expect(screen.queryByLabelText('Ihre Postleitzahl')).toBeNull();
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Konto anlegen' })
+			);
+			expect(
+				screen.getByRole('button', { name: 'Ohne Konto beitreten' })
+			).toBeTruthy();
+			typePostcode('10115');
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+			);
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			expect(
+				vi.mocked(apiPostRegistration).mock.calls[0][1]
+			).toMatchObject({ postcode: '10115', temporary: false });
+		});
+
+		it('registers a temporary account when the guest keeps the default', async () => {
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+				...directContext('CHAT'),
+				guestAccountMode: 'GUEST_CHOOSES'
+			} as any);
+			startChat();
+			renderInvite();
+			await screen.findByLabelText('User-ID');
+			fireEvent.click(
+				screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+			);
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			expect(
+				vi.mocked(apiPostRegistration).mock.calls[0][1]
+			).toMatchObject({ postcode: '00000', temporary: true });
+		});
+
+		it.each(['TEMPORARY', 'PERMANENT'])(
+			'offers no choice under %s',
+			async (guestAccountMode) => {
+				vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+					...directContext('CHAT'),
+					temporaryAccount: guestAccountMode === 'TEMPORARY',
+					guestAccountMode
+				} as any);
+				renderInvite();
+				await screen.findByLabelText('User-ID');
+				expect(
+					screen.queryByRole('button', { name: 'Konto anlegen' })
+				).toBeNull();
+				expect(
+					screen.queryByRole('button', {
+						name: 'Ohne Konto beitreten'
+					})
+				).toBeNull();
+			}
+		);
+	});
+
 	it('sends a chat link the same registration as a call link', async () => {
 		const context = { ...directContext('CHAT'), agencyId: null };
 		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
@@ -383,6 +531,7 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 		});
 		renderInvite();
 		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
 		fireEvent.click(
 			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
 		);
@@ -445,4 +594,233 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 			expect(redeemInviteLink).not.toHaveBeenCalled();
 		}
 	);
+
+	/* ORISO-UserService#1563: the link was switched off after the page loaded;
+	   the registration answers 410 and the person must not read a generic error. */
+	it('shows a link switched off during registration as paused (#2012)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 46,
+			medium: 'CHAT',
+			admission: 'DIRECT',
+			created: true
+		});
+		vi.mocked(apiPostRegistration).mockRejectedValueOnce(
+			new Response('{"reason":"DIRECT_LINK_INACTIVE"}', { status: 410 })
+		);
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		expect(
+			await screen.findByText('Dieser Link ist aktuell pausiert.')
+		).toBeTruthy();
+		expect(redirectToApp).not.toHaveBeenCalled();
+		expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+	});
+
+	it('keeps the generic text for another registration failure', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiPostRegistration).mockRejectedValueOnce(
+			new Response('', { status: 500 })
+		);
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		await screen.findByText('inviteLink.error.generic');
+		expect(
+			screen.queryByText('Dieser Link ist nicht mehr aktiv.')
+		).toBeNull();
+	});
+
+	/* The server allows a call only where the consulting type says so
+	   (`=== true`); the page mirrors that for a person without a session. */
+	it('does not offer a call link of a form of counselling without calls (#2012)', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValueOnce({
+			id: 3,
+			isVideoCallAllowed: false
+		} as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByText('Anrufe sind nicht möglich.')
+		).toBeTruthy();
+		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+		expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+	});
+
+	/* Someone signs in in another tab while the page reads the form of
+	   counselling: the call entry would register a guest over that session. */
+	it('takes a person who signed in during the call read to their own conversation', async () => {
+		vi.mocked(apiGetConsultingType).mockImplementationOnce(async () => {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			return { id: 3, isVideoCallAllowed: true } as any;
+		});
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 46,
+			medium: 'VIDEO',
+			admission: 'DIRECT',
+			created: true
+		} as any);
+		renderInvite();
+
+		await waitFor(() =>
+			expect(apiStartDirectLinkConversation).toHaveBeenCalled()
+		);
+		expect(screen.queryByTestId('direct-link-call-entry')).toBeNull();
+	});
+
+	it('does not offer a call link when the flag is missing from a successful read', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValueOnce({
+			id: 3
+		} as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('AUDIO') as any
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByText('Anrufe sind nicht möglich.')
+		).toBeTruthy();
+	});
+
+	it('still offers a chat link where calls are not allowed', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+		expect(screen.queryByText('Anrufe sind nicht möglich.')).toBeNull();
+	});
+
+	it('lets the server decide when the form of counselling cannot be read', async () => {
+		vi.mocked(apiGetConsultingType).mockResolvedValueOnce(null as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		renderInvite();
+
+		expect(
+			await screen.findByTestId('direct-link-call-entry')
+		).toBeTruthy();
+	});
+
+	it('lets the server decide when the link names no form of counselling', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+			...directContext('VIDEO'),
+			consultingTypeId: null
+		} as any);
+		renderInvite();
+
+		expect(
+			await screen.findByTestId('direct-link-call-entry')
+		).toBeTruthy();
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+	});
+
+	it('keeps the old flow for a signed-in asker, without reading the form of counselling', async () => {
+		vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+		vi.mocked(apiGetConsultingType).mockResolvedValue({
+			id: 3,
+			isVideoCallAllowed: false
+		} as any);
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('VIDEO') as any
+		);
+		vi.mocked(apiStartDirectLinkConversation).mockResolvedValueOnce({
+			sessionId: 42,
+			medium: 'VIDEO',
+			admission: 'KNOCK',
+			created: true,
+			knockId: 5,
+			knockStatus: 'PENDING'
+		});
+		renderInvite();
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(apiGetConsultingType).not.toHaveBeenCalled();
+		expect(apiStartDirectLinkConversation).toHaveBeenCalledWith(
+			'token-123'
+		);
+	});
+
+	it('keeps the old flow for a signed-in counsellor, without reading the form of counselling', async () => {
+		const jwt = [
+			btoa(JSON.stringify({ alg: 'none' })),
+			btoa(JSON.stringify({ realm_access: { roles: ['consultant'] } })),
+			'sig'
+		].join('.');
+		document.cookie = `keycloak=${jwt}; path=/`;
+		try {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			vi.mocked(apiGetConsultingType).mockResolvedValue({
+				id: 3,
+				isVideoCallAllowed: false
+			} as any);
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+				directContext('VIDEO') as any
+			);
+			renderInvite();
+
+			expect(
+				await screen.findByText('Sie sind als Beraterin angemeldet.')
+			).toBeTruthy();
+			expect(apiGetConsultingType).not.toHaveBeenCalled();
+			expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+		} finally {
+			document.cookie =
+				'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		}
+	});
+
+	/* The account exists and is signed in; only the conversation start is
+	   refused. Sending the person back to the identity step would offer a
+	   login retry that can never work. */
+	it('shows a link switched off after the account was created as paused (#2012)', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce(
+			directContext('CHAT') as any
+		);
+		vi.mocked(apiPostRegistration).mockImplementation((async (
+			...args: any[]
+		) => {
+			args[4]?.();
+		}) as any);
+		vi.mocked(apiStartDirectLinkConversation).mockRejectedValueOnce(
+			new Response('{"reason":"DIRECT_LINK_INACTIVE"}', { status: 410 })
+		);
+		renderInvite();
+
+		await screen.findByLabelText('User-ID');
+		typePostcode('10115');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		expect(
+			await screen.findByText('Dieser Link ist aktuell pausiert.')
+		).toBeTruthy();
+		expect(screen.queryByLabelText('User-ID')).toBeNull();
+		expect(redirectToApp).not.toHaveBeenCalled();
+	});
 });

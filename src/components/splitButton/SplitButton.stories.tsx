@@ -202,3 +202,63 @@ export const SelectionSelected: Story = {
 		await expect(onSelectionChange).toHaveBeenCalledWith(false);
 	}
 };
+
+const FIGMA_SIZES = [
+	{ name: 'XSmall', figma: '32', size: 'xsmall' },
+	{ name: 'Small', figma: '40', size: 'compact' },
+	{ name: 'Medium', figma: '56', size: 'medium' }
+] as const;
+const VARIANTS = ['tonal', 'primary', 'outlined', 'elevated'] as const;
+
+/**
+ * Figma "Split button" (RTUi1rcrEWECXz8rNFmj7Q, 57994:15751). Large (96) and
+ * XLarge (136) exist in Figma only; nothing in the app uses them yet.
+ */
+export const FigmaSizes: Story = {
+	name: 'Figma sizes — XSmall, Small, Medium',
+	args: { label: '', onClick: noop },
+	parameters: { layout: 'padded' },
+	render: () => (
+		<div style={{ display: 'grid', gap: 16 }}>
+			{FIGMA_SIZES.map(({ name, figma, size }) => (
+				<div
+					key={name}
+					style={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						alignItems: 'center',
+						gap: 12
+					}}
+				>
+					<span style={{ width: 96, font: '500 12px/16px Inter' }}>
+						{name} · {figma}px
+					</span>
+					{VARIANTS.map((variant) => (
+						<SplitButton
+							key={variant}
+							size={size}
+							variant={variant}
+							label="Fr 30. Okt 18:00"
+							icon={<CalendarIcon />}
+							onClick={noop}
+							onToggleMenu={noop}
+							menuLabel={`${name} ${variant}`}
+						/>
+					))}
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const heightOf = (selector: string) =>
+			canvasElement
+				.querySelector<HTMLElement>(`${selector} .splitButton__main`)!
+				.getBoundingClientRect().height;
+		await expect(heightOf('.splitButton--xsmall')).toBe(32);
+		await expect(heightOf('.splitButton--compact')).toBe(40);
+		const label = canvasElement.querySelector<HTMLElement>(
+			'.splitButton--xsmall .splitButton__main'
+		)!;
+		await expect(getComputedStyle(label).fontSize).toBe('14px');
+	}
+};

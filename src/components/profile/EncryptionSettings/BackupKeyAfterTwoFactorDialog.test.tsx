@@ -8,7 +8,14 @@ import {
 	waitFor
 } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import {
 	clearPendingRecoveryKey,
 	getPendingRecoveryKey,

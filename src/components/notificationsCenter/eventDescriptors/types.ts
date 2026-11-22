@@ -66,6 +66,7 @@ export type EventIconId =
 	| 'appointmentBriefing'
 	| 'waitingRoom'
 	| 'teamDiscussion'
+	| 'addon'
 	| 'system';
 
 /**
@@ -101,6 +102,8 @@ export interface EventActionParams {
 	isVideo?: boolean | null;
 	/** FE#1952: which call a direct-link knock is for. */
 	medium?: 'AUDIO' | 'VIDEO' | null;
+	/** FE#2252: the Direkteinladung a "Neuen Link anfragen" is about. */
+	linkId?: string | number;
 	/** Sender label (metadata only, ADR-AT-01 — never message content). */
 	senderName?: string | null;
 	/** Sender display name for i18n interpolation ({{senderDisplayName}}). */
@@ -148,6 +151,14 @@ export interface EventActionParams {
 	maintenanceEnd?: string | null;
 	/** #876 public status page; only http(s) survives parsing. */
 	statusUrl?: string | null;
+	/** ADDON_NOTIFICATION: the add-on, its app and the slot a click opens. */
+	addon?: string | null;
+	appId?: string | null;
+	slot?: string | null;
+	important?: boolean | null;
+	/** ADDON_NOTIFICATION: plain-text title and text per locale, written by the add-on. */
+	addonTitle?: Record<string, string> | null;
+	addonText?: Record<string, string> | null;
 }
 
 /**
@@ -175,6 +186,7 @@ export type EventActionTarget =
 	  }
 	// #876: opens the public status page in a new tab; never an in-app route.
 	| { kind: 'statusPage'; url: string | null }
+	| { kind: 'addon'; path: string | null }
 	| { kind: 'none' };
 
 /**
@@ -194,4 +206,10 @@ export interface EventDescriptor {
 	textTemplate: string;
 	/** Origin-based action target. Pure — returns a descriptor, never navigates. */
 	resolveActionTarget: (params: EventActionParams) => EventActionTarget;
+	/**
+	 * The entry belongs to a conversation (a case, a group or its call or
+	 * meeting), so Activity shows that conversation like a message entry.
+	 * False for an enquiry not yet accepted, a draft and a status notice.
+	 */
+	belongsToConversation?: boolean;
 }

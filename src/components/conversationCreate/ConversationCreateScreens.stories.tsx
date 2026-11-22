@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useRef, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
@@ -17,6 +17,7 @@ import { SplitButton } from '../splitButton/SplitButton';
 import { BackPill } from './BackPill';
 import { CompactFormatRow } from './CompactFormatRow';
 import { FormatCard } from './FormatCard';
+import { FormatCardCarousel } from './FormatCardCarousel';
 import { PanelHeader } from './PanelHeader';
 import { RowMenu } from './RowMenu';
 import { ScreenIntro } from './ScreenIntro';
@@ -29,6 +30,8 @@ import {
 } from './internal/InternalChatCreateCard';
 import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
+import { actWarnings, suspendedInAct } from '../../../.storybook/actWarnings';
+import { useCreateViewExit } from './useCreateViewExit';
 import {
 	CounsellorDashboard,
 	DashboardCircle,
@@ -236,21 +239,21 @@ const UPCOMING_CIRCLES: DashboardCircle[] = [
 		topic: 'Schulden',
 		when: 'Do., 30. Okt · 19:00',
 		medium: 'VIDEO',
-		participants: 6
+		assignedCounsellors: 6
 	},
 	{
 		id: 'c2',
 		topic: 'Trauer',
 		when: 'Mo., 3. Nov · 18:00',
 		medium: 'AUDIO',
-		participants: 4
+		assignedCounsellors: 4
 	},
 	{
 		id: 'c3',
 		topic: 'Sozialberatung',
 		when: 'Mi., 5. Nov · 17:30',
 		medium: 'CHAT',
-		participants: 8
+		assignedCounsellors: 8
 	}
 ];
 
@@ -260,7 +263,8 @@ const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
 	name: draft.topic,
 	topic: draft.topic,
 	medium: draft.medium,
-	temporary: draft.temporary,
+	temporary: draft.guestAccountMode !== 'PERMANENT',
+	guestAccountMode: draft.guestAccountMode,
 	active: true,
 	url: `https://app.oriso.org/l/${['k7m2qx', 'p4tz9a', 'w3nd8r'][index % 3]}`
 });
@@ -370,11 +374,11 @@ const FormatPicker = ({
 								/>
 							</div>
 						) : (
-							<div className="conversationCreate__cards">
+							<FormatCardCarousel>
 								<CircleCard menuOpen={menuOpen} />
 								<InternaCard preset="empty" />
 								{directLinkCard}
-							</div>
+							</FormatCardCarousel>
 						)}
 					</div>
 				</div>
@@ -597,7 +601,10 @@ const SAMPLE_LINKS: DirectLink[] = [
 const createVideoLink = async (canvasElement: HTMLElement) => {
 	const canvas = within(canvasElement);
 	const body = within(document.body);
-	const heading = await canvas.findByRole('heading', { name: 'Direktlink' });
+	// #2252: "Direktlink" is now called "Direkteinladung".
+	const heading = await canvas.findByRole('heading', {
+		name: 'Direkteinladung'
+	});
 	const card = within(heading.closest('section') as HTMLElement);
 	// The split button carries the label on both of its halves.
 	await userEvent.click(
@@ -607,20 +614,20 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 		await body.findByRole('option', { name: 'Schulden' })
 	);
 	await userEvent.click(card.getByRole('button', { name: /Videoanruf/ }));
-	// Calls default to a temporary account.
+	// Calls default to the guest choosing the account (UserService#1662).
 	await expect(
-		card.getByRole('switch', { name: 'Temporäres Konto' })
-	).toBeChecked();
+		card.getByRole('button', { name: 'Gast wählt' })
+	).toBeInTheDocument();
 	await userEvent.click(card.getByRole('button', { name: 'Link erstellen' }));
 	const dialog = await body.findByTestId('direct-link-share-dialog');
 	await expect(
-		await within(dialog).findByAltText('QR-Code zum Direktlink')
+		await within(dialog).findByAltText('QR-Code zur Direkteinladung')
 	).toBeInTheDocument();
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Fertig' })
 	);
 	const list = await canvas.findByRole('region', {
-		name: 'Meine Direktlinks'
+		name: 'Meine Direkteinladungen'
 	});
 	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
 };
@@ -649,11 +656,486 @@ export const FormatPickerDesktopTopicMenu: Story = {
 };
 
 export const FormatPickerMobile: Story = {
+	globals: { viewport: { value: 'phone390' } },
 	render: () => (
 		<MobileShell>
 			<FormatPicker compact />
 		</MobileShell>
+	),
+	play: async ({ canvasElement }) => {
+		// Phone: the rows render (as in the app below 900px) and the intro
+		// paragraph above them is dropped; the rows' own subtitles say it.
+		const subtitle = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.conversationCreate__picker--compact .conversationCreate__subtitle'
+			);
+			expect(found).toBeTruthy();
+			return found!;
+		});
+		await expect(getComputedStyle(subtitle).display).toBe('none');
+	}
+};
+
+/**
+ * The cards keep their size and the row scrolls: in a pane too narrow for all
+ * three, the round arrows below move the row one card at a time and are
+ * disabled at the ends (Figma 7633-34734).
+ */
+export const FormatCardsScrollNarrow: Story = {
+	name: 'Format cards — scroll row with arrow buttons (narrow pane)',
+	render: () => (
+		<div style={{ background: '#e9e6e6', padding: 16 }}>
+			<div
+				style={{
+					background: '#fcf9f9',
+					borderRadius: 32,
+					margin: '0 auto',
+					maxWidth: 720,
+					overflow: 'hidden'
+				}}
+			>
+				<FormatPicker compact={false} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const previous = await canvas.findByRole('button', {
+			name: /Vorheriges Gesprächsformat|Previous conversation format|cardsPrevious/
+		});
+		const next = await canvas.findByRole('button', {
+			name: /Nächstes Gesprächsformat|Next conversation format|cardsNext/
+		});
+		await expect(previous).toBeDisabled();
+		await expect(next).toBeEnabled();
+		await userEvent.click(next);
+		await waitFor(() => expect(previous).toBeEnabled());
+		const scroller = canvasElement.querySelector(
+			'.formatCardCarousel__scroller'
+		) as HTMLElement;
+		await waitFor(() => expect(scroller.scrollLeft).toBeGreaterThan(0));
+		// Keyboard: the arrow is a real button, Enter moves the row back.
+		previous.focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() => expect(previous).toBeDisabled());
+		// No label in the cards is cut off.
+		const cut = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.formatCard button, .formatCard [class*="__label"]'
+			)
+		).filter((el) => el.scrollWidth > el.clientWidth);
+		await expect(cut).toHaveLength(0);
+	}
+};
+
+/** Phone width: one card plus a peek of the next one, arrows underneath. */
+export const FormatCardsScrollPhone: Story = {
+	name: 'Format cards — scroll row (phone, 390px)',
+	render: () => (
+		// Edge to edge, like the app on a phone: the panel's own 12px padding
+		// leaves 366px, enough for one 360px card.
+		<div style={{ background: '#fcf9f9', margin: '0 auto', maxWidth: 390 }}>
+			<FormatPicker compact={false} />
+		</div>
 	)
+};
+
+const STORY_TRIGGER = '[data-testid="story-create-trigger"]';
+
+/**
+ * The open create view: the same screen as the format picker. Desktop is the
+ * three cards; the phone is the column of rows, and choosing Interna opens
+ * that card. It owns the exit hook, like the app's route does.
+ */
+const OpenCreateView = ({
+	compact,
+	onLeave
+}: {
+	compact: boolean;
+	onLeave: () => void;
+}) => {
+	const { t } = useTranslation();
+	const [phoneStep, setPhoneStep] = useState<'rows' | 'internal'>('rows');
+	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
+		onLeave,
+		triggerSelector: STORY_TRIGGER
+	});
+	const showInternal = compact && phoneStep === 'internal';
+	return (
+		<div className="conversationCreate" ref={surfaceRef} onInput={onInput}>
+			<PanelHeader
+				title={t('groupChat.format.panelTitle')}
+				menuLabel={t('groupChat.format.panelMenu')}
+				menuDisabled
+			/>
+			{showInternal ? (
+				<div className="conversationCreate__single conversationCreate__single--compact">
+					<InternaCard preset="empty" />
+				</div>
+			) : (
+				<div
+					className={`conversationCreate__picker${
+						compact ? ' conversationCreate__picker--compact' : ''
+					}`}
+				>
+					<ScreenIntro
+						title={t('groupChat.format.title')}
+						subtitle={t('groupChat.format.subtitle')}
+					/>
+					<div
+						className={`conversationCreate__selection${
+							compact
+								? ' conversationCreate__selection--rows'
+								: ''
+						}`}
+					>
+						{compact ? (
+							<div className="conversationCreate__rows">
+								<CompactFormatRow
+									icon={<InternalIcon />}
+									title={t('groupChat.internal.title')}
+									subtitle={t('groupChat.internal.subtitle')}
+									image={INTERNAL_CHAT_ARTWORK}
+									onSelect={() => setPhoneStep('internal')}
+								/>
+								<CompactFormatRow
+									icon={<CircleIcon />}
+									title={t('groupChat.circle.title')}
+									subtitle={t('groupChat.circle.subtitle')}
+									image={getTopicCardArtwork(null)}
+									onSelect={() => undefined}
+								/>
+								<CompactFormatRow
+									icon={<LinkOutlinedIcon />}
+									title={t('directLink.card.title')}
+									subtitle={t('directLink.card.subtitle')}
+									image={FORMAT_ARTWORK.VIDEO}
+									onSelect={() => undefined}
+								/>
+							</div>
+						) : (
+							<FormatCardCarousel>
+								<CircleCard />
+								<InternaCard preset="empty" />
+								<DirectLinkCard
+									topics={TOPICS}
+									onCreate={() => undefined}
+								/>
+							</FormatCardCarousel>
+						)}
+					</div>
+				</div>
+			)}
+			{/* Empty band under the formats: a click here leaves the view. */}
+			<div
+				className="conversationCreate__selection"
+				data-testid="story-panel-gap"
+				style={{ minHeight: 48 }}
+			/>
+			{compact && (
+				<BackPill
+					label={t('groupChat.format.back')}
+					onClick={() => setPhoneStep('rows')}
+				/>
+			)}
+			{discardDialog}
+		</div>
+	);
+};
+
+/**
+ * The create view beside the list: "Erstellen" opens it, a click into empty
+ * space or Escape closes it again, typed input asks first, the list and its
+ * buttons keep working and focus returns to "Erstellen".
+ */
+const CloseFromOutsideHarness = ({ compact }: { compact: boolean }) => {
+	const { t } = useTranslation();
+	const [open, setOpen] = useState(true);
+	const [searches, setSearches] = useState(0);
+	const createLabel = t('sessionList.toolbar.chips.create');
+	const search = (
+		<button
+			type="button"
+			onClick={() => setSearches((n) => n + 1)}
+			style={{
+				background: 'var(--m3-surface-container, #f0edee)',
+				border: 'none',
+				borderRadius: 20,
+				cursor: 'pointer',
+				font: 'inherit',
+				padding: '8px 16px',
+				whiteSpace: 'nowrap'
+			}}
+		>
+			Suche ({searches})
+		</button>
+	);
+	const trigger = (
+		<button
+			type="button"
+			data-testid="story-create-trigger"
+			data-tour-target="groupchat-create-button"
+			onClick={() => setOpen(true)}
+			style={{
+				background: 'var(--m3-primary, #a5000a)',
+				border: 'none',
+				borderRadius: 20,
+				color: 'var(--m3-on-primary, #ffffff)',
+				cursor: 'pointer',
+				font: 'inherit',
+				fontWeight: 500,
+				padding: '8px 16px',
+				whiteSpace: 'nowrap'
+			}}
+		>
+			+ {createLabel}
+		</button>
+	);
+	const view = open ? (
+		<OpenCreateView compact={compact} onLeave={() => setOpen(false)} />
+	) : null;
+	if (compact) {
+		return (
+			<MobileShell>
+				<div
+					style={{
+						display: 'flex',
+						flexDirection: 'column',
+						minHeight: 720
+					}}
+				>
+					<div
+						data-testid="story-list"
+						style={{
+							alignItems: 'center',
+							display: 'flex',
+							gap: 8,
+							padding: 12
+						}}
+					>
+						{search}
+						{trigger}
+						<span
+							data-testid="story-list-gap"
+							style={{ flex: 1, minHeight: 36 }}
+						/>
+					</div>
+					<div style={{ flex: 1, minWidth: 0 }}>
+						{view ?? (
+							<div
+								style={{
+									display: 'flex',
+									flexDirection: 'column',
+									gap: 8,
+									padding: 12
+								}}
+							>
+								{[0, 1, 2].map((row) => (
+									<span
+										key={row}
+										style={{
+											background:
+												'var(--m3-surface-container, #f0edee)',
+											borderRadius: 16,
+											height: 72
+										}}
+									/>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+			</MobileShell>
+		);
+	}
+	const surface = 'var(--m3-surface-container-high, #eae7e8)';
+	return (
+		<div
+			style={{
+				background: surface,
+				boxSizing: 'border-box',
+				display: 'flex',
+				gap: 8,
+				minHeight: '100vh',
+				padding: '8px 0 8px 8px'
+			}}
+		>
+			<nav
+				aria-label="Navigation"
+				style={{
+					alignItems: 'center',
+					display: 'flex',
+					flex: '0 0 72px',
+					flexDirection: 'column',
+					gap: 20,
+					paddingTop: 16
+				}}
+			>
+				{[0, 1, 2, 3].map((item) => (
+					<span
+						key={item}
+						style={{
+							background:
+								item === 0
+									? 'var(--m3-secondary-container, #646d78)'
+									: 'var(--m3-outline-variant, #c4c7c8)',
+							borderRadius: 16,
+							height: 32,
+							width: 56
+						}}
+					/>
+				))}
+			</nav>
+			<aside
+				data-testid="story-list"
+				aria-label={t('notifications.displayFilter.sections.sessions')}
+				style={{
+					background: 'var(--m3-surface-container-lowest, #ffffff)',
+					borderRadius: 24,
+					boxSizing: 'border-box',
+					display: 'flex',
+					flex: '0 0 380px',
+					flexDirection: 'column',
+					gap: 12,
+					padding: 16
+				}}
+			>
+				{search}
+				{trigger}
+				{[0, 1, 2, 3].map((row) => (
+					<span
+						key={row}
+						style={{
+							background: 'var(--m3-surface-container, #f0edee)',
+							borderRadius: 16,
+							height: 72
+						}}
+					/>
+				))}
+				<span data-testid="story-list-gap" style={{ flex: 1 }} />
+			</aside>
+			<div
+				style={{
+					background: '#fcf9f9',
+					borderRadius: '32px 0 0 32px',
+					flex: 1,
+					minWidth: 0,
+					overflow: 'hidden'
+				}}
+			>
+				{view}
+			</div>
+		</div>
+	);
+};
+
+const playCloseFromOutside = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const body = within(document.body);
+	const trigger = await canvas.findByTestId('story-create-trigger');
+	const surface = () =>
+		canvasElement.querySelector<HTMLElement>('.conversationCreate');
+	await waitFor(() => expect(surface()).not.toBeNull());
+
+	// 1. A click into empty space under the formats closes the view and hands
+	// focus back to "Erstellen" (WCAG 2.4.3).
+	const panelGap = () => canvas.getByTestId('story-panel-gap');
+	await userEvent.click(panelGap());
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+
+	// 2. The list behind it works: a button there is clicked, not swallowed.
+	await userEvent.click(trigger);
+	await waitFor(() => expect(surface()).not.toBeNull());
+	await userEvent.click(canvas.getByRole('button', { name: /Suche/ }));
+	await expect(
+		canvas.getByRole('button', { name: /Suche \(1\)/ })
+	).toBeVisible();
+	await expect(surface()).not.toBeNull();
+
+	// 3. Empty space outside the panel closes it as well.
+	await userEvent.click(canvas.getByTestId('story-list-gap'));
+	await waitFor(() => expect(surface()).toBeNull());
+
+	// 4. Escape closes it.
+	await userEvent.click(trigger);
+	await waitFor(() => expect(surface()).not.toBeNull());
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+
+	// 5. Typed input is not lost silently: Escape asks first. On the phone the
+	// name field is inside the Interna row, the same place the app opens it.
+	await userEvent.click(trigger);
+	if (!canvas.queryByRole('textbox', { name: 'Name Interna' })) {
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Interna besprechen/ })
+		);
+	}
+	const name = await canvas.findByRole('textbox', { name: 'Name Interna' });
+	await userEvent.type(name, 'Wochenplanung');
+	await userEvent.keyboard('{Escape}');
+	const dialog = await body.findByRole('dialog', {
+		name: 'Eingaben verwerfen?'
+	});
+	await expect(surface()).not.toBeNull();
+	await userEvent.click(
+		within(dialog).getByRole('button', { name: 'Weiter bearbeiten' })
+	);
+	await waitFor(() =>
+		expect(
+			body.queryByRole('dialog', { name: 'Eingaben verwerfen?' })
+		).toBeNull()
+	);
+	// Nothing was lost.
+	await expect(name).toHaveValue('Wochenplanung');
+	await userEvent.click(panelGap());
+	const again = await body.findByRole('dialog', {
+		name: 'Eingaben verwerfen?'
+	});
+	await userEvent.click(
+		within(again).getByRole('button', { name: 'Verwerfen und schließen' })
+	);
+	await waitFor(() => expect(surface()).toBeNull());
+	await waitFor(() => expect(trigger).toHaveFocus());
+};
+
+/* The dialog takes focus from the typed field: MUI's FormControl then updates
+   its focus state outside act's queue (a harness artefact, see actWarnings). */
+const closeFromOutsideVerification = (suspended: number) => ({
+	verification: {
+		expectedErrors: [
+			...actWarnings({ 'ForwardRef(FormControl)': 3 }),
+			...(suspended ? suspendedInAct(suspended) : [])
+		]
+	}
+});
+
+export const CloseFromOutsideDesktop: Story = {
+	name: 'Close view — empty space, Escape, unsaved input (desktop)',
+	parameters: closeFromOutsideVerification(1),
+	render: () => <CloseFromOutsideHarness compact={false} />,
+	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
+};
+
+export const CloseFromOutsidePhone: Story = {
+	name: 'Close view — empty space, Escape, unsaved input (phone, 390px)',
+	globals: { viewport: { value: 'phone390' } },
+	parameters: closeFromOutsideVerification(0),
+	render: () => <CloseFromOutsideHarness compact />,
+	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
+};
+
+/** The same harness at rest, so the open screen can be looked at on its own. */
+export const CloseFromOutsideDesktopOpen: Story = {
+	name: 'Close view — open (desktop)',
+	render: () => <CloseFromOutsideHarness compact={false} />
+};
+
+export const CloseFromOutsidePhoneOpen: Story = {
+	name: 'Close view — open (phone, 390px)',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <CloseFromOutsideHarness compact />
 };
 
 export const DirectLinkFlowDesktop: Story = {
@@ -683,7 +1165,7 @@ export const DirectLinkFlowMobile: Story = {
 	play: async ({ canvasElement }) => {
 		await userEvent.click(
 			await within(canvasElement).findByRole('button', {
-				name: /Direktlink/
+				name: /Direkteinladung/
 			})
 		);
 		await createVideoLink(canvasElement);

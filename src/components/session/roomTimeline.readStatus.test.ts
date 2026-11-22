@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { createClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import { buildRoomTimeline } from './roomTimeline';
+import { counterpartReaders } from '../../utils/matrixReadReceipts';
 
 // FE#1802: an own message shows "sent" until a counterpart's read receipt
 // covers it, then "read". Real matrix-js-sdk Room, so ordering, receipts and
@@ -116,6 +117,21 @@ describe('own message read status from Matrix receipts', () => {
 
 		room.addReceipt(readReceipt('$mine', asker));
 		expect(statusOf(room, [asker])).toEqual({ $mine: false });
+	});
+
+	it('keeps the message unread for a supervisor receipt and marks it read for the actual counterpart', async () => {
+		const room = await roomWith(
+			[me, asker, colleague],
+			[message('$mine', me, 10)]
+		);
+		const readers = counterpartReaders(
+			{ item: { askerMatrixUserId: asker, consultantMatrixUserId: me } },
+			me
+		);
+		room.addReceipt(readReceipt('$mine', colleague));
+		expect(statusOf(room, readers)).toEqual({ $mine: true });
+		room.addReceipt(readReceipt('$mine', asker));
+		expect(statusOf(room, readers)).toEqual({ $mine: false });
 	});
 
 	it('marks a group message read once at least one other member read it', async () => {

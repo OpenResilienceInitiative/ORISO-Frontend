@@ -43,7 +43,7 @@ describe('upcomingCirclesFrom', () => {
 		expect(result[0]).toMatchObject({
 			topic: 'Kreis 2',
 			medium: 'CHAT',
-			participants: 2
+			assignedCounsellors: 2
 		});
 		expect(result[1].medium).toBe('VIDEO');
 		expect(result[1].when).toMatch(/Okt.* · \d{2}:\d{2}/);

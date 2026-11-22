@@ -22,6 +22,8 @@ export const endpoints = {
 		userServiceOrigin +
 		`/service/users/account-invites/${encodeURIComponent(token)}`,
 	agencyConsultants: userServiceOrigin + '/service/users/consultants',
+	// Journeys an advice seeker runs (ADR-036 part E, #2333); read without a login.
+	journeys: userServiceOrigin + '/service/users/journeys',
 	agencyServiceBase: agencyServiceOrigin + '/service/agencies',
 	agencyDepartmentLegal: (agencyId: number, topicId: number) =>
 		agencyServiceOrigin +
@@ -29,28 +31,13 @@ export const endpoints = {
 	agencyTopics: agencyServiceOrigin + '/service/agencies/topics',
 	agenciesByTenant: agencyServiceOrigin + '/service/agencies/by-tenant',
 	additionalEnquiry: userServiceOrigin + '/service/users/askers/session/new',
+	addonRegistry: apiUrl + '/service/addons/registry',
+	addonCalendar: apiUrl + '/service/addons/calendar',
+	addonRegistration: apiUrl + '/service/addons/public/registration',
 	appointmentBase: apiUrl + '/service/appointments/sessions',
 	appointmentBaseNew: (sessionId: number) =>
 		apiUrl + `/service/appointments/sessions/${sessionId}/enquiry/new`,
 	appointmentServiceBase: apiUrl + '/service/agency/',
-	appointmentServiceCalDav:
-		agencyServiceOrigin + '/service/appointservice/caldav',
-	appointmentServiceCalDavAccount:
-		agencyServiceOrigin + '/service/appointservice/caldav/hasAccount',
-	appointmentServiceMeetingLink: (agencyId: number) =>
-		agencyServiceOrigin +
-		`/service/appointservice/agencies/${agencyId}/initialMeetingSlug`,
-	counselorAppointmentLink: (userId: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/consultants/${userId}/meetingSlug`,
-	counselorToken:
-		agencyServiceOrigin + `/service/appointservice/consultants/token`,
-	appointmentsServiceBookingEventsByUserId: (userId: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/askers/${userId}/bookings`,
-	appointmentsServiceConsultantBookings: (userId: string, status: string) =>
-		agencyServiceOrigin +
-		`/service/appointservice/consultants/${userId}/bookings?status=${status}`,
 	askerSessions: userServiceOrigin + '/service/users/sessions/askers',
 	askerSessionsBase: userServiceOrigin + '/service/users/askers/sessions',
 	banUser: (matrixUserId, chatId) =>
@@ -78,12 +65,17 @@ export const endpoints = {
 		'/service/conversations/consultants/availability/heartbeat',
 	consultantSessions:
 		userServiceOrigin + '/service/users/sessions/consultants?status=2&',
+	consultantDeletedAskerSessions:
+		userServiceOrigin +
+		'/service/users/sessions/consultants/deleted-askers',
 	/* Counsellor direct links (ORISO-UserService#1479). */
 	directLinks: userServiceOrigin + '/service/users/directlinks',
 	inviteLinksBase: userServiceOrigin + '/service/users/invitelinks/',
 	ownCallKnocks: userServiceOrigin + '/service/users/call-knocks/mine/',
 	/* A direct-link guest's own temporary account (ORISO-UserService#1486). */
 	temporaryAccount: userServiceOrigin + '/service/users/temporary-account',
+	liveChatConversion:
+		userServiceOrigin + '/service/users/live-chat-account/conversion',
 	consultantStatistics:
 		userServiceOrigin + '/service/users/statistics/consultant',
 	consultantsLanguages:
@@ -100,6 +92,14 @@ export const endpoints = {
 	directLink: (linkId: string) =>
 		userServiceOrigin +
 		`/service/users/directlinks/${encodeURIComponent(linkId)}`,
+	/** #2252 "Neuen Link senden": a new token for the same appointment. */
+	directLinkRenewal: (linkId: string) =>
+		userServiceOrigin +
+		`/service/users/directlinks/${encodeURIComponent(linkId)}/renewal`,
+	/** #2252 "Neuen Link anfragen": a person asks the counsellor. */
+	inviteLinkRenewalRequests: (token: string) =>
+		userServiceOrigin +
+		`/service/users/invitelinks/${encodeURIComponent(token)}/renewal-requests`,
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
@@ -112,9 +112,9 @@ export const endpoints = {
 	groupChatBase: userServiceOrigin + '/service/users/chat/',
 	internalSubsetChat:
 		userServiceOrigin + '/service/users/chat/internal-subset',
-	agencyAdminContacts: (agencyId: number) =>
+	agencyContactPerson: (agencyId: number) =>
 		userServiceOrigin +
-		`/service/users/agencies/${agencyId}/admin-contacts`,
+		`/service/users/agencies/${agencyId}/contact-person`,
 	chatSeriesBase: userServiceOrigin + '/service/users/chat-series/',
 	callKnocks: userServiceOrigin + '/service/users/call-knocks',
 	keycloakAccessToken:
@@ -135,6 +135,8 @@ export const endpoints = {
 		userServiceOrigin + '/service/users/password-reset/confirm',
 	matrixAccessToken: userServiceOrigin + '/service/matrix/me/token',
 	matrixCallState: userServiceOrigin + '/service/matrix/calls/state',
+	matrixCallObservations:
+		userServiceOrigin + '/service/matrix/calls/observations',
 	matrixCallShareLinks:
 		userServiceOrigin + '/service/matrix/calls/share-links',
 	matrixSyncRegister: (sessionId: number) =>
@@ -154,6 +156,19 @@ export const endpoints = {
 	sendAliasMessage: userServiceOrigin + '/service/messages/aliasonly/new',
 	sendMessage: userServiceOrigin + '/service/messages/new',
 	sessionBase: userServiceOrigin + '/service/users/sessions',
+	sessionAppointments: (sessionId: number) =>
+		userServiceOrigin + `/service/users/sessions/${sessionId}/appointments`,
+	/** FE#1050: the free slots an asker may book in this conversation. */
+	sessionAppointmentSlots: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/appointment-slots`,
+	/** #2252: invite more people by link into a 1:1, for an appointment. */
+	sessionDirectInvitations: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/direct-invitations`,
+	upcomingAppointments:
+		userServiceOrigin + '/service/users/appointments/upcoming',
+	calendarBase: userServiceOrigin + '/service/users/calendar',
 	sessionRooms: userServiceOrigin + '/service/users/sessions/room',
 	teamDiscussion: (sessionId: number) =>
 		userServiceOrigin +
@@ -173,6 +188,8 @@ export const endpoints = {
 	twoFactorAuthEmail: userServiceOrigin + '/service/users/2fa/email',
 	updateMessage: userServiceOrigin + '/service/messages/',
 	userData: userServiceOrigin + '/service/users/data',
+	keepTemporaryAccount:
+		userServiceOrigin + '/service/users/temporary-account/keep',
 	eventNotifications:
 		userServiceOrigin + '/service/users/event-notifications',
 	doNotDisturb:

@@ -14,6 +14,7 @@
  * nothing else here changes — no server-side rendered text is introduced.
  */
 
+import { ADDON_NOTIFICATION_EVENT_TYPE } from './registry';
 import { EventDescriptor } from './types';
 
 /** Minimal translate signature, satisfied by i18next's `t`. */
@@ -63,11 +64,36 @@ const MEDIUM_WORDING: Record<string, Record<string, string>> = {
 	'call.knock.requested': { VIDEO: 'video', AUDIO: 'audio' }
 };
 
+const nonEmpty = (value: unknown): string | undefined =>
+	typeof value === 'string' && value.trim() ? value : undefined;
+
+// The add-on's own plain text, never an i18n template: it may contain
+// characters i18next would escape.
+const renderAddonStrings = (
+	descriptor: EventDescriptor,
+	translate: TranslateFn,
+	input: EventStringInput
+): RenderedEventStrings => {
+	const title =
+		nonEmpty(input.interpolation?.addonTitle) ??
+		nonEmpty(input.fallbackTitle);
+	const text =
+		nonEmpty(input.interpolation?.addonText) ??
+		nonEmpty(input.fallbackText);
+	return {
+		title: title ?? translate(descriptor.titleTemplate),
+		text: text ?? (title ? '' : translate(descriptor.textTemplate))
+	};
+};
+
 export const renderEventStrings = (
 	descriptor: EventDescriptor,
 	translate: TranslateFn,
 	input: EventStringInput = {}
 ): RenderedEventStrings => {
+	if (descriptor.eventType === ADDON_NOTIFICATION_EVENT_TYPE) {
+		return renderAddonStrings(descriptor, translate, input);
+	}
 	const interpolation: Record<string, unknown> = { ...input.interpolation };
 	let titleTemplate = descriptor.titleTemplate;
 	let textTemplate = descriptor.textTemplate;

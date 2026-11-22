@@ -1,0 +1,237 @@
+/**
+ * The number on the Supervision chip (#1306).
+ *
+ * Frank, 14.09.2026: a supervisor could not tell from the chip that anything
+ * had arrived. The count answers "is there something new in a case I
+ * supervise" — so it counts UNREAD among supervised, not how many cases exist.
+ *
+ * Seed Matrix room notifications so counters and filters exercise the real
+ * unread derivation shared with expanded rows (#1147).
+ */
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
+const unreadRooms = new Set<string>();
+
+vi.mock('../../services/matrixClientRegistry', () => ({
+	getMatrixClientService: () => ({
+		getRoom: (roomId: string) => ({
+			getUnreadNotificationCount: () => (unreadRooms.has(roomId) ? 1 : 0)
+		})
+	})
+}));
+
+const {
+	countUnreadSupervisedSessions,
+	countUnreadOtherSessions,
+	sessionMatchesToolbar
+} = await import('./sessionToolbarFilters');
+
+const ME = 'consultant-me';
+const OWNER = 'consultant-owner';
+
+const pair = (
+	roomId: string,
+	supervision: Record<string, unknown> | undefined,
+	consultantId = OWNER
+) => {
+	const raw = {
+		consultant: { id: consultantId },
+		session: {
+			id: roomId,
+			matrixRoomId: roomId,
+			messagesRead: true,
+			...(supervision ? { supervision } : {})
+		}
+	} as any;
+	return { raw, extended: { isGroup: false, item: raw.session } as any };
+};
+
+const supervisedByMe = { supervisedByMe: true, supervisorConsultantIds: [ME] };
+const supervisedByOther = {
+	supervisedByMe: false,
+	supervisorConsultantIds: ['someone-else']
+};
+
+describe('countUnreadSupervisedSessions', () => {
+	beforeEach(() => unreadRooms.clear());
+
+	it('does not count an explicitly supervised case when only its main room is unread', () => {
+		unreadRooms.add('!a:hs');
+		expect(
+			countUnreadSupervisedSessions([pair('!a:hs', supervisedByMe)], ME)
+		).toBe(0);
+	});
+
+	it.each([false, true])(
+		'counts side-room unread once, including when main unread is %s',
+		(mainUnread) => {
+			unreadRooms.add('!side:hs');
+			if (mainUnread) unreadRooms.add('!a:hs');
+			expect(
+				countUnreadSupervisedSessions(
+					[
+						pair('!a:hs', {
+							...supervisedByMe,
+							sideRoomId: '!side:hs'
+						})
+					],
+					ME
+				)
+			).toBe(1);
+			expect(
+				countUnreadSupervisedSessions(
+					[
+						pair('!b:hs', {
+							...supervisedByOther,
+							sideRoomId: '!side:hs'
+						})
+					],
+					ME
+				)
+			).toBe(0);
+		}
+	);
+
+	it('does not count a supervised row that has been read', () => {
+		expect(
+			countUnreadSupervisedSessions([pair('!a:hs', supervisedByMe)], ME)
+		).toBe(0);
+	});
+
+	it('does not count an unread row somebody ELSE supervises', () => {
+		unreadRooms.add('!b:hs');
+		expect(
+			countUnreadSupervisedSessions(
+				[pair('!b:hs', supervisedByOther)],
+				ME
+			)
+		).toBe(0);
+	});
+
+	it('does not count an unread legacy unmarked row', () => {
+		unreadRooms.add('!c:hs');
+		expect(
+			countUnreadSupervisedSessions([pair('!c:hs', undefined)], ME)
+		).toBe(0);
+	});
+
+	it('does not count an unassigned case even if its side room has unread events', () => {
+		unreadRooms.add('!side:hs');
+		const unassigned = pair('!c:hs', undefined);
+		unassigned.extended.item.supervision = { sideRoomId: '!side:hs' };
+		expect(countUnreadSupervisedSessions([unassigned], ME)).toBe(0);
+	});
+
+	it('counts several and ignores the read ones in the same list', () => {
+		unreadRooms.add('!a:hs');
+		unreadRooms.add('!c:hs');
+		expect(
+			countUnreadSupervisedSessions(
+				[
+					pair('!a:hs', { ...supervisedByMe, sideRoomId: '!a:hs' }),
+					pair('!b:hs', { ...supervisedByMe, sideRoomId: '!b:hs' }),
+					pair('!c:hs', { ...supervisedByMe, sideRoomId: '!c:hs' }),
+					pair('!d:hs', supervisedByOther)
+				],
+				ME
+			)
+		).toBe(2);
+	});
+
+	it('is zero without a signed-in user id rather than counting everything', () => {
+		unreadRooms.add('!a:hs');
+		expect(
+			countUnreadSupervisedSessions(
+				[pair('!a:hs', supervisedByMe)],
+				undefined
+			)
+		).toBe(0);
+	});
+
+	it('is zero for an empty list', () => {
+		expect(countUnreadSupervisedSessions([], ME)).toBe(0);
+	});
+});
+
+describe('supervision bundled under Other', () => {
+	beforeEach(() => unreadRooms.clear());
+
+	it.each([false, true])(
+		'counts one case with an unread supervision side room when main unread is %s',
+		(mainUnread) => {
+			unreadRooms.add('!side:hs');
+			if (mainUnread) unreadRooms.add('!case:hs');
+			const pairs = [
+				pair('!case:hs', { ...supervisedByMe, sideRoomId: '!side:hs' })
+			];
+			expect(
+				countUnreadOtherSessions(
+					['supervision', 'liveChat'],
+					{
+						supervision: mainUnread ? 1 : 0,
+						liveChat: 2
+					},
+					pairs,
+					ME
+				)
+			).toBe(3);
+		}
+	);
+
+	it('does not add supervision when it has its own pill', () => {
+		unreadRooms.add('!side:hs');
+		expect(
+			countUnreadOtherSessions(
+				['liveChat'],
+				{ supervision: 0, liveChat: 2 },
+				[
+					pair('!case:hs', {
+						...supervisedByMe,
+						sideRoomId: '!side:hs'
+					})
+				],
+				ME
+			)
+		).toBe(2);
+	});
+
+	it('ignores another supervisor and read cases, and retains other-kind counts', () => {
+		unreadRooms.add('!side:hs');
+		expect(
+			countUnreadOtherSessions(
+				['supervision', 'liveChat', 'missing'],
+				{ liveChat: 2 },
+				[
+					pair('!other:hs', {
+						...supervisedByOther,
+						sideRoomId: '!side:hs'
+					}),
+					pair('!read:hs', supervisedByMe)
+				],
+				ME
+			)
+		).toBe(2);
+	});
+});
+
+describe('side-room unread uses the same source in the toolbar filter', () => {
+	beforeEach(() => unreadRooms.clear());
+	it('keeps a side-room-only unread supervised case in the Unread filter', () => {
+		unreadRooms.add('!side:hs');
+		const entry = pair('!main:hs', {
+			...supervisedByMe,
+			sideRoomId: '!side:hs'
+		});
+		expect(
+			sessionMatchesToolbar(
+				entry.raw,
+				entry.extended,
+				'',
+				'unread',
+				[],
+				[],
+				ME
+			)
+		).toBe(true);
+	});
+});

@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { resolveSessionRoomRouteId } from '../../utils/matrixRoomUtils';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { SessionItemInterface } from '../../globalState/interfaces';
 import {
 	OVERLAY_E2EE,
@@ -398,7 +399,13 @@ export const AcceptAssign = ({
 				: apiEnquiryAcceptance(sessionId);
 
 		acceptRequest
-			.then(() => fetchSessionRoutingAfterAccept(sessionId))
+			.then(() => {
+				// The server attached the standing supervisor (if any) inside
+				// the accept request. The conversation may stay mounted on
+				// the same route, so tell its supervisor lookups (#2386).
+				notifySessionSupervisorsChanged(sessionId);
+				return fetchSessionRoutingAfterAccept(sessionId);
+			})
 			.then((routing) =>
 				encryptRoom(setE2EEState, routing.roomRouteId).then(
 					() => routing
@@ -420,6 +427,20 @@ export const AcceptAssign = ({
 						headline: translate(`${failure.key}.title`),
 						copy: translate(`${failure.key}.text`)
 					});
+				} else if (error instanceof Response && error.status === 409) {
+					const isQueueConflict =
+						error.headers.get('X-Reason') ===
+						'LIVE_CHAT_QUEUE_NOT_FIRST';
+					setOverlayItem(
+						isQueueConflict
+							? {
+									...enquiryTakenByOtherConsultantOverlayItem,
+									headline:
+										'session.anonymous.queueNotFirst.headline',
+									copy: 'session.anonymous.queueNotFirst.text'
+								}
+							: enquiryTakenByOtherConsultantOverlayItem
+					);
 				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {

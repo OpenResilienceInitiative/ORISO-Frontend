@@ -30,6 +30,7 @@ import {
 } from '../app/navigationStoryHelpers';
 import { config } from '../../resources/scripts/config';
 import { SessionsListToolbar } from '../sessionsList/SessionsListToolbar';
+import { productionToolbarProps } from '../sessionsList/__storybook__/productionToolbarProps';
 import type { SessionToolbarChipFilter } from '../sessionsList/sessionToolbarFilters';
 import { SessionListItemComponent } from '../sessionsListItem/SessionListItemComponent';
 import '../app/authenticatedApp.styles.scss';
@@ -150,7 +151,8 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 /** The group's list item, planned `deltaSeconds` from now, not yet started. */
 export const buildGroupStageListItem = (
-	deltaSeconds: number
+	deltaSeconds: number,
+	modality?: 'TEXT' | 'AUDIO' | 'VIDEO'
 ): ListItemInterface => {
 	const start = new Date(Date.now() + deltaSeconds * 1000);
 	return {
@@ -186,7 +188,8 @@ export const buildGroupStageListItem = (
 			subscribed: true,
 			topic: 'HIV und Aids',
 			conversationType: 'SELF_HELP',
-			createdAt: '2026-09-21T12:00:00.000Z'
+			createdAt: '2026-09-21T12:00:00.000Z',
+			...(modality ? { modality } : {})
 		} as unknown as GroupChatItemInterface
 	} as ListItemInterface;
 };
@@ -220,7 +223,8 @@ const listTranslations: Record<string, string> = {
 	'sessionList.toolbar.chips.liveChat': 'Live Chat',
 	'sessionList.toolbar.chips.internalGroup': 'Interner Gruppenchat',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
-	'sessionList.toolbar.chips.groups': 'Gesprächskreis'
+	'sessionList.toolbar.chips.groups': 'Gesprächskreis',
+	'sessionList.toolbar.chips.other': 'Weitere'
 };
 const translateList = (key: string) => listTranslations[key] || key;
 
@@ -374,6 +378,8 @@ const StageList = () => {
 					showConsultantActions
 					showCreateGroupChatAction
 					showSupervisionChip={false}
+					showGroupChip
+					{...productionToolbarProps}
 					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 					archiveTabActive={false}
@@ -390,6 +396,7 @@ const StageList = () => {
 							defaultLanguage="de"
 							handleKeyDownLisItemContent={() => {}}
 							index={0}
+							grouped
 						/>
 					</div>
 				</div>

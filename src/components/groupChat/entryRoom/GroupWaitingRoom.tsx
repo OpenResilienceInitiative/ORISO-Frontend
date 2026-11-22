@@ -11,7 +11,10 @@ import { WaitingAreaCountdown } from '../waitingClock/WaitingAreaCountdown';
 import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
-import { GroupUpcomingDates } from './GroupUpcomingDates';
+import {
+	GroupUpcomingDates,
+	type GroupUpcomingDate
+} from './GroupUpcomingDates';
 import { GroupCalendarActions } from './GroupCalendarActions';
 import { GroupHeading } from './GroupHeading';
 import { usePanelHistory } from './EntryRoomPanel';
@@ -55,7 +58,7 @@ export interface GroupWaitingRoomProps {
 	onJoin: () => ClosingSwapResult;
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Alle Termine". */
-	upcomingDates?: Date[];
+	upcomingDates?: (Date | GroupUpcomingDate)[];
 	/**
 	 * How the group repeats and how many dates are left from its start on:
 	 * the rhythm under the headline, the series export.
@@ -93,6 +96,21 @@ export interface GroupWaitingRoomProps {
 	 * there is no button.
 	 */
 	onDeviceCheck?: () => void;
+	/**
+	 * #2237: an audio or video group lets the person agree and wait before
+	 * it starts; a moderator in the group's call lets them in.
+	 */
+	openBeforeStart?: boolean;
+	/**
+	 * #2237: the person agreed and waits to be let in. The bar says so in
+	 * place of "Beitreten"; the moderator's click does the rest.
+	 */
+	admissionWaiting?: string;
+	/**
+	 * After a minute of waiting in a running group (#2237): the bar shows
+	 * this note in place of the greyed-out button.
+	 */
+	admissionSoon?: string;
 }
 
 /**
@@ -128,7 +146,10 @@ export const GroupWaitingRoom = ({
 	audience = 'participant',
 	primaryLabel,
 	askConsent = true,
-	onDeviceCheck
+	onDeviceCheck,
+	openBeforeStart = false,
+	admissionWaiting,
+	admissionSoon
 }: GroupWaitingRoomProps) => {
 	const { t } = useTranslation();
 	const tr = useCallback(
@@ -148,9 +169,14 @@ export const GroupWaitingRoom = ({
 		active || (plannedStart !== null && now >= plannedStart.getTime());
 	// An opened group runs its planned date even before the clock says so.
 	const runningMs = started ? plannedStart?.getTime() : undefined;
-	const datesAhead = (
-		upcomingDates ?? (plannedStart ? [plannedStart] : [])
-	).filter((date) => date.getTime() > now && date.getTime() !== runningMs);
+	const datesAhead = (upcomingDates ?? (plannedStart ? [plannedStart] : []))
+		.map((date) =>
+			date instanceof Date ? { start: date, durationMinutes } : date
+		)
+		.filter(
+			({ start }) =>
+				start.getTime() > now && start.getTime() !== runningMs
+		);
 	/* The series from the first date still ahead: the dates left behind,
 	   the running one among them, no longer count. */
 	const seriesAhead = series && {
@@ -194,6 +220,12 @@ export const GroupWaitingRoom = ({
 		department: legalDepartment
 	});
 	const [asking, setAsking] = useState(false);
+	/* Agreed and waiting: the consent sheet has done its job (#2237). */
+	useEffect(() => {
+		if (admissionWaiting) setAsking(false);
+	}, [admissionWaiting]);
+	// Open for "Beitreten": running, or waiting allowed before the start.
+	const open = active || openBeforeStart;
 	const [saving, setSaving] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	// `saving` only disables the button after the next render; two quick
@@ -278,10 +310,16 @@ export const GroupWaitingRoom = ({
 			}
 		);
 	const joinAction = {
-		label: joinLabel,
+		label: admissionWaiting
+			? tr('waitingForAdmission', 'Angemeldet')
+			: joinLabel,
 		onClick: askConsent ? () => setAsking(true) : onJoin,
-		disabled: (!active && !moderator) || joinBusy || joinBlocked,
-		status: opensAt,
+		disabled:
+			(!open && !moderator) ||
+			joinBusy ||
+			joinBlocked ||
+			Boolean(admissionWaiting),
+		status: admissionWaiting ?? opensAt,
 		testId: 'group-entry-join'
 	};
 	const rhythm =
@@ -295,7 +333,7 @@ export const GroupWaitingRoom = ({
 		) : undefined;
 	/* On "Beitreten" in a running group the rules come up once, calm and
 	   all at once, while the bar asks for consent. */
-	const showRulesIntro = asking && active && askConsent && rules.length > 0;
+	const showRulesIntro = asking && open && askConsent && rules.length > 0;
 	const calendarRow = calendarInBar ? (
 		<GroupCalendarActions
 			inline={inlineCalendar}
@@ -319,7 +357,6 @@ export const GroupWaitingRoom = ({
 			<GroupUpcomingDates
 				onBack={backToRoom}
 				dates={datesAhead}
-				durationMinutes={durationMinutes}
 				eventId={eventId}
 				series={seriesAhead}
 			/>
@@ -552,7 +589,7 @@ export const GroupWaitingRoom = ({
 	    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
 	    gesperrt"). */
 	const bar =
-		asking && active && askConsent && !joinBlocked ? (
+		asking && open && askConsent && !joinBlocked ? (
 			<WaitingRoomBar
 				contained={embedded}
 				consent={
@@ -615,8 +652,25 @@ export const GroupWaitingRoom = ({
 					(Boolean(calendarRow) && !inlineCalendar) ||
 					Boolean(joinNotice)
 				}
-				primary={joinAction}
+				primary={admissionSoon ? undefined : joinAction}
 			>
+				{admissionSoon && (
+					<Typography
+						role="status"
+						data-testid="group-entry-admission-soon"
+						sx={{
+							fontSize: 16,
+							lineHeight: '24px',
+							letterSpacing: '0.5px',
+							color: 'text.primary',
+							textAlign: 'center',
+							py: 1.5,
+							px: 2
+						}}
+					>
+						{admissionSoon}
+					</Typography>
+				)}
 				{joinNotice && <JoinRefusalNotice message={joinNotice} />}
 				{calendarRow}
 			</WaitingRoomBar>

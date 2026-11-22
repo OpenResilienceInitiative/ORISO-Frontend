@@ -8,6 +8,9 @@ import HowToRegRoundedIcon from '@mui/icons-material/HowToRegRounded';
 import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
 import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
+import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { IconStepper } from '../../stepper/molecules/IconStepper';
@@ -93,7 +96,24 @@ export interface RegistrationHeaderProps {
 	 * moves up instead of jumping.
 	 */
 	collapsed?: boolean;
+	/**
+	 * Steps of a journey's check-in that are not platform steps (questions, ratings): their name
+	 * and the label to show (ORISO-Frontend#2333). They take their place from `visibleStepNames`.
+	 */
+	customSteps?: { name: string; label: string; kind?: CustomStepKind }[];
 }
+
+/** What a journey step asks for; each kind has its own icon in the stepper (Frank, 2026-11-20). */
+export type CustomStepKind = 'question' | 'rating' | 'panel';
+
+const CUSTOM_STEP_ICON: Record<CustomStepKind, SvgIconComponent> = {
+	question: QuizRoundedIcon,
+	rating: StarRoundedIcon,
+	panel: InfoRoundedIcon
+};
+
+/** Above this many steps the desktop stepper scrolls sideways, with arrows over its edges. */
+export const MAX_VISIBLE_STEPS = 5;
 
 /**
  * Sticky registration header.
@@ -116,7 +136,8 @@ export const RegistrationHeader = ({
 	fullBleed = true,
 	layout = 'auto',
 	completed = false,
-	collapsed = false
+	collapsed = false,
+	customSteps = []
 }: RegistrationHeaderProps) => {
 	const { t } = useTranslation();
 	const reducedMotion = useReducedMotion();
@@ -125,17 +146,35 @@ export const RegistrationHeader = ({
 		if (!visibleStepNames?.length) {
 			return CANONICAL_STEPS;
 		}
-
-		const wanted = new Set(visibleStepNames);
-		return CANONICAL_STEPS.filter(({ name }) => wanted.has(name));
-	}, [visibleStepNames]);
+		// The caller's order wins: a journey places its own steps between the platform's.
+		return visibleStepNames.flatMap((name) => {
+			const canonical = CANONICAL_STEPS.find(
+				(step) => step.name === name
+			);
+			if (canonical) return [canonical];
+			const custom = customSteps.find((step) => step.name === name);
+			// The label is the editor's text already: never a translation key.
+			return custom
+				? [
+						{
+							name,
+							labelKey: '',
+							label: custom.label,
+							Icon: CUSTOM_STEP_ICON[custom.kind ?? 'question']
+						}
+					]
+				: [];
+		});
+	}, [visibleStepNames, customSteps]);
 
 	const steps = useMemo(
 		() =>
-			visibleSteps.map(({ name, labelKey, Icon }) => ({
-				name,
-				label: t(labelKey),
-				icon: <Icon />
+			visibleSteps.map((step) => ({
+				name: step.name,
+				label: ('label' in step && step.label
+					? step.label
+					: t(step.labelKey)) as string,
+				icon: <step.Icon />
 			})),
 		[visibleSteps, t]
 	);
@@ -288,6 +327,11 @@ export const RegistrationHeader = ({
 							stateLabel={(state) =>
 								t(`registration.stepState.${state}`)
 							}
+							maxVisible={MAX_VISIBLE_STEPS}
+							scrollLabels={{
+								back: t('registration.stepScroll.back'),
+								forward: t('registration.stepScroll.forward')
+							}}
 						/>
 					</Box>
 				</Box>

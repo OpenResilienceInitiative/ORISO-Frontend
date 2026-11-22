@@ -42,6 +42,7 @@ function BarHarness({
 					onScrollToNewest={() => {}}
 					unreadCount={3}
 					onOpenTools={() => {}}
+					isMobile={phone}
 					showMic
 					micUnavailableReason={micUnavailableReason}
 					isRecording={false}
@@ -141,13 +142,34 @@ export const EditModeMicFocused: Story = {
 };
 
 /**
- * Review v6 (T22): on the phone the bar overflows — the end fades, the
- * wheel scrolls it, and scrolled to the end the last icon is whole.
+ * Frank (03.11.): on the phone the row holds five buttons and fits, so it
+ * neither fades nor scrolls, and the rest waits behind the plus.
  */
-export const Phone390Scrolls: Story = {
-	name: 'Phone 390 — bar scrolls: fade at the end, wheel travels, last icon whole (review v6)',
+export const Phone390Fits: Story = {
+	name: 'Phone 390 — five buttons fit, no fade',
 	globals: phone390Globals,
 	render: () => <BarHarness width={358} phone />,
+	play: async ({ canvasElement }) => {
+		const element = bar(canvasElement);
+		await waitFor(() => {
+			expect(element.querySelectorAll('button')).toHaveLength(5);
+			expect(element.scrollWidth).toBeLessThanOrEqual(
+				element.clientWidth
+			);
+			expect(element.dataset.overflowEnd).toBe('false');
+		});
+		await expect(getComputedStyle(element).maskImage).toBe('none');
+	}
+};
+
+/**
+ * Review v6 (T22): in a narrow pane above the phone width all icons stay in
+ * the row and it overflows — the end fades, the wheel scrolls it, and
+ * scrolled to the end the last icon is whole.
+ */
+export const NarrowPaneScrolls: Story = {
+	name: 'Narrow pane — bar scrolls: fade at the end, wheel travels, last icon whole (review v6)',
+	render: () => <BarHarness width={358} />,
 	play: async ({ canvasElement }) => {
 		const element = bar(canvasElement);
 		await waitFor(() => {

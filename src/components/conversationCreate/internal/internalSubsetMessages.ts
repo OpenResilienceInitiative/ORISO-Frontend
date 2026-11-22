@@ -34,10 +34,7 @@ export const internalSubsetErrorKey = (reason: InternalSubsetReason): string =>
 const SCOPE_HINT_KEYS: Record<InternalChatRecipientScope, string> = {
 	AGENCY: 'groupChat.internal.scope.AGENCY',
 	TENANT: 'groupChat.internal.scope.TENANT',
-	// The platform scope lists the Träger's directory until a platform-wide
-	// directory exists (ORISO-Frontend#1269 follow-up), so it must not promise
-	// more than that.
-	PLATFORM: 'groupChat.internal.scope.TENANT'
+	PLATFORM: 'groupChat.internal.scope.PLATFORM'
 };
 
 export const recipientScopeHintKey = (

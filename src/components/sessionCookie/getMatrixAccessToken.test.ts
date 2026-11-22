@@ -15,7 +15,7 @@ import {
 } from './getMatrixAccessToken';
 import { fetchData } from '../../api/fetchData';
 import { getMatrixHomeserverUrl } from '../../resources/scripts/runtimeConfig';
-import { createClient } from 'matrix-js-sdk';
+import { createBrowserMatrixSdkClient } from '../../services/browserMatrixSdkClient';
 import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getDeviceSigningAuth } from '../../services/matrixInteractiveAuth';
@@ -30,8 +30,14 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 	}
 }));
 
-vi.mock('matrix-js-sdk', () => ({
-	createClient: vi.fn((config) => ({ config }))
+const rawSendEvent = vi.hoisted(() => vi.fn());
+
+vi.mock('../../services/browserMatrixSdkClient', () => ({
+	createBrowserMatrixSdkClient: vi.fn((config) => ({
+		config,
+		getRoom: vi.fn(() => null),
+		sendEvent: rawSendEvent
+	}))
 }));
 
 vi.mock('../../resources/scripts/runtimeConfig', () => ({
@@ -39,7 +45,10 @@ vi.mock('../../resources/scripts/runtimeConfig', () => ({
 }));
 
 vi.mock('../../api/fetchData', () => ({
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' },
+	FETCH_ERRORS: {
+		CATCH_ALL: 'CATCH_ALL',
+		CATCH_ALL_WITH_RESPONSE: 'CATCH_ALL_WITH_RESPONSE'
+	},
 	FETCH_METHODS: { GET: 'GET' },
 	fetchData: vi.fn()
 }));
@@ -149,6 +158,39 @@ describe('clearPersistedMatrixDeviceId', () => {
 });
 
 describe('getMatrixAccessToken', () => {
+	it('preserves the wait when the browser device login is throttled', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		vi.mocked(fetchData).mockRejectedValueOnce(
+			new Response(null, {
+				status: 429,
+				headers: { 'Retry-After': '21' }
+			})
+		);
+
+		await expect(getMatrixAccessToken()).rejects.toMatchObject({
+			retryAfterMs: 21_000
+		});
+	});
+
+	it.each([
+		{ status: 503, delay: '21' },
+		{ status: 429, delay: 'bad-header' },
+		{ status: 429, delay: '3000000' }
+	])(
+		'keeps a generic failure for $status with Retry-After $delay',
+		async ({ status, delay }) => {
+			setAuthenticatedSubject('keycloak-user');
+			vi.mocked(fetchData).mockRejectedValueOnce(
+				new Response(null, {
+					status,
+					headers: { 'Retry-After': delay }
+				})
+			);
+
+			await expect(getMatrixAccessToken()).rejects.toThrow('CATCH_ALL');
+		}
+	);
+
 	it('skips the API call when local live websocket bootstrap is disabled', async () => {
 		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
 
@@ -542,7 +584,7 @@ describe('getMatrixAccessToken', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.example.test/service/matrix/me/token?deviceId=ORISO_WEB_EXISTING_DEVICE',
 			method: 'GET',
-			responseHandling: ['CATCH_ALL'],
+			responseHandling: ['CATCH_ALL_WITH_RESPONSE'],
 			recoverOnPublicAuthRoute: false
 		});
 	});
@@ -657,6 +699,31 @@ describe('getMatrixAccessToken', () => {
 		expect([...storage.values()]).not.toContain('must-stay-in-memory');
 	});
 
+	it('guards every client it creates against plaintext sends into an unsynced room (P0)', async () => {
+		vi.useFakeTimers();
+		try {
+			const client = createMatrixClient({
+				accessToken: 'matrix-token',
+				deviceId: 'ORISO_WEB_FRESH_DEVICE',
+				homeserverUrl: 'https://matrix.example.test',
+				userId: '@consultant:matrix.example.test'
+			});
+			const send = client.sendEvent(
+				'!livechat:matrix.example.test',
+				'm.room.message' as any,
+				{ msgtype: 'm.text', body: 'synthetic' } as any
+			);
+			const outcome = expect(send).rejects.toThrow(
+				'has not synced this room yet'
+			);
+			await vi.advanceTimersByTimeAsync(20_000);
+			await outcome;
+			expect(rawSendEvent).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('creates a Matrix client from stored credentials', async () => {
 		const client = createMatrixClient({
 			accessToken: 'matrix-token',
@@ -666,8 +733,9 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		});
 
-		const callback = vi.mocked(createClient).mock.calls.at(-1)![0]
-			.cryptoCallbacks!.getSecretStorageKey!;
+		const callback = vi
+			.mocked(createBrowserMatrixSdkClient)
+			.mock.calls.at(-1)![0].cryptoCallbacks!.getSecretStorageKey!;
 		const sdkKeys = { keys: {} };
 		await callback(sdkKeys, 'synthetic-secret');
 		expect(secretStorageKeyCallback).toHaveBeenCalledWith(
@@ -676,19 +744,8 @@ describe('getMatrixAccessToken', () => {
 			'synthetic-secret'
 		);
 
-		expect(createClient).toHaveBeenCalledWith({
-			baseUrl: 'https://matrix.example.test',
-			accessToken: 'matrix-token',
-			userId: '@consultant:matrix.example.test',
-			deviceId: 'ORISO_WEB_TEST_DEVICE',
-			fallbackICEServerAllowed: true,
-			logger: getMatrixClientLogger(),
-			cryptoCallbacks: {
-				getSecretStorageKey: expect.any(Function)
-			}
-		});
-		expect(client).toEqual({
-			config: {
+		expect(createBrowserMatrixSdkClient).toHaveBeenCalledWith(
+			{
 				baseUrl: 'https://matrix.example.test',
 				accessToken: 'matrix-token',
 				userId: '@consultant:matrix.example.test',
@@ -698,6 +755,19 @@ describe('getMatrixAccessToken', () => {
 				cryptoCallbacks: {
 					getSecretStorageKey: expect.any(Function)
 				}
+			},
+			undefined
+		);
+		// The send guard wraps sendEvent; this test only checks the SDK config.
+		expect((client as { config: unknown }).config).toEqual({
+			baseUrl: 'https://matrix.example.test',
+			accessToken: 'matrix-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			fallbackICEServerAllowed: true,
+			logger: getMatrixClientLogger(),
+			cryptoCallbacks: {
+				getSecretStorageKey: expect.any(Function)
 			}
 		});
 		expect(getDeviceSigningAuth(client)).toBeTypeOf('function');

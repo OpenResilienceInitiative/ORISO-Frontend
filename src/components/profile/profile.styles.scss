@@ -535,6 +535,10 @@ $profile-footer-justify-content: center !default;
 			display: inline-block;
 			margin: 0 8px;
 		}
+
+		&__identity {
+			margin-inline-start: $grid-base-two;
+		}
 	}
 
 	// Modern profile sections with Compound UI styling

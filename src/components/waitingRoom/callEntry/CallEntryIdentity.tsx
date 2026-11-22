@@ -7,6 +7,7 @@ import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { OrisoTextField } from '../../form/OrisoTextField';
+import { DirectLinkPostcodeField } from '../../directLinkEntry/DirectLinkPostcodeField';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import { PasswordRuleChips } from '../../registration/accountData/PasswordRuleChips';
 import { IdentitySuggestButton } from '../../registration/accountData/IdentitySuggestButton';
@@ -42,6 +43,12 @@ export interface CallEntryIdentityProps {
 	onUsernameBlur?: () => void;
 	/** No password field: the account's password is generated (#1486). */
 	hidePassword?: boolean;
+	/** `false`: only the suggest buttons change the User-ID. */
+	usernameEditable?: boolean;
+	/** A registered direct-link account enters a postcode (#1795). */
+	askPostcode?: boolean;
+	postcode?: string;
+	onPostcodeChange?: (postcode: string) => void;
 }
 
 /**
@@ -61,7 +68,11 @@ export const CallEntryIdentity = ({
 	onPasswordChange,
 	hidePassword = false,
 	usernameFeedback,
-	onUsernameBlur
+	onUsernameBlur,
+	usernameEditable = true,
+	askPostcode = false,
+	postcode = '',
+	onPostcodeChange
 }: CallEntryIdentityProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = i18n.resolvedLanguage ?? 'de';
@@ -159,6 +170,7 @@ export const CallEntryIdentity = ({
 				onBlur={onUsernameBlur}
 				fullWidth
 				autoComplete="username"
+				inputProps={{ readOnly: !usernameEditable }}
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
@@ -212,6 +224,12 @@ export const CallEntryIdentity = ({
 					/>
 					<PasswordRuleChips password={password} />
 				</>
+			)}
+			{askPostcode && (
+				<DirectLinkPostcodeField
+					value={postcode}
+					onChange={(value) => onPostcodeChange?.(value)}
+				/>
 			)}
 		</Box>
 	);

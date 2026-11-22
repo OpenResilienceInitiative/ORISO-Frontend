@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useLayoutEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, Typography } from '@mui/material';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { Stage } from '../../stage/stage';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
@@ -20,6 +20,10 @@ import {
 	useHandoverProgress
 } from './handoverProgress';
 import { expectWaitingRoomLayout } from './waitingRoomLayoutContract';
+import {
+	expectArrowStepsOneCard,
+	revealHoverArrow
+} from '../../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 
 /**
  * The one waiting room between "Registrieren" and the message field (#1219).
@@ -135,6 +139,105 @@ export const Ready: StoryObj = {
 	}
 };
 
+/**
+ * ORISO-Frontend#2139: on desktop the dots under "So geht es weiter" stayed
+ * on the first card while the cards moved, and every dot jumped to the end,
+ * so the visitor could not get back. The carousel measured its cards from the
+ * page column instead of from its own track (`offsetLeft` of an unpositioned
+ * track), which only matches where the column starts at x = 0 (phones).
+ * This drives the real room at 1440 px: scroll, click a dot, drag with the
+ * mouse — the active dot follows every time.
+ */
+export const ReadyDotsFollowTheCards: StoryObj = {
+	/* Since the cards size themselves to fit (2026-11-13), all three stand
+	   side by side from `sm` up and there is nothing to scroll there; the
+	   carousel and its dots live on the phone. */
+	name: '4b — Punkte folgen den Karten (Handy, Maus)',
+	globals: phone390Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		const doc = canvasElement.ownerDocument;
+		const track = await waitFor(() => {
+			const el = doc.querySelector<HTMLElement>(
+				'[data-cy="handover-carousel"]'
+			);
+			expect(el).not.toBeNull();
+			expect(el!.scrollWidth).toBeGreaterThan(el!.clientWidth);
+			return el!;
+		});
+		const dots = () =>
+			Array.from(
+				doc.querySelectorAll<HTMLElement>(
+					'[data-cy="handover-carousel-dots"] button'
+				)
+			);
+		const activeDot = () =>
+			dots().findIndex(
+				(dot) => dot.getAttribute('aria-current') === 'true'
+			);
+		const last = dots().length - 1;
+
+		// Scrolled to the end: the last dot is the active one.
+		track.scrollTo({ left: track.scrollWidth, behavior: 'auto' });
+		await waitFor(() => expect(activeDot()).toBe(last));
+
+		// The first dot brings the first card back.
+		await userEvent.click(dots()[0]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(0);
+			expect(activeDot()).toBe(0);
+		});
+
+		// Dragging with the mouse moves the cards (no trackpad needed) and
+		// the nearest card snaps in; the dots follow.
+		const rect = track.getBoundingClientRect();
+		const y = rect.top + rect.height / 2;
+		const startX = rect.left + rect.width - 40;
+		await userEvent.pointer([
+			{
+				keys: '[MouseLeft>]',
+				target: track,
+				coords: { clientX: startX, clientY: y }
+			},
+			// The drag takes over from its first move past the threshold
+			// (#2222), so a small first step lets the whole way count.
+			{ target: track, coords: { clientX: startX - 10, clientY: y } },
+			{ target: track, coords: { clientX: startX - 200, clientY: y } },
+			{ target: track, coords: { clientX: startX - 500, clientY: y } },
+			{
+				keys: '[/MouseLeft]',
+				target: track,
+				coords: { clientX: startX - 500, clientY: y }
+			}
+		]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(
+				track.scrollWidth - track.clientWidth
+			);
+			expect(activeDot()).toBe(last);
+		});
+		await userEvent.click(dots()[0]);
+		await waitFor(() => expect(track.scrollLeft).toBe(0));
+
+		// The middle dot centres the middle card, and it stays there once
+		// the browser's own snapping has settled.
+		await userEvent.click(dots()[1]);
+		await waitFor(() => expect(activeDot()).toBe(1));
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		expect(activeDot()).toBe(1);
+
+		// The last dot goes to the end again.
+		await userEvent.click(dots()[last]);
+		await waitFor(() => {
+			expect(track.scrollLeft).toBe(
+				track.scrollWidth - track.clientWidth
+			);
+			expect(activeDot()).toBe(last);
+		});
+	}
+};
+
 export const ReadyPhone: StoryObj = {
 	name: '4 — Alles geladen (Handy 390)',
 	globals: phone390Globals,
@@ -244,5 +347,151 @@ export const ReadyBluePrimary: StoryObj = {
 			cards: true,
 			stageNotRed: true
 		});
+	}
+};
+
+/**
+ * The step cards are a CAROUSEL with arrows and dots at every desktop size
+ * (#2179, #2198; product owner, 2026-11-20). #2247 had turned them into a
+ * static row of three without arrows or dots, from a misread of "nicht ewig
+ * viel rumscrollen" — Frank meant cards cut off behind the button. Do not
+ * turn this back into a static grid without the product owner.
+ *
+ * At every size: the cards end above the bar (nothing cut off), they are
+ * sized from the free height with a square motif, at most one and a half
+ * across, and the dots are there. Where the track scrolls (every normal
+ * desktop window), the hover arrow moves exactly one card and a dot click
+ * moves the track.
+ */
+const expectCarouselAtThisSize = async (
+	canvasElement: HTMLElement,
+	{ scrolls }: { scrolls: boolean }
+) => {
+	await expectWaitingRoomLayout(canvasElement, { cards: true });
+	const doc = canvasElement.ownerDocument;
+	const cards = [
+		...doc.querySelectorAll<HTMLElement>('[data-cy^="handover-card-"]')
+	].map((card) => card.getBoundingClientRect());
+	const track = doc.querySelector<HTMLElement>(
+		'[data-cy="handover-carousel"]'
+	)!;
+	const bar = doc
+		.querySelector<HTMLElement>('[data-cy="registration-footer"]')!
+		.getBoundingClientRect();
+	expect(cards).toHaveLength(3);
+	// Nothing cut off behind the bar.
+	expect(cards[0].bottom).toBeLessThan(bar.top);
+	// A carousel: the third card is not in view at the start.
+	if (scrolls) {
+		expect(track.scrollWidth).toBeGreaterThan(track.clientWidth + 1);
+	}
+	// The dots are always there.
+	const dots = doc.querySelectorAll<HTMLButtonElement>(
+		'[data-cy="handover-carousel-dots"] button'
+	);
+	expect(dots).toHaveLength(3);
+	if (!scrolls) return;
+	await expectArrowStepsOneCard(
+		canvasElement,
+		'handover-carousel',
+		'handover-carousel-arrows'
+	);
+	// A dot moves the track to its card.
+	track.scrollTo({ left: 0, behavior: 'auto' });
+	await waitFor(() => expect(track.scrollLeft).toBe(0));
+	await userEvent.click(dots[2]);
+	await waitFor(() => expect(track.scrollLeft).toBeGreaterThan(0));
+};
+
+/** 1440×900 desktop: the carousel scrolls, arrows and dots work. */
+export const ReadyDesktopCarousel: StoryObj = {
+	name: '4 — Alles geladen: Karussell mit Pfeilen und Punkten (1440)',
+	globals: desktop1440Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
+	}
+};
+
+export const ReadyQhd2560: StoryObj = {
+	name: '4 — Alles geladen (großer Bildschirm 2560)',
+	globals: { viewport: { value: 'desktop2560' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
+	}
+};
+
+export const Ready4k3840: StoryObj = {
+	name: '4 — Alles geladen (4K-Bildschirm 3840)',
+	globals: { viewport: { value: 'desktop3840' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
+	}
+};
+
+/** A 1366×768 laptop: smaller cards, still a carousel, nothing cut off. */
+export const ReadyLaptop1366: StoryObj = {
+	name: '4 — Alles geladen (Laptop 1366×768)',
+	globals: { viewport: { value: 'desktop1366' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
+	}
+};
+
+/**
+ * 1920×1080 at 150 % browser zoom: so little height that the three small
+ * cards fit side by side; nothing is cut off and the dots stay.
+ */
+export const ReadyZoom150: StoryObj = {
+	name: '4 — Alles geladen (1920 bei 150 % Zoom)',
+	globals: { viewport: { value: 'desktop1280x720' } },
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: false });
+	}
+};
+
+/**
+ * Hover arrows (Frank, 2026-11-11): with a mouse and no trackpad the cards
+ * could not be moved to the right. Hover near the right edge of the cards:
+ * a strip with a round arrow fades in, a click moves one card, and then the
+ * same appears on the left edge. Phones and tablets never show them.
+ *
+ * Shown in a 390 px window with a mouse; the desktop sizes are checked by
+ * `ReadyDesktopCarousel` and the size stories above.
+ */
+export const ReadyHoverArrows: StoryObj = {
+	name: '4c — Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	globals: phone390Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		await expectArrowStepsOneCard(
+			canvasElement,
+			'handover-carousel',
+			'handover-carousel-arrows'
+		);
+		await revealHoverArrow(
+			canvasElement,
+			'start',
+			'handover-carousel-arrows'
+		);
+	}
+};
+
+export const GroupInvitationHoverArrows: StoryObj = {
+	name: 'Gruppen-Einladung: Pfeile beim Darüberfahren',
+	globals: phone390Globals,
+	render: () => <GroupJoin />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
 	}
 };

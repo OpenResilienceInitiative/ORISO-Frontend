@@ -1,5 +1,10 @@
 import { clearSecretStorageKeys } from './matrixKeyBackupService';
-import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
+import {
+	bindDraftCryptographyClient,
+	handleDraftRecoveryAccountData,
+	unbindDraftCryptographyClient
+} from './draftCryptography';
+import { ClientEvent, MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
 	clearPersistedMatrixDeviceId,
@@ -8,7 +13,12 @@ import {
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { matrixCallService } from './matrixCallService';
+import { SendRoomWaitOptions, waitForJoinedRoom } from './matrixSendRoomGuard';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import {
+	canSubmitRustKeysQuery,
+	submitRustKeysQuery
+} from './matrixRustKeysQuery';
 import { applyDeviceIsolationMode } from './matrixDeviceIsolation';
 import { matrixDecryptionRetry } from './matrixDecryptionRetry';
 import { appConfig } from '../utils/appConfig';
@@ -27,6 +37,16 @@ import {
 } from '../utils/messageRelations';
 
 import { getImageDimensions } from '../utils/imageDimensions';
+import { buildMentionsContent } from '../utils/messageMentions';
+import {
+	buildPassageBlurContent,
+	PASSAGE_BLUR_EVENT_TYPE
+} from '../components/selectionReply/passageBlurEvents';
+import {
+	buildPassageRepliesContent,
+	type PassageRepliesFallbackLabels,
+	type PassageReplyContentItem
+} from '../components/selectionReply/passageReplyContent';
 
 const TOKEN_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 const isPreparedSyncState = (state: string | null): boolean =>
@@ -47,9 +67,43 @@ type RefreshableRustCrypto = {
 	};
 };
 
-export interface MatrixFileMessageOptions extends MessageRelationOptions {
+export interface MatrixFileContentOptions extends MessageRelationOptions {
+	/**
+	 * The text that goes with the file (MSC2530): `body` carries it and
+	 * `filename` keeps the name. Clients without caption support show the
+	 * text as the file's name, nothing is lost.
+	 */
+	caption?: string;
+	/** Intentional mentions in the caption (m.mentions). */
+	mentionedUserIds?: string[];
+}
+
+/**
+ * One answered passage on its way out (ADR-022). A voice answer is the
+ * recorded file; it is encrypted and uploaded before the message is sent.
+ */
+export type OutgoingPassageReply = Omit<PassageReplyContentItem, 'audio'> & {
+	voice?: { file: File; durationMs: number } | null;
+};
+
+export interface MatrixFileMessageOptions extends MatrixFileContentOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
+}
+
+/**
+ * The Matrix token could not be fetched or refreshed, so the upload never
+ * started. `fetchData` hands over a bare "CATCH_ALL" for any status, so without
+ * this name a token 503 reads like any other unexplained failure.
+ */
+export class MatrixTokenUnavailableError extends Error {
+	public readonly cause: unknown;
+
+	constructor(cause: unknown) {
+		super('Matrix token unavailable');
+		this.name = 'MatrixTokenUnavailableError';
+		this.cause = cause;
+	}
 }
 
 const getMatrixFileMessageType = (file: File): string => {
@@ -70,10 +124,11 @@ export const buildMatrixFileMessageContent = (
 	file: File,
 	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
 	dimensions?: { w: number; h: number } | null,
-	options?: MessageRelationOptions
+	options?: MatrixFileContentOptions
 ): Record<string, unknown> => ({
 	...buildMessageRelationContent(options),
-	body: file.name,
+	...(options?.caption ? buildMentionsContent(options.mentionedUserIds) : {}),
+	body: options?.caption || file.name,
 	filename: file.name,
 	msgtype: getMatrixFileMessageType(file),
 	file: encryptedFile,
@@ -141,8 +196,11 @@ export const isMatrixOneTimeKeyConflictLog = (messages: unknown[]): boolean => {
 };
 
 export class MatrixClientService {
+	private static runtimeOwner: MatrixClientService | null = null;
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
+	private sessionLifetime = new AbortController();
+	private runtimeAttached = false;
 	private refreshTimer: number | null = null;
 	private refreshingToken: Promise<void> | null = null;
 	private staleDeviceRecovery: Promise<void> | null = null;
@@ -154,30 +212,67 @@ export class MatrixClientService {
 		Map<string, Promise<boolean>>
 	>();
 	private syncStateListeners = new Set<(state: string | null) => void>();
+	private readonly sendRoomWaitOptions: SendRoomWaitOptions = {};
 	private clientChangeListeners = new Set<
 		(client: MatrixClient | null) => void
 	>();
 
-	// Initialize client with login data
-	public async initializeClient(loginData: MatrixLoginData): Promise<void> {
-		this.stopCurrentClient();
+	public async initializeClient(
+		loginData: MatrixLoginData,
+		isStartupActive?: () => boolean
+	): Promise<void> {
+		if (isStartupActive && !isStartupActive()) return;
+		this.cancelSessionWork();
+		this.sessionLifetime = new AbortController();
+		await this.initializeSessionClient(loginData, isStartupActive);
+	}
+
+	private async initializeSessionClient(
+		loginData: MatrixLoginData,
+		isStartupActive?: () => boolean
+	): Promise<void> {
+		const lifetime = this.sessionLifetime.signal;
+		const expiresAt = loginData.expiresInMs
+			? Date.now() + loginData.expiresInMs
+			: this.getStoredTokenExpiresAt();
+		this.teardownClient();
 		this.loginData = loginData;
-		this.client = createMatrixClient(loginData, (...messages) => {
-			this.handleMatrixSdkError(loginData.deviceId, messages);
-		});
-		this.syncState = null;
-		this.initializedServicesClient = null;
-		this.notifySyncStateListeners();
-		this.scheduleTokenRefresh(loginData);
+		let client: MatrixClient;
+		try {
+			client = createMatrixClient(
+				loginData,
+				(...messages) => {
+					if (!lifetime.aborted && this.loginData === loginData) {
+						this.handleMatrixSdkError(loginData.deviceId, messages);
+					}
+				},
+				isStartupActive
+			);
+		} catch (error) {
+			unbindDraftCryptographyClient(this);
+			throw error;
+		}
+		this.client = client;
+		bindDraftCryptographyClient(this, client, loginData.userId);
 		// Announce the replacement client before sync starts so consumers
 		// (e.g. SessionStream room listeners) re-attach without missing events.
 		this.notifyClientChangeListeners();
 
-		// CRITICAL: Start client with sync configuration (EXACTLY like Element does!)
-		// NOTE: TURN/STUN servers are fetched automatically from Matrix homeserver
-		// console.log('🔧 Matrix client will fetch TURN/STUN servers from homeserver');
+		const isCurrent = () => this.client === client && !lifetime.aborted;
+		const discardCancelledStartup = (): boolean => {
+			if (!isCurrent()) {
+				// Rust crypto can finish attaching after the earlier stop.
+				this.stopSdkClient(client);
+				return true;
+			}
+			if (isStartupActive && !isStartupActive()) {
+				this.stopAndCleanup();
+				return true;
+			}
+			return false;
+		};
 
-		const client = this.client;
+		if (discardCancelledStartup()) return;
 		try {
 			await client.initRustCrypto({
 				useIndexedDB: true,
@@ -187,11 +282,13 @@ export class MatrixClientService {
 				)
 			});
 		} catch (error) {
+			if (discardCancelledStartup()) return;
 			// The failed client was already announced above, so tear down via
 			// the notifying path to hand subscribers the resulting null.
-			this.stopAndCleanup();
+			this.stopClientAndNotify();
 			throw error;
 		}
+		if (discardCancelledStartup()) return;
 
 		// #438 MSC4153 invisible crypto: once the rust crypto stack is up, share
 		// Megolm keys only with cross-signed devices when the toggle is on.
@@ -207,13 +304,20 @@ export class MatrixClientService {
 		);
 		// Before startClient: the first device-list query of the initial sync
 		// must already re-decrypt what the SDK refused for an unknown sender.
+		MatrixClientService.runtimeOwner = this;
+		this.runtimeAttached = true;
 		matrixDecryptionRetry.initialize(client);
+		client.on(ClientEvent.AccountData, (event) =>
+			handleDraftRecoveryAccountData(client, event)
+		);
 
 		(client as any).on(
 			'sync',
 			(state: string, _prevState: string | null, syncError?: unknown) => {
+				if (!isCurrent()) return;
 				this.syncState = state;
 				this.notifySyncStateListeners();
+				if (!isCurrent()) return;
 
 				if (state === 'PREPARED') {
 					// console.log('✅ Matrix client SYNCED and READY for real-time events!');
@@ -226,13 +330,24 @@ export class MatrixClientService {
 			}
 		);
 
-		client.startClient({
-			initialSyncLimit: 20, // Load last 20 messages per room initially
-			pollTimeout: 30000, // 30-second long-polling timeout
-			lazyLoadMembers: true // Don't load all room members immediately
-		});
+		this.scheduleTokenRefresh(expiresAt, isCurrent);
+		try {
+			await client.startClient({
+				initialSyncLimit: 20, // Load last 20 messages per room initially
+				pollTimeout: 30000, // 30-second long-polling timeout
+				lazyLoadMembers: true // Don't load all room members immediately
+			});
+		} catch (error) {
+			if (discardCancelledStartup()) return;
+			this.stopClientAndNotify();
+			throw error;
+		}
+		discardCancelledStartup();
+	}
 
-		// console.log("✅ Matrix client starting with real-time sync...");
+	/** Authentication subject that established this exact Matrix client. */
+	public getAuthenticatedSubject(): string | null {
+		return this.loginData?.authenticatedSubject ?? null;
 	}
 
 	// Get current client
@@ -317,11 +432,13 @@ export class MatrixClientService {
 	public async holdTokenRefreshDuring<T>(
 		operation: () => Promise<T>
 	): Promise<T> {
+		const lifetime = this.sessionLifetime.signal;
 		// First let a due or in-flight refresh finish, so the operation starts on the current client.
 		await this.ensureFreshToken().catch(() => undefined);
-		while (this.refreshingToken) {
+		while (!lifetime.aborted && this.refreshingToken) {
 			await this.refreshingToken.catch(() => undefined);
 		}
+		if (lifetime.aborted) throw new Error('Matrix session ended');
 		// Registered before the operation starts, with no await since the check above: its own first
 		// token check already sees the hold, and no refresh can slip in.
 		let release: () => void = () => undefined;
@@ -335,21 +452,39 @@ export class MatrixClientService {
 		}
 	}
 
-	/** Unbounded on purpose: giving up would replace the client under a running reset. */
-	private async heldCryptoOperationsSettled(): Promise<void> {
-		while (this.heldCryptoOperations.size > 0) {
-			await Promise.all([...this.heldCryptoOperations]);
+	/** The active session waits as long as a reset needs. Logout releases that wait. */
+	private async heldCryptoOperationsSettled(
+		lifetime: AbortSignal
+	): Promise<void> {
+		while (!lifetime.aborted && this.heldCryptoOperations.size > 0) {
+			await new Promise<void>((resolve) => {
+				const settle = () => {
+					lifetime.removeEventListener('abort', settle);
+					resolve();
+				};
+				lifetime.addEventListener('abort', settle, { once: true });
+				void Promise.all([...this.heldCryptoOperations]).then(settle);
+			});
 		}
 	}
 
 	public async refreshMatrixToken(): Promise<void> {
+		const lifetime = this.sessionLifetime.signal;
+		if (lifetime.aborted) return;
 		if (this.refreshingToken) {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = this.heldCryptoOperationsSettled()
-			.then(() => getMatrixAccessToken({ forceRefresh: true }))
+		const startingClient = this.client;
+		const isCurrent = () =>
+			!lifetime.aborted && this.client === startingClient;
+		const refresh = this.heldCryptoOperationsSettled(lifetime)
+			.then(() => {
+				if (isCurrent())
+					return getMatrixAccessToken({ forceRefresh: true });
+			})
 			.then(async (loginData) => {
+				if (!loginData || !isCurrent()) return;
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag
 				// forward — otherwise invisible crypto would re-apply verified-only
@@ -361,13 +496,15 @@ export class MatrixClientService {
 						loginData.isAnonymous ?? this.loginData?.isAnonymous
 				};
 				persistMatrixLoginData(refreshedLoginData);
-				await this.initializeClient(refreshedLoginData);
+				await this.initializeSessionClient(refreshedLoginData);
 			})
 			.finally(() => {
-				this.refreshingToken = null;
+				if (this.refreshingToken === refresh)
+					this.refreshingToken = null;
 			});
 
-		return this.refreshingToken;
+		this.refreshingToken = refresh;
+		return refresh;
 	}
 
 	private refreshMatrixTokenSafely(): void {
@@ -391,20 +528,24 @@ export class MatrixClientService {
 		}
 
 		const staleLoginData = this.loginData;
-		if (!staleLoginData) {
+		const lifetime = this.sessionLifetime.signal;
+		if (!staleLoginData || lifetime.aborted) {
 			return Promise.resolve();
 		}
 
 		clearPersistedMatrixDeviceId(staleLoginData.userId);
-		this.staleDeviceRecovery = getMatrixAccessToken()
+		const recovery = getMatrixAccessToken()
 			.then(async (loginData) => {
+				if (lifetime.aborted || this.loginData !== staleLoginData)
+					return;
 				const recoveredLoginData: MatrixLoginData = {
 					...loginData,
 					isAnonymous:
 						loginData.isAnonymous ?? staleLoginData.isAnonymous
 				};
 				persistMatrixLoginData(recoveredLoginData);
-				await this.initializeClient(recoveredLoginData);
+				await this.initializeSessionClient(recoveredLoginData);
+				if (lifetime.aborted) return;
 				const recoveredClient = this.client;
 				if (!recoveredClient) {
 					throw new Error(
@@ -412,13 +553,16 @@ export class MatrixClientService {
 					);
 				}
 				await this.waitForClientPrepared(recoveredClient);
-				this.staleDeviceRecoveryVersion += 1;
+				if (!lifetime.aborted) this.staleDeviceRecoveryVersion += 1;
 			})
 			.finally(() => {
-				this.staleDeviceRecovery = null;
+				if (this.staleDeviceRecovery === recovery) {
+					this.staleDeviceRecovery = null;
+				}
 			});
 
-		return this.staleDeviceRecovery;
+		this.staleDeviceRecovery = recovery;
+		return recovery;
 	}
 
 	/** Await initial sync without confusing a not-yet-hydrated room with exhaustion. */
@@ -521,14 +665,11 @@ export class MatrixClientService {
 				| RefreshableRustCrypto
 				| undefined;
 			const olmMachine = crypto?.olmMachine;
-			const makeOutgoingRequest =
-				crypto?.outgoingRequestProcessor?.makeOutgoingRequest;
 			if (
 				!room ||
 				typeof room.getEncryptionTargetMembers !== 'function' ||
 				typeof olmMachine?.trackedUsers !== 'function' ||
-				typeof olmMachine.queryKeysForUsers !== 'function' ||
-				typeof makeOutgoingRequest !== 'function'
+				!canSubmitRustKeysQuery(crypto)
 			) {
 				return false;
 			}
@@ -552,12 +693,7 @@ export class MatrixClientService {
 				return false;
 			}
 
-			const request = olmMachine.queryKeysForUsers(queryUsers);
-			await makeOutgoingRequest.call(
-				crypto.outgoingRequestProcessor,
-				request
-			);
-			return true;
+			return submitRustKeysQuery(crypto, queryUsers);
 		})();
 
 		roomRefreshes.set(roomId, refresh);
@@ -571,6 +707,24 @@ export class MatrixClientService {
 			roomRefreshes.delete(roomId);
 			return false;
 		}
+	}
+
+	/**
+	 * P0: `joinRoom()` does not put the room into the client's store, and
+	 * matrix-js-sdk sends in the clear into a room it does not hold. After a
+	 * join (an accepted Live Chat, or a fresh client generation after a token
+	 * refresh) wait for sync to deliver the room before anything is sent.
+	 * The client-level guard (installSendRoomGuard) refuses the send otherwise.
+	 */
+	private async ensureSyncedRoom(
+		client: MatrixClient,
+		roomId: string
+	): Promise<void> {
+		if (client.getRoom(roomId)) {
+			return;
+		}
+		await client.joinRoom(roomId);
+		await waitForJoinedRoom(client, roomId, this.sendRoomWaitOptions);
 	}
 
 	// Send message to a room
@@ -590,9 +744,7 @@ export class MatrixClientService {
 			if (!client) {
 				throw new Error('Matrix client not initialized');
 			}
-			if (!client.getRoom(roomId)) {
-				await client.joinRoom(roomId);
-			}
+			await this.ensureSyncedRoom(client, roomId);
 			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			// Every real matrix-js-sdk client provides makeTxnId(). The guard also
 			// keeps deliberately minimal test doubles and adapters compatible.
@@ -602,27 +754,7 @@ export class MatrixClientService {
 					? client.sendMessage(roomId, content, txnId)
 					: client.sendMessage(roomId, content));
 			} catch (error) {
-				// matrix-js-sdk keeps a rejected send as a NOT_SENT local echo.
-				// The ORISO timeline owns failed-message presentation and retry,
-				// so retaining the SDK echo as well would reveal two copies after
-				// the user successfully retries with a fresh transaction.
-				const room = client.getRoom(roomId);
-				const errorEvent = (error as { event?: MatrixEvent })?.event;
-				const failedLocalEcho = txnId
-					? errorEvent?.getTxnId?.() === txnId
-						? errorEvent
-						: room?.timeline?.find(
-								(event) => event.getTxnId?.() === txnId
-							)
-					: undefined;
-				if (failedLocalEcho) {
-					try {
-						client.cancelPendingEvent(failedLocalEcho);
-					} catch {
-						// Preserve the original transport error. A status race must not
-						// turn failed-send recovery into a second exception.
-					}
-				}
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
 				throw error;
 			}
 		};
@@ -703,6 +835,41 @@ export class MatrixClientService {
 		}
 	}
 
+	/**
+	 * Blur a passage of a message (#2229): a room event that points at the
+	 * message and holds only the position. Lifting the blur redacts it.
+	 */
+	public async sendPassageBlur(
+		roomId: string,
+		targetEventId: string,
+		blur: { start: number; length: number }
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		const content = buildPassageBlurContent(targetEventId, blur) as any;
+		const send = () => {
+			if (!this.client) {
+				throw new Error('Matrix client not initialized');
+			}
+			return this.client.sendEvent(
+				roomId,
+				PASSAGE_BLUR_EVENT_TYPE as any,
+				content
+			);
+		};
+
+		try {
+			return await send();
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await this.refreshMatrixToken();
+			return send();
+		}
+	}
+
 	// Redact an event (reactions un-react, and message delete #827)
 	public async redactEvent(roomId: string, eventId: string): Promise<any> {
 		await this.ensureFreshToken();
@@ -719,7 +886,17 @@ export class MatrixClientService {
 		file: File,
 		options: MatrixFileMessageOptions = {}
 	): Promise<any> {
-		await this.ensureFreshToken();
+		const withTokenFailureNamed = (refresh: Promise<void>) =>
+			refresh.catch((error: unknown) => {
+				throw new MatrixTokenUnavailableError(error);
+			});
+		// A cancel has to stop the send at every step that is still ours: once
+		// the event is on its way it cannot be taken back.
+		const stopIfCancelled = () =>
+			options.abortController?.signal.throwIfAborted();
+
+		await withTokenFailureNamed(this.ensureFreshToken());
+		stopIfCancelled();
 
 		// Token or stale-device recovery can replace this.client between awaits.
 		// Each attempt pins one client so the device-key refresh, the upload and
@@ -735,7 +912,95 @@ export class MatrixClientService {
 				file,
 				options
 			);
-			return client.sendMessage(roomId, content as any);
+			stopIfCancelled();
+			// Every real matrix-js-sdk client provides makeTxnId(). The guard
+			// keeps minimal test doubles compatible.
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content as any, txnId)
+					: client.sendMessage(roomId, content as any));
+			} catch (error) {
+				// Same as text: the composer offers the retry, so the SDK's
+				// NOT_SENT echo would show a second copy after it succeeds.
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
+				throw error;
+			}
+		};
+
+		try {
+			return await sendWithCurrentClient();
+		} catch (error) {
+			if (!isMatrixExpiredTokenError(error)) {
+				throw error;
+			}
+
+			await withTokenFailureNamed(this.refreshMatrixToken());
+			stopIfCancelled();
+			return sendWithCurrentClient();
+		}
+	}
+
+	/**
+	 * Several answered passages as ONE message (ADR-022). Every clip is
+	 * encrypted and uploaded first; a failed upload sends nothing, so the
+	 * caller can keep the collection and offer the send again.
+	 */
+	public async sendPassageReplies(
+		roomId: string,
+		replies: OutgoingPassageReply[],
+		typedText: string,
+		labels: PassageRepliesFallbackLabels
+	): Promise<any> {
+		await this.ensureFreshToken();
+
+		const sendWithCurrentClient = async () => {
+			const client = this.client;
+			if (!client) {
+				throw new Error('Matrix client not initialized');
+			}
+			await this.ensureSyncedRoom(client, roomId);
+			await this.refreshTrackedRoomMemberDevices(client, roomId);
+			const items: PassageReplyContentItem[] = [];
+			for (const { voice, ...reply } of replies) {
+				if (!voice) {
+					items.push(reply);
+					continue;
+				}
+				const encryptedAttachment = await encryptMatrixAttachment(
+					voice.file
+				);
+				const upload = await client.uploadContent(
+					encryptedAttachment.encryptedBlob,
+					{ includeFilename: false, type: 'application/octet-stream' }
+				);
+				items.push({
+					...reply,
+					audio: {
+						file: {
+							...encryptedAttachment.file,
+							url: upload.content_uri
+						},
+						mimetype: voice.file.type || 'audio/webm',
+						durationMs: voice.durationMs,
+						size: voice.file.size
+					}
+				});
+			}
+			const content = buildPassageRepliesContent(
+				items,
+				typedText,
+				labels
+			);
+			const txnId = client.makeTxnId?.();
+			try {
+				return await (txnId
+					? client.sendMessage(roomId, content as any, txnId)
+					: client.sendMessage(roomId, content as any));
+			} catch (error) {
+				this.dropFailedLocalEcho(client, roomId, txnId, error);
+				throw error;
+			}
 		};
 
 		try {
@@ -838,8 +1103,6 @@ export class MatrixClientService {
 	public async logout(): Promise<void> {
 		const client = this.client;
 		this.stopAndCleanup();
-		matrixLiveEventBridge.destroy();
-		matrixCallService.destroy();
 
 		if (!client) {
 			return;
@@ -872,12 +1135,11 @@ export class MatrixClientService {
 		);
 	}
 
-	private scheduleTokenRefresh(loginData: MatrixLoginData): void {
+	private scheduleTokenRefresh(
+		expiresAt: number | null,
+		isCurrent: () => boolean
+	): void {
 		this.clearRefreshTimer();
-
-		const expiresAt = loginData.expiresInMs
-			? Date.now() + loginData.expiresInMs
-			: this.getStoredTokenExpiresAt();
 
 		if (!expiresAt) {
 			return;
@@ -889,7 +1151,7 @@ export class MatrixClientService {
 		);
 
 		this.refreshTimer = window.setTimeout(() => {
-			this.refreshMatrixTokenSafely();
+			if (isCurrent()) this.refreshMatrixTokenSafely();
 		}, refreshInMs);
 	}
 
@@ -900,43 +1162,93 @@ export class MatrixClientService {
 		}
 	}
 
-	// Teardown on the re-initialization path: the replacement client is
-	// announced by initializeClient itself, so skip the null notification.
-	private stopCurrentClient(): void {
-		this.teardownClient();
+	private cancelSessionWork(): void {
+		this.sessionLifetime.abort();
+		this.refreshingToken = null;
+		this.staleDeviceRecovery = null;
+		this.heldCryptoOperations.clear();
 	}
 
 	/** Stops sync, removes listeners, and tears down bridge/call services (no Matrix logout API). */
 	public stopAndCleanup(): void {
+		this.cancelSessionWork();
+		this.stopClientAndNotify();
+		// A client refresh detaches the old SDK but retains the session's
+		// handlers. End the owning session even during that replacement gap.
+		if (MatrixClientService.runtimeOwner === this) {
+			MatrixClientService.runtimeOwner = null;
+			matrixLiveEventBridge.destroy();
+			matrixCallService.destroy();
+		}
+	}
+
+	private stopClientAndNotify(): void {
 		const hadClient = this.client !== null;
+		unbindDraftCryptographyClient(this);
 		this.teardownClient();
 		if (hadClient) {
 			this.notifyClientChangeListeners();
 		}
 	}
 
+	private stopSdkClient(client: MatrixClient): void {
+		clearSecretStorageKeys(client);
+		client.stopClient();
+		client.removeAllListeners();
+	}
+
 	private teardownClient(): void {
-		if (this.client) clearSecretStorageKeys(this.client);
-		this.clearRefreshTimer();
-
-		if (this.client) {
-			this.client.stopClient();
-			this.client.removeAllListeners();
-		}
-
+		const client = this.client;
 		this.client = null;
 		this.loginData = null;
 		this.syncState = null;
 		this.initializedServicesClient = null;
-		matrixLiveEventBridge.detach();
-		matrixCallService.detach();
-		matrixRoomHistoryKeyTransfer.detach();
-		matrixDecryptionRetry.detach();
+		this.clearRefreshTimer();
+		if (client) {
+			// Call ownership changes on PREPARED, after the shared runtime owner.
+			matrixCallService.detach(client);
+			this.stopSdkClient(client);
+		}
+		if (this.runtimeAttached && MatrixClientService.runtimeOwner === this) {
+			matrixLiveEventBridge.detach();
+			matrixRoomHistoryKeyTransfer.detach();
+			matrixDecryptionRetry.detach();
+		}
+		this.runtimeAttached = false;
 		this.notifySyncStateListeners();
 	}
 
 	public hasActiveClient(): boolean {
 		return this.client !== null;
+	}
+
+	/**
+	 * matrix-js-sdk keeps a rejected send as a NOT_SENT local echo. The ORISO
+	 * timeline owns failed-message presentation and retry, so retaining the SDK
+	 * echo as well would reveal two copies after the user successfully retries
+	 * with a fresh transaction.
+	 */
+	private dropFailedLocalEcho(
+		client: MatrixClient,
+		roomId: string,
+		txnId: string | undefined,
+		error: unknown
+	): void {
+		const room = client.getRoom(roomId);
+		const errorEvent = (error as { event?: MatrixEvent })?.event;
+		const failedLocalEcho = txnId
+			? errorEvent?.getTxnId?.() === txnId
+				? errorEvent
+				: room?.timeline?.find((event) => event.getTxnId?.() === txnId)
+			: undefined;
+		if (failedLocalEcho) {
+			try {
+				client.cancelPendingEvent(failedLocalEcho);
+			} catch {
+				// Preserve the original transport error. A status race must not
+				// turn failed-send recovery into a second exception.
+			}
+		}
 	}
 
 	private async uploadFileMessageContent(

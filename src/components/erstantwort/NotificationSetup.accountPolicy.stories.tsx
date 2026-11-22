@@ -230,10 +230,14 @@ export const AcceptedRefreshKeepsBoth: Story = {
 		).toBeNull();
 		await expect(browserRequests).toBe(0);
 		releaseRefresh!();
+		// The browser step lives in a modal dialog, outside the canvas.
 		await userEvent.click(
-			await canvas.findByRole('button', {
-				name: i18n.t('erstantwort.notificationChoice.enableBrowser')
-			})
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'button',
+				{
+					name: i18n.t('erstantwort.notificationChoice.enableBrowser')
+				}
+			)
 		);
 		await waitFor(() =>
 			expect(

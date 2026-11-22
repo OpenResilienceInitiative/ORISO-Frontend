@@ -52,6 +52,8 @@ export const resolveComposerChannel = ({
 
 export const CHANNEL_PARAM = 'channel';
 export const AT_PARAM = 'at';
+/** `?addon=<add-on>/<app>`: an add-on side panel, exclusive with a channel. */
+export const ADDON_PANEL_PARAM = 'addon';
 export const LEGACY_THREAD_ROOT_PARAM = 'threadRootId';
 export const LEGACY_THREAD_MESSAGE_PARAM = 'threadMessageId';
 /** The stage's id for the supervision channel (`panelForChannel`). */
@@ -167,6 +169,7 @@ export const withChannel = (
 	const params = toParams(search || '');
 	deleteChannelParams(params);
 	if (channel) {
+		params.delete(ADDON_PANEL_PARAM);
 		params.set(CHANNEL_PARAM, serializeChannel(channel));
 		if (at) {
 			params.set(AT_PARAM, at);
@@ -289,6 +292,8 @@ export interface AutoOpenInput {
 	teamDiscussionResolved?: boolean;
 	/** Eligible unaccepted enquiry; selecting team creates/joins its room. */
 	canStartTeamDiscussion?: boolean;
+	/** The URL opens an add-on panel (`?addon=`), an explicit choice like a channel. */
+	addonPanelRequested?: boolean;
 }
 
 export interface AutoOpenDecision {
@@ -323,9 +328,10 @@ export const decideAutoOpen = ({
 	hasSupervisionSideRoom,
 	hasTeamSideRoom = false,
 	teamDiscussionResolved = false,
-	canStartTeamDiscussion = false
+	canStartTeamDiscussion = false,
+	addonPanelRequested = false
 }: AutoOpenInput): AutoOpenDecision => {
-	if (routeChannel) {
+	if (routeChannel || addonPanelRequested) {
 		return { settle: true, open: null };
 	}
 	if (alreadySettled) {

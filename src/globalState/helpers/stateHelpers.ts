@@ -52,7 +52,9 @@ export const buildExtendedSession = (
 		item: groupChat ?? sessionChat,
 		type: groupChat ? CHAT_TYPE_GROUP_CHAT : CHAT_TYPE_SINGLE_CHAT,
 		isGroup: !!groupChat,
-		isSession: !!sessionChat,
+		// A group chat can also carry a linked session, but `item` is then the
+		// chat, so session actions would send the chat id to session routes.
+		isSession: !!sessionChat && !groupChat,
 		isEnquiry:
 			sessionChat &&
 			[STATUS_EMPTY, STATUS_ENQUIRY].includes(sessionChat.status),

@@ -102,32 +102,6 @@ vi.mock('../editableData/EditableData', () => ({
 	)
 }));
 
-vi.mock('../overlay/Overlay', () => ({
-	OVERLAY_FUNCTIONS: {
-		CLOSE: 'close',
-		CLOSE_SUCCESS: 'close-success',
-		CONFIRM_EDIT: 'confirm-edit',
-		DELETE_EMAIL: 'delete-email'
-	},
-	Overlay: ({
-		item,
-		handleOverlay
-	}: React.ComponentProps<typeof import('../overlay/Overlay').Overlay>) => (
-		<div role="dialog">
-			<h2>{item.headline}</h2>
-			{item.buttonSet?.map((button) => (
-				<button
-					key={button.label}
-					type="button"
-					onClick={() => handleOverlay(button.function)}
-				>
-					{button.label}
-				</button>
-			))}
-		</div>
-	)
-}));
-
 vi.mock('../../resources/img/illustrations/check.svg', () => ({
 	ReactComponent: () => <svg />
 }));
@@ -143,6 +117,58 @@ afterEach(() => {
 });
 
 describe('AskerAboutMeData', () => {
+	describe('a temporary account (UserService#1662)', () => {
+		const renderAs = (temporaryAccount: boolean) =>
+			render(
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								userName: 'eule_mika_4821',
+								twoFactorAuth: { isActive: false, type: null },
+								temporaryAccount
+							},
+							reloadUserData: vi.fn()
+						} as never
+					}
+				>
+					<AskerAboutMeData />
+				</UserDataContext.Provider>
+			);
+
+		it('hides the e-mail address and its invitation to add one', () => {
+			renderAs(true);
+			expect(screen.getByText('profile.data.userName')).toBeTruthy();
+			expect(screen.queryByText('profile.data.email')).toBeNull();
+			expect(screen.queryByText('profile.data.emailInfo')).toBeNull();
+		});
+
+		it('offers the e-mail address again once the account is kept', () => {
+			renderAs(false);
+			expect(screen.getByText('profile.data.email')).toBeTruthy();
+			expect(
+				screen.getByRole('button', { name: 'edit email' })
+			).toBeTruthy();
+		});
+	});
+
+	it('opens a named confirmation that Escape can dismiss without removing the address', async () => {
+		policy.featureAskerEmailEnabled = false;
+		render(<AskerAboutMeData />);
+		const trigger = screen.getByRole('button', {
+			name: 'profile.unsetEmail.confirmOverlay.button.confirm'
+		});
+		trigger.focus();
+		fireEvent.click(trigger);
+		const dialog = screen.getByRole('dialog', {
+			name: 'profile.unsetEmail.confirmOverlay.headline'
+		});
+		fireEvent.keyDown(dialog, { key: 'Escape' });
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(document.activeElement).toBe(trigger);
+		expect(apiDeleteEmailMock).not.toHaveBeenCalled();
+	});
+
 	it('keeps safe deletion but offers no edit or solicitation when collection is forbidden', async () => {
 		policy.featureAskerEmailEnabled = false;
 		render(<AskerAboutMeData />);

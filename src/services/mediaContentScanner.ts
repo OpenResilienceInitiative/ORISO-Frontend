@@ -23,14 +23,20 @@
  *
  * The module is inert until an environment configures a scanner URL.
  */
-import { getMediaScannerUrl } from '../resources/scripts/runtimeConfig';
-import type { MatrixEncryptedFile } from '../utils/matrixEncryptedAttachment';
+import {
+	getMediaScannerUrl,
+	isMediaImageCheckConfigured
+} from '../resources/scripts/runtimeConfig';
+import { getMatrixClientService } from './matrixClientRegistry';
+import {
+	decryptMatrixAttachment,
+	type MatrixEncryptedFile
+} from '../utils/matrixEncryptedAttachment';
 
 /**
- * `safe` carries the plaintext the scanner released. `blocked` means the
- * scanner judged the file and rejected it. `error` means no judgement could be
- * obtained — treated exactly as strictly as `blocked`, but distinguishable so
- * the UI can say something honest.
+ * `safe` carries locally decrypted bytes from a verified scanner download.
+ * `blocked` means the scanner judged the file and rejected it. `error` keeps
+ * the media withheld when a verdict or verified download is unavailable.
  */
 export type MediaScanOutcome =
 	| { verdict: 'safe'; data: ArrayBuffer }
@@ -39,6 +45,20 @@ export type MediaScanOutcome =
 
 /** Verdicts the scanner returns about the file itself, rather than about its own health. */
 const REJECTION_REASONS = ['MCS_MEDIA_NOT_CLEAN', 'MCS_MIME_TYPE_FORBIDDEN'];
+
+const isTrustedScannerOrigin = (base: string, homeserver: string): boolean => {
+	try {
+		const scannerUrl = new URL(base, globalThis.location?.href);
+		const homeserverUrl = new URL(homeserver);
+		return (
+			(scannerUrl.protocol === 'https:' ||
+				scannerUrl.protocol === 'http:') &&
+			scannerUrl.origin === homeserverUrl.origin
+		);
+	} catch {
+		return false;
+	}
+};
 
 const MXC_PREFIX = 'mxc://';
 
@@ -50,6 +70,10 @@ const scannerBaseUrl = (): string =>
 /** Whether this environment routes media through a content scanner at all. */
 export const isMediaContentScannerEnabled = (): boolean =>
 	Boolean(scannerBaseUrl());
+
+/** Whether images are also judged by the AI image check, not only for viruses. */
+export const isMediaImageCheckEnabled = (): boolean =>
+	isMediaContentScannerEnabled() && isMediaImageCheckConfigured();
 
 const parseMxcUri = (
 	contentUrl: string
@@ -86,7 +110,7 @@ export const getScannedMediaDownloadPath = (
 };
 
 const fetchScannerPublicKey = async (base: string): Promise<string> => {
-	const response = await fetch(`${base}/public_key`);
+	const response = await fetch(`${base}/public_key`, { redirect: 'error' });
 	if (!response.ok) {
 		throw new Error(
 			`Content scanner public key request failed: ${response.status}`
@@ -160,6 +184,15 @@ export const downloadScannedEncryptedMedia = async (
 		return { verdict: 'error', reason: 'no-scanner-configured' };
 	}
 
+	const client = getMatrixClientService()?.getClient();
+	const accessToken = client?.getAccessToken();
+	if (!client || !accessToken) {
+		return { verdict: 'error', reason: 'matrix-session-unavailable' };
+	}
+	if (!isTrustedScannerOrigin(base, client.getHomeserverUrl())) {
+		return { verdict: 'error', reason: 'untrusted-scanner-origin' };
+	}
+
 	let encryptedBody;
 	try {
 		const publicKey = await getScannerPublicKey(base);
@@ -176,12 +209,25 @@ export const downloadScannedEncryptedMedia = async (
 		};
 	}
 
+	// Key retrieval can outlive the active Matrix session. Do not submit
+	// credentials for an attachment owned by a previous login.
+	if (
+		getMatrixClientService()?.getClient() !== client ||
+		client.getAccessToken() !== accessToken
+	) {
+		return { verdict: 'error', reason: 'matrix-session-unavailable' };
+	}
+
 	let response: Response;
 	try {
 		response = await fetch(`${base}/download_encrypted`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ encrypted_body: encryptedBody })
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${accessToken}`
+			},
+			body: JSON.stringify({ encrypted_body: encryptedBody }),
+			redirect: 'error'
 		});
 	} catch (error) {
 		return {
@@ -191,13 +237,23 @@ export const downloadScannedEncryptedMedia = async (
 	}
 
 	if (response.ok) {
+		let ciphertext: ArrayBuffer;
 		try {
-			return { verdict: 'safe', data: await response.arrayBuffer() };
+			ciphertext = await response.arrayBuffer();
 		} catch (error) {
 			return {
 				verdict: 'error',
 				reason: `unreadable-response: ${(error as Error)?.message}`
 			};
+		}
+		try {
+			const data = await decryptMatrixAttachment(
+				ciphertext,
+				encryptedFile
+			);
+			return { verdict: 'safe', data };
+		} catch {
+			return { verdict: 'error', reason: 'invalid-encrypted-response' };
 		}
 	}
 

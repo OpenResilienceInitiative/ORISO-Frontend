@@ -3,7 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
+import { matchRoutes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vite-plus/test';
+import { toV7Paths } from '../../utils/routeHelpers';
 
 const Stub = () => React.createElement('div');
 // Distinct stubs so the profile-icon assertions below can tell the
@@ -30,27 +32,12 @@ vi.mock('../conversationCreate/CreateConversationView', () => ({
 vi.mock('../groupChat/GroupChatInfo', () => ({ GroupChatInfo: Stub }));
 vi.mock('../tools/ToolsList', () => ({ ToolsList: Stub }));
 vi.mock('../../containers/overview/overview', () => ({ OverviewPage: Stub }));
-vi.mock('../../containers/bookings/components/Booking/booking', () => ({
-	Booking: Stub
-}));
-vi.mock(
-	'../../containers/bookings/components/BookingCancellation/bookingCancellation',
-	() => ({ BookingCancellation: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingEvents/bookingEvents',
-	() => ({ BookingEvents: Stub })
-);
-vi.mock(
-	'../../containers/bookings/components/BookingReschedule/bookingReschedule',
-	() => ({ BookingReschedule: Stub })
-);
 vi.mock('../notificationsCenter/NotificationsCenter', () => ({
 	NotificationsCenter: Stub
 }));
 vi.mock('../draftsCenter/DraftsCenter', () => ({ DraftsCenter: Stub }));
-vi.mock('../directLinks/MyDirectLinksPanel', () => ({
-	MyDirectLinksPage: Stub
+vi.mock('../directLinks/DirectLinksMoved', () => ({
+	DirectLinksMoved: Stub
 }));
 vi.mock('../../resources/img/icons/overview_outline.svg', () => ({
 	ReactComponent: Stub
@@ -131,11 +118,11 @@ describe('RouterConfigConsultant navigation', () => {
 	});
 });
 
-describe('"My direct links" clock entry (#1894)', () => {
-	it('is a rail item with its own page route for counsellors', () => {
+describe('"My direct links" moved into the calendar list (*19)', () => {
+	it('has no rail item any more, the old route stays for bookmarks', () => {
 		const routerConfig = RouterConfigConsultant(settings);
 
-		expect(routerConfig.navigation.map((item) => item.to)).toContain(
+		expect(routerConfig.navigation.map((item) => item.to)).not.toContain(
 			'/direct-links'
 		);
 		expect(routerConfig.profileRoutes).toEqual(
@@ -228,6 +215,52 @@ describe('RouterConfigUser navigation', () => {
 });
 
 describe('RouterConfigConsultant chat info', () => {
+	it('routes an asker group by chat ID independently of a case with the same number', () => {
+		const details = RouterConfigUser(settings, true).detailRoutes.flatMap(
+			(route: Parameters<typeof toV7Paths>[0]) =>
+				toV7Paths(route).map((path) => ({ path }))
+		);
+		const base = '/sessions/user/view';
+
+		expect(matchRoutes(details, `${base}/chat/41`)?.at(-1)?.params).toEqual(
+			{
+				chatId: '41'
+			}
+		);
+		expect(
+			matchRoutes(details, `${base}/session/41`)?.at(-1)?.params
+		).toEqual({ sessionId: '41' });
+	});
+
+	it('routes a consultant group by chat ID independently of a case with the same number', () => {
+		const consultant = RouterConfigConsultant(settings);
+		const detailRoutes = consultant.detailRoutes.flatMap(
+			(route: Parameters<typeof toV7Paths>[0]) =>
+				toV7Paths(route).map((path) => ({ path }))
+		);
+		const base = '/sessions/consultant/sessionView';
+
+		expect(
+			matchRoutes(detailRoutes, `${base}/chat/41`)?.at(-1)?.params
+		).toEqual({
+			chatId: '41'
+		});
+		expect(
+			matchRoutes(detailRoutes, `${base}/session/41`)?.at(-1)?.params
+		).toEqual({ sessionId: '41' });
+		expect(
+			matchRoutes(detailRoutes, `${base}/room/41`)?.at(-1)?.params
+		).toEqual({
+			groupId: 'room',
+			sessionId: '41'
+		});
+		expect(
+			RouterConfigUser(settings, true).detailRoutes
+		).not.toContainEqual(
+			expect.objectContaining({ path: `${base}/chat/:chatId` })
+		);
+	});
+
 	it('provides a group info dialog route for participating askers', () => {
 		const config = RouterConfigUser(settings, true);
 		expect(config.dialogRoutes).toEqual(
