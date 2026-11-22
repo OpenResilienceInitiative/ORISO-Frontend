@@ -354,7 +354,14 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.fastLogin({ userId: USER_CONSULTANT });
 		cy.visit(enquiryListPath);
 		cy.get('[data-cy="session-list-item"]').first().click();
-		cy.wait(archived ? '@readTeam' : '@openTeam');
+		cy.wait('@readTeam');
+		if (!archived) {
+			// Opening an enquiry without a team room creates nothing; the team
+			// action creates the room on click (product decision, 21 Nov).
+			cy.get('[data-cy="stage-panel"]').should('not.exist');
+			cy.get('[data-cy="enquiry-open-team"]').click();
+			cy.wait('@openTeam');
+		}
 		if (width >= 900) {
 			cy.get('[data-cy="stage-main"]').should('contain.text', text);
 			cy.get(
@@ -569,20 +576,23 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			expect(buttons[0].getAttribute('data-tour-target')).to.equal(
 				'enquiry-accept-button'
 			);
-			expect(buttons[1].getAttribute('data-cy')).to.equal(
+			// #2391: Accept and Decline form one decision group; the team
+			// action follows it.
+			expect(buttons[1].textContent.trim()).to.equal('Anfrage ablehnen');
+			expect(buttons.eq(1).prop('disabled')).to.equal(false);
+			expect(buttons[2].getAttribute('data-cy')).to.equal(
 				'enquiry-open-team'
 			);
-			expect(buttons[2].textContent.trim()).to.equal('Anfrage ablehnen');
-			expect(buttons.eq(2).prop('disabled')).to.equal(false);
 			expect(buttons[0].getBoundingClientRect().height).to.equal(
-				buttons[1].getBoundingClientRect().height
+				buttons[2].getBoundingClientRect().height
 			);
 			const accept = buttons[0].getBoundingClientRect();
-			const team = buttons[1].getBoundingClientRect();
-			const footer = buttons[1].closest('.session__acceptance');
+			const decline = buttons[1].getBoundingClientRect();
+			const team = buttons[2].getBoundingClientRect();
+			const footer = buttons[2].closest('.session__acceptance');
 			const footerRect = footer.getBoundingClientRect();
-			const win = buttons[1].ownerDocument.defaultView;
-			const arrow = win.getComputedStyle(buttons[1], '::after');
+			const win = buttons[2].ownerDocument.defaultView;
+			const arrow = win.getComputedStyle(buttons[2], '::after');
 			expect(arrow.maskImage, 'supplied SVG arrow mask').to.contain(
 				'arrow_right_24px'
 			);
@@ -596,17 +606,13 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 					accept.top
 				);
 				expect(
-					footerRect.right - buttons[2].getBoundingClientRect().right,
+					footerRect.right - team.right,
 					'comfortable right inset'
 				).to.be.closeTo(32, 1);
 			} else {
 				// Below desktop the three actions wrap; every row stays centered and
 				// no action overlaps another or leaves the footer.
-				const rects = [
-					accept,
-					team,
-					buttons[2].getBoundingClientRect()
-				];
+				const rects = [accept, decline, team];
 				const center = (footerRect.left + footerRect.right) / 2;
 				const rows = new Map<number, DOMRect[]>();
 				for (const rect of rects) {
@@ -777,7 +783,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.get('[data-cy="session-list-item"]').should('have.length', 30);
 	};
 	it(
-		'shows the complete original enquiry beside its automatic team panel',
+		'shows the complete original enquiry beside the team panel it opens',
 		verifyTeamPanel(false)
 	);
 	it(
