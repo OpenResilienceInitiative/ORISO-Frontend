@@ -777,38 +777,42 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper" ref={wrapperRef}>
-			<StartCallRequest
-				sessionId={activeSession.item?.id}
-				settled={!isLoadingTenantSettings && featuresSettled}
-				calls={{
-					video: {
-						allowed: videoCallShown,
-						start: () => handleStartVideoCall(true),
-						offer: () => offerCall('video'),
-						refuse: () =>
-							refuseCall(
-								translate(
-									'videoCall.overlay.unsupported.headline'
-								),
-								!callGates.video ||
-									!consultingType?.isVideoCallAllowed
-									? translate(
-											'directLink.entry.callsDisabled'
-										)
-									: ''
-							)
-					},
-					audio: {
-						allowed: audioCallShown,
-						start: () => handleStartVideoCall(false),
-						offer: () => offerCall('audio'),
-						refuse: () =>
-							refuseCall(
-								translate('directLink.entry.callsDisabled')
-							)
-					}
-				}}
-			/>
+			{/* Group chats: the group header owns the call buttons and takes the
+			    request (GroupCallStartRequest, FE#2482). */}
+			{sessionMenuOwnsCallControls(activeSession.isGroup) && (
+				<StartCallRequest
+					sessionId={activeSession.item?.id}
+					settled={!isLoadingTenantSettings && featuresSettled}
+					calls={{
+						video: {
+							allowed: videoCallShown,
+							start: () => handleStartVideoCall(true),
+							offer: () => offerCall('video'),
+							refuse: () =>
+								refuseCall(
+									translate(
+										'videoCall.overlay.unsupported.headline'
+									),
+									!callGates.video ||
+										!consultingType?.isVideoCallAllowed
+										? translate(
+												'directLink.entry.callsDisabled'
+											)
+										: ''
+								)
+						},
+						audio: {
+							allowed: audioCallShown,
+							start: () => handleStartVideoCall(false),
+							offer: () => offerCall('audio'),
+							refuse: () =>
+								refuseCall(
+									translate('directLink.entry.callsDisabled')
+								)
+						}
+					}}
+				/>
+			)}
 			{askerCallInfoShown && (
 				<AskerCallInfo
 					sessionId={activeSession.item.id}
@@ -1188,6 +1192,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									}}
 									disabled={!supervisionPanel.available}
 									data-cy="session-menu-supervision-panel"
+									// #2228: the hover hint names the channel
+									// as the feedback chat with the supervisor.
+									title={translate(
+										'supervision.panel.menuHint'
+									)}
 								>
 									<SessionMenuItemContent
 										icon={

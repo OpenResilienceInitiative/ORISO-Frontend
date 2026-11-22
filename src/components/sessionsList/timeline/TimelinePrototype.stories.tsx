@@ -555,7 +555,7 @@ export const CrowdField: Story = {
 		});
 		await expect(circle().querySelector('svg')).not.toBeNull();
 		await waitFor(() =>
-			expect(colours()).toEqual(['rgb(255, 255, 255)', 'rgb(27, 27, 28)'])
+			expect(colours()).toEqual(['rgb(255, 255, 255)', 'rgb(0, 0, 0)'])
 		);
 		// Open with the focus on the card: primary.
 		await userEvent.click(circle());

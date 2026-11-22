@@ -224,9 +224,11 @@ const CombinedMessage = ({
 									<span className="erstantwort__faqLabel">
 										{item.headline ??
 											t(
-												bausteinById(item.id)
-													?.headlineKey ??
-													`erstantwort.faq.${item.id}`
+												item.id === 'whoReadsAlong'
+													? 'erstantwort.whoReadsAlong.headline'
+													: (bausteinById(item.id)
+															?.headlineKey ??
+															`erstantwort.faq.${item.id}`)
 											)}
 									</span>
 									<ExpandMoreRoundedIcon

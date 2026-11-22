@@ -1,0 +1,51 @@
+name: Guest prefix guard
+
+# ORISO-Frontend#2347 / ORISO-UserService#1697: nobody is an anonymous guest
+# because of their name. Guests and registered users both get rolled animal
+# User-IDs, and a registered name may start with "anon". Whether a person is
+# a guest comes from the session's registrationType / conversationType
+# (src/components/session/getModality.ts) or the ANONYMOUS authority
+# (src/components/termsandconditions/isAnonymousAsker.ts).
+#
+# This job fails when non-test source under src/ looks for the historical
+# `anon_` / `Anonymous-` login prefix (startsWith, regex, includes, a bare
+# literal) outside scripts/contracts/guest-prefix-allowlist.txt.
+#
+# Fix a failure: decide by the session or authority instead. To hide a raw
+# legacy login label, use isLegacyGuestLoginLabel from
+# src/utils/anonymousChatDisplayName.ts. Add an allowlist entry
+# ("<path> | <reason>") only for code that renders a label and never decides
+# anonymity. Run locally: npm run check:guest-prefix
+
+on:
+    pull_request:
+    merge_group:
+        types: [checks_requested]
+    push:
+        branches:
+            - dev
+
+permissions:
+    contents: read
+
+jobs:
+    no-guest-prefix-detection:
+        name: no guest detection by name prefix
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+
+            - name: Guard self-test
+              run: node --test scripts/contracts/check-guest-prefix.test.mjs
+
+            - name: No name-prefix guest detection in src/
+              run: node scripts/contracts/check-guest-prefix.mjs

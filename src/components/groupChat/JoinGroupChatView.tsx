@@ -24,7 +24,8 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { logout } from '../logout/logout';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { startCallState, type CallKind } from '../call/startCallIntent';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 import './joinChat.styles';
 import { Headline } from '../headline/Headline';
@@ -140,12 +141,39 @@ export const JoinGroupChatView = ({
 		[translate]
 	);
 
+	/* Frank, 21 Nov 2026 ("Call direkt starten"): the moderator of an audio
+	   or video circle starts its call from the waiting room. The chat starts
+	   on the way (`START`), then the conversation's own call button takes the
+	   request (`startCallIntent`) with all its checks. The knock and admit of
+	   the people waiting stay as they are. */
+	const moderatorCallKind: CallKind | undefined =
+		activeSession.item.modality === 'VIDEO'
+			? 'video'
+			: activeSession.item.modality === 'AUDIO'
+				? 'audio'
+				: undefined;
+	const navigate = useNavigate();
+	const location = useLocation();
+	// Where the moderator is now: a START answer only hands the call request
+	// to the room it was pressed in (CodeRabbit on FE#2483).
+	const whereNow = React.useRef({
+		key: location.key,
+		chatId: activeSession.item.id
+	});
+	whereNow.current = { key: location.key, chatId: activeSession.item.id };
+
 	const startButtonItem: ButtonItem = useMemo(
 		() => ({
-			label: translate('groupChat.join.button.label.start'),
+			label: translate(
+				moderatorCallKind === 'video'
+					? 'videoCall.button.startVideoCall'
+					: moderatorCallKind === 'audio'
+						? 'videoCall.button.startCall'
+						: 'groupChat.join.button.label.start'
+			),
 			type: BUTTON_TYPES.PRIMARY
 		}),
-		[translate]
+		[translate, moderatorCallKind]
 	);
 
 	const [buttonItem, setButtonItem] = useState(joinButtonItem);
@@ -286,8 +314,33 @@ export const JoinGroupChatView = ({
 			!activeSession.item.active
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
+		const pressedIn = { key: location.key, chatId: activeSession.item.id };
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
-			.then(() => reloadActiveSession())
+			.then(() => {
+				const stillHere =
+					whereNow.current.key === pressedIn.key &&
+					whereNow.current.chatId === pressedIn.chatId;
+				if (
+					groupChatApiCall === GROUP_CHAT_API.START &&
+					moderatorCallKind &&
+					stillHere
+				)
+					navigate(
+						{
+							pathname: location.pathname,
+							search: location.search,
+							hash: location.hash
+						},
+						{
+							replace: true,
+							state: startCallState(
+								activeSession.item.id,
+								moderatorCallKind
+							)
+						}
+					);
+				return reloadActiveSession();
+			})
 			.catch((error) => {
 				// #1923: the server refuses a banned member with a reason.
 				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT) {

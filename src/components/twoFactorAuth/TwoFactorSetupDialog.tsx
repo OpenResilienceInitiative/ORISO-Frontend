@@ -169,7 +169,11 @@ interface TwoFactorSetupDialogProps {
 	 *  way on — has to be offered inside it. */
 	onLogout?: () => void;
 	currentType?: TwoFactorType;
-	email?: string;
+	/**
+	 * The account's e-mail. `null` for accounts without one, e.g. converted
+	 * live-chat guests: `/users/data` sends `email: null` (FE#2440).
+	 */
+	email?: string | null;
 	qrCode?: string;
 	secret?: string;
 	onClose: () => void;
@@ -243,7 +247,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	canDisable,
 	onLogout,
 	currentType = TWO_FACTOR_TYPES.NONE,
-	email: initialEmail = '',
+	email: initialEmailProp,
 	qrCode,
 	secret,
 	onClose,
@@ -252,6 +256,9 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	onSetupComplete,
 	showAccountProgress = false
 }) => {
+	// A default parameter only covers `undefined`; `null` must become '' too,
+	// or `initialEmail.trim()` throws and takes the settings page down.
+	const initialEmail = initialEmailProp ?? '';
 	const { t: translate } = useTranslation();
 	const { overlays, addOverlay, removeOverlay } = useContext(ModalContext);
 	const modalId = useRef(

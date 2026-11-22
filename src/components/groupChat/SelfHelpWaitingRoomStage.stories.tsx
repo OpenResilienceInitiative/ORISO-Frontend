@@ -48,14 +48,16 @@ const desktop1280Globals = { viewport: { value: 'desktop1280' } };
 
 const Stage = ({
 	layout,
-	deltaSeconds
+	deltaSeconds,
+	modality
 }: {
 	layout: 'desktop' | 'mobile';
 	deltaSeconds: number;
+	modality?: 'TEXT' | 'AUDIO' | 'VIDEO';
 }) => {
 	const listItem = React.useMemo(
-		() => buildGroupStageListItem(deltaSeconds),
-		[deltaSeconds]
+		() => buildGroupStageListItem(deltaSeconds, modality),
+		[deltaSeconds, modality]
 	);
 	useGroupChatInfoFixture(listItem.chat as GroupChatItemInterface);
 	return (
@@ -136,6 +138,53 @@ export const Overdue1440: Story = {
 		const menu = within(menuOf(canvasElement));
 		await waitFor(() =>
 			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
+		);
+	}
+};
+
+/**
+ * Frank, 21 Nov 2026 ("Call direkt starten"): in a video circle the moderator
+ * starts the call from the waiting room. The bar says "Video-Call starten";
+ * the chat starts on the way and the conversation starts the call.
+ */
+export const VideoCircleModerator1440: Story = {
+	name: 'Video circle · moderator starts the call · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<Stage
+			layout="desktop"
+			deltaSeconds={OVERDUE_SECONDS}
+			modality="VIDEO"
+		/>
+	),
+	play: async ({ canvas }) => {
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Video-Call starten' })
+			).toBeEnabled()
+		);
+		await expect(
+			canvas.queryByRole('button', { name: 'Chat starten' })
+		).toBeNull();
+	}
+};
+
+/** The same for an audio circle, on a phone. */
+export const AudioCircleModerator390: Story = {
+	name: 'Audio circle · moderator starts the call · 390 mobile',
+	globals: phone390Globals,
+	render: () => (
+		<Stage
+			layout="mobile"
+			deltaSeconds={OVERDUE_SECONDS}
+			modality="AUDIO"
+		/>
+	),
+	play: async ({ canvas }) => {
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Audio-Call starten' })
+			).toBeEnabled()
 		);
 	}
 };

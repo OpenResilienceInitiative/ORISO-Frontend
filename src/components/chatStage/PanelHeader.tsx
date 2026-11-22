@@ -66,6 +66,11 @@ export interface PanelHeaderProps {
 	'title': string;
 	/** Counterpart shown as the main line: "Bettina B.". */
 	'name'?: string;
+	/**
+	 * FE#2344: the counterpart's role, a second line under the name
+	 * ("Supervisor:in" / "Berater:in"). The host passes the word.
+	 */
+	'subtitle'?: string;
 	/** People in the side room, rendered as the avatar stack. */
 	'participants'?: StackParticipant[];
 	/** Role chip text ("Supervision" / "Beratung"). */
@@ -118,6 +123,7 @@ export const PanelHeader = ({
 	kind,
 	title,
 	name,
+	subtitle,
 	participants = [],
 	chip,
 	unreadCount = 0,
@@ -299,6 +305,14 @@ export const PanelHeader = ({
 							{name || title}
 						</span>
 					</h2>
+					{subtitle && name && (
+						<p
+							className="panelHeader__subtitle"
+							data-cy="panel-header-subtitle"
+						>
+							{subtitle}
+						</p>
+					)}
 				</div>
 				{chip && (
 					<span
