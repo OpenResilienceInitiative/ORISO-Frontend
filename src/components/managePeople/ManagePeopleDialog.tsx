@@ -71,6 +71,18 @@ export const ManagePeopleDialog = ({
 		setConfirmingRemove(null);
 	}, [open]);
 
+	// A replacement removes first. If the add then fails, the reloaded list no
+	// longer has the old person: a retry adds the chosen candidate only.
+	useEffect(() => {
+		if (
+			replacing &&
+			people.membersState === 'ready' &&
+			!people.members.some(({ id }) => id === replacing.id)
+		) {
+			setReplacing(null);
+		}
+	}, [replacing, people.members, people.membersState]);
+
 	const canAdd = Boolean(source.addPerson && source.loadCandidates);
 	const showPicker = canAdd || replacing !== null;
 	const visibleCandidates = people.candidates.filter((candidate) =>

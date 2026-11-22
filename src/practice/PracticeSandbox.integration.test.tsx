@@ -509,13 +509,21 @@ const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 	);
 	fireEvent.click(add);
 
-	fireEvent.click(
-		await screen.findByRole(
-			'button',
-			{ name: 'managePeople.add.labelFor' },
-			{ timeout: 15000 }
-		)
+	// The picker offers Robin, and not the colleague who is no supervisor.
+	const dialog = await screen.findByTestId(
+		'manage-people-dialog',
+		{},
+		{ timeout: 15000 }
 	);
+	const robin = await within(dialog).findByText(
+		world!.script.cast.supervisor.displayName,
+		{},
+		{ timeout: 15000 }
+	);
+	expect(
+		within(dialog).queryByText(world!.script.cast.colleague.displayName)
+	).toBeNull();
+	fireEvent.click(robin.closest('button')!);
 	fireEvent.change(
 		await screen.findByPlaceholderText(
 			'managePeople.supervision.reasonPlaceholder'
@@ -532,6 +540,9 @@ const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 		() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
 		{ timeout: 15000 }
 	);
+	expect(world!.rest.getCase().supervisors[0]).toMatchObject({
+		supervisorConsultantId: PRACTICE_CAST.supervisor.id
+	});
 	// The success toast stays; the feed entry is swallowed (see below).
 	await waitFor(() =>
 		expect(appNotifications.addNotification).toHaveBeenCalledWith(

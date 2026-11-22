@@ -17,6 +17,11 @@ export interface SupervisionPeopleSourceOptions {
 	/** Directory of the case's agency; the caller resolves it from the session. */
 	agencyId: string | null;
 	currentConsultantId?: string | null;
+	/**
+	 * Shown for a supervisor the directory does not name. Never the login: it
+	 * would reach the dialog and the case room's system message.
+	 */
+	unknownName: string;
 	/** After a change: system message, notifications, practice refresh. */
 	onChanged?: (
 		change:
@@ -44,6 +49,7 @@ export const createSupervisionPeopleSource = ({
 	sessionId,
 	agencyId,
 	currentConsultantId,
+	unknownName,
 	onChanged
 }: SupervisionPeopleSourceOptions): ManagedPeopleSource => {
 	let supervisors: SessionSupervisor[] = [];
@@ -54,13 +60,9 @@ export const createSupervisionPeopleSource = ({
 			({ consultantId }) =>
 				consultantId === supervisor.supervisorConsultantId
 		);
-		return known
-			? consultantName(known)
-			: readablePersonName(
-					null,
-					supervisor.supervisorUsername,
-					supervisor.supervisorConsultantId
-				);
+		// Without the directory only the login is known; a login is not a
+		// name to show in the dialog or to post into the case room.
+		return known ? consultantName(known) : unknownName;
 	};
 
 	return {
@@ -93,7 +95,12 @@ export const createSupervisionPeopleSource = ({
 			if (!agencyId) {
 				throw new Error('No agency for the supervisor directory');
 			}
-			directory = await fetchAgencyConsultantList(agencyId);
+			// The current supervisors are read here too: the members request
+			// runs in parallel and may not have answered yet.
+			[directory, supervisors] = await Promise.all([
+				fetchAgencyConsultantList(agencyId),
+				apiGetSessionSupervisors(sessionId)
+			]);
 			return filterEligibleSupervisorConsultants({
 				consultants: directory,
 				currentConsultantId,

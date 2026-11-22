@@ -394,15 +394,25 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
+	/** The case a supervision change belongs to, fixed when its dialog source is made. */
+	interface SupervisionOrigin {
+		sessionId: number;
+		rid: string;
+		matrixRoomId?: string | null;
+		chatDisplayName: string;
+		actionPath: string;
+	}
+
 	const postSupervisorSystemMessage = async (
+		origin: SupervisionOrigin,
 		kind: SupervisorSystemMessageKind,
 		supervisorName: string,
 		previousName?: string
 	) => {
-		const matrixRoomId = isMatrixRoom(activeSession.rid)
-			? activeSession.rid
-			: activeSession.item?.matrixRoomId;
-		if (!matrixRoomId || !activeSession.item.id) {
+		const matrixRoomId = isMatrixRoom(origin.rid)
+			? origin.rid
+			: origin.matrixRoomId;
+		if (!matrixRoomId || !origin.sessionId) {
 			return;
 		}
 		const payload = buildSupervisorSystemMessagePayload(
@@ -422,10 +432,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			}
 			await apiSendMessage(
 				`${SYSTEM_NOTIFICATION_PREFIX}${payload}`,
-				activeSession.rid,
+				origin.rid,
 				false,
 				false,
-				activeSession.item.id,
+				origin.sessionId,
 				matrixRoomId,
 				null,
 				true,
@@ -441,21 +451,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			NonNullable<
 				Parameters<typeof createSupervisionPeopleSource>[0]['onChanged']
 			>
-		>[0]
+		>[0],
+		origin: SupervisionOrigin
 	) => {
-		const sessionId = activeSession.item.id;
+		const { sessionId } = origin;
 		if (!sessionId) return;
+		// The counsellor may have opened another case while the change ran:
+		// the header, the dialog and practice belong to the case on screen.
+		const isOriginOnScreen =
+			activeSupervisorSessionIdRef.current === sessionId;
 		// The practice tour's next step points at the supervision panel, which
 		// the open dialog would cover; real cases keep the dialog open.
 		if (
+			isOriginOnScreen &&
 			change.kind === 'added' &&
-			(isPracticeId(sessionId) ||
-				isPracticeRoomId(activeSession.item.matrixRoomId))
+			(isPracticeId(sessionId) || isPracticeRoomId(origin.matrixRoomId))
 		) {
 			setIsSupervisorModalOpen(false);
 		}
-		const chatDisplayName =
-			resolveAnonymousChatDisplayName(contact) || `Session ${sessionId}`;
 		const noteKind: 'add' | 'remove' | 'replace' =
 			change.kind === 'added'
 				? 'add'
@@ -467,21 +480,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				? `${change.from} -> ${change.to}`
 				: change.name;
 		// The people dialog has already changed the case; the rest is
-		// non-blocking bookkeeping: the chat's system message, the refresh of
-		// the header and the notification.
-		await postSupervisorSystemMessage(
+		// non-blocking bookkeeping. The system message handles its own
+		// failure, so the dialog does not wait for the Matrix send.
+		void postSupervisorSystemMessage(
+			origin,
 			change.kind,
 			change.kind === 'replaced' ? change.to : change.name,
 			change.kind === 'replaced' ? change.from : undefined
-		);
-		await loadSupervisors();
-		notifyPracticeSupervisorsChanged();
+		).catch(() => undefined);
+		if (isOriginOnScreen) {
+			await loadSupervisors();
+			notifyPracticeSupervisorsChanged();
+		}
 		const title = translate(
 			`sessionHeader.supervisor.success.${noteKind}.title`
 		);
 		const text = `${translate(
 			`sessionHeader.supervisor.success.${noteKind}.text`
-		)} (${who} / ${chatDisplayName})`;
+		)} (${who} / ${origin.chatDisplayName})`;
 		addNotification({
 			notificationType: NOTIFICATION_TYPE_SUCCESS,
 			title,
@@ -494,27 +510,38 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			eventType: `supervisor.${change.kind}`,
 			title,
 			text,
-			actionPath: getCanonicalConversationActionPath(),
+			actionPath: origin.actionPath,
 			actionLabel: translate('notifications.center.open'),
 			sourceSessionId: sessionId,
 			category: 'system'
 		});
 	};
-	// The source lives as long as the case; it always calls the latest handler.
+	// The source lives as long as the case; it always calls the latest handler
+	// with the case it was made for.
 	const supervisionChangedRef = useRef(handleSupervisionChanged);
 	supervisionChangedRef.current = handleSupervisionChanged;
-	const supervisionPeopleSource = useMemo(
-		() =>
-			createSupervisionPeopleSource({
-				sessionId: activeSession.item.id,
-				agencyId: supervisorDirectoryAgencyId
-					? String(supervisorDirectoryAgencyId)
-					: null,
-				currentConsultantId: userData?.userId,
-				onChanged: (change) => supervisionChangedRef.current(change)
-			}),
-		[activeSession.item.id, supervisorDirectoryAgencyId, userData?.userId]
-	);
+	const supervisionPeopleSource = useMemo(() => {
+		const origin: SupervisionOrigin = {
+			sessionId: activeSession.item.id,
+			rid: activeSession.rid,
+			matrixRoomId: activeSession.item?.matrixRoomId,
+			chatDisplayName:
+				resolveAnonymousChatDisplayName(contact) ||
+				`Session ${activeSession.item.id}`,
+			actionPath: getCanonicalConversationActionPath()
+		};
+		return createSupervisionPeopleSource({
+			sessionId: activeSession.item.id,
+			agencyId: supervisorDirectoryAgencyId
+				? String(supervisorDirectoryAgencyId)
+				: null,
+			currentConsultantId: userData?.userId,
+			unknownName: translate('managePeople.supervision.unknownName'),
+			onChanged: (change) => supervisionChangedRef.current(change, origin)
+		});
+		// The origin is fixed per case on purpose.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activeSession.item.id, supervisorDirectoryAgencyId, userData?.userId]);
 
 	const sessionView = getViewPathForType(type);
 	const userProfileLink = `/sessions/consultant/${sessionView}/${
@@ -1371,6 +1398,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			    dialog; full screen on the phone. */}
 			{isSupervisionEnabledForCurrentChat && isSupervisorModalOpen && (
 				<ManagePeopleDialog
+					// A new case starts with a fresh picker.
+					key={activeSession.item.id}
 					open
 					onClose={() => setIsSupervisorModalOpen(false)}
 					source={supervisionPeopleSource}

@@ -357,4 +357,33 @@ describe('M3Dialog', () => {
 		);
 		plainHost.remove();
 	});
+	it('releases keyboard focus once a kept-mounted dialog with outside controls closes', async () => {
+		const host = document.createElement('div');
+		host.id = 'trap-host';
+		document.body.appendChild(host);
+		const page = document.createElement('button');
+		page.textContent = 'Page action';
+		document.body.appendChild(page);
+		const view = (open: boolean) => (
+			<M3Dialog
+				title="People"
+				open={open}
+				keepMounted
+				onClose={() => undefined}
+				reachableOutside={host}
+			/>
+		);
+		const { rerender } = render(view(true));
+		await waitFor(() =>
+			expect(screen.getByRole('dialog', { name: 'People' })).toBeTruthy()
+		);
+
+		rerender(view(false));
+		await waitFor(() => {
+			page.focus();
+			expect(document.activeElement).toBe(page);
+		});
+		page.remove();
+		host.remove();
+	});
 });

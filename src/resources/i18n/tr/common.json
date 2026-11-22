@@ -7918,6 +7918,7 @@
 			"membersTitle": "Mevcut süpervizyon",
 			"emptyMembers": "Bu vakanın henüz süpervizörü yok.",
 			"addTitle": "Süpervizör ekle",
+			"unknownName": "Süpervizör",
 			"emptyCandidates": "Bu merkezde başka kimse süpervizör olarak işaretli değil. Buna merkez yöneticisi karar verir.",
 			"reasonLabel": "Süpervizyon nedeni",
 			"reasonPlaceholder": "Bu kişi vakaya neden süpervizörlük yapmalı?",

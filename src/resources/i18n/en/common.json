@@ -7833,6 +7833,7 @@
 			"membersTitle": "Current supervision",
 			"emptyMembers": "This case has no supervisor yet.",
 			"addTitle": "Add a supervisor",
+			"unknownName": "Supervisor",
 			"emptyCandidates": "Nobody else at this counselling centre is marked as a supervisor. The agency admin decides who is.",
 			"reasonLabel": "Reason for supervision",
 			"reasonPlaceholder": "Why should this person supervise the case?",

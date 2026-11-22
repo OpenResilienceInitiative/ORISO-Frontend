@@ -7918,6 +7918,7 @@
 			"membersTitle": "Supervision actuelle",
 			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
 			"addTitle": "Ajouter un superviseur",
+			"unknownName": "Superviseur",
 			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
 			"reasonLabel": "Motif de la supervision",
 			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",

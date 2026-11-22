@@ -646,6 +646,14 @@ export const AddASupervisor: Story = {
 						name: 'Robin (Übung) hinzufügen'
 					})
 				);
+				// Practice closes the dialog, so the next step's panel is visible.
+				await waitFor(
+					() =>
+						expect(
+							screen.queryByTestId('manage-people-dialog')
+						).toBeNull(),
+					SLOW
+				);
 			}
 		);
 		await step(

@@ -186,6 +186,7 @@ export const M3Dialog = ({
 		>
 			{sharedScope && (
 				<FocusTrap
+					active={open}
 					containerElements={sharedScope}
 					focusTrapOptions={{
 						allowOutsideClick: true,
