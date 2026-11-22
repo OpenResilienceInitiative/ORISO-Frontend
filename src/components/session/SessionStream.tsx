@@ -212,6 +212,8 @@ export const SessionStream = ({
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
+	const [unavailableConsentScopeKey, setUnavailableConsentScopeKey] =
+		useState<string | null>(null);
 	const [
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
@@ -290,6 +292,7 @@ export const SessionStream = ({
 		}
 		setCaseHandoverConsentSubmitting(false);
 		setCaseHandoverConsentError('');
+		setUnavailableConsentScopeKey(null);
 	}, [consentScopeKey]);
 	useLayoutEffect(
 		() => () => {
@@ -1553,16 +1556,43 @@ export const SessionStream = ({
 	 * status is consultant-only and answers 403). A status that names another
 	 * session or request is no answer for this card.
 	 */
-	const readCaseHandoverRequestStatus = (
+	const readCaseHandoverRequestStatus = async (
 		sessionId: number,
 		requestId: number
-	) =>
-		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+	): Promise<CaseHandoverStatus | null> => {
+		try {
+			const status = await apiGetCaseHandoverRequestStatus(
+				sessionId,
+				requestId
+			);
 			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
 				throw new Error('Status does not belong to this request');
 			}
 			return status;
-		});
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === FETCH_ERRORS.NO_MATCH
+			) {
+				return null;
+			}
+			throw error;
+		}
+	};
+
+	const applyCaseHandoverRequestStatus = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus | null
+	) => {
+		if (status === null) {
+			// An unavailable request has no actionable or confirmed outcome.
+			setUnavailableConsentScopeKey(consentScopeKey);
+			return true;
+		}
+		if (isPendingCaseHandoverStatus(status.status)) return false;
+		settleCaseHandoverConsent(notification, status);
+		return true;
+	};
 
 	// A card whose request was closed elsewhere (takeover, decline on another
 	// device, expiry) stays visible until its unread notification is answered.
@@ -1583,14 +1613,12 @@ export const SessionStream = ({
 			.then((status) => {
 				if (
 					!cancelled &&
-					consentScope.current.generation === generation &&
-					!isPendingCaseHandoverStatus(status.status)
+					consentScope.current.generation === generation
 				) {
-					settleCaseHandoverConsent(notification, status);
+					applyCaseHandoverRequestStatus(notification, status);
 				}
 			})
-			// Not readable or offline: the card keeps its controls, a later
-			// decision reports the real outcome.
+			// Keep the existing card when the read fails without a definite result.
 			.catch(() => undefined);
 		return () => {
 			cancelled = true;
@@ -1683,10 +1711,14 @@ export const SessionStream = ({
 				return readCaseHandoverRequestStatus(sessionId, requestId).then(
 					(currentStatus) => {
 						if (!current()) return;
-						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+						if (
+							!applyCaseHandoverRequestStatus(
+								notification,
+								currentStatus
+							)
+						) {
 							throw new Error('Consent request is still open');
 						}
-						settleCaseHandoverConsent(notification, currentStatus);
 					}
 				);
 			})
@@ -1735,6 +1767,7 @@ export const SessionStream = ({
 				mainTimelineSupplement={
 					<>
 						{displayedConsent &&
+							unavailableConsentScopeKey !== consentScopeKey &&
 							activityEventCaseHandoverRequestId(
 								displayedConsent
 							) !== null && (
