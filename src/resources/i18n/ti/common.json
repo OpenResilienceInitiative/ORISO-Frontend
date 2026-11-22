@@ -2281,7 +2281,9 @@
 				"createNew": "ሓድሽ ቆጸራ ፍጠር",
 				"openCalendar": "ኣብ ዓውደ-ኣዋርሕ ክፈት"
 			}
-		}
+		},
+		"supervisionChangedTitle": "ምክትታል ተቐይሩ",
+		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።"
 	},
 	"navigation": {
 		"appointments": "ቪድዮ - ቆጸራታት",
@@ -5770,6 +5772,10 @@
 				"remove": {
 					"title": "ሱፐርቫይዘር ተሰርዙ",
 					"text": "ሱፐርቫይዘር ብዓወት ተሰርዙ።"
+				},
+				"replace": {
+					"title": "ሱፐርቫይዘር ተቐይሩ",
+					"text": "ሱፐርቫይዘር ብዓወት ተቐይሩ።"
 				}
 			},
 			"error": {
@@ -7879,6 +7885,7 @@
 			"membersTitle": "ናይ ሕጂ ሱፐርቪዥን",
 			"emptyMembers": "እዚ ጉዳይ ገና ሱፐርቫይዘር የብሉን።",
 			"addTitle": "ሱፐርቫይዘር ወስኽ",
+			"unknownName": "ሱፐርቫይዘር",
 			"emptyCandidates": "ኣብዚ ማእከል ካልእ ከም ሱፐርቫይዘር ዝተመልከተ የለን። እዚ ኣመሓዳሪ ማእከል ይውስኖ።",
 			"reasonLabel": "ምኽንያት ሱፐርቪዥን",
 			"reasonPlaceholder": "እዚ ሰብ ስለምንታይ እዚ ጉዳይ ይቆጻጸር?",

@@ -2307,7 +2307,9 @@
 				"createNew": "Créer un nouveau rendez-vous",
 				"openCalendar": "Ouvrir dans le calendrier"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision modifiée",
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
 	},
 	"navigation": {
 		"appointments": "Vidéo - Dates",
@@ -5796,6 +5798,10 @@
 				"remove": {
 					"title": "Superviseur supprimé",
 					"text": "Le superviseur a été supprimé avec succès."
+				},
+				"replace": {
+					"title": "Superviseur remplacé",
+					"text": "Le superviseur a bien été remplacé."
 				}
 			},
 			"error": {
@@ -7912,6 +7918,7 @@
 			"membersTitle": "Supervision actuelle",
 			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
 			"addTitle": "Ajouter un superviseur",
+			"unknownName": "Superviseur",
 			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
 			"reasonLabel": "Motif de la supervision",
 			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",

@@ -2328,7 +2328,9 @@
 				"createNew": "Neuen Termin anlegen",
 				"openCalendar": "Im Kalender öffnen"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision gewechselt",
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}."
 	},
 	"navigation": {
 		"appointments": "Video - Termine",
@@ -5818,6 +5820,10 @@
 				"remove": {
 					"title": "Supervisor entfernt",
 					"text": "Der Supervisor wurde erfolgreich entfernt."
+				},
+				"replace": {
+					"title": "Supervisor gewechselt",
+					"text": "Der Supervisor wurde erfolgreich gewechselt."
 				}
 			},
 			"error": {
@@ -7902,6 +7908,7 @@
 			"membersTitle": "Aktuelle Supervision",
 			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
 			"addTitle": "Supervisor:in hinzufügen",
+			"unknownName": "Supervisor:in",
 			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
 			"reasonLabel": "Grund für die Supervision",
 			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
