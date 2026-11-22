@@ -1618,12 +1618,10 @@ it('opens an existing team conversation through More without a team-only floatin
 	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 2 });
 	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
-	const trigger = await waitFor(() => {
-		const button = view.container.querySelector<HTMLButtonElement>(
-			'.sessionMenu__icon--desktop'
-		);
-		expect(button).not.toBeNull();
-		return button!;
+	// Desktop and phone render the same trigger (CSS shows one); both open
+	// the same menu.
+	const [trigger] = await screen.findAllByRole('button', {
+		name: 'app.menu'
 	});
 	await waitFor(() =>
 		expect(
@@ -1631,12 +1629,8 @@ it('opens an existing team conversation through More without a team-only floatin
 		).toBeNull()
 	);
 	fireEvent.click(trigger);
-	const teamAction = await waitFor(() => {
-		const button = document.querySelector<HTMLButtonElement>(
-			'[data-cy="session-menu-team-chat"]'
-		);
-		expect(button).not.toBeNull();
-		return button!;
+	const teamAction = await screen.findByRole('button', {
+		name: 'enquiry.teamDiscussion.open'
 	});
 	fireEvent.click(teamAction);
 	await waitFor(() =>
