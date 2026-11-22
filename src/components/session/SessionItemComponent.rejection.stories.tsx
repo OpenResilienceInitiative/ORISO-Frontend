@@ -403,3 +403,26 @@ export const NoTeamRoom: Story = {
 		});
 	}
 };
+
+/** Clicking the enquiry team action creates the team room and opens it beside the enquiry. */
+export const TeamActions: Story = {
+	args: { scenario: 'team-actions' },
+	play: async ({ canvasElement }) => {
+		const action = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="enquiry-open-team"]'
+			);
+			expect(node).not.toBeNull();
+			return node!;
+		});
+		expect(canvasElement.querySelector('.sidePanel')).toBeNull();
+		await userEvent.click(action);
+		await waitFor(
+			() =>
+				expect(
+					canvasElement.querySelector('.sidePanel')
+				).not.toBeNull(),
+			{ timeout: 5000 }
+		);
+	}
+};
