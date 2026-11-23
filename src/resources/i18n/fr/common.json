@@ -6581,6 +6581,96 @@
 					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
 				}
 			}
+		},
+		"liveChat": {
+			"title": "Chat en direct",
+			"summary": "Comment arrivent les chats en direct anonymes, comment vous signaler disponible et prendre en charge un chat.",
+			"step": {
+				"intro": {
+					"title": "Chat en direct : ce qui change",
+					"intro": "Les chats en direct arrivent par un lien, sans inscription. Les personnes en recherche de conseil écrivent de façon anonyme, sur un thème précis. Tous les conseillers disponibles pour ce thème partagent une seule file d'attente."
+				},
+				"availabilitySettings": {
+					"title": "Votre disponibilité",
+					"intro": "Activez ou désactivez ici « Je suis disponible ». Seules les personnes disponibles reçoivent des chats en direct. Si vous le souhaitez, placez l'interrupteur dans la barre de menu."
+				},
+				"availabilityToggle": {
+					"title": "Interrupteur dans la barre de menu",
+					"intro": "Avec « Activer le Live-Chat depuis la barre de menu », cet interrupteur apparaît. Un clic vous rend disponible ou indisponible — sans ouvrir les paramètres."
+				},
+				"queue": {
+					"title": "La file d'attente commune",
+					"intro": "Le filtre « Chat en direct » affiche tous les chats en attente. Vos collègues voient la même liste."
+				},
+				"accept": {
+					"title": "Démarrer le chat",
+					"intro": "« Démarrer le chat » vous attribue le chat. Seul le chat en tête de la file peut être accepté."
+				},
+				"done": {
+					"title": "Terminer le chat",
+					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Chronologie et brouillons",
+			"summary": "Où vous voyez tous les événements au même endroit et où se trouvent vos messages non envoyés.",
+			"step": {
+				"activityNav": {
+					"title": "Votre chronologie",
+					"intro": "La « Chronologie » rassemble les événements de tous vos chats. Vous n'avez plus besoin d'ouvrir chaque conversation pour voir ce qui est nouveau."
+				},
+				"timeline": {
+					"title": "Tout au même endroit",
+					"intro": "À gauche la liste des événements, à droite les détails de l'entrée choisie. De là, vous passez directement au chat correspondant."
+				},
+				"filters": {
+					"title": "Rechercher et filtrer",
+					"intro": "Cherchez dans la chronologie ou filtrez par type, par exemple « Non lus » ou « Mentions ». Le bouton de filtre à gauche règle l'affichage."
+				},
+				"markAllRead": {
+					"title": "Tout marquer comme lu",
+					"intro": "Un clic marque toutes les entrées de la chronologie comme lues. Les messages de vos chats ne changent pas."
+				},
+				"draftsChip": {
+					"title": "Brouillons dans vos conversations",
+					"intro": "Les messages non envoyés ne sont pas perdus. Le filtre « Brouillons » montre les conversations qui contiennent encore un brouillon."
+				},
+				"draftsCenter": {
+					"title": "Tous les brouillons",
+					"intro": "Tous les brouillons sont ici, enregistrés par chat et par fil. Ouvrez un brouillon pour continuer à écrire, ou supprimez-le."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Appel vidéo",
+			"summary": "Comment appeler depuis une conversation et laisser entrer les personnes en attente.",
+			"step": {
+				"intro": {
+					"title": "Les appels dans la conversation",
+					"intro": "Vous lancez les appels vidéo et audio directement dans la conversation, depuis son en-tête. La personne en recherche de conseil voit l'appel dans son chat."
+				},
+				"sessionCallButton": {
+					"title": "Lancer un appel",
+					"intro": "L'en-tête d'une conversation ouverte affiche « Démarrer un appel vidéo » et « Démarrer un appel audio ». Sur les écrans étroits, les deux se trouvent dans le menu ⋮."
+				},
+				"groupCallButton": {
+					"title": "Appel dans un chat de groupe",
+					"intro": "Dans un chat de groupe aussi, vous lancez l'appel depuis l'en-tête du chat."
+				},
+				"knock": {
+					"title": "Laisser entrer les personnes en attente",
+					"intro": "Qui arrive plus tard frappe et attend. Pendant l'appel apparaît « Personnes en attente » : « Laisser entrer » fait entrer une personne, « Refuser » non, « Laisser entrer tout le monde » toutes à la fois."
+				},
+				"help": {
+					"title": "Aide aux appels vidéo",
+					"intro": "« Aide » → « Appel vidéo » indique les navigateurs compatibles. Vous pouvez y copier le lien de connexion et le transmettre aux personnes en recherche de conseil."
+				},
+				"done": {
+					"title": "Prêt pour le premier appel",
+					"intro": "Ouvrez une conversation et lancez l'appel au bon moment. Après l'appel, la conversation par chat continue normalement."
+				}
+			}
 		}
 	},
 	"weekday": {
