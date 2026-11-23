@@ -1822,6 +1822,22 @@ export const OneToOneAppointmentCreateInMenu: Story = {
 	}
 };
 
+/**
+ * FE#2494: ⋮ → "Termin anlegen" opens the appointment module as a popup over
+ * the chat room (the shared invitation dialog, variant `appointment`).
+ */
+export const OneToOneAppointmentCreatePopup: Story = {
+	name: '1:1 appointment — ⋮ "Termin anlegen" opens the popup (FE#2494)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		await waitFor(() => expect(row).toBeVisible());
+		await userEvent.click(row);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(dialog).toBeVisible();
+	}
+};
+
 /** One appointment: the row shows only that appointment, no create button. */
 export const OneToOneAppointmentUpcoming: Story = {
 	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',

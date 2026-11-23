@@ -5996,6 +5996,13 @@
 				"mainPane": "Danışmanlık sohbeti",
 				"secondaryPane": "Yan oda"
 			}
+		},
+		"appointment": {
+			"title": "Süpervizörle randevu al",
+			"with": "İle",
+			"description": "Gün, saat ve türü seçin. Randevu ardından iki takvimde de görünür.",
+			"unreachable": "{{name}} takviminizden ulaşılamıyor. Burada randevu mümkün değil; {{name}} kişisine süpervizyon sohbetinde yazın.",
+			"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
 		}
 	},
 	"teamDiscussion": {

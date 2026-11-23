@@ -2368,6 +2368,13 @@
 			"empty": {
 				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
 			}
+		},
+		"appointment": {
+			"title": "Termin mit Supervisor:in vereinbaren",
+			"with": "Mit",
+			"description": "Wähle Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in deinem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreib {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut."
 		}
 	},
 	"teamDiscussion": {

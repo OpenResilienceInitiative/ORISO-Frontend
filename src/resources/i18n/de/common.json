@@ -6018,6 +6018,13 @@
 				"mainPane": "Beratungschat",
 				"secondaryPane": "Nebenraum"
 			}
+		},
+		"appointment": {
+			"title": "Termin mit Supervisor:in vereinbaren",
+			"with": "Mit",
+			"description": "Wählen Sie Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in Ihrem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreiben Sie {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
 		}
 	},
 	"teamDiscussion": {

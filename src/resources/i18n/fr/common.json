@@ -5996,6 +5996,13 @@
 				"mainPane": "Chat de conseil",
 				"secondaryPane": "Salle annexe"
 			}
+		},
+		"appointment": {
+			"title": "Prendre rendez-vous avec la supervision",
+			"with": "Avec",
+			"description": "Choisissez le jour, l'heure et le type. Le rendez-vous apparaît ensuite dans les deux agendas.",
+			"unreachable": "{{name}} n'est pas accessible depuis votre agenda. Un rendez-vous n'est pas possible ici ; écrivez à {{name}} dans le chat de supervision.",
+			"failed": "Le rendez-vous n'a pas pu être enregistré. Veuillez réessayer."
 		}
 	},
 	"teamDiscussion": {
