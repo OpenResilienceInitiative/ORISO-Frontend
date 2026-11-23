@@ -37,7 +37,10 @@ import { MessageSubmitInterfaceComponent } from '../messageSubmitInterface/messa
 import type { ComposerPendingQuote } from '../messageSubmitInterface/ComposerPendingQuotes';
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { PanelHeader } from '../chatStage/PanelHeader';
-import { PanelCallActions } from '../chatStage/PanelCallActions';
+import {
+	PanelCallActions,
+	type PanelMenuItem
+} from '../chatStage/PanelCallActions';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
@@ -67,6 +70,8 @@ import {
 } from '../chatStage/__storybook__/chatStageFixtures';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles.scss';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as CalendarPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
 import '../session/session.styles.scss';
 import '../chatStage/chatStage.styles.scss';
 import '../chatStage/sidePanel.styles.scss';
@@ -412,8 +417,28 @@ export function SideChatReplyStage({
 		}
 	};
 
-	const callActions = (participants: number) => (
+	// *3 (Frank, 24.11.): the Supervision ⋮ also changes the supervisor
+	// and books an appointment with them (calendar popup: own session).
+	const supervisionMenu: PanelMenuItem[] = [
+		{
+			'id': 'change',
+			'icon': <SupervisionIcon aria-hidden />,
+			'title': t('supervision.panel.changeSupervisor'),
+			'onClick': noop,
+			'data-cy': 'panel-menu-change-supervisor'
+		},
+		{
+			'id': 'appointment',
+			'icon': <CalendarPlusIcon aria-hidden />,
+			'title': t('supervision.panel.bookAppointment'),
+			'onClick': noop,
+			'data-cy': 'panel-menu-book-appointment'
+		}
+	];
+
+	const callActions = (participants: number, menuItems?: PanelMenuItem[]) => (
 		<PanelCallActions
+			menuItems={menuItems}
 			onStartCall={noop}
 			participantCount={participants}
 			width={panelWidth}
@@ -457,7 +482,7 @@ export function SideChatReplyStage({
 							title={supervisionTitle}
 							name={SUPERVISOR_NAME}
 							participants={[counsellor, supervisor]}
-							actions={callActions(2)}
+							actions={callActions(2, supervisionMenu)}
 							channels={[]}
 							onSelectChannel={noop}
 							onClose={() => setRoom(null)}

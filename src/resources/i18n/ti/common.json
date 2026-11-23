@@ -5939,6 +5939,8 @@
 			},
 			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
 			"close": "ሱፐርቪዥን ዕጸው",
+			"changeSupervisor": "ተቆጻጻሪ ቀይር",
+			"bookAppointment": "ምስ ተቆጻጻሪ ቆጸራ ሓዝ",
 			"collapse": "ሱፐርቪዥን ኣንኣእስ",
 			"dragHandle": "መስኮት ሱፐርቪዥን ኣንቀሳቕስ – መልክዕ ፍላጻ የንቀሳቕስ፣ Shift + ፍላጻ ዓቐን ይቕይር",
 			"unread": "{{count}} ዘይተነብቡ መልእኽትታት",

@@ -800,7 +800,7 @@
 				"placeholder": {
 					"asker": "Schreiben Sie uns, was Sie bewegt.",
 					"askerAfterFirstMessage": "Etwas vergessen? Senden Sie einfach eine weitere Nachricht.",
-					"consultant": "Nachricht an Klient:in schreiben",
+					"consultant": "Nachricht an ratsuchende Person",
 					"groupChat": "Nachricht schreiben"
 				},
 				"forgotSomething": {
@@ -2281,7 +2281,7 @@
 			"removeBlurLabel": "Geschwärzte Stelle – Schwärzung aufheben",
 			"blurBar": "Aktionen für die geschwärzte Stelle",
 			"toolbar": "Aktionen für die markierte Stelle",
-			"reply": "Antworten",
+			"reply": "Hier antworten",
 			"replyVoice": "Mit Sprachnachricht antworten",
 			"replyInSupervision": "In Supervision antworten",
 			"replyInTeam": "Im Team-Chat antworten",
@@ -5987,6 +5987,8 @@
 			},
 			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
 			"close": "Supervision schließen",
+			"changeSupervisor": "Supervisor:in ändern",
+			"bookAppointment": "Termin mit Supervisor:in vereinbaren",
 			"collapse": "Supervision minimieren",
 			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
 			"unread": "{{count}} ungelesene Nachrichten",

@@ -69,7 +69,7 @@ export const Toolbar: Story = {
 			.getAllByRole('button')
 			.map((button) => button.getAttribute('aria-label'));
 		await expect(names).toEqual([
-			'Antworten',
+			'Hier antworten',
 			'In Supervision antworten',
 			'Im Team-Chat antworten',
 			'Thread'
@@ -264,5 +264,30 @@ export const MarkInThread: Story = {
 		presetRoom: 'thread',
 		preset: P7_PASSAGES.threadReply,
 		presetMode: 'popover'
+	}
+};
+
+/** 8 · ⋮ der Supervision: Anrufe, Supervisor:in ändern, Termin vereinbaren. */
+export const SupervisionMenu: Story = {
+	name: '8 · Supervision ⋮: Anruf, Supervisor:in ändern, Termin',
+	args: { openRoom: 'supervision' },
+	play: async ({ canvasElement }) => {
+		const panel = await waitForSelector(
+			canvasElement,
+			'[data-side-room="supervision"]'
+		);
+		await userEvent.click(
+			await waitForSelector(panel, '[data-cy="panel-call-menu-trigger"]')
+		);
+		const menu = await waitForSelector(
+			panel,
+			'[data-cy="panel-call-menu"]'
+		);
+		await expect(
+			menu.querySelector('[data-cy="panel-menu-change-supervisor"]')
+		).toBeTruthy();
+		await expect(
+			menu.querySelector('[data-cy="panel-menu-book-appointment"]')
+		).toBeTruthy();
 	}
 };
