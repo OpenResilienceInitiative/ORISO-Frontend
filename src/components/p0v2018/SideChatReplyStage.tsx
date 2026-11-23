@@ -213,7 +213,7 @@ export interface SideChatReplyStageProps {
 	/** Today's bar over the passage, or the variant: handle + bubble menu. */
 	menu?: 'toolbar' | 'bubble';
 	/** Variant: the side-chat badge hangs on the grey quote. */
-	badgeOn?: 'bubble' | 'quote';
+	badgeOn?: 'bubble' | 'quote' | 'bottom';
 	/** The side chat that is open on load. */
 	openRoom?: SideRoom | null;
 	/** Passages already waiting in the open side chat's reply field. */

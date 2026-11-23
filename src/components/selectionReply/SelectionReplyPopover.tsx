@@ -57,12 +57,18 @@ export interface SelectionReplyPopoverProps {
 	 * FE#2494 *7: the side chat this answer goes to — a badge attached on top
 	 * of the bubble (icon + room), the full sentence as its accessible name.
 	 */
-	targetBadge?: { label: string; short: string; icon: React.ReactNode };
+	targetBadge?: {
+		label: string;
+		short: string;
+		icon: React.ReactNode;
+		/** Colours of that side room's own chip (Supervision / Team). */
+		kind?: 'supervision' | 'team';
+	};
 	/**
 	 * Where the badge hangs: on the bubble's edge, or (variant, Frank
 	 * 24 Nov) on the grey quote, which saves the bubble's top spacing.
 	 */
-	badgeOn?: 'bubble' | 'quote';
+	badgeOn?: 'bubble' | 'quote' | 'bottom';
 	/** Answers already stacked for that message; the stack shows the next number. */
 	collectedCount?: number;
 }
@@ -139,10 +145,22 @@ export const SelectionReplyPopover = forwardRef<
 			if (!field) {
 				return;
 			}
+			// Resetting the height to measure it throws away the scroll
+			// position; keep it, or the caret falls out of view (Frank,
+			// Shift+Enter on line 10).
+			const scrollTop = field.scrollTop;
 			field.style.height = 'auto';
 			// FE#2494 (Frank): more room when writing — up to 10 lines, then
 			// the field scrolls inside and keeps the caret in view.
 			field.style.height = `${Math.min(field.scrollHeight, 10 * 20 + 16)}px`;
+			field.scrollTop = scrollTop;
+			// Typing at the end keeps the newest line in view.
+			if (
+				document.activeElement === field &&
+				field.selectionEnd >= field.value.length
+			) {
+				field.scrollTop = field.scrollHeight;
+			}
 			// Hysteresis: once the answer wraps, Stack stays under Send until
 			// the field is empty again. Otherwise the wider field unwraps the
 			// line, the buttons move back, it wraps again — and words jump.
@@ -233,7 +251,9 @@ export const SelectionReplyPopover = forwardRef<
 
 		const badge = targetBadge ? (
 			<p
-				className="selectionReply__target"
+				className={`selectionReply__target selectionReply__target--${
+					targetBadge.kind ?? 'supervision'
+				}`}
 				data-cy="selection-reply-target"
 				title={targetBadge.label}
 			>
@@ -264,7 +284,10 @@ export const SelectionReplyPopover = forwardRef<
 						'selectionReply__popover--targeted',
 					targetBadge &&
 						badgeOn === 'quote' &&
-						'selectionReply__popover--targetedQuote'
+						'selectionReply__popover--targetedQuote',
+					targetBadge &&
+						badgeOn === 'bottom' &&
+						'selectionReply__popover--targetedBottom'
 				]
 					.filter(Boolean)
 					.join(' ')}
@@ -272,7 +295,7 @@ export const SelectionReplyPopover = forwardRef<
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
-				{badgeOn === 'bubble' && badge}
+				{(badgeOn === 'bubble' || badgeOn === 'bottom') && badge}
 				<div className="selectionReply__quote">
 					{badgeOn === 'quote' && badge}
 					<ReplyArrowIcon className="selectionReply__quoteIcon" />

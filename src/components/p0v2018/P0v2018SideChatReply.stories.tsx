@@ -368,3 +368,16 @@ export const BadgeOnQuote: Story = {
 		await expect(badge.closest('.selectionReply__quote')).toBeTruthy();
 	}
 };
+
+/** Variante · Wimpel unten links an der Blase, in den Farben der Supervision. */
+export const BadgeBottomLeft: Story = {
+	name: 'Variante · Wimpel unten links',
+	args: {
+		openRoom: 'supervision',
+		collected: [P7_PASSAGES.letters, P7_PASSAGES.contract],
+		preset: P7_PASSAGES.sleep,
+		presetMode: 'popover',
+		presetTarget: 'supervision',
+		badgeOn: 'bottom'
+	}
+};

@@ -99,7 +99,7 @@ export interface SelectionReplyLayerProps {
 	 */
 	menu?: 'toolbar' | 'bubble';
 	/** FE#2494 variant: the side-chat badge hangs on the quote. */
-	badgeOn?: 'bubble' | 'quote';
+	badgeOn?: 'bubble' | 'quote' | 'bottom';
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -1023,7 +1023,8 @@ export const SelectionReplyLayer = ({
 										'message.selectionReply.replyInSupervision'
 									),
 									short: translate('supervision.panel.title'),
-									icon: <SupervisionIcon />
+									icon: <SupervisionIcon />,
+									kind: 'supervision'
 								}
 							: target === 'team'
 								? {
@@ -1033,7 +1034,8 @@ export const SelectionReplyLayer = ({
 										short: translate(
 											'chatStage.panel.team.title'
 										),
-										icon: <TeamChatIcon />
+										icon: <TeamChatIcon />,
+										kind: 'team'
 									}
 								: undefined
 					}

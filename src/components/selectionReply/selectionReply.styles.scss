@@ -243,7 +243,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	border: 0;
 
 	// Surface, frame and corners belong to `.selectionReply__box`.
-	border-radius: 16px 0 0 16px;
+	border-radius: 4px 0 0 16px;
 	background: transparent;
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
@@ -275,7 +275,9 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-items: center;
 	min-height: 40px;
 	border: 1px solid var(--m3-primary-fixed, #ffdad5);
-	border-radius: 16px 4px 16px 16px;
+
+	// Top corners 4px where the box meets the quote (Frank's green marks).
+	border-radius: 4px 4px 16px 16px;
 	background: var(--m3-surface-container-lowest, #fff);
 	transition: border-color 150ms ease;
 
@@ -294,6 +296,12 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 		// Sit on the frame, flush with the notch.
 		margin: -1px -1px 0 0;
+	}
+
+	// One line: Send fills the box's height, so its bottom-right corner
+	// follows the box's round one (Frank's green mark, 24 Nov).
+	&:not(.selectionReply__box--stacked) > .selectionReply__send .sendButton {
+		border-bottom-right-radius: 16px;
 	}
 
 	&--stacked {
@@ -430,6 +438,20 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	padding-top: 18px;
 }
 
+// Variant (Frank, 24 Nov): the badge as a pennant under the bubble's
+// bottom-left, its 4px corner pointing up at the bubble.
+.selectionReply__popover--targetedBottom {
+	margin-bottom: 12px;
+
+	> .selectionReply__target {
+		top: auto;
+		right: auto;
+		bottom: -12px;
+		left: 16px;
+		border-radius: 4px 12px 12px 12px;
+	}
+}
+
 // Variant (Frank, 24 Nov): the badge hangs on the grey quote instead of the
 // bubble's edge; the bubble keeps its plain padding.
 .selectionReply__popover--targetedQuote {
@@ -452,10 +474,21 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	height: 24px;
 	margin: 0;
 	padding: 0 10px 0 6px;
-	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border: 0;
 	border-radius: 12px 4px 12px 12px;
-	background: var(--m3-secondary-container, #e8e6f0);
-	color: var(--m3-on-secondary-container, #4f5864);
+
+	// Frank, 24 Nov: the side room's own chip colours — Supervision is the
+	// accent `primary-fixed-dim` with the dark `on-primary-fixed`, the
+	// Teamberatung its `secondary-fixed` pair (as in the panel header).
+	&--supervision {
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--m3-on-primary-fixed, #410001);
+	}
+
+	&--team {
+		background: var(--m3-secondary-fixed, #dae3ee);
+		color: var(--m3-on-secondary-fixed, #131c25);
+	}
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 16px;
