@@ -199,6 +199,16 @@ export interface Colleague {
 	internalChat?: boolean;
 }
 
+export const repeatedColleagueNames = (colleagues: readonly Colleague[]) => {
+	const seen = new Set<string>();
+	const repeated = new Set<string>();
+	for (const { displayName } of colleagues) {
+		if (seen.has(displayName)) repeated.add(displayName);
+		seen.add(displayName);
+	}
+	return repeated;
+};
+
 const RELATIONS_IN_SCOPE: Record<CalendarVisibilityScope, ColleagueRelation[]> =
 	{
 		AGENCY: ['sameAgency'],
