@@ -6,6 +6,7 @@ import {
 } from '../../utils/listItemSelection';
 import {
 	activityEventRouteIdentity,
+	shouldMarkActivityEventReadOnOpen,
 	showsConversationPreview
 } from './activityEvent';
 import { getNextNotificationId } from './notificationQueue';
@@ -96,7 +97,11 @@ export const useActivityTimeline = ({
 		if (isPhone || unreadOnly) {
 			return;
 		}
-		if (selectedEvent && !selectedEvent.readAt) {
+		if (
+			selectedEvent &&
+			!selectedEvent.readAt &&
+			shouldMarkActivityEventReadOnOpen(selectedEvent)
+		) {
 			markRead(selectedEvent.id);
 		}
 	}, [isPhone, unreadOnly, selectedEvent, markRead]);
