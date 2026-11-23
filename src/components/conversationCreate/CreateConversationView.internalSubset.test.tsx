@@ -243,6 +243,65 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 		}
 	);
 
+	it.each([
+		['c-first', 'Centre 5'],
+		['c-second', 'Centre 9']
+	])(
+		'distinguishes identical display labels and sends only the selected account %s',
+		async (consultantId, centre) => {
+			tenantState.tenant = tenantWithScope('TENANT');
+			vi.mocked(loadInternalChatColleagues).mockResolvedValue([
+				{
+					...colleague('c-first', 'Anna', [5]),
+					tenantName: 'Springfield'
+				},
+				{
+					...colleague('c-second', 'Anna', [5, 9]),
+					tenantName: 'Springfield'
+				},
+				otherCentre
+			]);
+			vi.mocked(apiCreateInternalSubsetChat).mockResolvedValue({
+				matrixRoomId: '!room:matrix.test',
+				chatId: 321,
+				reused: false
+			});
+			renderView();
+
+			const menu = within(await openPersonMenu());
+			const first = await menu.findByText(
+				'Anna Test (Springfield) · Centre 5'
+			);
+			const second = menu.getByText(
+				'Anna Test (Springfield) · Centre 5, Centre 9'
+			);
+			expect(menu.getByText('Boris Test')).toBeTruthy();
+			fireEvent.click(centre === 'Centre 5' ? first : second);
+			fireEvent.change(
+				screen.getByLabelText('groupChat.internal.nameLabel'),
+				{
+					target: { value: 'Fallbesprechung' }
+				}
+			);
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'groupChat.internal.createLabel'
+				})
+			);
+
+			await waitFor(() =>
+				expect(
+					apiCreateInternalSubsetChat
+				).toHaveBeenCalledExactlyOnceWith({
+					consultantIds: [consultantId],
+					agencyId: 5,
+					topic: 'Fallbesprechung'
+				})
+			);
+			expect(apiCreateGroupChat).not.toHaveBeenCalled();
+		}
+	);
+
 	it('sends the picked colleague to a dedicated room and nobody else', async () => {
 		tenantState.tenant = tenantWithScope('TENANT');
 		vi.mocked(loadInternalChatColleagues).mockResolvedValue([
