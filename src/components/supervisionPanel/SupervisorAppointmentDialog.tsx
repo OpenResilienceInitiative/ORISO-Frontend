@@ -6,7 +6,8 @@
  * in the calendar; this file only frames it and loads what it needs.
  *
  * UserService books it into both calendars and opens (or reuses) the
- * private internal chat of the two, where the notice goes. A supervisor
+ * private internal chat of the two. The notice goes there and into the
+ * Supervision room it was opened from. A supervisor
  * outside the own calendar reach cannot be booked (UserService answers 404):
  * the dialog says so instead of offering a save that must fail.
  */
@@ -132,7 +133,13 @@ const DAY = 24 * 60 * 60 * 1000;
 export type SupervisorAppointmentDialogWiredProps = Omit<
 	SupervisorAppointmentDialogProps,
 	'colleagues' | 'entries' | 'saving' | 'error' | 'onSave'
->;
+> & {
+	/**
+	 * The Supervision room it was opened from: the appointment card shows
+	 * there too (Frank, 2026-11-24), besides the private chat of the two.
+	 */
+	supervisionRoom?: { sessionId: number; matrixRoomId: string };
+};
 
 /** Loads the calendar reach and the own entries, saves through UserService. */
 export const SupervisorAppointmentDialogWired = (
@@ -183,14 +190,28 @@ export const SupervisorAppointmentDialogWired = (
 				kind: kindToApi(draft.kind ?? 'video')
 			});
 			notifyAppointmentsChanged();
+			const notices: Promise<unknown>[] = [];
 			if (created?.matrixRoomId && typeof created.chatId === 'number')
-				await sendNotice({
-					kind: 'created',
-					start: draft.start,
-					end: draft.end,
-					sessionId: created.chatId,
-					matrixRoomId: created.matrixRoomId
-				});
+				notices.push(
+					sendNotice({
+						kind: 'created',
+						start: draft.start,
+						end: draft.end,
+						sessionId: created.chatId,
+						matrixRoomId: created.matrixRoomId
+					})
+				);
+			if (props.supervisionRoom)
+				notices.push(
+					sendNotice({
+						kind: 'created',
+						start: draft.start,
+						end: draft.end,
+						...props.supervisionRoom
+					})
+				);
+			// The appointment stands; a failed notice only tells the person.
+			await Promise.allSettled(notices);
 			props.onClose();
 		} catch {
 			setError(t('supervision.appointment.failed'));

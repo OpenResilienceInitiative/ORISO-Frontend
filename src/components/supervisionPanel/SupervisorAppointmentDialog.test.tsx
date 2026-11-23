@@ -50,11 +50,14 @@ const colleagueDto = (id: string) => ({
 	relation: 'SAME_AGENCY'
 });
 
+const SUPERVISION_ROOM = { sessionId: 12, matrixRoomId: '!supervision:oriso' };
+
 const renderDialog = (onClose = vi.fn()) =>
 	render(
 		<SupervisorAppointmentDialogWired
 			supervisor={SUPERVISOR}
 			ownerId="me"
+			supervisionRoom={SUPERVISION_ROOM}
 			onClose={onClose}
 		/>
 	);
@@ -97,6 +100,10 @@ describe('SupervisorAppointmentDialog (FE#2494)', () => {
 				sessionId: 77,
 				matrixRoomId: '!internal:oriso'
 			})
+		);
+		// Frank 2026-11-24: the card shows in the Supervision room too.
+		expect(sendNotice).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'created', ...SUPERVISION_ROOM })
 		);
 	});
 
