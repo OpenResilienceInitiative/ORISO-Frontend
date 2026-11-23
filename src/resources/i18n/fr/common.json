@@ -6153,6 +6153,17 @@
 			"dataProtection": "Que deviennent mes données ?",
 			"modalityNote": "Comment se déroule le conseil ?",
 			"title": "Questions fréquentes"
+		},
+		"questions": {
+			"title": "Quelques questions",
+			"send": "Envoyer les réponses",
+			"required": "Veuillez répondre à cette question.",
+			"requiredMark": "obligatoire",
+			"thanks": "Merci pour vos réponses.",
+			"choose": "Veuillez choisir",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant."
 		}
 	},
 	"legal": {
