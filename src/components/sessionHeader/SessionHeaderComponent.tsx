@@ -1386,6 +1386,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						</div>
 					)}
 					{topic?.name && <SessionTopic name={topic.name} />}
+					{/* FE#2494: the appointments hang beside the topic. */}
+					{activeSession.isSession &&
+						(isAskerUser || isConsultantUser) && (
+							<ConversationAppointmentSlot
+								onCreateChange={handleCreateAppointmentChange}
+								canChange={
+									// Handover co-access may create too: the backend decides
+									// for a colleague who is not the assigned counsellor.
+									isConsultantUser &&
+									!isChatFinished &&
+									activeSession.item.status === STATUS_ACTIVE
+								}
+							/>
+						)}
 				</div>
 			)}
 			{activeSession.isSession && isConsultantUser && (
@@ -1396,18 +1410,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					   answers only for the invitation's own counsellor. */
 					enabled
 					onChange={handleSendNewLinkChange}
-				/>
-			)}
-			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
-				<ConversationAppointmentSlot
-					onCreateChange={handleCreateAppointmentChange}
-					canChange={
-						// Handover co-access may create too: the backend decides
-						// for a colleague who is not the assigned counsellor.
-						isConsultantUser &&
-						!isChatFinished &&
-						activeSession.item.status === STATUS_ACTIVE
-					}
 				/>
 			)}
 			{isAskerUser &&

@@ -1,0 +1,159 @@
+// FE#2494: the appointment pennant hangs from the header divider beside the
+// topic tag: no top edge (the divider is it), rounded bottom, outline only.
+// A touch larger than the topic tag; the Art bubble in front and the arrow
+// bubble at the back peek out below the pennant.
+.appointmentPennant {
+	--pennant-height: 30px;
+
+	position: relative;
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+	height: var(--pennant-height);
+	margin: 0;
+	padding: 0 4px 0 3px;
+	// The divider's own colour, a step darker: it hangs from that line.
+	border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+	border-top: 0;
+	border-radius: 0 0 16px 16px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	line-height: 18px;
+	font-weight: 500;
+	letter-spacing: 0.1px;
+	cursor: pointer;
+
+	// 48px touch target around the pennant, without moving anything.
+	&::before {
+		content: '';
+		position: absolute;
+		inset: -4px -4px -14px;
+	}
+
+	&:hover {
+		background: var(--m3-surface-container-low, #f6f3f3);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a8001c);
+		outline-offset: 2px;
+	}
+
+	&[aria-expanded='true'] {
+		border-color: var(--m3-outline, #747775);
+		background: var(--m3-surface-container, #f0edee);
+	}
+
+	// FE#2287: a request nobody answered yet: same pennant, dashed.
+	&--requested {
+		border-style: dashed;
+		border-top: 0;
+	}
+}
+
+// The Art: a round bubble that peeks 6px out below the pennant.
+.appointmentPennant__bubble {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	margin-top: 12px;
+	border-radius: 50%;
+	background: var(--m3-secondary-container, #e2dfe0);
+	color: var(--m3-on-secondary-container, #1b1b1c);
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+
+	svg {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+
+	// The arrow at the back: smaller, inside the pennant.
+	&--arrow {
+		width: 22px;
+		height: 22px;
+		margin-top: 0;
+		box-shadow: none;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.appointmentPennant__label {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+// Another kind of appointment (e.g. with the supervisor): the Art bubble in
+// the tertiary tone, so the two pennants tell apart without words.
+.appointmentPennant--other
+	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
+	background: var(--m3-tertiary-container, #d8e2ff);
+	color: var(--m3-on-tertiary-container, #001a41);
+}
+
+.appointmentPennant__label--short {
+	display: none;
+}
+
+// Phone: the short date, no arrow bubble; the whole pennant opens the menu.
+@media (max-width: 599.98px) {
+	.appointmentPennant {
+		gap: 6px;
+		padding-right: 10px;
+	}
+
+	.appointmentPennant__bubble {
+		width: 26px;
+		height: 26px;
+		margin-top: 14px;
+	}
+
+	.appointmentPennant__bubble--arrow,
+	.appointmentPennant__label:not(.appointmentPennant__label--short) {
+		display: none;
+	}
+
+	.appointmentPennant__label--short {
+		display: inline;
+	}
+
+	// The short dates stay whole; the topic gives way ("Familien…").
+	.sessionInfo__metaInfo .roomAppointmentPennants,
+	.roomAppointmentPennants > .appointmentPennant {
+		flex-shrink: 0;
+		min-width: auto;
+	}
+}
+
+// The pennants of a room: in the topic's row, hanging from the divider.
+.roomAppointmentPennants {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+	align-self: flex-start;
+}
+
+// With pennants beside it the topic may shorten ("Familien…").
+.sessionInfo__metaInfo:has(.roomAppointmentPennants) > .topicTag {
+	flex: 0 1 auto;
+	min-width: 72px;
+}
+
+// The topic and the pennants hang from the divider: top-aligned.
+.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
+	align-items: flex-start;
+}

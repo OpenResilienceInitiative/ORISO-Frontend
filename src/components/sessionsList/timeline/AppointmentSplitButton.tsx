@@ -23,6 +23,7 @@ import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { MODALITY_ICON } from './AppointmentKindGlyph';
+import { AppointmentPennant } from './AppointmentPennant';
 import {
 	entryMenu,
 	formatEntrySlot,
@@ -255,32 +256,46 @@ export const AppointmentSplitButton = ({
 };
 
 /**
- * The room's next appointment, directly below the header divider (ADR-021),
- * on phone and desktop. Group rooms show it after `sessionInfo__headerWrapper`
- * in `GroupChatHeader`, 1:1 rooms after `sessionInfo__metaInfo` in
- * `SessionHeaderComponent`. `action` sits beside it, also with no appointment.
+ * The room's appointments as pennants hanging from the header divider
+ * (FE#2494, replacing the split button of ADR-021). 1:1 rooms show them in
+ * the topic's row (`sessionInfo__metaInfo`), group rooms right below the
+ * header line. `extra` adds pennants of other kinds, e.g. the appointment
+ * with the supervisor. `action` sits beside them, also with none.
  */
 export const RoomNextAppointment = ({
 	entry,
 	role,
 	onAction,
-	action
+	action,
+	extra = []
 }: {
 	entry?: FutureEntry;
 	role: TimelineRole;
 	onAction?: AppointmentAction;
 	action?: React.ReactNode;
+	extra?: { entry: FutureEntry; withLabel: string }[];
 }) =>
-	entry || action ? (
-		<div className="roomNextAppointment" data-cy="room-next-appointment">
+	entry || extra.length > 0 || action ? (
+		<div
+			className="roomNextAppointment roomAppointmentPennants"
+			data-cy="room-next-appointment"
+		>
 			{entry && (
-				<AppointmentSplitButton
+				<AppointmentPennant
 					entry={entry}
 					role={role}
-					size="compact"
 					onAction={onAction}
 				/>
 			)}
+			{extra.map((item) => (
+				<AppointmentPennant
+					key={item.entry.key}
+					entry={item.entry}
+					withLabel={item.withLabel}
+					role={role}
+					onAction={onAction}
+				/>
+			))}
 			{action}
 		</div>
 	) : null;
