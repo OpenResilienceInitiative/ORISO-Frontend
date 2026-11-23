@@ -1,3 +1,4 @@
+import { FittedHeaderTitle } from './FittedHeaderTitle';
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
@@ -1218,7 +1219,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						);
 					})()}
 					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<h3 title={headerTitle}>{headerTitle}</h3>
+						<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
 					)}
 					{hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
@@ -1226,10 +1227,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					) ? (
 						isAskerInfoAvailable() ? (
 							<Link to={userProfileLink}>
-								<h3 title={headerTitle}>{headerTitle}</h3>
+								<FittedHeaderTitle>
+									{headerTitle}
+								</FittedHeaderTitle>
 							</Link>
 						) : (
-							<h3 title={headerTitle}>{headerTitle}</h3>
+							<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
 						)
 					) : null}
 				</div>
