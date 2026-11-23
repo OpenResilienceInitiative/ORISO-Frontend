@@ -108,6 +108,41 @@ export const getConsultantDirectLinkTopicIds = (
 	return [];
 };
 
+/**
+ * The postcode UserService reads as an anonymous Live Chat guest
+ * (`AnonymousSessionRegistration`): it clears the privacy confirmation and
+ * hides the enquiry from counsellors until an in-chat consent.
+ */
+const GUEST_POSTCODE = '00000';
+
+const isRealPostcode = (value?: string | null): value is string =>
+	typeof value === 'string' &&
+	/^[0-9]{5}$/.test(value) &&
+	value !== GUEST_POSTCODE;
+
+/**
+ * The postcode a registration through a direct agency (`aid`) or counsellor
+ * (`cid`) link is sent with, since those links skip the postcode step.
+ *
+ * It used to be the placeholder `00000`, which made every such registration an
+ * anonymous guest to UserService: no privacy confirmation, and an enquiry no
+ * counsellor could see (Dev, case 263, 23 Nov 2026). The order is the URL's own
+ * postcode, then the linked agency's, then any of the counsellor's agencies.
+ * With none of them the result is `undefined` and the person is asked.
+ */
+export const resolveDirectLinkZipcode = (params: {
+	urlZipcode?: string | null;
+	directLinkAgency?: { postcode?: string | null } | null;
+	consultantAgencies?: { postcode?: string | null }[] | null;
+}): string | undefined => {
+	if (params.urlZipcode) {
+		return params.urlZipcode;
+	}
+	return [params.directLinkAgency, ...(params.consultantAgencies ?? [])]
+		.map((agency) => agency?.postcode)
+		.find(isRealPostcode);
+};
+
 export type RegistrationStepFilterParams = {
 	preselectedConsultantId?: string | null;
 	preselectedConsultant?: ConsultantDirectLink | null;
@@ -126,7 +161,10 @@ export const filterRegistrationStepsForDirectLink = (
 
 	return steps.filter((step) => {
 		if (isConsultantDirectLink) {
-			if (step.name === 'zipcode' || step.name === 'agency-selection') {
+			// The postcode step goes only once a postcode is known: the
+			// condition below drops it then, and keeps it when the
+			// counsellor's agencies have none (see resolveDirectLinkZipcode).
+			if (step.name === 'agency-selection') {
 				return false;
 			}
 
