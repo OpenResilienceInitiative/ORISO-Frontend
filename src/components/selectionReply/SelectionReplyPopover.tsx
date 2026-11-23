@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import MicIcon from '@mui/icons-material/Mic';
-import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
+import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio.svg';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
@@ -253,7 +252,10 @@ export const SelectionReplyPopover = forwardRef<
 								'message.selectionReply.replyVoice'
 							)}
 						>
-							<MicIcon fontSize="inherit" aria-hidden />
+							<MicIcon
+								aria-hidden
+								className="selectionReply__micIcon"
+							/>
 						</button>
 					)}
 					<span className="selectionReply__hintWrap">
@@ -270,7 +272,7 @@ export const SelectionReplyPopover = forwardRef<
 							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							<AddIcon fontSize="inherit" aria-hidden />
+							{translate('message.selectionReply.collect')}
 						</button>
 						{hint === 'add' && (
 							<span

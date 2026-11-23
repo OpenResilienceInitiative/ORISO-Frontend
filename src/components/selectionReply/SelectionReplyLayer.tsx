@@ -55,6 +55,20 @@ export interface SelectionReplyLayerProps {
 	onSendNow: (answer: SelectionAnswer) => void;
 	/** Last toolbar option: open a thread on the marked passage. */
 	onStartThread?: (passage: MarkedPassage) => void;
+	/**
+	 * FE#2494 *7: "In Supervision antworten" / "Im Team-Chat antworten".
+	 * Each handler receives the marked passage; the side chat collects it
+	 * in its own reply field. Missing handler = the entry is not offered.
+	 */
+	onReplyInSideRoom?: {
+		supervision?: (passage: MarkedPassage) => void;
+		team?: (passage: MarkedPassage) => void;
+	};
+	/**
+	 * FE#2494 *8: the microphone sits inside the reply field; the bar can
+	 * drop its own voice entry. Default keeps today's bar.
+	 */
+	voiceInToolbar?: boolean;
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -112,6 +126,8 @@ export const SelectionReplyLayer = ({
 	onAddToComposer,
 	onSendNow,
 	onStartThread,
+	onReplyInSideRoom,
+	voiceInToolbar = true,
 	focusComposer,
 	recorder,
 	onBlurPassage,
@@ -648,6 +664,15 @@ export const SelectionReplyLayer = ({
 		setBlurTarget(null);
 	};
 
+	const replyInSideRoom = (target: 'supervision' | 'team') => {
+		const handler = onReplyInSideRoom?.[target];
+		if (active && handler) {
+			handler(active.passage);
+			window.getSelection()?.removeAllRanges();
+			reset();
+		}
+	};
+
 	const startThread = () => {
 		if (active && onStartThread) {
 			onStartThread(active.passage);
@@ -706,8 +731,18 @@ export const SelectionReplyLayer = ({
 							anchor.layerWidth - EDGE - toolbarHalf
 						)
 					}}
-					showVoice={Boolean(recorder)}
+					showVoice={Boolean(recorder) && voiceInToolbar}
 					showThread={Boolean(onStartThread)}
+					onReplyInSupervision={
+						onReplyInSideRoom?.supervision
+							? () => replyInSideRoom('supervision')
+							: undefined
+					}
+					onReplyInTeam={
+						onReplyInSideRoom?.team
+							? () => replyInSideRoom('team')
+							: undefined
+					}
 					onReply={() => openPopover(false)}
 					onReplyWithVoice={() => openPopover(true)}
 					onStartThread={startThread}

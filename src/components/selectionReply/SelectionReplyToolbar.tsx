@@ -5,6 +5,8 @@ import MicIcon from '@mui/icons-material/Mic';
 
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 
 export interface SelectionReplyToolbarProps {
@@ -17,6 +19,13 @@ export interface SelectionReplyToolbarProps {
 	onReply: () => void;
 	onReplyWithVoice: () => void;
 	onStartThread: () => void;
+	/**
+	 * FE#2494 *7: put the passage into the Supervision side chat's own
+	 * reply field. Without a handler (no supervision room) not shown.
+	 */
+	onReplyInSupervision?: () => void;
+	/** FE#2494 *7: the same into the enquiry's team side chat. */
+	onReplyInTeam?: () => void;
 	/**
 	 * Moderators only: "Blur" hides the passage for everyone. Without a
 	 * handler the entry is not shown.
@@ -58,8 +67,9 @@ const Divider = () => (
 );
 
 /**
- * The small bar over a marked passage: reply, reply by voice note, start a
- * thread on that passage and, for moderators, blur it. Icons only; each
+ * The small bar over a marked passage: reply, reply by voice note, reply in
+ * the Supervision or team side chat, start a thread on that passage and, for
+ * moderators, blur it. Icons only; each
  * label appears as a tip. Same white card, radius and shadow as the message
  * action menu.
  */
@@ -75,6 +85,8 @@ export const SelectionReplyToolbar = forwardRef<
 			onReply,
 			onReplyWithVoice,
 			onStartThread,
+			onReplyInSupervision,
+			onReplyInTeam,
 			onBlur
 		},
 		ref
@@ -102,6 +114,34 @@ export const SelectionReplyToolbar = forwardRef<
 						label={translate('message.selectionReply.replyVoice')}
 						icon={<MicIcon fontSize="inherit" aria-hidden />}
 						onClick={onReplyWithVoice}
+					/>
+				)}
+				{onReplyInSupervision && (
+					<ToolbarAction
+						label={translate(
+							'message.selectionReply.replyInSupervision'
+						)}
+						icon={
+							<SupervisionIcon
+								aria-hidden
+								className="selectionReply__sideRoomIcon"
+							/>
+						}
+						onClick={onReplyInSupervision}
+						dataCy="selection-reply-supervision"
+					/>
+				)}
+				{onReplyInTeam && (
+					<ToolbarAction
+						label={translate('message.selectionReply.replyInTeam')}
+						icon={
+							<TeamChatIcon
+								aria-hidden
+								className="selectionReply__sideRoomIcon"
+							/>
+						}
+						onClick={onReplyInTeam}
+						dataCy="selection-reply-team"
 					/>
 				)}
 				{showThread && (

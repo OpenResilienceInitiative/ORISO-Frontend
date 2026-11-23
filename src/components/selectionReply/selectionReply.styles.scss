@@ -291,33 +291,53 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 }
 
-// "+": the answer joins the one message being put together in the composer.
+// "Sammeln" (FE#2494 *8): the answer joins the one message being put
+// together in the composer. A labelled, dark-grey secondary button — the old
+// round "+" read as "upload". Send beside it stays the red primary.
 .selectionReply__collect {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	width: 40px;
 	height: 40px;
-	padding: 0;
-	border: 1px solid var(--m3-outline-variant, #c4c7c7);
-	border-radius: 50%;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
+	padding: 0 16px;
+	border: 0;
+	border-radius: 20px;
+	background: var(--m3-on-surface-variant, #444748);
+	color: var(--m3-surface-container-lowest, #fff);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+	white-space: nowrap;
 	cursor: pointer;
 	transition:
 		background-color 150ms ease,
 		color 150ms ease;
 
-	svg {
-		font-size: 22px;
+	&:hover {
+		background: var(--m3-on-surface, #1b1b1c);
 	}
 
-	@include selection-reply-control-states;
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
+	}
 
 	&:disabled {
 		opacity: 0.38;
 		cursor: not-allowed;
+	}
+}
+
+// Library icons (src/resources/img/icons) take the button's colour.
+.selectionReply__micIcon,
+.selectionReply__sideRoomIcon {
+	width: 20px;
+	height: 20px;
+
+	path {
+		fill: currentColor;
 	}
 }
 
