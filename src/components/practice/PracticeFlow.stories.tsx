@@ -759,11 +759,11 @@ export const SupervisorPickerWithKeyboard: Story = {
 					{},
 					SLOW
 				);
-				await expect(
-					within(screen.getByRole('dialog')).getAllByText(
-						'Robin (Übung)'
-					)[0]
-				).toBeVisible();
+				const supervisorSelect = within(
+					screen.getByRole('dialog')
+				).getByRole('combobox', { name: 'Supervisor:in auswählen' });
+				await expect(supervisorSelect).toBeVisible();
+				await expect(supervisorSelect).toHaveTextContent('Robin (Übung)');
 				await tabTo(reason);
 				await userEvent.keyboard(
 					'Ich möchte mich zum Vorgehen absichern.'
