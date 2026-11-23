@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	apiCloseTeamDiscussion,
 	apiGetTeamDiscussion,
+	apiJoinTeamDiscussion,
 	apiOpenTeamDiscussion,
 	type TeamDiscussion
 } from '../api/apiTeamDiscussion';
+import { FETCH_ERRORS } from '../api/fetchData';
 import {
 	invalidateTeamDiscussionCache,
 	primeTeamDiscussionCache
@@ -27,6 +29,8 @@ interface UseTeamDiscussionChannelInput {
 }
 
 export type TeamDiscussionToggle = 'on' | 'off';
+/** 'onNotAllowed': the backend refused to start one here (400). */
+export type TeamDiscussionToggleError = TeamDiscussionToggle | 'onNotAllowed';
 
 interface TeamDiscussionChannelResult {
 	discussion: TeamDiscussion | null;
@@ -43,7 +47,7 @@ interface TeamDiscussionChannelResult {
 	/** The switch currently in flight, if any. */
 	toggling: TeamDiscussionToggle | null;
 	/** The switch that failed last; cleared by the next attempt. */
-	toggleError: TeamDiscussionToggle | null;
+	toggleError: TeamDiscussionToggleError | null;
 }
 
 const EMPTY_STATE: TeamDiscussionChannelState = {
@@ -56,9 +60,9 @@ const EMPTY_STATE: TeamDiscussionChannelState = {
 };
 
 /**
- * Looks at the GET answer first and decides whether the open route may POST.
+ * Looks at the GET answer first and decides how the open route joins.
  * POST creates, joins and — since FE#2491 — REOPENS a CLOSED discussion, so a
- * CLOSED one is only ever looked at here, never posted to.
+ * CLOSED or ARCHIVED one is only read here, through the read-only join.
  */
 const resolveRequestedDiscussion = async (
 	sessionId: number,
@@ -67,11 +71,13 @@ const resolveRequestedDiscussion = async (
 	// A failed lookup is inconclusive: the room may be CLOSED, and POST would
 	// reopen it without a switch-on. Surface the error; the panel can retry.
 	const existing = await apiGetTeamDiscussion(sessionId);
-	if (existing?.status === 'CLOSED') {
-		return existing;
+	if (existing?.status === 'CLOSED' || existing?.status === 'ARCHIVED') {
+		// A colleague who never joined can read it too (US#1778). 204: the
+		// room is gone for this case (moved to another Beratungsstelle).
+		return apiJoinTeamDiscussion(sessionId);
 	}
-	// POST is also the join contract. Accepted/archived sessions may not
-	// create a room, but must still join an existing room when opened.
+	// POST is the join contract for an OPEN room, and creates one where
+	// this case may start it.
 	if (existing || allowCreate) {
 		return apiOpenTeamDiscussion(sessionId);
 	}
@@ -88,9 +94,8 @@ export const useTeamDiscussionChannel = ({
 	const [state, setState] = useState<TeamDiscussionChannelState>(EMPTY_STATE);
 	const [retryToken, setRetryToken] = useState(0);
 	const [toggling, setToggling] = useState<TeamDiscussionToggle | null>(null);
-	const [toggleError, setToggleError] = useState<TeamDiscussionToggle | null>(
-		null
-	);
+	const [toggleError, setToggleError] =
+		useState<TeamDiscussionToggleError | null>(null);
 	const retry = useCallback(() => setRetryToken((token) => token + 1), []);
 	const currentSessionRef = useRef(sessionId);
 	currentSessionRef.current = sessionId;
@@ -175,7 +180,12 @@ export const useTeamDiscussionChannel = ({
 			}
 		} catch (error) {
 			if (currentSessionRef.current === sessionId) {
-				setToggleError('on');
+				setToggleError(
+					error instanceof Error &&
+						error.message === FETCH_ERRORS.BAD_REQUEST
+						? 'onNotAllowed'
+						: 'on'
+				);
 			}
 			throw error;
 		} finally {

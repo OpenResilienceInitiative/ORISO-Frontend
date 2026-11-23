@@ -6007,7 +6007,8 @@
 			"open": "Ekip sohbeti açılamadı.",
 			"send": "Mesaj gönderilemedi.",
 			"switchOn": "Ekip sohbeti etkinleştirilemedi. Lütfen tekrar deneyin.",
-			"switchOff": "Ekip sohbeti kapatılamadı. Lütfen tekrar deneyin."
+			"switchOff": "Ekip sohbeti kapatılamadı. Lütfen tekrar deneyin.",
+			"switchOnNotAllowed": "Ekip sohbeti bu vaka için etkinleştirilemez; örneğin vaka başka bir danışma merkezine devredildiği için."
 		},
 		"switchOn": {
 			"menu": "Ekip sohbetini etkinleştir",

@@ -50,8 +50,10 @@ export const apiGetTeamDiscussion = async (
 
 /**
  * Switches the team chat on and joins the caller: creates the room, joins an
- * OPEN one, REOPENS a CLOSED one (FE#2491) and read-only joins an ARCHIVED
- * one. Because of the reopen, never call this just to look at a CLOSED room.
+ * OPEN one and REOPENS a CLOSED one (FE#2491). Because of the reopen, never
+ * call this just to read a CLOSED or ARCHIVED room — use the read-only join.
+ * 400 when the case may not start one (e.g. moved to another Beratungsstelle
+ * while "Team-Chat nach Annahme" is off).
  */
 export const apiOpenTeamDiscussion = async (
 	sessionId: number
@@ -63,6 +65,27 @@ export const apiOpenTeamDiscussion = async (
 		responseHandling: [
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
+			FETCH_SUCCESS.CONTENT
+		]
+	}).then(normalize);
+
+/**
+ * FE#2491 / US#1778: read-only join for a CLOSED or ARCHIVED discussion, so
+ * a colleague who never joined can read it. Never creates or reopens.
+ * 200 with the discussion, 204 (→ null) when there is none — e.g. after the
+ * case moved to another Beratungsstelle. 403 for others. 503 while the room
+ * is not yet confirmed read-only: rejects (CATCH_ALL), the caller retries.
+ */
+export const apiJoinTeamDiscussion = async (
+	sessionId: number
+): Promise<TeamDiscussion | null> =>
+	fetchData({
+		url: `${endpoints.teamDiscussion(sessionId)}/join`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CATCH_ALL,
 			FETCH_SUCCESS.CONTENT
 		]
 	}).then(normalize);

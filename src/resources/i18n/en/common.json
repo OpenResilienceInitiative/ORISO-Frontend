@@ -5954,7 +5954,8 @@
 			"open": "The team chat could not be opened.",
 			"send": "The message could not be sent.",
 			"switchOn": "The team chat could not be switched on. Please try again.",
-			"switchOff": "The team chat could not be switched off. Please try again."
+			"switchOff": "The team chat could not be switched off. Please try again.",
+			"switchOnNotAllowed": "The team chat cannot be switched on for this case, for example because the case was moved to another counselling centre."
 		},
 		"switchOn": {
 			"menu": "Switch on team chat",

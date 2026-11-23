@@ -6029,7 +6029,8 @@
 			"open": "Der Team-Chat konnte nicht geöffnet werden.",
 			"send": "Die Nachricht konnte nicht gesendet werden.",
 			"switchOn": "Der Team-Chat konnte nicht eingeschaltet werden. Bitte versuchen Sie es erneut.",
-			"switchOff": "Der Team-Chat konnte nicht ausgeschaltet werden. Bitte versuchen Sie es erneut."
+			"switchOff": "Der Team-Chat konnte nicht ausgeschaltet werden. Bitte versuchen Sie es erneut.",
+			"switchOnNotAllowed": "Der Team-Chat kann für diesen Fall nicht eingeschaltet werden, zum Beispiel weil der Fall an eine andere Beratungsstelle übergeben wurde."
 		},
 		"switchOn": {
 			"menu": "Team-Chat einschalten",

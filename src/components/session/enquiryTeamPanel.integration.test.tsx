@@ -71,6 +71,7 @@ const boundary = vi.hoisted(() => {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
 		close: vi.fn(),
+		join: vi.fn(),
 		getTeam: vi.fn(),
 		getSupervisors: vi.fn(),
 		sessionRoom: vi.fn(),
@@ -111,6 +112,7 @@ vi.mock('lottie-web', () => ({
 vi.mock('../../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: (...args: any[]) => boundary.getTeam(...args),
 	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args),
+	apiJoinTeamDiscussion: (...args: any[]) => boundary.join(...args),
 	apiCloseTeamDiscussion: (...args: any[]) => boundary.close(...args)
 }));
 // The seeker is a normal account, not a temporary guest (404).
@@ -284,6 +286,10 @@ beforeEach(async () => {
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	boundary.getTeam.mockReset().mockResolvedValue(null);
 	boundary.close.mockReset().mockResolvedValue(undefined);
+	// The read-only join answers with what GET answered (US#1778).
+	boundary.join
+		.mockReset()
+		.mockImplementation((id: number) => boundary.getTeam(id));
 	boundary.getSupervisors.mockReset().mockResolvedValue([]);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
@@ -1844,8 +1850,10 @@ it('shows a switched-off team chat read-only without reopening it, and reopens i
 		{ timeout: 15000 }
 	);
 	expect(panel.textContent).toContain('teamDiscussion.closed.title');
-	// Read-only: no composer, and looking never POSTs (POST would reopen).
+	// Read-only: no composer, and looking never POSTs (POST would reopen);
+	// a colleague who never joined reads it through the read-only join.
 	expect(panel.querySelector('.messageSubmit__wrapper, textarea')).toBeNull();
+	expect(boundary.join).toHaveBeenCalledWith(4711);
 	expect(boundary.open).not.toHaveBeenCalled();
 	// No header chip while switched off.
 	expect(
@@ -1954,6 +1962,9 @@ it('after accept with "Team-Chat nach Annahme" off: "Weitere Funktionen" opens t
 	expect(
 		panel.querySelector('[data-cy="side-panel-timeline"]')
 	).not.toBeNull();
+	// Read through the read-only join, never the POST (US#1778).
+	expect(boundary.join).toHaveBeenCalledWith(4711);
+	expect(boundary.open).not.toHaveBeenCalled();
 	// Read-only: no composer, no switch back on, no chip; nothing reopens it.
 	expect(panel.querySelector('.textarea__wrapper-send-message')).toBeNull();
 	expect(
@@ -2015,6 +2026,73 @@ it('after accept with "Team-Chat nach Annahme" on: the accepted case switches th
 			view.container.querySelector('[data-cy="session-header-team-chat"]')
 		).toBeNull()
 	);
+}, 20000);
+
+it('says clearly when the case may not start a team chat (400), e.g. after a move to another Beratungsstelle (FE#2491)', async () => {
+	boundary.open.mockRejectedValue(new Error('BAD_REQUEST'));
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY);
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	const [trigger] = await screen.findAllByRole('button', {
+		name: 'app.menu'
+	});
+	fireEvent.click(trigger);
+	const on = await waitFor(() => {
+		const node = document.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat-on"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	fireEvent.click(on);
+	await waitFor(() => expect(boundary.open).toHaveBeenCalledWith(4711));
+	const alert = await waitFor(() => {
+		const node = view.container.querySelector(
+			'[data-cy="team-discussion-not-allowed"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	expect(alert.textContent).toContain(
+		'teamDiscussion.error.switchOnNotAllowed'
+	);
+	expect(
+		view.container.querySelector('[data-cy="team-discussion-open-error"]')
+	).toBeNull();
+	expect(
+		view.container.querySelector('[data-cy="session-header-team-chat"]')
+	).toBeNull();
+}, 20000);
+
+it('keeps the "could not open" retry while a CLOSED room is not yet confirmed read-only (503) (FE#2491)', async () => {
+	boundary.getTeam.mockResolvedValue({
+		matrixRoomId: TEAM,
+		status: 'CLOSED'
+	});
+	boundary.join
+		.mockReset()
+		.mockRejectedValueOnce(new Error('CATCH_ALL'))
+		.mockResolvedValue({ matrixRoomId: TEAM, status: 'CLOSED' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
+	const retry = await waitFor(
+		() => {
+			const node = view.container.querySelector<HTMLElement>(
+				'[data-cy="team-discussion-open-error"] button'
+			);
+			expect(node).not.toBeNull();
+			return node!;
+		},
+		{ timeout: 15000 }
+	);
+	expect(boundary.open).not.toHaveBeenCalled();
+	fireEvent.click(retry);
+	await waitFor(() => expect(boundary.join).toHaveBeenCalledTimes(2));
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('.chatStage__panel .sidePanel')
+				?.textContent
+		).toContain('teamDiscussion.closed.title')
+	);
+	expect(boundary.open).not.toHaveBeenCalled();
 }, 20000);
 
 it('never offers the team chat to the advice seeker (FE#2491)', async () => {

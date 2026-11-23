@@ -1776,25 +1776,41 @@ export const SessionStream = ({
 
 	return (
 		<div className="session__wrapper">
-			{teamChannelRequested && teamDiscussionError && (
-				<div role="alert">
-					<p>{translate('teamDiscussion.error.open')}</p>
-					<Button
-						item={{
-							label: translate('sessionList.reloadButton.label'),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={retryTeamDiscussion}
-					/>
-				</div>
-			)}
+			{teamChannelRequested &&
+				teamDiscussionError &&
+				(teamDiscussionError.message === FETCH_ERRORS.BAD_REQUEST ? (
+					// FE#2491 D4: this case may not start a team chat (e.g. it
+					// moved to another Beratungsstelle) — retrying cannot help.
+					<div role="alert" data-cy="team-discussion-not-allowed">
+						<p>
+							{translate(
+								'teamDiscussion.error.switchOnNotAllowed'
+							)}
+						</p>
+					</div>
+				) : (
+					<div role="alert" data-cy="team-discussion-open-error">
+						<p>{translate('teamDiscussion.error.open')}</p>
+						<Button
+							item={{
+								label: translate(
+									'sessionList.reloadButton.label'
+								),
+								type: BUTTON_TYPES.SECONDARY
+							}}
+							buttonHandle={retryTeamDiscussion}
+						/>
+					</div>
+				))}
 			{teamDiscussionToggleError && (
 				<div role="alert" data-cy="team-discussion-toggle-error">
 					<p>
 						{translate(
 							teamDiscussionToggleError === 'on'
 								? 'teamDiscussion.error.switchOn'
-								: 'teamDiscussion.error.switchOff'
+								: teamDiscussionToggleError === 'onNotAllowed'
+									? 'teamDiscussion.error.switchOnNotAllowed'
+									: 'teamDiscussion.error.switchOff'
 						)}
 					</p>
 				</div>

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	apiCloseTeamDiscussion,
 	apiGetTeamDiscussion,
+	apiJoinTeamDiscussion,
 	apiOpenTeamDiscussion
 } from '../api/apiTeamDiscussion';
 import { useTeamDiscussionChannel } from './useTeamDiscussionChannel';
@@ -11,6 +12,7 @@ import { useTeamDiscussionChannel } from './useTeamDiscussionChannel';
 vi.mock('../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: vi.fn(),
 	apiOpenTeamDiscussion: vi.fn(),
+	apiJoinTeamDiscussion: vi.fn(),
 	apiCloseTeamDiscussion: vi.fn()
 }));
 
@@ -20,6 +22,7 @@ describe('useTeamDiscussionChannel', () => {
 		vi.mocked(apiGetTeamDiscussion).mockResolvedValue(null);
 		vi.mocked(apiOpenTeamDiscussion).mockResolvedValue(null);
 		vi.mocked(apiCloseTeamDiscussion).mockResolvedValue(undefined);
+		vi.mocked(apiJoinTeamDiscussion).mockResolvedValue(null);
 	});
 
 	it('opens and joins an eligible discussion when the team route is requested', async () => {
@@ -64,12 +67,12 @@ describe('useTeamDiscussionChannel', () => {
 		expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 	});
 
-	it('joins an existing discussion without creating one after enquiry acceptance', async () => {
+	it('reads an ARCHIVED discussion through the read-only join after acceptance — no POST', async () => {
 		vi.mocked(apiGetTeamDiscussion).mockResolvedValue({
 			matrixRoomId: '!team:example.org',
 			status: 'ARCHIVED'
 		});
-		vi.mocked(apiOpenTeamDiscussion).mockResolvedValue({
+		vi.mocked(apiJoinTeamDiscussion).mockResolvedValue({
 			matrixRoomId: '!team:example.org',
 			status: 'ARCHIVED'
 		});
@@ -84,7 +87,8 @@ describe('useTeamDiscussionChannel', () => {
 
 		await waitFor(() => expect(result.current.resolved).toBe(true));
 		expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
-		expect(apiOpenTeamDiscussion).toHaveBeenCalledWith(42);
+		expect(apiJoinTeamDiscussion).toHaveBeenCalledWith(42);
+		expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 		expect(result.current.discussion?.status).toBe('ARCHIVED');
 	});
 
@@ -194,8 +198,9 @@ describe('useTeamDiscussionChannel', () => {
 			status: 'CLOSED' as const
 		};
 
-		it('only looks at a CLOSED discussion opened through the team route — no POST', async () => {
+		it('a colleague who never joined reads a CLOSED discussion through the read-only join — no POST', async () => {
 			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			vi.mocked(apiJoinTeamDiscussion).mockResolvedValue(CLOSED);
 			const { result } = renderHook(() =>
 				useTeamDiscussionChannel({
 					sessionId: 42,
@@ -207,8 +212,74 @@ describe('useTeamDiscussionChannel', () => {
 
 			await waitFor(() => expect(result.current.resolved).toBe(true));
 			expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
+			expect(apiJoinTeamDiscussion).toHaveBeenCalledWith(42);
 			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 			expect(result.current.discussion?.status).toBe('CLOSED');
+		});
+
+		it('keeps a retry path while the read-only room is not confirmed yet (503)', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			vi.mocked(apiJoinTeamDiscussion)
+				.mockRejectedValueOnce(new Error('CATCH_ALL'))
+				.mockResolvedValueOnce(CLOSED);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: true
+				})
+			);
+			await waitFor(() =>
+				expect(result.current.error?.message).toBe('CATCH_ALL')
+			);
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+
+			act(() => result.current.retry());
+			await waitFor(() =>
+				expect(result.current.discussion?.status).toBe('CLOSED')
+			);
+			expect(result.current.error).toBeNull();
+			expect(apiJoinTeamDiscussion).toHaveBeenCalledTimes(2);
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+		});
+
+		it('shows no old room once the case moved to another Beratungsstelle (join 204)', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			vi.mocked(apiJoinTeamDiscussion).mockResolvedValue(null);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: false,
+					teamChannelRequested: true
+				})
+			);
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+			expect(result.current.discussion).toBeNull();
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+		});
+
+		it('reports a refused switch-on (400) as not allowed, not as a retry', async () => {
+			vi.mocked(apiOpenTeamDiscussion).mockRejectedValue(
+				new Error('BAD_REQUEST')
+			);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+
+			await act(async () => {
+				await result.current.switchOn().catch(() => undefined);
+			});
+
+			expect(result.current.toggleError).toBe('onNotAllowed');
+			expect(result.current.discussion).toBeNull();
 		});
 
 		it('never POSTs for a CLOSED discussion while only viewing the enquiry', async () => {
