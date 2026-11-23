@@ -3211,7 +3211,9 @@
 		},
 		"consultationHours": {
 			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
-			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst.",
+			"onceHint": "Gib eine freie Zeit kurzfristig frei. Sie gilt nur an diesem Tag.",
+			"onceDescription": "Diese Zeit können Ratsuchende einmalig bei dir buchen."
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf dich",

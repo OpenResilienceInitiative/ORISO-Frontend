@@ -187,7 +187,10 @@ import {
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
 import { ConsultationHoursDialog } from './ConsultationHoursDialog';
-import type { ConsultationHours } from './calendarConsultationHours';
+import type {
+	ConsultationHours,
+	OneOffConsultation
+} from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -297,6 +300,13 @@ export interface CalendarPageProps {
 	 * Sprechzeiten" (FE#2494 *2c). On the phone it comes under the stage.
 	 */
 	besidePanel?: React.ReactNode;
+	/**
+	 * Releases a free stretch once for advice seekers (FE#2494 *2b);
+	 * without it "Sprechzeit" offers only the weekly hours.
+	 */
+	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => ChangeResult;
+	/** One's own one-off Sprechzeiten, banded in the time grid. */
+	oneOffConsultations?: OneOffConsultation[];
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -457,6 +467,8 @@ type Dialog =
 	  }
 	| { type: 'workingHours' }
 	| { type: 'consultationHours' }
+	/** "Sprechzeit" from the grid: released once (FE#2494 *2b). */
+	| { type: 'consultation'; slot?: { start: Date; end: Date } }
 	| { type: 'sync' }
 	| { type: 'autoAccept' }
 	| null;
@@ -596,6 +608,8 @@ export const CalendarPage = ({
 	initialDate,
 	linksPanel,
 	besidePanel,
+	onSaveOneOffConsultation,
+	oneOffConsultations,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -1617,6 +1631,21 @@ export const CalendarPage = ({
 			if (ok) setDialog(null);
 		});
 	};
+	const saveOneOffConsultation = (oneOff: OneOffConsultation) => {
+		const saved = run(onSaveOneOffConsultation?.(oneOff), {
+			message: t('calendar.consultationHours.onceSaved')
+		});
+		if (typeof saved === 'boolean') {
+			if (saved) setDialog(null);
+			return;
+		}
+		setSavingConsultationHours(true);
+		void saved.then((ok) => {
+			setSavingConsultationHours(false);
+			if (ok) setDialog(null);
+		});
+	};
+
 	const editConsultationHours =
 		consultant && !!consultationHours && !!onSaveConsultationHours;
 	const retryConsultationHours =
@@ -2185,6 +2214,17 @@ export const CalendarPage = ({
 				conversations={bookable}
 				onPick={pickSlotPerson}
 				onMore={moreSlotDetails}
+				onConsultation={
+					editConsultationHours && onSaveOneOffConsultation
+						? () => {
+								setMenu(null);
+								setDialog({
+									type: 'consultation',
+									slot: menu.range
+								});
+							}
+						: undefined
+				}
 			/>
 		);
 	} else if (menu?.type === 'month') {
@@ -3060,6 +3100,9 @@ export const CalendarPage = ({
 									? consultationHours?.windows
 									: undefined
 							}
+							consultationOnce={
+								consultant ? oneOffConsultations : undefined
+							}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							slotPx={slotPx}
 							proposals={gridProposals}
@@ -3353,7 +3396,9 @@ export const CalendarPage = ({
 					fullScreen={compact}
 				/>
 			)}
-			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
+			{(dialog?.type === 'appointment' ||
+				dialog?.type === 'blocker' ||
+				dialog?.type === 'consultation') && (
 				<NewEntryDialog
 					open
 					initialTab={dialog.type}
@@ -3415,6 +3460,11 @@ export const CalendarPage = ({
 							: undefined
 					}
 					savingConsultationHours={savingConsultationHours}
+					onSaveOneOffConsultation={
+						editConsultationHours && onSaveOneOffConsultation
+							? saveOneOffConsultation
+							: undefined
+					}
 					onClose={() => {
 						if (!savingConsultationHours) setDialog(null);
 					}}

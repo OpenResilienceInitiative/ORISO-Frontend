@@ -165,6 +165,8 @@ export interface CalendarViewProps {
 	 * that time out of the advice seekers' free times.
 	 */
 	consultationWindows?: WorkingHours;
+	/** One-off Sprechzeiten released from the calendar (FE#2494 *2b). */
+	consultationOnce?: { start: Date; end: Date }[];
 	/**
 	 * A grip on the edge of one's own working day was moved; without it the
 	 * grips are not drawn.
@@ -229,7 +231,7 @@ interface EventProps {
 	/** Background: colleagues busy in this stretch. */
 	band?: ColleagueBand;
 	/** Background: one's own Sprechstunde (FE#2494 *3). */
-	consultation?: true;
+	consultation?: 'weekly' | 'once';
 }
 
 /** The usual working day the time grid shows, before any widening. */
@@ -473,6 +475,7 @@ export const CalendarView = ({
 	initialDate,
 	workingPlan,
 	consultationWindows,
+	consultationOnce,
 	onEdgeChange,
 	proposals = [],
 	highlight,
@@ -596,23 +599,36 @@ export const CalendarView = ({
 	}, [workingPlan, shownRange, timeGrid]);
 
 	const consultationEvents = useMemo<EventInput[]>(() => {
-		if (!timeGrid || !shownRange || !consultationWindows?.length) return [];
+		if (
+			!timeGrid ||
+			!shownRange ||
+			(!consultationWindows?.length && !consultationOnce?.length)
+		)
+			return [];
 		const out: EventInput[] = [];
 		for (
 			let day = startOfDay(shownRange.start);
 			day < shownRange.end;
 			day = nextDay(day)
 		)
-			for (const w of windowsOn(consultationWindows, day.getDay()))
+			for (const w of windowsOn(consultationWindows ?? [], day.getDay()))
 				out.push({
 					id: `consultation-${day.getTime()}-${w.start}`,
 					start: atMinutes(day, minutesOf(w.start)),
 					end: atMinutes(day, minutesOf(w.end)),
 					display: 'background',
-					extendedProps: { consultation: true }
+					extendedProps: { consultation: 'weekly' }
 				});
+		for (const once of consultationOnce ?? [])
+			out.push({
+				id: `consultation-once-${once.start.getTime()}`,
+				start: once.start,
+				end: once.end,
+				display: 'background',
+				extendedProps: { consultation: 'once' }
+			});
 		return out;
-	}, [consultationWindows, shownRange, timeGrid]);
+	}, [consultationWindows, consultationOnce, shownRange, timeGrid]);
 
 	// The grips go into FullCalendar's day columns themselves: inside a
 	// background event they would sit in a layer FullCalendar hides from
@@ -880,7 +896,10 @@ export const CalendarView = ({
 
 	const backgroundClass = (info: EventDisplayInfo) => {
 		const { off, band, consultation } = propsOf(info);
-		if (consultation) return 'calendarView__consultation';
+		if (consultation)
+			return consultation === 'once'
+				? 'calendarView__consultation calendarView__consultation--once'
+				: 'calendarView__consultation';
 		if (band)
 			return allBusy(band)
 				? 'calendarView__band calendarView__band--all'
@@ -902,7 +921,11 @@ export const CalendarView = ({
 				>
 					<span className="calendarView__consultationPill">
 						<ClockIcon aria-hidden focusable="false" />
-						{t('calendar.consultationHours.band')}
+						{t(
+							consultation === 'once'
+								? 'calendar.consultationHours.bandOnce'
+								: 'calendar.consultationHours.band'
+						)}
 					</span>
 				</span>
 			);

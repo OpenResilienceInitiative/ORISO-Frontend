@@ -1,5 +1,8 @@
 import * as React from 'react';
-import type { ConsultationHours } from './calendarConsultationHours';
+import type {
+	ConsultationHours,
+	OneOffConsultation
+} from './calendarConsultationHours';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
@@ -196,12 +199,21 @@ const Scenario = ({
 		React.useState<ConsultationHours>({
 			windows: [
 				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 2, start: '16:00', end: '18:00' },
 				{ weekday: 4, start: '14:00', end: '17:00' }
 			],
 			autoAccept: true,
 			noticeDays: 2,
 			slotMinutes: 60
 		});
+	/* FE#2494 *2b: one short-notice Sprechzeit on Wednesday afternoon. */
+	const [oneOffs, setOneOffs] = useState<OneOffConsultation[]>([
+		{
+			start: new Date(2026, 10, 18, 15, 0),
+			end: new Date(2026, 10, 18, 16, 30),
+			noticeMinutes: 30
+		}
+	]);
 	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
 	const [exceptions, setExceptions] =
 		useState<DayExceptions>(initialExceptions);
@@ -340,6 +352,10 @@ const Scenario = ({
 				role === 'consultant' ? consultationHours : undefined
 			}
 			onSaveConsultationHours={setConsultationHours}
+			onSaveOneOffConsultation={(oneOff) =>
+				setOneOffs((all) => [...all, oneOff])
+			}
+			oneOffConsultations={role === 'consultant' ? oneOffs : undefined}
 			onSaveDayException={(date, windows) =>
 				setExceptions((all) => ({ ...all, [date]: windows }))
 			}

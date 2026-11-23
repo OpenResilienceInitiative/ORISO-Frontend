@@ -23,7 +23,8 @@ import { useColleagueAppointmentForm } from './ColleagueAppointmentForm';
 import { useConsultationHoursForm } from './ConsultationHoursDialog';
 import {
 	consultationHoursFromApi,
-	type ConsultationHours
+	type ConsultationHours,
+	type OneOffConsultation
 } from './calendarConsultationHours';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
@@ -81,6 +82,8 @@ export interface NewEntryDialogProps {
 	onSaveConsultationHours?: (hours: ConsultationHours) => void;
 	/** A Sprechzeit save is on its way. */
 	savingConsultationHours?: boolean;
+	/** "Einmalig": releases the chosen stretch once (FE#2494 *2b). */
+	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => void;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
@@ -134,6 +137,7 @@ export const NewEntryDialog = ({
 	consultationHours,
 	onSaveConsultationHours,
 	savingConsultationHours,
+	onSaveOneOffConsultation,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -202,6 +206,10 @@ export const NewEntryDialog = ({
 		hours: consultationHours ?? NO_CONSULTATION_HOURS,
 		saving: savingConsultationHours,
 		onSave: (hours) => onSaveConsultationHours?.(hours),
+		onSaveOneOff: onSaveOneOffConsultation,
+		slot: initialTab === 'consultation' ? slot : undefined,
+		entries,
+		now,
 		onClose
 	});
 	const colleague = useColleagueAppointmentForm({

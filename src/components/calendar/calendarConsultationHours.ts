@@ -68,67 +68,93 @@ export const consultationHoursFromApi = (
 		: DEFAULT_CONSULTATION_SETTINGS.slotMinutes
 });
 
-export interface ConsultationDayRow {
-	weekday: number;
-	enabled: boolean;
+/** One time window of a day, as the form edits it. */
+export interface ConsultationWindow {
 	start: string;
 	end: string;
 }
 
-/** One row per weekday, Monday first; a day is on when it has a window. */
-export const consultationRows = (windows: WorkingHours): ConsultationDayRow[] =>
+/**
+ * One weekday in the form (FE#2494 *2b): on or off, with as many windows
+ * as the counsellor adds with "+". UserService stores several windows per
+ * weekday as long as they do not overlap.
+ */
+export interface ConsultationDay {
+	weekday: number;
+	enabled: boolean;
+	windows: ConsultationWindow[];
+}
+
+/** One day per weekday, Monday first; a day is on when it has a window. */
+export const consultationDays = (windows: WorkingHours): ConsultationDay[] =>
 	WEEKDAYS_MONDAY_FIRST.map((weekday) => {
-		const window = windows.find((w) => w.weekday === weekday);
-		return window
-			? { weekday, enabled: true, start: window.start, end: window.end }
-			: { weekday, enabled: false, ...DEFAULT_CONSULTATION_DAY };
+		const own = windows
+			.filter((w) => w.weekday === weekday)
+			.sort((a, b) => minutesOf(a.start) - minutesOf(b.start))
+			.map(({ start, end }) => ({ start, end }));
+		return own.length
+			? { weekday, enabled: true, windows: own }
+			: { weekday, enabled: false, windows: [DEFAULT_CONSULTATION_DAY] };
 	});
 
-/** The weekdays switched on whose end is not after their start. */
-export const invalidConsultationRows = (rows: ConsultationDayRow[]) =>
-	rows.filter((r) => r.enabled && !validWindow(r)).map((r) => r.weekday);
+const pad = (n: number) => String(n).padStart(2, '0');
+const timeOf = (minutes: number) =>
+	`${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 
 /**
- * The weekdays whose edited window overlaps a further stored window of the
- * same day; UserService refuses overlapping windows of one day.
+ * The window "+" adds: right after the day's last one, two hours long and
+ * at most until midnight; on a full evening, before the first one.
  */
-export const overlappingConsultationRows = (
-	rows: ConsultationDayRow[],
-	stored: WorkingHours
-) =>
-	rows
+export const nextConsultationWindow = (
+	windows: ConsultationWindow[]
+): ConsultationWindow => {
+	const last = Math.max(0, ...windows.map((w) => minutesOf(w.end)));
+	if (last <= 22 * 60)
+		return {
+			start: timeOf(last),
+			end: timeOf(Math.min(last + 120, 23 * 60 + 45))
+		};
+	const first = Math.min(...windows.map((w) => minutesOf(w.start)));
+	return { start: timeOf(Math.max(0, first - 120)), end: timeOf(first) };
+};
+
+/** The weekdays switched on with a window whose end is not after its start. */
+export const invalidConsultationDays = (days: ConsultationDay[]) =>
+	days
 		.filter(
-			(r) =>
-				r.enabled &&
-				validWindow(r) &&
-				stored
-					.filter((w) => w.weekday === r.weekday)
-					.slice(1)
-					.some(
-						(w) =>
-							minutesOf(w.start) < minutesOf(r.end) &&
-							minutesOf(w.end) > minutesOf(r.start)
-					)
+			(d) =>
+				d.enabled &&
+				d.windows.some(
+					(w) => !validWindow({ weekday: d.weekday, ...w })
+				)
 		)
-		.map((r) => r.weekday);
+		.map((d) => d.weekday);
 
-/**
- * The whole set UserService stores. The dialog edits the first window of a
- * weekday; further windows of a day that stays on are kept as stored, so a
- * save never drops a window the dialog does not show (UserService allows
- * several per weekday that do not overlap).
- */
+/** The weekdays switched on whose windows overlap each other. */
+export const overlappingConsultationDays = (days: ConsultationDay[]) =>
+	days
+		.filter((d) => {
+			if (!d.enabled) return false;
+			const sorted = d.windows
+				.filter((w) => validWindow({ weekday: d.weekday, ...w }))
+				.sort((a, b) => minutesOf(a.start) - minutesOf(b.start));
+			return sorted.some(
+				(w, i) =>
+					i > 0 && minutesOf(w.start) < minutesOf(sorted[i - 1].end)
+			);
+		})
+		.map((d) => d.weekday);
+
+/** The whole set UserService stores: every window of the days that are on. */
 export const consultationHoursToApi = (
-	rows: ConsultationDayRow[],
-	settings: ConsultationSettings,
-	stored: WorkingHours = []
+	days: ConsultationDay[],
+	settings: ConsultationSettings
 ): ConsultationHours => ({
-	windows: rows
-		.filter((r) => r.enabled)
-		.flatMap(({ weekday, start, end }) => [
-			{ weekday, start, end },
-			...stored.filter((w) => w.weekday === weekday).slice(1)
-		])
+	windows: days
+		.filter((d) => d.enabled)
+		.flatMap(({ weekday, windows }) =>
+			windows.map(({ start, end }) => ({ weekday, start, end }))
+		)
 		.sort(
 			(a, b) =>
 				a.weekday - b.weekday || minutesOf(a.start) - minutesOf(b.start)
@@ -137,3 +163,18 @@ export const consultationHoursToApi = (
 	noticeDays: settings.noticeDays,
 	slotMinutes: settings.slotMinutes
 });
+
+/**
+ * A one-off Sprechzeit (FE#2494 *2b, Frank 23 Nov): a free stretch the
+ * counsellor releases at short notice from the calendar, bookable until
+ * `noticeMinutes` before its start, whatever the weekly notice says.
+ */
+export interface OneOffConsultation {
+	start: Date;
+	end: Date;
+	noticeMinutes: number;
+}
+
+/** "Buchbar bis …" for a one-off Sprechzeit, in minutes before the start. */
+export const ONE_OFF_NOTICE_MINUTES = [0, 30, 60, 120, 720, 1440] as const;
+export const DEFAULT_ONE_OFF_NOTICE = 60;

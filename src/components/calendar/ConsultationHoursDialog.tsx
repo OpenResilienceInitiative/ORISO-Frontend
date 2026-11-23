@@ -4,26 +4,38 @@
  * accepted. Outside the notice period a booking is confirmed at once when
  * "Automatisch bestätigen" is on; otherwise it is a request the counsellor
  * confirms. Only the counsellor edits their own; UserService checks again.
+ *
+ * FE#2494 *2b (Frank, 23 Nov 2026): a day takes as many windows as "+"
+ * adds, and a Sprechzeit can also be released once, at short notice, from
+ * the calendar ("Einmalig"), bookable until a lead time of its own.
  */
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
+import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { DialogForm } from './dialogForm';
 import { Switch } from '../Switch';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { useWeekdayNames } from './WorkingHoursDialog';
 import {
+	consultationDays,
 	consultationHoursToApi,
-	consultationRows,
-	invalidConsultationRows,
-	overlappingConsultationRows,
+	DEFAULT_ONE_OFF_NOTICE,
+	invalidConsultationDays,
+	nextConsultationWindow,
+	ONE_OFF_NOTICE_MINUTES,
+	overlappingConsultationDays,
 	MAX_NOTICE_DAYS,
-	type ConsultationDayRow,
+	type ConsultationDay,
 	type ConsultationHours,
+	type ConsultationWindow,
+	type OneOffConsultation,
 	type SlotMinutes
 } from './calendarConsultationHours';
+import type { CalendarEntry } from './calendarModel';
 
 export interface ConsultationHoursDialogProps {
 	open: boolean;
@@ -38,10 +50,33 @@ export interface ConsultationHoursDialogProps {
 const SLOT_MINUTES: SlotMinutes[] = [30, 60];
 const NOTICE_DAYS = Array.from({ length: MAX_NOTICE_DAYS + 1 }, (_, n) => n);
 
+type Mode = 'once' | 'weekly';
+const MODES: Mode[] = ['once', 'weekly'];
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const dateValue = (d: Date) =>
+	`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const timeValue = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const atTime = (date: string, time: string) => {
+	const [y, m, d] = date.split('-').map(Number);
+	const [h, min] = time.split(':').map(Number);
+	return new Date(y, m - 1, d, h, min);
+};
+
 export interface ConsultationHoursFormProps {
 	hours: ConsultationHours;
 	saving?: boolean;
 	onSave: (hours: ConsultationHours) => void;
+	/**
+	 * Saves a one-off Sprechzeit; without it the form has no "Einmalig"
+	 * (FE#2494 *2b).
+	 */
+	onSaveOneOff?: (oneOff: OneOffConsultation) => void;
+	/** The range chosen in the calendar: the form opens on "Einmalig". */
+	slot?: { start: Date; end: Date };
+	/** One's entries, to say when a one-off lies over a Sperrzeit. */
+	entries?: CalendarEntry[];
+	now?: Date;
 	onClose: () => void;
 }
 
@@ -54,215 +89,477 @@ export const useConsultationHoursForm = ({
 	hours,
 	saving = false,
 	onSave,
+	onSaveOneOff,
+	slot,
+	entries = [],
+	now = new Date(),
 	onClose
 }: ConsultationHoursFormProps): DialogForm => {
 	const { t } = useTranslation();
 	const dayName = useWeekdayNames();
-	const [rows, setRows] = useState<ConsultationDayRow[]>(() =>
-		consultationRows(hours.windows)
+	const [mode, setMode] = useState<Mode>(
+		slot && onSaveOneOff ? 'once' : 'weekly'
+	);
+	const shown: Mode = onSaveOneOff ? mode : 'weekly';
+	const [days, setDays] = useState<ConsultationDay[]>(() =>
+		consultationDays(hours.windows)
 	);
 	const [autoAccept, setAutoAccept] = useState(hours.autoAccept);
 	const [noticeDays, setNoticeDays] = useState(hours.noticeDays);
 	const [slotMinutes, setSlotMinutes] = useState<SlotMinutes>(
 		hours.slotMinutes
 	);
-	const invalid = invalidConsultationRows(rows);
-	const overlapping = overlappingConsultationRows(rows, hours.windows);
-	const empty = rows.every((r) => !r.enabled);
-	const update = (weekday: number, patch: Partial<ConsultationDayRow>) =>
-		setRows((all) =>
-			all.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
+	/* Einmalig: the chosen range, or the next full hour for one hour. */
+	const [once, setOnce] = useState(() => {
+		const start = slot?.start ?? new Date(now);
+		if (!slot) start.setHours(start.getHours() + 1, 0, 0, 0);
+		const end = slot?.end ?? new Date(start.getTime() + 60 * 60 * 1000);
+		return {
+			date: dateValue(start),
+			start: timeValue(start),
+			end: timeValue(end),
+			notice: DEFAULT_ONE_OFF_NOTICE
+		};
+	});
+	const invalid = invalidConsultationDays(days);
+	const overlapping = overlappingConsultationDays(days);
+	const empty = days.every((d) => !d.enabled);
+	const updateDay = (weekday: number, patch: Partial<ConsultationDay>) =>
+		setDays((all) =>
+			all.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d))
 		);
+	const updateWindow = (
+		day: ConsultationDay,
+		index: number,
+		patch: Partial<ConsultationWindow>
+	) =>
+		updateDay(day.weekday, {
+			windows: day.windows.map((w, i) =>
+				i === index ? { ...w, ...patch } : w
+			)
+		});
+
+	const onceStart = atTime(once.date, once.start);
+	const onceEnd = atTime(once.date, once.end);
+	const onceInvalid =
+		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
+	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
+	   overrides what was blocked). */
+	const overBlocker = entries.some(
+		(e) =>
+			e.type === 'blocker' &&
+			new Date(e.start) < onceEnd &&
+			new Date(e.end) > onceStart
+	);
+
+	const modeSwitch = onSaveOneOff && (
+		<div
+			className="calendarNewEntry__tabs"
+			role="radiogroup"
+			aria-label={t('calendar.consultationHours.mode')}
+		>
+			{MODES.map((value) => (
+				<button
+					key={value}
+					type="button"
+					role="radio"
+					className="calendarNewEntry__tab"
+					aria-checked={shown === value}
+					tabIndex={shown === value ? 0 : -1}
+					onClick={() => setMode(value)}
+					data-cy={`consultation-mode-${value}`}
+				>
+					{t(`calendar.consultationHours.modes.${value}`)}
+				</button>
+			))}
+		</div>
+	);
+
+	const onceContent = (
+		<div
+			className="calendarHours calendarConsultation__once"
+			role="group"
+			aria-label={t('calendar.consultationHours.modes.once')}
+		>
+			<p className="calendarConsultation__hint">
+				{t('calendar.consultationHours.onceHint')}
+			</p>
+			<div className="calendarConsultation__onceRow">
+				<label className="calendarHours__time calendarConsultation__date">
+					<span className="calendarConsultation__label">
+						{t('calendar.consultationHours.date')}
+					</span>
+					<input
+						type="date"
+						value={once.date}
+						min={dateValue(now)}
+						disabled={saving}
+						onChange={(e) =>
+							setOnce((o) => ({ ...o, date: e.target.value }))
+						}
+						data-cy="consultation-once-date"
+					/>
+				</label>
+				<span className="calendarConsultation__times">
+					<label className="calendarHours__time">
+						<span className="calendarConsultation__label">
+							{t('calendar.consultationHours.from')}
+						</span>
+						<input
+							type="time"
+							step={900}
+							value={once.start}
+							disabled={saving}
+							aria-invalid={onceInvalid || undefined}
+							onChange={(e) =>
+								setOnce((o) => ({
+									...o,
+									start: e.target.value
+								}))
+							}
+							data-cy="consultation-once-start"
+						/>
+					</label>
+					<span aria-hidden="true">–</span>
+					<label className="calendarHours__time">
+						<span className="calendarConsultation__label">
+							{t('calendar.consultationHours.to')}
+						</span>
+						<input
+							type="time"
+							step={900}
+							value={once.end}
+							disabled={saving}
+							aria-invalid={onceInvalid || undefined}
+							onChange={(e) =>
+								setOnce((o) => ({ ...o, end: e.target.value }))
+							}
+							data-cy="consultation-once-end"
+						/>
+					</label>
+				</span>
+			</div>
+			<div className="calendarHours__select">
+				<OrisoSelect
+					label={t('calendar.consultationHours.onceNotice')}
+					value={String(once.notice)}
+					helperText={t('calendar.consultationHours.onceNoticeHint')}
+					options={ONE_OFF_NOTICE_MINUTES.map((minutes) => ({
+						value: String(minutes),
+						label: t(
+							minutes === 0
+								? 'calendar.consultationHours.onceNoticeNone'
+								: minutes < 60
+									? 'calendar.consultationHours.onceNoticeMinutes'
+									: 'calendar.consultationHours.onceNoticeHours',
+							{ count: minutes < 60 ? minutes : minutes / 60 }
+						)
+					}))}
+					onChange={(event) =>
+						setOnce((o) => ({
+							...o,
+							notice: Number(event.target.value)
+						}))
+					}
+					data-cy="consultation-once-notice"
+					disabled={saving}
+				/>
+			</div>
+			{overBlocker && (
+				<p
+					className="calendarConsultation__warning"
+					role="status"
+					data-testid="consultation-once-over-blocker"
+				>
+					{t('calendar.consultationHours.overBlocker')}
+				</p>
+			)}
+			{onceInvalid && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceInvalid')}
+				</p>
+			)}
+		</div>
+	);
+
+	const weeklyContent = (
+		<div
+			className="calendarHours"
+			role="group"
+			aria-label={t('calendar.consultationHours.title')}
+		>
+			{days.map((day) => {
+				const name = dayName(day.weekday);
+				const wrong =
+					invalid.includes(day.weekday) ||
+					overlapping.includes(day.weekday);
+				return (
+					<div
+						key={day.weekday}
+						className={`calendarConsultation__row${day.enabled ? '' : ' calendarConsultation__row--off'}`}
+						data-testid={`consultation-hours-${day.weekday}`}
+					>
+						<Switch
+							checked={day.enabled}
+							onChange={(enabled) =>
+								updateDay(day.weekday, { enabled })
+							}
+							aria-label={name}
+							showIcon={false}
+							disabled={saving}
+						/>
+						<span className="calendarHours__day">{name}</span>
+						<span className="calendarConsultation__windows">
+							{day.windows.map((w, index) => (
+								<span
+									key={index}
+									className="calendarConsultation__times"
+									data-testid={`consultation-window-${day.weekday}-${index}`}
+								>
+									<label className="calendarHours__time">
+										<span className="sr-only">
+											{t('calendar.workingHours.from', {
+												day: name
+											})}
+										</span>
+										<input
+											type="time"
+											step={900}
+											value={w.start}
+											disabled={saving || !day.enabled}
+											aria-invalid={wrong || undefined}
+											onChange={(e) =>
+												updateWindow(day, index, {
+													start: e.target.value
+												})
+											}
+										/>
+									</label>
+									<span aria-hidden="true">–</span>
+									<label className="calendarHours__time">
+										<span className="sr-only">
+											{t('calendar.workingHours.to', {
+												day: name
+											})}
+										</span>
+										<input
+											type="time"
+											step={900}
+											value={w.end}
+											disabled={saving || !day.enabled}
+											aria-invalid={wrong || undefined}
+											onChange={(e) =>
+												updateWindow(day, index, {
+													end: e.target.value
+												})
+											}
+										/>
+									</label>
+									{day.enabled && day.windows.length > 1 ? (
+										<button
+											type="button"
+											className="calendarConsultation__iconButton"
+											aria-label={t(
+												'calendar.consultationHours.removeWindow',
+												{
+													day: name,
+													start: w.start,
+													end: w.end
+												}
+											)}
+											title={t(
+												'calendar.consultationHours.removeWindowShort'
+											)}
+											disabled={saving}
+											onClick={() =>
+												updateDay(day.weekday, {
+													windows: day.windows.filter(
+														(_, i) => i !== index
+													)
+												})
+											}
+											data-cy={`consultation-remove-${day.weekday}-${index}`}
+										>
+											<CloseIcon
+												aria-hidden="true"
+												focusable="false"
+											/>
+										</button>
+									) : (
+										<span
+											className="calendarConsultation__iconSpace"
+											aria-hidden="true"
+										/>
+									)}
+								</span>
+							))}
+							{day.enabled && (
+								<button
+									type="button"
+									className="calendarConsultation__add"
+									aria-label={t(
+										'calendar.consultationHours.addWindow',
+										{ day: name }
+									)}
+									disabled={saving}
+									onClick={() =>
+										updateDay(day.weekday, {
+											windows: [
+												...day.windows,
+												nextConsultationWindow(
+													day.windows
+												)
+											]
+										})
+									}
+									data-cy={`consultation-add-${day.weekday}`}
+								>
+									<PlusIcon
+										aria-hidden="true"
+										focusable="false"
+									/>
+									{t(
+										'calendar.consultationHours.addWindowShort'
+									)}
+								</button>
+							)}
+						</span>
+					</div>
+				);
+			})}
+			{empty && (
+				<p
+					className="calendarConsultation__hint"
+					data-testid="consultation-hours-empty"
+				>
+					{t('calendar.consultationHours.empty')}
+				</p>
+			)}
+			<div className="calendarHours__holidayBox">
+				<div className="calendarHours__row calendarHours__row--holidays">
+					<Switch
+						checked={autoAccept}
+						onChange={setAutoAccept}
+						disabled={saving}
+						aria-label={t('calendar.consultationHours.autoAccept')}
+						showIcon={false}
+						data-testid="consultation-hours-auto-accept"
+					/>
+					<span className="calendarHours__holidays">
+						{t('calendar.consultationHours.autoAccept')}
+						<small>
+							{t(
+								autoAccept
+									? 'calendar.consultationHours.autoAcceptOn'
+									: 'calendar.consultationHours.autoAcceptOff'
+							)}
+						</small>
+					</span>
+				</div>
+				{/* The MUI 3 select of the design system, like "Bundesland"
+				    in the working hours (Frank *12), not own fields. */}
+				<div className="calendarHours__region">
+					<div className="calendarHours__select">
+						<OrisoSelect
+							label={t('calendar.consultationHours.noticeDays')}
+							value={String(noticeDays)}
+							helperText={t(
+								'calendar.consultationHours.noticeDaysHint'
+							)}
+							options={NOTICE_DAYS.map((count) => ({
+								value: String(count),
+								label: t(
+									'calendar.consultationHours.noticeDaysOption',
+									{ count }
+								)
+							}))}
+							onChange={(event) =>
+								setNoticeDays(Number(event.target.value))
+							}
+							data-cy="consultation-hours-notice-days"
+							disabled={saving}
+						/>
+					</div>
+					<div className="calendarHours__select">
+						<OrisoSelect
+							label={t('calendar.consultationHours.slotMinutes')}
+							value={String(slotMinutes)}
+							options={SLOT_MINUTES.map((count) => ({
+								value: String(count),
+								label: t('calendar.consultationHours.minutes', {
+									count
+								})
+							}))}
+							disabled={saving}
+							onChange={(event) =>
+								setSlotMinutes(
+									Number(event.target.value) as SlotMinutes
+								)
+							}
+							data-cy="consultation-hours-slot-minutes"
+						/>
+					</div>
+				</div>
+			</div>
+			{invalid.length > 0 && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.invalid')}
+				</p>
+			)}
+			{overlapping.length > 0 && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.overlaps')}
+				</p>
+			)}
+		</div>
+	);
 
 	return {
 		testId: 'calendar-consultation-hours-dialog',
-		description: t('calendar.consultationHours.description'),
+		description: t(
+			shown === 'once'
+				? 'calendar.consultationHours.onceDescription'
+				: 'calendar.consultationHours.description'
+		),
 		icon: <ClockIcon aria-hidden="true" focusable="false" />,
 		width: 680,
 		actions: [
 			{ label: t('app.cancel'), onClick: onClose },
-			{
-				label: t('calendar.consultationHours.save'),
-				primary: true,
-				disabled:
-					saving || invalid.length > 0 || overlapping.length > 0,
-				onClick: () =>
-					onSave(
-						consultationHoursToApi(
-							rows,
-							{ autoAccept, noticeDays, slotMinutes },
-							hours.windows
-						)
-					),
-				testId: 'consultation-hours-save'
-			}
+			shown === 'once'
+				? {
+						label: t('calendar.consultationHours.onceSave'),
+						primary: true,
+						disabled: saving || onceInvalid,
+						onClick: () =>
+							onSaveOneOff?.({
+								start: onceStart,
+								end: onceEnd,
+								noticeMinutes: once.notice
+							}),
+						testId: 'consultation-once-save'
+					}
+				: {
+						label: t('calendar.consultationHours.save'),
+						primary: true,
+						disabled:
+							saving ||
+							invalid.length > 0 ||
+							overlapping.length > 0,
+						onClick: () =>
+							onSave(
+								consultationHoursToApi(days, {
+									autoAccept,
+									noticeDays,
+									slotMinutes
+								})
+							),
+						testId: 'consultation-hours-save'
+					}
 		],
 		content: (
-			<div
-				className="calendarHours"
-				role="group"
-				aria-label={t('calendar.consultationHours.title')}
-			>
-				{rows.map((row) => {
-					const name = dayName(row.weekday);
-					const wrong =
-						invalid.includes(row.weekday) ||
-						overlapping.includes(row.weekday);
-					return (
-						<div
-							key={row.weekday}
-							className={`calendarConsultation__row${row.enabled ? '' : ' calendarConsultation__row--off'}`}
-							data-testid={`consultation-hours-${row.weekday}`}
-						>
-							<Switch
-								checked={row.enabled}
-								onChange={(enabled) =>
-									update(row.weekday, { enabled })
-								}
-								aria-label={name}
-								showIcon={false}
-								disabled={saving}
-							/>
-							<span className="calendarHours__day">{name}</span>
-							<span className="calendarConsultation__times">
-								<label className="calendarHours__time">
-									<span className="sr-only">
-										{t('calendar.workingHours.from', {
-											day: name
-										})}
-									</span>
-									<input
-										type="time"
-										step={900}
-										value={row.start}
-										disabled={saving || !row.enabled}
-										aria-invalid={wrong || undefined}
-										onChange={(e) =>
-											update(row.weekday, {
-												start: e.target.value
-											})
-										}
-									/>
-								</label>
-								<span aria-hidden="true">–</span>
-								<label className="calendarHours__time">
-									<span className="sr-only">
-										{t('calendar.workingHours.to', {
-											day: name
-										})}
-									</span>
-									<input
-										type="time"
-										step={900}
-										value={row.end}
-										disabled={saving || !row.enabled}
-										aria-invalid={wrong || undefined}
-										onChange={(e) =>
-											update(row.weekday, {
-												end: e.target.value
-											})
-										}
-									/>
-								</label>
-							</span>
-						</div>
-					);
-				})}
-				{empty && (
-					<p
-						className="calendarConsultation__hint"
-						data-testid="consultation-hours-empty"
-					>
-						{t('calendar.consultationHours.empty')}
-					</p>
-				)}
-				<div className="calendarHours__holidayBox">
-					<div className="calendarHours__row calendarHours__row--holidays">
-						<Switch
-							checked={autoAccept}
-							onChange={setAutoAccept}
-							disabled={saving}
-							aria-label={t(
-								'calendar.consultationHours.autoAccept'
-							)}
-							showIcon={false}
-							data-testid="consultation-hours-auto-accept"
-						/>
-						<span className="calendarHours__holidays">
-							{t('calendar.consultationHours.autoAccept')}
-							<small>
-								{t(
-									autoAccept
-										? 'calendar.consultationHours.autoAcceptOn'
-										: 'calendar.consultationHours.autoAcceptOff'
-								)}
-							</small>
-						</span>
-					</div>
-					{/* The MUI 3 select of the design system, like "Bundesland"
-					    in the working hours (Frank *12), not own fields. */}
-					<div className="calendarHours__region">
-						<div className="calendarHours__select">
-							<OrisoSelect
-								label={t(
-									'calendar.consultationHours.noticeDays'
-								)}
-								value={String(noticeDays)}
-								helperText={t(
-									'calendar.consultationHours.noticeDaysHint'
-								)}
-								options={NOTICE_DAYS.map((days) => ({
-									value: String(days),
-									label: t(
-										'calendar.consultationHours.noticeDaysOption',
-										{ count: days }
-									)
-								}))}
-								onChange={(event) =>
-									setNoticeDays(Number(event.target.value))
-								}
-								data-cy="consultation-hours-notice-days"
-								disabled={saving}
-							/>
-						</div>
-						<div className="calendarHours__select">
-							<OrisoSelect
-								label={t(
-									'calendar.consultationHours.slotMinutes'
-								)}
-								value={String(slotMinutes)}
-								options={SLOT_MINUTES.map((minutes) => ({
-									value: String(minutes),
-									label: t(
-										'calendar.consultationHours.minutes',
-										{
-											count: minutes
-										}
-									)
-								}))}
-								disabled={saving}
-								onChange={(event) =>
-									setSlotMinutes(
-										Number(
-											event.target.value
-										) as SlotMinutes
-									)
-								}
-								data-cy="consultation-hours-slot-minutes"
-							/>
-						</div>
-					</div>
-				</div>
-				{invalid.length > 0 && (
-					<p className="calendarDialog__error" role="alert">
-						{t('calendar.consultationHours.invalid')}
-					</p>
-				)}
-				{overlapping.length > 0 && (
-					<p className="calendarDialog__error" role="alert">
-						{t('calendar.consultationHours.overlaps')}
-					</p>
-				)}
+			<div className="calendarConsultation">
+				{modeSwitch}
+				{shown === 'once' ? onceContent : weeklyContent}
 			</div>
 		)
 	};
