@@ -99,6 +99,9 @@ export const useTeamDiscussionChannel = ({
 	const retry = useCallback(() => setRetryToken((token) => token + 1), []);
 	const currentSessionRef = useRef(sessionId);
 	currentSessionRef.current = sessionId;
+	// Bumped by every lookup and by a successful switch-on, so a lookup that
+	// was overtaken by the switch can never write its older answer.
+	const lookupGenerationRef = useRef(0);
 
 	useEffect(() => {
 		setToggleError(null);
@@ -121,13 +124,16 @@ export const useTeamDiscussionChannel = ({
 			error: null,
 			resolved: false
 		});
+		const generation = ++lookupGenerationRef.current;
+		const isCurrent = () =>
+			!cancelled && generation === lookupGenerationRef.current;
 		const resolveDiscussion = () =>
 			teamChannelRequested
 				? resolveRequestedDiscussion(sessionId, allowCreate)
 				: apiGetTeamDiscussion(sessionId);
 		resolveDiscussion()
 			.then((discussion) => {
-				if (!cancelled) {
+				if (isCurrent()) {
 					if (teamChannelRequested && discussion) {
 						invalidateTeamDiscussionCache(sessionId);
 					}
@@ -142,7 +148,7 @@ export const useTeamDiscussionChannel = ({
 				}
 			})
 			.catch((error) => {
-				if (!cancelled) {
+				if (isCurrent()) {
 					setState({
 						sessionId,
 						allowCreate,
@@ -172,9 +178,16 @@ export const useTeamDiscussionChannel = ({
 			const discussion = await apiOpenTeamDiscussion(sessionId);
 			primeTeamDiscussionCache(sessionId, discussion);
 			if (currentSessionRef.current === sessionId) {
+				// A lookup still in flight started before the switch: drop it.
+				lookupGenerationRef.current += 1;
 				setState((previous) =>
 					previous.sessionId === sessionId
-						? { ...previous, discussion, error: null }
+						? {
+								...previous,
+								discussion,
+								error: null,
+								resolved: true
+							}
 						: previous
 				);
 			}

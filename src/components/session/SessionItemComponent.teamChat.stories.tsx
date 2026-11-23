@@ -6,7 +6,7 @@
  *
  * Source-bound real composition (SessionStream → SessionItemComponent →
  * SessionHeader → SessionMenu → SidePanel) with synthetic HTTP for
- * `/sessions/4711/team-discussion` (GET / POST / DELETE, UserService#1778)
+ * `/sessions/4711/team-discussion` (GET / POST / DELETE) and `/join` (UserService#1778)
  * and the Matrix SDK. Not a deployed proof: the endpoints are not on Dev yet.
  */
 import * as React from 'react';
@@ -170,12 +170,13 @@ function EnquiryTeamChatStory({ scenario }: { scenario: Scenario }) {
 				init?.method ??
 				(input instanceof Request ? input.method : 'GET');
 			if (/\/sessions\/4711\/team-discussion/.test(url)) {
-				setCalls((list) => [...list, method]);
+				// The read-only join (US#1778) never creates or reopens.
+				const isJoin = /\/team-discussion\/join/.test(url);
+				setCalls((list) => [...list, isJoin ? 'JOIN' : method]);
 				if (scenario === 'agencyOff') {
 					return new Response(null, { status: 403 });
 				}
-				// POST on an archived one is the read-only join.
-				if (method === 'POST' && status !== 'ARCHIVED') status = 'OPEN';
+				if (method === 'POST' && !isJoin) status = 'OPEN';
 				if (method === 'DELETE') {
 					status = 'CLOSED';
 					return new Response(null, { status: 204 });
@@ -413,10 +414,12 @@ export const Closed: Story = {
 		await expect(
 			byCy(canvasElement, 'team-chat-switch-on-again')
 		).not.toBeNull();
-		// Looking at a switched-off team chat never POSTs (POST reopens it).
-		await expect(
-			within(canvasElement).getByTestId('team-calls').textContent
-		).not.toContain('POST');
+		// Looking at a switched-off team chat reads it through the read-only
+		// join and never POSTs (POST reopens it).
+		const calls =
+			within(canvasElement).getByTestId('team-calls').textContent;
+		await expect(calls).toContain('JOIN');
+		await expect(calls).not.toContain('POST');
 	}
 };
 

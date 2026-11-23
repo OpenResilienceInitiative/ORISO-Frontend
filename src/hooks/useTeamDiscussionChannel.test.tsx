@@ -260,6 +260,36 @@ describe('useTeamDiscussionChannel', () => {
 			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 		});
 
+		it('keeps OPEN when a lookup started before the switch-on answers late', async () => {
+			let answerLookup!: (value: typeof CLOSED) => void;
+			vi.mocked(apiGetTeamDiscussion).mockReturnValue(
+				new Promise((resolve) => {
+					answerLookup = resolve;
+				})
+			);
+			vi.mocked(apiOpenTeamDiscussion).mockResolvedValue({
+				...CLOSED,
+				status: 'OPEN'
+			});
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+			await act(() => result.current.switchOn());
+			expect(result.current.discussion?.status).toBe('OPEN');
+
+			await act(async () => {
+				answerLookup(CLOSED);
+			});
+
+			expect(result.current.discussion?.status).toBe('OPEN');
+			expect(result.current.resolved).toBe(true);
+		});
+
 		it('reports a refused switch-on (400) as not allowed, not as a retry', async () => {
 			vi.mocked(apiOpenTeamDiscussion).mockRejectedValue(
 				new Error('BAD_REQUEST')

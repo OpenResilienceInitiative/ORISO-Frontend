@@ -95,7 +95,10 @@ type TeamProps = Pick<
 	| 'teamChatToggling'
 >;
 
-const Menu = (props: TeamProps) => (
+const Menu = ({
+	session = enquiry,
+	...props
+}: TeamProps & { session?: typeof enquiry }) => (
 	<MemoryRouter>
 		<SessionTypeContext.Provider
 			value={
@@ -109,7 +112,7 @@ const Menu = (props: TeamProps) => (
 				<ActiveSessionContext.Provider
 					value={
 						{
-							activeSession: enquiry,
+							activeSession: session,
 							reloadActiveSession: vi.fn()
 						} as any
 					}
@@ -213,6 +216,31 @@ describe('SessionMenu — Team-Chat switch (FE#2491)', () => {
 				screen.queryByText('teamDiscussion.switchOff.confirm.headline')
 			).toBeNull()
 		);
+	});
+
+	it('never switches off another case that became active while the confirmation was open', async () => {
+		const switchOff = vi.fn(async () => undefined);
+		const { rerender } = render(
+			<Menu onOpenTeamChat={vi.fn()} onSwitchTeamChatOff={switchOff} />
+		);
+		fireEvent.click(row('session-menu-team-chat-off')!);
+		await screen.findByText('teamDiscussion.switchOff.confirm.headline');
+		rerender(
+			<Menu
+				session={{ ...enquiry, item: { ...enquiry.item, id: 4712 } }}
+				onOpenTeamChat={vi.fn()}
+				onSwitchTeamChatOff={switchOff}
+			/>
+		);
+		fireEvent.click(
+			screen.getByText('teamDiscussion.switchOff.confirm.confirm')
+		);
+		await waitFor(() =>
+			expect(
+				screen.queryByText('teamDiscussion.switchOff.confirm.headline')
+			).toBeNull()
+		);
+		expect(switchOff).not.toHaveBeenCalled();
 	});
 
 	it('keeps the team chat on when the confirmation is cancelled', async () => {

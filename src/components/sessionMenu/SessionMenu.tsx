@@ -449,9 +449,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		caseHandover.handleOpen();
 	};
 
+	// FE#2491: the confirmation belongs to the case that opened it.
+	const switchOffSessionIdRef = useRef<number | undefined>(undefined);
 	const handleSwitchOffTeamChat = () => {
 		closeMenu();
 		menuTriggerRef.current?.focus();
+		switchOffSessionIdRef.current = activeSession?.item?.id;
 		setOverlayItem(teamChatSwitchOffConfirmOverlayItem);
 		setOverlayActive(true);
 	};
@@ -584,7 +587,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			mobileListView();
 			navigate(listPath);
 		} else if (buttonFunction === SWITCH_OFF_TEAM_CHAT) {
-			Promise.resolve(props.onSwitchTeamChatOff?.()).finally(() => {
+			// The case changed while the confirmation was open: never switch
+			// off the team chat of a case nobody confirmed it for.
+			const confirmedForThisCase =
+				switchOffSessionIdRef.current === activeSession?.item?.id;
+			switchOffSessionIdRef.current = undefined;
+			Promise.resolve(
+				confirmedForThisCase ? props.onSwitchTeamChatOff?.() : undefined
+			).finally(() => {
 				setOverlayActive(false);
 				setOverlayItem(null);
 				setIsRequestInProgress(false);
