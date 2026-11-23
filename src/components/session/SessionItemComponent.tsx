@@ -72,8 +72,7 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
-import { Button, BUTTON_TYPES } from '../button/Button';
-import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { EnquiryTeamAction } from './EnquiryTeamAction';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -2568,10 +2567,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!sessionId || !isSupervisionPanelViewer) {
 			return;
 		}
+		const remembered = readLastChannel(safeChannelStorage(), sessionId);
+		// Do not pick supervision while a first-visit enquiry is still checking
+		// whether its existing team room should take precedence.
+		if (
+			activeSession.isEnquiry &&
+			!props.teamDiscussionResolved &&
+			!routeChannel &&
+			!addonPanelRequested &&
+			remembered === undefined &&
+			!isPracticing
+		) {
+			return;
+		}
 		const decision = decideAutoOpen({
 			routeChannel,
 			alreadySettled: autoOpenedForSessionRef.current === sessionId,
-			remembered: readLastChannel(safeChannelStorage(), sessionId),
+			remembered,
 			loadedRootIds: messages
 				? messages.map((message) => message._id)
 				: null,
@@ -2580,7 +2592,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			teamDiscussionResolved: props.teamDiscussionResolved,
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
-				canOpenTeamSideRoom &&
+				hasTeamSideRoom &&
 				!isPracticing,
 			addonPanelRequested
 		});
@@ -2856,12 +2868,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	]);
 	// Channels not on screen — the desktop FAB (while no panel is open)
 	// offers these; the panel header's menu lists all of them (T15).
-	const otherChannels = useMemo(
+	const mainSwitcherChannels = useMemo(
 		() =>
 			secondaryChannels.filter(
+				(channel) =>
+					channel.kind !== 'team' ||
+					(Boolean(activeSession.isEnquiry) &&
+						type !== SESSION_LIST_TYPES.ENQUIRY &&
+						(hasTeamSideRoom ||
+							!props.teamDiscussionResolved ||
+							props.teamDiscussionError))
+			),
+		[
+			secondaryChannels,
+			activeSession.isEnquiry,
+			type,
+			hasTeamSideRoom,
+			props.teamDiscussionResolved,
+			props.teamDiscussionError
+		]
+	);
+	const otherChannels = useMemo(
+		() =>
+			mainSwitcherChannels.filter(
 				(channel) => channel.id !== shownChannelId
 			),
-		[secondaryChannels, shownChannelId]
+		[mainSwitcherChannels, shownChannelId]
 	);
 
 	// Room participants for the panel headers (the same avatar stack the
@@ -3152,6 +3184,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.isEnquiry &&
 		!shouldBlockAnonymousInquiryChat &&
 		!isAnonymousAskerExperience &&
+		// Open enquiries keep the action even without a team room: the click
+		// creates it. The hide-if-no-room rule is for accepted cases only.
 		canOpenTeamSideRoom &&
 		!canRenderClientComposer({
 			canWriteMessage,
@@ -3502,6 +3536,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
+							teamChatUnreadCount={teamUnreadCount}
+							onOpenTeamChat={
+								!activeSession.isEnquiry && canOpenTeamSideRoom
+									? () =>
+											selectChannelFromFab(
+												channelId({ kind: 'team' })
+											)
+									: undefined
+							}
 						/>
 					)}
 				</div>
@@ -4005,18 +4048,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							btnLabel={'enquiry.acceptButton.known'}
 							secondaryAction={
 								showEnquiryTeamAction && openPanel === null ? (
-									<Button
-										item={{
-											type: BUTTON_TYPES.SECONDARY,
-											label: 'enquiry.teamDiscussion.open',
-											icon: (
-												<TeamActionGlyph aria-hidden="true" />
-											)
-										}}
-										className="session__teamDiscussionAction"
-										testingAttribute="enquiry-open-team"
-										tourTarget="enquiry-team-button"
-										buttonHandle={() =>
+									<EnquiryTeamAction
+										unreadCount={teamUnreadCount}
+										onOpen={() =>
 											selectChannelFromFab(
 												channelId({ kind: 'team' })
 											)
@@ -4299,12 +4333,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.some(
-					(channel) =>
-						!showEnquiryTeamAction || channel.kind !== 'team'
-				) && (
+				{otherChannels.length > 0 && (
 					<ChannelSwitcherFab
-						channels={secondaryChannels}
+						channels={mainSwitcherChannels}
 						activeChannelId={shownChannelId}
 						onSelect={selectChannelFromFab}
 						bottomOffset={fabOffset}

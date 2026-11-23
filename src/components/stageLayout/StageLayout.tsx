@@ -40,6 +40,7 @@ interface StageLayoutProps {
 	children: ReactNode;
 	stage: ReactNode;
 	showLegalLinks?: boolean;
+	showBuildIdentity?: boolean;
 	/**
 	 * The department (agency × topic) whose documents the footer legal links
 	 * open. Absent on public pages, where the platform note applies because no
@@ -72,6 +73,7 @@ export const StageLayout = ({
 	children,
 	stage,
 	showLegalLinks,
+	showBuildIdentity = true,
 	legalDepartment,
 	showLoginLink,
 	showRegistrationLink,
@@ -103,7 +105,8 @@ export const StageLayout = ({
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 	const platformVersion = getPlatformVersion();
 	const identityOwner = useBuildIdentityOwner();
-	const showIdentity = Boolean(platformVersion || getBuildCommit());
+	const showIdentity =
+		showBuildIdentity && Boolean(platformVersion || getBuildCommit());
 
 	return (
 		<div className={clsx('stageLayout', className)} inert={inert}>

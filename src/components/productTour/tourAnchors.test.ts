@@ -73,7 +73,7 @@ const anchorContract: Array<{
 	},
 	{
 		anchor: 'enquiry-team-button',
-		sourceFile: 'session/SessionItemComponent.tsx',
+		sourceFile: 'session/EnquiryTeamAction.tsx',
 		expected: /tourTarget="enquiry-team-button"/
 	},
 	{

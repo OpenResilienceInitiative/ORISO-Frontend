@@ -26,6 +26,9 @@
 // Formatted message text — one look in the composer AND the message bubble
 @import './richTextContent';
 
+// Unread count pill — one look for every unread indicator in a session
+@import './unreadCountBadge';
+
 // FONTS
 $font-family-sans-serif: 'Inter Variable', arial, sans-serif;
 $font-family-divider: 'Inter Variable', arial, sans-serif;

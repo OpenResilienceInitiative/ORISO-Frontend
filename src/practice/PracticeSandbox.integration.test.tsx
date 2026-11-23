@@ -654,6 +654,14 @@ describe('practice sandbox on the real session containers', () => {
 			);
 
 		await openThePracticeCase(view.container);
+		// The enquiry has no team room yet; its team action creates it.
+		fireEvent.click(
+			await screen.findByRole(
+				'button',
+				{ name: 'enquiry.teamDiscussion.open' },
+				{ timeout: 15000 }
+			)
+		);
 		await waitFor(
 			() =>
 				expect(panel()?.textContent).toContain(

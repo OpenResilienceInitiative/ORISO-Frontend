@@ -929,7 +929,9 @@ export const NotificationsCenter = () => {
 					className="notificationsCenter__listColumn"
 					style={{ width: `${listWidth}px` }}
 				>
-					<ActivityTimelineEmptyState variant="conversation-history" />
+					{!isIconRail && (
+						<ActivityTimelineEmptyState variant="conversation-history" />
+					)}
 					<ResizableHandle
 						currentWidth={listWidth}
 						onResize={handleListResize}

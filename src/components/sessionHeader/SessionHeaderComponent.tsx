@@ -160,6 +160,9 @@ export interface SessionHeaderProps {
 	 * header reads it.
 	 */
 	hideGroupTopic?: boolean;
+	/** Opens the team conversation from the shared More menu. */
+	onOpenTeamChat?: () => void;
+	teamChatUnreadCount?: number;
 }
 
 type SupervisorSnapshot = {
@@ -1290,6 +1293,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
 					callsInMenu={callsInMenu}
+					onOpenTeamChat={props.onOpenTeamChat}
+					teamChatUnreadCount={props.teamChatUnreadCount}
 					onCreateAppointment={openCreateAppointment}
 					onSendNewLink={sendNewLink}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
