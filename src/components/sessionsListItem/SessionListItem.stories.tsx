@@ -37,6 +37,7 @@ import {
 	SessionListItemComponent,
 	type SessionCardDatePlacement
 } from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
 import './sessionsListItem.styles.scss';
@@ -1091,7 +1092,7 @@ const expectCardLayout = async (
 		const menu = at('.sessionsListItem__menuIcon');
 		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
 
-		// 48 px avatar straight under the chip row, without its outline.
+		// 48 px avatar straight under the chip row, with the shared chat outline.
 		const avatar = at('.sessionsListItem__icon');
 		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
 		await expect(Math.round(avatar.top - box.top)).toBe(
@@ -1100,6 +1101,13 @@ const expectCardLayout = async (
 		await expect(Math.round(avatar.left - box.left)).toBe(
 			CARD_BORDER + CARD_INSET
 		);
+		const avatarFrame = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		await expect(getComputedStyle(avatarFrame, '::after').content).toBe(
+			'none'
+		);
+		await expect(getComputedStyle(avatarFrame).boxShadow).toContain('2px');
 		const circle = card.querySelector<HTMLElement>(
 			'[data-testid="user-avatar"] > div'
 		)!;
@@ -3176,5 +3184,47 @@ export const EnquiryWaitingHiddenWhenOff: Story = {
 		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
 			longTopic.name
 		);
+	}
+};
+
+/** The compact group rail uses UserAvatar directly, rather than MessageAvatar. */
+export const GroupRailAvatarCustomTheme: Story = {
+	name: 'Gruppenleiste — Avatar im eigenen Theme',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div
+				style={
+					{
+						...listShell,
+						'--m3-outline-variant': '#314f69'
+					} as React.CSSProperties
+				}
+			>
+				<div role="tablist" aria-label="Conversations">
+					<SessionListRailProvider rail>
+						<RuntimeCard
+							item={runtimeGroupChat({
+								id: 5901,
+								name: 'Eine Person'
+							})}
+						/>
+					</SessionListRailProvider>
+				</div>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		const animal = avatar.querySelector<HTMLElement>(':scope > div')!;
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		const railFrame = avatar.closest<HTMLElement>(
+			'.sessionRailPill__avatar'
+		)!;
+		expect(getComputedStyle(railFrame).boxShadow).toContain('2px');
+		expect(getComputedStyle(animal).borderTopWidth).toBe('0px');
+		expect(getComputedStyle(animal).boxShadow).toBe('none');
 	}
 };

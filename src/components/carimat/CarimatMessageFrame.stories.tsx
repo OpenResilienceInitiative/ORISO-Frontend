@@ -3,6 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { MessageItemComponent } from '../message/MessageItemComponent';
+import { MessageAvatar } from '../message/MessageAvatar';
+import { CarimatAvatar } from './CarimatMessageFrame';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -163,6 +165,16 @@ const checkSharedPresentation: Story['play'] = async ({ canvasElement }) => {
 		}
 		for (const row of rects)
 			expect(row.header.left).toBeGreaterThanOrEqual(row.avatar.right);
+		for (const region of regions) {
+			const avatar = region.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!;
+			expect(getComputedStyle(avatar).backgroundColor).toBe(
+				'rgb(255, 255, 255)'
+			);
+			expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+			expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		}
 	});
 	expect(
 		canvas.getByText('Your enquiry has arrived. We will answer here.')
@@ -185,4 +197,72 @@ export const ExistingMessageFamiliesGerman: Story = {
 export const ExistingMessageFamiliesFrench: Story = {
 	...ExistingMessageFamilies,
 	globals: { locale: 'fr' }
+};
+
+/** The same frame surrounds human, branded and assistant avatars, even with a non-white chat surface. */
+export const SharedAvatarOutlineWithCustomSurface: Story = {
+	render: () => (
+		<div
+			style={
+				{
+					'--m3-surface-container-lowest': '#e5eef6',
+					'--m3-outline-variant': '#556677',
+					'display': 'flex',
+					'gap': 24,
+					'background': '#e5eef6',
+					'padding': 24
+				} as React.CSSProperties
+			}
+		>
+			<div className="messageItem messageItem--left">
+				<div className="messageItem__avatar" data-testid="animal-frame">
+					<MessageAvatar
+						isGroup={false}
+						isSystemNotification={false}
+						userId="test-animal"
+						username="test-animal"
+						displayName="Test animal"
+					/>
+				</div>
+			</div>
+			<div className="messageItem messageItem--right">
+				<div className="messageItem__avatar" data-testid="brand-frame">
+					<MessageAvatar
+						isGroup={false}
+						isSystemNotification={false}
+						userId="test-counsellor"
+						username="test-counsellor"
+						displayName="Test counsellor"
+						choice={{ kind: 'motif', file: 'fox.svg' }}
+					/>
+				</div>
+			</div>
+			<div className="carimatMessageFrame">
+				<CarimatAvatar />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const frames = [
+			canvasElement.querySelector<HTMLElement>(
+				'[data-testid="animal-frame"]'
+			)!,
+			canvasElement.querySelector<HTMLElement>(
+				'[data-testid="brand-frame"]'
+			)!,
+			canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!
+		];
+		for (const frame of frames) {
+			expect(frame.getBoundingClientRect().width).toBe(60);
+			expect(getComputedStyle(frame).backgroundColor).toBe(
+				'rgb(229, 238, 246)'
+			);
+			const outline =
+				frame.querySelector<HTMLElement>('.chatAvatarOutline') ?? frame;
+			expect(getComputedStyle(frame).borderTopWidth).toBe('6px');
+			expect(getComputedStyle(outline, '::after').content).toBe('none');
+		}
+	}
 };

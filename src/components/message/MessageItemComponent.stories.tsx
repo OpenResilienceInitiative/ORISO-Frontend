@@ -2553,7 +2553,22 @@ export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
 export const InitialAcceptanceDefault: Story = {
 	...InitialAcceptanceWithScopedPreference,
 	name: 'Initial acceptance — default chat notice',
-	play: undefined
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!;
+			const bubble = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__bubble'
+			)!;
+			const avatarRect = avatar.getBoundingClientRect();
+			const bubbleRect = bubble.getBoundingClientRect();
+			expect(bubbleRect.left - avatarRect.left).toBeCloseTo(40, 0);
+			expect(bubbleRect.top - avatarRect.top).toBeLessThanOrEqual(44);
+			expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+			expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		});
+	}
 };
 export const InitialAcceptanceDefaultMobile: Story = {
 	...InitialAcceptanceDefault,
@@ -2689,6 +2704,12 @@ export const SupervisorFeedback: Story = {
 		expect(
 			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
 		).toBeTruthy();
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__avatar--supervisor'
+		)!;
+		expect(avatar).not.toBeNull();
+		expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
 	}
 };
 

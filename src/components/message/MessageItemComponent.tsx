@@ -3232,7 +3232,13 @@ export const MessageItemComponent = ({
 					!isSystemNotification && (
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-								<div className="messageItem__avatar">
+								<div
+									className={clsx(
+										'messageItem__avatar',
+										isSupervisorFeedback &&
+											'messageItem__avatar--supervisor'
+									)}
+								>
 									{supervisionPerson ? (
 										// FE#2344: the same avatar as in the panel
 										// header; the "Feedback" tag in the bubble
