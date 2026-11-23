@@ -139,9 +139,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	background: var(--m3-surface-container-lowest, #fff);
 	border: 1px solid var(--m3-primary-fixed, #ffdad5);
 
-	// FE#2494: the same rounding on every corner, concentric with the
-	// quote and the field inside (12px padding + 12px inner radius).
-	border-radius: 24px;
+	// FE#2494: concentric with the quote and the field inside (12px padding +
+	// 12px inner radius); the top-right corner stays a 4px speech-bubble
+	// point, like the reply handle (Frank, 24 Nov).
+	border-radius: 24px 4px 24px 24px;
 	box-shadow: $selection-reply-elevation;
 	color: var(--m3-on-surface, #1b1b1c);
 
@@ -347,13 +348,40 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 // FE#2494 *7: where the answer goes ("In Supervision antworten").
+// FE#2494 *7: where the answer goes — a badge attached on top of the
+// bubble (Frank, 24 Nov), not a line of text inside it.
+.selectionReply__popover--targeted {
+	padding-top: 20px;
+}
+
 .selectionReply__target {
+	position: absolute;
+	top: -14px;
+	left: 16px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 28px;
 	margin: 0;
-	padding: 0 4px;
-	color: var(--m3-on-surface-variant, #444748);
+	padding: 0 12px 0 8px;
+	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border-radius: 14px;
+	background: var(--m3-secondary-container, #e8e6f0);
+	color: var(--m3-on-secondary-container, #4f5864);
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 16px;
+	white-space: nowrap;
+}
+
+.selectionReply__targetIcon {
+	display: inline-flex;
+
+	svg {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
 }
 
 // FE#2494 *7 bubble variant: a small reply handle on the top right corner

@@ -966,15 +966,25 @@ export const SelectionReplyLayer = ({
 					// Choosing a side chat already happened: the bubble then
 					// shows only the field for that chat.
 					actions={target ? undefined : bubbleActions}
-					targetLabel={
+					targetBadge={
 						target === 'supervision'
-							? translate(
-									'message.selectionReply.replyInSupervision'
-								)
+							? {
+									label: translate(
+										'message.selectionReply.replyInSupervision'
+									),
+									short: translate('supervision.panel.title'),
+									icon: <SupervisionIcon />
+								}
 							: target === 'team'
-								? translate(
-										'message.selectionReply.replyInTeam'
-									)
+								? {
+										label: translate(
+											'message.selectionReply.replyInTeam'
+										),
+										short: translate(
+											'chatStage.panel.team.title'
+										),
+										icon: <TeamChatIcon />
+									}
 								: undefined
 					}
 					collectedCount={collectedCount?.(target) ?? 0}

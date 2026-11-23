@@ -45,8 +45,11 @@ export interface SelectionReplyPopoverProps {
 	 * its tail on the side facing the passage.
 	 */
 	bubble?: false | 'below' | 'above';
-	/** FE#2494 *7: the side chat this answer goes to ("In Supervision antworten"). */
-	targetLabel?: string;
+	/**
+	 * FE#2494 *7: the side chat this answer goes to — a badge attached on top
+	 * of the bubble (icon + room), the full sentence as its accessible name.
+	 */
+	targetBadge?: { label: string; short: string; icon: React.ReactNode };
 	/** Answers already stacked for that message; the stack shows the next number. */
 	collectedCount?: number;
 }
@@ -83,7 +86,7 @@ export const SelectionReplyPopover = forwardRef<
 			autoFocus = true,
 			actions,
 			bubble = false,
-			targetLabel,
+			targetBadge,
 			collectedCount = 0
 		},
 		ref
@@ -205,7 +208,8 @@ export const SelectionReplyPopover = forwardRef<
 				className={[
 					'selectionReply__popover',
 					bubble && 'selectionReply__popover--bubble',
-					bubble === 'above' && 'selectionReply__popover--above'
+					bubble === 'above' && 'selectionReply__popover--above',
+					targetBadge && 'selectionReply__popover--targeted'
 				]
 					.filter(Boolean)
 					.join(' ')}
@@ -213,12 +217,20 @@ export const SelectionReplyPopover = forwardRef<
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
-				{targetLabel && (
+				{targetBadge && (
 					<p
 						className="selectionReply__target"
 						data-cy="selection-reply-target"
+						aria-label={targetBadge.label}
+						title={targetBadge.label}
 					>
-						{targetLabel}
+						<span
+							className="selectionReply__targetIcon"
+							aria-hidden="true"
+						>
+							{targetBadge.icon}
+						</span>
+						<span aria-hidden="true">{targetBadge.short}</span>
 					</p>
 				)}
 				<div className="selectionReply__quote">

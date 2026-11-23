@@ -109,8 +109,9 @@ export const TeamDiscussionBadge = ({
 		};
 	}, [sessionId]);
 
-	// FE#2491: a switched-off team chat is no longer marked on the list.
-	if (!discussion || discussion.status === 'CLOSED') {
+	// FE#2491/#2494: the row marks only an active (OPEN) team chat — not a
+	// switched-off (CLOSED) one, nor one archived after accept.
+	if (!discussion || discussion.status !== 'OPEN') {
 		return null;
 	}
 

@@ -101,7 +101,8 @@ export const IntoSupervision: Story = {
 			canvasElement,
 			'[data-cy="selection-reply-target"]'
 		);
-		await expect(target).toHaveTextContent('In Supervision antworten');
+		await expect(target).toHaveAccessibleName('In Supervision antworten');
+		await expect(target).toHaveTextContent('Supervision');
 		await userEvent.type(
 			canvasElement.querySelector<HTMLTextAreaElement>(
 				'.selectionReply__input'
