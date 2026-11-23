@@ -1,12 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import type { CalendarEntry } from './calendarModel';
+import type { CalendarEntry, Colleague } from './calendarModel';
 import {
 	EdgeMenuContent,
 	EntryMenuContent,
 	MonthDayMenuContent,
+	PeopleMenuContent,
 	MoveForm,
 	RequestMenuContent,
 	SettingsMenuContent
@@ -391,5 +392,66 @@ describe('⋮ settings — Sprechstunden (FE#2287)', () => {
 				'[data-cy="calendar-settings-consultation-hours"] .chatMenuDropdown__itemDescription'
 			)?.textContent
 		).toBe('calendar.consultationHours.none');
+	});
+});
+
+describe('calendar colleague picker (FE#2348)', () => {
+	it('distinguishes same-name colleagues before selection using scoped labels', () => {
+		const onToggle = vi.fn();
+		const colleagues: Colleague[] = [
+			{
+				id: 'bart-1',
+				displayName: 'Bart Simpson',
+				agencyName: 'Springfield',
+				relation: 'sameAgency',
+				secondaryLabel: 'bart.s'
+			},
+			{
+				id: 'bart-2',
+				displayName: 'Bart Simpson',
+				agencyName: 'Springfield',
+				relation: 'sameAgency',
+				secondaryLabel: 'bsimpson'
+			},
+			{
+				id: 'bart-3',
+				displayName: 'Bart Simpson',
+				agencyName: 'Other centre',
+				relation: 'otherTenant'
+			},
+			{
+				id: 'lisa',
+				displayName: 'Lisa Simpson',
+				agencyName: 'Springfield',
+				relation: 'sameAgency',
+				secondaryLabel: 'lisa.s'
+			}
+		];
+
+		render(
+			<PeopleMenuContent
+				colleagues={colleagues}
+				shown={[]}
+				onToggle={onToggle}
+			/>
+		);
+
+		const first = screen.getByRole('menuitemcheckbox', {
+			name: 'Bart Simpson bart.s'
+		});
+		const second = screen.getByRole('menuitemcheckbox', {
+			name: 'Bart Simpson bsimpson'
+		});
+		expect(first.textContent).toContain('bart.s');
+		expect(second.textContent).toContain('bsimpson');
+		fireEvent.click(second);
+		expect(onToggle).toHaveBeenCalledWith('bart-2');
+		expect(
+			screen.getByRole('menuitemcheckbox', { name: 'Bart Simpson' })
+		).toBeTruthy();
+		expect(
+			screen.getByRole('menuitemcheckbox', { name: 'Lisa Simpson' })
+				.textContent
+		).not.toContain('lisa.s');
 	});
 });

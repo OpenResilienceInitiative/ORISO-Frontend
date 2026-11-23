@@ -37,6 +37,7 @@ import {
 	DEFAULT_VISIBILITY,
 	draftConflicts,
 	moveProblem,
+	repeatedColleagueNames,
 	soonEntry,
 	type AppointmentDraft,
 	type AppointmentKind,
@@ -2759,11 +2760,7 @@ export const CalendarPage = ({
 	// (prototype v17).
 	// Names that repeat get their Beratungsstelle on the chip, so two
 	// "Bart Simpson" can be told apart (test finding C12).
-	const twinNames = new Set(
-		colleagues
-			.map((c) => c.displayName)
-			.filter((name, i, all) => all.indexOf(name) !== i)
-	);
+	const twinNames = repeatedColleagueNames(colleagues);
 	// The second hint under a chip: the centre's code always; for a name
 	// that repeats, the username (UserService#1663), else the centre.
 	const chipHint = (colleague: Colleague) =>

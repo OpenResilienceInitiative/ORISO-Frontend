@@ -48,6 +48,7 @@ import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	APPOINTMENT_KINDS,
 	findConflicts,
+	repeatedColleagueNames,
 	type AppointmentKind,
 	type CalendarConversation,
 	type CalendarEntry,
@@ -1577,11 +1578,13 @@ export interface PeopleMenuContentProps {
 const PersonRow = ({
 	on,
 	name,
+	secondaryLabel,
 	avatar,
 	toneClass
 }: {
 	on: boolean;
 	name: string;
+	secondaryLabel?: string;
 	avatar: string;
 	toneClass: string;
 }) => (
@@ -1598,7 +1601,10 @@ const PersonRow = ({
 		>
 			{avatar}
 		</span>
-		<span className="chatMenuDropdown__itemTitle">{name}</span>
+		<ChatMenuDropdownItemContent
+			title={name}
+			description={secondaryLabel}
+		/>
 	</>
 );
 
@@ -1627,6 +1633,7 @@ export const PeopleMenuContent = ({
 		return [...byAgency.entries()];
 	}, [colleagues]);
 	const ownCentre = colleagues.filter((c) => c.relation === 'sameAgency');
+	const twinNames = repeatedColleagueNames(colleagues);
 	return (
 		<>
 			<div className="calendarPeopleMenu__head" role="presentation">
@@ -1665,6 +1672,11 @@ export const PeopleMenuContent = ({
 					</ChatMenuDropdownGroupLabel>
 					{people.map((c) => {
 						const on = shown.includes(c.id);
+						const secondaryLabel =
+							twinNames.has(c.displayName) &&
+							c.relation !== 'otherTenant'
+								? c.secondaryLabel
+								: undefined;
 						return (
 							<ChatMenuDropdownItem
 								key={c.id}
@@ -1677,6 +1689,7 @@ export const PeopleMenuContent = ({
 								<PersonRow
 									on={on}
 									name={c.displayName}
+									secondaryLabel={secondaryLabel}
 									avatar={initialsOf(c.displayName)}
 									toneClass={avatarToneClass(c.displayName)}
 								/>

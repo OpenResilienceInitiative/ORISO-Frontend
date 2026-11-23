@@ -287,7 +287,23 @@ export const People: Story = {
 	render: () => (
 		<Card label="Kalender anzeigen">
 			<PeopleMenuContent
-				colleagues={COLLEAGUES.slice(0, 5)}
+				colleagues={[
+					...COLLEAGUES.slice(0, 5),
+					{
+						id: 'springfield-1',
+						displayName: 'Bart Simpson',
+						agencyName: 'Springfield',
+						relation: 'sameAgency',
+						secondaryLabel: 'bart.s'
+					},
+					{
+						id: 'springfield-2',
+						displayName: 'Bart Simpson',
+						agencyName: 'Springfield',
+						relation: 'sameAgency',
+						secondaryLabel: 'bsimpson'
+					}
+				]}
 				shown={['kaya', 'brandt']}
 				scopeHint="Sie sehen die Kalender Ihrer Beratungsstelle. Das legt Ihr Träger fest."
 				onToggle={fn()}
