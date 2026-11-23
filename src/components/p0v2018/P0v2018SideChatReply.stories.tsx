@@ -24,10 +24,10 @@ const meta = {
 		docs: {
 			description: {
 				component: [
-					'FE#2494 *7 (mit *8 „Stacked Reply“). Text im Chat mit der Ratsuchenden markieren → die bekannte Leiste, vereinfacht: **Antworten · In Supervision antworten · Im Team-Chat antworten · Thread** (Schwärzen nur für Moderierende). Die Sprachnachricht ist keine eigene Aktion mehr — das Mikrofon sitzt im Antwort-Feld. „Sammeln“ ist ein Symbol (Doppelpfeil wie „allen antworten“), Senden bleibt rot.',
+					'FE#2494 *7 (mit *8 „Stacked Reply“). Text im Chat mit der Ratsuchenden markieren → die bekannte Leiste, vereinfacht: **Antworten · In Supervision antworten · Im Team-Chat antworten · Thread** (Schwärzen nur für Moderierende). Die Sprachnachricht ist keine eigene Aktion mehr — das Mikrofon sitzt im Antwort-Feld. Stapeln ist ein ruhiges Symbol (Zeilen in eine Ablage) mit der Nummer der nächsten gestapelten Antwort; Senden bleibt rot. Das Feld ist rund und wächst mehrzeilig.',
 					'**Variante (Frank, 23.11.):** statt der Leiste ein kleiner Antwort-Griff oben rechts an der markierten Stelle; er öffnet ein Sprechblasen-Menü mit Feld, Mikrofon, Sammeln, Senden und darunter Supervision · Team-Chat · Thread.',
 					'Markieren, Antworten und Sammeln gibt es **auch in der Supervision, im Team-Chat und im Thread** — dort sammelt sich das Zitat in deren eigener Eingabe; jedes Zitat zeigt, wer es geschrieben hat.',
-					'Ein Klick auf „In Supervision antworten“ oder „Im Team-Chat antworten“ öffnet diesen Seitenchat und legt die Stelle als Zitat in **dessen** Eingabe. Weitere Stellen sammeln sich dort. Gesendet wird nur im Seitenchat — die Eingabe der Ratsuchenden hat keinen Ziel-Umschalter, also geht nichts versehentlich an sie.',
+					'„In Supervision antworten“ oder „Im Team-Chat antworten“ öffnet das Antwort-Feld **für diesen Seitenchat** (oben steht, wohin es geht): stapeln legt Zitat + Antwort in dessen Eingabe und öffnet ihn, Senden schickt sofort dorthin. Gesendet wird nur im Seitenchat — die Eingabe der Ratsuchenden hat keinen Ziel-Umschalter, also geht nichts versehentlich an sie.',
 					'Gesendet wird **eine** Nachricht mit allen Zitaten; ein Klick auf ein Zitat springt zur Stelle im Chat. Im Team-Chat gibt es jetzt Audio- und Videoanruf wie in der Supervision (gleiche Komponente `PanelCallActions`).',
 					'Gebaut aus: `SelectionReplyLayer`/`SelectionReplyToolbar`, `SelectionReplyPopover`, `MessageTimeline` (`PassageReplyBlocks`), `MessageSubmitInterfaceComponent` (`ComposerPendingQuotes`), `SidePanel`, `PanelHeader`, `PanelCallActions`. Symbole aus `src/resources/img/icons`.'
 				].join('\n\n')
@@ -77,15 +77,15 @@ export const Toolbar: Story = {
 	}
 };
 
-/** 2 · „Antworten“ im selben Chat: Mikrofon im Feld, Sammeln (Doppelpfeil) dunkelgrau, Senden rot. */
+/** 2 · „Antworten“ im selben Chat: Mikrofon im Feld, Stapeln als ruhiges Symbol wie das Mikrofon, Senden rot. */
 export const ReplyField: Story = {
-	name: '2 · Antwort-Feld: Mikrofon im Feld, Sammel-Symbol statt „+“',
+	name: '2 · Antwort-Feld: Feld rund und mehrzeilig, Mikrofon, Stapel-Symbol',
 	args: { preset: P7_PASSAGES.sleep, presetMode: 'popover' }
 };
 
-/** 3 · Ein Klick auf „In Supervision antworten“ öffnet die Supervision mit dem Zitat. */
+/** 3 · „In Supervision antworten“: das Antwort-Feld für die Supervision — stapeln oder senden. */
 export const IntoSupervision: Story = {
-	name: '3 · Klick → Supervision öffnet, Zitat liegt in ihrer Eingabe',
+	name: '3 · „In Supervision antworten“ → Feld mit Stapeln, dann in der Supervision',
 	args: { preset: P7_PASSAGES.letters },
 	play: async ({ canvasElement }) => {
 		const bar = await waitForSelector(
@@ -96,6 +96,22 @@ export const IntoSupervision: Story = {
 			within(bar).getByRole('button', {
 				name: 'In Supervision antworten'
 			})
+		);
+		const target = await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-target"]'
+		);
+		await expect(target).toHaveTextContent('In Supervision antworten');
+		await userEvent.type(
+			canvasElement.querySelector<HTMLTextAreaElement>(
+				'.selectionReply__input'
+			)!,
+			'Wie spreche ich die Briefe an?'
+		);
+		await userEvent.click(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="selection-reply-collect"]'
+			)!
 		);
 		const panel = await waitForSelector(
 			canvasElement,
@@ -108,6 +124,18 @@ export const IntoSupervision: Story = {
 				)
 			).toHaveLength(1)
 		);
+	}
+};
+
+/** 3b · Schon zwei gestapelt: das Stapel-Symbol zeigt „3“ — die dritte Antwort. */
+export const StackNumber: Story = {
+	name: '3b · Stapel-Zahl: die dritte Antwort für die Supervision',
+	args: {
+		openRoom: 'supervision',
+		collected: [P7_PASSAGES.letters, P7_PASSAGES.contract],
+		preset: P7_PASSAGES.sleep,
+		presetMode: 'popover',
+		presetTarget: 'supervision'
 	}
 };
 

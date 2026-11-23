@@ -23,7 +23,6 @@ import {
 import { createSilentWavUrl } from '../voicePlayer/__storybook__/silentAudio';
 import {
 	anchorFor,
-	type MarkedPassage,
 	type MessageSelection
 } from '../selectionReply/useMessageSelection';
 import {
@@ -197,6 +196,8 @@ export interface SideChatReplyStageProps {
 	preset?: PassageRef;
 	/** What shows over the preset passage: the bar or the reply field. */
 	presetMode?: 'toolbar' | 'popover';
+	/** The preset reply field is already aimed at this side chat. */
+	presetTarget?: 'supervision' | 'team' | null;
 	/** Where the preset passage is marked (default: the client chat). */
 	presetRoom?: 'main' | SideRoom;
 	/** Today's bar over the passage, or the variant: handle + bubble menu. */
@@ -220,6 +221,7 @@ export function SideChatReplyStage({
 	preset,
 	presetMode = 'toolbar',
 	presetRoom = 'main',
+	presetTarget = null,
 	menu = 'toolbar',
 	openRoom = null,
 	collected = [],
@@ -326,33 +328,6 @@ export function SideChatReplyStage({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	/** Toolbar entry: open that side chat and collect the passage there. */
-	const collectInto = (target: SideRoom) => (passage: MarkedPassage) => {
-		setRoom(target);
-		setPending((all) => {
-			const list = all[target];
-			if (
-				list.some(
-					(q) =>
-						q.eventId === passage.eventId &&
-						q.excerpt === passage.text
-				)
-			) {
-				return all;
-			}
-			return {
-				...all,
-				[target]: [
-					...list,
-					toQuote(
-						{ eventId: passage.eventId, excerpt: passage.text },
-						list.length
-					)
-				]
-			};
-		});
-	};
-
 	const sendCollected = (target: SideRoom) => (typedText: string) => {
 		const quotes = pending[target];
 		setSideMessages((all) => ({
@@ -371,7 +346,11 @@ export function SideChatReplyStage({
 			[target]: all[target].filter((q) => q.id !== id)
 		}));
 
-	/** Inside a side chat: the answer joins that chat's own reply field. */
+	/**
+	 * The answer joins that chat's composer as one stacked quote — from a
+	 * marking inside the chat, or from the client chat via
+	 * "In Supervision / Im Team-Chat antworten" (which opens that chat).
+	 */
 	const collectInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
 		setPending((all) => ({
 			...all,
@@ -525,6 +504,7 @@ export function SideChatReplyStage({
 						authorFor={sideAuthorFor}
 						onAddToComposer={collectInSide(room)}
 						onSendNow={sendInSide(room)}
+						collectedCount={() => pending[room].length}
 						recorder={storyRecorder}
 						voiceInToolbar={false}
 						menu={menu}
@@ -631,18 +611,48 @@ export function SideChatReplyStage({
 									menu={menu}
 									onReplyInSideRoom={{
 										supervision: withSupervision
-											? collectInto('supervision')
+											? {
+													onCollect: (answer) => {
+														setRoom('supervision');
+														collectInSide(
+															'supervision'
+														)(answer);
+													},
+													onSend: (answer) => {
+														setRoom('supervision');
+														sendInSide(
+															'supervision'
+														)(answer);
+													}
+												}
 											: undefined,
 										team: withTeam
-											? collectInto('team')
+											? {
+													onCollect: (answer) => {
+														setRoom('team');
+														collectInSide('team')(
+															answer
+														);
+													},
+													onSend: (answer) => {
+														setRoom('team');
+														sendInSide('team')(
+															answer
+														);
+													}
+												}
 											: undefined
 									}}
+									collectedCount={(target) =>
+										target ? pending[target].length : 0
+									}
 									// *8: the microphone lives in the reply
 									// field, the bar drops its voice entry.
 									recorder={storyRecorder}
 									voiceInToolbar={false}
 									initialSelection={presetSelection}
 									initialMode={presetMode}
+									initialTarget={presetTarget}
 								>
 									<MessageTimeline
 										messages={messages}

@@ -152,8 +152,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			color: var(--m3-on-surface-variant, #444748) !important;
 		}
 
+		// FE#2494: Supervision reads like Mail — grey, not the primary red.
 		.sessionsListItem__consultingTypeIcon--supervisionLabel {
-			color: var(--m3-primary, $primary);
+			color: var(--m3-secondary, #4c555f) !important;
 		}
 
 		// The master icons are grey already; the black-to-red filter above belongs
@@ -799,7 +800,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	&__icon {
 		> .chatAvatarOutline {
-			@include chat-avatar-small-halo(var(--m3-surface-container-lowest, #ffffff));
+			@include chat-avatar-small-halo(
+				var(--m3-surface-container-lowest, #ffffff)
+			);
 		}
 
 		width: 32px;
@@ -1023,6 +1026,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		&--supervisionLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 500;
+			color: var(--m3-secondary, #4c555f);
+			line-height: 20px;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;

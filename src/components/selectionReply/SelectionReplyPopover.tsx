@@ -7,7 +7,7 @@ import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio.svg';
-import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-collect.svg';
+import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-stack.svg';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
@@ -40,8 +40,15 @@ export interface SelectionReplyPopoverProps {
 	 * thread, blur) as one row under the field.
 	 */
 	actions?: React.ReactNode;
-	/** FE#2494 *7 bubble variant: drawn as a speech bubble from the handle. */
-	bubble?: boolean;
+	/**
+	 * FE#2494 *7 bubble variant: drawn as a speech bubble from the handle,
+	 * its tail on the side facing the passage.
+	 */
+	bubble?: false | 'below' | 'above';
+	/** FE#2494 *7: the side chat this answer goes to ("In Supervision antworten"). */
+	targetLabel?: string;
+	/** Answers already stacked for that message; the stack shows the next number. */
+	collectedCount?: number;
 }
 
 const isMacLike = () =>
@@ -75,12 +82,14 @@ export const SelectionReplyPopover = forwardRef<
 			onClose,
 			autoFocus = true,
 			actions,
-			bubble = false
+			bubble = false,
+			targetLabel,
+			collectedCount = 0
 		},
 		ref
 	) => {
 		const { t: translate } = useTranslation();
-		const inputRef = useRef<HTMLInputElement | null>(null);
+		const inputRef = useRef<HTMLTextAreaElement | null>(null);
 		const rootRef = useRef<HTMLDivElement | null>(null);
 		const setRoot = (element: HTMLDivElement | null) => {
 			rootRef.current = element;
@@ -94,6 +103,16 @@ export const SelectionReplyPopover = forwardRef<
 		const sendKey = isMacLike() ? '⌘' : 'Strg';
 		const hasAnswer = Boolean(draft.trim()) || voice.mode === 'review';
 		const isRecording = voice.mode === 'recording';
+
+		// The field grows with the answer, like the composer (up to 6 lines).
+		useEffect(() => {
+			const field = inputRef.current;
+			if (!field) {
+				return;
+			}
+			field.style.height = 'auto';
+			field.style.height = `${Math.min(field.scrollHeight, 6 * 20 + 24)}px`;
+		}, [draft]);
 
 		useEffect(() => {
 			if (autoFocus) {
@@ -183,15 +202,25 @@ export const SelectionReplyPopover = forwardRef<
 				aria-label={translate('message.selectionReply.dialog', {
 					author: passage.author
 				})}
-				className={
-					bubble
-						? 'selectionReply__popover selectionReply__popover--bubble'
-						: 'selectionReply__popover'
-				}
+				className={[
+					'selectionReply__popover',
+					bubble && 'selectionReply__popover--bubble',
+					bubble === 'above' && 'selectionReply__popover--above'
+				]
+					.filter(Boolean)
+					.join(' ')}
 				data-cy="selection-reply-popover"
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
+				{targetLabel && (
+					<p
+						className="selectionReply__target"
+						data-cy="selection-reply-target"
+					>
+						{targetLabel}
+					</p>
+				)}
 				<div className="selectionReply__quote">
 					<ReplyArrowIcon className="selectionReply__quoteIcon" />
 					<span className="selectionReply__quoteBody">
@@ -237,9 +266,9 @@ export const SelectionReplyPopover = forwardRef<
 				)}
 
 				<div className="selectionReply__inputRow">
-					<input
+					<textarea
 						ref={inputRef}
-						type="text"
+						rows={1}
 						className="selectionReply__input"
 						value={draft}
 						onChange={(event) => onDraftChange(event.target.value)}
@@ -290,6 +319,14 @@ export const SelectionReplyPopover = forwardRef<
 								aria-hidden
 								className="selectionReply__collectIcon"
 							/>
+							{collectedCount > 0 && (
+								<span
+									className="selectionReply__stackCount"
+									data-cy="selection-reply-stack-count"
+								>
+									{collectedCount + 1}
+								</span>
+							)}
 						</button>
 						{hint === 'add' && (
 							<span

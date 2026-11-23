@@ -35,6 +35,18 @@ import {
 } from './passageRange';
 import './selectionReply.styles.scss';
 
+export type SideRoomTarget = 'supervision' | 'team';
+
+/**
+ * FE#2494 *7: "In Supervision antworten" opens the answer field for that
+ * side chat; stacking puts the answer into the side chat's composer, send
+ * posts it there at once. Never into the chat the passage came from.
+ */
+export interface SideRoomReply {
+	onCollect: (answer: SelectionAnswer) => void;
+	onSend: (answer: SelectionAnswer) => void;
+}
+
 /** An answer to one marked passage. */
 export interface SelectionAnswer {
 	passage: MarkedPassage;
@@ -66,10 +78,12 @@ export interface SelectionReplyLayerProps {
 	 * Each handler receives the marked passage; the side chat collects it
 	 * in its own reply field. Missing handler = the entry is not offered.
 	 */
-	onReplyInSideRoom?: {
-		supervision?: (passage: MarkedPassage) => void;
-		team?: (passage: MarkedPassage) => void;
-	};
+	onReplyInSideRoom?: Partial<Record<SideRoomTarget, SideRoomReply>>;
+	/**
+	 * How many answers already wait in the composer the answer would go
+	 * to (null = this chat's own), shown as the stack's number.
+	 */
+	collectedCount?: (target: SideRoomTarget | null) => number;
 	/**
 	 * FE#2494 *8: the microphone sits inside the reply field; the bar can
 	 * drop its own voice entry. Default keeps today's bar.
@@ -104,6 +118,8 @@ export interface SelectionReplyLayerProps {
 	/** Story hook: open with this selection already made. */
 	initialSelection?: MessageSelection | null;
 	initialMode?: 'toolbar' | 'popover';
+	/** Story hook: the answer field opens for this side chat. */
+	initialTarget?: SideRoomTarget | null;
 	/** Story hook: the answer field opens in this voice state. */
 	initialVoice?: SelectionReplyVoice;
 	/** Story hook: open with the bar of this blurred passage. */
@@ -139,6 +155,7 @@ export const SelectionReplyLayer = ({
 	onSendNow,
 	onStartThread,
 	onReplyInSideRoom,
+	collectedCount,
 	voiceInToolbar = true,
 	menu = 'toolbar',
 	focusComposer,
@@ -151,10 +168,12 @@ export const SelectionReplyLayer = ({
 	initialSelection = null,
 	initialMode,
 	initialVoice,
+	initialTarget = null,
 	initialBlurTarget = null
 }: SelectionReplyLayerProps) => {
 	const layerRef = useRef<HTMLDivElement | null>(null);
 	const toolbarRef = useRef<HTMLDivElement | null>(null);
+	const handleRef = useRef<HTMLButtonElement | null>(null);
 	const blurBarRef = useRef<HTMLDivElement | null>(null);
 	const [blurTarget, setBlurTarget] = useState<BlurTarget | null>(null);
 	// Half the bar's real width, so a wider bar (with "Blur") stays inside.
@@ -170,6 +189,7 @@ export const SelectionReplyLayer = ({
 		initialVoice || { mode: 'idle' }
 	);
 	const [startWithVoice, setStartWithVoice] = useState(false);
+	const [target, setTarget] = useState<SideRoomTarget | null>(initialTarget);
 	const [voiceError, setVoiceError] = useState(false);
 	// Each start/stop/discard/close bumps this; a recorder call that finishes
 	// after a newer one (or after the reply closed) is ignored.
@@ -192,6 +212,7 @@ export const SelectionReplyLayer = ({
 	useEffect(() => {
 		if (initialSelection) {
 			setMode(initialMode || 'toolbar');
+			setTarget(initialTarget);
 			if (initialVoice) {
 				setVoice(initialVoice);
 			}
@@ -231,6 +252,7 @@ export const SelectionReplyLayer = ({
 		setVoice({ mode: 'idle' });
 		setVoiceError(false);
 		setStartWithVoice(false);
+		setTarget(null);
 		clear();
 	}, [clear, abandonVoice]);
 
@@ -317,6 +339,7 @@ export const SelectionReplyLayer = ({
 			const target = event.target as Node;
 			if (
 				toolbarRef.current?.contains(target) ||
+				handleRef.current?.contains(target) ||
 				popoverRef.current?.contains(target)
 			) {
 				return;
@@ -489,7 +512,12 @@ export const SelectionReplyLayer = ({
 	const addToComposer = () => {
 		const next = answer();
 		if (next) {
-			onAddToComposer(next);
+			const side = target && onReplyInSideRoom?.[target];
+			if (side) {
+				side.onCollect(next);
+			} else {
+				onAddToComposer(next);
+			}
 			focusComposer?.();
 			reset();
 		}
@@ -498,7 +526,12 @@ export const SelectionReplyLayer = ({
 	const sendNow = () => {
 		const next = answer();
 		if (next && (next.text || next.voice)) {
-			onSendNow(next);
+			const side = target && onReplyInSideRoom?.[target];
+			if (side) {
+				side.onSend(next);
+			} else {
+				onSendNow(next);
+			}
 			focusComposer?.();
 			reset();
 		}
@@ -677,12 +710,10 @@ export const SelectionReplyLayer = ({
 		setBlurTarget(null);
 	};
 
-	const replyInSideRoom = (target: 'supervision' | 'team') => {
-		const handler = onReplyInSideRoom?.[target];
-		if (active && handler) {
-			handler(active.passage);
-			window.getSelection()?.removeAllRanges();
-			reset();
+	const replyInSideRoom = (room: SideRoomTarget) => {
+		if (active && onReplyInSideRoom?.[room]) {
+			setTarget(room);
+			openPopover(false);
 		}
 	};
 
@@ -712,12 +743,38 @@ export const SelectionReplyLayer = ({
 	const anchor = active?.anchor;
 	const isBubble = menu === 'bubble';
 	const HANDLE_SIZE = 32;
-	// The handle sits on the top right corner of the marked text.
+	// The handle sits right after the end of the marked text (its last
+	// line), so it never covers words.
+	const lastLine = (() => {
+		const layer = layerRef.current;
+		const rects = active?.range?.getClientRects();
+		if (!isBubble || !layer || !rects || rects.length === 0) {
+			return null;
+		}
+		const box = layer.getBoundingClientRect();
+		const last = rects[rects.length - 1];
+		return {
+			right: last.right - box.left,
+			middle: last.top - box.top + last.height / 2
+		};
+	})();
 	const handleLeft = anchor
 		? clamp(
-				(anchor.right ?? anchor.centerX) - HANDLE_SIZE / 2,
+				(lastLine?.right ?? anchor.right ?? anchor.centerX) + 4,
 				EDGE,
 				anchor.layerWidth - HANDLE_SIZE - EDGE
+			)
+		: 0;
+	const handleTop = anchor
+		? (lastLine?.middle ?? anchor.top) - HANDLE_SIZE / 2
+		: 0;
+	const popoverLeft = anchor
+		? clamp(
+				isBubble
+					? handleLeft + HANDLE_SIZE - POPOVER_WIDTH
+					: anchor.centerX - POPOVER_WIDTH / 2,
+				EDGE,
+				anchor.layerWidth - POPOVER_WIDTH - EDGE
 			)
 		: 0;
 	const bubbleActions = isBubble ? (
@@ -809,9 +866,10 @@ export const SelectionReplyLayer = ({
 				<button
 					type="button"
 					className="selectionReply__handle"
+					ref={handleRef}
 					data-cy="selection-reply-handle"
 					style={{
-						top: anchor.top - HANDLE_SIZE / 2 - 4,
+						top: handleTop,
 						left: handleLeft
 					}}
 					aria-label={translate('message.selectionReply.toolbar')}
@@ -882,18 +940,44 @@ export const SelectionReplyLayer = ({
 				<SelectionReplyPopover
 					ref={popoverRef}
 					passage={active.passage}
-					style={{
-						top: popoverTop,
-						left: clamp(
-							isBubble
-								? handleLeft + HANDLE_SIZE - POPOVER_WIDTH
-								: anchor.centerX - POPOVER_WIDTH / 2,
-							EDGE,
-							anchor.layerWidth - POPOVER_WIDTH - EDGE
-						)
-					}}
-					bubble={isBubble}
-					actions={bubbleActions}
+					style={
+						{
+							'top': popoverTop,
+							'left': popoverLeft,
+							'--bubble-tail-x': `${Math.max(
+								16,
+								Math.min(
+									POPOVER_WIDTH - 28,
+									handleLeft +
+										HANDLE_SIZE / 2 -
+										popoverLeft -
+										6
+								)
+							)}px`
+						} as React.CSSProperties
+					}
+					bubble={
+						isBubble
+							? anchor && popoverTop < anchor.top
+								? 'above'
+								: 'below'
+							: false
+					}
+					// Choosing a side chat already happened: the bubble then
+					// shows only the field for that chat.
+					actions={target ? undefined : bubbleActions}
+					targetLabel={
+						target === 'supervision'
+							? translate(
+									'message.selectionReply.replyInSupervision'
+								)
+							: target === 'team'
+								? translate(
+										'message.selectionReply.replyInTeam'
+									)
+								: undefined
+					}
+					collectedCount={collectedCount?.(target) ?? 0}
 					draft={draft}
 					onDraftChange={setDraft}
 					voice={voice}
