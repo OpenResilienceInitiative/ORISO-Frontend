@@ -54,19 +54,21 @@ const renderLayer = (
 	recorder: {
 		start: () => Promise<void>;
 		stop: () => Promise<{ src: string; durationSec: number }>;
+		pause?: () => void;
+		resume?: () => void;
 		cancel: () => void;
 	},
 	extra: Partial<React.ComponentProps<typeof SelectionReplyLayer>> = {}
 ) =>
 	render(
 		<SelectionReplyLayer
-			{...extra}
 			authorFor={() => 'Anna'}
 			onAddToComposer={() => {}}
 			onSendNow={() => {}}
 			recorder={recorder}
 			initialSelection={selection()}
 			initialMode="toolbar"
+			{...extra}
 		>
 			<div data-message-id="$1">
 				<div className="messageItem__message">
@@ -191,13 +193,16 @@ describe('SelectionReplyLayer voice recording', () => {
 		renderLayer(recorder);
 		startVoiceFromToolbar();
 		await act(async () => {});
-		const input = screen.getByLabelText(
-			'message.selectionReply.inputLabel'
-		) as HTMLInputElement;
-		expect(input.disabled).toBe(true);
+		// FE#2494: the take replaces the field while it records.
+		expect(
+			screen.queryByLabelText('message.selectionReply.inputLabel')
+		).toBeNull();
 		fireEvent.click(screen.getByLabelText('app.stop'));
 		await act(async () => stop.reject(new Error('broken')));
 		expect(screen.getByRole('alert')).toBeTruthy();
+		const input = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
 		expect(input.disabled).toBe(false);
 	});
 });
@@ -472,5 +477,37 @@ describe('SelectionReplyLayer selection bar on scroll', () => {
 		});
 
 		expect(bar()).toBeNull();
+	});
+});
+
+describe('SelectionReplyLayer voice: stack and send stop the take (FE#2494)', () => {
+	afterEach(cleanup);
+
+	it('Stack while recording stops the take first and stacks it', async () => {
+		const take = { src: 'blob:take', durationSec: 3 };
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(async () => take),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		// Pause, not Stop: the same button pauses and records on.
+		fireEvent.click(screen.getByLabelText('voice.recording.pause'));
+		expect(recorder.pause).toHaveBeenCalledTimes(1);
+		fireEvent.click(screen.getByLabelText('voice.recording.resume'));
+		expect(recorder.resume).toHaveBeenCalledTimes(1);
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		await act(async () => {});
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).toHaveBeenCalledWith(
+			expect.objectContaining({ voice: take })
+		);
 	});
 });

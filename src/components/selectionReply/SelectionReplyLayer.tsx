@@ -61,6 +61,9 @@ export interface SelectionAnswer {
 export interface SelectionVoiceRecorder {
 	start: () => Promise<void> | void;
 	stop: () => Promise<{ src: string; durationSec: number }>;
+	/** FE#2494: hold the take without ending it (optional for stand-ins). */
+	pause?: () => void;
+	resume?: () => void;
 	cancel: () => void;
 }
 
@@ -426,7 +429,7 @@ export const SelectionReplyLayer = ({
 		stopTimer();
 		timerRef.current = window.setInterval(() => {
 			setVoice((current) =>
-				current.mode === 'recording'
+				current.mode === 'recording' && !current.paused
 					? {
 							mode: 'recording',
 							durationSec: current.durationSec + 1
@@ -436,9 +439,12 @@ export const SelectionReplyLayer = ({
 		}, 1000);
 	}, [recorder]);
 
-	const stopVoice = useCallback(async () => {
+	const stopVoice = useCallback(async (): Promise<{
+		src: string;
+		durationSec: number;
+	} | null> => {
 		if (!recorder) {
-			return;
+			return null;
 		}
 		stopTimer();
 		voiceOpRef.current += 1;
@@ -452,12 +458,29 @@ export const SelectionReplyLayer = ({
 				setVoice({ mode: 'idle' });
 				setVoiceError(true);
 			}
-			return;
+			return null;
 		}
 		// A take that arrives after a discard or close stays discarded.
 		if (op === voiceOpRef.current) {
 			setVoice({ mode: 'review', ...take });
+			return take;
 		}
+		return null;
+	}, [recorder]);
+
+	// FE#2494: Pause holds the take; the same button records on.
+	const togglePauseVoice = useCallback(() => {
+		setVoice((current) => {
+			if (current.mode !== 'recording') {
+				return current;
+			}
+			if (current.paused) {
+				recorder?.resume?.();
+			} else {
+				recorder?.pause?.();
+			}
+			return { ...current, paused: !current.paused };
+		});
 	}, [recorder]);
 
 	const discardVoice = useCallback(() => {
@@ -474,17 +497,41 @@ export const SelectionReplyLayer = ({
 		}
 	};
 
-	const answer = (): SelectionAnswer | null =>
+	const answer = (
+		take?: { src: string; durationSec: number } | null
+	): SelectionAnswer | null =>
 		active
 			? {
 					passage: active.passage,
 					text: draft.trim(),
 					voice:
-						voice.mode === 'review'
+						take ??
+						(voice.mode === 'review'
 							? { src: voice.src, durationSec: voice.durationSec }
-							: null
+							: null)
 				}
 			: null;
+
+	/**
+	 * FE#2494 (Frank, 24 Nov): stacking or sending while recording first
+	 * stops the take cleanly, then goes on with it — no extra Stop click.
+	 */
+	const withFinishedTake = async (
+		deliver: (next: SelectionAnswer) => void
+	) => {
+		if (voice.mode === 'recording') {
+			const take = await stopVoice();
+			const next = answer(take);
+			if (next && (next.text || next.voice)) {
+				deliver(next);
+			}
+			return;
+		}
+		const next = answer();
+		if (next) {
+			deliver(next);
+		}
+	};
 
 	// Leaving the answer field unmounts it; focus must not fall to the
 	// page. It goes back to the marked message, a stable place in the
@@ -509,9 +556,8 @@ export const SelectionReplyLayer = ({
 		reset();
 	};
 
-	const addToComposer = () => {
-		const next = answer();
-		if (next) {
+	const addToComposer = () =>
+		withFinishedTake((next) => {
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onCollect(next);
@@ -520,12 +566,13 @@ export const SelectionReplyLayer = ({
 			}
 			focusComposer?.();
 			reset();
-		}
-	};
+		});
 
-	const sendNow = () => {
-		const next = answer();
-		if (next && (next.text || next.voice)) {
+	const sendNow = () =>
+		withFinishedTake((next) => {
+			if (!next.text && !next.voice) {
+				return;
+			}
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onSend(next);
@@ -534,8 +581,7 @@ export const SelectionReplyLayer = ({
 			}
 			focusComposer?.();
 			reset();
-		}
-	};
+		});
 
 	const blurPassage = () => {
 		const layer = layerRef.current;
@@ -995,6 +1041,9 @@ export const SelectionReplyLayer = ({
 					showVoice={Boolean(recorder)}
 					onStartVoice={() => void startVoice()}
 					onStopVoice={() => void stopVoice()}
+					onPauseVoice={
+						recorder?.pause ? togglePauseVoice : undefined
+					}
 					onDiscardVoice={discardVoice}
 					onAddToComposer={addToComposer}
 					onSendNow={sendNow}

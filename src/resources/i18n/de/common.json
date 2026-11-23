@@ -5531,6 +5531,8 @@
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"pause": "Aufnahme pausieren",
+			"resume": "Aufnahme fortsetzen",
 			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}

@@ -292,3 +292,59 @@ export const SupervisionMenu: Story = {
 		).toBeTruthy();
 	}
 };
+
+/**
+ * 9 · Sprachnachricht in die Supervision: Mikrofon ersetzt das Feld,
+ * Pause statt Stopp, Senden beendet die Aufnahme selbst und schickt sie mit.
+ */
+export const VoiceIntoSupervision: Story = {
+	name: '9 · Sprachnachricht in die Supervision — Senden stoppt die Aufnahme',
+	args: { preset: P7_PASSAGES.letters },
+	play: async ({ canvasElement }) => {
+		const bar = await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-toolbar"]'
+		);
+		await userEvent.click(
+			within(bar).getByRole('button', {
+				name: 'In Supervision antworten'
+			})
+		);
+		const popover = await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-popover"]'
+		);
+		await userEvent.click(
+			within(popover).getByRole('button', {
+				name: 'Mit Sprachnachricht antworten'
+			})
+		);
+		// The voice note takes the field's place; Pause, not Stop.
+		await waitFor(() =>
+			expect(popover.querySelector('.selectionReply__input')).toBeNull()
+		);
+		await expect(
+			within(popover).getByRole('button', { name: 'Aufnahme pausieren' })
+		).toBeTruthy();
+		// One recorded second makes it an answer.
+		await waitFor(
+			() =>
+				expect(
+					popover
+						.querySelector('.sendButton')
+						?.getAttribute('disabled')
+				).toBeNull(),
+			{ timeout: 3000 }
+		);
+		await userEvent.click(
+			popover.querySelector<HTMLElement>('.sendButton')!
+		);
+		const panel = await waitForSelector(
+			canvasElement,
+			'[data-side-room="supervision"]'
+		);
+		await waitFor(() =>
+			expect(panel.querySelector('.voicePlayer')).toBeTruthy()
+		);
+	}
+};

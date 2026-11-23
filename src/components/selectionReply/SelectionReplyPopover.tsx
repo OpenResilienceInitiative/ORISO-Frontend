@@ -12,7 +12,7 @@ import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
 	| { mode: 'idle' }
-	| { mode: 'recording'; durationSec: number }
+	| { mode: 'recording'; durationSec: number; paused?: boolean }
 	| { mode: 'review'; src: string; durationSec: number };
 
 export interface SelectionReplyPopoverProps {
@@ -27,6 +27,8 @@ export interface SelectionReplyPopoverProps {
 	showVoice?: boolean;
 	onStartVoice: () => void;
 	onStopVoice: () => void;
+	/** FE#2494: when given, the take is paused/resumed instead of stopped. */
+	onPauseVoice?: () => void;
 	onDiscardVoice: () => void;
 	/** Enter: the answer goes into the composer as its own reply bar. */
 	onAddToComposer: () => void;
@@ -79,6 +81,7 @@ export const SelectionReplyPopover = forwardRef<
 			showVoice = true,
 			onStartVoice,
 			onStopVoice,
+			onPauseVoice,
 			onDiscardVoice,
 			onAddToComposer,
 			onSendNow,
@@ -104,8 +107,15 @@ export const SelectionReplyPopover = forwardRef<
 		};
 		const [hint, setHint] = useState<'add' | 'send' | null>(null);
 		const sendKey = isMacLike() ? '⌘' : 'Strg';
-		const hasAnswer = Boolean(draft.trim()) || voice.mode === 'review';
 		const isRecording = voice.mode === 'recording';
+		// FE#2494: stacking or sending a running take stops it first, so a
+		// take counts as an answer once it has a second in it.
+		const hasAnswer =
+			Boolean(draft.trim()) ||
+			voice.mode === 'review' ||
+			(isRecording && voice.durationSec > 0);
+		// A stand-in without pause keeps the old Stop; it must stay usable.
+		const blockWhileRecording = isRecording && !onPauseVoice;
 
 		// The field grows with the answer, like the composer (up to 6 lines).
 		useEffect(() => {
@@ -114,7 +124,9 @@ export const SelectionReplyPopover = forwardRef<
 				return;
 			}
 			field.style.height = 'auto';
-			field.style.height = `${Math.min(field.scrollHeight, 6 * 20 + 24)}px`;
+			// FE#2494 (Frank): more room when writing — up to 10 lines, then
+			// the field scrolls inside and keeps the caret in view.
+			field.style.height = `${Math.min(field.scrollHeight, 10 * 20 + 20)}px`;
 		}, [draft]);
 
 		useEffect(() => {
@@ -260,42 +272,47 @@ export const SelectionReplyPopover = forwardRef<
 						{translate('voice.recording.error.message')}
 					</p>
 				)}
-				{voice.mode === 'recording' && (
-					<VoiceNoteRow
-						mode="recording"
-						durationSec={voice.durationSec}
-						onStop={onStopVoice}
-						onDiscard={onDiscardVoice}
-					/>
-				)}
-				{voice.mode === 'review' && (
-					<VoiceNoteRow
-						mode="review"
-						src={voice.src}
-						durationSec={voice.durationSec}
-						onDiscard={onDiscardVoice}
-					/>
-				)}
-
 				<div className="selectionReply__inputRow">
-					<textarea
-						ref={inputRef}
-						rows={1}
-						className="selectionReply__input"
-						value={draft}
-						onChange={(event) => onDraftChange(event.target.value)}
-						placeholder={translate(
-							voice.mode === 'review'
-								? 'message.selectionReply.placeholderWithVoice'
-								: 'message.selectionReply.placeholder'
-						)}
-						aria-label={translate(
-							'message.selectionReply.inputLabel'
-						)}
-						disabled={isRecording}
-						autoComplete="off"
-					/>
-					{showVoice && voice.mode === 'idle' && (
+					{/* FE#2494 (Frank, 24 Nov): the voice note takes the field's
+					    place — the mic swaps writing for recording. */}
+					{voice.mode === 'recording' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="recording"
+							durationSec={voice.durationSec}
+							onStop={onStopVoice}
+							onPause={onPauseVoice}
+							paused={voice.paused}
+							onDiscard={onDiscardVoice}
+						/>
+					) : voice.mode === 'review' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="review"
+							src={voice.src}
+							durationSec={voice.durationSec}
+							onDiscard={onDiscardVoice}
+						/>
+					) : (
+						<textarea
+							ref={inputRef}
+							rows={1}
+							className="selectionReply__input"
+							value={draft}
+							onChange={(event) =>
+								onDraftChange(event.target.value)
+							}
+							placeholder={translate(
+								'message.selectionReply.placeholder'
+							)}
+							aria-label={translate(
+								'message.selectionReply.inputLabel'
+							)}
+							autoComplete="off"
+						/>
+					)}
+					{/* Writing already: the mic would only take the field's room. */}
+					{showVoice && voice.mode === 'idle' && !draft.trim() && (
 						<button
 							type="button"
 							className="selectionReply__iconButton"
@@ -319,7 +336,7 @@ export const SelectionReplyPopover = forwardRef<
 							className="selectionReply__collect"
 							data-cy="selection-reply-collect"
 							onClick={onAddToComposer}
-							disabled={isRecording}
+							disabled={blockWhileRecording}
 							aria-label={addLabel}
 							aria-describedby="selection-reply-keys"
 							onMouseEnter={() => setHint('add')}
@@ -360,7 +377,7 @@ export const SelectionReplyPopover = forwardRef<
 						<SendButton
 							type="button"
 							state={
-								isRecording
+								blockWhileRecording
 									? 'disabled'
 									: hasAnswer
 										? 'ready'

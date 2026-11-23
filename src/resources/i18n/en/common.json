@@ -5479,6 +5479,8 @@
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"pause": "Pause recording",
+			"resume": "Resume recording",
 			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}

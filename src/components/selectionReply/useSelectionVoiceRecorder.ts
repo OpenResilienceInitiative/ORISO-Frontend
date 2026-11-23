@@ -46,6 +46,9 @@ export const useSelectionVoiceRecorder = (): {
 		stream: MediaStream;
 		chunks: BlobPart[];
 		startedAt: number;
+		/** FE#2494: time spent paused does not count as recorded. */
+		pausedMs: number;
+		pausedAt: number | null;
 	} | null>(null);
 
 	const stopStream = (stream: MediaStream) =>
@@ -106,7 +109,9 @@ export const useSelectionVoiceRecorder = (): {
 					recorder: mediaRecorder,
 					stream,
 					chunks,
-					startedAt: Date.now()
+					startedAt: Date.now(),
+					pausedMs: 0,
+					pausedAt: null
 				};
 				mediaRecorder.start();
 			},
@@ -126,9 +131,14 @@ export const useSelectionVoiceRecorder = (): {
 							reject(new Error('Empty recording'));
 							return;
 						}
+						const pausedMs =
+							active.pausedMs +
+							(active.pausedAt
+								? Date.now() - active.pausedAt
+								: 0);
 						const elapsedMs = Math.max(
 							1000,
-							Date.now() - active.startedAt
+							Date.now() - active.startedAt - pausedMs
 						);
 						const durationSec = Math.max(
 							1,
@@ -145,6 +155,25 @@ export const useSelectionVoiceRecorder = (): {
 					};
 					active.recorder.stop();
 				}),
+			// FE#2494 (Frank, 24 Nov): Pause instead of Stop; stacking or
+			// sending stops the take cleanly first.
+			pause: () => {
+				const active = activeRef.current;
+				if (active && active.recorder.state === 'recording') {
+					active.recorder.pause();
+					active.pausedAt = Date.now();
+				}
+			},
+			resume: () => {
+				const active = activeRef.current;
+				if (active && active.recorder.state === 'paused') {
+					active.recorder.resume();
+					if (active.pausedAt) {
+						active.pausedMs += Date.now() - active.pausedAt;
+					}
+					active.pausedAt = null;
+				}
+			},
 			cancel
 		};
 	}, [cancel]);

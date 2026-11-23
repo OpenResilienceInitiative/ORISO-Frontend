@@ -5514,6 +5514,8 @@
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"pause": "Kaydı duraklat",
+			"resume": "Kayda devam et",
 			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}

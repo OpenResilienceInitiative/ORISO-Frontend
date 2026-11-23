@@ -116,6 +116,8 @@ export type PassageRef = {
 	author?: string;
 	/** The answer written to it, if any. */
 	replyText?: string;
+	/** FE#2494: a voice answer to it, played in the sent message. */
+	voice?: { src: string; durationSec: number } | null;
 };
 
 const noop = () => {};
@@ -150,6 +152,8 @@ const teamMateB: StackParticipant = {
 const storyRecorder: SelectionVoiceRecorder = {
 	start: noop,
 	stop: async () => ({ src: createSilentWavUrl(12), durationSec: 12 }),
+	pause: noop,
+	resume: noop,
 	cancel: noop
 };
 
@@ -191,7 +195,8 @@ const stackedReply = (
 			eventId: passage.eventId,
 			author: passage.author ?? CLIENT_NAME,
 			excerpt: passage.excerpt,
-			text: passage.replyText
+			text: passage.replyText,
+			voice: passage.voice ?? null
 		})
 	)
 });
@@ -248,6 +253,9 @@ export function SideChatReplyStage({
 		team: openRoom === 'team' ? collected.map(toQuote) : [],
 		thread: openRoom === 'thread' ? collected.map(toQuote) : []
 	}));
+	const voiceByQuote = useRef(
+		new Map<string, { src: string; durationSec: number }>()
+	);
 	const [sideMessages, setSideMessages] = useState<
 		Record<SideRoom, MessageItem[]>
 	>(() => {
@@ -334,7 +342,11 @@ export function SideChatReplyStage({
 	}, []);
 
 	const sendCollected = (target: SideRoom) => (typedText: string) => {
-		const quotes = pending[target];
+		// FE#2494 *3: each stacked answer keeps its text and voice note.
+		const quotes = pending[target].map((quote) => ({
+			...quote,
+			voice: voiceByQuote.current.get(quote.id) ?? null
+		}));
 		setSideMessages((all) => ({
 			...all,
 			[target]: [
@@ -357,24 +369,30 @@ export function SideChatReplyStage({
 	 * "In Supervision / Im Team-Chat antworten" (which opens that chat).
 	 */
 	const collectInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
-		setPending((all) => ({
-			...all,
-			[target]: [
-				...all[target],
+		setPending((all) => {
+			const quote = toQuote(
 				{
-					...toQuote(
-						{
-							eventId: answer.passage.eventId,
-							excerpt: answer.passage.text,
-							author: answer.passage.author
-						},
-						all[target].length
-					),
-					replyText: answer.text || undefined,
-					voiceDurationSec: answer.voice?.durationSec ?? null
-				}
-			]
-		}));
+					eventId: answer.passage.eventId,
+					excerpt: answer.passage.text,
+					author: answer.passage.author
+				},
+				all[target].length
+			);
+			if (answer.voice) {
+				voiceByQuote.current.set(quote.id, answer.voice);
+			}
+			return {
+				...all,
+				[target]: [
+					...all[target],
+					{
+						...quote,
+						replyText: answer.text || undefined,
+						voiceDurationSec: answer.voice?.durationSec ?? null
+					}
+				]
+			};
+		});
 
 	const sendInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
 		setSideMessages((all) => ({
@@ -388,7 +406,8 @@ export function SideChatReplyStage({
 							eventId: answer.passage.eventId,
 							excerpt: answer.passage.text,
 							author: answer.passage.author,
-							replyText: answer.text
+							replyText: answer.text,
+							voice: answer.voice
 						}
 					],
 					'',
