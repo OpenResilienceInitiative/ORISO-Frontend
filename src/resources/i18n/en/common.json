@@ -5952,7 +5952,29 @@
 		"send": "Send",
 		"error": {
 			"open": "The team chat could not be opened.",
-			"send": "The message could not be sent."
+			"send": "The message could not be sent.",
+			"switchOn": "The team chat could not be switched on. Please try again.",
+			"switchOff": "The team chat could not be switched off. Please try again.",
+			"switchOnNotAllowed": "The team chat cannot be switched on for this case, for example because the case was moved to another counselling centre."
+		},
+		"switchOn": {
+			"menu": "Switch on team chat",
+			"menuHint": "Starts the team chat for this enquiry. Advice seekers never see it.",
+			"again": "Switch team chat on again"
+		},
+		"switchOff": {
+			"menu": "Switch off team chat",
+			"menuHint": "Closes the team chat for this enquiry for everyone. The history stays readable.",
+			"confirm": {
+				"headline": "Switch off team chat?",
+				"copy": "Nobody in the team can write in it any more. The history stays readable, and you can switch the team chat on again while the enquiry is open.",
+				"confirm": "Switch off",
+				"cancel": "Cancel"
+			}
+		},
+		"closed": {
+			"title": "Team chat switched off",
+			"text": "The team chat for this enquiry is switched off and read-only. Switch it on again to keep writing."
 		}
 	},
 	"inviteLink": {

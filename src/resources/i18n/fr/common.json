@@ -6005,7 +6005,29 @@
 		"send": "Envoyer",
 		"error": {
 			"open": "Le chat d'équipe n'a pas pu être ouvert.",
-			"send": "Le message n'a pas pu être envoyé."
+			"send": "Le message n'a pas pu être envoyé.",
+			"switchOn": "Le chat d’équipe n’a pas pu être activé. Veuillez réessayer.",
+			"switchOff": "Le chat d’équipe n’a pas pu être désactivé. Veuillez réessayer.",
+			"switchOnNotAllowed": "Le chat d’équipe ne peut pas être activé pour ce dossier, par exemple parce que le dossier a été transféré à un autre centre de conseil."
+		},
+		"switchOn": {
+			"menu": "Activer le chat d’équipe",
+			"menuHint": "Démarre le chat d’équipe pour cette demande. Les personnes en recherche de conseil ne le voient jamais.",
+			"again": "Réactiver le chat d’équipe"
+		},
+		"switchOff": {
+			"menu": "Désactiver le chat d’équipe",
+			"menuHint": "Ferme le chat d’équipe de cette demande pour tout le monde. L’historique reste lisible.",
+			"confirm": {
+				"headline": "Désactiver le chat d’équipe ?",
+				"copy": "Plus personne de l’équipe ne pourra y écrire. L’historique reste lisible, et vous pouvez réactiver le chat d’équipe tant que la demande est ouverte.",
+				"confirm": "Désactiver",
+				"cancel": "Annuler"
+			}
+		},
+		"closed": {
+			"title": "Chat d’équipe désactivé",
+			"text": "Le chat d’équipe de cette demande est désactivé et en lecture seule. Réactivez-le pour continuer à écrire."
 		}
 	},
 	"inviteLink": {

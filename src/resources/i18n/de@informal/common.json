@@ -2383,7 +2383,17 @@
 		"send": "Senden",
 		"error": {
 			"open": "Der Team-Chat konnte nicht geöffnet werden.",
-			"send": "Die Nachricht konnte nicht gesendet werden."
+			"send": "Die Nachricht konnte nicht gesendet werden.",
+			"switchOn": "Der Team-Chat konnte nicht eingeschaltet werden. Bitte versuche es erneut.",
+			"switchOff": "Der Team-Chat konnte nicht ausgeschaltet werden. Bitte versuche es erneut."
+		},
+		"switchOff": {
+			"confirm": {
+				"copy": "Danach kann niemand aus dem Team mehr schreiben. Der Verlauf bleibt lesbar, und du kannst den Team-Chat wieder einschalten, solange die Anfrage offen ist."
+			}
+		},
+		"closed": {
+			"text": "Der Team-Chat zu dieser Anfrage ist ausgeschaltet und nur noch lesbar. Schalte ihn wieder ein, um weiterzuschreiben."
 		}
 	},
 	"anonymousConsent": {
