@@ -1277,7 +1277,9 @@
 			"back": "Retour",
 			"headerTitle": "Créer une nouvelle conversation",
 			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
-			"title": "Choisir le format d'entretien"
+			"title": "Choisir le format d'entretien",
+			"goToCard": "Aller au format de conversation {{position}} sur {{total}}",
+			"choose": "Choisir"
 		},
 		"internal": {
 			"addPerson": "Ajouter une personne",
@@ -1317,7 +1319,9 @@
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
 			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
-			"vacatedHint": "ne fait plus partie du service de consultation"
+			"vacatedHint": "ne fait plus partie du service de consultation",
+			"cardShort": "Se concerter en équipe – chat, audio, vidéo.",
+			"infoLabel": "En savoir plus sur « Discussions internes »"
 		},
 		"circle": {
 			"addModerator": "Ajouter une co-modération",
