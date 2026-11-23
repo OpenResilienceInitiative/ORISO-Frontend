@@ -1,3 +1,4 @@
+@import './avatarFrame';
 $icon-size: 24px;
 $icon-size-small: 24px;
 
@@ -241,18 +242,12 @@ $message-avatar-overlap: -19px;
 	// so the visible avatar stays 48px and the ring cuts into the bubble
 	// corner without touching the kebab.
 	&__avatar {
-		width: 60px;
-		height: 60px;
-		min-width: 60px;
-		min-height: 60px;
-		border: 6px solid #fff;
-		border-radius: 999px;
-		background: #fff;
+		@include chat-avatar-frame;
+
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		box-sizing: border-box;
 		flex-shrink: 0;
 
 		// Force Compound avatar to render properly
@@ -338,12 +333,6 @@ $message-avatar-overlap: -19px;
 		&--right {
 			margin-top: auto;
 			translate: 0% 25%;
-		}
-	}
-
-	&--right {
-		.messageItem__avatar {
-			background: #fff;
 		}
 	}
 
@@ -773,6 +762,8 @@ $message-avatar-overlap: -19px;
 	// platform entry (#2237): its own size and colour, centred in the shared
 	// avatar frame instead of the inline offset it has beside a subject.
 	&__avatar--system .systemMessage__icon {
+		width: 40px;
+		height: 40px;
 		margin: 0;
 		padding: 0;
 	}

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import './UserAvatar.styles.scss';
 import { useMemo } from 'react';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { CounsellorAvatar } from './CounsellorAvatar';
@@ -24,6 +25,8 @@ interface UserAvatarProps {
 	ring?: boolean;
 	/** The animal circle's own grey outline; see `AnimalAvatar`. */
 	outline?: boolean;
+	/** Shared chat outline replaces the animal’s own outline and shadow. */
+	chatOutline?: boolean;
 	/** The avatar the user picked in their profile (#1240); default when absent. */
 	choice?: AvatarChoice | null;
 }
@@ -42,6 +45,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	size = AVATAR_SIZES.default,
 	ring = true,
 	outline = true,
+	chatOutline = false,
 	choice
 }) => {
 	const resolvedName = formatMessagePersonName(
@@ -69,6 +73,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
 	return (
 		<span
+			className={chatOutline ? 'chatAvatarOutline' : undefined}
 			// Only a human-readable name may become the accessible name; technical
 			// identifiers (anonymous matrix usernames) stay hidden from AT.
 			role={resolvedName ? 'img' : undefined}
@@ -83,7 +88,11 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				height: totalSize,
 				borderRadius: '50%',
 				background: ring ? '#fff' : 'transparent',
-				boxShadow: ring ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
+				boxShadow: ring
+					? '0 2px 8px 0 rgba(0, 0, 0, 0.10)'
+					: chatOutline
+						? undefined
+						: 'none',
 				boxSizing: 'border-box',
 				flexShrink: 0,
 				color:
@@ -105,7 +114,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				<AnimalAvatar
 					avatar={avatar}
 					size={innerSize}
-					outline={outline}
+					outline={outline && !chatOutline}
 				/>
 			)}
 		</span>

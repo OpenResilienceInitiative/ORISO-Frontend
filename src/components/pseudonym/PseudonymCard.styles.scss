@@ -1,3 +1,5 @@
+@import '../message/avatarFrame';
+
 /* Pseudonym card — reads as a proper left-aligned chat message.
  *
  * Horizontal layout:
@@ -48,18 +50,10 @@ $header-avatar-gap: 8px;
 }
 
 .pseudonymCard__avatarFrame {
-	/* Keep in sync with `.messageItem__avatar`. */
-	width: 60px;
-	height: 60px;
-	min-width: 60px;
-	min-height: 60px;
-	border: 6px solid #ffffff;
-	border-radius: 999px;
-	background: #ffffff;
+	@include chat-avatar-frame;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	box-sizing: border-box;
 	position: relative;
 	z-index: 2;
 	flex-shrink: 0;

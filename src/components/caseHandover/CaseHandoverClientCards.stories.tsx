@@ -256,15 +256,15 @@ export const PendingClientConsent: Story = {
 		});
 
 		// Figma 9596:35524: the 60px avatar/header layer sits above the chat
-		// container. The bubble starts 40px into the rail and 48px below the
-		// avatar origin, so its square top-left corner is visibly tucked under
+		// container. The bubble starts 40px into the rail and 44px below the
+		// avatar origin (shared avatar frame, #2462), so its square top-left corner is visibly tucked under
 		// the avatar instead of beginning beneath the complete sender block.
 		const railBounds = messageItem!.getBoundingClientRect();
 		const avatarBounds = avatar!.getBoundingClientRect();
 		const bubbleBounds = bubble!.getBoundingClientRect();
 		const senderBounds = sender.getBoundingClientRect();
 		expect(Math.round(bubbleBounds.left - railBounds.left)).toBe(40);
-		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(48);
+		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(44);
 		expect(
 			// 40px content origin + 28px header inset = 68px (60px avatar + 8px clearance).
 			Math.abs(senderBounds.left - railBounds.left - 68)
