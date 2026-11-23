@@ -80,6 +80,10 @@ import { useRunningCall } from './runningCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
 import {
+	isTeamDiscussionEnabled,
+	resolveConversationFeatureSettings
+} from '../../utils/conversationFeatureSettings';
+import {
 	TeamDiscussionBadge,
 	getCachedTeamDiscussion
 } from '../teamDiscussion/TeamDiscussionBadge';
@@ -561,7 +565,12 @@ export const SessionListItemComponent = ({
 			: [];
 
 	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
-	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	// FE#2491: the effective team-chat policy, never the raw tenant value.
+	// The list has no open conversation, so this is the platform/Träger cap;
+	// a Beratungsstelle that has it off answers 403, which reads as "none".
+	const featureTeamDiscussionEnabled = isTeamDiscussionEnabled(
+		resolveConversationFeatureSettings(getTenantSettings())
+	);
 	const isAgencyCounselling =
 		!!activeSession &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING;
@@ -2159,6 +2168,7 @@ export const SessionListItemComponent = ({
 							{/* FE#514: team-only discussion exists on this
 								    enquiry (consultants only, ADR-016). */}
 							{!isAsker &&
+								featureTeamDiscussionEnabled &&
 								activeSession.isEnquiry &&
 								modality === Modality.AGENCY_COUNSELLING &&
 								activeSession.item?.id && (

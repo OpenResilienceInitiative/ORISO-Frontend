@@ -72,7 +72,8 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
-import { EnquiryTeamAction } from './EnquiryTeamAction';
+import { resolveEnquiryTeamChatState } from '../teamDiscussion/enquiryTeamChatState';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -326,6 +327,14 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
+	/**
+	 * FE#2491: switch the team chat of an OPEN enquiry on (POST — creates or
+	 * reopens a CLOSED one) or off (DELETE — CLOSED, read-only for all).
+	 * Absent for accepted cases: after accept it is archived (ADR-016).
+	 */
+	onSwitchTeamDiscussionOn?: () => Promise<void>;
+	onSwitchTeamDiscussionOff?: () => Promise<void>;
+	teamDiscussionToggling?: 'on' | 'off' | null;
 	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -2590,9 +2599,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
+			// A switched-off (CLOSED) team chat never opens by itself.
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
 				hasTeamSideRoom &&
+				props.teamDiscussionStatus !== 'CLOSED' &&
 				!isPracticing,
 			addonPanelRequested
 		});
@@ -2609,6 +2620,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		props.teamDiscussionStatus,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
 		isPracticing,
@@ -2678,6 +2690,47 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[teamMessages, openPanel, teamSeenAt, isMyMessageMatrix]
 	);
+
+	// FE#2491: the team chat is switched on and off like supervision —
+	// "Weitere Funktionen" carries the switch, the header the indication. One
+	// state, read by every entry point. Switchable on an open enquiry, and in
+	// an accepted case only with "Team-Chat nach Annahme" on (the stream
+	// hands the switch over only then); otherwise accepted cases keep the
+	// read-only archive (ADR-016).
+	const teamChatState = resolveEnquiryTeamChatState({
+		eligible:
+			canOpenTeamSideRoom &&
+			!isRejectedSession &&
+			!!props.onSwitchTeamDiscussionOn,
+		resolved: props.teamDiscussionResolved === true,
+		hasRoom: hasTeamSideRoom,
+		status: props.teamDiscussionStatus
+	});
+	const openTeamChat = useCallback(
+		() => selectChannelFromFab(channelId({ kind: 'team' })),
+		[selectChannelFromFab]
+	);
+	const onSwitchTeamDiscussionOn = props.onSwitchTeamDiscussionOn;
+	const switchTeamChatOn = useCallback(async () => {
+		// No room yet: opening the team route creates it (the long-standing
+		// enquiry contract). CLOSED: only this explicit POST reopens it.
+		if (props.teamDiscussionStatus === 'CLOSED') {
+			try {
+				await onSwitchTeamDiscussionOn?.();
+			} catch {
+				return;
+			}
+		}
+		openTeamChat();
+	}, [onSwitchTeamDiscussionOn, openTeamChat, props.teamDiscussionStatus]);
+	const onSwitchTeamDiscussionOff = props.onSwitchTeamDiscussionOff;
+	const switchTeamChatOff = useCallback(async () => {
+		try {
+			await onSwitchTeamDiscussionOff?.();
+		} catch {
+			// The stream shows the error; the state stays OPEN.
+		}
+	}, [onSwitchTeamDiscussionOff]);
 
 	// New side-room message from someone else while no panel is open:
 	// desktop re-opens the supervision channel (auto re-open); the phone
@@ -3179,19 +3232,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
-	const showEnquiryTeamAction =
-		type === SESSION_LIST_TYPES.ENQUIRY &&
-		activeSession.isEnquiry &&
-		!shouldBlockAnonymousInquiryChat &&
-		!isAnonymousAskerExperience &&
-		// Open enquiries keep the action even without a team room: the click
-		// creates it. The hide-if-no-room rule is for accepted cases only.
-		canOpenTeamSideRoom &&
-		!canRenderClientComposer({
-			canWriteMessage,
-			isSupervisor: isSupervisorView,
-			shouldBlockAnonymousInquiryChat
-		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -3538,11 +3578,38 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							hideGroupTopic={shouldShowGroupConsentGate}
 							teamChatUnreadCount={teamUnreadCount}
 							onOpenTeamChat={
-								!activeSession.isEnquiry && canOpenTeamSideRoom
-									? () =>
-											selectChannelFromFab(
-												channelId({ kind: 'team' })
-											)
+								teamChatState === 'unavailable'
+									? // Accepted case, setting off: the
+										// archived history, read-only.
+										!activeSession.isEnquiry &&
+										canOpenTeamSideRoom
+										? openTeamChat
+										: undefined
+									: teamChatState === 'on' ||
+										  teamChatState === 'closed' ||
+										  teamChatState === 'archived'
+										? openTeamChat
+										: undefined
+							}
+							onSwitchTeamChatOn={
+								teamChatState === 'off' ||
+								teamChatState === 'closed'
+									? switchTeamChatOn
+									: undefined
+							}
+							onSwitchTeamChatOff={
+								teamChatState === 'on' &&
+								props.onSwitchTeamDiscussionOff
+									? switchTeamChatOff
+									: undefined
+							}
+							teamChatToggling={props.teamDiscussionToggling}
+							teamChatIndicator={
+								teamChatState === 'on'
+									? {
+											active: openPanel === 'team',
+											onOpen: openTeamChat
+										}
 									: undefined
 							}
 						/>
@@ -4044,21 +4111,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign
-							btnLabel={'enquiry.acceptButton.known'}
-							secondaryAction={
-								showEnquiryTeamAction && openPanel === null ? (
-									<EnquiryTeamAction
-										unreadCount={teamUnreadCount}
-										onOpen={() =>
-											selectChannelFromFab(
-												channelId({ kind: 'team' })
-											)
-										}
-									/>
-								) : undefined
-							}
-						/>
+						// FE#2491 (Frank, 23 Nov): no team-chat button beside
+						// "Annehmen" — the team chat is reached through
+						// "Weitere Funktionen" and the header chip only.
+						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -4968,7 +5024,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				}
 				banner={
-					!teamMessages || teamMessages.length === 0 ? (
+					props.teamDiscussionStatus === 'CLOSED' ? (
+						<InfoBanner
+							data-cy="team-chat-closed-banner"
+							title={translate('teamDiscussion.closed.title')}
+							text={translate('teamDiscussion.closed.text')}
+						/>
+					) : !teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
 								props.teamDiscussionStatus === 'OPEN' &&
@@ -5069,8 +5131,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' &&
-					!isRejectedSession ? (
+					props.teamDiscussionStatus === 'CLOSED' &&
+					teamChatState === 'closed' ? (
+						<div className="session__teamChatSwitchOn">
+							<Button
+								item={{
+									type: BUTTON_TYPES.SECONDARY,
+									label: 'teamDiscussion.switchOn.again',
+									disabled:
+										props.teamDiscussionToggling === 'on'
+								}}
+								testingAttribute="team-chat-switch-on-again"
+								buttonHandle={switchTeamChatOn}
+							/>
+						</div>
+					) : props.teamDiscussionStatus === 'OPEN' &&
+					  !isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={(isCleared: boolean) =>
 								props.isTypingInRoom?.(isCleared, teamRoomId)

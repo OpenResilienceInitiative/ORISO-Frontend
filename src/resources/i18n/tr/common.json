@@ -6005,7 +6005,28 @@
 		"send": "Gönder",
 		"error": {
 			"open": "Ekip sohbeti açılamadı.",
-			"send": "Mesaj gönderilemedi."
+			"send": "Mesaj gönderilemedi.",
+			"switchOn": "Ekip sohbeti etkinleştirilemedi. Lütfen tekrar deneyin.",
+			"switchOff": "Ekip sohbeti kapatılamadı. Lütfen tekrar deneyin."
+		},
+		"switchOn": {
+			"menu": "Ekip sohbetini etkinleştir",
+			"menuHint": "Bu talep için ekip sohbetini başlatır. Danışan kişiler bunu asla görmez.",
+			"again": "Ekip sohbetini yeniden etkinleştir"
+		},
+		"switchOff": {
+			"menu": "Ekip sohbetini kapat",
+			"menuHint": "Bu talebin ekip sohbetini herkes için kapatır. Geçmiş okunabilir kalır.",
+			"confirm": {
+				"headline": "Ekip sohbeti kapatılsın mı?",
+				"copy": "Ekipten kimse artık yazamaz. Geçmiş okunabilir kalır ve talep açık olduğu sürece ekip sohbetini yeniden etkinleştirebilirsiniz.",
+				"confirm": "Kapat",
+				"cancel": "İptal"
+			}
+		},
+		"closed": {
+			"title": "Ekip sohbeti kapatıldı",
+			"text": "Bu talebin ekip sohbeti kapatıldı ve yalnızca okunabilir. Yazmaya devam etmek için yeniden etkinleştirin."
 		}
 	},
 	"inviteLink": {

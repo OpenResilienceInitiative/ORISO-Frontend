@@ -15,7 +15,7 @@ const SRC = join(__dirname, '..');
 const REGISTRY = new Set<string>(CONVERSATION_FEATURE_KEYS);
 /** Conversation capability families; any key of these families must be in the registry. */
 const CONVERSATION_FAMILY =
-	/\bfeature(?:Calls|AudioCalls|VideoCalls|VoiceMessages|MediaUpload|MediaInlineDisplay|Supervision|Threads|AnonymousChat|GroupChatV2|InternalGroupChat|SelfHelpGroups)[A-Za-z]*Enabled\b/g;
+	/\bfeature(?:Calls|AudioCalls|VideoCalls|VoiceMessages|MediaUpload|MediaInlineDisplay|MediaAiScanTeam|Supervision|TeamDiscussion|Threads|AnonymousChat|GroupChatV2|InternalGroupChat|SelfHelpGroups)[A-Za-z]*Enabled\b/g;
 
 const sourceFiles = (dir: string): string[] =>
 	readdirSync(dir).flatMap((name) => {

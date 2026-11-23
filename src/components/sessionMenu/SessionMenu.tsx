@@ -64,7 +64,9 @@ import {
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
 	stopGroupChatSecurityOverlayItem,
-	stopGroupChatSuccessOverlayItem
+	stopGroupChatSuccessOverlayItem,
+	SWITCH_OFF_TEAM_CHAT,
+	teamChatSwitchOffConfirmOverlayItem
 } from './sessionMenuHelpers';
 import {
 	apiPutArchive,
@@ -169,6 +171,16 @@ export interface SessionMenuProps {
 	/** Opens the existing team conversation when available to this viewer. */
 	onOpenTeamChat?: () => void;
 	teamChatUnreadCount?: number;
+	/**
+	 * FE#2491: switches the team chat of an open enquiry on (none or
+	 * switched off). Set only while it is not on — like supervision, the
+	 * switch lives here in "Weitere Funktionen".
+	 */
+	onSwitchTeamChatOn?: () => void;
+	/** FE#2491: switches it off (after a confirmation). Set only while on. */
+	onSwitchTeamChatOff?: () => Promise<void> | void;
+	/** The team-chat switch in flight; its row is disabled meanwhile. */
+	teamChatToggling?: 'on' | 'off' | null;
 	/**
 	 * #2252: "Neuen Link senden" for an expired Direkteinladung of this
 	 * conversation. Set only while there is one.
@@ -437,6 +449,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		caseHandover.handleOpen();
 	};
 
+	const handleSwitchOffTeamChat = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
+		setOverlayItem(teamChatSwitchOffConfirmOverlayItem);
+		setOverlayActive(true);
+	};
+
 	const handleEndTopicDuplicate = () => {
 		closeMenu();
 		setOverlayItem(endTopicDuplicateConfirmOverlayItem);
@@ -564,6 +583,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			closeMenu();
 			mobileListView();
 			navigate(listPath);
+		} else if (buttonFunction === SWITCH_OFF_TEAM_CHAT) {
+			Promise.resolve(props.onSwitchTeamChatOff?.()).finally(() => {
+				setOverlayActive(false);
+				setOverlayItem(null);
+				setIsRequestInProgress(false);
+			});
 		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
@@ -661,7 +686,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		Boolean(props.showMobileEndAnonymousChatAction) ||
 		Boolean(props.showMobileDeleteAnonymousAccountAction) ||
 		Boolean(props.showMobileSupervisionAction);
-	const showSessionMenu = !activeSession.isEnquiry || showAnonymousMobileMenu;
+	// FE#2491: an open enquiry gets "Weitere Funktionen" for its team chat
+	// switch, as supervision has it in a case.
+	const showTeamChatSwitch =
+		Boolean(props.onSwitchTeamChatOn) ||
+		Boolean(props.onSwitchTeamChatOff) ||
+		Boolean(props.onOpenTeamChat);
+	const showSessionMenu =
+		!activeSession.isEnquiry ||
+		showAnonymousMobileMenu ||
+		showTeamChatSwitch;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		props.isSupervisor
 			? 'supervision'
@@ -1063,6 +1097,55 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											teamUnreadCount > 0
 												? teamUnreadCount
 												: undefined
+										}
+									/>
+								</button>
+							)}
+
+							{props.onSwitchTeamChatOn && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									disabled={props.teamChatToggling === 'on'}
+									onClick={() => {
+										closeMenu();
+										props.onSwitchTeamChatOn?.();
+									}}
+									data-cy="session-menu-team-chat-on"
+									title={translate(
+										'teamDiscussion.switchOn.menuHint'
+									)}
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'teamDiscussion.switchOn.menu'
+										)}
+										disabled={
+											props.teamChatToggling === 'on'
+										}
+									/>
+								</button>
+							)}
+
+							{props.onSwitchTeamChatOff && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									disabled={props.teamChatToggling === 'off'}
+									onClick={handleSwitchOffTeamChat}
+									data-cy="session-menu-team-chat-off"
+									title={translate(
+										'teamDiscussion.switchOff.menuHint'
+									)}
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'teamDiscussion.switchOff.menu'
+										)}
+										disabled={
+											props.teamChatToggling === 'off'
 										}
 									/>
 								</button>

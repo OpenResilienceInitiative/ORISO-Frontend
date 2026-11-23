@@ -1,7 +1,8 @@
 // @vitest-environment oriso-jsdom
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
+	apiCloseTeamDiscussion,
 	apiGetTeamDiscussion,
 	apiOpenTeamDiscussion
 } from '../api/apiTeamDiscussion';
@@ -9,7 +10,8 @@ import { useTeamDiscussionChannel } from './useTeamDiscussionChannel';
 
 vi.mock('../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: vi.fn(),
-	apiOpenTeamDiscussion: vi.fn()
+	apiOpenTeamDiscussion: vi.fn(),
+	apiCloseTeamDiscussion: vi.fn()
 }));
 
 describe('useTeamDiscussionChannel', () => {
@@ -17,6 +19,7 @@ describe('useTeamDiscussionChannel', () => {
 		vi.clearAllMocks();
 		vi.mocked(apiGetTeamDiscussion).mockResolvedValue(null);
 		vi.mocked(apiOpenTeamDiscussion).mockResolvedValue(null);
+		vi.mocked(apiCloseTeamDiscussion).mockResolvedValue(undefined);
 	});
 
 	it('opens and joins an eligible discussion when the team route is requested', async () => {
@@ -34,8 +37,9 @@ describe('useTeamDiscussionChannel', () => {
 		);
 
 		await waitFor(() => expect(result.current.resolved).toBe(true));
+		// FE#2491: the route looks first, so it can never reopen a CLOSED one.
+		expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
 		expect(apiOpenTeamDiscussion).toHaveBeenCalledWith(42);
-		expect(apiGetTeamDiscussion).not.toHaveBeenCalled();
 		expect(result.current.discussion?.matrixRoomId).toBe(
 			'!team:example.org'
 		);
@@ -152,6 +156,7 @@ describe('useTeamDiscussionChannel', () => {
 			error: null,
 			resolved: false
 		});
+		await waitFor(() => expect(apiOpenTeamDiscussion).toHaveBeenCalled());
 		resolveOpen(null);
 		await waitFor(() => expect(result.current.resolved).toBe(true));
 	});
@@ -182,5 +187,138 @@ describe('useTeamDiscussionChannel', () => {
 			)
 		);
 		expect(result.current.error).toBeNull();
+	});
+	describe('switch on and off (FE#2491)', () => {
+		const CLOSED = {
+			matrixRoomId: '!team:example.org',
+			status: 'CLOSED' as const
+		};
+
+		it('only looks at a CLOSED discussion opened through the team route — no POST', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: true
+				})
+			);
+
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+			expect(apiGetTeamDiscussion).toHaveBeenCalledWith(42);
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+			expect(result.current.discussion?.status).toBe('CLOSED');
+		});
+
+		it('never POSTs for a CLOSED discussion while only viewing the enquiry', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+		});
+
+		it('switches a CLOSED discussion on with an explicit POST', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue(CLOSED);
+			vi.mocked(apiOpenTeamDiscussion).mockResolvedValue({
+				...CLOSED,
+				status: 'OPEN'
+			});
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+
+			await act(() => result.current.switchOn());
+
+			expect(apiOpenTeamDiscussion).toHaveBeenCalledTimes(1);
+			expect(apiOpenTeamDiscussion).toHaveBeenCalledWith(42);
+			expect(result.current.discussion?.status).toBe('OPEN');
+			expect(result.current.toggleError).toBeNull();
+		});
+
+		it('never switches on after accept — the archive is not reopened', async () => {
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: false,
+					teamChannelRequested: false
+				})
+			);
+			await waitFor(() => expect(result.current.resolved).toBe(true));
+
+			await act(() => result.current.switchOn());
+
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+		});
+
+		it('switches an OPEN discussion off with DELETE and keeps its history as CLOSED', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue({
+				...CLOSED,
+				status: 'OPEN'
+			});
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+			await waitFor(() =>
+				expect(result.current.discussion?.status).toBe('OPEN')
+			);
+
+			await act(() => result.current.switchOff());
+
+			expect(apiCloseTeamDiscussion).toHaveBeenCalledWith(42);
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
+			expect(result.current.discussion).toMatchObject({
+				matrixRoomId: '!team:example.org',
+				status: 'CLOSED'
+			});
+		});
+
+		it('reports a failed switch and keeps the discussion OPEN', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockResolvedValue({
+				...CLOSED,
+				status: 'OPEN'
+			});
+			vi.mocked(apiCloseTeamDiscussion).mockRejectedValue(
+				new Error('FORBIDDEN')
+			);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: false
+				})
+			);
+			await waitFor(() =>
+				expect(result.current.discussion?.status).toBe('OPEN')
+			);
+
+			await act(async () => {
+				await result.current.switchOff().catch(() => undefined);
+			});
+
+			expect(result.current.toggleError).toBe('off');
+			expect(result.current.discussion?.status).toBe('OPEN');
+		});
 	});
 });

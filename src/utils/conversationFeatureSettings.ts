@@ -81,3 +81,23 @@ export const isSupervisionEnabledForChat = (
 	(isAnonymousChat
 		? features?.featureSupervisionAnonymousChatsEnabled !== false
 		: features?.featureSupervisionOneOnOneChatsEnabled !== false);
+
+/**
+ * FE#2491: the team chat of an open enquiry, read like supervision — the
+ * effective platform -> Träger -> Beratungsstelle value. Off on any level
+ * means no team-chat entry for that enquiry.
+ */
+export const isTeamDiscussionEnabled = (
+	features: Partial<TenantDataSettingsInterface> | undefined
+): boolean => features?.featureTeamDiscussionEnabled !== false;
+
+/**
+ * FE#2491: whether the team chat stays switchable after accept. Only
+ * effective with the master on; off (the default) keeps ADR-016 — archived
+ * read-only at accept.
+ */
+export const isTeamDiscussionAfterAcceptEnabled = (
+	features: Partial<TenantDataSettingsInterface> | undefined
+): boolean =>
+	isTeamDiscussionEnabled(features) &&
+	features?.featureTeamDiscussionAfterAcceptEnabled === true;

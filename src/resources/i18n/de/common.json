@@ -6027,7 +6027,28 @@
 		"send": "Senden",
 		"error": {
 			"open": "Der Team-Chat konnte nicht geöffnet werden.",
-			"send": "Die Nachricht konnte nicht gesendet werden."
+			"send": "Die Nachricht konnte nicht gesendet werden.",
+			"switchOn": "Der Team-Chat konnte nicht eingeschaltet werden. Bitte versuchen Sie es erneut.",
+			"switchOff": "Der Team-Chat konnte nicht ausgeschaltet werden. Bitte versuchen Sie es erneut."
+		},
+		"switchOn": {
+			"menu": "Team-Chat einschalten",
+			"menuHint": "Startet den Team-Chat zu dieser Anfrage. Ratsuchende sehen ihn nicht.",
+			"again": "Team-Chat wieder einschalten"
+		},
+		"switchOff": {
+			"menu": "Team-Chat ausschalten",
+			"menuHint": "Schließt den Team-Chat zu dieser Anfrage für alle. Der Verlauf bleibt lesbar.",
+			"confirm": {
+				"headline": "Team-Chat ausschalten?",
+				"copy": "Danach kann niemand aus dem Team mehr schreiben. Der Verlauf bleibt lesbar, und Sie können den Team-Chat wieder einschalten, solange die Anfrage offen ist.",
+				"confirm": "Ausschalten",
+				"cancel": "Abbrechen"
+			}
+		},
+		"closed": {
+			"title": "Team-Chat ausgeschaltet",
+			"text": "Der Team-Chat zu dieser Anfrage ist ausgeschaltet und nur noch lesbar. Schalten Sie ihn wieder ein, um weiterzuschreiben."
 		}
 	},
 	"inviteLink": {

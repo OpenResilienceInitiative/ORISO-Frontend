@@ -70,6 +70,7 @@ const boundary = vi.hoisted(() => {
 	return {
 		rooms: new Map<string, any>(),
 		open: vi.fn(),
+		close: vi.fn(),
 		getTeam: vi.fn(),
 		getSupervisors: vi.fn(),
 		sessionRoom: vi.fn(),
@@ -109,7 +110,8 @@ vi.mock('lottie-web', () => ({
 }));
 vi.mock('../../api/apiTeamDiscussion', () => ({
 	apiGetTeamDiscussion: (...args: any[]) => boundary.getTeam(...args),
-	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args)
+	apiOpenTeamDiscussion: (...args: any[]) => boundary.open(...args),
+	apiCloseTeamDiscussion: (...args: any[]) => boundary.close(...args)
 }));
 // The seeker is a normal account, not a temporary guest (404).
 vi.mock('../../api/apiTemporaryAccount', () => ({
@@ -281,6 +283,7 @@ beforeEach(async () => {
 		.mockReset()
 		.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	boundary.getTeam.mockReset().mockResolvedValue(null);
+	boundary.close.mockReset().mockResolvedValue(undefined);
 	boundary.getSupervisors.mockReset().mockResolvedValue([]);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
@@ -640,14 +643,21 @@ it('keeps an explicit close when the same enquiry is opened again', async () => 
 	await waitFor(() => expect(reopened.container.textContent).toContain(TEXT));
 	expect(reopened.container.querySelector('.sidePanel')).toBeNull();
 	expect(boundary.open).toHaveBeenCalledTimes(calls);
-	const teamAction = screen.getByRole('button', {
-		name: 'enquiry.teamDiscussion.open'
+	// FE#2491: no button beside "Annehmen"; the header chip reopens it.
+	const teamChip = await waitFor(() => {
+		const node = reopened.container.querySelector<HTMLButtonElement>(
+			'[data-cy="session-header-team-chat"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
 	});
-	expect(teamAction.classList.contains('button__secondary')).toBe(true);
+	expect(
+		reopened.container.querySelector('[data-cy="enquiry-open-team"]')
+	).toBeNull();
 	expect(
 		reopened.container.querySelector('[data-cy="channel-switcher-fab"]')
 	).toBeNull();
-	fireEvent.click(teamAction);
+	fireEvent.click(teamChip);
 	await waitFor(() =>
 		expect(reopened.container.querySelector('.sidePanel')).not.toBeNull()
 	);
@@ -1590,7 +1600,7 @@ it.each([false, true])(
 	20000
 );
 
-it('keeps the enquiry team button when lookup confirms there is no team room, so a click creates it', async () => {
+it('offers "Team-Chat einschalten" in "Weitere Funktionen" when lookup confirms there is no team room, and the click creates it', async () => {
 	let resolveLookup!: (result: null) => void;
 	boundary.getTeam.mockReturnValue(
 		new Promise((resolve) => {
@@ -1603,10 +1613,20 @@ it('keeps the enquiry team button when lookup confirms there is no team room, so
 	await act(async () => {
 		resolveLookup(null);
 	});
-	// Product decision (21 Nov): open enquiries keep the action; only
-	// accepted cases hide the team entry when no room exists.
-	const action = await screen.findByRole('button', {
-		name: 'enquiry.teamDiscussion.open'
+	// FE#2491: no button beside "Annehmen"; the switch is in the menu.
+	expect(
+		view.container.querySelector('[data-cy="enquiry-open-team"]')
+	).toBeNull();
+	const [trigger] = await screen.findAllByRole('button', {
+		name: 'app.menu'
+	});
+	fireEvent.click(trigger);
+	const action = await waitFor(() => {
+		const node = document.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat-on"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
 	});
 	// Seeing the enquiry creates nothing by itself.
 	expect(boundary.open).not.toHaveBeenCalled();
@@ -1755,17 +1775,17 @@ it('does not reuse a previous enquiry team room after changing cases', async () 
 	});
 }, 20000);
 
-it('keeps an accessible unread indicator on the enquiry team button', async () => {
+it('keeps an accessible unread indicator on "Weitere Funktionen" for the team chat', async () => {
 	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	window.localStorage.setItem('chatStage.lastChannel.4711', 'none');
 	try {
 		const view = openEnquiry();
 		await waitFor(() =>
 			expect(
-				screen.getByRole('button', {
-					name: 'enquiry.teamDiscussion.open'
-				})
-			).toBeTruthy()
+				view.container.querySelector(
+					'[data-cy="session-header-team-chat"]'
+				)
+			).not.toBeNull()
 		);
 		boundary.rooms.get(TEAM).timeline.push(
 			new MatrixEvent({
@@ -1786,16 +1806,221 @@ it('keeps an accessible unread indicator on the enquiry team button', async () =
 		});
 		await waitFor(() =>
 			expect(
-				view.container.querySelector('.session__teamDiscussionUnread')
+				view.container.querySelector('.sessionMenu__teamUnread')
 					?.textContent
 			).toBe('1')
 		);
+		// The "Weitere Funktionen" trigger names the unread team messages.
 		expect(
-			screen.getByRole('button', {
-				name: /enquiry.teamDiscussion.open.*supervision.panel.unread/
-			})
-		).toBeTruthy();
+			screen.getAllByRole('button', {
+				name: /app\.menu.*enquiry.teamDiscussion.open.*supervision.panel.unread/
+			}).length
+		).toBeGreaterThanOrEqual(1);
 	} finally {
 		window.localStorage.removeItem('chatStage.lastChannel.4711');
 	}
+}, 20000);
+
+it('shows a switched-off team chat read-only without reopening it, and reopens it only on the explicit switch (FE#2491)', async () => {
+	boundary.getTeam.mockResolvedValue({
+		matrixRoomId: TEAM,
+		status: 'CLOSED'
+	});
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
+	const panel = await waitFor(
+		() => {
+			const node = view.container.querySelector<HTMLElement>(
+				'.chatStage__panel .sidePanel'
+			);
+			expect(node).not.toBeNull();
+			return node!;
+		},
+		{ timeout: 15000 }
+	);
+	expect(panel.textContent).toContain('teamDiscussion.closed.title');
+	// Read-only: no composer, and looking never POSTs (POST would reopen).
+	expect(panel.querySelector('.messageSubmit__wrapper, textarea')).toBeNull();
+	expect(boundary.open).not.toHaveBeenCalled();
+	// No header chip while switched off.
+	expect(
+		view.container.querySelector('[data-cy="session-header-team-chat"]')
+	).toBeNull();
+
+	fireEvent.click(
+		panel.querySelector<HTMLButtonElement>(
+			'[data-cy="team-chat-switch-on-again"]'
+		)!
+	);
+	await waitFor(() => expect(boundary.open).toHaveBeenCalledWith(4711));
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="session-header-team-chat"]')
+		).not.toBeNull()
+	);
+	expect(boundary.close).not.toHaveBeenCalled();
+}, 20000);
+
+it('switches an open team chat off from "Weitere Funktionen" after the confirmation (FE#2491)', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector(
+					'[data-cy="session-header-team-chat"]'
+				)
+			).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	const [trigger] = await screen.findAllByRole('button', {
+		name: 'app.menu'
+	});
+	fireEvent.click(trigger);
+	const off = await waitFor(() => {
+		const node = document.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat-off"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	fireEvent.click(off);
+	expect(boundary.close).not.toHaveBeenCalled();
+	fireEvent.click(
+		await screen.findByText('teamDiscussion.switchOff.confirm.confirm')
+	);
+	await waitFor(() => expect(boundary.close).toHaveBeenCalledWith(4711));
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="session-header-team-chat"]')
+		).toBeNull()
+	);
+	expect(
+		view.container.querySelector('.chatStage__panel .sidePanel')
+			?.textContent
+	).toContain('teamDiscussion.closed.title');
+}, 20000);
+
+it('after accept with "Team-Chat nach Annahme" off: "Weitere Funktionen" opens the archived team chat read-only, without chip or switch (FE#2491)', async () => {
+	boundary.getTeam.mockResolvedValue({
+		matrixRoomId: TEAM,
+		status: 'ARCHIVED'
+	});
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 2 });
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	const [trigger] = await screen.findAllByRole('button', {
+		name: /app\.menu/
+	});
+	fireEvent.click(trigger);
+	const open = await waitFor(() => {
+		const node = document.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	expect(
+		document.querySelector('[data-cy="session-menu-team-chat-on"]')
+	).toBeNull();
+	expect(
+		document.querySelector('[data-cy="session-menu-team-chat-off"]')
+	).toBeNull();
+	fireEvent.click(open);
+	const panel = await waitFor(() => {
+		const node = view.container.querySelector<HTMLElement>(
+			'.chatStage__panel .sidePanel'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	// Read-only: no composer, no switch back on, no chip; nothing reopens it.
+	expect(panel.querySelector('.textarea__wrapper-send-message')).toBeNull();
+	expect(
+		panel.querySelector('[data-cy="team-chat-switch-on-again"]')
+	).toBeNull();
+	expect(
+		view.container.querySelector('[data-cy="session-header-team-chat"]')
+	).toBeNull();
+	expect(
+		view.container.querySelector('[data-cy="enquiry-open-team"]')
+	).toBeNull();
+	expect(boundary.close).not.toHaveBeenCalled();
+}, 20000);
+
+it('after accept with "Team-Chat nach Annahme" on: the accepted case switches the team chat like the enquiry — chip, writable, switch off (FE#2491)', async () => {
+	setTenantSettings({
+		featureTeamDiscussionEnabled: true,
+		featureTeamDiscussionAfterAcceptEnabled: true
+	} as any);
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+		status: 2,
+		teamChannel: true
+	});
+	const panel = await waitFor(
+		() => {
+			const node = view.container.querySelector<HTMLElement>(
+				'.chatStage__panel .sidePanel'
+			);
+			expect(node).not.toBeNull();
+			return node!;
+		},
+		{ timeout: 15000 }
+	);
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="session-header-team-chat"]')
+		).not.toBeNull()
+	);
+	expect(panel.textContent).not.toContain('teamDiscussion.closed.title');
+	const [trigger] = await screen.findAllByRole('button', {
+		name: /app\.menu/
+	});
+	fireEvent.click(trigger);
+	const off = await waitFor(() => {
+		const node = document.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat-off"]'
+		);
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	fireEvent.click(off);
+	fireEvent.click(
+		await screen.findByText('teamDiscussion.switchOff.confirm.confirm')
+	);
+	await waitFor(() => expect(boundary.close).toHaveBeenCalledWith(4711));
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="session-header-team-chat"]')
+		).toBeNull()
+	);
+}, 20000);
+
+it('never offers the team chat to the advice seeker (FE#2491)', async () => {
+	setTenantSettings({
+		featureTeamDiscussionEnabled: true,
+		featureTeamDiscussionAfterAcceptEnabled: true
+	} as any);
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+		status: 2,
+		seeker: true
+	});
+	await waitFor(
+		() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			),
+		{ timeout: 15000 }
+	);
+	expect(boundary.getTeam).not.toHaveBeenCalled();
+	expect(
+		view.container.querySelector('[data-cy="session-header-team-chat"]')
+	).toBeNull();
+	expect(
+		document.querySelector('[data-cy="session-menu-team-chat"]')
+	).toBeNull();
+	expect(
+		document.querySelector('[data-cy="session-menu-team-chat-on"]')
+	).toBeNull();
 }, 20000);

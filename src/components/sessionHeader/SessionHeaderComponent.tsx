@@ -1,3 +1,4 @@
+import { TeamDiscussionIconButton } from '../teamDiscussion/TeamDiscussionBadge';
 import { FittedHeaderTitle } from './FittedHeaderTitle';
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
@@ -163,6 +164,15 @@ export interface SessionHeaderProps {
 	/** Opens the team conversation from the shared More menu. */
 	onOpenTeamChat?: () => void;
 	teamChatUnreadCount?: number;
+	/** FE#2491: "Weitere Funktionen" → Team-Chat einschalten / ausschalten. */
+	onSwitchTeamChatOn?: () => void;
+	onSwitchTeamChatOff?: () => Promise<void> | void;
+	teamChatToggling?: 'on' | 'off' | null;
+	/**
+	 * FE#2491: the team chat of this enquiry is on — the header carries the
+	 * "Team-Chat" chip, as it carries the supervisors while supervised.
+	 */
+	teamChatIndicator?: { active: boolean; onOpen: () => void };
 }
 
 type SupervisorSnapshot = {
@@ -1242,6 +1252,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					!activeSession.isGroup &&
 					!activeSession.isEnquiry && <AddonSessionActions />}
+				{props.teamChatIndicator &&
+					hasUserAuthority(
+						AUTHORITIES.CONSULTANT_DEFAULT,
+						userData
+					) && (
+						<TeamDiscussionIconButton
+							showLabel
+							active={props.teamChatIndicator.active}
+							onOpen={props.teamChatIndicator.onOpen}
+							data-cy="session-header-team-chat"
+						/>
+					)}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
@@ -1295,6 +1317,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					callsInMenu={callsInMenu}
 					onOpenTeamChat={props.onOpenTeamChat}
 					teamChatUnreadCount={props.teamChatUnreadCount}
+					onSwitchTeamChatOn={props.onSwitchTeamChatOn}
+					onSwitchTeamChatOff={props.onSwitchTeamChatOff}
+					teamChatToggling={props.teamChatToggling}
 					onCreateAppointment={openCreateAppointment}
 					onSendNewLink={sendNewLink}
 					isAskerInfoAvailable={isAskerInfoAvailable()}
