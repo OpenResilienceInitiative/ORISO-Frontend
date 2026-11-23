@@ -109,6 +109,11 @@ export const isJoinedMatrixRoom = (roomId: string): boolean =>
 /** Entries that ask for a decision answered in Activity's detail view. */
 const DECISION_EVENT_TYPES = new Set(['case.handover.consent.requested']);
 
+/** The chat still needs a decision event after the user opens it in Activity. */
+export const shouldMarkActivityEventReadOnOpen = (
+	row: Pick<ActivityEventRow, 'eventType'>
+): boolean => !DECISION_EVENT_TYPES.has(row.eventType);
+
 export const showsConversationPreview = (
 	row: ActivityEventRow,
 	isJoinedRoom: (roomId: string) => boolean = isJoinedMatrixRoom
