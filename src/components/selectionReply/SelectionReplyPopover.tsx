@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import {
+	forwardRef,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -124,9 +130,11 @@ export const SelectionReplyPopover = forwardRef<
 			(isRecording && voice.durationSec > 0);
 		// A stand-in without pause keeps the old Stop; it must stay usable.
 		const blockWhileRecording = isRecording && !onPauseVoice;
+		const stacked = multiline && voice.mode === 'idle';
 
-		// The field grows with the answer, like the composer (up to 6 lines).
-		useEffect(() => {
+		// The field grows with the answer, like the composer (up to 10 lines);
+		// measured before paint so the text never flickers.
+		useLayoutEffect(() => {
 			const field = inputRef.current;
 			if (!field) {
 				return;
@@ -134,9 +142,16 @@ export const SelectionReplyPopover = forwardRef<
 			field.style.height = 'auto';
 			// FE#2494 (Frank): more room when writing — up to 10 lines, then
 			// the field scrolls inside and keeps the caret in view.
-			field.style.height = `${Math.min(field.scrollHeight, 10 * 20 + 20)}px`;
-			setMultiline(field.scrollHeight > 44);
-		}, [draft]);
+			field.style.height = `${Math.min(field.scrollHeight, 10 * 20 + 16)}px`;
+			// Hysteresis: once the answer wraps, Stack stays under Send until
+			// the field is empty again. Otherwise the wider field unwraps the
+			// line, the buttons move back, it wraps again — and words jump.
+			if (!draft) {
+				setMultiline(false);
+			} else if (field.scrollHeight > 44) {
+				setMultiline(true);
+			}
+		}, [draft, multiline]);
 
 		useEffect(() => {
 			if (autoFocus) {
@@ -286,9 +301,17 @@ export const SelectionReplyPopover = forwardRef<
 						{translate('voice.recording.error.message')}
 					</p>
 				)}
-				<div className="selectionReply__inputRow">
-					{/* FE#2494 (Frank, 24 Nov): the voice note takes the field's
-					    place — the mic swaps writing for recording. */}
+				{/* FE#2494 (Frank, 24 Nov): one box like the chat's own composer —
+				    accent frame, Send docked in the top-right corner; from the
+				    second line on, Stack sits under Send. */}
+				<div
+					className={[
+						'selectionReply__box',
+						stacked ? 'selectionReply__box--stacked' : null
+					]
+						.filter(Boolean)
+						.join(' ')}
+				>
 					{voice.mode === 'recording' ? (
 						<VoiceNoteRow
 							className="selectionReply__voiceField"
@@ -308,126 +331,111 @@ export const SelectionReplyPopover = forwardRef<
 							onDiscard={onDiscardVoice}
 						/>
 					) : (
-						// FE#2494 (Frank): writing and the mic are one field —
-						// either answer by text or by voice.
-						<div className="selectionReply__field">
-							<textarea
-								ref={inputRef}
-								rows={1}
-								className="selectionReply__input"
-								value={draft}
-								onChange={(event) =>
-									onDraftChange(event.target.value)
-								}
-								placeholder={translate(
-									'message.selectionReply.placeholder'
-								)}
-								aria-label={translate(
-									'message.selectionReply.inputLabel'
-								)}
-								autoComplete="off"
-							/>
-							{/* Writing already: the mic would only take the field's room. */}
-							{showVoice && !draft.trim() && (
-								<button
-									type="button"
-									className="selectionReply__iconButton selectionReply__fieldMic"
-									onClick={onStartVoice}
-									aria-label={translate(
-										'message.selectionReply.replyVoice'
-									)}
-									title={translate(
-										'message.selectionReply.replyVoice'
-									)}
-								>
-									<MicIcon
-										aria-hidden
-										className="selectionReply__micIcon"
-									/>
-								</button>
+						<textarea
+							ref={inputRef}
+							rows={1}
+							className="selectionReply__input"
+							value={draft}
+							onChange={(event) =>
+								onDraftChange(event.target.value)
+							}
+							placeholder={translate(
+								'message.selectionReply.placeholder'
 							)}
-						</div>
+							aria-label={translate(
+								'message.selectionReply.inputLabel'
+							)}
+							autoComplete="off"
+						/>
 					)}
-					<div
-						className={[
-							'selectionReply__actions',
-							multiline && voice.mode === 'idle'
-								? 'selectionReply__actions--stacked'
-								: null
-						]
-							.filter(Boolean)
-							.join(' ')}
-					>
-						<span className="selectionReply__hintWrap">
-							<button
-								type="button"
-								className="selectionReply__collect"
-								data-cy="selection-reply-collect"
-								onClick={onAddToComposer}
-								disabled={blockWhileRecording}
-								aria-label={addLabel}
-								aria-describedby="selection-reply-keys"
-								onMouseEnter={() => setHint('add')}
-								onMouseLeave={() => setHint(null)}
-								onFocus={() => setHint('add')}
-								onBlur={() => setHint(null)}
-							>
-								<CollectIcon
-									aria-hidden
-									className="selectionReply__collectIcon"
-								/>
-								{collectedCount > 0 && (
-									<span
-										className="selectionReply__stackCount"
-										data-cy="selection-reply-stack-count"
-									>
-										{collectedCount + 1}
-									</span>
-								)}
-							</button>
-							{hint === 'add' && (
-								<span
-									role="tooltip"
-									className="selectionReply__keyHint"
-								>
-									<span>{addLabel}</span>
-									<kbd>↵</kbd>
-								</span>
+					{/* Writing already: the mic would only take the field's room. */}
+					{showVoice && voice.mode === 'idle' && !draft.trim() && (
+						<button
+							type="button"
+							className="selectionReply__iconButton selectionReply__fieldMic"
+							onClick={onStartVoice}
+							aria-label={translate(
+								'message.selectionReply.replyVoice'
 							)}
-						</span>
-						<span
-							className="selectionReply__hintWrap selectionReply__send"
-							onMouseEnter={() => setHint('send')}
+							title={translate(
+								'message.selectionReply.replyVoice'
+							)}
+						>
+							<MicIcon
+								aria-hidden
+								className="selectionReply__micIcon"
+							/>
+						</button>
+					)}
+					<span className="selectionReply__hintWrap">
+						<button
+							type="button"
+							className="selectionReply__collect"
+							data-cy="selection-reply-collect"
+							onClick={onAddToComposer}
+							disabled={blockWhileRecording}
+							aria-label={addLabel}
+							aria-describedby="selection-reply-keys"
+							onMouseEnter={() => setHint('add')}
 							onMouseLeave={() => setHint(null)}
-							onFocus={() => setHint('send')}
+							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							<SendButton
-								type="button"
-								state={
-									blockWhileRecording
-										? 'disabled'
-										: hasAnswer
-											? 'ready'
-											: 'empty'
-								}
-								onSend={onSendNow}
+							<CollectIcon
+								aria-hidden
+								className="selectionReply__collectIcon"
 							/>
-							{hint === 'send' && (
+							{collectedCount > 0 && (
 								<span
-									role="tooltip"
-									className="selectionReply__keyHint"
+									className="selectionReply__stackCount"
+									data-cy="selection-reply-stack-count"
 								>
-									<span>
-										{translate(
-											'message.selectionReply.sendNow'
-										)}
-									</span>
-									<kbd>{`${sendKey} ↵`}</kbd>
+									{collectedCount + 1}
 								</span>
 							)}
-						</span>
-					</div>
+						</button>
+						{hint === 'add' && (
+							<span
+								role="tooltip"
+								className="selectionReply__keyHint"
+							>
+								<span>{addLabel}</span>
+								<kbd>↵</kbd>
+							</span>
+						)}
+					</span>
+					<span
+						className="selectionReply__hintWrap selectionReply__send"
+						onMouseEnter={() => setHint('send')}
+						onMouseLeave={() => setHint(null)}
+						onFocus={() => setHint('send')}
+						onBlur={() => setHint(null)}
+					>
+						<SendButton
+							type="button"
+							state={
+								blockWhileRecording
+									? 'disabled'
+									: hasAnswer
+										? 'ready'
+										: 'empty'
+							}
+							onSend={onSendNow}
+						/>
+						{hint === 'send' && (
+							<span
+								role="tooltip"
+								className="selectionReply__keyHint"
+							>
+								<span>
+									{translate(
+										'message.selectionReply.sendNow'
+									)}
+								</span>
+								<kbd>{`${sendKey} ↵`}</kbd>
+							</span>
+						)}
+					</span>
 				</div>
 
 				{actions && (

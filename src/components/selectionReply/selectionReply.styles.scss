@@ -131,6 +131,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	z-index: 31;
 	display: flex;
 	flex-direction: column;
+
 	// FE#2494 (Frank, 24 Nov): quote and field sit close, one unit.
 	gap: 4px;
 	width: 400px;
@@ -149,13 +150,6 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	.voiceNoteRow {
 		width: 100%;
 	}
-}
-
-// FE#2494: the voice note in the field's place, as wide as the field.
-.selectionReply__inputRow .selectionReply__voiceField {
-	flex: 1 1 auto;
-	width: auto;
-	min-width: 0;
 }
 
 // The passage, quoted the way the composer's reply bar quotes a message
@@ -236,29 +230,20 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
-.selectionReply__inputRow {
-	display: flex;
-	// The buttons stay on the last line while the field grows.
-	align-items: flex-end;
-	gap: 2px;
-
-	> :first-child {
-		margin-right: 2px;
-	}
-}
-
 .selectionReply__input {
 	flex: 1 1 auto;
 	min-width: 0;
 	box-sizing: border-box;
 	min-height: 36px;
+
 	// FE#2494: several lines, growing like the composer (height set in JS).
 	resize: none;
 	overflow-y: auto;
-	padding: 8px 14px;
+	padding: 9px 12px 9px 14px;
 	border: 0;
-	// The grey surface and corners belong to `.selectionReply__field`.
-	border-radius: inherit;
+
+	// Surface, frame and corners belong to `.selectionReply__box`.
+	border-radius: 16px 0 0 16px;
 	background: transparent;
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
@@ -279,24 +264,68 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
-// FE#2494 (Frank, 24 Nov): one field — write, or tap the mic inside it.
-// A rounded grey field, the same surface as the quote above it; its top
-// corners meet the quote (4px), the bottom stays round.
-.selectionReply__field {
+// FE#2494 (Frank, 24 Nov): one box like the chat's own composer — the
+// accent frame (primary-fixed, red when focused), white surface, the
+// composer's corners and Send docked in the top-right notch. From the
+// second line on, Stack sits under Send instead of beside it.
+.selectionReply__box {
 	position: relative;
-	display: flex;
-	flex: 1 1 auto;
-	align-items: flex-end;
-	min-width: 0;
-	border-radius: 4px 4px 20px 20px;
-	background: var(--m3-surface-container, #f0eded);
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto auto;
+	align-items: center;
+	min-height: 40px;
+	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border-radius: 16px 4px 16px 16px;
+	background: var(--m3-surface-container-lowest, #fff);
+	transition: border-color 150ms ease;
 
+	// The composer's selected state: a 2px primary frame, no extra ring.
 	&:focus-within {
-		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
+		border-color: var(--m3-primary-container, #cc1e1c);
+		box-shadow: inset 0 0 0 1px var(--m3-primary-container, #cc1e1c);
+	}
+
+	> .selectionReply__voiceField {
+		margin: 2px 4px;
+	}
+
+	> .selectionReply__send {
+		align-self: start;
+
+		// Sit on the frame, flush with the notch.
+		margin: -1px -1px 0 0;
+	}
+
+	&--stacked {
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-rows: auto auto 1fr;
+		align-items: start;
+
+		> .selectionReply__input {
+			grid-row: 1 / span 3;
+			grid-column: 1;
+		}
+
+		> .selectionReply__send {
+			grid-row: 1;
+			grid-column: 2;
+		}
+
+		> .selectionReply__hintWrap:not(.selectionReply__send) {
+			grid-row: 2;
+			grid-column: 2;
+			justify-self: center;
+			margin-top: 2px;
+		}
 	}
 }
 
 .selectionReply__fieldMic.selectionReply__iconButton {
+	width: 36px;
+	height: 36px;
+}
+
+.selectionReply__iconButton {
 	width: 36px;
 	height: 36px;
 }
@@ -356,6 +385,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	height: 36px;
 	padding: 0;
 	border: 0;
+
 	// The send button's shape: round with a 4px top-right corner.
 	border-radius: 18px 4px 18px 18px;
 	background: transparent;
@@ -417,6 +447,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
+
 	// Flatter than a pill, with the send button's 4px top-right corner.
 	height: 24px;
 	margin: 0;
@@ -554,12 +585,11 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 	flex-shrink: 0;
 
-	// A plain round button here: the composer's corner shape belongs to
-	// the composer card.
+	// The composer's own send shape, docked in the box's top-right notch.
 	.sendButton {
-		width: 36px;
-		height: 36px;
-		border-radius: 18px 4px 18px 18px;
+		width: 40px;
+		height: 40px;
+		border-radius: 0 4px 0 20px;
 	}
 }
 
