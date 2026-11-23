@@ -287,6 +287,11 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		box-shadow: inset 0 0 0 1px var(--m3-primary-container, #cc1e1c);
 	}
 
+	> .selectionReply__hintWrap,
+	> .selectionReply__fieldMic {
+		align-self: start;
+	}
+
 	> .selectionReply__voiceField {
 		margin: 2px 4px;
 	}
@@ -328,9 +333,28 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
-.selectionReply__fieldMic.selectionReply__iconButton {
-	width: 36px;
-	height: 36px;
+// Frank (24 Nov): mic and stack are the composer's own toolbar buttons —
+// round, the light `surface-container-low` fill, a bit smaller here — and
+// sit at the top right next to Send instead of hanging in the middle.
+.selectionReply__box .selectionReply__fieldMic.selectionReply__iconButton,
+.selectionReply__box .selectionReply__collect {
+	align-self: start;
+	width: 32px;
+	height: 32px;
+	margin: 4px 2px 0;
+	border-radius: 50%;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface-variant, #444748);
+
+	&:hover:not(:disabled) {
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-primary-container, #cc1e1c);
+	}
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
 }
 
 .selectionReply__iconButton {
