@@ -235,7 +235,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
-import { UserAvatar } from '../message/UserAvatar';
+import { InlineTypingIndicator } from './InlineTypingIndicator';
 import {
 	isLegacyGuestLoginLabel,
 	resolveAnonymousChatDisplayName,
@@ -4061,42 +4061,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
-								<div className="messageItem session__inlineTypingIndicator">
-									<div className="messageItem__messageWrap">
-										<div className="messageItem__avatar">
-											<UserAvatar
-												username={
-													primaryTypingUser.name
-												}
-												displayName={
-													primaryTypingUser.name
-												}
-												userId={
-													primaryTypingUser.userId
-												}
-												choice={
-													primaryTypingUser.choice
-												}
-												ring={false}
-											/>
-										</div>
-										<div className="messageItem__content">
-											<div className="session__inlineTypingLabel">
-												{typingIndicatorLabel}
-											</div>
-											<div
-												className="session__inlineTypingBubble"
-												aria-hidden="true"
-											>
-												<div className="session__inlineTypingDots">
-													<span />
-													<span />
-													<span />
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
+								<InlineTypingIndicator
+									name={primaryTypingUser.name}
+									userId={primaryTypingUser.userId}
+									choice={primaryTypingUser.choice}
+									label={typingIndicatorLabel}
+								/>
 							)}
 						</div>
 					)}

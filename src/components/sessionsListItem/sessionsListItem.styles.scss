@@ -1,3 +1,5 @@
+@import '../message/avatarFrame';
+
 $icon-size: 24px;
 $icon-size-small: 16px;
 $session-card-bg: var(--m3-surface-container-high, #eae7e8);
@@ -796,6 +798,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 
 	&__icon {
+		> .chatAvatarOutline {
+			@include chat-avatar-small-halo(var(--m3-surface-container-lowest, #ffffff));
+		}
+
 		width: 32px;
 		height: 32px;
 		min-width: 32px;

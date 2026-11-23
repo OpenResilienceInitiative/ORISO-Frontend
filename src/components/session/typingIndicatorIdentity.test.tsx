@@ -205,6 +205,7 @@ describe('typing indicator identity (#2387)', () => {
 				displayName="Harbour Lights"
 				userId={ASKER_ID}
 				ring={false}
+				chatOutline
 			/>
 		).container.querySelector('[data-testid="user-avatar"]');
 		expect(avatar?.innerHTML).toBe(reference?.innerHTML);
