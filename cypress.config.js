@@ -163,6 +163,15 @@ module.exports = defineConfig(
 				},
 				specPattern: ['cypress/e2e/**/*.cy.ts']
 			},
+			component: {
+				devServer: {
+					framework: 'react',
+					bundler: 'webpack',
+					webpackConfig: options.webpackOptions
+				},
+				specPattern: ['cypress/component/**/*.cy.tsx'],
+				supportFile: false
+			},
 			env: {
 				CYPRESS_WS_URL:
 					process.env.CYPRESS_WS_URL || process.env.REACT_APP_API_URL

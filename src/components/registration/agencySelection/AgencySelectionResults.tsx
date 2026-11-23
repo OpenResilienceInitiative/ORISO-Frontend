@@ -33,6 +33,39 @@ import { registrationMd3 } from '../registrationDesign/registrationDesign';
 import { SearchEmptyStateAnimation } from '../../emptyState/SearchEmptyStateAnimation';
 import '../../emptyState/emptyState.styles';
 
+const resultPanelSx = {
+	display: 'grid',
+	gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+	// Keep the heading above the illustration on narrow screens.
+	gridTemplateAreas: {
+		xs: '"headline" "icon" "body"',
+		md: '"headline icon" "body icon"'
+	},
+	columnGap: { md: '24px' },
+	alignItems: { md: 'center' },
+	p: '16px',
+	mt: '16px',
+	borderRadius: '4px',
+	border: `1px solid ${registrationMd3.outlineVariant}`
+} as const;
+
+const resultHeadingSx = {
+	gridArea: 'headline',
+	fontWeight: '600',
+	color: registrationMd3.onSurface
+} as const;
+
+const resultBodySx = { color: registrationMd3.onSurface } as const;
+
+const externalResultLinkSx = {
+	'mt': '16px',
+	'width': { xs: '100%', md: 'auto' },
+	'&:focus-visible': {
+		outline: `2px solid ${registrationMd3.outline}`,
+		outlineOffset: '3px'
+	}
+} as const;
+
 interface AgencySelectionResultsProps {
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
 	isLoading?: boolean;
@@ -263,30 +296,8 @@ export const AgencySelectionResults = ({
 
 			{/* no Results */}
 			{results?.length === 0 && (
-				<Box
-					sx={{
-						// Grid instead of wrap-reverse flex: the text column
-						// used to shrink to min-content on phones and broke
-						// words mid-syllable. Mobile order per design review:
-						// headline, icon centred, copy, full-width button.
-						display: 'grid',
-						gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
-						gridTemplateAreas: {
-							xs: '"headline" "icon" "body"',
-							md: '"headline icon" "body icon"'
-						},
-						columnGap: { md: '24px' },
-						alignItems: { md: 'center' },
-						p: '16px',
-						mt: '16px',
-						borderRadius: '4px',
-						border: `1px solid ${registrationMd3.outlineVariant}`
-					}}
-				>
-					<Typography
-						variant="h5"
-						sx={{ gridArea: 'headline', fontWeight: '600' }}
-					>
+				<Box sx={resultPanelSx}>
+					<Typography variant="h5" sx={resultHeadingSx}>
 						{t(
 							'registration.agencySelection.postcode.unavailable.title'
 						)}
@@ -304,16 +315,14 @@ export const AgencySelectionResults = ({
 						<SearchEmptyStateAnimation />
 					</Box>
 					<Box sx={{ gridArea: 'body' }}>
-						<Typography>
+						<Typography sx={resultBodySx}>
 							{t(
 								'registration.agencySelection.postcode.unavailable.text'
 							)}
 						</Typography>
 						<Button
-							sx={{
-								mt: '16px',
-								width: { xs: '100%', md: 'auto' }
-							}}
+							sx={externalResultLinkSx}
+							disableFocusRipple
 							variant="contained"
 							startIcon={<OpenInNewIcon />}
 							target="_blank"
@@ -332,31 +341,12 @@ export const AgencySelectionResults = ({
 
 			{/* only external results */}
 			{results?.length > 0 && onlyExternalAgencies && (
-				<Box
-					sx={{
-						// Same grid as the no-results state above, same reason.
-						display: 'grid',
-						gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
-						gridTemplateAreas: {
-							xs: '"headline" "icon" "body"',
-							md: '"headline icon" "body icon"'
-						},
-						columnGap: { md: '24px' },
-						alignItems: { md: 'center' },
-						p: '16px',
-						mt: '16px',
-						borderRadius: '4px',
-						border: `1px solid ${registrationMd3.outlineVariant}`
-					}}
-				>
-					<Typography
-						variant="h5"
-						sx={{ gridArea: 'headline', fontWeight: '600' }}
-					>
+				<Box sx={resultPanelSx}>
+					<Typography variant="h5" sx={resultHeadingSx}>
 						{t('registration.agency.result.external.headline')}
 					</Typography>
 					<Box sx={{ gridArea: 'body' }}>
-						<Typography>
+						<Typography sx={resultBodySx}>
 							{t('registration.agency.result.external.subline')}
 						</Typography>
 						{results?.[0]?.url && (
@@ -364,10 +354,8 @@ export const AgencySelectionResults = ({
 								target="_blank"
 								component={Link}
 								href={results?.[0]?.url}
-								sx={{
-									mt: '16px',
-									width: { xs: '100%', md: 'auto' }
-								}}
+								sx={externalResultLinkSx}
+								disableFocusRipple
 								variant="contained"
 								startIcon={<OpenInNewIcon />}
 							>

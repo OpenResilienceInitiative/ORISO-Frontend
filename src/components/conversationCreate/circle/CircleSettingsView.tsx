@@ -96,6 +96,8 @@ interface CircleSettingsViewProps {
 	 * that desktop already collected on screen 1.
 	 */
 	compact?: boolean;
+	/** Extra class on the root, e.g. the step's enter animation. */
+	className?: string;
 }
 
 const buildSeriesDefaults = (
@@ -122,7 +124,8 @@ export const CircleSettingsView = ({
 	topicOptions,
 	people = [],
 	editChatId,
-	compact = false
+	compact = false,
+	className
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
 	const identityOwner = useBuildIdentityOwner();
@@ -395,7 +398,7 @@ export const CircleSettingsView = ({
 		<div
 			className={`circleSettings${
 				compact ? ' circleSettings--compact' : ''
-			}`}
+			}${className ? ` ${className}` : ''}`}
 		>
 			<ScreenIntro
 				title={translate('groupChat.circle.settingsTitle')}

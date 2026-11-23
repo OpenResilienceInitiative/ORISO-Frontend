@@ -157,6 +157,10 @@ describe('frontendTours registry', () => {
 		const ids = frontendTours.map((t) => t.id);
 		expect(ids).toEqual([
 			'consultant-walkthrough',
+			'consultant-case-handover',
+			'consultant-calendar',
+			'consultant-group-circle',
+			'consultant-profile',
 			'consultant-live-chat',
 			'consultant-timeline',
 			'consultant-video-call',

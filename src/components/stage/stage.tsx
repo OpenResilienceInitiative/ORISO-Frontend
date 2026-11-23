@@ -24,6 +24,7 @@ import { useStageEffect } from './effects/useStageEffect';
 import { resolveTenantStageEffect } from './effects/tenantStageEffect';
 
 export interface StageProps {
+	claim?: string;
 	className?: string;
 	hasAnimation?: boolean;
 	isReady?: boolean;
@@ -32,6 +33,7 @@ export interface StageProps {
 }
 
 export const Stage = ({
+	claim,
 	className,
 	hasAnimation,
 	isReady = true,
@@ -223,7 +225,8 @@ export const Stage = ({
 					<Headline
 						className="stage__claim"
 						semanticLevel="4"
-						text={translate('app.claim')}
+						text={claim || translate('app.claim')}
+						plainText={Boolean(claim)}
 					/>
 				</div>
 				{hasAnimation && !isReady ? (

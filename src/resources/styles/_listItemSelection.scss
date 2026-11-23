@@ -133,15 +133,24 @@ $list-item-focus-color: var(--m3-primary-container, #cc1e1c) !default;
 }
 
 // --- Focus ring of controls and pill entries ---
-// The 2px primary outline that calendar controls and the pill entries of the
-// appointment lists (Activity Timeline, calendar) show on keyboard focus.
-// Cards use `list-item-focus-treatment` or `list-group-keyboard-focus`
-// instead; this ring is an outline outside the box, so a control that sits
-// flush against its neighbours only needs a smaller offset.
-$control-focus-ring-width: 2px !default;
-$control-focus-ring-color: var(--m3-primary, #a5000a) !default;
+// The ONE keyboard focus ring of ORISO (Frontend#1134, ADR-037). Colour, width
+// and offset come from `settings.scss` (`$focus-ring-*`), so light, dark and
+// High contrast all draw the generated primary role. Storybook:
+// Design Tokens/Focus ring contract. Cards use `list-item-focus-treatment` or
+// `list-group-keyboard-focus` instead; this ring is an outline outside the
+// box, so a control that sits flush against its neighbours only needs a
+// smaller offset.
+$control-focus-ring-width: $focus-ring-width !default;
+$control-focus-ring-color: $focus-ring-color !default;
 
-@mixin control-focus-ring($offset: 2px) {
+@mixin control-focus-ring($offset: $focus-ring-offset) {
 	outline: $control-focus-ring-width solid $control-focus-ring-color;
 	outline-offset: $offset;
+}
+
+// A control FILLED with the primary colour (send, primary FAB) cannot show a
+// primary ring on itself: draw the on-primary ring inside the fill instead.
+@mixin control-focus-ring-on-fill($inset: 3px) {
+	outline: $focus-ring-width solid $focus-ring-on-fill-color;
+	outline-offset: -($focus-ring-width + $inset);
 }

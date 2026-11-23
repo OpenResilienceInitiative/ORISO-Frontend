@@ -119,6 +119,26 @@ describe('autoLogin', () => {
 			await consumeLoginRecoveryPassword(matrixResponse.userId)
 		).toBeNull();
 	});
+	it('ignores a delayed token exchange after the form invalidates that attempt', async () => {
+		let active = true;
+		let complete!: (data: typeof keycloakResponse) => void;
+		vi.mocked(getKeycloakAccessToken).mockReturnValueOnce(
+			new Promise((resolve) => {
+				complete = resolve;
+			})
+		);
+		const attempt = autoLogin({
+			username: 'fixture',
+			password: 'fixture',
+			isCurrentAttempt: () => active
+		});
+		active = false;
+		complete(keycloakResponse);
+		await attempt;
+		expect(setTokens).not.toHaveBeenCalled();
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+	});
+
 	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
 		await stageLoginRecoveryPassword(
 			matrixResponse.userId,

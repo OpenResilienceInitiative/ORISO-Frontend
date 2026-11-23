@@ -1,8 +1,60 @@
 import * as React from 'react';
 import { CSSProperties, ReactNode, useEffect, useRef } from 'react';
 import clsx from 'clsx';
+import {
+	HoverScrollArrows,
+	ScrollDirection
+} from '../hoverScrollArrows/HoverScrollArrows';
 import { findActiveChips, revealChip } from './chipRowReveal';
 import './displayFilter.styles.scss';
+
+/**
+ * The scrollLeft at which each chip starts. The chips sit in one inner row,
+ * so the arrows' default (the scroller's direct children) would see a single
+ * target and never offer a step.
+ */
+export const chipTargets = (track: HTMLElement) => {
+	const max = Math.max(0, track.scrollWidth - track.clientWidth);
+	const origin = track.getBoundingClientRect().left - track.scrollLeft;
+	const chips = Array.from(track.firstElementChild?.children ?? []);
+	return chips.map((chip) =>
+		Math.min(max, Math.max(0, chip.getBoundingClientRect().left - origin))
+	);
+};
+
+/**
+ * One click pages the row (#2390): forward, the first chip cut off on the
+ * right starts the view; back, the chip cut off on the left ends it. So
+ * every chip is fully visible at some step, not just a few at a time.
+ */
+export const pageChips = (
+	track: HTMLElement | null,
+	direction: ScrollDirection
+) => {
+	if (!track) return;
+	const { scrollLeft, clientWidth } = track;
+	const origin = track.getBoundingClientRect().left - scrollLeft;
+	const spans = Array.from(track.firstElementChild?.children ?? []).map(
+		(chip) => {
+			const { left, right } = chip.getBoundingClientRect();
+			return { left: left - origin, right: right - origin };
+		}
+	);
+	const cut =
+		direction === 1
+			? spans.find((span) => span.right > scrollLeft + clientWidth + 1)
+			: [...spans].reverse().find((span) => span.left < scrollLeft - 1);
+	const target = cut
+		? direction === 1
+			? cut.left
+			: cut.right - clientWidth
+		: undefined;
+	// A chip wider than the row would not move it: page a row width instead.
+	const moves = target !== undefined && direction * (target - scrollLeft) > 1;
+	track.scrollTo({
+		left: moves ? target : scrollLeft + direction * clientWidth * 0.8
+	});
+};
 
 export interface FilterChipRowProps {
 	/**
@@ -56,6 +108,13 @@ export const FilterChipRow = ({
 		// the row has a size again.
 		let pending: HTMLElement | null = null;
 		const laidOut = () => scroller.clientWidth > 0;
+		// The arrows span their wrapper, which also holds the gap under the
+		// row (a per-page margin): end them at the chips so they centre on them.
+		const syncArrowGap = () =>
+			scroller.parentElement?.style.setProperty(
+				'--filter-chip-row-gap',
+				window.getComputedStyle(scroller).marginBottom
+			);
 		const reveal = (chip: HTMLElement) => {
 			revealed = chip;
 			if (!laidOut()) {
@@ -94,6 +153,7 @@ export const FilterChipRow = ({
 			typeof ResizeObserver === 'undefined'
 				? null
 				: new ResizeObserver(() => {
+						syncArrowGap();
 						const width = scroller.clientWidth;
 						const narrowed = width < lastWidth;
 						lastWidth = width;
@@ -108,6 +168,7 @@ export const FilterChipRow = ({
 					});
 		resize?.observe(scroller);
 		scroller.addEventListener('transitionend', onTransitionEnd);
+		syncArrowGap();
 		onMutation();
 		return () => {
 			observer.disconnect();
@@ -118,19 +179,30 @@ export const FilterChipRow = ({
 
 	return (
 		<div className={clsx('filterChipRow', className)} style={style}>
-			<div
-				ref={scrollRef}
-				className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
-				data-cy={scrollDataCy}
+			{/* The row hides its scrollbar, so a mouse without a trackpad
+			    could only reach the last chips by clicking them one by one
+			    (#2390): the shared desktop arrows page through the row. */}
+			<HoverScrollArrows
+				targetRef={scrollRef}
+				targets={chipTargets}
+				onStep={(direction) => pageChips(scrollRef.current, direction)}
+				className="filterChipRow__arrows"
+				data-cy="filter-chip-row-arrows"
 			>
 				<div
-					className="sessionsListToolbar__chipsRow"
-					role={label ? 'group' : undefined}
-					aria-label={label}
+					ref={scrollRef}
+					className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
+					data-cy={scrollDataCy}
 				>
-					{children}
+					<div
+						className="sessionsListToolbar__chipsRow"
+						role={label ? 'group' : undefined}
+						aria-label={label}
+					>
+						{children}
+					</div>
 				</div>
-			</div>
+			</HoverScrollArrows>
 			{trailing && (
 				<div className="filterChipRow__trailing">{trailing}</div>
 			)}

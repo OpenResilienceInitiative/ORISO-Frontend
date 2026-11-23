@@ -15,9 +15,10 @@ export interface LocaleSwitchPillProps {
 	/**
 	 * `pill` — the desktop control: globe in a circle, plain language name,
 	 * ISO code, chevron. `circle` — the compact control for the mobile hero:
-	 * a translucent globe button on the red surface.
+	 * a translucent globe button on primary. `circleOnPrimaryContainer` pairs
+	 * the same circle with the on-primary-container foreground.
 	 */
-	variant?: 'pill' | 'circle';
+	variant?: 'pill' | 'circle' | 'circleOnPrimaryContainer';
 	className?: string;
 }
 
@@ -125,7 +126,11 @@ export const LocaleSwitchPill = ({
 				type="button"
 				className={clsx(
 					'localeSwitchPill',
-					`localeSwitchPill--${variant}`,
+					variant === 'pill'
+						? 'localeSwitchPill--pill'
+						: 'localeSwitchPill--circle',
+					variant === 'circleOnPrimaryContainer' &&
+						'localeSwitchPill--onPrimaryContainer',
 					className
 				)}
 				aria-haspopup="listbox"

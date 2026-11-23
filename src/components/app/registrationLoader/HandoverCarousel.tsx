@@ -4,7 +4,18 @@ import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { CarouselDots } from '../../carouselDots/CarouselDots';
-import { cardWidth, fluid, rem } from './handoverCardSize';
+import {
+	cardWidth,
+	fluid,
+	HANDOVER_BLOCK_HEIGHT_VAR,
+	HANDOVER_BLOCK_WIDTH_VAR,
+	CARD_MIN_HEIGHT_REM,
+	DOTS_ROW_REM,
+	cardWidthPortrait,
+	PORTRAIT_SM,
+	MOTIF_MIN_HEIGHT_REM,
+	rem
+} from './handoverCardSize';
 import {
 	HoverScrollArrows,
 	ScrollDirection,
@@ -122,10 +133,33 @@ export const HandoverCarousel = ({
 }: HandoverCarouselProps) => {
 	const { t } = useTranslation();
 	const trackRef = useRef<HTMLDivElement>(null);
+	const blockRef = useRef<HTMLDivElement>(null);
+
+	/* The free height between the headline and the bar, as a CSS variable
+	   the card width is computed from (`handoverCardSize`). Container query
+	   units cannot do it: Chromium resolves `cqh` of a flex-sized container
+	   to 0. The block's height comes from the layout, not from the cards
+	   (`flex: 1`, `contain: size` from `sm`), so this cannot feed back. */
+	useEffect(() => {
+		const block = blockRef.current;
+		if (!block) return undefined;
+		const note = () => {
+			block.style.setProperty(
+				HANDOVER_BLOCK_HEIGHT_VAR,
+				`${block.clientHeight}px`
+			);
+			block.style.setProperty(
+				HANDOVER_BLOCK_WIDTH_VAR,
+				`${block.clientWidth}px`
+			);
+		};
+		note();
+		if (typeof ResizeObserver === 'undefined') return undefined;
+		const observer = new ResizeObserver(note);
+		observer.observe(block);
+		return () => observer.disconnect();
+	}, []);
 	const [activeIndex, setActiveIndex] = useState(0);
-	/* All cards in view at once (the usual case from `sm` up, where the
-	   cards size themselves to fit): nothing to scroll, so no dots. */
-	const [allInView, setAllInView] = useState(false);
 	const selectDotRef = useRef<((index: number) => void) | null>(null);
 	const settledCount = useRef(0);
 
@@ -221,13 +255,8 @@ export const HandoverCarousel = ({
 			scheduleSettle();
 		};
 
-		const noteAllInView = () =>
-			setAllInView(track.scrollWidth <= track.clientWidth + 1);
-		noteAllInView();
-
 		let trackWidth = track.clientWidth;
 		const reconcileTrackWidth = () => {
-			noteAllInView();
 			const width = track.clientWidth;
 			if (width === trackWidth) return false;
 			trackWidth = width;
@@ -397,16 +426,19 @@ export const HandoverCarousel = ({
 
 	return (
 		<Box
+			ref={blockRef}
 			sx={{
-				// Mobile fills the screen; on desktop the block hugs its cards
-				// so the dots stay attached to them instead of drifting to the
-				// bottom of a tall window.
-				flex: { xs: 1, sm: 'none' },
+				// The block takes the room between the headline and the bar,
+				// and the cards size themselves from its height, so there is
+				// no dead space above the bar at any zoom.
+				flex: 1,
 				minHeight: 0,
 				display: 'flex',
 				flexDirection: 'column',
-				// The card width counts in this block's width (`cqi`).
-				containerType: 'inline-size'
+				// From `sm` the block's height comes from the layout, never
+				// from the cards. Phones keep their own content height: on a
+				// 320 × 568 screen there is no free height to give.
+				contain: { sm: 'size' }
 			}}
 		>
 			<HoverScrollArrows
@@ -463,13 +495,23 @@ export const HandoverCarousel = ({
 							sx={{
 								flex: 'none',
 								width: cardWidth,
-								// The card's text and badge grow with it (`cqi`).
-								containerType: 'inline-size',
+								// Desktop and tablet: exactly the free height
+								// between headline and bar, like a phone — the
+								// motif takes what the text leaves (Frank,
+								// 2026-11-20: use the space, no dead white).
+								// Not below the smallest whole card (a window too
+								// short even for that is tracked separately).
+								height: {
+									sm: `max(calc(var(${HANDOVER_BLOCK_HEIGHT_VAR}) - ${DOTS_ROW_REM}rem), ${CARD_MIN_HEIGHT_REM}rem)`
+								},
 								// Centre on every width: the dots and a released
 								// drag centre their card (`cardTargets`), and a
 								// start snap would pull the middle card off to an
 								// end where two cards fit at once.
 								scrollSnapAlign: 'center',
+								// Tablet upright: the same card as the same tablet
+								// turned sideways (its long side sets the size).
+								[PORTRAIT_SM]: { width: cardWidthPortrait },
 								display: 'flex',
 								flexDirection: 'column',
 								bgcolor: registrationMd3.surface,
@@ -484,9 +526,14 @@ export const HandoverCarousel = ({
 									// Either way the box has a definite size before
 									// the image arrives, so a late motif never
 									// shifts the text the user is already reading.
-									flex: { xs: 1, sm: 'none' },
-									minHeight: { xs: rem(170), sm: 0 },
-									aspectRatio: { xs: 'auto', sm: '1 / 1' },
+									// Every size: the motif takes the card's height
+									// left over by the text and is cropped to it
+									// (at 1440 × 900 that is the approved 372 px).
+									flex: 1,
+									minHeight: {
+										xs: rem(170),
+										sm: `${MOTIF_MIN_HEIGHT_REM}rem`
+									},
 									bgcolor: registrationMd3.surfaceContainer
 								}}
 							>
@@ -610,22 +657,20 @@ export const HandoverCarousel = ({
 				</Box>
 			</HoverScrollArrows>
 
-			{!allInView && (
-				<CarouselDots
-					data-cy="handover-carousel-dots"
-					count={steps.length}
-					activeIndex={activeIndex}
-					onSelect={scrollToCard}
-					getLabel={(index, total) =>
-						t('registration.handover.goToStep', {
-							position: index + 1,
-							total
-						})
-					}
-					// The 24 px targets add 9 px above the mark: same gap as before.
-					sx={{ flex: 'none', pt: { xs: rem(3), sm: rem(7) } }}
-				/>
-			)}
+			<CarouselDots
+				data-cy="handover-carousel-dots"
+				count={steps.length}
+				activeIndex={activeIndex}
+				onSelect={scrollToCard}
+				getLabel={(index, total) =>
+					t('registration.handover.goToStep', {
+						position: index + 1,
+						total
+					})
+				}
+				// The 24 px targets add 9 px above the mark: same gap as before.
+				sx={{ flex: 'none', pt: { xs: rem(3), sm: rem(7) } }}
+			/>
 		</Box>
 	);
 };

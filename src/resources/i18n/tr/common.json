@@ -42,6 +42,8 @@
 		"recoveryIntro": "Önce mevcut görüşmenizin kurtarma anahtarını hazırlayın. Böylece mesajlarınıza yeni bir cihazdan erişebilirsiniz.",
 		"pending": "Önceki bir deneme tamamlanmadı. Tamamlamak için aynı parolayı kullanın.",
 		"recoveryError": "Kurtarma anahtarı henüz kullanılamıyor. Tekrar deneyin veya daha önce kaydettiğiniz anahtarı girin.",
+		"historyError": "Sohbet geçmişiniz henüz güvenceye alınamadı. Lütfen tekrar deneyin.",
+		"fallbackKeyHelp": "Hesabınız hazır, ancak sohbet geçmişiniz henüz şifrenize bağlanamadı. Bu kurtarma anahtarını kaydedin: bu görüşmeyi yeni bir cihazda okumak için ona ihtiyacınız olacak.",
 		"existingKey": "Daha önce kaydedilen kurtarma anahtarı (gerekirse)",
 		"prepare": "Kurtarma anahtarını hazırla",
 		"accountChanged": "Giriş yapılan hesap değişti. Güvenle devam etmek için sayfayı yenileyin.",
@@ -653,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Bazı sohbet verileri bu tarayıcıda kalmış olabilir. Diğer ORISO sekmelerini kapatın.",
+			"retryCleanup": "Tarayıcı temizliğini yeniden dene",
 			"button": "Kapat",
 			"headline": "Caritas Beratung hesabınızı başarıyla sildiniz."
 		}
@@ -1262,12 +1266,20 @@
 		"format": {
 			"panelTitle": "Yeni görüşme oluştur",
 			"panelMenu": "Diğer seçenekler",
+			"discard": {
+				"title": "Girdiğiniz bilgiler silinsin mi?",
+				"description": "Bu karttaki bilgiler henüz kaydedilmedi. Bu görünümü kapatırsanız kaybolacaklar.",
+				"keepEditing": "Düzenlemeye devam et",
+				"confirm": "Sil ve kapat"
+			},
 			"cardsPrevious": "Önceki görüşme formatı",
 			"cardsNext": "Sonraki görüşme formatı",
 			"back": "Geri",
 			"headerTitle": "Yeni görüşme oluştur",
 			"subtitle": "Sizin ve danışanlar için farklı, özel görüşme formatları sunuyoruz. Seçenekler, kurumlar ve danışma merkeziniz tarafından serbestçe yapılandırılabilir.",
-			"title": "Görüşme formatını seçin"
+			"title": "Görüşme formatını seçin",
+			"goToCard": "{{total}} görüşme biçiminden {{position}}. biçime git",
+			"choose": "Seç"
 		},
 		"internal": {
 			"addPerson": "Kişi ekle",
@@ -1307,7 +1319,9 @@
 			"title": "Dahili görüşme",
 			"togglePersonList": "Kişi listesini aç veya kapat",
 			"tooMany": "En fazla {{max}} kişi seçebilirsiniz.",
-			"vacatedHint": "artık bu danışma merkezinde değil"
+			"vacatedHint": "artık bu danışma merkezinde değil",
+			"cardShort": "Ekipçe uyum – sohbet, ses, görüntü.",
+			"infoLabel": "“Dahili görüşme” hakkında daha fazla"
 		},
 		"circle": {
 			"addModerator": "Yardımcı moderatör ekle",
@@ -2297,7 +2311,9 @@
 				"createNew": "Yeni randevu oluştur",
 				"openCalendar": "Takvimde aç"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Süpervizyon değiştirildi",
+		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor."
 	},
 	"navigation": {
 		"appointments": "Video - Tarihler",
@@ -2820,7 +2836,8 @@
 		},
 		"avatar": {
 			"label": "Resminiz",
-			"default": "Varsayılan"
+			"default": "Varsayılan",
+			"initials": "Baş harfler"
 		},
 		"appLanguage": {
 			"info": "Uygulamanın dilini buradan ayarlayın.",
@@ -3165,6 +3182,8 @@
 				"intro": "Bildirim seslerinizi her alan için ayrı ayrı seçin.",
 				"emailNote": "E-postalar yalnızca olaydan sonraki beş dakika içinde yanıt vermezseniz gönderilir.",
 				"noSound": "Ses seçilmedi",
+				"defaultSound": "Varsayılan",
+				"legacySound": "Önceki ses",
 				"tone": "Ses #{{number}}",
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
@@ -4086,6 +4105,10 @@
 				"headline": "Bu davet bağlantısı çalışmıyor.",
 				"body": "Bağlantı eksik ya da grup artık mevcut değil. Lütfen size bağlantıyı gönderen kişiden yenisini isteyin."
 			}
+		},
+		"stepScroll": {
+			"back": "Önceki adımlar",
+			"forward": "Sonraki adımlar"
 		}
 	},
 	"releaseNote": {
@@ -5780,6 +5803,10 @@
 				"remove": {
 					"title": "Süpervizör Kaldırıldı",
 					"text": "Süpervizör başarıyla kaldırıldı."
+				},
+				"replace": {
+					"title": "Süpervizör değiştirildi",
+					"text": "Süpervizör başarıyla değiştirildi."
 				}
 			},
 			"error": {
@@ -5929,6 +5956,7 @@
 			"title": "Süpervizyon",
 			"systemNotice": "{{name}} tarafından süpervizyon. Başka bir süpervizörü posta simgesinin yanındaki artı işaretiyle talep edebilirsiniz.",
 			"headerLabel": "Süpervizyon · {{name}}",
+			"menuHint": "Bu danışmanlık hakkında süpervizyonla feedback sohbeti",
 			"role": {
 				"supervisor": "Süpervizyon",
 				"consultant": "Danışmanlık"
@@ -6025,8 +6053,7 @@
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."
 		},
 		"whoReadsAlong": {
-			"headline": "Mesajınızı kim okuyor",
-			"body": "Mesajınızı yalnızca yetkili danışma merkezinin uzmanları okur. Hepsi gizlilik yükümlülüğü altındadır."
+			"headline": "Mesajınızı kim okuyor"
 		},
 		"responseDeadline": {
 			"headline": "Ne zaman yanıt alacaksınız",
@@ -6127,6 +6154,17 @@
 			"dataProtection": "Verilerime ne olur?",
 			"modalityNote": "Danışmanlık nasıl ilerler?",
 			"title": "Sık sorulan sorular"
+		},
+		"questions": {
+			"title": "Birkaç soru",
+			"send": "Yanıtları gönder",
+			"required": "Lütfen bu soruyu yanıtlayın.",
+			"requiredMark": "zorunlu",
+			"thanks": "Yanıtlarınız için teşekkürler.",
+			"choose": "Lütfen seçin",
+			"other": "Başka bir şey",
+			"otherPlaceholder": "Tam olarak ne?",
+			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin."
 		}
 	},
 	"legal": {
@@ -6389,6 +6427,138 @@
 			"open": "Turları aç",
 			"close": "Turları kapat",
 			"manage": "Turları yönet"
+		},
+		"caseHandover": {
+			"title": "Vakaları devretmek",
+			"summary": "Kendi danışmanlığınızı bir meslektaşa devredin ya da onun vakalarına erişim talep edin.",
+			"step": {
+				"intro": {
+					"title": "İki yönlü devir",
+					"intro": "Yeni: vakaların sorumluluğu doğrudan platformda değişir. Kendi danışmanlığınızı önerebilir ya da bir meslektaşınızın vakasına erişim talep edebilirsiniz. Bu tur iki yolu da gösterir, hiçbir işlem başlatmaz."
+				},
+				"offer": {
+					"title": "Kendi danışmanlığınızı devretmek",
+					"intro": "Açık bir danışmanlıkta başlıktaki „+“ simgesini ve ardından „Danışmanlığı devret“i seçin. Yetkili bir meslektaş seçip bir gerekçe yazın. Gerekli tüm onaylar gelene kadar sorumluluk sizde kalır."
+				},
+				"search": {
+					"title": "Meslektaş aramak",
+					"intro": "Burada „Kişiler“ altında bir meslektaş arayın. Liste, biriminize ve konularınıza göre devralabileceğiniz vakalarını gösterir."
+				},
+				"requestAccess": {
+					"title": "Erişim talep etmek",
+					"intro": "„Erişim talep et“ ile bir vakayı gerekçesiyle istersiniz. ▾ ve „Birden fazla vaka seç“ ile birkaç vakayı aynı anda talep edersiniz."
+				},
+				"status": {
+					"title": "Durumu takip etmek",
+					"intro": "Vakada durum görünür, örneğin „Onay bekleniyor“. Meslektaşınızın yanıtı ve kural gerektiriyorsa danışanın onayı zaman çizelgesinde görünür."
+				},
+				"done": {
+					"title": "Kısaca",
+					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Sohbet çemberi oluşturmak",
+			"summary": "Moderasyonlu bir sohbet çemberi oluşturun, paylaşın ve başlatın.",
+			"step": {
+				"intro": {
+					"title": "Sohbet çemberleri",
+					"intro": "Sohbet çemberi, danışmanların yönettiği anonim bir gruptur – tek seferlik ya da düzenli. Bu tur nerede oluşturulduğunu gösterir. Hiçbir şey oluşturulmaz."
+				},
+				"create": {
+					"title": "Oluştur",
+					"intro": "Danışmanlık listenizdeki „Oluştur“ ile yeni sohbetler başlatırsınız. Hangi formatları göreceğinizi kurum ve danışma merkezi belirler."
+				},
+				"format": {
+					"title": "„Sohbet çemberi“ formatı",
+					"intro": "„Görüşme formatını seçin“ altında çember diğer formatların yanında yer alır. Yalnızca bir format açıksa bu seçim atlanır."
+				},
+				"topic": {
+					"title": "Konu seçmek",
+					"intro": "Önce „Konu / uzmanlık alanı“ seçin. Ardından çemberin ayarları açılır."
+				},
+				"settings": {
+					"title": "Ayarla, paylaş, başlat",
+					"intro": "Ayarlarda tarih, tekrar, ortam ve dili belirler, „Ek moderasyon“ altında yardımcı moderatör eklersiniz. Ardından davet bağlantısını veya QR kodunu paylaşın. Katılımcılar siz „Sohbet başlat“ ile başlayıp onları içeri alana kadar bekleme odasında bekler."
+				},
+				"done": {
+					"title": "Hazır",
+					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				}
+			}
+		},
+		"profile": {
+			"title": "Profiliniz",
+			"summary": "Profil, yokluk, bildirimler, güvenlik ve ekran ayarları artık nerede.",
+			"step": {
+				"overview": {
+					"title": "Profiliniz",
+					"intro": "Profilinizde verileriniz ve ayarlarınız Genel, Etkinliklerim, Ayarlar ve Yardım bölümlerinde yer alır. Bu tur en önemli kartları gösterir."
+				},
+				"public": {
+					"title": "Kamu verileri",
+					"intro": "Danışanlar bu bilgileri görür: adınız, dilleriniz ve danışma merkezleriniz. Bunları güncel tutun."
+				},
+				"absence": {
+					"title": "Yokluğum",
+					"intro": "Yokluğunuzu buraya girin. Danışanlar o zaman yokluk mesajınızı görür."
+				},
+				"notifications": {
+					"title": "Bildirimler",
+					"intro": "E-posta ve tarayıcıda neler hakkında bilgilendirileceğinizi burada seçersiniz."
+				},
+				"security": {
+					"title": "Güvenlik",
+					"intro": "„Giriş ve hesap“ altında şifrenizi değiştirir ve iki faktörlü doğrulamayı yönetirsiniz. Yeni: eski mesajları kurtarma – şifreli mesajları yeni bir cihazda da okuyabilmek için bunu kurun."
+				},
+				"display": {
+					"title": "Ekran",
+					"intro": "Burada efektleri, zaman çizelgesini ve arayüz dilini ayarlarsınız."
+				},
+				"shortcuts": {
+					"title": "Klavye kısayolları",
+					"intro": "Yeni: birçok işlem klavyeyle yapılabilir. Tüm kısayollar burada."
+				},
+				"helpTours": {
+					"title": "Turlar",
+					"intro": "Herhangi bir turu buradan yeniden başlatın. „Tur düğmesini göster“ sağ alttaki „?“ düğmesini gösterir veya gizler."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Takvim",
+			"summary": "Randevu, kapalı zaman ve yokluk girin, çalışma saatlerini belirleyin, takvim bağlayın.",
+			"step": {
+				"nav": {
+					"title": "Randevularım",
+					"intro": "Yeni: takviminiz platformun bir parçası. Danışanlarla tüm randevularınızı – isterseniz meslektaşlarınızınkileri de – burada görürsünüz."
+				},
+				"create": {
+					"title": "Yeni kayıt",
+					"intro": "„Yeni“ ile randevu, engellenmiş zaman veya yokluk girersiniz – tek pencerede üç sekme."
+				},
+				"viewSwitch": {
+					"title": "Görünüm",
+					"intro": "Gün, hafta, ay ve liste arasında geçiş yapın. Liste ayrıca randevusuz bağlantılarınızı da gösterir."
+				},
+				"quickEntry": {
+					"title": "Hızlı kayıt",
+					"intro": "Pencere açmadan kayıt: türü ve kişiyi seçin, gün ve başlangıcı girin ya da boş bir zamana dokunun, sonra kaydedin."
+				},
+				"workingHours": {
+					"title": "Çalışma saatleri",
+					"intro": "Çalışma saatleriniz danışanların ne zaman randevu alabileceğini belirler. „Değiştir“ ile ayarlayın."
+				},
+				"settings": {
+					"title": "Takvim ayarları",
+					"intro": "⋮ altında çalışma ve görüşme saatlerini belirler, tekrarlanan kapalı zaman ve boş günler girer, Outlook veya Google bağlarsınız."
+				},
+				"links": {
+					"title": "Randevusuz bağlantılar",
+					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
+				}
+			}
 		},
 		"liveChat": {
 			"title": "Canlı sohbet",
@@ -6970,7 +7140,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofonu aç",
 			"micOff": "Mikrofonu kapat",
-			"micMeter": "Mikrofonunuzun ses düzeyi"
+			"micMeter": "Mikrofonunuzun ses düzeyi",
+			"cameraNotice": {
+				"permissionDenied": "Kameranız bu site için engellendi. Tarayıcınızın site ayarlarında kameraya izin verin (adresin yanındaki kilit simgesi). Görüntü sayfayı yenilemeden görünür.",
+				"deviceBusy": "Kameranızı şu anda başka bir program kullanıyor. Programı kapatın ve tekrar kontrol edin.",
+				"retry": "Kamerayı tekrar kontrol et"
+			}
 		},
 		"ready": {
 			"title": "Kamerayı ve mikrofonu kontrol edin",
@@ -7981,6 +8156,7 @@
 			"membersTitle": "Mevcut süpervizyon",
 			"emptyMembers": "Bu vakanın henüz süpervizörü yok.",
 			"addTitle": "Süpervizör ekle",
+			"unknownName": "Süpervizör",
 			"emptyCandidates": "Bu merkezde başka kimse süpervizör olarak işaretli değil. Buna merkez yöneticisi karar verir.",
 			"reasonLabel": "Süpervizyon nedeni",
 			"reasonPlaceholder": "Bu kişi vakaya neden süpervizörlük yapmalı?",
@@ -8018,5 +8194,40 @@
 		"archiveHint": "Listenizden ve etkinliklerinizden kalkması için kaydı arşive taşıyın.",
 		"archived": "Bu kayıt arşivde.",
 		"archiveFailed": "Arşivleme başarısız oldu. Lütfen tekrar deneyin."
+	},
+	"journey": {
+		"question": {
+			"optional": "(isteğe bağlı)",
+			"missing": "Lütfen bu soruyu yanıtlayın.",
+			"textPlaceholder": "Yanıtınız",
+			"other": "Başka bir şey",
+			"otherPlaceholder": "Tam olarak ne?",
+			"choose": "Lütfen seçin",
+			"multiHint": "Birden fazla yanıt seçebilirsiniz"
+		},
+		"rating": {
+			"stars": "{{max}} yıldızdan {{count}}",
+			"stars_one": "{{max}} yıldızdan {{count}}",
+			"stars_other": "{{max}} yıldızdan {{count}}",
+			"untouched": "henüz seçilmedi",
+			"moveHint": "Kaydırıcıyı kendi değerinize getirin."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Kısa bir soru",
+				"arrival": "Geri bildiriminiz"
+			},
+			"send": "Yanıtları gönder",
+			"thanks": "Yanıtlarınız için teşekkürler!",
+			"failed": "Bu işe yaramadı. Yanıtlarınız hâlâ burada – lütfen birazdan tekrar deneyin.",
+			"anonymous": "Yanıtlarınız danışmanlığınızla bağlantı kurulmadan kaydedilir."
+		},
+		"checkIn": {
+			"progress": "Soru {{current}} / {{total}}",
+			"back": "Önceki soru",
+			"next": "İleri",
+			"skip": "Atla",
+			"done": "Tamam – “İleri” sizi sonraki adıma götürür."
+		}
 	}
 }

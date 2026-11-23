@@ -42,6 +42,8 @@
 		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
 		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
 		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"historyError": "Votre historique de discussion n'a pas encore pu être sécurisé. Veuillez réessayer.",
+		"fallbackKeyHelp": "Votre compte est prêt, mais votre historique de discussion n'a pas encore pu être lié à votre mot de passe. Enregistrez cette clé de récupération : vous en aurez besoin pour lire cette conversation sur un nouvel appareil.",
 		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
 		"prepare": "Préparer la clé de récupération",
 		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
@@ -653,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Certaines données de conversation peuvent rester dans ce navigateur. Fermez les autres onglets ORISO.",
+			"retryCleanup": "Réessayer le nettoyage du navigateur",
 			"button": "Fermer",
 			"headline": "Vous avez supprimé avec succès votre compte auprès de Caritas Beratung."
 		}
@@ -1262,12 +1266,20 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
+			"discard": {
+				"title": "Abandonner la saisie ?",
+				"description": "Votre saisie dans cette carte n’est pas enregistrée. Si vous fermez cette vue, elle sera perdue.",
+				"keepEditing": "Continuer la saisie",
+				"confirm": "Abandonner et fermer"
+			},
 			"cardsPrevious": "Format de conversation précédent",
 			"cardsNext": "Format de conversation suivant",
 			"back": "Retour",
 			"headerTitle": "Créer une nouvelle conversation",
 			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
-			"title": "Choisir le format d'entretien"
+			"title": "Choisir le format d'entretien",
+			"goToCard": "Aller au format de conversation {{position}} sur {{total}}",
+			"choose": "Choisir"
 		},
 		"internal": {
 			"addPerson": "Ajouter une personne",
@@ -1307,7 +1319,9 @@
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
 			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
-			"vacatedHint": "ne fait plus partie du service de consultation"
+			"vacatedHint": "ne fait plus partie du service de consultation",
+			"cardShort": "Se concerter en équipe – chat, audio, vidéo.",
+			"infoLabel": "En savoir plus sur « Discussions internes »"
 		},
 		"circle": {
 			"addModerator": "Ajouter une co-modération",
@@ -2297,7 +2311,9 @@
 				"createNew": "Créer un nouveau rendez-vous",
 				"openCalendar": "Ouvrir dans le calendrier"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision modifiée",
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
 	},
 	"navigation": {
 		"appointments": "Vidéo - Dates",
@@ -2820,7 +2836,8 @@
 		},
 		"avatar": {
 			"label": "Votre image",
-			"default": "Par défaut"
+			"default": "Par défaut",
+			"initials": "Initiales"
 		},
 		"appLanguage": {
 			"info": "Définissez ici la langue de l'application.",
@@ -3165,6 +3182,8 @@
 				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
 				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
 				"noSound": "Aucun son sélectionné",
+				"defaultSound": "Par défaut",
+				"legacySound": "Ancien son",
 				"tone": "Son n° {{number}}",
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
@@ -4086,6 +4105,10 @@
 				"headline": "Ce lien d'invitation ne fonctionne pas.",
 				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
 			}
+		},
+		"stepScroll": {
+			"back": "Étapes précédentes",
+			"forward": "Étapes suivantes"
 		}
 	},
 	"releaseNote": {
@@ -5780,6 +5803,10 @@
 				"remove": {
 					"title": "Superviseur supprimé",
 					"text": "Le superviseur a été supprimé avec succès."
+				},
+				"replace": {
+					"title": "Superviseur remplacé",
+					"text": "Le superviseur a bien été remplacé."
 				}
 			},
 			"error": {
@@ -5929,6 +5956,7 @@
 			"title": "Supervision",
 			"systemNotice": "La supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Chat de feedback avec la supervision sur cette consultation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Conseil"
@@ -6025,8 +6053,7 @@
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
 		},
 		"whoReadsAlong": {
-			"headline": "Qui lit votre message",
-			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+			"headline": "Qui lit votre message"
 		},
 		"responseDeadline": {
 			"headline": "Quand vous recevrez une réponse",
@@ -6127,6 +6154,17 @@
 			"dataProtection": "Que deviennent mes données ?",
 			"modalityNote": "Comment se déroule le conseil ?",
 			"title": "Questions fréquentes"
+		},
+		"questions": {
+			"title": "Quelques questions",
+			"send": "Envoyer les réponses",
+			"required": "Veuillez répondre à cette question.",
+			"requiredMark": "obligatoire",
+			"thanks": "Merci pour vos réponses.",
+			"choose": "Veuillez choisir",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant."
 		}
 	},
 	"legal": {
@@ -6389,6 +6427,138 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"caseHandover": {
+			"title": "Transférer des dossiers",
+			"summary": "Transférer une de vos consultations à un·e collègue ou demander l'accès à ses dossiers.",
+			"step": {
+				"intro": {
+					"title": "Un transfert dans les deux sens",
+					"intro": "Nouveau : les dossiers changent de responsable directement dans la plateforme. Vous proposez une de vos consultations ou demandez l'accès au dossier d'un·e collègue. Cette visite montre les deux voies sans rien déclencher."
+				},
+				"offer": {
+					"title": "Transférer votre consultation",
+					"intro": "Dans une consultation ouverte, choisissez « + » dans l'en-tête, puis « Transférer la consultation ». Choisissez un·e collègue habilité·e et indiquez un motif. Vous restez responsable jusqu'à ce que toutes les autorisations nécessaires soient réunies."
+				},
+				"search": {
+					"title": "Chercher un·e collègue",
+					"intro": "Cherchez ici un·e collègue sous « Personnes ». La liste affiche alors ses dossiers que vous pouvez reprendre – selon votre service et vos thèmes."
+				},
+				"requestAccess": {
+					"title": "Demander l'accès",
+					"intro": "« Demander l'accès » sollicite un dossier avec un motif. Avec ▾ et « Sélectionner plusieurs dossiers », vous en demandez plusieurs à la fois."
+				},
+				"status": {
+					"title": "Suivre l'état",
+					"intro": "Le dossier affiche son état, par exemple « En attente d'autorisation ». La réponse de votre collègue et, si la règle l'exige, l'accord de la personne accompagnée apparaissent dans la chronologie."
+				},
+				"done": {
+					"title": "En bref",
+					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Créer un cercle de parole",
+			"summary": "Créer, partager et lancer un cercle de parole modéré.",
+			"step": {
+				"intro": {
+					"title": "Cercles de parole",
+					"intro": "Un cercle de parole est un groupe anonyme animé par des conseiller·ères – ponctuel ou régulier. Cette visite montre où le créer. Rien n'est créé."
+				},
+				"create": {
+					"title": "Créer",
+					"intro": "« Créer » dans votre liste de consultations lance de nouvelles conversations. Les formats proposés dépendent de l'organisme et du centre de conseil."
+				},
+				"format": {
+					"title": "Le format « Cercle de parole »",
+					"intro": "Sous « Choisir le format d'entretien », le cercle figure à côté des autres formats. Si un seul format est activé, ce choix est sauté."
+				},
+				"topic": {
+					"title": "Choisir un sujet",
+					"intro": "Choisissez d'abord « Sujet / domaine spécialisé ». Les réglages du cercle s'ouvrent ensuite."
+				},
+				"settings": {
+					"title": "Régler, partager, lancer",
+					"intro": "Dans les réglages, vous fixez date, répétitions, média et langue, et ajoutez des co-modérateur·rices sous « Modération supplémentaire ». Partagez ensuite le lien d'invitation ou le QR code. Les participant·es attendent en salle d'attente jusqu'à ce que vous commenciez avec « Démarrer le chat » et les fassiez entrer."
+				},
+				"done": {
+					"title": "Prêt",
+					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				}
+			}
+		},
+		"profile": {
+			"title": "Votre profil",
+			"summary": "Où se trouvent désormais profil, absence, notifications, sécurité et affichage.",
+			"step": {
+				"overview": {
+					"title": "Votre profil",
+					"intro": "Votre profil regroupe vos données et réglages, répartis entre Général, Mes activités, Paramètres et Aide. Cette visite montre les cartes essentielles."
+				},
+				"public": {
+					"title": "Données publiques",
+					"intro": "Les personnes accompagnées voient ces informations : votre nom, vos langues et vos centres de conseil. Tenez-les à jour."
+				},
+				"absence": {
+					"title": "Mon absence",
+					"intro": "Indiquez ici votre absence. Les personnes accompagnées voient alors votre message d'absence."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Choisissez ici ce qui vous est signalé par e-mail et dans le navigateur."
+				},
+				"security": {
+					"title": "Sécurité",
+					"intro": "Sous « Connexion et compte », vous changez votre mot de passe et gérez l'authentification à deux facteurs. Nouveau : la récupération des anciens messages – configurez-la pour lire vos messages chiffrés aussi sur un nouvel appareil."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous réglez les effets, la chronologie et la langue de l'interface."
+				},
+				"shortcuts": {
+					"title": "Raccourcis clavier",
+					"intro": "Nouveau : de nombreuses actions se font au clavier. Tous les raccourcis sont listés ici."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Relancez ici n'importe quelle visite. « Afficher le bouton des visites guidées » affiche ou masque le bouton « ? » en bas à droite."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Calendrier",
+			"summary": "Saisir rendez-vous, plages bloquées et absences, définir ses horaires, connecter un agenda.",
+			"step": {
+				"nav": {
+					"title": "Mes rendez-vous",
+					"intro": "Nouveau : votre calendrier fait partie de la plateforme. Il montre tous vos rendez-vous avec les personnes accompagnées – et, si vous le souhaitez, ceux de vos collègues."
+				},
+				"create": {
+					"title": "Nouvelle saisie",
+					"intro": "« Nouveau » ajoute un rendez-vous, une plage bloquée ou une absence – trois onglets dans une seule fenêtre."
+				},
+				"viewSwitch": {
+					"title": "Affichage",
+					"intro": "Passez du jour à la semaine, au mois ou à la liste. La liste affiche aussi vos liens sans rendez-vous."
+				},
+				"quickEntry": {
+					"title": "Saisie rapide",
+					"intro": "Une saisie sans fenêtre : choisissez le type et la personne, fixez le jour et l'heure ou touchez un créneau libre, puis enregistrez."
+				},
+				"workingHours": {
+					"title": "Horaires de travail",
+					"intro": "Vos horaires déterminent quand les personnes accompagnées peuvent réserver. « Modifier » les ajuste."
+				},
+				"settings": {
+					"title": "Paramètres du calendrier",
+					"intro": "Sous ⋮, vous définissez horaires de travail et heures de consultation, saisissez des plages bloquées récurrentes et des jours libres, et connectez Outlook ou Google."
+				},
+				"links": {
+					"title": "Liens sans rendez-vous",
+					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				}
+			}
 		},
 		"liveChat": {
 			"title": "Chat en direct",
@@ -6970,7 +7140,12 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro"
+			"micMeter": "Volume de votre micro",
+			"cameraNotice": {
+				"permissionDenied": "Votre caméra est bloquée pour ce site. Autorisez la caméra dans les paramètres du site de votre navigateur (icône de cadenas à côté de l'adresse). L'image apparaît alors sans recharger.",
+				"deviceBusy": "Un autre programme utilise votre caméra. Fermez-le, puis vérifiez à nouveau.",
+				"retry": "Vérifier la caméra à nouveau"
+			}
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",
@@ -7981,6 +8156,7 @@
 			"membersTitle": "Supervision actuelle",
 			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
 			"addTitle": "Ajouter un superviseur",
+			"unknownName": "Superviseur",
 			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
 			"reasonLabel": "Motif de la supervision",
 			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",
@@ -8018,5 +8194,40 @@
 		"archiveHint": "Déplacez l'entrée vers les archives pour qu'elle disparaisse de votre liste et de vos activités.",
 		"archived": "Cette entrée se trouve dans les archives.",
 		"archiveFailed": "L'archivage n'a pas fonctionné. Veuillez réessayer."
+	},
+	"journey": {
+		"question": {
+			"optional": "(facultatif)",
+			"missing": "Veuillez répondre à cette question.",
+			"textPlaceholder": "Votre réponse",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"choose": "Veuillez choisir",
+			"multiHint": "Plusieurs réponses possibles"
+		},
+		"rating": {
+			"stars": "{{count}} étoiles sur {{max}}",
+			"stars_one": "{{count}} étoile sur {{max}}",
+			"stars_other": "{{count}} étoiles sur {{max}}",
+			"untouched": "pas encore choisi",
+			"moveHint": "Déplacez le curseur sur votre valeur."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Une petite question",
+				"arrival": "Votre avis"
+			},
+			"send": "Envoyer les réponses",
+			"thanks": "Merci pour vos réponses !",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant.",
+			"anonymous": "Vos réponses sont enregistrées sans lien avec votre conseil."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} sur {{total}}",
+			"back": "Question précédente",
+			"next": "Suivant",
+			"skip": "Passer",
+			"done": "Terminé – « Suivant » mène à l’étape suivante."
+		}
 	}
 }

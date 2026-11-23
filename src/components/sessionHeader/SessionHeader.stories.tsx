@@ -1837,3 +1837,103 @@ export const OneToOneAppointmentUpcoming: Story = {
 		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
 	}
 };
+
+/** A longer room name in the real group header; the wrapper models a resizable chat pane. */
+export const LongRoomTitleInResizablePane: Story = {
+	name: 'Long room title in a resizable pane',
+	globals: desktop1440Globals,
+	render: () => {
+		const preset = mockGroupSessionSmall();
+		preset.session.item.topic = 'Fallbesprechung Schulden · Team Moabit';
+		return (
+			<div
+				data-testid="title-fit-pane"
+				style={{ width: 1100, maxWidth: '100%' }}
+			>
+				{renderGroupHeader(preset)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const pane = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="title-fit-pane"]'
+		)!;
+		const title = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="group-header-topic"]'
+		)!;
+		const text = title.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		const fontSize = () =>
+			Number.parseFloat(getComputedStyle(text).fontSize);
+		const expectSpaceBeforeCalls = () => {
+			const calls = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-video-call-buttons"]'
+			)!;
+			expect(
+				calls.getBoundingClientRect().left -
+					title.getBoundingClientRect().right
+			).toBeGreaterThanOrEqual(7.5);
+		};
+		if (window.innerWidth < 900) {
+			pane.style.width = '660px';
+			await waitFor(() => expect(text.style.fontSize).not.toBe(''));
+			expect(fontSize()).toBeGreaterThanOrEqual(16);
+			expect(fontSize()).toBeLessThanOrEqual(18);
+			expect(title.title).toBe(title.textContent);
+			expectSpaceBeforeCalls();
+			return;
+		}
+		pane.style.maxWidth = 'none';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = 'none';
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '780px';
+		await waitFor(() => {
+			expect(fontSize()).toBeLessThan(22);
+			expect(fontSize()).toBeGreaterThan(16);
+			expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth + 1);
+			expectSpaceBeforeCalls();
+		});
+		pane.style.width = '550px';
+		await waitFor(() => {
+			expect(fontSize()).toBe(16);
+			expect(text.scrollWidth).toBeGreaterThan(text.clientWidth);
+			expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+		});
+		await expect(title.textContent).toBe(
+			'Fallbesprechung Schulden · Team Moabit'
+		);
+		await expect(title.getAttribute('title')).toBe(title.textContent);
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '660px';
+		pane.style.maxWidth = '100%';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = '';
+	}
+};
+
+/** The 1:1 title uses the same fitting behavior and retains the complete accessible name. */
+export const LongPersonTitle: Story = {
+	render: () => {
+		const preset = mockActiveConversationWithParticipants();
+		if (preset.session.user) {
+			preset.session.user.displayName =
+				'Eine sehr lange Gesprächsbezeichnung zur Familienberatung';
+		}
+		return renderSessionHeader(preset);
+	},
+	play: async ({ canvasElement }) => {
+		const heading = canvasElement.querySelector<HTMLElement>(
+			'.sessionInfo__username h3'
+		)!;
+		const visible = heading.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		await waitFor(() => expect(visible.style.fontSize).not.toBe(''));
+		expect(
+			Number.parseFloat(getComputedStyle(visible).fontSize)
+		).toBeGreaterThanOrEqual(16);
+		expect(heading.title).toBe(heading.textContent);
+	}
+};

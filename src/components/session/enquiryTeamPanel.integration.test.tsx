@@ -44,6 +44,7 @@ import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { chatTransportService } from '../../services/chatTransportService';
+import { MATRIX_HISTORY_KEYS_IMPORTED_EVENT } from '../../services/matrixRoomHistoryKeyTransfer';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	setValueInCookie,
@@ -87,9 +88,8 @@ vi.mock('../../api', async (original) => ({
 	...(await original<any>()),
 	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
 }));
-vi.mock('matrix-js-sdk', async (original) => ({
-	...(await original<any>()),
-	createClient: () => boundary.client
+vi.mock('../../services/browserMatrixSdkClient', () => ({
+	createBrowserMatrixSdkClient: () => boundary.client
 }));
 // jsdom gives every node zero layout, so focus-trap sees no tabbable element
 // and throws on activate (the delete confirmation is the first overlay here).
@@ -524,6 +524,7 @@ function openEnquiry(
 }
 
 it('opens the enquiry with its complete original text and the shared team panel without accepting', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	const view = openEnquiry();
 	await waitFor(() => expect(boundary.open).toHaveBeenCalledWith(4711));
 	await waitFor(
@@ -613,6 +614,7 @@ it('shows the complete enquiry text when opened outside the enquiry list', async
 }, 20000);
 
 it('keeps an explicit close when the same enquiry is opened again', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
 	const view = openEnquiry();
 	const panel = await waitFor(
 		() => {
@@ -655,7 +657,7 @@ it('keeps the original enquiry available after an opening error and retries into
 	boundary.open.mockRejectedValueOnce(
 		new Error('Temporary room service failure')
 	);
-	const view = openEnquiry();
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await screen.findByRole('alert');
 	expect(view.container.textContent).toContain(TEXT);
 	fireEvent.click(
@@ -671,7 +673,7 @@ it('keeps the original enquiry available after an opening error and retries into
 
 it('shows an empty archived team discussion without inviting the counsellor to write', async () => {
 	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
-	const view = openEnquiry();
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await waitFor(
 		() => {
 			const panel = view.container.querySelector(
@@ -712,7 +714,7 @@ it('keeps archived team history readable without a composer when the server repo
 		])
 	);
 	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
-	const view = openEnquiry();
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await waitFor(
 		() => {
 			const panel = view.container.querySelector(
@@ -755,7 +757,8 @@ it('lets the author delete their own team message through the same Matrix redact
 		.fn()
 		.mockResolvedValue({ event_id: '$redaction' });
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
-		allowDeleting: true
+		allowDeleting: true,
+		teamChannel: true
 	});
 	const panelText = () =>
 		view.container.querySelector('.chatStage__panel .sidePanel')
@@ -811,7 +814,8 @@ it('offers no delete in an archived, read-only team discussion', async () => {
 	);
 	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
-		allowDeleting: true
+		allowDeleting: true,
+		teamChannel: true
 	});
 	await waitFor(
 		() =>
@@ -880,7 +884,7 @@ it('keeps the consultant enquiry one-way and hides system notices while retainin
 }, 20000);
 
 it('updates an already open enquiry when another colleague accepts it', async () => {
-	const view = openEnquiry();
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await waitFor(() =>
 		expect(
 			view.container.querySelector(
@@ -922,18 +926,27 @@ it('tells the counsellor when a colleague took the enquiry they have open', asyn
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
 		reloadedConsultant: 'colleague'
 	});
-	await waitFor(() =>
-		expect(
-			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
-		).toBeTruthy()
-	);
+	const acceptButton = { name: 'enquiry.acceptButton.known' };
+	await screen.findByRole('button', acceptButton);
 	expect(screen.queryByText(TAKEN_HEADLINE)).toBeNull();
-	boundary.sessionRoom.mockResolvedValue({
+	const taken = {
 		sessions: [{ session: { id: 4711, status: 2, matrixRoomId: MAIN } }]
-	});
-	await waitFor(() => expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy(), {
-		timeout: 10000
-	});
+	};
+	const { promise, resolve } = Promise.withResolvers<typeof taken>();
+	const nextStatus = vi.fn(() => promise);
+	boundary.sessionRoom.mockImplementation(nextStatus);
+	await waitFor(
+		() =>
+			expect(nextStatus).toHaveBeenCalledWith(
+				4711,
+				expect.objectContaining({ aborted: false })
+			),
+		{ timeout: 10000 }
+	);
+	await act(async () => resolve(taken));
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('button', acceptButton)).toBeNull();
+	expect(screen.getByText(TAKEN_HEADLINE)).toBeTruthy();
 	fireEvent.click(
 		screen.getByRole('button', {
 			name: 'session.anonymous.takenByOtherConsultant.button.label'
@@ -1052,8 +1065,11 @@ it.each([
 		await waitFor(
 			() =>
 				expect(
-					view.container.querySelector('.channelSwitcher__badge')
-						?.textContent
+					view.container.querySelector(
+						channel === 'team'
+							? '.sessionMenu__teamUnread'
+							: '.channelSwitcher__badge'
+					)?.textContent
 				).toBe('1'),
 			{ timeout: 10000 }
 		);
@@ -1099,7 +1115,7 @@ it('keeps focus the reader moved away right after the panel composer focused its
 	vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 	const flushFrames = () =>
 		frames.splice(0).forEach((callback) => callback(0));
-	const view = openEnquiry();
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await waitFor(
 		() => {
 			const card = view.container.querySelector<HTMLElement>(
@@ -1573,3 +1589,213 @@ it.each([false, true])(
 	},
 	20000
 );
+
+it('keeps the enquiry team button when lookup confirms there is no team room, so a click creates it', async () => {
+	let resolveLookup!: (result: null) => void;
+	boundary.getTeam.mockReturnValue(
+		new Promise((resolve) => {
+			resolveLookup = resolve;
+		})
+	);
+	const view = openEnquiry();
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	await waitFor(() => expect(view.container.textContent).toContain(TEXT));
+	await act(async () => {
+		resolveLookup(null);
+	});
+	// Product decision (21 Nov): open enquiries keep the action; only
+	// accepted cases hide the team entry when no room exists.
+	const action = await screen.findByRole('button', {
+		name: 'enquiry.teamDiscussion.open'
+	});
+	// Seeing the enquiry creates nothing by itself.
+	expect(boundary.open).not.toHaveBeenCalled();
+	fireEvent.click(action);
+	await waitFor(() => expect(boundary.open).toHaveBeenCalled());
+}, 20000);
+
+it('opens an existing team conversation through More without a team-only floating switcher', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 2 });
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	// Desktop and phone render the same trigger (CSS shows one); both open
+	// the same menu.
+	const [trigger] = await screen.findAllByRole('button', {
+		name: 'app.menu'
+	});
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull()
+	);
+	fireEvent.click(trigger);
+	const teamAction = await screen.findByRole('button', {
+		name: 'enquiry.teamDiscussion.open'
+	});
+	fireEvent.click(teamAction);
+	await waitFor(() =>
+		expect(
+			view.container.querySelector('.chatStage__panel .sidePanel')
+		).not.toBeNull()
+	);
+	expect(boundary.open).toHaveBeenCalledWith(4711);
+}, 20000);
+
+it('keeps the existing team chat reachable when an open enquiry is shown outside the enquiry list', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 1 });
+	const panel = await waitFor(() => {
+		const node = view.container.querySelector<HTMLElement>('.sidePanel');
+		expect(node).not.toBeNull();
+		return node!;
+	});
+	fireEvent.click(
+		panel.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-close"]'
+		)!
+	);
+	await waitFor(() =>
+		expect(view.container.querySelector('.sidePanel')).toBeNull()
+	);
+	const switcher = await waitFor(() => {
+		const button = view.container.querySelector<HTMLButtonElement>(
+			'[data-cy="channel-switcher-fab"]'
+		);
+		expect(button).not.toBeNull();
+		return button!;
+	});
+	fireEvent.click(switcher);
+	await waitFor(() =>
+		expect(view.container.querySelector('.sidePanel')).not.toBeNull()
+	);
+}, 20000);
+
+it('waits for a pending team lookup before choosing between team and supervision', async () => {
+	let resolveLookup!: (result: {
+		matrixRoomId: string;
+		status: string;
+	}) => void;
+	boundary.getTeam.mockReturnValue(
+		new Promise((resolve) => {
+			resolveLookup = resolve;
+		})
+	);
+	boundary.rooms.set(SUPERVISION, room(SUPERVISION, []));
+	boundary.getSupervisors.mockResolvedValue([
+		{ supervisorConsultantId: 'supervisor', matrixRoomId: SUPERVISION }
+	]);
+	const view = openEnquiry();
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	await waitFor(() => expect(boundary.getSupervisors).toHaveBeenCalled());
+	await act(async () => {
+		await Promise.resolve();
+	});
+	expect(view.getByTestId('route').textContent).not.toContain(
+		'channel=supervision'
+	);
+	await act(async () => {
+		resolveLookup({ matrixRoomId: TEAM, status: 'OPEN' });
+	});
+	await waitFor(() =>
+		expect(view.getByTestId('route').textContent).toContain('channel=team')
+	);
+}, 20000);
+
+it('keeps a retry path for a team lookup error outside the enquiry list', async () => {
+	let rejectLookup!: (error: Error) => void;
+	boundary.getTeam.mockReturnValue(
+		new Promise((_resolve, reject) => {
+			rejectLookup = reject;
+		})
+	);
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 1 });
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
+	await act(async () => {
+		rejectLookup(new Error('Temporary lookup failure'));
+	});
+	const switcher = await waitFor(() => {
+		const button = view.container.querySelector<HTMLButtonElement>(
+			'[data-cy="channel-switcher-fab"]'
+		);
+		expect(button).not.toBeNull();
+		return button!;
+	});
+	expect(boundary.open).not.toHaveBeenCalled();
+	fireEvent.click(switcher);
+	await waitFor(() => expect(boundary.open).toHaveBeenCalledWith(4711));
+}, 20000);
+
+it('does not reuse a previous enquiry team room after changing cases', async () => {
+	boundary.getTeam.mockImplementation(async (id: number) =>
+		id === 4711 ? { matrixRoomId: TEAM, status: 'OPEN' } : null
+	);
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 1 });
+	await waitFor(() =>
+		expect(view.container.querySelector('.sidePanel')).not.toBeNull()
+	);
+	fireEvent.click(
+		view.container.querySelector<HTMLButtonElement>(
+			'[data-cy="panel-header-close"]'
+		)!
+	);
+	await waitFor(() =>
+		expect(view.container.querySelector('.sidePanel')).toBeNull()
+	);
+	await act(async () => {
+		boundary.changeCase?.(4712);
+	});
+	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalledWith(4712));
+	await waitFor(() => {
+		expect(
+			view.container.querySelector('[data-cy="channel-switcher-fab"]')
+		).toBeNull();
+		expect(
+			document.querySelector('[data-cy="session-menu-team-chat"]')
+		).toBeNull();
+	});
+}, 20000);
+
+it('keeps an accessible unread indicator on the enquiry team button', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	window.localStorage.setItem('chatStage.lastChannel.4711', 'none');
+	try {
+		const view = openEnquiry();
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', {
+					name: 'enquiry.teamDiscussion.open'
+				})
+			).toBeTruthy()
+		);
+		boundary.rooms.get(TEAM).timeline.push(
+			new MatrixEvent({
+				event_id: '$new-team-message',
+				room_id: TEAM,
+				sender: '@colleague:test',
+				type: 'm.room.message',
+				origin_server_ts: Date.now() + 1000,
+				content: { msgtype: 'm.text', body: 'Neue Nachricht' }
+			})
+		);
+		await act(async () => {
+			window.dispatchEvent(
+				new CustomEvent(MATRIX_HISTORY_KEYS_IMPORTED_EVENT, {
+					detail: { roomId: TEAM }
+				})
+			);
+		});
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.session__teamDiscussionUnread')
+					?.textContent
+			).toBe('1')
+		);
+		expect(
+			screen.getByRole('button', {
+				name: /enquiry.teamDiscussion.open.*supervision.panel.unread/
+			})
+		).toBeTruthy();
+	} finally {
+		window.localStorage.removeItem('chatStage.lastChannel.4711');
+	}
+}, 20000);

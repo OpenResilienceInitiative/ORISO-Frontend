@@ -719,6 +719,7 @@ export const SessionsListToolbar = ({
 			<div
 				className="sessionsListToolbar__search"
 				ref={searchRootRef}
+				data-tour-target="sessions-search"
 				onKeyDown={closeSearchOnEscape}
 			>
 				<div

@@ -39,12 +39,6 @@ export type ModalityInput =
 			user?: { username?: string | null };
 	  };
 
-// Historical accounts: live-chat used to mint Anonymous-<timestamp> handles;
-// topic-based invite still uses anon_N. Newer guests get animal User-IDs.
-const isAnonymousUsername = (username?: string | null): boolean =>
-	typeof username === 'string' &&
-	(username.startsWith('Anonymous-') || username.startsWith('anon_'));
-
 const isAnonymousPostcode = (postcode?: number | string | null): boolean => {
 	if (postcode === null || postcode === undefined) {
 		return false;
@@ -73,7 +67,6 @@ export const getModalityIfKnown = (
 	const listItem =
 		item && !('item' in item) ? (item as ListItemInterface) : undefined;
 	const activeItem = activeSession?.item;
-	const user = activeSession?.user ?? listItem?.user;
 	const session = (
 		activeItem && !activeSession?.isGroup ? activeItem : listItem?.session
 	) as
@@ -111,10 +104,12 @@ export const getModalityIfKnown = (
 		if (
 			(session.registrationType as string) ===
 				REGISTRATION_TYPE_ANONYMOUS ||
-			isAnonymousPostcode(session.postcode) ||
-			isAnonymousUsername(session.askerUserName) ||
-			isAnonymousUsername(user?.username)
+			isAnonymousPostcode(session.postcode)
 		) {
+			/* Never from the username (ORISO-Frontend#2347): guests and
+			   registered users both carry rolled animal User-IDs, and a
+			   registered name may start with "anon". Legacy anon_N guests
+			   keep registrationType ANONYMOUS on their session. */
 			return Modality.LIVE_CHAT;
 		}
 		return Modality.AGENCY_COUNSELLING;

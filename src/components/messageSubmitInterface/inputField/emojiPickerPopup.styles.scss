@@ -43,6 +43,11 @@
 	}
 
 	.EmojiPickerReact {
+		// Height is set by floating-ui's available room. Animating it feeds
+		// intermediate sizes back into ResizeObserver and can keep the picker
+		// outside the viewport for seconds while each transition restarts.
+		transition: background-color 0.1s ease-in-out;
+
 		--epr-emoji-size: 22px;
 		--epr-hover-bg-color: var(--m3-primary-fixed, #ffdad5);
 		--epr-focus-bg-color: var(--m3-primary-fixed, #ffdad5);
@@ -57,5 +62,11 @@
 			0 4px 8px 3px rgba(0, 0, 0, 0.08),
 			0 1px 3px rgba(0, 0, 0, 0.2);
 		border: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.emojiPickerPopup .EmojiPickerReact {
+		transition: none;
 	}
 }

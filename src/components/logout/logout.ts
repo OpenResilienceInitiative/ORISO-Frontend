@@ -6,6 +6,7 @@ import { apiSetLiveChatAvailability } from '../../api/apiSetLiveChatAvailability
 import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
+import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
 import {
 	getValueFromCookie,
 	removeAllCookies
@@ -147,10 +148,16 @@ export const logout = async (
 
 	const serverRequests: Promise<unknown>[] = [];
 	if (hasSession) {
+		// FE#2331: only a counsellor can be live; for anyone else the
+		// endpoint answers 403 on every sign-out.
+		if (isConsultantAccessToken(getValueFromCookie('keycloak'))) {
+			serverRequests.push(
+				runBoundedLogoutRequest((signal) =>
+					apiSetLiveChatAvailability(false, signal)
+				)
+			);
+		}
 		serverRequests.push(
-			runBoundedLogoutRequest((signal) =>
-				apiSetLiveChatAvailability(false, signal)
-			),
 			runBoundedLogoutRequest((signal) => apiKeycloakLogout(signal))
 		);
 		if (featureToolsEnabled) {

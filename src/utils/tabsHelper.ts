@@ -31,6 +31,8 @@ export type SingleComponentType = {
 	fullWidth?: boolean;
 	/** Leading icon of the section card; only read by the `cards` layout. */
 	icon?: ElementType;
+	/** Product-tour anchor on the section card; only read by the `cards` layout. */
+	tourTarget?: string;
 };
 
 export type TabsType = TabType[];

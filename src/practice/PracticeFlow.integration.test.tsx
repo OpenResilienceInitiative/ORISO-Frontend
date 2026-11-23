@@ -696,16 +696,16 @@ describe('practice flows on the real app shell', () => {
 			PRACTICE_TOUR_EVENTS.supervisorAdded,
 			async () => {
 				fireEvent.click(add!);
-				const picker = await screen.findByRole('combobox', {}, SLOW);
-				fireEvent.mouseDown(picker);
 				fireEvent.click(
-					await screen.findByRole('option', {
-						name: SCRIPT.cast.supervisor.displayName
-					})
+					await screen.findByRole(
+						'button',
+						{ name: 'managePeople.add.labelFor' },
+						SLOW
+					)
 				);
 				fireEvent.change(
-					screen.getByPlaceholderText(
-						'sessionHeader.supervisor.modal.reasonPlaceholder'
+					await screen.findByPlaceholderText(
+						'managePeople.supervision.reasonPlaceholder'
 					),
 					{
 						target: {
@@ -716,7 +716,7 @@ describe('practice flows on the real app shell', () => {
 				await act(async () => {
 					fireEvent.click(
 						screen.getByRole('button', {
-							name: 'sessionHeader.supervisor.modal.addButton'
+							name: 'managePeople.add.confirm'
 						})
 					);
 				});
@@ -837,9 +837,13 @@ describe('practice flows on the real app shell', () => {
 		await app.start(SUPERVISION);
 		const add = await expectStep(0);
 		fireEvent.click(add!);
-		await screen.findByRole('combobox', {}, SLOW);
+		await screen.findByRole(
+			'button',
+			{ name: 'managePeople.add.labelFor' },
+			SLOW
+		);
 		const dialog = screen.getByRole('dialog', {
-			name: 'sessionHeader.supervisor.modal.title'
+			name: 'managePeople.supervision.title'
 		});
 		const end = banner().getByRole('button', {
 			name: 'practice.banner.end'

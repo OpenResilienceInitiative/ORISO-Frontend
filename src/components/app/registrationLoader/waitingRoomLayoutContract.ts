@@ -8,9 +8,10 @@ import {
 const STAGE_SPLIT_PX = 1200;
 /**
  * One card size in every room (#1735). Below the theme's `sm` (520 px)
- * 18.75rem; from `sm` up fluid between 12rem and 45rem so the three cards fit
- * the visible area at every screen size and zoom (Frank, 2026-11-13: rem and
- * clamp(), never a fixed px size), see `handoverCardSize`.
+ * 18.75rem; from `sm` up a share of the window (same look at any zoom), at
+ * most one and a half across; the height fills the free room and crops the
+ * motif, so no card is cut off behind the bar and the cards stay a carousel
+ * with arrows and dots (Frank, 2026-11-20), see `handoverCardSize`.
  */
 const CARD_SM_PX = 520;
 
@@ -89,15 +90,16 @@ const checkCards = (
 		return `card is ${Math.round(width)}px wide, expected ${Math.round(min)}–${Math.round(max)}px`;
 	}
 	if (viewport >= CARD_SM_PX) {
-		// The fluid formula, recomputed: three across the carousel block and
-		// ending above the bar. A fixed size (the 372 px bug: half a 2560 px
-		// column empty, cut off at 150 % zoom) misses it on most windows.
-		const container = cards[0].parentElement?.parentElement;
-		if (container) {
+		// The fluid formula, recomputed: a share of the window, at most one
+		// and a half across the carousel block.
+		const block = cards[0].closest('[data-cy="handover-carousel"]')
+			?.parentElement?.parentElement;
+		if (block) {
 			const expected = expectedSmCardWidthPx(
-				container.clientWidth,
-				doc.defaultView!.innerHeight,
-				rootFontPx(doc)
+				block.clientWidth,
+				doc.defaultView!.innerWidth,
+				rootFontPx(doc),
+				doc.defaultView!.innerHeight
 			);
 			if (Math.abs(width - expected) > 2) {
 				return `card is ${Math.round(width)}px wide, the fluid size here is ${Math.round(expected)}px`;

@@ -7,9 +7,14 @@ import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import {
 	beginLoginHandover,
+	captureLoginCurtain,
 	endLoginHandover,
 	persistLoginHandover
 } from '../app/loginHandover';
+import {
+	useLoginMatrixFeedback,
+	warmLoginMatrix
+} from '../app/useLoginMatrixFeedback';
 import { warmAppChunks, warmCryptoEngine } from '../app/appChunks';
 import { readLastOpenSession } from '../../utils/lastOpenSession';
 import {
@@ -173,10 +178,35 @@ export const Login = () => {
 		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
-	// Identity of the latest sign-in attempt: a late answer of an earlier
-	// attempt (fields stay editable, the resend-mail path retries) must not
-	// write its message or field marks over newer input.
+	// A late response must never take ownership from a restored or retried form.
 	const loginAttemptRef = useRef(0);
+	const loginFormRef = useRef<HTMLDivElement>(null);
+	const [showFeedback, setShowFeedback] = useState(false);
+	const restoreInputFocus = useRef(false);
+	const matrixRunning = useLoginMatrixFeedback(loginFormRef, showFeedback);
+
+	useEffect(() => {
+		if (showFeedback || !restoreInputFocus.current) return;
+		restoreInputFocus.current = false;
+		const input = loginFormRef.current?.querySelector<HTMLInputElement>(
+			isOtpRequired ? '#otp' : '#passwordInput'
+		);
+		input?.focus({ preventScroll: true });
+	}, [showFeedback, isOtpRequired]);
+
+	useEffect(() => {
+		const restoreLogin = (event: PageTransitionEvent) => {
+			if (!event.persisted) return;
+			loginAttemptRef.current += 1;
+			earlyUserDataRef.current = null;
+			leavingForAppRef.current = false;
+			setShowFeedback(false);
+			setIsRequestInProgress(false);
+		};
+		window.addEventListener('pageshow', restoreLogin);
+		return () => window.removeEventListener('pageshow', restoreLogin);
+	}, []);
+
 	const existingSessionLookupRef = useRef(0);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
@@ -341,7 +371,7 @@ export const Login = () => {
 	}, []);
 
 	const postLogin = useCallback(
-		() =>
+		(attempt = loginAttemptRef.current) =>
 			(
 				(() => {
 					const early = earlyUserDataRef.current;
@@ -349,6 +379,7 @@ export const Login = () => {
 					return early ?? reloadUserData();
 				})() as Promise<UserDataInterface>
 			).then(async (userData: UserDataInterface) => {
+				if (attempt !== loginAttemptRef.current) return;
 				// A language the person chose on the login screen wins over the
 				// stored profile language, which the app applies after the
 				// redirect. A choice that equals the browser default counts too
@@ -377,11 +408,13 @@ export const Login = () => {
 					await apiPatchUserData(patchedUserData).catch((error) => {
 						/* console.log(error); */
 					});
+					if (attempt !== loginAttemptRef.current) return;
 					await reloadUserData().catch((error) => {
 						/* console.log(error); */
 					});
 				}
 
+				if (attempt !== loginAttemptRef.current) return;
 				const appointment = groupAppointmentRedirect(
 					appointmentSeriesId,
 					userData
@@ -491,6 +524,10 @@ export const Login = () => {
 		setIsRequestInProgress(true);
 		loginAttemptRef.current += 1;
 		const attempt = loginAttemptRef.current;
+		if (purpose === 'submit') {
+			setShowFeedback(true);
+			restoreInputFocus.current = true;
+		}
 		const isLatestAttempt = () => attempt === loginAttemptRef.current;
 		const handleAutoLoginFailure = (
 			error: unknown
@@ -585,6 +622,7 @@ export const Login = () => {
 				username: username,
 				password: password,
 				tenantData: tenant,
+				isCurrentAttempt: isLatestAttempt,
 				...(otp ? { otp } : {}),
 				onCredentialsAccepted: () => {
 					if (!isLatestAttempt()) return;
@@ -592,7 +630,18 @@ export const Login = () => {
 					   instead of the login page flickering underneath the
 					   tenant switch, the Matrix token and the user data. */
 					leavingForAppRef.current = false;
-					beginLoginHandover();
+					const stage =
+						loginFormRef.current?.closest<HTMLElement>(
+							'.stageLayout'
+						);
+					if (stage) {
+						setShowFeedback(true);
+						beginLoginHandover({
+							curtain: captureLoginCurtain(stage)
+						});
+					} else {
+						beginLoginHandover();
+					}
 					// The app's code and crypto engine download meanwhile.
 					warmAppChunks();
 					warmCryptoEngine();
@@ -606,8 +655,9 @@ export const Login = () => {
 				// consultant-blocked message) before it throws, and those must
 				// neither be overwritten nor counted.
 				.then(
-					() =>
-						postLogin()
+					() => {
+						if (!isLatestAttempt()) return null;
+						return postLogin(attempt)
 							.catch((error: unknown) => {
 								// The consultant block shows its own message before it
 								// throws; anything else (e.g. the user-data reload
@@ -629,12 +679,16 @@ export const Login = () => {
 							})
 							.then(() => {
 								// Still here: the form has something to say.
-								if (!leavingForAppRef.current) {
+								if (
+									isLatestAttempt() &&
+									!leavingForAppRef.current
+								) {
 									earlyUserDataRef.current = null;
 									endLoginHandover();
 								}
 								return null;
-							}),
+							});
+					},
 					(error: unknown) => {
 						// A newer attempt owns the screen and its user data.
 						if (!isLatestAttempt()) return null;
@@ -645,6 +699,7 @@ export const Login = () => {
 				)
 				.finally(() => {
 					if (isLatestAttempt()) {
+						if (!leavingForAppRef.current) setShowFeedback(false);
 						setIsRequestInProgress(false);
 					}
 				})
@@ -726,13 +781,32 @@ export const Login = () => {
 
 	return (
 		<>
+			{showFeedback && (
+				<span
+					role="status"
+					className={matrixRunning ? 'sr-only' : 'loginForm__wait'}
+				>
+					{translate('app.wait')}
+				</span>
+			)}
 			<StageLayout
-				stage={<Stage hasAnimation={isFirstVisit} isReady={isReady} />}
+				inert={showFeedback}
+				stage={
+					<Stage
+						hasAnimation={isFirstVisit}
+						isReady={isReady}
+						claim={tenant?.content?.claim}
+					/>
+				}
+				mobileClaim={tenant?.content?.claim}
+				mobileHero="branding"
 				showLegalLinks
 				showRegistrationLink={hasTenant}
 				registrationUrl={registrationUrl}
 			>
 				<div
+					ref={loginFormRef}
+					onFocusCapture={warmLoginMatrix}
 					className={clsx('loginForm', {
 						'loginForm--securityOpen': isSecurityExplainerOpen
 					})}
@@ -740,10 +814,14 @@ export const Login = () => {
 					<div
 						className="loginForm__inner loginForm__pane loginForm__pane--login"
 						aria-hidden={isSecurityExplainerOpen}
-						inert={isSecurityExplainerOpen}
+						inert={isSecurityExplainerOpen || showFeedback}
 					>
 						<div className="loginForm__headline">
-							<h2>{translate('login.headline')}</h2>
+							<h2>
+								<span data-cipher-at={965}>
+									{translate('login.headline')}
+								</span>
+							</h2>
 						</div>
 						{accountCreatedLogin && (
 							<div
@@ -827,12 +905,14 @@ export const Login = () => {
 											: handleMagicLinkUsernameChange
 									}
 									onKeyUp={handleKeyUp}
-									placeholder={
-										activeLoginMethod === 'password'
-											? translate('login.user.label')
-											: translate(
-													'login.magicLink.usernameLabel'
-												)
+									label={
+										<span data-cipher-at={1000}>
+											{activeLoginMethod === 'password'
+												? translate('login.user.label')
+												: translate(
+														'login.magicLink.usernameLabel'
+													)}
+										</span>
 									}
 									error={
 										activeLoginMethod === 'password' &&
@@ -841,6 +921,8 @@ export const Login = () => {
 									fullWidth
 									autoComplete="username"
 									inputProps={{
+										'data-cipher-input': 855,
+										'data-cipher-length': username.length,
 										'aria-label':
 											activeLoginMethod === 'password'
 												? translate('login.user.label')
@@ -875,14 +957,21 @@ export const Login = () => {
 										value={password}
 										onChange={handlePasswordChange}
 										onKeyUp={handleKeyUp}
-										placeholder={translate(
-											'login.password.label'
-										)}
+										label={
+											<span data-cipher-at={1035}>
+												{translate(
+													'login.password.label'
+												)}
+											</span>
+										}
 										error={labelState === VALIDITY_INVALID}
 										fullWidth
 										autoComplete="current-password"
 										inputRef={passwordInputRef}
 										inputProps={{
+											'data-cipher-input': 890,
+											'data-cipher-length':
+												password.length,
 											'aria-label': translate(
 												'login.password.label'
 											)
@@ -950,72 +1039,87 @@ export const Login = () => {
 											'loginForm__otp--active':
 												isOtpRequired
 										})}
+										inert={!isOtpRequired}
 									>
-										{twoFactorType ===
-											TWO_FACTOR_TYPES.EMAIL && (
-											<Text
-												className="loginForm__emailHint"
-												text={translate(
-													'twoFactorAuth.activate.email.resend.hint'
-												)}
-												type="infoLargeAlternative"
-											/>
-										)}
-										<OrisoTextField
-											id="otp"
-											name="otp"
-											type="text"
-											value={otp}
-											onChange={handleOtpChange}
-											onKeyUp={handleKeyUp}
-											placeholder={translate(
-												'twoFactorAuth.activate.otp.input.label.text'
+										<div className="loginForm__otpContent">
+											{twoFactorType ===
+												TWO_FACTOR_TYPES.EMAIL && (
+												<Text
+													className="loginForm__emailHint"
+													type="infoLargeAlternative"
+												>
+													<span data-cipher-at={1080}>
+														{translate(
+															'twoFactorAuth.activate.email.resend.hint'
+														)}
+													</span>
+												</Text>
 											)}
-											helperText={
-												twoFactorType ===
-												TWO_FACTOR_TYPES.APP
-													? translate(
-															`login.warning.failed.app.otp.missing`
-														)
-													: ''
-											}
-											fullWidth
-											inputProps={{
-												'aria-label': translate(
-													'twoFactorAuth.activate.otp.input.label.text'
-												),
-												'maxLength': OTP_LENGTH,
-												'tabIndex': isOtpRequired
-													? 0
-													: -1
-											}}
-											InputProps={{
-												startAdornment: (
-													<InputAdornment position="start">
-														<VerifiedIcon
-															color={
-																orisoInputColors.onSurfaceVariant
-															}
-														/>
-													</InputAdornment>
-												)
-											}}
-										/>
-										{twoFactorType ===
-											TWO_FACTOR_TYPES.EMAIL && (
-											<TwoFactorAuthResendMail
-												key={emailCodeChallenge.id}
-												initialCooldownSeconds={
-													emailCodeChallenge.resendAvailableInSeconds
+											<OrisoTextField
+												id="otp"
+												name="otp"
+												type="text"
+												value={otp}
+												onChange={handleOtpChange}
+												onKeyUp={handleKeyUp}
+												label={
+													<span data-cipher-at={1050}>
+														{translate(
+															'twoFactorAuth.activate.otp.input.label.text'
+														)}
+													</span>
 												}
-												initialNotice={
-													emailCodeChallenge.limitReached
-														? 'tooMany'
-														: undefined
+												helperText={
+													twoFactorType ===
+													TWO_FACTOR_TYPES.APP
+														? translate(
+																`login.warning.failed.app.otp.missing`
+															)
+														: ''
 												}
-												onResend={requestNewEmailCode}
+												fullWidth
+												inputProps={{
+													'aria-label': translate(
+														'twoFactorAuth.activate.otp.input.label.text'
+													),
+													'data-cipher-input': 925,
+													'data-cipher-length':
+														otp.length,
+													'maxLength': OTP_LENGTH,
+													'tabIndex': isOtpRequired
+														? 0
+														: -1
+												}}
+												InputProps={{
+													startAdornment: (
+														<InputAdornment position="start">
+															<VerifiedIcon
+																color={
+																	orisoInputColors.onSurfaceVariant
+																}
+															/>
+														</InputAdornment>
+													)
+												}}
 											/>
-										)}
+											{twoFactorType ===
+												TWO_FACTOR_TYPES.EMAIL && (
+												<TwoFactorAuthResendMail
+													key={emailCodeChallenge.id}
+													initialCooldownSeconds={
+														emailCodeChallenge.resendAvailableInSeconds
+													}
+													initialNotice={
+														emailCodeChallenge.limitReached
+															? 'tooMany'
+															: undefined
+													}
+													onResend={
+														requestNewEmailCode
+													}
+												/>
+											)}
+										</div>
 									</div>
 								</>
 							)}
@@ -1038,15 +1142,8 @@ export const Login = () => {
 
 						<div className="loginForm__actions">
 							<Button
-								item={{
-									...loginButton,
-									label:
-										activeLoginMethod === 'password'
-											? translate('login.button.label')
-											: translate(
-													'login.magicLink.submitLabel'
-												)
-								}}
+								type="button"
+								item={loginButton}
 								buttonHandle={
 									activeLoginMethod === 'password'
 										? handleLogin
@@ -1059,7 +1156,15 @@ export const Login = () => {
 										: !magicLinkUsername?.trim() ||
 											isRequestInProgress
 								}
-							/>
+							>
+								<span data-cipher-at={65}>
+									{activeLoginMethod === 'password'
+										? loginButton.label
+										: translate(
+												'login.magicLink.submitLabel'
+											)}
+								</span>
+							</Button>
 						</div>
 
 						{/* The registration path (2e): inside the sheet on mobile,

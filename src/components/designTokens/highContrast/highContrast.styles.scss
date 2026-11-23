@@ -58,11 +58,11 @@
 		outline-offset: 4px;
 
 		&--token {
-			outline: 2px solid var(--m3-primary-outline, #930008);
+			@include control-focus-ring(4px);
 		}
 
 		&--button {
-			// What Button's `:focus` draws today (settings.scss `$focus-outline`).
+			// What Button's `:focus` draws (settings.scss `$focus-outline`).
 			outline: $focus-outline;
 		}
 	}
