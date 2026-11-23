@@ -20,6 +20,13 @@ const ready = (settings = canonicalAgencySettings()) => ({
 	settings
 });
 
+/** A policy map from an AgencyService that does not know these keys yet. */
+const withoutPolicies = (...keys: string[]) => {
+	const settings = canonicalAgencySettings();
+	for (const key of keys) delete (settings.permissionPolicies as any)[key];
+	return settings;
+};
+
 const effective = (
 	tenant: Record<string, boolean>,
 	policy?: ReturnType<typeof ready> | { agencyId: number; state: 'loading' }
@@ -79,6 +86,43 @@ describe('team chat feature gate (FE#2491)', () => {
 		).toBe(false);
 	});
 
+	it('counts a policy map without the key as on, like UserService does', () => {
+		expect(
+			isTeamDiscussionEnabled(
+				effective(
+					{},
+					ready(withoutPolicies('featureTeamDiscussionEnabled'))
+				)
+			)
+		).toBe(true);
+	});
+
+	it('still hides it for a missing agency key when the Träger said no', () => {
+		expect(
+			isTeamDiscussionEnabled(
+				effective(
+					{ featureTeamDiscussionEnabled: false },
+					ready(withoutPolicies('featureTeamDiscussionEnabled'))
+				)
+			)
+		).toBe(false);
+	});
+
+	it('hides it only on an explicit false in the policy map', () => {
+		expect(
+			isTeamDiscussionEnabled(
+				effective(
+					{},
+					ready(
+						canonicalAgencySettings({
+							featureTeamDiscussionEnabled: false
+						})
+					)
+				)
+			)
+		).toBe(false);
+	});
+
 	it('keeps the old default for tenants that never set it', () => {
 		expect(isTeamDiscussionEnabled(effective({}))).toBe(true);
 	});
@@ -121,6 +165,22 @@ describe('team chat feature gate (FE#2491)', () => {
 							canonicalAgencySettings({
 								featureTeamDiscussionAfterAcceptEnabled: false
 							})
+						)
+					)
+				)
+			).toBe(false);
+		});
+
+		it('stays off when the policy map does not carry the key yet', () => {
+			expect(
+				isTeamDiscussionAfterAcceptEnabled(
+					effective(
+						{ featureTeamDiscussionAfterAcceptEnabled: true },
+						ready(
+							withoutPolicies(
+								'featureTeamDiscussionEnabled',
+								'featureTeamDiscussionAfterAcceptEnabled'
+							)
 						)
 					)
 				)

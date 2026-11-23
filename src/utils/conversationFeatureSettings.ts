@@ -23,6 +23,15 @@ export const readConversationPolicyValue = (
 		: undefined;
 };
 
+/**
+ * Keys whose absence from a present policy map means "on" — UserService treats
+ * an unset team-discussion policy as enabled (FE#2491), so only an explicit
+ * false may hide it. Everything else stays fail-closed.
+ */
+export const UNSET_MEANS_ON_POLICY_KEYS: ReadonlySet<string> = new Set([
+	'featureTeamDiscussionEnabled'
+]);
+
 /** Agency policy values are already resolved by the server; never AND them with the parent again. */
 export const resolveConversationFeatureSettings = (
 	tenant: Partial<TenantDataSettingsInterface> | undefined,
@@ -33,10 +42,16 @@ export const resolveConversationFeatureSettings = (
 	for (const key of CONVERSATION_FEATURE_KEYS) {
 		if (agency?.permissionPolicies != null) {
 			// A present canonical map cannot silently fall back to raw values.
-			const policy = Object.prototype.hasOwnProperty.call(
+			const hasPolicy = Object.prototype.hasOwnProperty.call(
 				agency.permissionPolicies,
 				key
-			)
+			);
+			if (!hasPolicy && UNSET_MEANS_ON_POLICY_KEYS.has(key)) {
+				// Unset follows the backend default (on) unless the tenant said no.
+				result[key] = result[key] === false ? false : true;
+				continue;
+			}
+			const policy = hasPolicy
 				? agency.permissionPolicies[key]
 				: undefined;
 			result[key] = readConversationPolicyValue(policy) ?? false;

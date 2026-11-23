@@ -289,7 +289,10 @@ beforeEach(async () => {
 	boundary.fetch.mockClear();
 	boundary.reload.mockReset();
 	boundary.rejectEnquiry.mockReset().mockResolvedValue(undefined);
-	setTenantSettings({ featureTeamDiscussionEnabled: true } as any);
+	setTenantSettings({
+		featureTeamDiscussionEnabled: true,
+		featureTeamDiscussionAfterAcceptEnabled: false
+	} as any);
 	service = new MatrixClientService();
 	await service.initializeClient({
 		userId: '@consultant:test',
@@ -1723,11 +1726,14 @@ it('waits for a pending team lookup before choosing between team and supervision
 
 it('keeps a retry path for a team lookup error outside the enquiry list', async () => {
 	let rejectLookup!: (error: Error) => void;
-	boundary.getTeam.mockReturnValue(
-		new Promise((_resolve, reject) => {
-			rejectLookup = reject;
-		})
-	);
+	boundary.getTeam
+		.mockReturnValueOnce(
+			new Promise((_resolve, reject) => {
+				rejectLookup = reject;
+			})
+		)
+		// The next lookup succeeds: only a conclusive "no room" may create.
+		.mockResolvedValue(null);
 	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status: 1 });
 	await waitFor(() => expect(boundary.getTeam).toHaveBeenCalled());
 	await act(async () => {
@@ -1862,6 +1868,12 @@ it('shows a switched-off team chat read-only without reopening it, and reopens i
 
 it('switches an open team chat off from "Weitere Funktionen" after the confirmation (FE#2491)', async () => {
 	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	boundary.close.mockImplementation(async () => {
+		boundary.getTeam.mockResolvedValue({
+			matrixRoomId: TEAM,
+			status: 'CLOSED'
+		});
+	});
 	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { teamChannel: true });
 	await waitFor(
 		() =>
@@ -1933,6 +1945,15 @@ it('after accept with "Team-Chat nach Annahme" off: "Weitere Funktionen" opens t
 		expect(node).not.toBeNull();
 		return node!;
 	});
+	// It is the team chat with its history, not an empty panel.
+	expect(
+		panel
+			.querySelector('[data-cy="panel-header"]')
+			?.getAttribute('data-kind')
+	).toBe('team');
+	expect(
+		panel.querySelector('[data-cy="side-panel-timeline"]')
+	).not.toBeNull();
 	// Read-only: no composer, no switch back on, no chip; nothing reopens it.
 	expect(panel.querySelector('.textarea__wrapper-send-message')).toBeNull();
 	expect(

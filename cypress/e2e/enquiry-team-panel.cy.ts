@@ -45,14 +45,11 @@ const syntheticText = (text: string | null | undefined) => {
  * FE#2491 (Frank, 23 Nov): the team chat has no button beside "Annehmen";
  * it is switched on or opened in "Weitere Funktionen".
  */
-const openTeamChatFromMenu = () => {
+const openTeamChatFromMenu = (
+	row: 'session-menu-team-chat-on' | 'session-menu-team-chat'
+) => {
 	cy.get('.sessionMenu__icon:visible').first().click();
-	cy.get(
-		'[data-cy="session-menu-team-chat-on"], [data-cy="session-menu-team-chat"]'
-	)
-		.filter(':visible')
-		.first()
-		.click();
+	cy.get(`[data-cy="${row}"]`).filter(':visible').first().click();
 };
 
 beforeEach(() => {
@@ -366,6 +363,21 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		}).as('openTeam');
 		cy.intercept('GET', '**/service/users/chat-series/join-requests', []);
 		cy.fastLogin({ userId: USER_CONSULTANT });
+		// FE#2491: the team chat follows the agency policy. This AgencyService
+		// does not serve the team-chat key yet, which UserService reads as on.
+		// Registered after the login mocks so it wins over their empty list.
+		cy.intercept('GET', '**/service/agencies/1', [
+			{
+				id: 1,
+				name: 'agency name',
+				postcode: '12345',
+				city: 'city',
+				description: null,
+				offline: false,
+				consultingType: 1,
+				settings: { permissionPolicies: {} }
+			}
+		]).as('agencyPolicy');
 		cy.visit(enquiryListPath);
 		cy.get('[data-cy="session-list-item"]').first().click();
 		cy.wait('@readTeam');
@@ -373,8 +385,13 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			// Opening an enquiry without a team room creates nothing;
 			// "Weitere Funktionen" → Team-Chat einschalten creates it.
 			cy.get('[data-cy="stage-panel"]').should('not.exist');
-			openTeamChatFromMenu();
+			openTeamChatFromMenu('session-menu-team-chat-on');
 			cy.wait('@openTeam');
+			// From now on the room exists: later visits open it, never enable it.
+			cy.intercept('GET', '**/sessions/1375/team-discussion', {
+				matrixRoomId: teamRoomId,
+				status: 'OPEN'
+			}).as('readTeam');
 		}
 		if (width >= 900) {
 			cy.get('[data-cy="stage-main"]').should('contain.text', text);
@@ -596,7 +613,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			scale: true,
 			disableTimersAndAnimations: false
 		});
-		openTeamChatFromMenu();
+		openTeamChatFromMenu('session-menu-team-chat');
 		cy.get('[data-cy="stage-panel"]').should('be.visible');
 		cy.get(closeControl).click();
 		cy.get('[data-cy="stage-panel"]').should('not.exist');

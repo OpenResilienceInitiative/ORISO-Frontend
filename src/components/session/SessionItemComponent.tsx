@@ -2343,6 +2343,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const locationRef = useRef(location);
 	locationRef.current = location;
 	const sessionIdForChannelMemory = activeSession.item?.id;
+	const sessionIdRef = useRef(sessionIdForChannelMemory);
+	sessionIdRef.current = sessionIdForChannelMemory;
 	const setChannelRoute = useCallback(
 		(channel: SessionChannel | null, mode: 'push' | 'replace') => {
 			const current = locationRef.current;
@@ -2715,14 +2717,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// No room yet: opening the team route creates it (the long-standing
 		// enquiry contract). CLOSED: only this explicit POST reopens it.
 		if (props.teamDiscussionStatus === 'CLOSED') {
+			const requestedSessionId = sessionIdForChannelMemory;
 			try {
 				await onSwitchTeamDiscussionOn?.();
 			} catch {
 				return;
 			}
+			// The user left this case while it reopened: never route the next
+			// case to its team chat (that could create a room there).
+			if (sessionIdRef.current !== requestedSessionId) return;
 		}
 		openTeamChat();
-	}, [onSwitchTeamDiscussionOn, openTeamChat, props.teamDiscussionStatus]);
+	}, [
+		onSwitchTeamDiscussionOn,
+		openTeamChat,
+		props.teamDiscussionStatus,
+		sessionIdForChannelMemory
+	]);
 	const onSwitchTeamDiscussionOff = props.onSwitchTeamDiscussionOff;
 	const switchTeamChatOff = useCallback(async () => {
 		try {

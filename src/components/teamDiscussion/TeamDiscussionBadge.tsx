@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 import {
 	getCachedTeamDiscussion,
-	invalidateTeamDiscussionCache
+	invalidateTeamDiscussionCache,
+	subscribeTeamDiscussionCache
 } from '../../services/teamDiscussionCache';
 import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import './teamDiscussion.styles.scss';
@@ -88,13 +89,23 @@ export const TeamDiscussionBadge = ({
 
 	useEffect(() => {
 		let cancelled = false;
-		getCachedTeamDiscussion(sessionId).then((result) => {
-			if (!cancelled) {
-				setDiscussion(result);
-			}
+		let lookup = 0;
+		const load = () => {
+			const current = ++lookup;
+			getCachedTeamDiscussion(sessionId).then((result) => {
+				if (!cancelled && current === lookup) {
+					setDiscussion(result);
+				}
+			});
+		};
+		load();
+		// FE#2491: a switch on/off elsewhere must not leave the list stale.
+		const unsubscribe = subscribeTeamDiscussionCache((changedId) => {
+			if (changedId === sessionId) load();
 		});
 		return () => {
 			cancelled = true;
+			unsubscribe();
 		};
 	}, [sessionId]);
 

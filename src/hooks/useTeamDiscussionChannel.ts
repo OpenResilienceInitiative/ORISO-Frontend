@@ -5,7 +5,10 @@ import {
 	apiOpenTeamDiscussion,
 	type TeamDiscussion
 } from '../api/apiTeamDiscussion';
-import { invalidateTeamDiscussionCache } from '../services/teamDiscussionCache';
+import {
+	invalidateTeamDiscussionCache,
+	primeTeamDiscussionCache
+} from '../services/teamDiscussionCache';
 
 interface TeamDiscussionChannelState {
 	sessionId: number | null;
@@ -61,17 +64,9 @@ const resolveRequestedDiscussion = async (
 	sessionId: number,
 	allowCreate: boolean
 ): Promise<TeamDiscussion | null> => {
-	let existing: TeamDiscussion | null;
-	try {
-		existing = await apiGetTeamDiscussion(sessionId);
-	} catch (error) {
-		// An open enquiry kept its old contract: the click creates the room
-		// even when the lookup failed. Accepted cases never create.
-		if (allowCreate) {
-			return apiOpenTeamDiscussion(sessionId);
-		}
-		throw error;
-	}
+	// A failed lookup is inconclusive: the room may be CLOSED, and POST would
+	// reopen it without a switch-on. Surface the error; the panel can retry.
+	const existing = await apiGetTeamDiscussion(sessionId);
 	if (existing?.status === 'CLOSED') {
 		return existing;
 	}
@@ -170,7 +165,7 @@ export const useTeamDiscussionChannel = ({
 		setToggleError(null);
 		try {
 			const discussion = await apiOpenTeamDiscussion(sessionId);
-			invalidateTeamDiscussionCache(sessionId);
+			primeTeamDiscussionCache(sessionId, discussion);
 			if (currentSessionRef.current === sessionId) {
 				setState((previous) =>
 					previous.sessionId === sessionId
@@ -196,8 +191,12 @@ export const useTeamDiscussionChannel = ({
 		setToggleError(null);
 		try {
 			await apiCloseTeamDiscussion(sessionId);
+			// List badges subscribed to the cache look again and hide CLOSED.
 			invalidateTeamDiscussionCache(sessionId);
 			if (currentSessionRef.current === sessionId) {
+				// Re-run the lookup so an OPEN answer started before the DELETE
+				// committed cannot overwrite CLOSED.
+				retry();
 				setState((previous) =>
 					previous.sessionId === sessionId && previous.discussion
 						? {
@@ -219,7 +218,7 @@ export const useTeamDiscussionChannel = ({
 		} finally {
 			setToggling(null);
 		}
-	}, [enabled, sessionId]);
+	}, [enabled, retry, sessionId]);
 
 	if (!enabled || !sessionId) {
 		return {

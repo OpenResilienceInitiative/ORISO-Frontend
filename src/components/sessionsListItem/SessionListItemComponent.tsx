@@ -565,11 +565,15 @@ export const SessionListItemComponent = ({
 			: [];
 
 	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
-	// FE#2491: the effective team-chat policy, never the raw tenant value.
-	// The list has no open conversation, so this is the platform/Träger cap;
-	// a Beratungsstelle that has it off answers 403, which reads as "none".
+	// FE#2491: the effective team-chat policy, never the raw tenant value —
+	// resolved with this row's own agency policy when the list carries it.
+	// Without one this is the platform/Träger cap; a Beratungsstelle that has
+	// it off answers 403, which reads as "none".
 	const featureTeamDiscussionEnabled = isTeamDiscussionEnabled(
-		resolveConversationFeatureSettings(getTenantSettings())
+		resolveConversationFeatureSettings(
+			getTenantSettings(),
+			activeSession?.agency?.settings
+		)
 	);
 	const isAgencyCounselling =
 		!!activeSession &&

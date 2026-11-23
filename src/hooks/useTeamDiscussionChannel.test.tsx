@@ -267,10 +267,9 @@ describe('useTeamDiscussionChannel', () => {
 		});
 
 		it('switches an OPEN discussion off with DELETE and keeps its history as CLOSED', async () => {
-			vi.mocked(apiGetTeamDiscussion).mockResolvedValue({
-				...CLOSED,
-				status: 'OPEN'
-			});
+			vi.mocked(apiGetTeamDiscussion)
+				.mockResolvedValueOnce({ ...CLOSED, status: 'OPEN' })
+				.mockResolvedValue(CLOSED);
 			const { result } = renderHook(() =>
 				useTeamDiscussionChannel({
 					sessionId: 42,
@@ -286,11 +285,34 @@ describe('useTeamDiscussionChannel', () => {
 			await act(() => result.current.switchOff());
 
 			expect(apiCloseTeamDiscussion).toHaveBeenCalledWith(42);
+			await waitFor(() =>
+				expect(result.current.discussion).toMatchObject({
+					matrixRoomId: '!team:example.org',
+					status: 'CLOSED'
+				})
+			);
+			// The lookup runs again after the DELETE, so a stale OPEN answer
+			// cannot win; it never POSTs.
+			expect(apiGetTeamDiscussion).toHaveBeenCalledTimes(2);
 			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
-			expect(result.current.discussion).toMatchObject({
-				matrixRoomId: '!team:example.org',
-				status: 'CLOSED'
-			});
+		});
+
+		it('never POSTs after a failed lookup — the room might be CLOSED', async () => {
+			vi.mocked(apiGetTeamDiscussion).mockRejectedValue(
+				new Error('offline')
+			);
+			const { result } = renderHook(() =>
+				useTeamDiscussionChannel({
+					sessionId: 42,
+					enabled: true,
+					allowCreate: true,
+					teamChannelRequested: true
+				})
+			);
+			await waitFor(() =>
+				expect(result.current.error?.message).toBe('offline')
+			);
+			expect(apiOpenTeamDiscussion).not.toHaveBeenCalled();
 		});
 
 		it('reports a failed switch and keeps the discussion OPEN', async () => {
