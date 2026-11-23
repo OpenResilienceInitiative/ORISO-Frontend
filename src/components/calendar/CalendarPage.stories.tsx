@@ -62,6 +62,8 @@ import {
 import { publishReceivedProposalCount } from './calendarProposalCount';
 import { withPersonAvatars } from './calendarAvatar';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
+import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
+import { storyBookSlot, storyFreeSlots } from './calendarStoryFreeSlots';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -91,6 +93,11 @@ interface HarnessProps {
 	initialSheet?: SheetStop;
 	splitDays?: SplitDays;
 	shell?: boolean;
+	/**
+	 * FE#2494 *2c: the advice seeker's "Freie Sprechzeiten" beside the
+	 * calendar, with sample free times of the counsellor.
+	 */
+	freeTimes?: boolean | 'none';
 }
 
 /**
@@ -169,7 +176,8 @@ const Scenario = ({
 	dayExceptions: initialExceptions = {},
 	initialSheet,
 	splitDays,
-	shell = true
+	shell = true,
+	freeTimes = false
 }: HarnessProps) => {
 	const visibility = { scope, showUsernames };
 	const colleagues =
@@ -281,6 +289,22 @@ const Scenario = ({
 					<CalendarLinksBox>
 						<StoryLinksPanel />
 					</CalendarLinksBox>
+				) : undefined
+			}
+			besidePanel={
+				freeTimes ? (
+					<AskerFreeTimesPanel
+						sessionId={7}
+						counsellorName="Laura Berger"
+						loadSlots={
+							freeTimes === 'none'
+								? () => Promise.resolve([])
+								: storyFreeSlots
+						}
+						bookSlot={storyBookSlot}
+						onBooked={() => undefined}
+						onLimitReached={() => undefined}
+					/>
 				) : undefined
 			}
 			initialShownColleagues={shownColleagues}
@@ -553,9 +577,9 @@ const StoryLinksPanel = () => {
 				}
 				onShowQr={setQr}
 				onEdit={() => undefined}
-				onCreate={() => undefined}
 				onRetry={() => undefined}
 				onCopy={() => undefined}
+				variant="rows"
 			/>
 			{qr && (
 				<DirectLinkShareDialog

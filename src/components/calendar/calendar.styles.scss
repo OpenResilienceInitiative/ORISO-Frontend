@@ -3718,14 +3718,27 @@ $cal-new-pill-hover: #4b4f51;
 	display: inline-flex;
 	align-self: flex-start;
 	gap: 2px;
+	max-width: 100%;
+	box-sizing: border-box;
+	// Four tabs on a 390 px phone (FE#2494 *2b): words stay whole, the
+	// row scrolls sideways if it must.
+	overflow-x: auto;
+	scrollbar-width: none;
 	padding: 4px;
 	border-radius: 999px;
 	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarNewEntry__tab {
+	flex: none;
 	height: 36px;
 	padding: 0 16px;
+	white-space: nowrap;
+
+	@media (width < 600px) {
+		padding: 0 12px;
+	}
+
 	border: 0;
 	border-radius: 999px;
 	background: transparent;
@@ -4110,5 +4123,141 @@ $cal-new-pill-hover: #4b4f51;
 
 	@include breakpoint($fromMedium) {
 		flex-direction: row;
+	}
+}
+
+// FE#2494 *3: one's own Sprechstunden as a quiet band behind the entries,
+// named by a pill like the pause (not by colour alone).
+.calendarView__consultation {
+	background: var(--m3-secondary-fixed, #dae3f0) !important;
+	opacity: 1 !important;
+	box-shadow: inset 3px 0 0 var(--m3-secondary, #4d5660);
+}
+
+// Bottom right: entries over the band start at its top.
+.calendarView__consultationLabel {
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	box-sizing: border-box;
+	height: 100%;
+	padding: 4px;
+}
+
+.calendarView__consultationPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: calc(100% - 8px);
+	overflow: hidden;
+	padding: 1px 8px 1px 6px;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-secondary-fixed, #141c25);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+	white-space: nowrap;
+
+	svg {
+		flex: none;
+		width: 14px;
+		height: 14px;
+	}
+}
+
+// FE#2494 *2c: the advice seeker's "Freie Sprechzeiten" beside "Meine
+// Termine", the same size; on the phone under it, the page scrolls.
+.calendarPage__beside {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+	// The same card as the stage, so both take the same width.
+	padding: 14px 18px;
+	border: 1.5px solid $cal-stage-border;
+	border-radius: 32px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+}
+
+.calendarPage__beside:empty {
+	display: none;
+}
+
+// Only while the panel shows something (no office hours: no panel).
+.calendarPage--beside.calendarPage--compact:has(
+		.calendarPage__beside:not(:empty)
+	) {
+	overflow: auto;
+
+	.calendarStage {
+		flex: none;
+		min-height: 72vh;
+	}
+
+	.calendarPage__beside {
+		flex: none;
+		overflow: visible;
+		margin-top: 12px;
+		padding: 14px;
+		border-radius: 24px;
+	}
+}
+
+.calendarFreeTimes {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	&__icon {
+		flex: none;
+		width: 24px;
+		height: 24px;
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__title {
+		margin: 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 28px;
+		font-weight: 600;
+		line-height: 36px;
+
+		.calendarPage--compact & {
+			font-size: 22px;
+			line-height: 28px;
+		}
+	}
+
+	&__description,
+	&__status {
+		margin: 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__media {
+		align-self: flex-start;
+	}
+
+	&__problem {
+		margin: 0;
+		color: var(--m3-error, #ba1a1a);
+		font-size: 14px;
+	}
+
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
 	}
 }

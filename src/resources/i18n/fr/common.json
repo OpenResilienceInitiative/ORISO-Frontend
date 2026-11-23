@@ -7439,7 +7439,8 @@
 			"tabs": {
 				"appointment": "Rendez-vous",
 				"blocker": "Plage bloquée",
-				"absence": "Absence prévue"
+				"absence": "Absence prévue",
+				"consultation": "Permanence"
 			},
 			"withWhom": "Rendez-vous avec",
 			"withConversation": "Personne conseillée",
@@ -7922,7 +7923,8 @@
 			"minutes": "{{count}} minutes",
 			"invalid": "La fin doit être après le début.",
 			"loadFailed": "Chargement impossible. Réessayer",
-			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là."
+			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là.",
+			"band": "Permanence"
 		},
 		"appointmentRequest": {
 			"status": "Demandé · attend votre réponse",
@@ -7971,6 +7973,15 @@
 			"hint": "Les rendez-vous de toutes les autres personnes attendent votre accord.",
 			"save": "Enregistrer",
 			"saved": "Liste enregistrée."
+		},
+		"freeTimes": {
+			"title": "Permanences libres",
+			"description": "Réservez vous-même un rendez-vous avec {{name}}.",
+			"counsellor": "Conseiller ou conseillère",
+			"medium": {
+				"video": "Vidéo",
+				"phone": "Téléphone"
+			}
 		}
 	},
 	"guestAccountMode": {

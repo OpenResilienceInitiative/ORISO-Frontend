@@ -7406,7 +7406,8 @@
 			"tabs": {
 				"appointment": "ቆጸራ",
 				"blocker": "ዝተዓጽወ ግዜ",
-				"absence": "ዘይምህላው"
+				"absence": "ዘይምህላው",
+				"consultation": "ግዜ ምኽሪ"
 			},
 			"withWhom": "ቆጸራ ምስ",
 			"withConversation": "ምኽሪ ዝደሊ ሰብ",
@@ -7889,7 +7890,8 @@
 			"minutes": "{{count}} ደቒቕ",
 			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።",
 			"loadFailed": "ክጽዕን ኣይተኻእለን። ደጊምካ ፈትን",
-			"overlaps": "እቲ ሰዓታት ምስ ካልእ ናይ ምኽሪ ግዜ ኣብዚ መዓልቲ ይጋጠም።"
+			"overlaps": "እቲ ሰዓታት ምስ ካልእ ናይ ምኽሪ ግዜ ኣብዚ መዓልቲ ይጋጠም።",
+			"band": "ግዜ ምኽሪ"
 		},
 		"appointmentRequest": {
 			"status": "ተሓቲቱ · ንመልስኹም ይጽበ",
@@ -7938,6 +7940,15 @@
 			"hint": "ናይ ካልኦት ኩሎም ቆጸራታት ክሳብ እትቕበልዎ ይጽበዩ።",
 			"save": "ዓቅብ",
 			"saved": "ዝርዝር ተዓቂቡ።"
+		},
+		"freeTimes": {
+			"title": "ነጻ ግዜታት ምኽሪ",
+			"description": "ምስ {{name}} ባዕልኻ ቈጸራ ሓዝ።",
+			"counsellor": "ኣማኻሪ",
+			"medium": {
+				"video": "ቪድዮ",
+				"phone": "ተሌፎን"
+			}
 		}
 	},
 	"guestAccountMode": {

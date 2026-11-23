@@ -3224,6 +3224,9 @@
 			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
 			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
 			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		},
+		"freeTimes": {
+			"description": "Hier buchst du selbst einen Termin bei {{name}}."
 		}
 	},
 	"guestAccountMode": {

@@ -7354,7 +7354,8 @@
 			"tabs": {
 				"appointment": "Appointment",
 				"blocker": "Blocked time",
-				"absence": "Absence"
+				"absence": "Absence",
+				"consultation": "Office hours"
 			},
 			"withWhom": "Appointment with",
 			"withConversation": "Advice seeker",
@@ -7837,7 +7838,8 @@
 			"minutes": "{{count}} min",
 			"invalid": "The end must be after the start.",
 			"loadFailed": "Could not be loaded. Try again",
-			"overlaps": "The times overlap another consultation window on this day."
+			"overlaps": "The times overlap another consultation window on this day.",
+			"band": "Office hours"
 		},
 		"appointmentRequest": {
 			"status": "Requested · waiting for you",
@@ -7886,6 +7888,15 @@
 			"hint": "Appointments from everyone else wait until you accept them.",
 			"save": "Save",
 			"saved": "List saved."
+		},
+		"freeTimes": {
+			"title": "Free office hours",
+			"description": "Book an appointment with {{name}} yourself.",
+			"counsellor": "Counsellor",
+			"medium": {
+				"video": "Video",
+				"phone": "Phone"
+			}
 		}
 	},
 	"guestAccountMode": {

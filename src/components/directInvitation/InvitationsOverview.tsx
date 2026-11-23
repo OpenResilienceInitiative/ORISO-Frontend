@@ -501,6 +501,7 @@ export const InvitationsOverview = ({
 			<div className="invitationsOverview__section">
 				<MyDirectLinks
 					title={t(`${KEYS}.withoutAppointment`)}
+					variant="rows"
 					links={links}
 					onToggle={onToggle}
 					pendingIds={pendingIds}

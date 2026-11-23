@@ -292,6 +292,11 @@ export interface CalendarPageProps {
 	 * the real links panel, stories a sample.
 	 */
 	linksPanel?: React.ReactNode;
+	/**
+	 * Beside the stage, the same size: the advice seeker's "Freie
+	 * Sprechzeiten" (FE#2494 *2c). On the phone it comes under the stage.
+	 */
+	besidePanel?: React.ReactNode;
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -590,6 +595,7 @@ export const CalendarPage = ({
 	initialView,
 	initialDate,
 	linksPanel,
+	besidePanel,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -1593,6 +1599,24 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
+	/* Open until the save settles: reopened meanwhile, the dialog (or the
+	   tab "Sprechzeit" of "Neuer Eintrag", FE#2494 *2b) would show the old
+	   set and save it back over this one. A failed save keeps the draft
+	   for a retry. */
+	const saveConsultationHours = (hours: ConsultationHours) => {
+		const saved = run(onSaveConsultationHours?.(hours), {
+			message: t('calendar.consultationHours.saved')
+		});
+		if (typeof saved === 'boolean') {
+			if (saved) setDialog(null);
+			return;
+		}
+		setSavingConsultationHours(true);
+		void saved.then((ok) => {
+			setSavingConsultationHours(false);
+			if (ok) setDialog(null);
+		});
+	};
 	const editConsultationHours =
 		consultant && !!consultationHours && !!onSaveConsultationHours;
 	const retryConsultationHours =
@@ -3031,6 +3055,11 @@ export const CalendarPage = ({
 							now={fixedNow}
 							initialDate={anchorDate}
 							workingPlan={workingPlan}
+							consultationWindows={
+								consultant
+									? consultationHours?.windows
+									: undefined
+							}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							slotPx={slotPx}
 							proposals={gridProposals}
@@ -3144,7 +3173,8 @@ export const CalendarPage = ({
 				'calendarPage',
 				compact && 'calendarPage--compact',
 				sheetShown && 'calendarPage--sheet',
-				fullscreen && 'calendarPage--fullscreen'
+				fullscreen && 'calendarPage--fullscreen',
+				besidePanel && !fullscreen && 'calendarPage--beside'
 			]
 				.filter(Boolean)
 				.join(' ')}
@@ -3236,6 +3266,9 @@ export const CalendarPage = ({
 				{peopleBar}
 				<div className="calendarStage__grid">{body}</div>
 			</section>
+			{besidePanel && !fullscreen && (
+				<div className="calendarPage__beside">{besidePanel}</div>
+			)}
 			{sheetCovers && (
 				// A tap above the sheet lowers it (Escape does, too).
 				<div
@@ -3373,7 +3406,18 @@ export const CalendarPage = ({
 					}
 					onSaveAbsence={onSaveAbsence ? saveAbsence : undefined}
 					initialAbsence={absence}
-					onClose={() => setDialog(null)}
+					consultationHours={
+						editConsultationHours ? consultationHours : undefined
+					}
+					onSaveConsultationHours={
+						editConsultationHours
+							? saveConsultationHours
+							: undefined
+					}
+					savingConsultationHours={savingConsultationHours}
+					onClose={() => {
+						if (!savingConsultationHours) setDialog(null);
+					}}
 				/>
 			)}
 			{dialog?.type === 'autoAccept' && onSaveAutoAccept && (
@@ -3422,28 +3466,7 @@ export const CalendarPage = ({
 						hours={consultationHours}
 						fullScreen={compact}
 						saving={savingConsultationHours}
-						onSave={(hours) => {
-							/* Open until the save settles: reopened meanwhile, the
-							   dialog would show the old set and save it back over
-							   this one. A failed save keeps the draft for a retry. */
-							const saved = run(
-								onSaveConsultationHours?.(hours),
-								{
-									message: t(
-										'calendar.consultationHours.saved'
-									)
-								}
-							);
-							if (typeof saved === 'boolean') {
-								if (saved) setDialog(null);
-								return;
-							}
-							setSavingConsultationHours(true);
-							void saved.then((ok) => {
-								setSavingConsultationHours(false);
-								if (ok) setDialog(null);
-							});
-						}}
+						onSave={saveConsultationHours}
 						onClose={() => {
 							if (!savingConsultationHours) setDialog(null);
 						}}

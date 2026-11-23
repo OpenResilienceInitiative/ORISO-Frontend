@@ -29,6 +29,7 @@ import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
 import { Popper } from '@mui/material';
 import FreeBreakfastOutlinedIcon from '@mui/icons-material/FreeBreakfastOutlined';
+import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import enGbLocale from '@fullcalendar/react/locales/en-gb';
 import frLocale from '@fullcalendar/react/locales/fr';
 import ruLocale from '@fullcalendar/react/locales/ru';
@@ -55,6 +56,8 @@ import {
 	effectiveDay,
 	minutesOf,
 	offRangesOf,
+	windowsOn,
+	type WorkingHours,
 	type WorkingPlan
 } from './calendarWorkingHours';
 import {
@@ -157,6 +160,12 @@ export interface CalendarViewProps {
 	/** Weekly hours, day exceptions and the holiday region. */
 	workingPlan?: WorkingPlan;
 	/**
+	 * One's own Sprechstunden: a background band in the time grid
+	 * (FE#2494 *3). Entries still go over them; UserService then takes
+	 * that time out of the advice seekers' free times.
+	 */
+	consultationWindows?: WorkingHours;
+	/**
 	 * A grip on the edge of one's own working day was moved; without it the
 	 * grips are not drawn.
 	 */
@@ -219,6 +228,8 @@ interface EventProps {
 	holiday?: PublicHoliday;
 	/** Background: colleagues busy in this stretch. */
 	band?: ColleagueBand;
+	/** Background: one's own Sprechstunde (FE#2494 *3). */
+	consultation?: true;
 }
 
 /** The usual working day the time grid shows, before any widening. */
@@ -461,6 +472,7 @@ export const CalendarView = ({
 	now,
 	initialDate,
 	workingPlan,
+	consultationWindows,
 	onEdgeChange,
 	proposals = [],
 	highlight,
@@ -583,6 +595,25 @@ export const CalendarView = ({
 		return out;
 	}, [workingPlan, shownRange, timeGrid]);
 
+	const consultationEvents = useMemo<EventInput[]>(() => {
+		if (!timeGrid || !shownRange || !consultationWindows?.length) return [];
+		const out: EventInput[] = [];
+		for (
+			let day = startOfDay(shownRange.start);
+			day < shownRange.end;
+			day = nextDay(day)
+		)
+			for (const w of windowsOn(consultationWindows, day.getDay()))
+				out.push({
+					id: `consultation-${day.getTime()}-${w.start}`,
+					start: atMinutes(day, minutesOf(w.start)),
+					end: atMinutes(day, minutesOf(w.end)),
+					display: 'background',
+					extendedProps: { consultation: true }
+				});
+		return out;
+	}, [consultationWindows, shownRange, timeGrid]);
+
 	// The grips go into FullCalendar's day columns themselves: inside a
 	// background event they would sit in a layer FullCalendar hides from
 	// assistive technology (aria-hidden), where nothing may take focus.
@@ -668,6 +699,7 @@ export const CalendarView = ({
 				extendedProps: { entry, proposal }
 			})),
 			...offEvents,
+			...consultationEvents,
 			...bands.map((band) => ({
 				id: `band-${bandKey(band)}`,
 				start: band.start,
@@ -676,7 +708,17 @@ export const CalendarView = ({
 				extendedProps: { band }
 			}))
 		],
-		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
+		[
+			gridEntries,
+			proposals,
+			ownerId,
+			role,
+			label,
+			t,
+			offEvents,
+			consultationEvents,
+			bands
+		]
 	);
 
 	// "Beginnt gleich" in words and a clock, not by colour alone, on the
@@ -837,7 +879,8 @@ export const CalendarView = ({
 	};
 
 	const backgroundClass = (info: EventDisplayInfo) => {
-		const { off, band } = propsOf(info);
+		const { off, band, consultation } = propsOf(info);
+		if (consultation) return 'calendarView__consultation';
 		if (band)
 			return allBusy(band)
 				? 'calendarView__band calendarView__band--all'
@@ -850,7 +893,19 @@ export const CalendarView = ({
 	};
 
 	const backgroundContent = (info: EventDisplayInfo) => {
-		const { off, band } = propsOf(info);
+		const { off, band, consultation } = propsOf(info);
+		if (consultation)
+			return (
+				<span
+					className="calendarView__consultationLabel"
+					data-cy="calendar-consultation-band"
+				>
+					<span className="calendarView__consultationPill">
+						<ClockIcon aria-hidden focusable="false" />
+						{t('calendar.consultationHours.band')}
+					</span>
+				</span>
+			);
 		if (band) {
 			const busy = band.busy
 				.map((id) => bandPeopleById.get(id))

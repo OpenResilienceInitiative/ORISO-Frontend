@@ -394,3 +394,40 @@
 	margin: 8px 0 0;
 	padding: 12px 16px;
 }
+
+/* FE#2494 *2a: a link without appointment as one compact row. */
+.directLinkRow {
+	&__medium {
+		align-items: center;
+		display: flex;
+		font-size: 14px;
+		gap: 8px;
+
+		svg {
+			flex-shrink: 0;
+			height: 20px;
+			width: 20px;
+		}
+	}
+
+	&__meta {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 8px;
+
+		.directLinkChip {
+			margin-left: 0;
+		}
+	}
+
+	&__actions {
+		align-items: center;
+		gap: 4px;
+	}
+
+	&--off &__medium,
+	&--off .invitationRow__body {
+		opacity: 0.6;
+	}
+}

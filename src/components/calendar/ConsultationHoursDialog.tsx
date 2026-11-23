@@ -8,7 +8,9 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
+import type { DialogForm } from './dialogForm';
 import { Switch } from '../Switch';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { useWeekdayNames } from './WorkingHoursDialog';
@@ -36,14 +38,24 @@ export interface ConsultationHoursDialogProps {
 const SLOT_MINUTES: SlotMinutes[] = [30, 60];
 const NOTICE_DAYS = Array.from({ length: MAX_NOTICE_DAYS + 1 }, (_, n) => n);
 
-export const ConsultationHoursDialog = ({
-	open,
+export interface ConsultationHoursFormProps {
+	hours: ConsultationHours;
+	saving?: boolean;
+	onSave: (hours: ConsultationHours) => void;
+	onClose: () => void;
+}
+
+/**
+ * The Sprechstunden form without its frame: the dialog below and the tab
+ * "Sprechzeit" in "Neuer Eintrag" (FE#2494 *2b) show the same form and save
+ * the same office hours.
+ */
+export const useConsultationHoursForm = ({
 	hours,
-	fullScreen,
 	saving = false,
 	onSave,
 	onClose
-}: ConsultationHoursDialogProps) => {
+}: ConsultationHoursFormProps): DialogForm => {
 	const { t } = useTranslation();
 	const dayName = useWeekdayNames();
 	const [rows, setRows] = useState<ConsultationDayRow[]>(() =>
@@ -62,34 +74,30 @@ export const ConsultationHoursDialog = ({
 			all.map((r) => (r.weekday === weekday ? { ...r, ...patch } : r))
 		);
 
-	return (
-		<M3Dialog
-			open={open}
-			title={t('calendar.consultationHours.title')}
-			description={t('calendar.consultationHours.description')}
-			fullScreen={fullScreen}
-			onClose={onClose}
-			closeLabel={t('app.close')}
-			data-testid="calendar-consultation-hours-dialog"
-			actions={[
-				{ label: t('app.cancel'), onClick: onClose },
-				{
-					label: t('calendar.consultationHours.save'),
-					primary: true,
-					disabled:
-						saving || invalid.length > 0 || overlapping.length > 0,
-					onClick: () =>
-						onSave(
-							consultationHoursToApi(
-								rows,
-								{ autoAccept, noticeDays, slotMinutes },
-								hours.windows
-							)
-						),
-					testId: 'consultation-hours-save'
-				}
-			]}
-		>
+	return {
+		testId: 'calendar-consultation-hours-dialog',
+		description: t('calendar.consultationHours.description'),
+		icon: <ClockIcon aria-hidden="true" focusable="false" />,
+		width: 680,
+		actions: [
+			{ label: t('app.cancel'), onClick: onClose },
+			{
+				label: t('calendar.consultationHours.save'),
+				primary: true,
+				disabled:
+					saving || invalid.length > 0 || overlapping.length > 0,
+				onClick: () =>
+					onSave(
+						consultationHoursToApi(
+							rows,
+							{ autoAccept, noticeDays, slotMinutes },
+							hours.windows
+						)
+					),
+				testId: 'consultation-hours-save'
+			}
+		],
+		content: (
 			<div
 				className="calendarHours"
 				role="group"
@@ -256,6 +264,32 @@ export const ConsultationHoursDialog = ({
 					</p>
 				)}
 			</div>
+		)
+	};
+};
+
+export const ConsultationHoursDialog = ({
+	open,
+	hours,
+	fullScreen,
+	saving = false,
+	onSave,
+	onClose
+}: ConsultationHoursDialogProps) => {
+	const { t } = useTranslation();
+	const form = useConsultationHoursForm({ hours, saving, onSave, onClose });
+	return (
+		<M3Dialog
+			open={open}
+			title={t('calendar.consultationHours.title')}
+			description={form.description}
+			fullScreen={fullScreen}
+			onClose={onClose}
+			closeLabel={t('app.close')}
+			data-testid={form.testId}
+			actions={form.actions}
+		>
+			{form.content}
 		</M3Dialog>
 	);
 };

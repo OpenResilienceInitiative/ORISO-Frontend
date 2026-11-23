@@ -7429,7 +7429,8 @@
 			"tabs": {
 				"appointment": "Termin",
 				"blocker": "Sperrzeit",
-				"absence": "Abwesenheit"
+				"absence": "Abwesenheit",
+				"consultation": "Sprechzeit"
 			},
 			"withWhom": "Termin mit",
 			"withConversation": "Ratsuchende Person",
@@ -7912,7 +7913,8 @@
 			"minutes": "{{count}} Min.",
 			"invalid": "Das Ende muss nach dem Beginn liegen.",
 			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
-			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag.",
+			"band": "Sprechstunde"
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",
@@ -7961,6 +7963,15 @@
 			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
 			"save": "Speichern",
 			"saved": "Liste gespeichert."
+		},
+		"freeTimes": {
+			"title": "Freie Sprechzeiten",
+			"description": "Hier buchen Sie selbst einen Termin bei {{name}}.",
+			"counsellor": "Beratungsperson",
+			"medium": {
+				"video": "Video",
+				"phone": "Telefon"
+			}
 		}
 	},
 	"guestAccountMode": {

@@ -7439,7 +7439,8 @@
 			"tabs": {
 				"appointment": "Randevu",
 				"blocker": "Engellenmiş zaman",
-				"absence": "Yokluk"
+				"absence": "Yokluk",
+				"consultation": "Görüşme saati"
 			},
 			"withWhom": "Randevu",
 			"withConversation": "Danışan kişi",
@@ -7922,7 +7923,8 @@
 			"minutes": "{{count}} dk",
 			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
 			"loadFailed": "Yüklenemedi. Tekrar dene",
-			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor."
+			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor.",
+			"band": "Görüşme saati"
 		},
 		"appointmentRequest": {
 			"status": "Talep edildi · yanıtınızı bekliyor",
@@ -7971,6 +7973,15 @@
 			"hint": "Diğer herkesin randevuları siz kabul edene kadar bekler.",
 			"save": "Kaydet",
 			"saved": "Liste kaydedildi."
+		},
+		"freeTimes": {
+			"title": "Boş görüşme saatleri",
+			"description": "{{name}} ile kendiniz randevu alın.",
+			"counsellor": "Danışman",
+			"medium": {
+				"video": "Görüntülü",
+				"phone": "Telefon"
+			}
 		}
 	},
 	"guestAccountMode": {
