@@ -2264,7 +2264,6 @@
 			"replyVoice": "Sesli mesajla yanıtla",
 			"replyInSupervision": "Süpervizyonda yanıtla",
 			"replyInTeam": "Ekip sohbetinde yanıtla",
-			"collect": "Topla",
 			"startThread": "Konu başlat",
 			"dialog": "{{author}} adlı kişinin işaretlenen bölümüne yanıt",
 			"cancel": "İptal",

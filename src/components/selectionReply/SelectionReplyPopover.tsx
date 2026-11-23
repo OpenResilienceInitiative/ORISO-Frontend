@@ -7,6 +7,7 @@ import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio.svg';
+import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-collect.svg';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
@@ -34,6 +35,13 @@ export interface SelectionReplyPopoverProps {
 	onClose: () => void;
 	/** Focus the text field on open (off when the take starts with voice). */
 	autoFocus?: boolean;
+	/**
+	 * FE#2494 *7 bubble variant: the passage's other actions (side chats,
+	 * thread, blur) as one row under the field.
+	 */
+	actions?: React.ReactNode;
+	/** FE#2494 *7 bubble variant: drawn as a speech bubble from the handle. */
+	bubble?: boolean;
 }
 
 const isMacLike = () =>
@@ -65,7 +73,9 @@ export const SelectionReplyPopover = forwardRef<
 			onAddToComposer,
 			onSendNow,
 			onClose,
-			autoFocus = true
+			autoFocus = true,
+			actions,
+			bubble = false
 		},
 		ref
 	) => {
@@ -173,7 +183,11 @@ export const SelectionReplyPopover = forwardRef<
 				aria-label={translate('message.selectionReply.dialog', {
 					author: passage.author
 				})}
-				className="selectionReply__popover"
+				className={
+					bubble
+						? 'selectionReply__popover selectionReply__popover--bubble'
+						: 'selectionReply__popover'
+				}
 				data-cy="selection-reply-popover"
 				style={style}
 				onKeyDown={handleKeyDown}
@@ -272,7 +286,10 @@ export const SelectionReplyPopover = forwardRef<
 							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							{translate('message.selectionReply.collect')}
+							<CollectIcon
+								aria-hidden
+								className="selectionReply__collectIcon"
+							/>
 						</button>
 						{hint === 'add' && (
 							<span
@@ -317,6 +334,16 @@ export const SelectionReplyPopover = forwardRef<
 						)}
 					</span>
 				</div>
+
+				{actions && (
+					<div
+						className="selectionReply__bubbleActions"
+						role="group"
+						aria-label={translate('message.selectionReply.toolbar')}
+					>
+						{actions}
+					</div>
+				)}
 
 				{/* Keys and Esc for screen readers; sighted users get them as
 				    tooltips, and clicking beside the field closes it. */}

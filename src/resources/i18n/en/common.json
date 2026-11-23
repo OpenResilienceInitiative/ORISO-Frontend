@@ -2263,7 +2263,6 @@
 			"replyVoice": "Reply with a voice message",
 			"replyInSupervision": "Reply in supervision",
 			"replyInTeam": "Reply in team chat",
-			"collect": "Collect",
 			"startThread": "Thread",
 			"dialog": "Reply to the passage marked from {{author}}",
 			"cancel": "Cancel",

@@ -330,6 +330,81 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
+// Collect (FE#2494 *8): reply-all arrows instead of the word "Sammeln".
+.selectionReply__collect:has(.selectionReply__collectIcon) {
+	width: 40px;
+	padding: 0;
+}
+
+.selectionReply__collectIcon {
+	width: 22px;
+	height: 22px;
+}
+
+// FE#2494 *7 bubble variant: a small reply handle on the top right corner
+// of the marked text; it opens the one speech-bubble menu.
+.selectionReply__handle {
+	position: absolute;
+	z-index: 30;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 16px 16px 16px 4px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-primary, #a5000a);
+	box-shadow: $selection-reply-elevation;
+	cursor: pointer;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	@include selection-reply-control-states;
+}
+
+// The menu as a speech bubble hanging from the handle (tail top right).
+.selectionReply__popover--bubble {
+	border-radius: 16px 4px 16px 16px;
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: -7px;
+		right: 12px;
+		width: 12px;
+		height: 12px;
+		background: inherit;
+		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-left: 1px solid var(--m3-primary-fixed, #ffdad5);
+		transform: rotate(45deg);
+	}
+}
+
+.selectionReply__bubbleActions {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	padding-top: 4px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+// One labelled row of the bubble menu: icon + words, full width.
+.selectionReply__menuRow {
+	justify-content: flex-start;
+	width: 100%;
+	text-align: left;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
 // Library icons (src/resources/img/icons) take the button's colour.
 .selectionReply__micIcon,
 .selectionReply__sideRoomIcon {

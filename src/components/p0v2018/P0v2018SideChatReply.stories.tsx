@@ -24,7 +24,9 @@ const meta = {
 		docs: {
 			description: {
 				component: [
-					'FE#2494 *7 (mit *8 „Stacked Reply“). Text im Chat mit der Ratsuchenden markieren → die bekannte Leiste, vereinfacht: **Antworten · In Supervision antworten · Im Team-Chat antworten · Thread** (Schwärzen nur für Moderierende). Die Sprachnachricht ist keine eigene Aktion mehr — das Mikrofon sitzt im Antwort-Feld.',
+					'FE#2494 *7 (mit *8 „Stacked Reply“). Text im Chat mit der Ratsuchenden markieren → die bekannte Leiste, vereinfacht: **Antworten · In Supervision antworten · Im Team-Chat antworten · Thread** (Schwärzen nur für Moderierende). Die Sprachnachricht ist keine eigene Aktion mehr — das Mikrofon sitzt im Antwort-Feld. „Sammeln“ ist ein Symbol (Doppelpfeil wie „allen antworten“), Senden bleibt rot.',
+					'**Variante (Frank, 23.11.):** statt der Leiste ein kleiner Antwort-Griff oben rechts an der markierten Stelle; er öffnet ein Sprechblasen-Menü mit Feld, Mikrofon, Sammeln, Senden und darunter Supervision · Team-Chat · Thread.',
+					'Markieren, Antworten und Sammeln gibt es **auch in der Supervision, im Team-Chat und im Thread** — dort sammelt sich das Zitat in deren eigener Eingabe; jedes Zitat zeigt, wer es geschrieben hat.',
 					'Ein Klick auf „In Supervision antworten“ oder „Im Team-Chat antworten“ öffnet diesen Seitenchat und legt die Stelle als Zitat in **dessen** Eingabe. Weitere Stellen sammeln sich dort. Gesendet wird nur im Seitenchat — die Eingabe der Ratsuchenden hat keinen Ziel-Umschalter, also geht nichts versehentlich an sie.',
 					'Gesendet wird **eine** Nachricht mit allen Zitaten; ein Klick auf ein Zitat springt zur Stelle im Chat. Im Team-Chat gibt es jetzt Audio- und Videoanruf wie in der Supervision (gleiche Komponente `PanelCallActions`).',
 					'Gebaut aus: `SelectionReplyLayer`/`SelectionReplyToolbar`, `SelectionReplyPopover`, `MessageTimeline` (`PassageReplyBlocks`), `MessageSubmitInterfaceComponent` (`ComposerPendingQuotes`), `SidePanel`, `PanelHeader`, `PanelCallActions`. Symbole aus `src/resources/img/icons`.'
@@ -75,9 +77,9 @@ export const Toolbar: Story = {
 	}
 };
 
-/** 2 · „Antworten“ im selben Chat: Mikrofon im Feld, „Sammeln“ dunkelgrau, Senden rot. */
+/** 2 · „Antworten“ im selben Chat: Mikrofon im Feld, Sammeln (Doppelpfeil) dunkelgrau, Senden rot. */
 export const ReplyField: Story = {
-	name: '2 · Antwort-Feld: Mikrofon im Feld, „Sammeln“ statt „+“',
+	name: '2 · Antwort-Feld: Mikrofon im Feld, Sammel-Symbol statt „+“',
 	args: { preset: P7_PASSAGES.sleep, presetMode: 'popover' }
 };
 
@@ -151,4 +153,88 @@ export const TeamChatWithCall: Story = {
 export const WithoutTeamChat: Story = {
 	name: '7 · Team-Chat aus → nur „In Supervision antworten“',
 	args: { preset: P7_PASSAGES.sleep, withTeam: false }
+};
+
+/* ---------------------------------------------------------------------------
+ * Variante: Antwort-Griff + Sprechblasen-Menü (Frank, 23.11.).
+ * ------------------------------------------------------------------------- */
+
+/** V1 · Text markiert: nur ein kleiner Griff oben rechts an der Stelle. */
+export const BubbleHandle: Story = {
+	name: 'Variante 1 · Griff oben rechts an der markierten Stelle',
+	args: { preset: P7_PASSAGES.sleep, menu: 'bubble' },
+	play: async ({ canvasElement }) => {
+		await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-handle"]'
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="selection-reply-toolbar"]')
+		).toBeNull();
+	}
+};
+
+/** V2 · Griff angeklickt: ein Sprechblasen-Menü mit allem. */
+export const BubbleMenu: Story = {
+	name: 'Variante 2 · Sprechblasen-Menü: schreiben, sammeln, senden, Ziele',
+	args: { preset: P7_PASSAGES.sleep, menu: 'bubble', presetMode: 'popover' },
+	play: async ({ canvasElement }) => {
+		const bubble = await waitForSelector(
+			canvasElement,
+			'.selectionReply__popover--bubble'
+		);
+		await expect(
+			within(bubble).getByRole('button', {
+				name: 'In Supervision antworten'
+			})
+		).toBeTruthy();
+		await expect(
+			within(bubble).getByRole('button', {
+				name: 'Im Team-Chat antworten'
+			})
+		).toBeTruthy();
+	}
+};
+
+/* ---------------------------------------------------------------------------
+ * Markieren und sammeln IN den Seitenchats und im Thread.
+ * ------------------------------------------------------------------------- */
+
+/** S1 · In der Supervision eine Stelle der Supervisorin markieren und beantworten. */
+export const MarkInSupervision: Story = {
+	name: 'Im Seitenchat 1 · In der Supervision markieren und antworten',
+	args: {
+		openRoom: 'supervision',
+		presetRoom: 'supervision',
+		preset: P7_PASSAGES.supervisorAdvice,
+		presetMode: 'popover'
+	}
+};
+
+/** S2 · Im Team-Chat Stellen von zwei Kolleg:innen gesammelt — jedes Zitat nennt die Person. */
+export const CollectInTeamChat: Story = {
+	name: 'Im Seitenchat 2 · Team-Chat: Stellen verschiedener Personen gesammelt',
+	args: {
+		openRoom: 'team',
+		panelWidth: 560,
+		collected: [
+			{ ...P7_PASSAGES.teamAdvice, author: 'Jonas K.' },
+			{
+				eventId: '$t3',
+				excerpt: 'noch zwei Termine frei',
+				author: 'Aylin D.'
+			}
+		]
+	}
+};
+
+/** S3 · Im Thread: dieselbe Leiste, dasselbe Sammeln — der Thread ist ein vollständiger Chat. */
+export const MarkInThread: Story = {
+	name: 'Im Seitenchat 3 · Im Thread markieren und antworten',
+	args: {
+		openRoom: 'thread',
+		presetRoom: 'thread',
+		preset: P7_PASSAGES.threadReply,
+		presetMode: 'popover'
+	}
 };

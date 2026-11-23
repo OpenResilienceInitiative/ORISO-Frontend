@@ -1,7 +1,8 @@
 /**
  * FE#2494 *7 (+ *8) — design stage for "P0 v2.0.18": reply to marked
  * passages of the client chat INTO a side chat (Supervision or the enquiry's
- * team chat), never into the client chat by mistake.
+ * team chat), never into the client chat by mistake. Marking, replying and
+ * collecting also work INSIDE each side chat and a thread (Frank, 23 Nov).
  *
  * Built only from the real organisms: `SessionHeaderComponent`,
  * `SelectionReplyLayer` (+ `SelectionReplyToolbar`), `MessageTimeline`
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
 	SelectionReplyLayer,
+	type SelectionAnswer,
 	type SelectionVoiceRecorder
 } from '../selectionReply/SelectionReplyLayer';
 import { createSilentWavUrl } from '../voicePlayer/__storybook__/silentAudio';
@@ -59,7 +61,10 @@ import {
 	TEAM_MATE_B_MATRIX_ID,
 	TEAM_MATE_B_NAME,
 	TEAM_ROOM_ID,
-	teamMessages
+	teamMessages,
+	THREAD_ROOT_ID,
+	threadMessages,
+	CLIENT_ROOM_ID
 } from '../chatStage/__storybook__/chatStageFixtures';
 import '../message/message.styles.scss';
 import '../messageSubmitInterface/messageSubmitInterface.styles.scss';
@@ -69,7 +74,7 @@ import '../chatStage/sidePanel.styles.scss';
 import '../chatStage/panelCallActions.styles.scss';
 import '../selectionReply/selectionReply.styles.scss';
 
-export type SideRoom = 'supervision' | 'team';
+export type SideRoom = 'supervision' | 'team' | 'thread';
 
 /** Three passages of the fixture client chat (real text of $m3 / $m5). */
 export const P7_PASSAGES = {
@@ -82,10 +87,32 @@ export const P7_PASSAGES = {
 		eventId: '$m5',
 		excerpt: 'Mein Vertrag läuft im Oktober aus'
 	},
-	sleep: { eventId: '$m5', excerpt: 'Ich schlafe kaum noch.' }
+	sleep: { eventId: '$m5', excerpt: 'Ich schlafe kaum noch.' },
+	/** In the Supervision: the supervisor's advice ($s2). */
+	supervisorAdvice: {
+		eventId: '$s2',
+		excerpt: 'Vermeidung ist hier oft Scham.'
+	},
+	/** In the team chat: a colleague's message ($t2). */
+	teamAdvice: {
+		eventId: '$t2',
+		excerpt: 'die Fachstelle Wohnen Vorrang'
+	},
+	/** In the thread: the client's reply ($t2 of the thread). */
+	threadReply: {
+		eventId: '$t2',
+		excerpt: 'Vielleicht nächste Woche'
+	}
 } as const;
 
-type PassageRef = { eventId: string; excerpt: string };
+export type PassageRef = {
+	eventId: string;
+	excerpt: string;
+	/** Who wrote the passage (default: the advice seeker). */
+	author?: string;
+	/** The answer written to it, if any. */
+	replyText?: string;
+};
 
 const noop = () => {};
 const handlers = {
@@ -125,9 +152,16 @@ const storyRecorder: SelectionVoiceRecorder = {
 const toQuote = (passage: PassageRef, index: number): ComposerPendingQuote => ({
 	id: `${passage.eventId}-${index}-${passage.excerpt.length}`,
 	eventId: passage.eventId,
-	author: CLIENT_NAME,
+	author: passage.author ?? CLIENT_NAME,
 	excerpt: passage.excerpt
 });
+
+const roomIdOf = (room: SideRoom) =>
+	room === 'supervision'
+		? SUPERVISION_ROOM_ID
+		: room === 'team'
+			? TEAM_ROOM_ID
+			: CLIENT_ROOM_ID;
 
 /** One message in the side room carrying every collected passage. */
 const stackedReply = (
@@ -143,15 +177,17 @@ const stackedReply = (
 	askerMatrixUserId: CLIENT_MATRIX_ID,
 	isNotRead: false,
 	t: null,
-	rid: room === 'supervision' ? SUPERVISION_ROOM_ID : TEAM_ROOM_ID,
+	rid: roomIdOf(room),
+	...(room === 'thread' ? { threadRootEventId: THREAD_ROOT_ID } : {}),
 	displayName: COUNSELLOR_NAME,
 	username: 'mona.s@oriso.invalid',
 	userId: COUNSELLOR_MATRIX_ID,
 	passageReplies: passages.map(
 		(passage): PassageReply => ({
 			eventId: passage.eventId,
-			author: CLIENT_NAME,
-			excerpt: passage.excerpt
+			author: passage.author ?? CLIENT_NAME,
+			excerpt: passage.excerpt,
+			text: passage.replyText
 		})
 	)
 });
@@ -161,6 +197,10 @@ export interface SideChatReplyStageProps {
 	preset?: PassageRef;
 	/** What shows over the preset passage: the bar or the reply field. */
 	presetMode?: 'toolbar' | 'popover';
+	/** Where the preset passage is marked (default: the client chat). */
+	presetRoom?: 'main' | SideRoom;
+	/** Today's bar over the passage, or the variant: handle + bubble menu. */
+	menu?: 'toolbar' | 'bubble';
 	/** The side chat that is open on load. */
 	openRoom?: SideRoom | null;
 	/** Passages already waiting in the open side chat's reply field. */
@@ -179,6 +219,8 @@ export interface SideChatReplyStageProps {
 export function SideChatReplyStage({
 	preset,
 	presetMode = 'toolbar',
+	presetRoom = 'main',
+	menu = 'toolbar',
 	openRoom = null,
 	collected = [],
 	sent = null,
@@ -190,12 +232,14 @@ export function SideChatReplyStage({
 	const { t } = useTranslation();
 	const copy = teamCopy(t);
 	const contentRef = useRef<HTMLDivElement | null>(null);
+	const sideRef = useRef<HTMLDivElement | null>(null);
 	const [room, setRoom] = useState<SideRoom | null>(openRoom);
 	const [pending, setPending] = useState<
 		Record<SideRoom, ComposerPendingQuote[]>
 	>(() => ({
 		supervision: openRoom === 'supervision' ? collected.map(toQuote) : [],
-		team: openRoom === 'team' ? collected.map(toQuote) : []
+		team: openRoom === 'team' ? collected.map(toQuote) : [],
+		thread: openRoom === 'thread' ? collected.map(toQuote) : []
 	}));
 	const [sideMessages, setSideMessages] = useState<
 		Record<SideRoom, MessageItem[]>
@@ -213,10 +257,17 @@ export function SideChatReplyStage({
 				: [];
 		return {
 			supervision: [...supervisionMessages(), ...sentRow('supervision')],
-			team: [...teamMessages(), ...sentRow('team')]
+			team: [...teamMessages(), ...sentRow('team')],
+			thread: [
+				mainChatMessages().find((m) => m._id === THREAD_ROOT_ID)!,
+				...threadMessages(),
+				...sentRow('thread')
+			]
 		};
 	});
 	const [presetSelection, setPresetSelection] =
+		useState<MessageSelection | null>(null);
+	const [sidePresetSelection, setSidePresetSelection] =
 		useState<MessageSelection | null>(null);
 	const messages = mainChatMessages();
 
@@ -245,8 +296,11 @@ export function SideChatReplyStage({
 		if (!preset) {
 			return undefined;
 		}
+		const inSide = presetRoom !== 'main';
 		const timer = window.setTimeout(() => {
-			const layer = contentRef.current?.querySelector<HTMLElement>(
+			const layer = (
+				inSide ? sideRef : contentRef
+			).current?.querySelector<HTMLElement>(
 				'[data-cy="selection-reply-layer"]'
 			);
 			const bubble = layer && findMessageBubble(layer, preset.eventId);
@@ -255,10 +309,12 @@ export function SideChatReplyStage({
 				return;
 			}
 			bubble!.scrollIntoView({ block: 'center' });
-			setPresetSelection({
+			(inSide ? setSidePresetSelection : setPresetSelection)({
 				passage: {
 					eventId: preset.eventId,
-					author: authorFor(preset.eventId),
+					author: inSide
+						? sideAuthorFor(preset.eventId)
+						: authorFor(preset.eventId),
 					text: preset.excerpt
 				},
 				anchor: anchorFor(range.getBoundingClientRect(), layer),
@@ -315,15 +371,65 @@ export function SideChatReplyStage({
 			[target]: all[target].filter((q) => q.id !== id)
 		}));
 
-	/** A quote in the side chat jumps back to its passage in the client chat. */
+	/** Inside a side chat: the answer joins that chat's own reply field. */
+	const collectInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
+		setPending((all) => ({
+			...all,
+			[target]: [
+				...all[target],
+				{
+					...toQuote(
+						{
+							eventId: answer.passage.eventId,
+							excerpt: answer.passage.text,
+							author: answer.passage.author
+						},
+						all[target].length
+					),
+					replyText: answer.text || undefined,
+					voiceDurationSec: answer.voice?.durationSec ?? null
+				}
+			]
+		}));
+
+	const sendInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
+		setSideMessages((all) => ({
+			...all,
+			[target]: [
+				...all[target],
+				stackedReply(
+					target,
+					[
+						{
+							eventId: answer.passage.eventId,
+							excerpt: answer.passage.text,
+							author: answer.passage.author,
+							replyText: answer.text
+						}
+					],
+					'',
+					String(Date.now())
+				)
+			]
+		}));
+
+	function sideAuthorFor(eventId: string) {
+		return room
+			? sideMessages[room].find((m) => m._id === eventId)?.displayName ||
+					''
+			: '';
+	}
+
+	/**
+	 * A quote jumps back to its passage: in the side chat itself when it was
+	 * marked there, else in the client chat.
+	 */
 	const jumpBack = (reply: PassageReply) => {
-		if (contentRef.current) {
-			jumpToPassage(
-				contentRef.current,
-				reply.eventId,
-				reply.excerpt,
-				reply.start
-			);
+		const inSide =
+			room && sideMessages[room].some((m) => m._id === reply.eventId);
+		const target = inSide ? sideRef.current : contentRef.current;
+		if (target) {
+			jumpToPassage(target, reply.eventId, reply.excerpt, reply.start);
 		}
 	};
 
@@ -345,19 +451,25 @@ export function SideChatReplyStage({
 
 	const supervisionTitle = t('supervision.panel.title');
 	const teamTitle = copy('chatStage.panel.team.title');
+	const threadTitle = t('chatStage.panel.thread.title');
+	const titleOf = (target: SideRoom) =>
+		target === 'supervision'
+			? supervisionTitle
+			: target === 'team'
+				? teamTitle
+				: threadTitle;
 
 	const sidePanel = room && (
 		<div
 			className="chatStage__panel"
 			style={{ width: panelWidth }}
 			data-side-room={room}
+			ref={sideRef}
 		>
 			<SidePanel
 				variant="inside"
 				className="chatStage__panel--inside"
-				label={t('chatStage.panel.region', {
-					title: room === 'supervision' ? supervisionTitle : teamTitle
-				})}
+				label={t('chatStage.panel.region', { title: titleOf(room) })}
 				data-cy="stage-panel"
 				header={
 					room === 'supervision' ? (
@@ -367,6 +479,16 @@ export function SideChatReplyStage({
 							name={SUPERVISOR_NAME}
 							participants={[counsellor, supervisor]}
 							actions={callActions(2)}
+							channels={[]}
+							onSelectChannel={noop}
+							onClose={() => setRoom(null)}
+						/>
+					) : room === 'thread' ? (
+						<PanelHeader
+							kind="thread"
+							title={threadTitle}
+							name={CLIENT_NAME}
+							participants={[counsellor]}
 							channels={[]}
 							onSelectChannel={noop}
 							onClose={() => setRoom(null)}
@@ -396,21 +518,39 @@ export function SideChatReplyStage({
 					) : undefined
 				}
 				timeline={
-					<MessageTimeline
-						keyPrefix={`${room}-`}
-						messages={sideMessages[room]}
-						renderMode="main"
-						threadsEnabled={false}
-						clientName={
-							room === 'supervision'
-								? SUPERVISOR_NAME
-								: CLIENT_NAME
-						}
-						askerMatrixUserIdFor={() => CLIENT_MATRIX_ID}
-						isMyMessage={isCounsellorMessage}
-						onJumpToPassage={jumpBack}
-						{...handlers}
-					/>
+					// Mark, reply and collect work in every side chat and
+					// in a thread too — the same layer as the client chat.
+					<SelectionReplyLayer
+						key={room}
+						authorFor={sideAuthorFor}
+						onAddToComposer={collectInSide(room)}
+						onSendNow={sendInSide(room)}
+						recorder={storyRecorder}
+						voiceInToolbar={false}
+						menu={menu}
+						initialSelection={sidePresetSelection}
+						initialMode={presetMode}
+					>
+						<MessageTimeline
+							keyPrefix={`${room}-`}
+							messages={sideMessages[room]}
+							renderMode={room === 'thread' ? 'thread' : 'main'}
+							threadsEnabled={room === 'thread'}
+							threadRootId={
+								room === 'thread' ? THREAD_ROOT_ID : undefined
+							}
+							forceShow={room === 'thread'}
+							clientName={
+								room === 'supervision'
+									? SUPERVISOR_NAME
+									: CLIENT_NAME
+							}
+							askerMatrixUserIdFor={() => CLIENT_MATRIX_ID}
+							isMyMessage={isCounsellorMessage}
+							onJumpToPassage={jumpBack}
+							{...handlers}
+						/>
+					</SelectionReplyLayer>
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
@@ -420,21 +560,24 @@ export function SideChatReplyStage({
 								? t('supervision.panel.composer.placeholder', {
 										name: SUPERVISOR_NAME
 									})
-								: copy(
-										'chatStage.panel.team.composer.placeholder'
-									)
+								: room === 'team'
+									? copy(
+											'chatStage.panel.team.composer.placeholder'
+										)
+									: t('message.thread.placeholder')
 						}
 						targetRoomId={
-							room === 'supervision'
-								? SUPERVISION_ROOM_ID
-								: TEAM_ROOM_ID
+							room === 'thread' ? undefined : roomIdOf(room)
+						}
+						threadRootId={
+							room === 'thread' ? THREAD_ROOT_ID : undefined
 						}
 						targetChannelKind={room === 'team' ? 'team' : undefined}
 						teamDiscussion={room === 'team'}
 						hideSupervisorAudience
 						compactHeight
 						flushCorner="bottom-right"
-						accent={room}
+						accent={room === 'thread' ? undefined : room}
 						pendingQuotes={pending[room]}
 						onRemovePendingQuote={removePending(room)}
 						onSendPendingQuotes={sendCollected(room)}
@@ -484,7 +627,8 @@ export function SideChatReplyStage({
 									authorFor={authorFor}
 									onAddToComposer={noop}
 									onSendNow={noop}
-									onStartThread={noop}
+									onStartThread={() => setRoom('thread')}
+									menu={menu}
 									onReplyInSideRoom={{
 										supervision: withSupervision
 											? collectInto('supervision')

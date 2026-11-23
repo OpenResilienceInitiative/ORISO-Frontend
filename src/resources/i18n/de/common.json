@@ -2285,7 +2285,6 @@
 			"replyVoice": "Mit Sprachnachricht antworten",
 			"replyInSupervision": "In Supervision antworten",
 			"replyInTeam": "Im Team-Chat antworten",
-			"collect": "Sammeln",
 			"startThread": "Thread",
 			"dialog": "Auf die markierte Stelle von {{author}} antworten",
 			"cancel": "Abbrechen",

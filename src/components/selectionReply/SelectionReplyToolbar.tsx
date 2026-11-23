@@ -37,30 +37,44 @@ export interface SelectionReplyToolbarProps {
  * One icon button of the bar. The label is its accessible name and shows as
  * a small tip on hover and keyboard focus, on desktop and phone alike.
  */
-const ToolbarAction = ({
+export const ToolbarAction = ({
 	label,
 	icon,
 	onClick,
-	dataCy
+	dataCy,
+	withLabel = false
 }: {
 	label: string;
 	icon: React.ReactNode;
 	onClick: () => void;
 	dataCy?: string;
-}) => (
-	<button
-		type="button"
-		className="selectionReply__toolbarButton selectionReply__toolbarButton--icon"
-		onClick={onClick}
-		aria-label={label}
-		data-cy={dataCy}
-	>
-		{icon}
-		<span className="selectionReply__toolbarTip" aria-hidden>
-			{label}
-		</span>
-	</button>
-);
+	/** A menu row with its words (bubble menu) instead of an icon with a tip. */
+	withLabel?: boolean;
+}) =>
+	withLabel ? (
+		<button
+			type="button"
+			className="selectionReply__toolbarButton selectionReply__menuRow"
+			onClick={onClick}
+			data-cy={dataCy}
+		>
+			{icon}
+			<span>{label}</span>
+		</button>
+	) : (
+		<button
+			type="button"
+			className="selectionReply__toolbarButton selectionReply__toolbarButton--icon"
+			onClick={onClick}
+			aria-label={label}
+			data-cy={dataCy}
+		>
+			{icon}
+			<span className="selectionReply__toolbarTip" aria-hidden>
+				{label}
+			</span>
+		</button>
+	);
 
 const Divider = () => (
 	<span className="selectionReply__toolbarDivider" aria-hidden />

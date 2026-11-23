@@ -7,7 +7,13 @@ import {
 	useState
 } from 'react';
 
-import { SelectionReplyToolbar } from './SelectionReplyToolbar';
+import { SelectionReplyToolbar, ToolbarAction } from './SelectionReplyToolbar';
+import { useTranslation } from 'react-i18next';
+import { ReactComponent as ReplyBubbleIcon } from '../../resources/img/icons/reply-bubble.svg';
+import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
+import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { PassageBlurBar } from './PassageBlurBar';
 import { passageBlurFromRange, type PassageBlur } from './passageBlur';
 import {
@@ -69,6 +75,12 @@ export interface SelectionReplyLayerProps {
 	 * drop its own voice entry. Default keeps today's bar.
 	 */
 	voiceInToolbar?: boolean;
+	/**
+	 * FE#2494 *7 variant: 'bubble' shows a small reply handle at the top
+	 * right of the marked passage instead of the bar; the handle opens one
+	 * speech-bubble menu with the field and every other action.
+	 */
+	menu?: 'toolbar' | 'bubble';
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -128,6 +140,7 @@ export const SelectionReplyLayer = ({
 	onStartThread,
 	onReplyInSideRoom,
 	voiceInToolbar = true,
+	menu = 'toolbar',
 	focusComposer,
 	recorder,
 	onBlurPassage,
@@ -695,7 +708,79 @@ export const SelectionReplyLayer = ({
 		}
 	}, [mode, active]);
 
+	const { t: translate } = useTranslation();
 	const anchor = active?.anchor;
+	const isBubble = menu === 'bubble';
+	const HANDLE_SIZE = 32;
+	// The handle sits on the top right corner of the marked text.
+	const handleLeft = anchor
+		? clamp(
+				(anchor.right ?? anchor.centerX) - HANDLE_SIZE / 2,
+				EDGE,
+				anchor.layerWidth - HANDLE_SIZE - EDGE
+			)
+		: 0;
+	const bubbleActions = isBubble ? (
+		<>
+			{onReplyInSideRoom?.supervision && (
+				<ToolbarAction
+					withLabel
+					label={translate(
+						'message.selectionReply.replyInSupervision'
+					)}
+					icon={
+						<SupervisionIcon
+							aria-hidden
+							className="selectionReply__sideRoomIcon"
+						/>
+					}
+					onClick={() => replyInSideRoom('supervision')}
+					dataCy="selection-reply-supervision"
+				/>
+			)}
+			{onReplyInSideRoom?.team && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.replyInTeam')}
+					icon={
+						<TeamChatIcon
+							aria-hidden
+							className="selectionReply__sideRoomIcon"
+						/>
+					}
+					onClick={() => replyInSideRoom('team')}
+					dataCy="selection-reply-team"
+				/>
+			)}
+			{onStartThread && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.startThread')}
+					icon={
+						<ThreadEntryIcon
+							aria-hidden
+							className="selectionReply__threadIcon"
+						/>
+					}
+					onClick={startThread}
+				/>
+			)}
+			{onBlurPassage && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.blur')}
+					icon={
+						<BlurIcon
+							aria-hidden
+							className="selectionReply__blurIcon"
+						/>
+					}
+					onClick={blurPassage}
+					dataCy="selection-blur"
+				/>
+			)}
+		</>
+	) : undefined;
 	// Above the passage when it fits in the visible band, else below it.
 	const toolbarTop = anchor
 		? anchor.top - TOOLBAR_HEIGHT - TOOLBAR_GAP < anchor.visibleTop
@@ -720,7 +805,25 @@ export const SelectionReplyLayer = ({
 			onKeyDown={onLayerKeyDown}
 		>
 			{children}
-			{anchor && mode === 'toolbar' && (
+			{anchor && mode === 'toolbar' && isBubble && (
+				<button
+					type="button"
+					className="selectionReply__handle"
+					data-cy="selection-reply-handle"
+					style={{
+						top: anchor.top - HANDLE_SIZE / 2 - 4,
+						left: handleLeft
+					}}
+					aria-label={translate('message.selectionReply.toolbar')}
+					title={translate('message.selectionReply.reply')}
+					// Keep the native selection while it is pressed.
+					onMouseDown={(event) => event.preventDefault()}
+					onClick={() => openPopover(false)}
+				>
+					<ReplyBubbleIcon aria-hidden />
+				</button>
+			)}
+			{anchor && mode === 'toolbar' && !isBubble && (
 				<SelectionReplyToolbar
 					ref={toolbarRef}
 					style={{
@@ -782,11 +885,15 @@ export const SelectionReplyLayer = ({
 					style={{
 						top: popoverTop,
 						left: clamp(
-							anchor.centerX - POPOVER_WIDTH / 2,
+							isBubble
+								? handleLeft + HANDLE_SIZE - POPOVER_WIDTH
+								: anchor.centerX - POPOVER_WIDTH / 2,
 							EDGE,
 							anchor.layerWidth - POPOVER_WIDTH - EDGE
 						)
 					}}
+					bubble={isBubble}
+					actions={bubbleActions}
 					draft={draft}
 					onDraftChange={setDraft}
 					voice={voice}
