@@ -212,6 +212,8 @@ export interface SideChatReplyStageProps {
 	presetRoom?: 'main' | SideRoom;
 	/** Today's bar over the passage, or the variant: handle + bubble menu. */
 	menu?: 'toolbar' | 'bubble';
+	/** Variant: the side-chat badge hangs on the grey quote. */
+	badgeOn?: 'bubble' | 'quote';
 	/** The side chat that is open on load. */
 	openRoom?: SideRoom | null;
 	/** Passages already waiting in the open side chat's reply field. */
@@ -233,6 +235,7 @@ export function SideChatReplyStage({
 	presetRoom = 'main',
 	presetTarget = null,
 	menu = 'toolbar',
+	badgeOn = 'bubble',
 	openRoom = null,
 	collected = [],
 	sent = null,
@@ -552,6 +555,7 @@ export function SideChatReplyStage({
 						recorder={storyRecorder}
 						voiceInToolbar={false}
 						menu={menu}
+						badgeOn={badgeOn}
 						initialSelection={sidePresetSelection}
 						initialMode={presetMode}
 					>
@@ -653,6 +657,7 @@ export function SideChatReplyStage({
 									onSendNow={noop}
 									onStartThread={() => setRoom('thread')}
 									menu={menu}
+									badgeOn={badgeOn}
 									onReplyInSideRoom={{
 										supervision: withSupervision
 											? {

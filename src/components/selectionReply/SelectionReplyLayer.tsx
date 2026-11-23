@@ -98,6 +98,8 @@ export interface SelectionReplyLayerProps {
 	 * speech-bubble menu with the field and every other action.
 	 */
 	menu?: 'toolbar' | 'bubble';
+	/** FE#2494 variant: the side-chat badge hangs on the quote. */
+	badgeOn?: 'bubble' | 'quote';
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -161,6 +163,7 @@ export const SelectionReplyLayer = ({
 	collectedCount,
 	voiceInToolbar = true,
 	menu = 'toolbar',
+	badgeOn = 'bubble',
 	focusComposer,
 	recorder,
 	onBlurPassage,
@@ -1012,6 +1015,7 @@ export const SelectionReplyLayer = ({
 					// Choosing a side chat already happened: the bubble then
 					// shows only the field for that chat.
 					actions={target ? undefined : bubbleActions}
+					badgeOn={badgeOn}
 					targetBadge={
 						target === 'supervision'
 							? {

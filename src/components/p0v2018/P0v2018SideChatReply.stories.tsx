@@ -101,7 +101,7 @@ export const IntoSupervision: Story = {
 			canvasElement,
 			'[data-cy="selection-reply-target"]'
 		);
-		await expect(target).toHaveAccessibleName('In Supervision antworten');
+		await expect(target).toHaveTextContent('In Supervision antworten');
 		await expect(target).toHaveTextContent('Supervision');
 		await userEvent.type(
 			canvasElement.querySelector<HTMLTextAreaElement>(
@@ -346,5 +346,25 @@ export const VoiceIntoSupervision: Story = {
 		await waitFor(() =>
 			expect(panel.querySelector('.voicePlayer')).toBeTruthy()
 		);
+	}
+};
+
+/** Variante · Das Supervision-Badge hängt auf dem grauen Zitat (spart Abstand). */
+export const BadgeOnQuote: Story = {
+	name: 'Variante · Badge auf dem grauen Zitat',
+	args: {
+		openRoom: 'supervision',
+		collected: [P7_PASSAGES.letters, P7_PASSAGES.contract],
+		preset: P7_PASSAGES.sleep,
+		presetMode: 'popover',
+		presetTarget: 'supervision',
+		badgeOn: 'quote'
+	},
+	play: async ({ canvasElement }) => {
+		const badge = await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-target"]'
+		);
+		await expect(badge.closest('.selectionReply__quote')).toBeTruthy();
 	}
 };

@@ -52,6 +52,11 @@ export interface SelectionReplyPopoverProps {
 	 * of the bubble (icon + room), the full sentence as its accessible name.
 	 */
 	targetBadge?: { label: string; short: string; icon: React.ReactNode };
+	/**
+	 * Where the badge hangs: on the bubble's edge, or (variant, Frank
+	 * 24 Nov) on the grey quote, which saves the bubble's top spacing.
+	 */
+	badgeOn?: 'bubble' | 'quote';
 	/** Answers already stacked for that message; the stack shows the next number. */
 	collectedCount?: number;
 }
@@ -90,6 +95,7 @@ export const SelectionReplyPopover = forwardRef<
 			actions,
 			bubble = false,
 			targetBadge,
+			badgeOn = 'bubble',
 			collectedCount = 0
 		},
 		ref
@@ -210,6 +216,20 @@ export const SelectionReplyPopover = forwardRef<
 			onAddToComposer();
 		};
 
+		const badge = targetBadge ? (
+			<p
+				className="selectionReply__target"
+				data-cy="selection-reply-target"
+				title={targetBadge.label}
+			>
+				<span className="selectionReply__targetIcon" aria-hidden="true">
+					{targetBadge.icon}
+				</span>
+				<span aria-hidden="true">{targetBadge.short}</span>
+				<span className="sr-only">{targetBadge.label}</span>
+			</p>
+		) : null;
+
 		const addLabel = translate('message.selectionReply.addToComposer');
 
 		return (
@@ -224,7 +244,12 @@ export const SelectionReplyPopover = forwardRef<
 					'selectionReply__popover',
 					bubble && 'selectionReply__popover--bubble',
 					bubble === 'above' && 'selectionReply__popover--above',
-					targetBadge && 'selectionReply__popover--targeted'
+					targetBadge &&
+						badgeOn === 'bubble' &&
+						'selectionReply__popover--targeted',
+					targetBadge &&
+						badgeOn === 'quote' &&
+						'selectionReply__popover--targetedQuote'
 				]
 					.filter(Boolean)
 					.join(' ')}
@@ -232,23 +257,9 @@ export const SelectionReplyPopover = forwardRef<
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
-				{targetBadge && (
-					<p
-						className="selectionReply__target"
-						data-cy="selection-reply-target"
-						aria-label={targetBadge.label}
-						title={targetBadge.label}
-					>
-						<span
-							className="selectionReply__targetIcon"
-							aria-hidden="true"
-						>
-							{targetBadge.icon}
-						</span>
-						<span aria-hidden="true">{targetBadge.short}</span>
-					</p>
-				)}
+				{badgeOn === 'bubble' && badge}
 				<div className="selectionReply__quote">
+					{badgeOn === 'quote' && badge}
 					<ReplyArrowIcon className="selectionReply__quoteIcon" />
 					<span className="selectionReply__quoteBody">
 						<span className="selectionReply__quoteAuthor">

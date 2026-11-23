@@ -356,7 +356,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	height: 36px;
 	padding: 0;
 	border: 0;
-	border-radius: 50%;
+	// The send button's shape: round with a 4px top-right corner.
+	border-radius: 18px 4px 18px 18px;
 	background: transparent;
 	color: var(--m3-on-surface-variant, #444748);
 	cursor: pointer;
@@ -396,21 +397,32 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 // FE#2494 *7: where the answer goes — a badge attached on top of the
 // bubble (Frank, 24 Nov), not a line of text inside it.
 .selectionReply__popover--targeted {
-	padding-top: 20px;
+	padding-top: 18px;
+}
+
+// Variant (Frank, 24 Nov): the badge hangs on the grey quote instead of the
+// bubble's edge; the bubble keeps its plain padding.
+.selectionReply__popover--targetedQuote {
+	.selectionReply__quote {
+		position: relative;
+		margin-top: 10px;
+		padding-top: 14px;
+	}
 }
 
 .selectionReply__target {
 	position: absolute;
-	top: -14px;
+	top: -12px;
 	right: 8px;
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	height: 28px;
+	// Flatter than a pill, with the send button's 4px top-right corner.
+	height: 24px;
 	margin: 0;
-	padding: 0 12px 0 8px;
+	padding: 0 10px 0 6px;
 	border: 1px solid var(--m3-primary-fixed, #ffdad5);
-	border-radius: 14px;
+	border-radius: 12px 4px 12px 12px;
 	background: var(--m3-secondary-container, #e8e6f0);
 	color: var(--m3-on-secondary-container, #4f5864);
 	font-size: 12px;
@@ -423,8 +435,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 
 	svg {
-		width: 18px;
-		height: 18px;
+		width: 16px;
+		height: 16px;
 		fill: currentColor;
 	}
 }
@@ -547,7 +559,7 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	.sendButton {
 		width: 36px;
 		height: 36px;
-		border-radius: 50%;
+		border-radius: 18px 4px 18px 18px;
 	}
 }
 
