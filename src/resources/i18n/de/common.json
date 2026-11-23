@@ -6549,6 +6549,96 @@
 					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
 				}
 			}
+		},
+		"liveChat": {
+			"title": "Live-Chat",
+			"summary": "Wie anonyme Live-Chats ankommen, wie Sie sich verfügbar melden und einen Chat übernehmen.",
+			"step": {
+				"intro": {
+					"title": "Live-Chat: was anders ist",
+					"intro": "Live-Chats kommen ohne Registrierung über einen Link. Ratsuchende schreiben anonym und zu einem bestimmten Thema. Alle verfügbaren Beratenden des Themas teilen sich eine gemeinsame Warteschlange."
+				},
+				"availabilitySettings": {
+					"title": "Ihre Verfügbarkeit",
+					"intro": "Hier schalten Sie „Bin verfügbar“ ein oder aus. Nur wer verfügbar ist, bekommt Live-Chats angeboten. Auf Wunsch legen Sie den Schalter in die Menüleiste."
+				},
+				"availabilityToggle": {
+					"title": "Schalter in der Menüleiste",
+					"intro": "Mit „Live Chat über Menü Leiste aktivieren“ erscheint dieser Schalter. Ein Klick meldet Sie verfügbar oder nicht verfügbar — ohne die Einstellungen zu öffnen."
+				},
+				"queue": {
+					"title": "Die gemeinsame Warteschlange",
+					"intro": "Der Filter „Live-Chat“ zeigt alle wartenden Live-Chats. Ihre Kolleginnen und Kollegen sehen dieselbe Liste."
+				},
+				"accept": {
+					"title": "Chat starten",
+					"intro": "Mit „Chat starten“ übernehmen Sie den Chat. Angenommen werden kann nur der Chat, der vorne in der Warteschlange steht."
+				},
+				"done": {
+					"title": "Chat beenden",
+					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Zeitstrahl und Entwürfe",
+			"summary": "Wo Sie alle Ereignisse an einem Ort sehen und wo Ihre ungesendeten Nachrichten liegen.",
+			"step": {
+				"activityNav": {
+					"title": "Ihr Zeitstrahl",
+					"intro": "Unter „Zeitstrahl“ laufen die Ereignisse aus all Ihren Chats zusammen. Sie müssen nicht mehr jede Beratung einzeln öffnen, um zu sehen, was neu ist."
+				},
+				"timeline": {
+					"title": "Alles an einem Ort",
+					"intro": "Links die Liste der Ereignisse, rechts die Details zum gewählten Eintrag. Von dort springen Sie direkt in den passenden Chat."
+				},
+				"filters": {
+					"title": "Suchen und filtern",
+					"intro": "Suchen Sie im Zeitstrahl oder filtern Sie nach Art, zum Beispiel „Ungelesen“ oder „Erwähnungen“. Die Anzeige passen Sie über den Filter-Knopf links an."
+				},
+				"markAllRead": {
+					"title": "Alle als gelesen markieren",
+					"intro": "Ein Klick markiert alle Einträge im Zeitstrahl als gelesen. Die Nachrichten in Ihren Chats bleiben davon unberührt."
+				},
+				"draftsChip": {
+					"title": "Entwürfe in den Beratungen",
+					"intro": "Ungesendete Nachrichten gehen nicht verloren. Der Filter „Entwürfe“ zeigt die Beratungen, in denen noch ein Entwurf liegt."
+				},
+				"draftsCenter": {
+					"title": "Alle Entwürfe",
+					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffnen Sie einen Entwurf, um weiterzuschreiben, oder löschen Sie ihn."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Video-Call",
+			"summary": "Wie Sie aus einem Gespräch heraus anrufen und wartende Personen einlassen.",
+			"step": {
+				"intro": {
+					"title": "Anrufe im Gespräch",
+					"intro": "Video- und Audio-Calls starten Sie direkt in der Beratung, im Kopf des Gesprächs. Die ratsuchende Person bekommt den Anruf in ihrem Chat angezeigt."
+				},
+				"sessionCallButton": {
+					"title": "Anruf starten",
+					"intro": "Im Kopf eines geöffneten Gesprächs stehen „Video-Call starten“ und „Audio-Call starten“. Auf schmalen Bildschirmen finden Sie beide im Menü ⋮."
+				},
+				"groupCallButton": {
+					"title": "Anruf im Gruppenchat",
+					"intro": "Auch im Gruppenchat starten Sie den Anruf oben im Kopf des Chats."
+				},
+				"knock": {
+					"title": "Wartende Personen einlassen",
+					"intro": "Wer später dazukommt, klopft an und wartet. Im laufenden Anruf erscheint „Wartende Personen“: Mit „Einlassen“ holen Sie eine Person herein, mit „Ablehnen“ nicht, mit „Alle einlassen“ alle auf einmal."
+				},
+				"help": {
+					"title": "Hilfe zu Video-Calls",
+					"intro": "Unter „Hilfe“ → „Video-Call“ steht, welche Browser Video-Calls unterstützen. Den Anmelde-Link können Sie hier kopieren und an Ratsuchende weitergeben."
+				},
+				"done": {
+					"title": "Bereit für den ersten Anruf",
+					"intro": "Öffnen Sie ein Gespräch und starten Sie den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
+				}
+			}
 		}
 	},
 	"weekday": {

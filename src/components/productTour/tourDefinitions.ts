@@ -7,6 +7,9 @@ import {
 } from './tours/groupCircleTour';
 import { consultantProfileTour } from './tours/profileTour';
 import type { TourDefinition } from './types';
+import { consultantLiveChatTour } from './tours/liveChatTour';
+import { consultantTimelineTour } from './tours/timelineTour';
+import { consultantVideoCallTour } from './tours/videoCallTour';
 
 /**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
@@ -139,6 +142,9 @@ export const frontendTopicTours: TourDefinition[] = [
 	consultantCalendarTour,
 	consultantGroupCircleTour,
 	consultantProfileTour,
+	consultantLiveChatTour,
+	consultantTimelineTour,
+	consultantVideoCallTour,
 	consultantMailCounsellingTour
 ];
 

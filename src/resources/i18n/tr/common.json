@@ -6559,6 +6559,96 @@
 					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
 				}
 			}
+		},
+		"liveChat": {
+			"title": "Canlı sohbet",
+			"summary": "Anonim canlı sohbetler nasıl gelir, kendinizi nasıl uygun olarak işaretler ve bir sohbeti nasıl devralırsınız.",
+			"step": {
+				"intro": {
+					"title": "Canlı sohbet: farklı olan ne",
+					"intro": "Canlı sohbetler kayıt olmadan bir bağlantı üzerinden gelir. Danışanlar anonim olarak ve belirli bir konuda yazar. Konunun tüm uygun danışmanları tek bir ortak sırayı paylaşır."
+				},
+				"availabilitySettings": {
+					"title": "Uygunluğunuz",
+					"intro": "“Uygunum” ayarını burada açıp kapatırsınız. Canlı sohbetler yalnızca uygun olanlara sunulur. İsterseniz anahtarı menü çubuğuna taşıyabilirsiniz."
+				},
+				"availabilityToggle": {
+					"title": "Menü çubuğundaki anahtar",
+					"intro": "“Canlı sohbeti menü çubuğundan etkinleştir” seçiliyse bu anahtar görünür. Tek tıkla ayarları açmadan uygun ya da uygun değil olursunuz."
+				},
+				"queue": {
+					"title": "Ortak sıra",
+					"intro": "“Canlı sohbet” filtresi bekleyen tüm canlı sohbetleri gösterir. Meslektaşlarınız aynı listeyi görür."
+				},
+				"accept": {
+					"title": "Sohbet başlat",
+					"intro": "“Sohbet başlat” ile sohbeti devralırsınız. Yalnızca sıranın başındaki sohbet kabul edilebilir."
+				},
+				"done": {
+					"title": "Sohbeti bitir",
+					"intro": "Görüşme bitince ⋮ menüsünden “Sohbeti bitir” ile sonlandırın. Ardından sıraya geri dönersiniz."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Zaman çizelgesi ve taslaklar",
+			"summary": "Tüm olayları tek yerde nerede gördüğünüz ve gönderilmemiş mesajlarınızın nerede durduğu.",
+			"step": {
+				"activityNav": {
+					"title": "Zaman çizelgeniz",
+					"intro": "“Zaman çizelgesi” tüm sohbetlerinizdeki olayları bir araya getirir. Yenilikleri görmek için artık her görüşmeyi tek tek açmanız gerekmez."
+				},
+				"timeline": {
+					"title": "Her şey tek yerde",
+					"intro": "Solda olayların listesi, sağda seçilen kaydın ayrıntıları. Oradan doğrudan ilgili sohbete geçersiniz."
+				},
+				"filters": {
+					"title": "Ara ve filtrele",
+					"intro": "Zaman çizelgesinde arayın ya da türe göre filtreleyin, örneğin “Okunmamış” veya “Bahsetmeler”. Soldaki filtre düğmesi görünümü ayarlar."
+				},
+				"markAllRead": {
+					"title": "Tümünü okundu işaretle",
+					"intro": "Tek tıkla zaman çizelgesindeki tüm kayıtlar okundu olarak işaretlenir. Sohbetlerinizdeki mesajlar bundan etkilenmez."
+				},
+				"draftsChip": {
+					"title": "Görüşmelerdeki taslaklar",
+					"intro": "Gönderilmemiş mesajlar kaybolmaz. “Taslaklar” filtresi hâlâ taslak bulunan görüşmeleri gösterir."
+				},
+				"draftsCenter": {
+					"title": "Tüm taslaklar",
+					"intro": "Tüm taslaklar burada, sohbet ve konu başına kayıtlı. Yazmaya devam etmek için bir taslağı açın ya da silin."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Görüntülü arama",
+			"summary": "Bir görüşmenin içinden nasıl arama yaptığınız ve bekleyenleri nasıl içeri aldığınız.",
+			"step": {
+				"intro": {
+					"title": "Görüşme içinde aramalar",
+					"intro": "Görüntülü ve sesli aramaları doğrudan görüşmenin başlığından başlatırsınız. Danışan aramayı kendi sohbetinde görür."
+				},
+				"sessionCallButton": {
+					"title": "Arama başlat",
+					"intro": "Açık bir görüşmenin başlığında “Görüntülü aramayı başlat” ve “Sesli aramayı başlat” bulunur. Dar ekranlarda ikisi de ⋮ menüsündedir."
+				},
+				"groupCallButton": {
+					"title": "Grup sohbetinde arama",
+					"intro": "Grup sohbetinde de aramayı sohbetin başlığından başlatırsınız."
+				},
+				"knock": {
+					"title": "Bekleyenleri içeri almak",
+					"intro": "Sonradan katılan kapıyı çalar ve bekler. Arama sırasında “Bekleyen kişiler” görünür: “İçeri al” bir kişiyi alır, “Reddet” almaz, “Herkesi içeri al” hepsini birden alır."
+				},
+				"help": {
+					"title": "Görüntülü arama yardımı",
+					"intro": "“Yardım” → “Görüntülü arama” hangi tarayıcıların görüntülü aramayı desteklediğini gösterir. Giriş bağlantısını buradan kopyalayıp danışanlara iletebilirsiniz."
+				},
+				"done": {
+					"title": "İlk aramaya hazırsınız",
+					"intro": "Bir görüşme açın ve uygun olduğunda aramayı başlatın. Aramadan sonra sohbet her zamanki gibi devam eder."
+				}
+			}
 		}
 	},
 	"weekday": {

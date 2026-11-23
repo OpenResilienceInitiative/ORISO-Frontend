@@ -2853,6 +2853,71 @@
 					"intro": "Deine Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
 				}
 			}
+		},
+		"liveChat": {
+			"summary": "Wie anonyme Live-Chats ankommen, wie du dich verfügbar meldest und einen Chat übernimmst.",
+			"step": {
+				"availabilitySettings": {
+					"title": "Deine Verfügbarkeit",
+					"intro": "Hier schaltest du „Bin verfügbar“ ein oder aus. Nur wer verfügbar ist, bekommt Live-Chats angeboten. Auf Wunsch legst du den Schalter in die Menüleiste."
+				},
+				"availabilityToggle": {
+					"intro": "Mit „Live Chat über Menü Leiste aktivieren“ erscheint dieser Schalter. Ein Klick meldet dich verfügbar oder nicht verfügbar — ohne die Einstellungen zu öffnen."
+				},
+				"queue": {
+					"intro": "Der Filter „Live-Chat“ zeigt alle wartenden Live-Chats. Deine Kolleginnen und Kollegen sehen dieselbe Liste."
+				},
+				"accept": {
+					"intro": "Mit „Chat starten“ übernimmst du den Chat. Angenommen werden kann nur der Chat, der vorne in der Warteschlange steht."
+				},
+				"done": {
+					"intro": "Ist das Gespräch vorbei, beendest du es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				}
+			}
+		},
+		"timeline": {
+			"summary": "Wo du alle Ereignisse an einem Ort siehst und wo deine ungesendeten Nachrichten liegen.",
+			"step": {
+				"activityNav": {
+					"title": "Dein Zeitstrahl",
+					"intro": "Unter „Zeitstrahl“ laufen die Ereignisse aus all deinen Chats zusammen. Du musst nicht mehr jede Beratung einzeln öffnen, um zu sehen, was neu ist."
+				},
+				"timeline": {
+					"intro": "Links die Liste der Ereignisse, rechts die Details zum gewählten Eintrag. Von dort springst du direkt in den passenden Chat."
+				},
+				"filters": {
+					"intro": "Suche im Zeitstrahl oder filtere nach Art, zum Beispiel „Ungelesen“ oder „Erwähnungen“. Die Anzeige passt du über den Filter-Knopf links an."
+				},
+				"markAllRead": {
+					"intro": "Ein Klick markiert alle Einträge im Zeitstrahl als gelesen. Die Nachrichten in deinen Chats bleiben davon unberührt."
+				},
+				"draftsCenter": {
+					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffne einen Entwurf, um weiterzuschreiben, oder lösche ihn."
+				}
+			}
+		},
+		"videoCall": {
+			"summary": "Wie du aus einem Gespräch heraus anrufst und wartende Personen einlässt.",
+			"step": {
+				"intro": {
+					"intro": "Video- und Audio-Calls startest du direkt in der Beratung, im Kopf des Gesprächs. Die ratsuchende Person bekommt den Anruf in ihrem Chat angezeigt."
+				},
+				"sessionCallButton": {
+					"intro": "Im Kopf eines geöffneten Gesprächs stehen „Video-Call starten“ und „Audio-Call starten“. Auf schmalen Bildschirmen findest du beide im Menü ⋮."
+				},
+				"groupCallButton": {
+					"intro": "Auch im Gruppenchat startest du den Anruf oben im Kopf des Chats."
+				},
+				"knock": {
+					"intro": "Wer später dazukommt, klopft an und wartet. Im laufenden Anruf erscheint „Wartende Personen“: Mit „Einlassen“ holst du eine Person herein, mit „Ablehnen“ nicht, mit „Alle einlassen“ alle auf einmal."
+				},
+				"help": {
+					"intro": "Unter „Hilfe“ → „Video-Call“ steht, welche Browser Video-Calls unterstützen. Den Anmelde-Link kannst du hier kopieren und an Ratsuchende weitergeben."
+				},
+				"done": {
+					"intro": "Öffne ein Gespräch und starte den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
+				}
+			}
 		}
 	},
 	"liveChat": {

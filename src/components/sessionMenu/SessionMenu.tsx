@@ -866,6 +866,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								buttonHandle={() => handleCallButton(true)}
 								item={buttonStartVideoCall}
 								testingAttribute={CALL_HEADER_BUTTON.video}
+								tourTarget="session-video-call-button"
 								className={
 									offeredCall === 'video'
 										? 'sessionMenu__callOffer'

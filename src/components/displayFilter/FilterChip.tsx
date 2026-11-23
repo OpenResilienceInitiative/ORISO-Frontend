@@ -29,6 +29,8 @@ export interface FilterChipProps {
 	'deactivatedLabel'?: string;
 	'onDeactivatedClick'?: () => void;
 	'data-cy'?: string;
+	/** Inert product-tour anchor, rendered as `data-tour-target`. */
+	'tourTarget'?: string;
 }
 
 /**
@@ -51,7 +53,8 @@ export const FilterChip = ({
 	deactivated = false,
 	deactivatedLabel,
 	onDeactivatedClick,
-	'data-cy': dataCy
+	'data-cy': dataCy,
+	tourTarget
 }: FilterChipProps) => {
 	const hasCount = count !== undefined && count > 0;
 	const badge = hasCount ? (count > 99 ? '99+' : String(count)) : null;
@@ -74,6 +77,7 @@ export const FilterChip = ({
 			disabled={disabled}
 			onClick={deactivated ? onDeactivatedClick : onClick}
 			data-cy={dataCy}
+			data-tour-target={tourTarget}
 			className={clsx('sessionsListToolbar__chip', {
 				'sessionsListToolbar__chip--active': active,
 				'sessionsListToolbar__chip--iconOnly':
