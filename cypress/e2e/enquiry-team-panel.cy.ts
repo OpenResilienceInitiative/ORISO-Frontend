@@ -361,6 +361,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			matrixRoomId: teamRoomId,
 			status: archived ? 'ARCHIVED' : 'OPEN'
 		}).as('openTeam');
+		// FE#2491: an ARCHIVED (or CLOSED) team chat is read through the
+		// read-only join, never the switch-on POST (US#1778).
+		cy.intercept('POST', '**/sessions/1375/team-discussion/join', {
+			matrixRoomId: teamRoomId,
+			status: 'ARCHIVED'
+		}).as('joinTeam');
 		cy.intercept('GET', '**/service/users/chat-series/join-requests', []);
 		cy.fastLogin({ userId: USER_CONSULTANT });
 		// FE#2491: the team chat follows the agency policy. This AgencyService
