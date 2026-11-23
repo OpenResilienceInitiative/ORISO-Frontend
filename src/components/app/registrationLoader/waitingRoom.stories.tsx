@@ -351,39 +351,66 @@ export const ReadyBluePrimary: StoryObj = {
 };
 
 /**
- * Large screens: the cards grow with the window instead of staying 372 px
- * in the left half of the white column with an empty lower half (seen on
- * ORISO Staging on a 2560 px screen, 2026-11-13). The contract fails when a
- * card keeps its laptop size here; this story also checks that all three
- * cards stand side by side, fully above the bar.
+ * The step cards are a CAROUSEL with arrows and dots at every desktop size
+ * (#2179, #2198; product owner, 2026-11-20). #2247 had turned them into a
+ * static row of three without arrows or dots, from a misread of "nicht ewig
+ * viel rumscrollen" — Frank meant cards cut off behind the button. Do not
+ * turn this back into a static grid without the product owner.
+ *
+ * At every size: the cards end above the bar (nothing cut off), they are
+ * sized from the free height with a square motif, at most one and a half
+ * across, and the dots are there. Where the track scrolls (every normal
+ * desktop window), the hover arrow moves exactly one card and a dot click
+ * moves the track.
  */
-const expectCardsUseTheRoom = async (canvasElement: HTMLElement) => {
+const expectCarouselAtThisSize = async (
+	canvasElement: HTMLElement,
+	{ scrolls }: { scrolls: boolean }
+) => {
 	await expectWaitingRoomLayout(canvasElement, { cards: true });
 	const doc = canvasElement.ownerDocument;
 	const cards = [
 		...doc.querySelectorAll<HTMLElement>('[data-cy^="handover-card-"]')
 	].map((card) => card.getBoundingClientRect());
-	const track = doc
-		.querySelector<HTMLElement>('[data-cy="handover-carousel"]')!
-		.getBoundingClientRect();
+	const track = doc.querySelector<HTMLElement>(
+		'[data-cy="handover-carousel"]'
+	)!;
 	const bar = doc
 		.querySelector<HTMLElement>('[data-cy="registration-footer"]')!
 		.getBoundingClientRect();
 	expect(cards).toHaveLength(3);
-	// All three visible in the track, none cut off at its right edge.
-	expect(cards[2].right).toBeLessThanOrEqual(track.right + 1);
-	// They end above the bar: nothing to scroll to see a whole card.
+	// Nothing cut off behind the bar.
 	expect(cards[0].bottom).toBeLessThan(bar.top);
-	// Nothing to scroll sideways either, so no dots.
-	expect(doc.querySelector('[data-cy="handover-carousel-dots"]')).toBeNull();
-	return { cards, track };
+	// A carousel: the third card is not in view at the start.
+	if (scrolls) {
+		expect(track.scrollWidth).toBeGreaterThan(track.clientWidth + 1);
+	}
+	// The dots are always there.
+	const dots = doc.querySelectorAll<HTMLButtonElement>(
+		'[data-cy="handover-carousel-dots"] button'
+	);
+	expect(dots).toHaveLength(3);
+	if (!scrolls) return;
+	await expectArrowStepsOneCard(
+		canvasElement,
+		'handover-carousel',
+		'handover-carousel-arrows'
+	);
+	// A dot moves the track to its card.
+	track.scrollTo({ left: 0, behavior: 'auto' });
+	await waitFor(() => expect(track.scrollLeft).toBe(0));
+	await userEvent.click(dots[2]);
+	await waitFor(() => expect(track.scrollLeft).toBeGreaterThan(0));
 };
 
-/** Wide screens: the cards also fill the column's width, not half of it. */
-const expectCardsFillTheWidth = async (canvasElement: HTMLElement) => {
-	const { cards, track } = await expectCardsUseTheRoom(canvasElement);
-	const used = cards[2].right - cards[0].left;
-	expect(used / track.width).toBeGreaterThan(0.9);
+/** 1440×900 desktop: the carousel scrolls, arrows and dots work. */
+export const ReadyDesktopCarousel: StoryObj = {
+	name: '4 — Alles geladen: Karussell mit Pfeilen und Punkten (1440)',
+	globals: desktop1440Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	play: async ({ canvasElement }) => {
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
+	}
 };
 
 export const ReadyQhd2560: StoryObj = {
@@ -391,7 +418,7 @@ export const ReadyQhd2560: StoryObj = {
 	globals: { viewport: { value: 'desktop2560' } },
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
-		await expectCardsFillTheWidth(canvasElement);
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
 	}
 };
 
@@ -400,27 +427,30 @@ export const Ready4k3840: StoryObj = {
 	globals: { viewport: { value: 'desktop3840' } },
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
-		await expectCardsFillTheWidth(canvasElement);
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
 	}
 };
 
-/** A 1366×768 laptop: the cards shrink so all three fit above the bar. */
+/** A 1366×768 laptop: smaller cards, still a carousel, nothing cut off. */
 export const ReadyLaptop1366: StoryObj = {
 	name: '4 — Alles geladen (Laptop 1366×768)',
 	globals: { viewport: { value: 'desktop1366' } },
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
-		await expectCardsUseTheRoom(canvasElement);
+		await expectCarouselAtThisSize(canvasElement, { scrolls: true });
 	}
 };
 
-/** 1920×1080 at 150 % browser zoom: the same, with less room still. */
+/**
+ * 1920×1080 at 150 % browser zoom: so little height that the three small
+ * cards fit side by side; nothing is cut off and the dots stay.
+ */
 export const ReadyZoom150: StoryObj = {
 	name: '4 — Alles geladen (1920 bei 150 % Zoom)',
 	globals: { viewport: { value: 'desktop1280x720' } },
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement }) => {
-		await expectCardsUseTheRoom(canvasElement);
+		await expectCarouselAtThisSize(canvasElement, { scrolls: false });
 	}
 };
 
@@ -430,8 +460,8 @@ export const ReadyZoom150: StoryObj = {
  * a strip with a round arrow fades in, a click moves one card, and then the
  * same appears on the left edge. Phones and tablets never show them.
  *
- * Shown in a 390 px window with a mouse: from `sm` up the fluid cards fit
- * side by side (2026-11-13), so there is nothing to scroll and no arrow.
+ * Shown in a 390 px window with a mouse; the desktop sizes are checked by
+ * `ReadyDesktopCarousel` and the size stories above.
  */
 export const ReadyHoverArrows: StoryObj = {
 	name: '4c — Pfeile beim Darüberfahren (schmales Fenster, Maus)',

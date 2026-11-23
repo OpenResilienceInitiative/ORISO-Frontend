@@ -122,6 +122,7 @@ import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotifi
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
@@ -165,6 +166,9 @@ export interface SessionMenuProps {
 	 * counsellor may create one here and the backend can store it.
 	 */
 	onCreateAppointment?: () => void;
+	/** Opens the existing team conversation when available to this viewer. */
+	onOpenTeamChat?: () => void;
+	teamChatUnreadCount?: number;
 	/**
 	 * #2252: "Neuen Link senden" for an expired Direkteinladung of this
 	 * conversation. Set only while there is one.
@@ -188,6 +192,16 @@ const CALL_MENU_ROW: Record<CallKind, string> = {
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	const teamUnreadCount = props.onOpenTeamChat
+		? Math.max(0, props.teamChatUnreadCount ?? 0)
+		: 0;
+	const teamUnreadLabel =
+		teamUnreadCount > 0
+			? `${translate('enquiry.teamDiscussion.open')}: ${translate('supervision.panel.unread', { count: teamUnreadCount })}`
+			: '';
+	const menuLabel = [translate('app.menu'), teamUnreadLabel]
+		.filter(Boolean)
+		.join(', ');
 
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -763,38 +777,42 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper" ref={wrapperRef}>
-			<StartCallRequest
-				sessionId={activeSession.item?.id}
-				settled={!isLoadingTenantSettings && featuresSettled}
-				calls={{
-					video: {
-						allowed: videoCallShown,
-						start: () => handleStartVideoCall(true),
-						offer: () => offerCall('video'),
-						refuse: () =>
-							refuseCall(
-								translate(
-									'videoCall.overlay.unsupported.headline'
-								),
-								!callGates.video ||
-									!consultingType?.isVideoCallAllowed
-									? translate(
-											'directLink.entry.callsDisabled'
-										)
-									: ''
-							)
-					},
-					audio: {
-						allowed: audioCallShown,
-						start: () => handleStartVideoCall(false),
-						offer: () => offerCall('audio'),
-						refuse: () =>
-							refuseCall(
-								translate('directLink.entry.callsDisabled')
-							)
-					}
-				}}
-			/>
+			{/* Group chats: the group header owns the call buttons and takes the
+			    request (GroupCallStartRequest, FE#2482). */}
+			{sessionMenuOwnsCallControls(activeSession.isGroup) && (
+				<StartCallRequest
+					sessionId={activeSession.item?.id}
+					settled={!isLoadingTenantSettings && featuresSettled}
+					calls={{
+						video: {
+							allowed: videoCallShown,
+							start: () => handleStartVideoCall(true),
+							offer: () => offerCall('video'),
+							refuse: () =>
+								refuseCall(
+									translate(
+										'videoCall.overlay.unsupported.headline'
+									),
+									!callGates.video ||
+										!consultingType?.isVideoCallAllowed
+										? translate(
+												'directLink.entry.callsDisabled'
+											)
+										: ''
+								)
+						},
+						audio: {
+							allowed: audioCallShown,
+							start: () => handleStartVideoCall(false),
+							offer: () => offerCall('audio'),
+							refuse: () =>
+								refuseCall(
+									translate('directLink.entry.callsDisabled')
+								)
+						}
+					}}
+				/>
+			)}
 			{askerCallInfoShown && (
 				<AskerCallInfo
 					sessionId={activeSession.item.id}
@@ -882,12 +900,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
-						aria-label={translate('app.menu')}
+						aria-label={menuLabel}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
-							aria-label={translate('app.menu')}
+							aria-hidden="true"
 						/>
+						{teamUnreadCount > 0 && (
+							<span
+								className="sessionMenu__teamUnread"
+								aria-hidden="true"
+							>
+								{teamUnreadCount > 99 ? '99+' : teamUnreadCount}
+							</span>
+						)}
 					</button>
 					<button
 						type="button"
@@ -899,12 +925,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
-						aria-label={translate('app.menu')}
+						aria-label={menuLabel}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
-							aria-label={translate('app.menu')}
+							aria-hidden="true"
 						/>
+						{teamUnreadCount > 0 && (
+							<span
+								className="sessionMenu__teamUnread"
+								aria-hidden="true"
+							>
+								{teamUnreadCount > 99 ? '99+' : teamUnreadCount}
+							</span>
+						)}
 					</button>
 
 					{/* Escape the header stacking context so the menu remains above its backdrop. */}
@@ -1007,6 +1041,31 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										</button>
 									)}
 								</>
+							)}
+
+							{props.onOpenTeamChat && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onOpenTeamChat?.();
+									}}
+									aria-label={teamUnreadLabel || undefined}
+									data-cy="session-menu-team-chat"
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'enquiry.teamDiscussion.open'
+										)}
+										shortcut={
+											teamUnreadCount > 0
+												? teamUnreadCount
+												: undefined
+										}
+									/>
+								</button>
 							)}
 
 							{props.onCreateAppointment && (
@@ -1133,6 +1192,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									}}
 									disabled={!supervisionPanel.available}
 									data-cy="session-menu-supervision-panel"
+									// #2228: the hover hint names the channel
+									// as the feedback chat with the supervisor.
+									title={translate(
+										'supervision.panel.menuHint'
+									)}
 								>
 									<SessionMenuItemContent
 										icon={

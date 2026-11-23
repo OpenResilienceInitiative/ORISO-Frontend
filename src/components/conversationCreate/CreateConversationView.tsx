@@ -84,8 +84,11 @@ import { PanelHeader } from './PanelHeader';
 import { ScreenIntro } from './ScreenIntro';
 import { BackPill } from './BackPill';
 import { TopicMedia } from './TopicMedia';
-import { CompactFormatRow } from './CompactFormatRow';
+import { FormatPickerCard } from './FormatPickerCard';
+import { CardInfoButton } from './CardInfoButton';
+import { recipientScopeHintKey } from './internal/internalSubsetMessages';
 import { SplitButton } from '../splitButton/SplitButton';
+import { useCreateViewExit } from './useCreateViewExit';
 import {
 	InternalChatCreateCard,
 	InternalChatDraft
@@ -101,7 +104,16 @@ import {
 	loadInternalChatColleagues
 } from './internal/loadInternalChatColleagues';
 import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
+import { peopleForInternalChatPicker } from './internal/peopleForInternalChatPicker';
 import './conversationCreate.styles.scss';
+
+type PickedFormat = Exclude<CreateStep, 'picker'>;
+
+/** How long the picked card flips while the others slide away. */
+const FORMAT_LEAVE_MS = 420;
+
+const prefersReducedMotion = () =>
+	window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /**
  * Create-conversation flow (Figma "Flow Self Help Group", node 8482-30552).
@@ -115,6 +127,8 @@ import './conversationCreate.styles.scss';
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
+
+const consultantConversationList = '/sessions/consultant/sessionView';
 
 interface CreateConversationFlowProps {
 	/** The counsellor's agencies with their effective group-chat settings. */
@@ -291,6 +305,34 @@ const CreateConversationFlow = ({
 		duplicateOccurrence,
 		isEditMode
 	]);
+	/* Picking a format (Frank, 2026-11-21): the other cards slide out to
+	   the right, the chosen one flips, then the next step comes in from
+	   below. Skipped entirely under prefers-reduced-motion. */
+	const [leaving, setLeaving] = useState<PickedFormat | null>(null);
+	const [stepEnters, setStepEnters] = useState(false);
+	const leaveTimer = useRef<number | undefined>(undefined);
+	useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
+	const chooseFormat = useCallback(
+		(next: PickedFormat) => {
+			if (leaving) {
+				return;
+			}
+			if (prefersReducedMotion()) {
+				setStep(next);
+				return;
+			}
+			setLeaving(next);
+			leaveTimer.current = window.setTimeout(() => {
+				setLeaving(null);
+				setStepEnters(true);
+				setStep(next);
+			}, FORMAT_LEAVE_MS);
+		},
+		[leaving]
+	);
+	const stepEnterClass =
+		stepEnters && step !== 'picker' ? ' conversationCreate__stepEnter' : '';
+
 	const [circlePrefill, setCirclePrefill] = useState<
 		CircleSettingsPrefill | undefined
 	>(() =>
@@ -524,15 +566,7 @@ const CreateConversationFlow = ({
 		[availableConsultants]
 	);
 	const internalPeople = useMemo(
-		() =>
-			internalColleagues.map(
-				({ consultantId, displayName, tenantName }) => ({
-					id: consultantId,
-					label: tenantName
-						? `${displayName} (${tenantName})`
-						: displayName
-				})
-			),
+		() => peopleForInternalChatPicker(internalColleagues),
 		[internalColleagues]
 	);
 
@@ -548,14 +582,31 @@ const CreateConversationFlow = ({
 		[agencies, selectedAgency, topics]
 	);
 
+	const { surfaceRef, onInput, discardDialog } = useCreateViewExit({
+		hasExtraInput: () =>
+			internalDraft.selectedIds.length > 0 ||
+			internalDraft.name.trim() !== '',
+		isBlocked: () => isSubmitting,
+		onLeave: () =>
+			navigate(
+				editChatId !== null
+					? consultantGroupChatPath(editChatId)
+					: consultantConversationList
+			)
+	});
+
 	const handleBackButton = useCallback(() => {
+		// A running create request cannot be cancelled: stay on the view.
+		if (isSubmitting) {
+			return;
+		}
 		if (step !== 'picker' && formatCount > 1) {
 			setStep('picker');
 			clearError();
 			return;
 		}
-		navigate('/sessions/consultant/sessionView');
-	}, [formatCount, clearError, navigate, step]);
+		navigate(consultantConversationList);
+	}, [formatCount, clearError, navigate, step, isSubmitting]);
 
 	/* The direct link offers every topic of the counsellor's
 	   Beratungsstellen; the id goes to the backend, the name is shown. */
@@ -602,7 +653,7 @@ const CreateConversationFlow = ({
 					: undefined
 			}
 			/* "Fertig": the link now lives in "Gespräche". */
-			onDone={() => navigate('/sessions/consultant/sessionView')}
+			onDone={() => navigate(consultantConversationList)}
 		/>
 	);
 
@@ -632,7 +683,7 @@ const CreateConversationFlow = ({
 
 	const openCircleSettings = () => {
 		setCirclePrefill(pickerTopic ? { topic: pickerTopic } : undefined);
-		setStep('circle');
+		chooseFormat('circle');
 	};
 
 	// Topic listbox keyboard contract (WCAG combobox/listbox): focus moves into
@@ -688,6 +739,7 @@ const CreateConversationFlow = ({
 	const circleCard = (
 		<FormatCard
 			className="conversationCreate__formatCard"
+			tourTarget="groupchat-format-circle"
 			title={translate('groupChat.circle.title')}
 			subtitle={translate('groupChat.circle.subtitle')}
 			avatar={<CircleIcon />}
@@ -715,6 +767,7 @@ const CreateConversationFlow = ({
 					<>
 						<SplitButton
 							ref={pickerSplitButtonRef}
+							tourTarget="groupchat-topic-picker"
 							fullWidth
 							icon={<TopicIcon filled={Boolean(pickerTopic)} />}
 							label={
@@ -778,61 +831,105 @@ const CreateConversationFlow = ({
 		</FormatCard>
 	);
 
+	const slide = (format: PickedFormat, card: React.ReactNode) => (
+		<div
+			key={format}
+			className="formatCardCarousel__slide"
+			data-format={format}
+			data-chosen={leaving === format || undefined}
+		>
+			{card}
+		</div>
+	);
+
+	const internalInfo = (
+		<CardInfoButton
+			label={translate('groupChat.internal.infoLabel')}
+			data-cy="internal-card-info"
+		>
+			<p>{translate('groupChat.internal.supportText')}</p>
+			<p>
+				{translate(recipientScopeHintKey(recipientScope))}{' '}
+				{translate('groupChat.internal.privateRoomHint')}
+			</p>
+		</CardInfoButton>
+	);
+
 	const renderPicker = () => (
 		<div
 			className={`conversationCreate__picker${
 				fromL ? '' : ' conversationCreate__picker--compact'
 			}`}
+			data-leaving={leaving || undefined}
 		>
 			<ScreenIntro
 				title={translate('groupChat.format.title')}
 				subtitle={translate('groupChat.format.subtitle')}
 			/>
-			<div
-				className={`conversationCreate__selection${
-					fromL ? '' : ' conversationCreate__selection--rows'
-				}`}
-			>
+			<div className="conversationCreate__selection">
 				{fromL ? (
 					<FormatCardCarousel>
-						{availability.circle && circleCard}
-						{availability.internal && renderInternalCard()}
-						{directLinkOffered && renderDirectLinkCard()}
+						{availability.circle && slide('circle', circleCard)}
+						{availability.internal &&
+							slide('internal', renderInternalCard())}
+						{directLinkOffered &&
+							slide('directLink', renderDirectLinkCard())}
 					</FormatCardCarousel>
 				) : (
-					<div className="conversationCreate__rows">
-						{availability.internal && (
-							<CompactFormatRow
-								icon={<InternalIcon />}
-								title={translate('groupChat.internal.title')}
-								subtitle={translate(
-									'groupChat.internal.subtitle'
-								)}
-								image={INTERNAL_CHAT_ARTWORK}
-								onSelect={() => setStep('internal')}
-							/>
-						)}
-						{availability.circle && (
-							<CompactFormatRow
-								icon={<CircleIcon />}
-								title={translate('groupChat.circle.title')}
-								subtitle={translate(
-									'groupChat.circle.subtitle'
-								)}
-								image={getTopicCardArtwork(null)}
-								onSelect={() => setStep('circle')}
-							/>
-						)}
-						{directLinkOffered && (
-							<CompactFormatRow
-								icon={<LinkOutlinedIcon />}
-								title={translate('directLink.card.title')}
-								subtitle={translate('directLink.card.subtitle')}
-								image={FORMAT_ARTWORK.VIDEO}
-								onSelect={() => setStep('directLink')}
-							/>
-						)}
-					</div>
+					<FormatCardCarousel className="formatCardCarousel--compact">
+						{availability.internal &&
+							slide(
+								'internal',
+								<FormatPickerCard
+									icon={<InternalIcon />}
+									title={translate(
+										'groupChat.internal.title'
+									)}
+									subtitle={translate(
+										'groupChat.internal.subtitle'
+									)}
+									text={translate(
+										'groupChat.internal.cardShort'
+									)}
+									image={INTERNAL_CHAT_ARTWORK}
+									headerAction={internalInfo}
+									onSelect={() => chooseFormat('internal')}
+									data-cy="format-choose-internal"
+								/>
+							)}
+						{availability.circle &&
+							slide(
+								'circle',
+								<FormatPickerCard
+									icon={<CircleIcon />}
+									title={translate('groupChat.circle.title')}
+									subtitle={translate(
+										'groupChat.circle.subtitle'
+									)}
+									text={translate(
+										'groupChat.circle.cardHeadline'
+									)}
+									image={getTopicCardArtwork(null)}
+									onSelect={() => chooseFormat('circle')}
+									data-cy="format-choose-circle"
+								/>
+							)}
+						{directLinkOffered &&
+							slide(
+								'directLink',
+								<FormatPickerCard
+									icon={<LinkOutlinedIcon />}
+									title={translate('directLink.card.title')}
+									subtitle={translate(
+										'directLink.card.subtitle'
+									)}
+									text={translate('directLink.card.headline')}
+									image={FORMAT_ARTWORK.VIDEO}
+									onSelect={() => chooseFormat('directLink')}
+									data-cy="format-choose-directLink"
+								/>
+							)}
+					</FormatCardCarousel>
 				)}
 			</div>
 		</div>
@@ -843,7 +940,7 @@ const CreateConversationFlow = ({
 	}
 
 	return (
-		<div className="conversationCreate">
+		<div className="conversationCreate" ref={surfaceRef} onInput={onInput}>
 			<PanelHeader
 				title={translate('groupChat.format.panelTitle')}
 				menuLabel={translate('groupChat.format.panelMenu')}
@@ -865,12 +962,13 @@ const CreateConversationFlow = ({
 					editChatId={editChatId}
 					people={people}
 					compact={!fromL}
+					className={stepEnterClass.trim() || undefined}
 				/>
 			) : step === 'directLink' ? (
 				<div
 					className={`conversationCreate__single${
 						fromL ? '' : ' conversationCreate__single--compact'
-					}`}
+					}${stepEnterClass}`}
 				>
 					{invitationPreset && (
 						<p
@@ -892,7 +990,7 @@ const CreateConversationFlow = ({
 				<div
 					className={`conversationCreate__single${
 						fromL ? '' : ' conversationCreate__single--compact'
-					}`}
+					}${stepEnterClass}`}
 				>
 					{renderInternalCard()}
 				</div>
@@ -900,6 +998,7 @@ const CreateConversationFlow = ({
 				renderPicker()
 			)}
 			{directInvitationSetup.dialog}
+			{discardDialog}
 			{createdDirectLink && (
 				<DirectLinkShareDialog
 					open
@@ -907,7 +1006,7 @@ const CreateConversationFlow = ({
 					fullScreen={!fromL}
 					onClose={() => {
 						setCreatedDirectLink(undefined);
-						navigate('/sessions/consultant/sessionView');
+						navigate(consultantConversationList);
 					}}
 				/>
 			)}
@@ -921,8 +1020,6 @@ const CreateConversationFlow = ({
 		</div>
 	);
 };
-
-const consultantConversationList = '/sessions/consultant/sessionView';
 
 const EditConversationRoute = ({
 	agencyFormats,

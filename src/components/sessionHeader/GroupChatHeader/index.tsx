@@ -1,3 +1,4 @@
+import { FittedHeaderTitle } from '../FittedHeaderTitle';
 import { useConversationFeatureSettings } from '../../../hooks/useConversationFeatureSettings';
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -6,7 +7,9 @@ import {
 	SessionTypeContext,
 	UserDataContext,
 	hasUserAuthority,
-	ActiveSessionContext
+	ActiveSessionContext,
+	NotificationsContext,
+	NOTIFICATION_TYPE_WARNING
 } from '../../../globalState';
 import { useSearchParam } from '../../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from '../../session/sessionHelpers';
@@ -36,6 +39,7 @@ import { getGroupChatInfoLink } from '../../groupChat/groupChatInfoLink';
 import { ManagePeopleDialog } from '../../managePeople/ManagePeopleDialog';
 import { createInternalChatPeopleSource } from '../../managePeople/internalChatPeopleSource';
 import { canInviteToInternalChat } from './internalChatInvite';
+import { GroupCallStartRequest } from './GroupCallStartRequest';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -69,6 +73,7 @@ export const GroupChatHeader = ({
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const { matrixClientService } = useMatrixClient();
 
 	// MATRIX: room members + per-member latest activity (#1193 Job 1).
@@ -336,6 +341,30 @@ export const GroupChatHeader = ({
 		featureVideoCallsGroupChatsEnabled !== false;
 
 	const isActive = activeSession.item.active;
+	// The same checks that show the header's call buttons below.
+	const canStartGroupCall =
+		Boolean(isActive) && !isJoinGroupChatView && isConsultant;
+	const callButtonsRef = useRef<HTMLDivElement>(null);
+	const offerGroupCall = (kind: 'video' | 'audio') => {
+		const buttons = Array.from(
+			callButtonsRef.current?.querySelectorAll<HTMLButtonElement>(
+				'button'
+			) ?? []
+		);
+		// Video comes first when both are shown.
+		(kind === 'video' || !isVideoCallsEnabled
+			? buttons[0]
+			: buttons[1]
+		)?.focus();
+	};
+	const refuseGroupCall = () =>
+		notifications?.addNotification({
+			notificationType: NOTIFICATION_TYPE_WARNING,
+			title: t('directLink.entry.callsDisabled'),
+			text: '',
+			closeable: true,
+			announce: 'status'
+		});
 	// #1193 Job 1: latest-active participant first. Job 2 (overlap + "+N")
 	// is handled by MemberAvatarStack; Figma #430 caps the visible avatars at 4.
 	const visibleMembers = useMemo(
@@ -407,11 +436,11 @@ export const GroupChatHeader = ({
 							/>
 						</div>
 						{!hideTopic && (
-							<h3 data-cy="group-header-topic">
+							<FittedHeaderTitle data-cy="group-header-topic">
 								{typeof activeSession.item.topic === 'string'
 									? activeSession.item.topic
 									: activeSession.item.topic?.name || ''}
-							</h3>
+							</FittedHeaderTitle>
 						)}
 					</div>
 					{isLoadingMembers && (
@@ -421,11 +450,22 @@ export const GroupChatHeader = ({
 					)}
 				</div>
 
+				{canStartGroupCall && (
+					<GroupCallStartRequest
+						sessionId={activeSession.item.id}
+						video={isVideoCallsEnabled}
+						audio={isAudioCallsEnabled}
+						start={(isVideo) => void handleStartVideoCall(isVideo)}
+						offer={offerGroupCall}
+						refuse={refuseGroupCall}
+					/>
+				)}
 				{isActive &&
 					!isJoinGroupChatView &&
 					(isAudioCallsEnabled || isVideoCallsEnabled) &&
 					isConsultant && (
 						<div
+							ref={callButtonsRef}
 							className="sessionInfo__videoCallButtons"
 							data-cy="session-header-video-call-buttons"
 							data-tour-target="groupchat-call-button"

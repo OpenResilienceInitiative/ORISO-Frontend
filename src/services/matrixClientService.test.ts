@@ -1,12 +1,21 @@
+import { EventEmitter } from 'node:events';
+import {
+	CallEvent,
+	CallState,
+	type MatrixCall
+} from 'matrix-js-sdk/lib/webrtc/call';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DeviceIsolationModeKind } from 'matrix-js-sdk/lib/crypto-api';
 import {
+	type MatrixLoginData,
 	clearPersistedMatrixDeviceId,
 	createMatrixClient,
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../components/sessionCookie/getMatrixAccessToken';
 import { buildMatrixCryptoStorePrefix } from './matrixCrypto';
+import { matrixCallService } from './matrixCallService';
+import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import {
 	MatrixClientService,
 	isMatrixExpiredTokenError
@@ -25,6 +34,7 @@ const mockedMatrixClient = vi.hoisted(() => ({
 	getRoom: vi.fn(),
 	getCrypto: vi.fn(),
 	joinRoom: vi.fn(),
+	logout: vi.fn().mockResolvedValue({}),
 	sendMessage: vi.fn(),
 	startClient: vi.fn(),
 	stopClient: vi.fn()
@@ -78,6 +88,13 @@ const setClient = (
 
 const setSyncState = (service: MatrixClientService, state: string) => {
 	(service as unknown as { syncState: string }).syncState = state;
+};
+
+const lifecycleLogin: MatrixLoginData = {
+	userId: '@alice:matrix.localhost',
+	accessToken: 'test-access',
+	deviceId: 'DEVICE_ONE',
+	homeserverUrl: 'http://matrix.localhost:18008'
 };
 
 describe('MatrixClientService', () => {
@@ -221,6 +238,243 @@ describe('MatrixClientService', () => {
 		expect(service.getClient()).toBeNull();
 	});
 
+	it('keeps token recovery available after a crypto startup error in the active session', async () => {
+		mockedMatrixClient.initRustCrypto.mockRejectedValueOnce(
+			new Error('temporarily unavailable')
+		);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce(lifecycleLogin);
+		const service = new MatrixClientService();
+		await expect(service.initializeClient(lifecycleLogin)).rejects.toThrow(
+			'temporarily unavailable'
+		);
+
+		await service.refreshMatrixToken();
+
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		expect(mockedMatrixClient.startClient).toHaveBeenCalledOnce();
+		expect(service.getClient()).toBe(mockedMatrixClient);
+	});
+
+	it('closes crypto that finishes bootstrapping after the client was stopped', async () => {
+		const crypto = Promise.withResolvers<void>();
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(crypto.promise);
+		const service = new MatrixClientService();
+		const initialization = service.initializeClient(lifecycleLogin);
+
+		service.stopAndCleanup();
+		const stopsBeforeCryptoFinishes =
+			mockedMatrixClient.stopClient.mock.calls.length;
+		crypto.resolve();
+		await initialization;
+
+		expect(mockedMatrixClient.startClient).not.toHaveBeenCalled();
+		expect(mockedMatrixClient.on).not.toHaveBeenCalled();
+		expect(mockedMatrixClient.stopClient).toHaveBeenCalledTimes(
+			stopsBeforeCryptoFinishes + 1
+		);
+		expect(service.getClient()).toBeNull();
+	});
+
+	it('discards an unpublished startup when its caller ends the session', async () => {
+		const crypto = Promise.withResolvers<void>();
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(crypto.promise);
+		const service = new MatrixClientService();
+		let sessionActive = true;
+		const initialization = service.initializeClient(
+			lifecycleLogin,
+			() => sessionActive
+		);
+
+		sessionActive = false;
+		crypto.resolve();
+		await initialization;
+
+		expect(mockedMatrixClient.startClient).not.toHaveBeenCalled();
+		expect(service.getClient()).toBeNull();
+	});
+
+	it('leaves the replacement active when previous crypto initialization fails', async () => {
+		const crypto = Promise.withResolvers<void>();
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(crypto.promise);
+		const replacement = {
+			...mockedMatrixClient,
+			stopClient: vi.fn(),
+			removeAllListeners: vi.fn()
+		};
+		vi.mocked(createMatrixClient)
+			.mockReturnValueOnce(
+				mockedMatrixClient as unknown as ReturnType<
+					typeof createMatrixClient
+				>
+			)
+			.mockReturnValueOnce(
+				replacement as unknown as ReturnType<typeof createMatrixClient>
+			);
+		const service = new MatrixClientService();
+		const superseded = service.initializeClient(lifecycleLogin);
+		await service.initializeClient({
+			...lifecycleLogin,
+			userId: '@bea:matrix.localhost',
+			deviceId: 'DEVICE_TWO'
+		});
+
+		crypto.reject(new Error('previous account crypto cancelled'));
+		await superseded.catch(() => undefined);
+
+		expect(service.getClient()).toBe(replacement);
+		expect(replacement.stopClient).not.toHaveBeenCalled();
+	});
+
+	it('discards a token refresh that completes after session teardown', async () => {
+		const login = Promise.withResolvers<MatrixLoginData>();
+		vi.mocked(getMatrixAccessToken).mockReturnValueOnce(login.promise);
+		const service = new MatrixClientService();
+		await service.initializeClient(lifecycleLogin);
+		const refresh = service.refreshMatrixToken();
+		await vi.waitFor(() =>
+			expect(getMatrixAccessToken).toHaveBeenCalledOnce()
+		);
+
+		service.stopAndCleanup();
+		login.resolve({
+			...lifecycleLogin,
+			accessToken: 'refreshed-test-access'
+		});
+		await refresh;
+
+		expect(persistMatrixLoginData).not.toHaveBeenCalled();
+		expect(mockedMatrixClient.startClient).toHaveBeenCalledOnce();
+		expect(service.getClient()).toBeNull();
+	});
+
+	it('arms refresh at the original deadline after a slow crypto startup', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		const timer = vi.spyOn(window, 'setTimeout').mockReturnValue(1);
+		try {
+			vi.setSystemTime(new Date('2026-11-18T12:00:00Z'));
+			const crypto = Promise.withResolvers<void>();
+			mockedMatrixClient.initRustCrypto.mockReturnValueOnce(
+				crypto.promise
+			);
+			const service = new MatrixClientService();
+			const initialization = service.initializeClient({
+				...lifecycleLogin,
+				expiresInMs: 130_000
+			});
+
+			vi.setSystemTime(new Date('2026-11-18T12:00:12Z'));
+			crypto.resolve();
+			await initialization;
+
+			expect(timer).toHaveBeenCalledExactlyOnceWith(
+				expect.any(Function),
+				0
+			);
+			service.stopAndCleanup();
+		} finally {
+			timer.mockRestore();
+			vi.useRealTimers();
+		}
+	});
+
+	it('releases a refresh blocked on a crypto hold when the session ends', async () => {
+		const service = new MatrixClientService();
+		await service.initializeClient(lifecycleLogin);
+		const releaseHold = Promise.withResolvers<void>();
+		const holdStarted = Promise.withResolvers<void>();
+		const held = service.holdTokenRefreshDuring(() => {
+			holdStarted.resolve();
+			return releaseHold.promise;
+		});
+		await holdStarted.promise;
+		const refreshFinished = vi.fn();
+		const refresh = service.refreshMatrixToken().then(refreshFinished);
+
+		try {
+			service.stopAndCleanup();
+			await vi.waitFor(
+				() => expect(refreshFinished).toHaveBeenCalledOnce(),
+				{ timeout: 100 }
+			);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+		} finally {
+			releaseHold.resolve();
+			await held;
+			await refresh;
+		}
+	});
+
+	it('destroys owned event handlers when logout interrupts a client replacement', async () => {
+		const service = new MatrixClientService();
+		await service.initializeClient(lifecycleLogin);
+		const bridgeDestroy = vi.spyOn(matrixLiveEventBridge, 'destroy');
+		const callsDestroy = vi.spyOn(matrixCallService, 'destroy');
+		const crypto = Promise.withResolvers<void>();
+		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(crypto.promise);
+		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce(lifecycleLogin);
+		const refresh = service.refreshMatrixToken();
+		try {
+			await vi.waitFor(() =>
+				expect(mockedMatrixClient.initRustCrypto).toHaveBeenCalledTimes(
+					2
+				)
+			);
+			await service.logout();
+			expect(bridgeDestroy).toHaveBeenCalledOnce();
+			expect(callsDestroy).toHaveBeenCalledOnce();
+		} finally {
+			crypto.resolve();
+			await refresh;
+			bridgeDestroy.mockRestore();
+			callsDestroy.mockRestore();
+		}
+	});
+
+	it('tears down the current client and surfaces an SDK startup failure', async () => {
+		mockedMatrixClient.startClient.mockRejectedValueOnce(
+			new Error('SDK could not start')
+		);
+		const service = new MatrixClientService();
+
+		await expect(service.initializeClient(lifecycleLogin)).rejects.toThrow(
+			'SDK could not start'
+		);
+		expect(service.getClient()).toBeNull();
+		expect(mockedMatrixClient.stopClient).toHaveBeenCalled();
+	});
+
+	it('does not clear the new session handlers when the outgoing client stops', async () => {
+		const outgoing = new MatrixClientService();
+		await outgoing.initializeClient(lifecycleLogin);
+		const replacementSdk = {
+			...mockedMatrixClient,
+			stopClient: vi.fn(),
+			removeAllListeners: vi.fn()
+		};
+		vi.mocked(createMatrixClient).mockReturnValueOnce(
+			replacementSdk as unknown as ReturnType<typeof createMatrixClient>
+		);
+		const replacement = new MatrixClientService();
+		await replacement.initializeClient({
+			...lifecycleLogin,
+			userId: '@other:matrix.localhost'
+		});
+		const bridgeDestroy = vi.spyOn(matrixLiveEventBridge, 'destroy');
+		const callsDestroy = vi.spyOn(matrixCallService, 'destroy');
+
+		try {
+			await outgoing.logout();
+			expect(replacement.getClient()).toBe(replacementSdk);
+			expect(replacementSdk.stopClient).not.toHaveBeenCalled();
+			expect(bridgeDestroy).not.toHaveBeenCalled();
+			expect(callsDestroy).not.toHaveBeenCalled();
+		} finally {
+			bridgeDestroy.mockRestore();
+			callsDestroy.mockRestore();
+			replacement.stopAndCleanup();
+		}
+	});
+
 	/**
 	 * A crypto reset spans deleting the backup, the UIA round-trip and new
 	 * keys. A token refresh in that window stops the client under it and
@@ -330,6 +584,96 @@ describe('MatrixClientService', () => {
 			vi.useRealTimers();
 		}
 	});
+
+	it.each(['before', 'after'])(
+		'ends only the outgoing call when logout occurs %s replacement PREPARED',
+		async (timing) => {
+			const createSdkClient = () => ({
+				...mockedMatrixClient,
+				on: vi.fn<
+					(event: string, listener: (state: string) => void) => void
+				>(),
+				getRoom: vi.fn().mockReturnValue({
+					hasEncryptionStateEvent: () => true
+				}),
+				getMediaHandler: () =>
+					Object.assign(new EventEmitter(), { userMediaStreams: [] })
+			});
+			const prepareClient = (
+				client: ReturnType<typeof createSdkClient>
+			) => {
+				const sync = client.on.mock.calls.find(
+					([name]) => name === 'sync'
+				);
+				if (!sync) throw new Error('Expected a Matrix sync listener');
+				sync[1]('PREPARED');
+			};
+			const createCall = () => {
+				const stopTrack = vi.fn();
+				const call = Object.assign(new EventEmitter(), {
+					roomId: '!room:matrix.localhost',
+					answer: vi.fn().mockResolvedValue(undefined),
+					hangup: vi.fn(),
+					localUsermediaFeed: {
+						stream: { getTracks: () => [{ stop: stopTrack }] }
+					}
+				});
+				return { call, stopTrack };
+			};
+			const outgoingClient = createSdkClient();
+			const replacementClient = createSdkClient();
+			vi.mocked(createMatrixClient)
+				.mockReturnValueOnce(
+					outgoingClient as unknown as ReturnType<
+						typeof createMatrixClient
+					>
+				)
+				.mockReturnValueOnce(
+					replacementClient as unknown as ReturnType<
+						typeof createMatrixClient
+					>
+				);
+			const outgoing = new MatrixClientService();
+			const replacement = new MatrixClientService();
+			const oldCall = createCall();
+			const newCall = createCall();
+
+			try {
+				await outgoing.initializeClient(lifecycleLogin);
+				prepareClient(outgoingClient);
+				await matrixCallService.answerCall(
+					oldCall.call as unknown as MatrixCall,
+					false
+				);
+				await replacement.initializeClient({
+					...lifecycleLogin,
+					userId: '@other:matrix.localhost'
+				});
+
+				if (timing === 'before') {
+					await outgoing.logout();
+					expect(oldCall.stopTrack).toHaveBeenCalledOnce();
+				}
+				prepareClient(replacementClient);
+				await matrixCallService.answerCall(
+					newCall.call as unknown as MatrixCall,
+					false
+				);
+				if (timing === 'after') await outgoing.logout();
+
+				expect(oldCall.call.hangup).toHaveBeenCalledOnce();
+				expect(oldCall.stopTrack).toHaveBeenCalledOnce();
+				oldCall.call.emit(CallEvent.State, CallState.Ended);
+				oldCall.call.emit(CallEvent.Hangup);
+				expect(newCall.call.hangup).not.toHaveBeenCalled();
+				expect(newCall.stopTrack).not.toHaveBeenCalled();
+				expect(matrixCallService.getActiveCall()).toBe(newCall.call);
+			} finally {
+				outgoing.stopAndCleanup();
+				replacement.stopAndCleanup();
+			}
+		}
+	);
 
 	it('does not deadlock when a held operation checks its token', async () => {
 		const service = new MatrixClientService();
@@ -474,7 +818,8 @@ describe('MatrixClientService', () => {
 		);
 		expect(createMatrixClient).toHaveBeenLastCalledWith(
 			expect.objectContaining({ deviceId: 'DEVICE_TWO' }),
-			expect.any(Function)
+			expect.any(Function),
+			undefined
 		);
 	});
 
@@ -488,6 +833,10 @@ describe('MatrixClientService', () => {
 			}
 		});
 		mockedMatrixClient.sendMessage.mockResolvedValue({ event_id: '$sent' });
+		// The recovered client's sync has delivered the joined room.
+		mockedMatrixClient.getRoom.mockReturnValue({
+			getMyMembership: () => 'join'
+		});
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
 			accessToken: 'fresh-token',
@@ -1327,9 +1676,17 @@ describe('MatrixClientService', () => {
 			callOrder.push('send');
 			return { event_id: '$event' };
 		});
+		// Sync delivers the joined room only after the join (P0: sending
+		// before that would leave the SDK unable to encrypt).
+		let syncedRoom: { getMyMembership: () => string } | null = null;
+		joinRoom.mockImplementation(async () => {
+			callOrder.push('join');
+			syncedRoom = { getMyMembership: () => 'join' };
+			return { roomId: '!room:example.org' };
+		});
 		const service = new MatrixClientService();
 		setClient(service, {
-			getRoom: () => null,
+			getRoom: () => syncedRoom,
 			joinRoom,
 			sendMessage
 		});
@@ -1339,6 +1696,28 @@ describe('MatrixClientService', () => {
 		expect(joinRoom).toHaveBeenCalledWith('!room:example.org');
 		expect(sendMessage).toHaveBeenCalled();
 		expect(callOrder).toEqual(['join', 'send']);
+	});
+
+	it('refuses to send when the joined room never reaches the client store, so nothing leaves in plaintext (P0)', async () => {
+		const sendMessage = vi.fn();
+		const service = new MatrixClientService();
+		(
+			service as unknown as {
+				sendRoomWaitOptions: { waitMs: number; pollIntervalMs: number };
+			}
+		).sendRoomWaitOptions = { waitMs: 30, pollIntervalMs: 10 };
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom: vi
+				.fn()
+				.mockResolvedValue({ roomId: '!room:example.org' }),
+			sendMessage
+		});
+
+		await expect(
+			service.sendMessage('!room:example.org', 'Hello after accept')
+		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(sendMessage).not.toHaveBeenCalled();
 	});
 
 	it('refreshes an expired token during join and retries join before sending', async () => {
@@ -1363,9 +1742,14 @@ describe('MatrixClientService', () => {
 			deviceId: 'DEVICE_ONE',
 			homeserverUrl: 'http://matrix.localhost:18008'
 		});
-		mockedMatrixClient.getRoom.mockReturnValue(null);
-		mockedMatrixClient.joinRoom.mockResolvedValue({
-			roomId: '!room:example.org'
+		let refreshedClientRoom: { getMyMembership: () => string } | null =
+			null;
+		mockedMatrixClient.getRoom.mockImplementation(
+			() => refreshedClientRoom
+		);
+		mockedMatrixClient.joinRoom.mockImplementation(async () => {
+			refreshedClientRoom = { getMyMembership: () => 'join' };
+			return { roomId: '!room:example.org' };
 		});
 		mockedMatrixClient.sendMessage.mockResolvedValue({
 			event_id: '$event'

@@ -75,9 +75,16 @@ export const EntryRoomShell = ({
 				sx={{
 					'width': '100%',
 					'minWidth': 0,
+					/* The room fills the window under the 72 px desktop header
+					   to its bottom edge, so the space above the fixed bar is
+					   the cards' (Frank, 2026-11-20). It used to subtract 128 px
+					   and left 56 px of white above the button. */
 					'minHeight': {
-						xs: 'calc(100vh - 96px)',
-						lg: 'calc(100vh - 128px)'
+						// Phone, tablet and zoomed desktop: the mobile header
+						// leaves the room 60 px down (measured at 360, 390 and
+						// 960 px wide); 96 px left 36 px of white above the bar.
+						xs: 'calc(100vh - 60px)',
+						lg: 'calc(100vh - 72px)'
 					},
 					'display': 'flex',
 					'flexDirection': 'column',

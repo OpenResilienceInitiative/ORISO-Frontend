@@ -13,12 +13,11 @@ const consultantDefaults = {
 	isAsker: false,
 	isConsultant: true,
 	isSupervisionEnabled: true,
-	isSupervisor: false,
-	isMobile: false
+	isSupervisor: false
 };
 
 describe('getSupervisorAddState', () => {
-	it('is interactive for a desktop consultant with supervision enabled', () => {
+	it('is interactive for a consultant with supervision enabled, on desktop and phone alike', () => {
 		expect(getSupervisorAddState(consultantDefaults)).toEqual({
 			mode: 'interactive',
 			labelKey: 'sessionHeader.supervisor.modal.title'
@@ -35,15 +34,6 @@ describe('getSupervisorAddState', () => {
 		).toEqual({
 			mode: 'disabled',
 			labelKey: 'sessionHeader.supervisor.add.disabledAsker'
-		});
-	});
-
-	it('is disabled with the mobile label for a consultant below the L breakpoint', () => {
-		expect(
-			getSupervisorAddState({ ...consultantDefaults, isMobile: true })
-		).toEqual({
-			mode: 'disabled',
-			labelKey: 'sessionHeader.supervisor.add.disabledMobile'
 		});
 	});
 
@@ -80,21 +70,8 @@ describe('getSupervisorAddState', () => {
 		});
 	});
 
-	it('prefers the mobile reason over generic unavailability only when supervision could otherwise act', () => {
-		expect(
-			getSupervisorAddState({
-				...consultantDefaults,
-				isMobile: true,
-				isSupervisionEnabled: false
-			})
-		).toEqual({
-			mode: 'disabled',
-			labelKey: 'sessionHeader.supervisor.add.disabledUnavailable'
-		});
-	});
-
 	describe('while the agency answer is still loading (no grey flash)', () => {
-		it('is pending, not disabled, for a desktop consultant', () => {
+		it('is pending, not disabled, for a consultant', () => {
 			expect(
 				getSupervisorAddState({
 					...consultantDefaults,
@@ -105,17 +82,6 @@ describe('getSupervisorAddState', () => {
 				mode: 'pending',
 				labelKey: 'sessionHeader.supervisor.modal.title'
 			});
-		});
-
-		it('stays disabled on the phone, where the answer is grey either way', () => {
-			expect(
-				getSupervisorAddState({
-					...consultantDefaults,
-					isSupervisionEnabled: false,
-					isSettled: false,
-					isMobile: true
-				}).mode
-			).toBe('disabled');
 		});
 
 		it('stays disabled for a supervisor and for an asker', () => {

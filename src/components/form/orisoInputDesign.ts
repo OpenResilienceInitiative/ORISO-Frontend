@@ -1,7 +1,6 @@
 // #143: role colours read the runtime --m3-* tokens so tenant seeds reach the
 // form fields; the literal fallbacks keep today's rendering when no palette is
-// injected. `error` stays literal: the static --m3-error (#cc0000) would
-// override the intended magenta error role.
+// injected. Field-specific error ink takes precedence over the semantic error role.
 export const orisoInputColors = {
 	onSurface: 'var(--m3-on-surface, #1b1b1c)',
 	onSurfaceVariant: 'var(--m3-on-surface-variant, #444748)',
@@ -19,7 +18,7 @@ export const orisoInputColors = {
 	primary: 'var(--m3-primary, #a5000a)',
 	onPrimary: 'var(--m3-on-primary, #ffffff)',
 	primaryDark: 'var(--m3-primary-hover, #7e0008)',
-	error: '#b1005e',
+	error: 'var(--oriso-input-error, var(--oriso-error-text, var(--m3-error, #b1005e)))',
 	focus: 'var(--m3-primary, #a5000a)',
 	// State layers stay rgba literals: these are single CSS-in-JS values,
 	// so there is no second declaration to fall back to — an engine
@@ -229,6 +228,17 @@ export const orisoSelectSx = {
 		color: `${orisoInputColors.error} !important`
 	}
 } as const;
+
+/** Label above the field (`OrisoSelect labelAbove`): M3 body-medium, full width, wraps. */
+export const orisoSelectLabelAboveSx = {
+	'mb': '8px',
+	'color': orisoInputColors.onSurface,
+	'fontSize': '15px',
+	'fontWeight': 600,
+	'lineHeight': '21px',
+	'&.Mui-focused': { color: orisoInputColors.onSurface },
+	'&.Mui-error': { color: orisoInputColors.error }
+};
 
 export const orisoSelectMenuProps = {
 	sx: {

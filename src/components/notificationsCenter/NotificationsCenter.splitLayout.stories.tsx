@@ -219,8 +219,25 @@ export const EmptyPageShowsBothPanes: Story = {
 		await expect(
 			within(page).getByText(/Kurz durchatmen/)
 		).toBeInTheDocument();
-		const handle = page.querySelector('.sessionsList__resizeHandle--end')!;
-		expect(getComputedStyle(handle, '::before').content).not.toBe('none');
+		const handle = page.querySelector<HTMLElement>(
+			'.sessionsList__resizeHandle--end'
+		)!;
+		const expectDivider = () => {
+			const line = getComputedStyle(handle, '::before');
+			expect(line.width).toBe('1px');
+			expect(line.backgroundColor).toBe('rgb(255, 255, 255)');
+		};
+		expectDivider();
+		handle.focus();
+		await userEvent.keyboard('{Home}');
+		await waitFor(() =>
+			expect(
+				page
+					.querySelector('.notificationsCenter__listColumn')!
+					.getBoundingClientRect().width
+			).toBe(80)
+		);
+		expectDivider();
 	}
 };
 

@@ -134,6 +134,7 @@
 		padding: 20px 22px;
 		border-radius: 14px;
 		background: var(--m3-surface-container, #eeeeee);
+		color: var(--m3-on-surface, #1b1b1c);
 		box-sizing: border-box;
 		overflow-wrap: anywhere;
 	}
@@ -144,6 +145,7 @@
 
 	.carimatMessageFrame__bubble .pseudonymCard__bubbleText {
 		font: inherit;
+		color: inherit;
 		margin: 0;
 	}
 

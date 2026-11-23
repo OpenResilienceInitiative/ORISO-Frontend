@@ -1,3 +1,11 @@
+import { tourAvailability } from './tourCatalogue';
+import { consultantCalendarTour } from './tours/calendarTour';
+import { consultantCaseHandoverTour } from './tours/caseHandoverTour';
+import {
+	consultantGroupCircleTour,
+	isGroupCircleTourAvailable
+} from './tours/groupCircleTour';
+import { consultantProfileTour } from './tours/profileTour';
 import type { TourDefinition } from './types';
 import { askerFirstStepsTour } from './tours/askerFirstStepsTour';
 import { askerSettingsTour } from './tours/askerSettingsTour';
@@ -129,10 +137,17 @@ export const consultantMailCounsellingTour: TourDefinition = {
  * sees its own (`getAvailableTours`).
  */
 export const frontendTopicTours: TourDefinition[] = [
+	consultantCaseHandoverTour,
+	consultantCalendarTour,
+	consultantGroupCircleTour,
+	consultantProfileTour,
 	consultantMailCounsellingTour,
 	askerFirstStepsTour,
 	askerSettingsTour
 ];
+
+// Gates beyond a tenant flag (`tourCatalogue.ts`).
+tourAvailability[consultantGroupCircleTour.id] = isGroupCircleTourAvailable;
 
 export const frontendTours: TourDefinition[] = [
 	consultantWalkthroughTour,

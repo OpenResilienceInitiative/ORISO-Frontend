@@ -39,6 +39,8 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import { SESSION_LIST_TAB, SESSION_LIST_TYPES } from './sessionHelpers';
+import type { TypingUser } from './SessionItemComponent';
+import { decodeUsernameSafely } from '../../utils/encryptionHelpers';
 import { buildRoomTimeline } from './roomTimeline';
 import {
 	awaitsDecryption,
@@ -92,6 +94,7 @@ import {
 import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
+import { useSessionSupervisorsRevision } from './sessionSupervisorsRefresh';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
@@ -101,6 +104,7 @@ import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprova
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+const TIMELINE_REFRESH_WINDOW_MS = 120;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -208,6 +212,8 @@ export const SessionStream = ({
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
+	const [unavailableConsentScopeKey, setUnavailableConsentScopeKey] =
+		useState<string | null>(null);
 	const [
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
@@ -286,6 +292,7 @@ export const SessionStream = ({
 		}
 		setCaseHandoverConsentSubmitting(false);
 		setCaseHandoverConsentError('');
+		setUnavailableConsentScopeKey(null);
 	}, [consentScopeKey]);
 	useLayoutEffect(
 		() => () => {
@@ -338,7 +345,9 @@ export const SessionStream = ({
 		teamMessageState.roomId === teamRoomId
 			? teamMessageState.messages
 			: EMPTY_MESSAGES;
-	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
+	const [matrixTypingUsers, setMatrixTypingUsers] = useState<TypingUser[]>(
+		[]
+	);
 	const matrixTypingActivityRef = useRef<Map<string, number>>(new Map());
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -375,6 +384,10 @@ export const SessionStream = ({
 
 	// Practice only: bumps when the learner adds a supervisor under this case.
 	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+	// #2386: bumps when accepting this enquiry attached a standing supervisor.
+	const sessionSupervisorsRevision = useSessionSupervisorsRevision(
+		activeSession.item?.id
+	);
 
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
@@ -423,7 +436,12 @@ export const SessionStream = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
+	}, [
+		activeSession.item?.id,
+		userData,
+		practiceSupervisorsRevision,
+		sessionSupervisorsRevision
+	]);
 
 	const askerMatrixUserId = activeSession.item?.askerMatrixUserId;
 	const consultantMatrixUserId = activeSession.item?.consultantMatrixUserId;
@@ -882,11 +900,19 @@ export const SessionStream = ({
 
 		let retryTimer: number | null = null;
 		let earlierRefreshTimer: number | null = null;
+		let trailingRefreshTimer: number | null = null;
 		let receiptRefreshTimer: number | null = null;
 		let arrivalReadTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
+		const cancelTrailingRefresh = () => {
+			if (trailingRefreshTimer !== null) {
+				window.clearTimeout(trailingRefreshTimer);
+				trailingRefreshTimer = null;
+			}
+		};
 		const refreshMessages = () => {
+			cancelTrailingRefresh();
 			lastRefreshAt = Date.now();
 			fetchSessionMessages().catch(() => {
 				// keep UI stable if a timeline event races with navigation
@@ -949,11 +975,18 @@ export const SessionStream = ({
 					return;
 				}
 
-				// Coalesce encrypted/metadata bursts, but never drop a clear message:
-				// delayed Matrix decryption mutates the event after its fallback rendered.
-				const now = Date.now();
-				const elapsed = now - lastRefreshAt;
-				if (eventType !== 'm.room.message' && elapsed < 120) {
+				// Read once more at the end of the window for encrypted or metadata
+				// events that arrived since the latest read. Clear messages still
+				// refresh immediately, including after delayed Matrix decryption.
+				const remaining =
+					TIMELINE_REFRESH_WINDOW_MS - (Date.now() - lastRefreshAt);
+				if (eventType !== 'm.room.message' && remaining > 0) {
+					if (trailingRefreshTimer === null) {
+						trailingRefreshTimer = window.setTimeout(
+							refreshMessages,
+							remaining
+						);
+					}
 					return;
 				}
 				refreshMessages();
@@ -969,7 +1002,7 @@ export const SessionStream = ({
 				.filter(Boolean) as Array<() => void>;
 			// A deletion (ours included) must show at once, not with the next
 			// unrelated event: refresh when the SDK marks the message redacted.
-			// Not refreshMessages(): stamping lastRefreshAt would drop an
+			// Not refreshMessages(): stamping lastRefreshAt would delay an
 			// encrypted message arriving in the same sync batch.
 			const handleRedaction = () => {
 				fetchSessionMessages().catch(() => {
@@ -1001,7 +1034,7 @@ export const SessionStream = ({
 				if (receiptRefreshTimer !== null) return;
 				receiptRefreshTimer = window.setTimeout(() => {
 					receiptRefreshTimer = null;
-					// Not refreshMessages(): stamping lastRefreshAt would drop a
+					// Not refreshMessages(): stamping lastRefreshAt would delay a
 					// reaction or redaction arriving in the next 120 ms.
 					fetchSessionMessages().catch(() => {
 						// keep UI stable if a receipt races with navigation
@@ -1069,6 +1102,7 @@ export const SessionStream = ({
 			}
 			if (earlierRefreshTimer !== null)
 				window.clearTimeout(earlierRefreshTimer);
+			cancelTrailingRefresh();
 			if (receiptRefreshTimer !== null)
 				window.clearTimeout(receiptRefreshTimer);
 			if (arrivalReadTimer !== null)
@@ -1260,23 +1294,29 @@ export const SessionStream = ({
 						now - (lastActivity as number) < MATRIX_TYPING_STALE_MS
 					);
 				})
-				.map((member: any) => {
+				.map((member: any): TypingUser => {
 					const matrixUserId = `${member?.userId || ''}`;
 					const matrixUserName = matrixUserId
 						.split(':')[0]
 						.replace(/^@/, '');
-					return (
-						member?.name ||
-						member?.rawDisplayName ||
-						matrixUserName ||
-						matrixUserId
+					// The member name is the login, often encoded like the
+					// message sender's; the session's name is resolved later.
+					const name = decodeUsernameSafely(
+						`${
+							member?.name ||
+							member?.rawDisplayName ||
+							matrixUserName ||
+							matrixUserId
+						}`.trim()
 					);
+					return { userId: matrixUserId, name };
 				})
-				.map((name: string) => name.trim())
-				.filter(Boolean)
 				.filter(
-					(name: string, index: number, source: string[]) =>
-						source.indexOf(name) === index
+					(user: TypingUser, index: number, source: TypingUser[]) =>
+						user.name &&
+						source.findIndex(
+							(other) => other.userId === user.userId
+						) === index
 				);
 
 			setMatrixTypingUsers(nextTypingUsers);
@@ -1516,16 +1556,43 @@ export const SessionStream = ({
 	 * status is consultant-only and answers 403). A status that names another
 	 * session or request is no answer for this card.
 	 */
-	const readCaseHandoverRequestStatus = (
+	const readCaseHandoverRequestStatus = async (
 		sessionId: number,
 		requestId: number
-	) =>
-		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+	): Promise<CaseHandoverStatus | null> => {
+		try {
+			const status = await apiGetCaseHandoverRequestStatus(
+				sessionId,
+				requestId
+			);
 			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
 				throw new Error('Status does not belong to this request');
 			}
 			return status;
-		});
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === FETCH_ERRORS.NO_MATCH
+			) {
+				return null;
+			}
+			throw error;
+		}
+	};
+
+	const applyCaseHandoverRequestStatus = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus | null
+	) => {
+		if (status === null) {
+			// An unavailable request has no actionable or confirmed outcome.
+			setUnavailableConsentScopeKey(consentScopeKey);
+			return true;
+		}
+		if (isPendingCaseHandoverStatus(status.status)) return false;
+		settleCaseHandoverConsent(notification, status);
+		return true;
+	};
 
 	// A card whose request was closed elsewhere (takeover, decline on another
 	// device, expiry) stays visible until its unread notification is answered.
@@ -1546,14 +1613,12 @@ export const SessionStream = ({
 			.then((status) => {
 				if (
 					!cancelled &&
-					consentScope.current.generation === generation &&
-					!isPendingCaseHandoverStatus(status.status)
+					consentScope.current.generation === generation
 				) {
-					settleCaseHandoverConsent(notification, status);
+					applyCaseHandoverRequestStatus(notification, status);
 				}
 			})
-			// Not readable or offline: the card keeps its controls, a later
-			// decision reports the real outcome.
+			// Keep the existing card when the read fails without a definite result.
 			.catch(() => undefined);
 		return () => {
 			cancelled = true;
@@ -1646,10 +1711,14 @@ export const SessionStream = ({
 				return readCaseHandoverRequestStatus(sessionId, requestId).then(
 					(currentStatus) => {
 						if (!current()) return;
-						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+						if (
+							!applyCaseHandoverRequestStatus(
+								notification,
+								currentStatus
+							)
+						) {
 							throw new Error('Consent request is still open');
 						}
-						settleCaseHandoverConsent(notification, currentStatus);
 					}
 				);
 			})
@@ -1698,6 +1767,7 @@ export const SessionStream = ({
 				mainTimelineSupplement={
 					<>
 						{displayedConsent &&
+							unavailableConsentScopeKey !== consentScopeKey &&
 							activityEventCaseHandoverRequestId(
 								displayedConsent
 							) !== null && (

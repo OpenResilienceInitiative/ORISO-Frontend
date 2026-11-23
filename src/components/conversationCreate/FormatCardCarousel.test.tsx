@@ -1,7 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
-	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -12,7 +11,10 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { FormatCardCarousel } from './FormatCardCarousel';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string, options?: { position?: number }) =>
+			options?.position ? `${key} ${options.position}` : key
+	})
 }));
 
 afterEach(cleanup);
@@ -77,8 +79,11 @@ const renderRow = () =>
 const getScroller = (container: HTMLElement) =>
 	container.querySelector<HTMLElement>('.formatCardCarousel__scroller')!;
 
+const arrow = (name: string) =>
+	screen.queryByRole('button', { name, hidden: true });
+
 describe('FormatCardCarousel', () => {
-	it('renders every card and no arrow buttons while nothing overflows', () => {
+	it('renders every card and no arrows or dots while nothing overflows', () => {
 		const { container } = renderRow();
 		stubGeometry(getScroller(container), {
 			scrollWidth: 600,
@@ -88,10 +93,12 @@ describe('FormatCardCarousel', () => {
 
 		expect(screen.getByText('Gesprächskreis')).toBeTruthy();
 		expect(screen.getByText('Direktlink')).toBeTruthy();
-		expect(screen.queryByRole('button')).toBeNull();
+		expect(screen.queryAllByRole('button', { hidden: true })).toHaveLength(
+			0
+		);
 	});
 
-	it('shows both arrows when cards overflow, previous disabled at the start', () => {
+	it('uses the edge arrows: only "next" at the start, plus one dot per card', () => {
 		const { container } = renderRow();
 		stubGeometry(getScroller(container), {
 			scrollWidth: 1100,
@@ -99,17 +106,20 @@ describe('FormatCardCarousel', () => {
 		});
 		fireEvent.scroll(getScroller(container));
 
-		const previous = screen.getByRole('button', {
-			name: 'groupChat.format.cardsPrevious'
-		}) as HTMLButtonElement;
-		const next = screen.getByRole('button', {
-			name: 'groupChat.format.cardsNext'
-		}) as HTMLButtonElement;
-		expect(previous.disabled).toBe(true);
-		expect(next.disabled).toBe(false);
+		expect(arrow('groupChat.format.cardsPrevious')).toBeNull();
+		expect(arrow('groupChat.format.cardsNext')).toBeTruthy();
+		// The edge control (overlay), not the big pills under the row.
+		expect(
+			container.querySelector(
+				'[data-cy="format-card-carousel-arrows-controls"]'
+			)
+		).toBeNull();
+		expect(
+			screen.getAllByRole('button', { name: /groupChat.format.goToCard/ })
+		).toHaveLength(3);
 	});
 
-	it('moves one card per click and disables the arrow at either end', () => {
+	it('moves one card per click; at the end only "previous" is left', () => {
 		const { container } = renderRow();
 		const scroller = getScroller(container);
 		const scrollTo = stubGeometry(scroller, {
@@ -118,70 +128,35 @@ describe('FormatCardCarousel', () => {
 		});
 		fireEvent.scroll(scroller);
 
-		const previous = screen.getByRole('button', {
-			name: 'groupChat.format.cardsPrevious'
-		}) as HTMLButtonElement;
-		const next = screen.getByRole('button', {
-			name: 'groupChat.format.cardsNext'
-		}) as HTMLButtonElement;
-
-		fireEvent.click(next);
+		fireEvent.click(arrow('groupChat.format.cardsNext')!);
 		// The next snap position (392px) lies past the 300px of travel, so
 		// the row goes to its end.
 		expect(scrollTo.mock.calls[0][0].left).toBe(300);
-		expect(next.disabled).toBe(true);
-		expect(previous.disabled).toBe(false);
+		expect(arrow('groupChat.format.cardsNext')).toBeNull();
+		expect(arrow('groupChat.format.cardsPrevious')).toBeTruthy();
 
-		fireEvent.click(previous);
+		fireEvent.click(arrow('groupChat.format.cardsPrevious')!);
 		expect(scrollTo.mock.calls[1][0].left).toBe(0);
-		expect(previous.disabled).toBe(true);
-		expect(next.disabled).toBe(false);
+		expect(arrow('groupChat.format.cardsPrevious')).toBeNull();
 	});
 
-	it('hands keyboard focus to "previous" when one step reaches the end', () => {
-		// Start to end in a single step: "previous" is still disabled when
-		// "next" loses its use, so focus must follow once it is enabled.
+	it('jumps to a card from its page dot (touch and keyboard)', () => {
 		const { container } = renderRow();
 		const scroller = getScroller(container);
-		stubGeometry(scroller, { scrollWidth: 1000, clientWidth: 700 });
+		const scrollTo = stubGeometry(scroller, {
+			scrollWidth: 1200,
+			clientWidth: 400
+		});
 		fireEvent.scroll(scroller);
 
-		const previous = screen.getByRole('button', {
-			name: 'groupChat.format.cardsPrevious'
-		}) as HTMLButtonElement;
-		const next = screen.getByRole('button', {
-			name: 'groupChat.format.cardsNext'
-		}) as HTMLButtonElement;
-		next.focus();
-		expect(document.activeElement).toBe(next);
-
-		// jsdom focuses a disabled button that has a tabindex (MUI sets -1);
-		// browsers do not. Behave like a browser here.
-		const realFocus = HTMLElement.prototype.focus;
-		const focusSpy = vi
-			.spyOn(HTMLButtonElement.prototype, 'focus')
-			.mockImplementation(function (
-				this: HTMLButtonElement,
-				options?: FocusOptions
-			) {
-				if (!this.disabled) realFocus.call(this, options);
-			});
-
-		// A browser reports the jump in one scroll event after the click
-		// (reduced motion: no smooth scroll in between).
-		Object.defineProperty(scroller, 'scrollTo', {
-			configurable: true,
-			value: ({ left }: { left: number }) => {
-				scroller.scrollLeft = left;
-			}
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.format.goToCard 2' })
+		);
+		expect(scrollTo.mock.calls[0][0].left).toBe(CARD_STEP);
+		const dots = screen.getAllByRole('button', {
+			name: /groupChat.format.goToCard/
 		});
-		fireEvent.click(next);
-		act(() => {
-			scroller.dispatchEvent(new Event('scroll'));
-		});
-		expect(next.disabled).toBe(true);
-		expect(document.activeElement).toBe(previous);
-		focusSpy.mockRestore();
+		expect(dots[1].getAttribute('aria-current')).toBe('true');
 	});
 
 	it('shows the arrows when cards are added after the first layout', async () => {
@@ -195,12 +170,8 @@ describe('FormatCardCarousel', () => {
 		const scroller = getScroller(container);
 		stubGeometry(scroller, { scrollWidth: 700, clientWidth: 700 });
 		fireEvent.scroll(scroller);
-		expect(screen.queryByRole('button')).toBeNull();
+		expect(arrow('groupChat.format.cardsNext')).toBeNull();
 
-		Object.defineProperty(scroller, 'scrollWidth', {
-			configurable: true,
-			value: 1152
-		});
 		rerender(
 			<FormatCardCarousel>
 				<section>Gesprächskreis</section>
@@ -211,28 +182,7 @@ describe('FormatCardCarousel', () => {
 		stubGeometry(scroller, { scrollWidth: 1152, clientWidth: 700 });
 
 		await waitFor(() =>
-			expect(
-				screen.getByRole('button', {
-					name: 'groupChat.format.cardsNext'
-				})
-			).toBeTruthy()
+			expect(arrow('groupChat.format.cardsNext')).toBeTruthy()
 		);
-	});
-
-	it('uses real, focusable buttons so the arrows work from the keyboard', () => {
-		const { container } = renderRow();
-		stubGeometry(getScroller(container), {
-			scrollWidth: 1100,
-			clientWidth: 400
-		});
-		fireEvent.scroll(getScroller(container));
-
-		const next = screen.getByRole('button', {
-			name: 'groupChat.format.cardsNext'
-		});
-		expect(next.tagName).toBe('BUTTON');
-		expect(next.getAttribute('type')).toBe('button');
-		next.focus();
-		expect(document.activeElement).toBe(next);
 	});
 });

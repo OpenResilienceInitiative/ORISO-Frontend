@@ -1,10 +1,12 @@
 import { LoginArgs, USER_ASKER } from '../mockApi';
 
+export type FastLoginArgs = LoginArgs & { waitForSessionList?: boolean };
+
 const fastLoginCommand = (getWillReturn, setWillReturn) =>
 	Cypress.Commands.add(
 		'fastLogin',
 		(
-			args: LoginArgs = {
+			args: FastLoginArgs = {
 				userId: USER_ASKER
 			}
 		) => {
@@ -40,6 +42,7 @@ const fastLoginCommand = (getWillReturn, setWillReturn) =>
 				cy.wait('@usersData');
 				cy.wait('@settings');
 				cy.wait('@consultingTypeServiceBaseBasic');
+				if (args.waitForSessionList === false) return;
 				if (userId === USER_ASKER) {
 					cy.wait('@askerSessions');
 				} else {

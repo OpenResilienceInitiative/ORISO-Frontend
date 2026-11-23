@@ -140,6 +140,7 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Einige Chatdaten könnten in diesem Browser geblieben sein. Schließe alle anderen ORISO-Tabs.",
 			"headline": "Du hast Deinen Account bei der Caritas Beratung erfolgreich gelöscht."
 		}
 	},
@@ -333,6 +334,9 @@
 		"format": {
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"description": "Deine Eingaben in dieser Karte sind noch nicht gespeichert. Wenn du die Ansicht schließt, gehen sie verloren."
+			},
 			"back": "Zurück",
 			"subtitle": "Wir bieten verschiedene spezialisierte Gesprächsformate für dich und die Ratsuchenden an. Die Auswahl ist von den Trägern und deiner Beratungsstelle frei konfigurierbar."
 		},
@@ -2456,8 +2460,7 @@
 			"body": "Schön, dass Du Dich gemeldet hast. Deine Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Deine Nachricht liest",
-			"body": "Deine Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Deine Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Du eine Antwort bekommst",
@@ -2529,6 +2532,11 @@
 			"emailSavedNext": "Deine E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlaube Benachrichtigungen in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
+		},
+		"questions": {
+			"required": "Bitte beantworte diese Frage.",
+			"thanks": "Danke für deine Antworten.",
+			"failed": "Das hat nicht geklappt. Deine Antworten sind noch da – versuch es bitte gleich noch einmal."
 		}
 	},
 	"caseHandover": {
@@ -2750,6 +2758,99 @@
 				},
 				"done": {
 					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
+		},
+		"caseHandover": {
+			"step": {
+				"intro": {
+					"intro": "Neu: Fälle wechseln die Zuständigkeit direkt in der Plattform. Du bietest eine eigene Beratung an oder fragst bei Kolleg:innen Zugriff auf einen Fall an. Der Rundgang zeigt beide Wege, ausgelöst wird dabei nichts."
+				},
+				"offer": {
+					"intro": "Über „+“ im Kopf einer geöffneten Beratung wählst du „Beratung übergeben“. Du wählst eine berechtigte Kolleg:in und nennst einen Grund. Bis alle nötigen Zustimmungen vorliegen, bleibst du zuständig."
+				},
+				"search": {
+					"intro": "Suche hier unter „Personen“ nach einer Kolleg:in. Die Liste zeigt dann deren Fälle, die du übernehmen darfst – abhängig von deiner Abteilung und deinen Themen."
+				},
+				"requestAccess": {
+					"intro": "Mit „Zugriff anfragen“ bittest du um einen Fall und nennst einen Grund. Über ▾ und „Mehrere Fälle auswählen“ fragst du mehrere Fälle auf einmal an."
+				},
+				"status": {
+					"intro": "Am Fall steht der Stand, etwa „Warten auf Freigabe“. Die Antwort der Kolleg:in und – falls die Richtlinie es verlangt – die Zustimmung der ratsuchenden Person siehst du im Zeitstrahl."
+				},
+				"done": {
+					"intro": "Eigene Fälle bietest du in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragst du über die Personensuche an. Den Stand findest du im Zeitstrahl."
+				}
+			}
+		},
+		"groupCircle": {
+			"step": {
+				"intro": {
+					"intro": "Ein Gesprächskreis ist eine anonyme, von Berater:innen moderierte Gruppe – einmalig oder regelmäßig. Der Rundgang zeigt, wo du ihn anlegst. Angelegt wird dabei nichts."
+				},
+				"create": {
+					"intro": "Über „Erstellen“ in deiner Beratungsliste legst du neue Unterhaltungen an. Welche Formate du siehst, legen Träger und Beratungsstelle fest."
+				},
+				"topic": {
+					"intro": "Zuerst wählst du „Thema / Fachbereich“. Danach öffnen sich die Einstellungen für den Gesprächskreis."
+				},
+				"settings": {
+					"intro": "In den Einstellungen legst du Termin, Wiederholungen, Medium und Sprache fest und fügst unter „Weitere Moderation“ Co-Moderator:innen hinzu. Danach teilst du den Einladungs-Link oder QR-Code. Teilnehmende warten im Warteraum, bis du mit „Chat starten“ beginnst und sie hereinlässt."
+				},
+				"done": {
+					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
+				}
+			}
+		},
+		"profile": {
+			"title": "Dein Profil",
+			"step": {
+				"overview": {
+					"title": "Dein Profil",
+					"intro": "Im Profil liegen deine Daten und Einstellungen, verteilt auf die Bereiche Allgemeines, Meine Aktivitäten, Einstellungen und Hilfe. Der Rundgang zeigt die wichtigsten Karten."
+				},
+				"public": {
+					"intro": "Diese Angaben sehen Ratsuchende: dein Name, deine Sprachen und deine Beratungsstellen. Halte sie aktuell."
+				},
+				"absence": {
+					"intro": "Hier trägst du deine Abwesenheit ein. Ratsuchende sehen dann deine Abwesenheitsnachricht."
+				},
+				"notifications": {
+					"intro": "Hier legst du fest, worüber du per E-Mail und im Browser informiert wirst."
+				},
+				"security": {
+					"intro": "Unter „Anmeldung & Konto“ änderst du dein Passwort und verwaltest die Zwei-Faktor-Authentifizierung. Neu: die Wiederherstellung alter Nachrichten – richte sie ein, damit du verschlüsselte Nachrichten auch auf einem neuen Gerät lesen kannst."
+				},
+				"display": {
+					"intro": "Unter „Anzeige“ stellst du Effekte, den Zeitstrahl und die Sprache der Oberfläche ein."
+				},
+				"shortcuts": {
+					"intro": "Neu: Viele Aktionen erreichst du per Tastatur. Hier findest du alle Kürzel."
+				},
+				"helpTours": {
+					"intro": "Hier startest du jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blendest du den Knopf „?“ unten rechts ein oder aus."
+				}
+			}
+		},
+		"calendar": {
+			"step": {
+				"nav": {
+					"intro": "Neu: Dein Kalender ist Teil der Plattform. Hier siehst du alle Termine mit Ratsuchenden – und auf Wunsch die deiner Kolleg:innen."
+				},
+				"create": {
+					"intro": "Über „Neu“ trägst du einen Termin, eine Sperrzeit oder eine Abwesenheit ein – drei Reiter in einem Dialog."
+				},
+				"viewSwitch": {
+					"intro": "Wechsle zwischen Tag, Woche, Monat und Liste. Die Liste zeigt außerdem deine Links ohne Termin."
+				},
+				"workingHours": {
+					"intro": "Deine Arbeitszeit bestimmt, wann Ratsuchende Termine buchen können. Mit „Ändern“ passt du sie an."
+				},
+				"settings": {
+					"intro": "Unter ⋮ legst du Arbeitszeit und Sprechstunden fest, trägst Sperrzeiten mit Wiederholung und freie Tage ein und verbindest Outlook oder Google."
+				},
+				"links": {
+					"intro": "Deine Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
 				}
 			}
 		},
@@ -3219,5 +3320,22 @@
 	"deletedAskerSession": {
 		"archiveHint": "Verschiebe den Eintrag ins Archiv, damit er aus deiner Liste und den Aktivitäten verschwindet.",
 		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuche es erneut."
+	},
+	"journey": {
+		"question": {
+			"missing": "Bitte beantworte diese Frage.",
+			"textPlaceholder": "Deine Antwort"
+		},
+		"rating": {
+			"moveHint": "Beweg den Regler auf deinen Wert."
+		},
+		"chat": {
+			"subtitle": {
+				"arrival": "Deine Rückmeldung"
+			},
+			"thanks": "Danke für deine Antworten!",
+			"failed": "Das hat nicht geklappt. Deine Antworten sind noch da – versuch es bitte gleich noch einmal.",
+			"anonymous": "Deine Antworten werden ohne Bezug zu deiner Beratung gespeichert."
+		}
 	}
 }

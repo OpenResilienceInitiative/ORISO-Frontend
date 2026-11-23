@@ -3,10 +3,17 @@ import { Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import { M3Checkbox } from '../../M3Checkbox';
 import BreathingCompanion, {
 	BREATHING_COPY,
-	BreathingCopy
+	BreathingCopy,
+	BreathingToggleProps
 } from './BreathingCompanion';
+
+/** ORISO's kit checkbox for the companion's options (its `toggle` slot). */
+export const BreathingKitToggle = (props: BreathingToggleProps) => (
+	<M3Checkbox tone="inherit" {...props} />
+);
 
 export interface BreathingCompanionHostProps {
 	onClose: () => void;
@@ -92,6 +99,7 @@ export const BreathingCompanionHost = ({
 				onClose={onClose}
 				reducedMotion={reducedMotion}
 				copy={copy}
+				toggle={BreathingKitToggle}
 			/>
 		</Box>
 	);

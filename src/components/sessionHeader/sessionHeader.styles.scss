@@ -232,6 +232,13 @@ $room-header-gap-top: 2px;
 			margin-left: 0;
 		}
 
+		// Keep the title visibly separate from inline call controls. Only
+		// where they sit beside it: on a narrow pane the calls live in the
+		// kebab menu, and the title needs every pixel of the row (#2367).
+		&.sessionInfo__username:has(~ .sessionInfo__videoCallButtons) {
+			margin-inline-end: 8px;
+		}
+
 		&--deactivate {
 			cursor: unset;
 		}

@@ -538,6 +538,29 @@ describe('answered passages (ADR-022, #2202)', () => {
 		expect(formatted.replyToEventId).toBeUndefined();
 	});
 
+	it('renders a collected quote and separate composer text without a raw fallback', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				'msgtype': 'm.text',
+				'body': '> drei Mahnungen\n\nDie schauen wir uns an.',
+				'org.oriso.passage_replies': [
+					{
+						event_id: '$client:hs',
+						author: 'Lena',
+						excerpt: 'drei Mahnungen'
+					}
+				],
+				'org.oriso.passage_replies_text': 'Die schauen wir uns an.'
+			}),
+			null,
+			'encrypted'
+		);
+		expect(formatted.msg).toBe('Die schauen wir uns an.');
+		expect(formatted.passageReplies).toMatchObject([
+			{ eventId: '$client:hs', excerpt: 'drei Mahnungen' }
+		]);
+	});
+
 	it('turns a clip into an encrypted voice attachment with its length', () => {
 		const voice = passageReplyAudioAttachment({
 			file: clip as any,

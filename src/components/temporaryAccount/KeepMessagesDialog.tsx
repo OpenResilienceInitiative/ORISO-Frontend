@@ -2,7 +2,12 @@ import * as React from 'react';
 import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
-import { useMediaQuery } from '@mui/material';
+import {
+	FormControlLabel,
+	Radio,
+	RadioGroup,
+	useMediaQuery
+} from '@mui/material';
 import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { MessageRetention } from './messageRetention';
@@ -67,40 +72,42 @@ export const KeepMessagesDialog = ({
 				}
 			]}
 		>
-			<div
-				role="radiogroup"
+			<RadioGroup
+				name={name}
 				aria-label={t('temporaryAccount.keepDialog.title')}
 				className="keepMessagesDialog__choices"
+				value={choice ?? ''}
+				onChange={(event) =>
+					setChoice(event.target.value as MessageRetention)
+				}
 			>
 				{CHOICES.map((value) => (
-					<label
+					<FormControlLabel
 						key={value}
+						value={value}
+						control={<Radio />}
 						className={clsx(
 							'keepMessagesDialog__choice',
 							choice === value &&
 								'keepMessagesDialog__choice--selected'
 						)}
-					>
-						<input
-							type="radio"
-							name={name}
-							value={value}
-							checked={choice === value}
-							onChange={() => setChoice(value)}
-						/>
-						<span className="keepMessagesDialog__choiceText">
-							<span className="keepMessagesDialog__choiceLabel">
-								{t(
-									`temporaryAccount.keepDialog.${value}.label`
-								)}
+						label={
+							<span className="keepMessagesDialog__choiceText">
+								<span className="keepMessagesDialog__choiceLabel">
+									{t(
+										`temporaryAccount.keepDialog.${value}.label`
+									)}
+								</span>
+								<span className="keepMessagesDialog__choiceHint">
+									{t(
+										`temporaryAccount.keepDialog.${value}.hint`
+									)}
+								</span>
 							</span>
-							<span className="keepMessagesDialog__choiceHint">
-								{t(`temporaryAccount.keepDialog.${value}.hint`)}
-							</span>
-						</span>
-					</label>
+						}
+					/>
 				))}
-			</div>
+			</RadioGroup>
 			<p className="keepMessagesDialog__note">
 				{t('temporaryAccount.keepDialog.note')}
 			</p>

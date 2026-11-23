@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { SessionMenu } from './SessionMenu';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
@@ -354,6 +354,10 @@ export const SupervisionUsesCatalogIcon: Story = {
 				'[data-icon-id="ui-icon:supervision-nocirc:400"]'
 			)
 		).not.toBeNull();
+		// #2228: hovering the row says what it opens.
+		const hint = supervision.getAttribute('title') ?? '';
+		await expect(hint).toMatch(/feedback/i);
+		await expect(hint).not.toContain('supervision.panel');
 	}
 };
 
@@ -505,5 +509,31 @@ export const AdviceSeekerCallButtonsShowAppointment: Story = {
 			return found!;
 		});
 		await expect(card.textContent).toMatch(/Videoanruf|Video call/);
+	}
+};
+
+/** A counsellor opens the team conversation from the existing More menu. */
+export const TeamChatInMoreMenu: Story = {
+	name: 'Team-Chat im Mehr-Menü',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true,
+		onOpenTeamChat: fn(),
+		teamChatUnreadCount: 2
+	},
+	play: async ({ canvasElement, args }) => {
+		const flyout = await openTheKebab(canvasElement);
+		await expect(
+			canvasElement.querySelector('.sessionMenu__teamUnread')
+		).toHaveTextContent('2');
+		const item = flyout.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat"]'
+		);
+		await expect(item).not.toBeNull();
+		await userEvent.click(item!);
+		await expect(args.onOpenTeamChat).toHaveBeenCalledTimes(1);
 	}
 };
