@@ -55,7 +55,12 @@ export const LiveChatAvailability = () => {
 				    to control availability from the navigation rail (checkbox
 				    below), this toggle is disabled — it then only mirrors the
 				    current state, and the rail becomes the control. */}
-				<div className="flex">
+				{/* The tour points at this row, not the tall card: on a phone
+				    the card is taller than the screen (FE#2342). */}
+				<div
+					className="flex"
+					data-tour-target="livechat-availability-settings"
+				>
 					<Switch
 						className="mr--1"
 						onChange={handleToggle}

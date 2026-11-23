@@ -26,7 +26,8 @@ import {
 	mergeRegistrationSteps,
 	RegistrationStep,
 	filterRegistrationStepsForDirectLink,
-	getConsultantDirectLinkTopicIds
+	getConsultantDirectLinkTopicIds,
+	resolveDirectLinkZipcode
 } from '../../components/registration/registrationSteps';
 import { getGroupInviteTopicId } from '../../components/registration/groupInviteEntry/groupInviteEntryState';
 import { agencyExcludesTopic } from '../../components/registration/agencyTopicMatch';
@@ -76,7 +77,6 @@ interface RegistrationContextInterface {
 }
 
 export const registrationSessionStorageKey = 'registrationData';
-const DIRECT_LINK_POSTCODE = '00000';
 
 export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	const getSessionStorageData = (): SessionStorageData =>
@@ -333,11 +333,11 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			getDirectLinkAgency(
 				registrationData?.mainTopic || preselectedTopic
 			);
-		const directLinkZipcode =
-			preselectedZipcode ||
-			(directLinkAgency || preselectedConsultant
-				? DIRECT_LINK_POSTCODE
-				: undefined);
+		const directLinkZipcode = resolveDirectLinkZipcode({
+			urlZipcode: preselectedZipcode,
+			directLinkAgency,
+			consultantAgencies: preselectedConsultant?.agencies
+		});
 
 		updateRegistrationData({
 			...(directLinkZipcode ? { zipcode: directLinkZipcode } : {}),
