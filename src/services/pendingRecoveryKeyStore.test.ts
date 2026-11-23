@@ -9,6 +9,7 @@ import {
 } from 'vite-plus/test';
 import {
 	beginRecoverySetup,
+	clearDeletedAccountRecoveryKey,
 	clearPendingRecoveryKey,
 	endRecoverySetup,
 	getPendingRecoveryKey,
@@ -26,8 +27,9 @@ import {
 
 // vi.mock is hoisted above the imports.
 // Stands in for IndexedDB, which jsdom lacks; outlives a simulated reload.
-const { sealKeys } = vi.hoisted(() => ({
-	sealKeys: new Map<string, { key: CryptoKey; expiresAt: number }>()
+const { sealKeys, beforeDelete } = vi.hoisted(() => ({
+	sealKeys: new Map<string, { key: CryptoKey; expiresAt: number }>(),
+	beforeDelete: vi.fn<() => Promise<void>>()
 }));
 vi.mock('./loginHandoffKeyStore', () => ({
 	putHandoffKey: async (id: string, key: CryptoKey, expiresAt: number) =>
@@ -36,7 +38,11 @@ vi.mock('./loginHandoffKeyStore', () => ({
 		const entry = sealKeys.get(id);
 		return entry && entry.expiresAt > Date.now() ? entry.key : null;
 	},
-	dropHandoffKey: (id: string) => void sealKeys.delete(id)
+	dropHandoffKey: (id: string) => void sealKeys.delete(id),
+	deleteHandoffKey: async (id: string) => {
+		await beforeDelete();
+		sealKeys.delete(id);
+	}
 }));
 
 const USER = '@abe.simpson:example.org';
@@ -48,10 +54,43 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 		localStorage.clear();
 		resetPendingRecoveryKeyCacheForTests();
 		sealKeys.clear();
+		beforeDelete.mockReset();
+		beforeDelete.mockResolvedValue(undefined);
 		vi.useRealTimers();
 		vi.stubGlobal('indexedDB', {});
 	});
 	afterEach(() => vi.unstubAllGlobals());
+
+	it('waits for removal of the deleted account seal and preserves another account', async () => {
+		savePendingRecoveryKey(USER, KEY);
+		savePendingRecoveryKey(OTHER_USER, 'synthetic second key');
+		await pendingRecoveryKeyPersisted();
+
+		let finishDelete!: () => void;
+		beforeDelete.mockReturnValueOnce(
+			new Promise<void>((resolve) => {
+				finishDelete = resolve;
+			})
+		);
+		const finished = vi.fn();
+		const deleting = clearDeletedAccountRecoveryKey(USER).then(finished);
+		await Promise.resolve();
+
+		expect(getPendingRecoveryKey(USER)).toBeNull();
+		expect(
+			localStorage.getItem(`oriso.pendingRecoveryKey.${USER}`)
+		).toBeNull();
+		expect(finished).not.toHaveBeenCalled();
+		expect(sealKeys.has(`pendingRecoveryKey:${USER}`)).toBe(true);
+		expect(
+			localStorage.getItem(`oriso.pendingRecoveryKey.${OTHER_USER}`)
+		).not.toBeNull();
+		expect(sealKeys.has(`pendingRecoveryKey:${OTHER_USER}`)).toBe(true);
+		finishDelete();
+		await deleting;
+		expect(finished).toHaveBeenCalledWith(true);
+		expect(sealKeys.has(`pendingRecoveryKey:${USER}`)).toBe(false);
+	});
 
 	/** Module memory is gone after a document load; storage and IndexedDB are not. */
 	const reload = () => resetPendingRecoveryKeyCacheForTests();

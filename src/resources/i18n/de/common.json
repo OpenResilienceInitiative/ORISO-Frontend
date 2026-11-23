@@ -42,6 +42,8 @@
 		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
 		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
 		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"historyError": "Ihr Chatverlauf konnte noch nicht gesichert werden. Bitte versuchen Sie es erneut.",
+		"fallbackKeyHelp": "Ihr Konto ist bereit, aber Ihr Chatverlauf konnte noch nicht mit Ihrem Passwort verknüpft werden. Speichern Sie diesen Wiederherstellungsschlüssel: Sie brauchen ihn, um dieses Gespräch auf einem neuen Gerät zu lesen.",
 		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
 		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
@@ -648,6 +650,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Einige Chatdaten könnten in diesem Browser geblieben sein. Schließen Sie alle anderen ORISO-Tabs.",
+			"retryCleanup": "Browserdaten erneut bereinigen",
 			"button": "Schließen",
 			"headline": "Sie haben Ihren Account bei der Caritas Beratung erfolgreich gelöscht."
 		}
@@ -1041,8 +1045,16 @@
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"title": "Eingaben verwerfen?",
+				"description": "Ihre Eingaben in dieser Karte sind noch nicht gespeichert. Wenn Sie die Ansicht schließen, gehen sie verloren.",
+				"keepEditing": "Weiter bearbeiten",
+				"confirm": "Verwerfen und schließen"
+			},
 			"cardsPrevious": "Vorheriges Gesprächsformat",
-			"cardsNext": "Nächstes Gesprächsformat"
+			"cardsNext": "Nächstes Gesprächsformat",
+			"goToCard": "Zu Gesprächsformat {{position}} von {{total}}",
+			"choose": "Auswählen"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -1082,7 +1094,9 @@
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
 			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"cardShort": "Im Team abstimmen – Chat, Audio, Video.",
+			"infoLabel": "Mehr zu „Interna besprechen“"
 		},
 		"circle": {
 			"addModerator": "Co-Moderator:in hinzufügen",
@@ -2318,7 +2332,9 @@
 				"createNew": "Neuen Termin anlegen",
 				"openCalendar": "Im Kalender öffnen"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision gewechselt",
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}."
 	},
 	"navigation": {
 		"appointments": "Video - Termine",
@@ -3217,6 +3233,8 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"defaultSound": "Standard",
+				"legacySound": "Früherer Ton",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
@@ -4106,6 +4124,10 @@
 				"headline": "Dieser Einladungslink funktioniert nicht.",
 				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
 			}
+		},
+		"stepScroll": {
+			"back": "Vorige Schritte",
+			"forward": "Nächste Schritte"
 		}
 	},
 	"releaseNote": {
@@ -5802,6 +5824,10 @@
 				"remove": {
 					"title": "Supervisor entfernt",
 					"text": "Der Supervisor wurde erfolgreich entfernt."
+				},
+				"replace": {
+					"title": "Supervisor gewechselt",
+					"text": "Der Supervisor wurde erfolgreich gewechselt."
 				}
 			},
 			"error": {
@@ -5951,6 +5977,7 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback-Chat mit der Supervision zu dieser Beratung",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Beratung"
@@ -6077,8 +6104,7 @@
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Ihre Nachricht liest",
-			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Ihre Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Sie eine Antwort erhalten",
@@ -7002,7 +7028,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"cameraNotice": {
+				"permissionDenied": "Ihre Kamera ist für diese Seite blockiert. Erlauben Sie die Kamera in den Website-Einstellungen Ihres Browsers (Schloss-Symbol links neben der Adresse). Das Bild erscheint dann ohne Neuladen.",
+				"deviceBusy": "Ihre Kamera wird gerade von einem anderen Programm verwendet. Schließen Sie es und prüfen Sie dann erneut.",
+				"retry": "Kamera erneut prüfen"
+			}
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",
@@ -8013,6 +8044,7 @@
 			"membersTitle": "Aktuelle Supervision",
 			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
 			"addTitle": "Supervisor:in hinzufügen",
+			"unknownName": "Supervisor:in",
 			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
 			"reasonLabel": "Grund für die Supervision",
 			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
@@ -8050,5 +8082,40 @@
 		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
 		"archived": "Dieser Eintrag ist im Archiv.",
 		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
+	},
+	"journey": {
+		"question": {
+			"optional": "(optional)",
+			"missing": "Bitte beantworten Sie diese Frage.",
+			"textPlaceholder": "Ihre Antwort",
+			"other": "Etwas anderes",
+			"otherPlaceholder": "Was genau?",
+			"choose": "Bitte auswählen",
+			"multiHint": "Mehrere Antworten möglich"
+		},
+		"rating": {
+			"stars": "{{count}} von {{max}} Sternen",
+			"stars_one": "{{count}} von {{max}} Sternen",
+			"stars_other": "{{count}} von {{max}} Sternen",
+			"untouched": "noch nicht gewählt",
+			"moveHint": "Bewegen Sie den Regler auf Ihren Wert."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Eine kurze Frage",
+				"arrival": "Ihre Rückmeldung"
+			},
+			"send": "Antworten senden",
+			"thanks": "Danke für Ihre Antworten!",
+			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal.",
+			"anonymous": "Ihre Antworten werden ohne Bezug zu Ihrer Beratung gespeichert."
+		},
+		"checkIn": {
+			"progress": "Frage {{current}} von {{total}}",
+			"back": "Vorige Frage",
+			"next": "Weiter",
+			"skip": "Überspringen",
+			"done": "Fertig – mit „Weiter“ geht es zum nächsten Schritt."
+		}
 	}
 }

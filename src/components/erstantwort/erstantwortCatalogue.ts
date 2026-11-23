@@ -113,21 +113,6 @@ export const ERSTANTWORT_CATALOGUE: ErstantwortCatalogueEntry[] = [
 			'Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen.'
 	},
 	{
-		id: 'whoReadsAlong',
-		trigger: 'AFTER_FIRST_MESSAGE',
-		source: 'AGENCY',
-		// Live Chat has neither teams nor case handover, so there is nothing
-		// to disclose about who else reads along.
-		modalities: ASYNC_MODALITIES,
-		toggleable: false,
-		editable: true,
-		headlineKey: 'erstantwort.whoReadsAlong.headline',
-		defaultHeadline: 'Wer Ihre Nachricht liest',
-		bodyKey: 'erstantwort.whoReadsAlong.body',
-		defaultBody:
-			'Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet.'
-	},
-	{
 		id: 'responseDeadline',
 		trigger: 'AFTER_FIRST_MESSAGE',
 		source: 'DERIVED',

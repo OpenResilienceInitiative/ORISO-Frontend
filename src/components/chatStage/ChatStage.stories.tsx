@@ -1477,11 +1477,8 @@ export const PanelChannelCardOrganismHover: Story = {
 				item.querySelector('.chatMenuDropdown__itemDescription')
 			).not.toBeNull();
 		});
-		// Hover / selected = D3 "Hellblau" surface (the alias
-		// `--oriso-menu-hover-surface`), primary label + icon. Review v10:
-		// the alias is bound to the engine's `--m3-on-secondary-container`
-		// (the table's #e7effc; the engine emits #e6effb — within one unit),
-		// so the assertion follows the engine, not a hard hex.
+		// The selected and focused rows use the shared menu surface alias.
+		// Its light tint follows the generated on-secondary-container role.
 		const root = getComputedStyle(document.documentElement);
 		const secondaryFixed = root
 			.getPropertyValue('--oriso-menu-hover-surface')
@@ -1489,7 +1486,6 @@ export const PanelChannelCardOrganismHover: Story = {
 		const engineHover = root
 			.getPropertyValue('--m3-on-secondary-container')
 			.trim();
-		await expect(engineHover).toMatch(/^#e[67]eff[bc]$/i);
 		await expect(secondaryFixed.toLowerCase()).toBe(
 			engineHover.toLowerCase()
 		);

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 
 export interface StageMobileHeroProps {
+	claim?: string;
 	/** Optional trailing action, e.g. the "to login" icon button. */
 	action?: ReactNode;
 	leadingAction?: ReactNode;
@@ -12,8 +13,9 @@ export interface StageMobileHeroProps {
 	 * brand row, headline, claim. `bar` is the same brand row alone on the
 	 * same red surface (design 8a) — the registration steps carry their own
 	 * headline per step, so the big head would only push the form down.
+	 * `branding` uses the desktop stage's title and claim for the login.
 	 */
-	variant?: 'hero' | 'bar';
+	variant?: 'hero' | 'bar' | 'branding';
 }
 
 /**
@@ -32,18 +34,16 @@ export interface StageMobileHeroProps {
 export const StageMobileHero = ({
 	action,
 	leadingAction,
+	claim,
 	variant = 'hero'
 }: StageMobileHeroProps) => {
 	const { t: translate } = useTranslation();
 	const isBar = variant === 'bar';
+	const isBranding = variant === 'branding';
 
 	return (
 		<div
-			className={
-				isBar
-					? 'stageMobileHero stageMobileHero--bar'
-					: 'stageMobileHero'
-			}
+			className={`stageMobileHero stageMobileHero--${variant}`}
 			data-cy="stage-mobile-hero"
 			data-cy-variant={variant}
 		>
@@ -61,12 +61,18 @@ export const StageMobileHero = ({
 			)}
 
 			<div className="stageMobileHero__bar">
-				<span className="stageMobileHero__brand">
-					{translate('app.stage.title')}
-				</span>
+				{!isBranding && (
+					<span className="stageMobileHero__brand">
+						{translate('app.stage.title')}
+					</span>
+				)}
 				<span className="stageMobileHero__actions">
 					{leadingAction}
-					<LocaleSwitchPill variant="circle" />
+					<LocaleSwitchPill
+						variant={
+							isBranding ? 'circleOnPrimaryContainer' : 'circle'
+						}
+					/>
 					{action}
 				</span>
 			</div>
@@ -74,10 +80,14 @@ export const StageMobileHero = ({
 			{!isBar && (
 				<div className="stageMobileHero__copy">
 					<h1 className="stageMobileHero__headline">
-						{translate('app.stage.mobileHeadline')}
+						{translate(
+							isBranding
+								? 'app.stage.title'
+								: 'app.stage.mobileHeadline'
+						)}
 					</h1>
 					<p className="stageMobileHero__claim">
-						{translate('app.claim')}
+						{claim || translate('app.claim')}
 					</p>
 				</div>
 			)}

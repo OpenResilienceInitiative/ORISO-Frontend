@@ -602,6 +602,45 @@ describe('answers to marked passages in the list preview (#2202)', () => {
 		).toEqual({ kind: 'text', text: 'Bis morgen.' });
 	});
 
+	it('shows the composer text for an added bare quote', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': '> drei Mahnungen\n\nBis morgen.',
+					'org.oriso.passage_replies': [
+						{ event_id: '$m1', excerpt: 'drei Mahnungen' }
+					],
+					'org.oriso.passage_replies_text': 'Bis morgen.'
+				})
+			])
+		).toEqual({ kind: 'text', text: 'Bis morgen.' });
+	});
+
+	it('does not show an older message when a bare quote is sent on its own', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': '> drei Mahnungen',
+					'org.oriso.passage_replies': [
+						{ event_id: '$m1', excerpt: 'drei Mahnungen' }
+					]
+				})
+			])
+		).toEqual({ kind: 'text', text: 'drei Mahnungen' });
+	});
+
+	it('treats a collected excerpt as literal text, including markup', () => {
+		const excerpt = '<img src="https://attacker.invalid/tracker"> <x>';
+		expect(
+			getLatestMatrixRoomPreview([
+				answers({
+					'body': `> ${excerpt}`,
+					'org.oriso.passage_replies': [{ event_id: '$m1', excerpt }]
+				})
+			])
+		).toEqual({ kind: 'text', text: excerpt });
+	});
+
 	it('reads a voice-only answer as a voice message with its length', () => {
 		expect(
 			getLatestMatrixRoomPreview([

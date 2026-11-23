@@ -124,6 +124,9 @@ import {
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
+import { enrichSupervisionParticipants } from '../supervisionPanel/supervisionPeople';
+import { SupervisionPeopleContext } from '../supervisionPanel/SupervisionPeopleContext';
+import { useSupervisionPeople } from '../supervisionPanel/useSupervisionPeople';
 import { apiGetConsultant } from '../../api/apiGetConsultant';
 import {
 	computeThreadSummaries,
@@ -156,6 +159,7 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	STATUS_EMPTY,
 	STATUS_ENQUIRY,
+	STATUS_FINISHED,
 	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -202,6 +206,7 @@ import {
 	ensureAnonymousChatPreLogoutCleanup,
 	registerAnonymousChatSessionForCleanup
 } from '../../utils/anonymousChatSessionCleanup';
+import { useLastingLiveChatAccount } from '../liveChatConversion/lastingLiveChatAccount';
 import { parseMessagePrefixes } from '../message/messageConstants';
 import { decodeUsername } from '../../utils/encryptionHelpers';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
@@ -231,6 +236,13 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
 import { UserAvatar } from '../message/UserAvatar';
+import {
+	isLegacyGuestLoginLabel,
+	resolveAnonymousChatDisplayName,
+	resolveAssignedAskerDisplayName
+} from '../../utils/anonymousChatDisplayName';
+import { directAvatarChoice } from '../../utils/sessionAvatarChoice';
+import { counsellorChoiceOf } from '../../utils/avatarChoice';
 import {
 	Dialog,
 	Box as MuiBox,
@@ -269,8 +281,17 @@ import {
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
+import { useSessionSupervisorsRevision } from './sessionSupervisorsRefresh';
 import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
+
+/** Someone typing in the room right now (#2387). */
+export interface TypingUser {
+	/** Matrix user id: picks the same name and avatar as their messages. */
+	userId: string;
+	/** Matrix member name, for when the session knows no better one. */
+	name: string;
+}
 
 interface SessionItemProps {
 	/**
@@ -306,7 +327,7 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
-	typingUsers: string[];
+	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
@@ -580,9 +601,23 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		(userData?.userRoles || []).includes('USER');
 	const isAnonymousAskerExperience =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	/* US#1601 (FE#2330): a guest who converted to a lasting account signs in
+	   again with an empty sessionStorage. The guest gates below must not come
+	   back for them: they hid the history (with no way out once the chat was
+	   finished) and stored a new random display name. */
+	const isLastingLiveChatAccount =
+		useLastingLiveChatAccount(
+			isAnonymousAskerExperience,
+			userData?.userId
+		) === true;
 	const isAnonymousBreathingGameAvailable = isAnonymousAskerExperience;
 	const sessionStatusNum = Number(activeSession.item?.status);
 	const isRejectedSession = sessionStatusNum === STATUS_REJECTED;
+	/* FE#2330: a converted account sees its finished Live Chat without the
+	   guest gates, so the closed state has to be said here: no composer, the
+	   closed notice and the way on to mail counselling. */
+	const isFinishedLiveChatOfLastingAccount =
+		isLastingLiveChatAccount && sessionStatusNum === STATUS_FINISHED;
 	const privacyAcceptanceRecorded = Boolean(
 		userData?.dataPrivacyConfirmation &&
 			String(userData.dataPrivacyConfirmation).trim() !== ''
@@ -669,7 +704,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			.filter((value) => value.length > 0);
 		const resolved =
 			resolvedCandidates.find(
-				(value) => !value.toLowerCase().startsWith('anonymous-')
+				(value) => !isLegacyGuestLoginLabel(value)
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
 			return translate('session.waitingMiniGame.robotUsernameFallback');
@@ -793,25 +828,42 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		robotSequenceVisibleCount >= robotSystemCards.length;
 	const shouldShowRobotTypingIndicator =
 		shouldShowRobotMessages && !areRobotMessagesComplete;
+	// The same name and avatar as the person's messages (#2387): Matrix only
+	// knows the login, so the asker's session alias wins over it.
 	const otherTypingUsers = useMemo(
 		() =>
-			(props.typingUsers || [])
-				.map((entry) => `${entry || ''}`.trim())
-				.filter(Boolean)
-				.filter(
-					(entry, index, source) => source.indexOf(entry) === index
-				),
-		[props.typingUsers]
+			(props.typingUsers || []).map((user) => {
+				const isSessionAsker =
+					user.userId === activeSession.item?.askerMatrixUserId;
+				// Like MessageItem's isUserMessage: group members who are not
+				// moderators are advice seekers too.
+				const isAsker =
+					isSessionAsker ||
+					(activeSession.isGroup &&
+						!activeSession.item?.moderators?.includes(user.userId));
+				const choice = activeSession.isGroup
+					? null
+					: directAvatarChoice(user.userId, activeSession);
+				const alias = isSessionAsker
+					? resolveAssignedAskerDisplayName(activeSession.user)
+					: null;
+				return {
+					userId: user.userId,
+					name: alias || user.name,
+					choice: isAsker ? choice : counsellorChoiceOf(choice)
+				};
+			}),
+		[props.typingUsers, activeSession]
 	);
 	const shouldShowInlineTypingIndicator = otherTypingUsers.length > 0;
 	const typingIndicatorLabel = useMemo(() => {
 		if (otherTypingUsers.length === 1) {
-			return `${otherTypingUsers[0]} ${translate(
+			return `${otherTypingUsers[0].name} ${translate(
 				'typingIndicator.singleUser.typing'
 			)}`;
 		}
 		if (otherTypingUsers.length === 2) {
-			return `${otherTypingUsers[0]} & ${otherTypingUsers[1]} ${translate(
+			return `${otherTypingUsers[0].name} & ${otherTypingUsers[1].name} ${translate(
 				'typingIndicator.twoUsers.typing'
 			)}`;
 		}
@@ -819,7 +871,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			'typingIndicator.multipleUsers.typing'
 		)}`;
 	}, [otherTypingUsers, translate]);
-	const primaryTypingUser = otherTypingUsers[0] || '';
+	const primaryTypingUser = otherTypingUsers[0];
 	const visibleRobotCards = useMemo(
 		() => robotSystemCards.slice(0, Math.max(0, robotSequenceVisibleCount)),
 		[robotSequenceVisibleCount, robotSystemCards]
@@ -1059,6 +1111,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Practice only: bumps when the learner adds a supervisor under this case.
 	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+	// #2386: bumps when accepting this enquiry attached a standing supervisor.
+	const sessionSupervisorsRevision = useSessionSupervisorsRevision(
+		activeSession.item?.id
+	);
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -1126,7 +1182,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
 		userData.userId,
-		practiceSupervisorsRevision
+		practiceSupervisorsRevision,
+		sessionSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
@@ -1271,6 +1328,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setPseudonymConfirmed(false);
 		}
 	}, [isAnonymousAskerExperience, pseudonymStorageKey]);
+
+	/* Declared after the sessionStorage read above so it wins on a session
+	   switch: a lasting account has passed the guest gates for good. */
+	useEffect(() => {
+		if (!isLastingLiveChatAccount) return;
+		setPseudonymConfirmed(true);
+		setWaitingGateDismissed(true);
+	}, [
+		isLastingLiveChatAccount,
+		activeSession.item.id,
+		setWaitingGateDismissed
+	]);
 
 	/**
 	 * Confirm the chosen display-name pseudonym for this live-chat session.
@@ -1430,7 +1499,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		ensureAnonymousChatPreLogoutCleanup();
 
-		if (!isAnonymousAskerExperience || !activeSession.item?.id) {
+		if (
+			!isAnonymousAskerExperience ||
+			isLastingLiveChatAccount ||
+			!activeSession.item?.id
+		) {
 			registerAnonymousChatSessionForCleanup(null);
 			return;
 		}
@@ -1445,6 +1518,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		);
 	}, [
 		isAnonymousAskerExperience,
+		isLastingLiveChatAccount,
 		activeSession.item?.id,
 		activeSession.item?.status,
 		activeSession.item?.matrixRoomId,
@@ -1657,7 +1731,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 
 		const contactName =
-			getContact(activeSession)?.username ||
+			resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 			translate('sessionList.user.consultantUnknown');
 		// Backfilled replies precede the newest event already observed. Only
 		// replies appended after that boundary are new-arrival notifications.
@@ -2668,8 +2742,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		translate
 	]);
 
+	// The name the chat header shows: the asker's alias, not the login (#2387).
 	const clientDisplayName =
-		getContact(activeSession)?.username ||
+		resolveAnonymousChatDisplayName(getContact(activeSession)) ||
 		translate('sessionList.user.consultantUnknown');
 
 	// Teamberatung words (Frank, 09.09.). The i18n catalogue is on a drift
@@ -2866,7 +2941,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stackParticipantsOf, resolvedMatrixRoomId, messages]
 	);
-	const supervisionParticipants = useMemo(
+	const supervisionRoomParticipants = useMemo(
 		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -2876,6 +2951,77 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			supervisionRoomUsers
 		]
 	);
+	// FE#2344: the side room's people — name, role and avatar — resolved once
+	// for the header and the side-room messages, so both show each person the
+	// same way (`supervisionPeople.ts`).
+	const supervisionPeopleConsultant = useMemo(
+		() => ({
+			id: activeSession.consultant?.id,
+			matrixUserId: activeSession.item?.consultantMatrixUserId,
+			internalName: markerCounsellorDisplayName,
+			identity: activeSession.consultant
+		}),
+		[
+			activeSession.consultant,
+			activeSession.item?.consultantMatrixUserId,
+			markerCounsellorDisplayName
+		]
+	);
+	const supervisionPeopleSelf = useMemo(
+		() => ({ userId: userData?.userId, identity: userData }),
+		[userData]
+	);
+	const supervisionPeople = useSupervisionPeople({
+		enabled: hasSupervisionSideRoom,
+		agencyId: activeSession.item?.agencyId,
+		consultant: supervisionPeopleConsultant,
+		supervisors: sessionSupervisors,
+		marker: supervisionMarker,
+		self: supervisionPeopleSelf
+	});
+	const supervisionParticipants = useMemo(
+		() =>
+			enrichSupervisionParticipants(
+				supervisionRoomParticipants,
+				supervisionPeople,
+				{
+					consultant: translate(
+						'groupChat.info.subscribers.role.consultant'
+					),
+					supervisor: translate(
+						'groupChat.info.subscribers.role.supervisor'
+					)
+				}
+			),
+		[supervisionRoomParticipants, supervisionPeople, translate]
+	);
+	// The counterpart as the header names it: the person, then their role.
+	const supervisionCounterpartPerson = useMemo(() => {
+		const people = Array.from(supervisionPeople.values());
+		const ownMatrixIds = new Set(
+			[
+				matrixClientService?.getClient?.()?.getUserId?.(),
+				getCurrentMatrixUserId()
+			].filter(Boolean)
+		);
+		const wanted = isSupervisor ? 'consultant' : 'supervisor';
+		return (
+			people.find(
+				(person) =>
+					person.role === wanted &&
+					!ownMatrixIds.has(person.matrixUserId)
+			) ?? null
+		);
+	}, [supervisionPeople, isSupervisor, matrixClientService]);
+	const supervisionHeaderName =
+		supervisionCounterpartPerson?.name || supervisionCounterpartName;
+	const supervisionHeaderRole = supervisionCounterpartPerson
+		? translate(
+				supervisionCounterpartPerson.role === 'supervisor'
+					? 'groupChat.info.subscribers.role.supervisor'
+					: 'groupChat.info.subscribers.role.consultant'
+			)
+		: undefined;
 	// Teamberatung: the room's own members ARE the team — the `team` rule
 	// shows them all and drops only the advice seeker, who is never invited
 	// (`visibleParticipants.ts`).
@@ -2923,9 +3069,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!hasSupervisionSideRoom) {
 			return [];
 		}
-		const supervisorName = isSupervisor
-			? userData?.displayName || userData?.userName || ''
-			: supervisionCounterpartName;
+		// FE#2344: the supervisor as the header names them.
+		const supervisorPerson = Array.from(supervisionPeople.values()).find(
+			(person) => person.role === 'supervisor'
+		);
+		const supervisorName =
+			supervisorPerson?.name ||
+			(isSupervisor
+				? userData?.displayName || userData?.userName || ''
+				: supervisionCounterpartName);
 		return buildSupervisionTimeline(supervisionMessages, {
 			roomId: supervisionRoomId || '',
 			title: translate('supervision.panel.title'),
@@ -2942,6 +3094,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.displayName,
 		userData?.userName,
 		supervisionCounterpartName,
+		supervisionPeople,
 		activeSession.item?.askerMatrixUserId,
 		translate
 	]);
@@ -3802,11 +3955,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									<div className="messageItem__messageWrap">
 										<div className="messageItem__avatar">
 											<UserAvatar
-												username={primaryTypingUser}
-												displayName={primaryTypingUser}
-												firstName={primaryTypingUser}
-												lastName=""
-												userId={`typing-${primaryTypingUser}`}
+												username={
+													primaryTypingUser.name
+												}
+												displayName={
+													primaryTypingUser.name
+												}
+												userId={
+													primaryTypingUser.userId
+												}
+												choice={
+													primaryTypingUser.choice
+												}
 												ring={false}
 											/>
 										</div>
@@ -3896,6 +4056,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								'anonymousChat.noAvailability.startMailCounseling'
 							)}
 						</MuiButton>
+					</div>
+				)}
+
+				{isFinishedLiveChatOfLastingAccount && (
+					<div className="session__pseudonymActionBarSlot">
+						<div
+							className="session__anonymousEnquiryClosedNote"
+							role="status"
+						>
+							{translate('anonymousChat.enquiryClosed')}
+						</div>
 					</div>
 				)}
 
@@ -3989,6 +4160,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				)}
 				{!isRejectedSession &&
+					!isFinishedLiveChatOfLastingAccount &&
 					canRenderClientComposer({
 						canWriteMessage,
 						isSupervisor: isSupervisorView,
@@ -4034,7 +4206,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													'session__submit-interface--scrolled-up'
 											)}
 											placeholder={getPlaceholder()}
-											typingUsers={props.typingUsers}
 											preselectedFile={draggedFile}
 											handleMessageSendSuccess={
 												handleMessageSendSuccess
@@ -4521,7 +4692,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							placeholder={translate(
 								'message.thread.placeholder'
 							)}
-							typingUsers={props.typingUsers}
 							handleMessageSendSuccess={handleMessageSendSuccess}
 							onSendError={handleComposerSendError}
 							retryRequest={
@@ -4570,7 +4740,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<PanelHeader
 						kind="supervision"
 						title={translate('supervision.panel.title')}
-						name={supervisionCounterpartName}
+						name={supervisionHeaderName}
+						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
 						actions={
@@ -4628,7 +4799,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					) : undefined
 				}
 				timeline={
-					<>
+					<SupervisionPeopleContext.Provider
+						value={supervisionPeople}
+					>
 						<MessageTimeline
 							keyPrefix="supervision-"
 							messages={supervisionTimelineMessages}
@@ -4692,14 +4865,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									)}
 								/>
 							))}
-					</>
+					</SupervisionPeopleContext.Provider>
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
 						isTyping={props.isTyping}
 						placeholder={translate(
 							'supervision.panel.composer.placeholder',
-							{ name: supervisionCounterpartName }
+							{ name: supervisionHeaderName }
 						)}
 						handleMessageSendSuccess={handleMessageSendSuccess}
 						onSendError={handleComposerSendError}

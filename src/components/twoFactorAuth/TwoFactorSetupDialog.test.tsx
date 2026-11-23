@@ -353,6 +353,18 @@ describe('TwoFactorSetupDialog', () => {
 		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 
+	// FE#2440: accounts without an e-mail (converted live-chat guests) get
+	// `email: null` from /users/data; with e-mail collection off the dialog
+	// threw on `null.trim()` and took the whole settings page down.
+	it('renders for an account without e-mail when e-mail collection is off', async () => {
+		emailPermission.allowed = false;
+		renderDialog({ email: null });
+
+		expect(
+			await screen.findByText('twoFactorAuth.setupDialog.decision.title')
+		).toBeTruthy();
+	});
+
 	it('does not render a close action when setup is forced', async () => {
 		renderDialog({ canClose: false });
 

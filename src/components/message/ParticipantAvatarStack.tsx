@@ -132,7 +132,13 @@ export const ParticipantAvatarStack = ({
 		return null;
 	}
 
-	const names = participants.map((p) => p.displayName).filter(Boolean);
+	// FE#2344: a person shown with a role is announced with it.
+	const personLabel = (participant: StackParticipant) =>
+		participant.roleLabel
+			? `${participant.displayName}, ${participant.roleLabel}`
+			: participant.displayName;
+	const hasRoles = participants.some((p) => p.roleLabel);
+	const names = participants.filter((p) => p.displayName).map(personLabel);
 	const overflowLabel = translate('chatStage.participants.more', {
 		count: overflow,
 		defaultValue: '{{count}} weitere Teilnehmende'
@@ -157,7 +163,7 @@ export const ParticipantAvatarStack = ({
 				} as React.CSSProperties
 			}
 			aria-label={translate('chatStage.participants.label', {
-				names: names.join(', '),
+				names: names.join(hasRoles ? '; ' : ', '),
 				defaultValue: 'Teilnehmende: {{names}}'
 			})}
 			data-cy={dataCy}
@@ -206,7 +212,7 @@ export const ParticipantAvatarStack = ({
 							className="participantStack__avatar"
 							role="img"
 							tabIndex={0}
-							aria-label={participant.displayName}
+							aria-label={personLabel(participant)}
 							aria-describedby={
 								openIndex === index ? tipId : undefined
 							}
@@ -236,6 +242,14 @@ export const ParticipantAvatarStack = ({
 							data-cy="participant-tooltip"
 						>
 							{participant.displayName}
+							{participant.roleLabel && (
+								<span
+									className="participantStack__tipRole"
+									data-cy="participant-tooltip-role"
+								>
+									{participant.roleLabel}
+								</span>
+							)}
 						</span>
 					</li>
 				);

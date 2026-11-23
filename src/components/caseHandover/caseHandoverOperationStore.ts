@@ -126,6 +126,9 @@ export const activateCaseHandoverActor = (actorId: string) => {
 	activeActorId = actorId;
 };
 
+export const isCaseHandoverActorActive = (actorId: string) =>
+	activeActorId === actorId;
+
 export const resetCaseHandoverOperationStoreForTests = () => {
 	operations.clear();
 	activeActorId = null;

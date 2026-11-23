@@ -64,12 +64,6 @@
 		color: var(--m3-on-surface-variant, #534343);
 	}
 
-	&__select:disabled,
-	&__bannerSelect:disabled {
-		cursor: not-allowed;
-		opacity: 0.6;
-	}
-
 	&__label {
 		font-size: 12px;
 		color: var(--m3-on-surface-variant, #534343);
@@ -118,24 +112,6 @@
 		}
 	}
 
-	&__selectWrap {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		border: 1px solid var(--m3-outline-variant, #d8c2c1);
-		border-radius: 8px;
-		background: var(--m3-surface-container, #f0edee);
-		padding: 0 12px;
-		height: 48px;
-		flex: 1;
-
-		&:focus-within {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 1px;
-		}
-	}
-
 	// State icon INSIDE the field (left), per the Figma.
 	&__fieldIcon {
 		display: inline-flex;
@@ -167,12 +143,7 @@
 
 	&__select {
 		flex: 1;
-		border: none;
-		background: transparent;
-		font-size: 15px;
-		height: 100%;
-		outline: none;
-		color: var(--m3-on-surface, #211a1a);
+		min-width: 0;
 	}
 
 	// Channel row: banner mode select + M3 email checkbox
@@ -181,28 +152,6 @@
 		align-items: center;
 		gap: 16px;
 		flex-wrap: wrap;
-	}
-
-	&__banner {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 14px;
-		color: var(--m3-on-surface, #211a1a);
-	}
-
-	&__bannerSelect {
-		border: 1px solid var(--m3-outline-variant, #d8c2c1);
-		border-radius: 6px;
-		background: var(--m3-surface-container, #f0edee);
-		font-size: 13px;
-		padding: 4px 8px;
-		color: var(--m3-on-surface, #211a1a);
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 1px;
-		}
 	}
 
 	// Feature-signal micro-survey card (FE#590 dummy)

@@ -4,6 +4,7 @@ import {
 	cleanup,
 	fireEvent,
 	render,
+	renderHook,
 	screen,
 	waitFor
 } from '@testing-library/react';
@@ -109,6 +110,9 @@ const { apiAcceptAnonymousEnquiry } = await import(
 );
 const { ActiveSessionContext } = await import('../../globalState');
 const { AcceptAssign } = await import('./AcceptAssign');
+const { useSessionSupervisorsRevision } = await import(
+	'./sessionSupervisorsRefresh'
+);
 
 const renderAccept = (
 	activeSession: object = { item: { id: 76 }, isEnquiry: true }
@@ -199,6 +203,35 @@ describe('AcceptAssign', () => {
 			);
 		}
 	);
+
+	it('asks the open conversation to look up its supervisors again once the accept returns (#2386)', async () => {
+		const { result } = renderHook(() => useSessionSupervisorsRevision(76));
+		const before = result.current;
+		vi.mocked(apiEnquiryAcceptance).mockResolvedValue(undefined as any);
+		renderAccept();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		);
+
+		// The server attaches the standing supervisor inside the accept
+		// request; the room routing that follows may still be loading.
+		await waitFor(() => expect(result.current).not.toBe(before));
+	});
+
+	it('does not announce a supervisor change when accepting fails', async () => {
+		const { result } = renderHook(() => useSessionSupervisorsRevision(76));
+		const before = result.current;
+		vi.mocked(apiEnquiryAcceptance).mockRejectedValue(new Error('boom'));
+		renderAccept();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
+		);
+
+		await screen.findByRole('dialog');
+		expect(result.current).toBe(before);
+	});
 
 	it('watches an open enquiry for a colleague taking it over', () => {
 		watcher.running = false;

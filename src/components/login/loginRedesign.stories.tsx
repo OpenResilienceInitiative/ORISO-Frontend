@@ -76,7 +76,7 @@ export const MobileHero: StoryObj = {
 				overflow: 'hidden'
 			}}
 		>
-			<StageMobileHero action={<LocaleGlobe />} />
+			<StageMobileHero variant="branding" action={<LocaleGlobe />} />
 			<Box
 				sx={{
 					position: 'relative',
@@ -176,9 +176,9 @@ const STORY_TENANT = {
  * no links to click and the header CTA (which only appears for a tenant) would
  * be missing.
  */
-const LoginScreen = () => (
+const LoginScreen = ({ tenant = STORY_TENANT } = {}) => (
 	<TenantContext.Provider
-		value={{ tenant: STORY_TENANT, setTenant: () => undefined } as any}
+		value={{ tenant, setTenant: () => undefined } as any}
 	>
 		<LegalLinksProvider
 			legalLinks={[
@@ -211,6 +211,30 @@ export const FullScreen: StoryObj = {
 		}
 	},
 	render: () => <LoginScreen />
+};
+
+export const ConfiguredClaim: StoryObj = {
+	name: 'Mandantenspezifischer Claim',
+	parameters: { layout: 'fullscreen' },
+	render: () => (
+		<LoginScreen
+			tenant={{
+				...STORY_TENANT,
+				content: {
+					...STORY_TENANT.content,
+					claim: 'Wir hören Ihnen zu.'
+				}
+			}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const claims = canvasElement.querySelectorAll(
+			'.stage__claim, .stageMobileHero__claim'
+		);
+		await expect(claims).toHaveLength(2);
+		for (const claim of claims)
+			await expect(claim).toHaveTextContent('Wir hören Ihnen zu.');
+	}
 };
 
 /**
@@ -365,11 +389,13 @@ export const EmailCodeCountdown = emailCodeStory(
 		const link = resendLink(canvas);
 		await expect(link).toHaveAttribute('aria-disabled', 'true');
 		await expect(link.textContent).toMatch(/\(0:(30|29|28)\)/);
-		await expect(
-			canvas.getByText(
-				/Nur der zuletzt gesendete Code gilt|Only the most recently sent code is valid/
-			)
-		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				canvas.getByText(
+					/Nur der zuletzt gesendete Code gilt|Only the most recently sent code is valid/
+				)
+			).toBeVisible()
+		);
 	}
 );
 

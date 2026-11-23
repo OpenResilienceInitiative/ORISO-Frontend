@@ -201,6 +201,55 @@ describe('ManagePeopleDialog', () => {
 		expect(managed.addPerson).not.toHaveBeenCalled();
 	});
 
+	it('retries a half-done replacement as an add, without a second removal', async () => {
+		const loadMembers = vi
+			.fn<() => Promise<ManagedPerson[]>>()
+			.mockResolvedValueOnce([standing])
+			// The removal went through, the add did not.
+			.mockResolvedValue([]);
+		const managed = source({
+			requiresReason: true,
+			loadMembers,
+			replacePerson: vi.fn(async () => {
+				throw new Error('add failed');
+			})
+		});
+		show(managed);
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.replace.labelFor:Selma Bouvier'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.replace.pickLabelFor:Patty Bouvier'
+			})
+		);
+		fireEvent.change(await screen.findByRole('textbox'), {
+			target: { value: 'Urlaub' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'managePeople.replace.confirm:Patty Bouvier'
+			})
+		);
+
+		// Patty stays chosen with the reason; the retry only adds her.
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.add.confirm:Patty Bouvier'
+			})
+		);
+		await waitFor(() =>
+			expect(managed.addPerson).toHaveBeenCalledWith(
+				{ id: 'patty', name: 'Patty Bouvier' },
+				{ reason: 'Urlaub' }
+			)
+		);
+		expect(managed.replacePerson).toHaveBeenCalledTimes(1);
+		expect(managed.removePerson).not.toHaveBeenCalled();
+	});
+
 	it('removes only after the confirmation inside the row', async () => {
 		const person = { ...standing, isStanding: false, canRemove: true };
 		const managed = source({ loadMembers: async () => [person] });

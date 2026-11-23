@@ -26,6 +26,7 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
@@ -1657,6 +1658,139 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(mocks.detachLifecycle).toHaveBeenCalled();
 	});
 
+	describe('coalesced live timeline refresh', () => {
+		const emitTimelineEvent = (type: string) => {
+			const room = {
+				roomId: ROOM_ID,
+				myUserId: '@me:matrix.example.org'
+			};
+			const event = {
+				getType: () => type,
+				getSender: () => room.myUserId
+			};
+			act(() =>
+				mocks.timelineListeners.forEach((listener) =>
+					listener(event, room, false)
+				)
+			);
+		};
+		const advance = (ms: number) =>
+			act(async () => {
+				await vi.advanceTimersByTimeAsync(ms);
+			});
+
+		beforeEach(() => {
+			vi.useFakeTimers({
+				toFake: ['Date', 'setTimeout', 'clearTimeout']
+			});
+		});
+
+		afterEach(() => {
+			cleanup();
+			vi.useRealTimers();
+		});
+
+		it('refreshes once more when a second metadata event arrives in the window', async () => {
+			renderSessionStream({ isGroup: true });
+			await advance(120);
+			expect(mocks.timelineListeners).toHaveLength(1);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+
+			emitTimelineEvent('m.reaction');
+			await advance(20);
+			emitTimelineEvent('m.reaction');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+			await advance(99);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+
+			await advance(1);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+			await advance(120);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+		});
+
+		it('cancels a pending refresh when navigation replaces the room', async () => {
+			const view = renderSessionStream({ isGroup: true });
+			await advance(120);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+			emitTimelineEvent('m.reaction');
+			emitTimelineEvent('m.reaction');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 1
+			);
+
+			const nextRoom = '!other:matrix.example.org';
+			const nextSession = {
+				rid: nextRoom,
+				isGroup: true,
+				isSession: false,
+				item: { id: 2, matrixRoomId: nextRoom, active: true, status: 2 }
+			};
+			mocks.resolveSession.mockReturnValue({
+				isMatrixSession: true,
+				matrixRoomId: nextRoom,
+				sessionId: 2
+			});
+			try {
+				view.rerender(
+					sessionStreamElement({
+						isGroup: true,
+						activeSession: nextSession
+					})
+				);
+				await advance(0);
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledWith(
+					nextRoom,
+					Infinity
+				);
+				const readsAfterNavigation =
+					mocks.getMatrixRoomMessages.mock.calls.length;
+				await advance(120);
+				expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+					readsAfterNavigation
+				);
+			} finally {
+				mocks.resolveSession.mockReturnValue({
+					isMatrixSession: true,
+					matrixRoomId: ROOM_ID,
+					sessionId: 1
+				});
+			}
+		});
+
+		it('refreshes clear messages and redactions immediately during the window', async () => {
+			renderSessionStream({ isGroup: true });
+			await advance(120);
+			const reads = mocks.getMatrixRoomMessages.mock.calls.length;
+			emitTimelineEvent('m.reaction');
+			emitTimelineEvent('m.reaction');
+
+			emitTimelineEvent('m.room.message');
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 2
+			);
+			act(() =>
+				mocks.redactionListeners.forEach((listener) => listener())
+			);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 3
+			);
+
+			await advance(120);
+			expect(mocks.getMatrixRoomMessages).toHaveBeenCalledTimes(
+				reads + 3
+			);
+		});
+	});
+
 	it('refreshes a clear message when delayed decryption lands inside the coalescing window', async () => {
 		renderSessionStream({ isGroup: true });
 
@@ -2828,6 +2962,63 @@ describe('SessionStream Matrix room lifecycle', () => {
 		view.unmount();
 		await act(async () => lateStatus.resolve(grantedHandoverStatus()));
 		expect(mocks.getMatrixRoomMessages).not.toHaveBeenCalled();
+	});
+
+	it('looks up the supervisors again when accepting attached a standing supervisor (#2386)', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		mocks.getSessionSupervisors.mockResolvedValueOnce([]);
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2386,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(2)
+		);
+		expect(mocks.getSessionSupervisors).toHaveBeenLastCalledWith(2386);
+	});
+
+	it('does not look up the supervisors again for another session', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2387,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1);
 	});
 });
 

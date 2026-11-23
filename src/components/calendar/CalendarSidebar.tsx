@@ -67,6 +67,8 @@ import type {
 	FutureEntry
 } from '../sessionsList/timeline/timelineModel';
 import { avatarToneClass } from './calendarAvatar';
+import { CalendarPersonAvatar } from './CalendarPersonAvatar';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { calendarLocale } from './calendarLocale';
 import type { CalendarListMode } from './calendarPreferences';
 import {
@@ -74,6 +76,9 @@ import {
 	useEntryLabel,
 	useRangeFormat
 } from './useEntryLabel';
+
+/** The quick entry's person chips, as before (one of `AVATAR_SIZE_OPTIONS`). */
+const QUICK_PERSON_AVATAR_PX = 28;
 
 const QUICK_KINDS: QuickKind[] = [
 	'video',
@@ -843,11 +848,12 @@ const CardLead = ({ entry }: { entry: CalendarEntry }) => {
 	if (entry.type === 'appointment' && entry.title)
 		return (
 			<span className="calendarSide__lead" aria-hidden="true">
-				<span
-					className={`calendarSide__avatar ${avatarToneClass(entry.title)}`}
-				>
-					{initialsOf(entry.title)}
-				</span>
+				<CalendarPersonAvatar
+					className="calendarSide__avatar"
+					name={entry.title}
+					avatar={entry.avatar}
+					size={AVATAR_SIZES.default}
+				/>
 				<span className="calendarSide__leadKind">
 					<FacetIcon facet={facet} />
 				</span>
@@ -1612,12 +1618,12 @@ export const QuickEntry = ({
 								}}
 								data-cy={`calendar-quick-person-${c.sessionId}`}
 							>
-								<span
-									className={`calendarQuick__personAvatar ${avatarToneClass(c.username)}`}
-									aria-hidden="true"
-								>
-									{initialsOf(c.username)}
-								</span>
+								<CalendarPersonAvatar
+									className="calendarQuick__personAvatar"
+									name={c.username}
+									avatar={c.avatar}
+									size={QUICK_PERSON_AVATAR_PX}
+								/>
 								<span>{c.username}</span>
 							</button>
 						))}

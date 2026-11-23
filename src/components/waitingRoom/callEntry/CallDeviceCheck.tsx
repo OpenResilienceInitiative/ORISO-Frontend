@@ -8,6 +8,7 @@ import { DeviceToggle } from './DeviceToggle';
 import { DevicePicker } from './DevicePicker';
 import { MicLevelMeter } from './MicLevelMeter';
 import { CallNotice } from './CallNotice';
+import { Button, BUTTON_TYPES } from '../../button/Button';
 import {
 	CallDeviceKind,
 	CallDevices,
@@ -40,6 +41,16 @@ export interface CallDeviceCheckProps {
 	blocker?: CallEntryBlocker;
 	onToggleMic: () => void;
 	onToggleCamera: () => void;
+	/**
+	 * Ask the browser for the camera again. Without it, a camera that was
+	 * missing, blocked or busy leaves the camera switch disabled.
+	 */
+	onCameraRetry?: () => void;
+	/**
+	 * Why the camera is unavailable. Blocked or busy is said out loud with
+	 * a retry, instead of a silent check with the microphone alone.
+	 */
+	cameraBlocker?: CallEntryBlocker;
 	onSelectDevice: (kind: CallDeviceKind, id: string) => void;
 }
 
@@ -67,6 +78,8 @@ export const CallDeviceCheck = ({
 	blocker,
 	onToggleMic,
 	onToggleCamera,
+	onCameraRetry,
+	cameraBlocker,
 	onSelectDevice
 }: CallDeviceCheckProps) => {
 	const { t } = useTranslation();
@@ -95,9 +108,36 @@ export const CallDeviceCheck = ({
 					micOn={micOn}
 					micLevel={micLevel}
 					onToggleCamera={onToggleCamera}
+					onCameraRetry={onCameraRetry}
 					onToggleMic={onToggleMic}
 				/>
-			) : (
+			) : null}
+			{video &&
+			!cameraAvailable &&
+			(cameraBlocker === 'permissionDenied' ||
+				cameraBlocker === 'deviceBusy') ? (
+				<div
+					className="callDeviceCheck__cameraNotice"
+					role="status"
+					data-testid="camera-notice"
+					data-blocker={cameraBlocker}
+				>
+					<p className="callDeviceCheck__cameraNoticeText">
+						{t(`knockWait.devices.cameraNotice.${cameraBlocker}`)}
+					</p>
+					{onCameraRetry && (
+						<Button
+							item={{
+								type: BUTTON_TYPES.SECONDARY,
+								label: t('knockWait.devices.cameraNotice.retry')
+							}}
+							buttonHandle={onCameraRetry}
+							testingAttribute="camera-retry"
+						/>
+					)}
+				</div>
+			) : null}
+			{video ? null : (
 				<div className="callDeviceCheck__voice">
 					<DeviceToggle
 						tone="onSurface"

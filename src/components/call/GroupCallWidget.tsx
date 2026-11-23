@@ -71,6 +71,10 @@ import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
 import { callWidgetEntryOf } from './callHostContext';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
+import {
+	isKnockingOnCall,
+	readPendingKnock
+} from '../directLinkEntry/directLinkEntryFlow';
 import { DockedCall } from './states/DockedCall';
 import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import './GroupCallWidget.scss';
@@ -1339,6 +1343,17 @@ export const GroupCallWidget: React.FC = () => {
 	 * the app behind stays usable. It replaces the old black popup.
 	 */
 	if (callData.isIncoming && callData.state === 'ringing') {
+		/* A person knocking on this call waits in the knock dialog and is let
+		   in by the counsellor; ringing them too leads to "Call access denied". */
+		if (
+			isKnockingOnCall(readPendingKnock(), [
+				callData.signalRoomId,
+				callData.roomId,
+				callData.elementCallRoomId
+			])
+		) {
+			return null;
+		}
 		return (
 			<IncomingCallCard
 				caller={incomingCaller}

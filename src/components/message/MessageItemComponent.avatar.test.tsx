@@ -4,6 +4,9 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MessageItemComponent } from './MessageItemComponent';
 import { MessageContextShell } from './messageStoryShell';
+import { SUPERVISOR_FEEDBACK_PREFIX } from './messageConstants';
+import { SupervisionPeopleContext } from '../supervisionPanel/SupervisionPeopleContext';
+import type { SupervisionPeople } from '../supervisionPanel/supervisionPeople';
 import {
 	mockActiveSessionGroup,
 	mockActiveSession1on1,
@@ -121,4 +124,57 @@ it('renders an own counsellor message on primary even without a saved choice', (
 	expect(
 		screen.getByTestId('counsellor-avatar').getAttribute('data-avatar-kind')
 	).toBe('INITIALS');
+});
+
+describe('supervision side room (FE#2344)', () => {
+	const MONA = '@mona.simpson_at_trail.ist:example.org';
+	const people: SupervisionPeople = new Map([
+		[
+			MONA,
+			{
+				matrixUserId: MONA,
+				role: 'supervisor',
+				name: 'Mona Simpson (trail.ist)',
+				firstName: 'Mona',
+				lastName: 'Simpson',
+				choice: { kind: 'initials' }
+			}
+		]
+	]);
+	const feedback = () =>
+		mockMessageItemComponentProps({
+			userId: MONA,
+			username: 'mona.simpson_at_trail.ist',
+			message: `${SUPERVISOR_FEEDBACK_PREFIX} Deine Nachricht ist angekommen.`
+		});
+
+	it('shows the supervisor with the person avatar and name of the panel header', () => {
+		const { container } = render(
+			<MessageContextShell activeSession={mockActiveSession1on1()}>
+				<SupervisionPeopleContext.Provider value={people}>
+					<MessageItemComponent {...feedback()} />
+				</SupervisionPeopleContext.Provider>
+			</MessageContextShell>
+		);
+		expect(
+			container.querySelector('.messageItem__supervisionAvatar')
+		).toBeNull();
+		const avatar = screen.getByTestId('counsellor-avatar');
+		expect(avatar.getAttribute('data-avatar-kind')).toBe('INITIALS');
+		expect(avatar.textContent).toContain('MS');
+		expect(
+			screen.getAllByText('Mona Simpson (trail.ist)').length
+		).toBeGreaterThan(0);
+	});
+
+	it('keeps the role glyph outside the side room', () => {
+		const { container } = render(
+			<MessageContextShell activeSession={mockActiveSession1on1()}>
+				<MessageItemComponent {...feedback()} />
+			</MessageContextShell>
+		);
+		expect(
+			container.querySelector('.messageItem__supervisionAvatar')
+		).not.toBeNull();
+	});
 });

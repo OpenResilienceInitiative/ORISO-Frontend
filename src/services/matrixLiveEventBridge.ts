@@ -553,11 +553,12 @@ export class MatrixLiveEventBridge {
 		const isElementCall = isElementOrGroupCallInvite(content);
 		const isOrisoInvite = event.getType() === 'org.oriso.call.invite';
 		const { lifetime } = content;
-		// MatrixRTC membership can outlive the ringing window of a one-to-one offer.
+		// MatrixRTC membership can outlive the ringing window of an offer, for
+		// one-to-one and group calls alike (#2481). A running group call is
+		// joined from its conversation, not by ringing again after a reload.
 		if (
 			isOrisoInvite &&
 			isElementCall &&
-			!isGroupCall &&
 			typeof lifetime === 'number' &&
 			Number.isFinite(lifetime) &&
 			ageMs >= lifetime

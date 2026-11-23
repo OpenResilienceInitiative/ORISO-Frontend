@@ -115,6 +115,42 @@ describe('getPassageReplies', () => {
 		expect(getPassageRepliesText(content)).toBe('Bis morgen.');
 	});
 
+	it('keeps a marked passage added empty when the answer is typed in the composer', () => {
+		const quoteOnly = {
+			eventId: '$client',
+			author: 'Lena',
+			excerpt: 'drei Mahnungen',
+			start: 12
+		};
+		const content = buildPassageRepliesContent(
+			[quoteOnly],
+			'Die schauen wir uns an.',
+			labels
+		);
+		expect(getPassageReplies(content)).toEqual([
+			{ ...quoteOnly, audio: null }
+		]);
+		expect(getPassageRepliesText(content)).toBe('Die schauen wir uns an.');
+	});
+
+	it('keeps quote-only, text and encrypted audio entries in their original order', () => {
+		const quoteOnly = {
+			eventId: '$quote',
+			author: 'Lena',
+			excerpt: 'erste Stelle'
+		};
+		const content = buildPassageRepliesContent(
+			[quoteOnly, textReply, voiceReply],
+			'Fazit',
+			labels
+		);
+		expect(getPassageReplies(content)).toEqual([
+			{ ...quoteOnly, start: null, audio: null },
+			{ ...textReply, audio: null },
+			{ ...voiceReply, start: null }
+		]);
+	});
+
 	it('returns null for an ordinary message', () => {
 		expect(getPassageReplies({ msgtype: 'm.text', body: 'Hallo' })).toBe(
 			null
@@ -122,7 +158,7 @@ describe('getPassageReplies', () => {
 		expect(getPassageRepliesText({ body: 'Hallo' })).toBe('');
 	});
 
-	it('drops malformed entries and answers without text or voice', () => {
+	it('keeps bare quotes while dropping malformed entries and invalid media', () => {
 		const replies = getPassageReplies({
 			[PASSAGE_REPLIES_KEY]: [
 				null,
@@ -138,6 +174,13 @@ describe('getPassageReplies', () => {
 			]
 		});
 		expect(replies).toEqual([
+			{
+				eventId: '$a',
+				author: '',
+				excerpt: 'x',
+				start: null,
+				audio: null
+			},
 			{
 				eventId: '$d',
 				author: '',

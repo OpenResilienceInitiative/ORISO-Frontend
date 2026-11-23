@@ -1090,8 +1090,7 @@ const preview: Preview = {
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
 		scheme: 'light',
-		entryFormDemo: 'manual',
-		backgrounds: { value: 'light' }
+		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],
 	// The scheme decorator installs custom properties before the story

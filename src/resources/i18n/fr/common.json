@@ -42,6 +42,8 @@
 		"recoveryIntro": "Préparez d'abord la clé de récupération de votre conversation actuelle. Vos messages resteront ainsi accessibles sur un nouvel appareil.",
 		"pending": "Une tentative précédente est en attente. Utilisez le même mot de passe pour la terminer.",
 		"recoveryError": "La clé de récupération n'est pas encore disponible. Réessayez ou saisissez la clé enregistrée précédemment.",
+		"historyError": "Votre historique de discussion n'a pas encore pu être sécurisé. Veuillez réessayer.",
+		"fallbackKeyHelp": "Votre compte est prêt, mais votre historique de discussion n'a pas encore pu être lié à votre mot de passe. Enregistrez cette clé de récupération : vous en aurez besoin pour lire cette conversation sur un nouvel appareil.",
 		"existingKey": "Clé de récupération enregistrée précédemment (si nécessaire)",
 		"prepare": "Préparer la clé de récupération",
 		"accountChanged": "Le compte connecté a changé. Rechargez la page pour continuer en toute sécurité.",
@@ -653,6 +655,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Certaines données de conversation peuvent rester dans ce navigateur. Fermez les autres onglets ORISO.",
+			"retryCleanup": "Réessayer le nettoyage du navigateur",
 			"button": "Fermer",
 			"headline": "Vous avez supprimé avec succès votre compte auprès de Caritas Beratung."
 		}
@@ -1262,12 +1266,20 @@
 		"format": {
 			"panelTitle": "Créer une nouvelle conversation",
 			"panelMenu": "Plus d’options",
+			"discard": {
+				"title": "Abandonner la saisie ?",
+				"description": "Votre saisie dans cette carte n’est pas enregistrée. Si vous fermez cette vue, elle sera perdue.",
+				"keepEditing": "Continuer la saisie",
+				"confirm": "Abandonner et fermer"
+			},
 			"cardsPrevious": "Format de conversation précédent",
 			"cardsNext": "Format de conversation suivant",
 			"back": "Retour",
 			"headerTitle": "Créer une nouvelle conversation",
 			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
-			"title": "Choisir le format d'entretien"
+			"title": "Choisir le format d'entretien",
+			"goToCard": "Aller au format de conversation {{position}} sur {{total}}",
+			"choose": "Choisir"
 		},
 		"internal": {
 			"addPerson": "Ajouter une personne",
@@ -1307,7 +1319,9 @@
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
 			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
-			"vacatedHint": "ne fait plus partie du service de consultation"
+			"vacatedHint": "ne fait plus partie du service de consultation",
+			"cardShort": "Se concerter en équipe – chat, audio, vidéo.",
+			"infoLabel": "En savoir plus sur « Discussions internes »"
 		},
 		"circle": {
 			"addModerator": "Ajouter une co-modération",
@@ -2297,7 +2311,9 @@
 				"createNew": "Créer un nouveau rendez-vous",
 				"openCalendar": "Ouvrir dans le calendrier"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision modifiée",
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
 	},
 	"navigation": {
 		"appointments": "Vidéo - Dates",
@@ -3165,6 +3181,8 @@
 				"intro": "Choisissez vos sons de notification séparément pour chaque domaine.",
 				"emailNote": "Les e-mails ne sont envoyés que si vous ne réagissez pas dans les cinq minutes suivant l'événement.",
 				"noSound": "Aucun son sélectionné",
+				"defaultSound": "Par défaut",
+				"legacySound": "Ancien son",
 				"tone": "Son n° {{number}}",
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
@@ -4086,6 +4104,10 @@
 				"headline": "Ce lien d'invitation ne fonctionne pas.",
 				"body": "Le lien est incomplet, ou le groupe n'existe plus. Veuillez demander un nouveau lien à la personne qui vous l'a envoyé."
 			}
+		},
+		"stepScroll": {
+			"back": "Étapes précédentes",
+			"forward": "Étapes suivantes"
 		}
 	},
 	"releaseNote": {
@@ -5780,6 +5802,10 @@
 				"remove": {
 					"title": "Superviseur supprimé",
 					"text": "Le superviseur a été supprimé avec succès."
+				},
+				"replace": {
+					"title": "Superviseur remplacé",
+					"text": "Le superviseur a bien été remplacé."
 				}
 			},
 			"error": {
@@ -5929,6 +5955,7 @@
 			"title": "Supervision",
 			"systemNotice": "La supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Chat de feedback avec la supervision sur cette consultation",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Conseil"
@@ -6025,8 +6052,7 @@
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."
 		},
 		"whoReadsAlong": {
-			"headline": "Qui lit votre message",
-			"body": "Seules les personnes qualifiées du service de consultation compétent lisent votre message. Toutes sont tenues au secret professionnel."
+			"headline": "Qui lit votre message"
 		},
 		"responseDeadline": {
 			"headline": "Quand vous recevrez une réponse",
@@ -7012,7 +7038,12 @@
 			"microphone": "Micro",
 			"micOn": "Activer le micro",
 			"micOff": "Couper le micro",
-			"micMeter": "Volume de votre micro"
+			"micMeter": "Volume de votre micro",
+			"cameraNotice": {
+				"permissionDenied": "Votre caméra est bloquée pour ce site. Autorisez la caméra dans les paramètres du site de votre navigateur (icône de cadenas à côté de l'adresse). L'image apparaît alors sans recharger.",
+				"deviceBusy": "Un autre programme utilise votre caméra. Fermez-le, puis vérifiez à nouveau.",
+				"retry": "Vérifier la caméra à nouveau"
+			}
 		},
 		"ready": {
 			"title": "Vérifier la caméra et le micro",
@@ -8023,6 +8054,7 @@
 			"membersTitle": "Supervision actuelle",
 			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
 			"addTitle": "Ajouter un superviseur",
+			"unknownName": "Superviseur",
 			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
 			"reasonLabel": "Motif de la supervision",
 			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",
@@ -8060,5 +8092,40 @@
 		"archiveHint": "Déplacez l'entrée vers les archives pour qu'elle disparaisse de votre liste et de vos activités.",
 		"archived": "Cette entrée se trouve dans les archives.",
 		"archiveFailed": "L'archivage n'a pas fonctionné. Veuillez réessayer."
+	},
+	"journey": {
+		"question": {
+			"optional": "(facultatif)",
+			"missing": "Veuillez répondre à cette question.",
+			"textPlaceholder": "Votre réponse",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"choose": "Veuillez choisir",
+			"multiHint": "Plusieurs réponses possibles"
+		},
+		"rating": {
+			"stars": "{{count}} étoiles sur {{max}}",
+			"stars_one": "{{count}} étoile sur {{max}}",
+			"stars_other": "{{count}} étoiles sur {{max}}",
+			"untouched": "pas encore choisi",
+			"moveHint": "Déplacez le curseur sur votre valeur."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Une petite question",
+				"arrival": "Votre avis"
+			},
+			"send": "Envoyer les réponses",
+			"thanks": "Merci pour vos réponses !",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant.",
+			"anonymous": "Vos réponses sont enregistrées sans lien avec votre conseil."
+		},
+		"checkIn": {
+			"progress": "Question {{current}} sur {{total}}",
+			"back": "Question précédente",
+			"next": "Suivant",
+			"skip": "Passer",
+			"done": "Terminé – « Suivant » mène à l’étape suivante."
+		}
 	}
 }

@@ -106,6 +106,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			&:focus,
 			&:active {
 				background-color: $session-card-selected-bg !important;
+
+				--session-preview-color: var(--m3-on-surface, #1e1e1e);
 				border-color: $list-item-selected-border-color !important;
 			}
 		}
@@ -188,6 +190,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// which `__content--flow` gives back, so nothing moves.
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
+
+			// The open menu keeps this pale card in both schemes.
+			--session-preview-color: var(--black, #1e1e1e);
 			border: $list-item-active-menu-border-width solid
 				$session-light-border !important;
 		}
@@ -442,6 +447,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 	}
 
+	// Reserve room for the postcode and a visible ellipsis; the wait label wraps as a last resort.
+	&__rowRight--waiting {
+		max-width: calc(100% - 104px);
+	}
+
 	&__consultingType {
 		display: block;
 		white-space: nowrap;
@@ -457,6 +467,12 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		font-size: 12px;
 		line-height: 16px;
 		white-space: nowrap;
+	}
+
+	// Enquiry waiting time is never clipped, including longer translations.
+	&__dateLine--waiting {
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 
 	&__date {
@@ -485,10 +501,13 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	// FE#2183: the waiting time is the point of an enquiry card, so it is not
 	// cut to "wartet seit…" on narrow screens; the topic chip yields instead.
 	&__date--waiting {
-		@media screen and (width <= 899px) {
-			max-width: none;
-			flex-shrink: 0;
-		}
+		display: block;
+		max-width: none;
+		min-width: 0;
+		overflow: visible;
+		overflow-wrap: anywhere;
+		white-space: normal;
+		flex-shrink: 1;
 	}
 
 	&__menuIcon {
@@ -766,9 +785,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		border-radius: 12px 0 0 12px;
 		border-right: none;
 		align-self: stretch;
-		display: inline-flex;
-		align-items: center;
-		justify-content: flex-start;
+		display: block;
 		padding: 2px 4px 2px 12px;
 	}
 
@@ -898,7 +915,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		align-content: center;
-		color: #1e1e1e;
+		color: var(--session-preview-color, var(--m3-on-surface, #1e1e1e));
 
 		&--aliasMessage {
 			font-style: italic !important;
@@ -1490,6 +1507,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 @mixin session-card-secondary {
 	.sessionsListItem__content {
 		background-color: var(--m3-surface-container-low, #f6f3f3) !important;
+
+		--session-preview-color: var(--m3-on-surface, #1e1e1e);
 
 		&:hover,
 		&:focus,
