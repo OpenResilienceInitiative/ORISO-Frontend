@@ -16,7 +16,7 @@
 		margin-block: 1rem;
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline: $focus-outline;
 			outline-offset: 2px;
 		}
 	}

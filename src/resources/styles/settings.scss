@@ -5,6 +5,16 @@
 // BREAKPOINTS
 @import '~breakpoint-sass/stylesheets/breakpoint';
 
+// Keyboard focus ring contract (Frontend#1134, ADR-037): one themed ring for
+// light, dark and High contrast. `--m3-primary` reaches 7.7:1 (light) and
+// 10.9:1 (dark) on the page surface; the old `$focus-blue` reached 2.82:1 on
+// white and `--m3-primary-outline` 1.98:1 on the dark surface. Storybook:
+// Design Tokens/Focus ring contract.
+$focus-ring-width: 2px;
+$focus-ring-offset: 2px;
+$focus-ring-color: var(--oriso-focus-ring-color, var(--m3-primary, #a5000a));
+$focus-ring-on-fill-color: var(--m3-on-primary, #ffffff);
+
 // WP-06 Activity Timeline — shared list-item selection tokens + mixins (Slice 0b)
 @import './listItemSelection';
 
@@ -233,7 +243,7 @@ $drag-and-drop-area-border-radius: $grid-base-two;
 $enquiry-background: $background-light;
 $enquiry-circle-background: $background-lighter;
 $enquiry-input-border-radius: $grid-base-three;
-$focus-outline: 2px solid $focus-blue;
+$focus-outline: $focus-ring-width solid $focus-ring-color;
 $form-accordion-index-background-active: $primary;
 $form-accordion-index-border: 1px solid $secondary;
 $form-accordion-index-color-active: $white;
