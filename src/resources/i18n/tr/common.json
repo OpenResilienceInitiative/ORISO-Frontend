@@ -6427,6 +6427,138 @@
 			"open": "Turları aç",
 			"close": "Turları kapat",
 			"manage": "Turları yönet"
+		},
+		"caseHandover": {
+			"title": "Vakaları devretmek",
+			"summary": "Kendi danışmanlığınızı bir meslektaşa devredin ya da onun vakalarına erişim talep edin.",
+			"step": {
+				"intro": {
+					"title": "İki yönlü devir",
+					"intro": "Yeni: vakaların sorumluluğu doğrudan platformda değişir. Kendi danışmanlığınızı önerebilir ya da bir meslektaşınızın vakasına erişim talep edebilirsiniz. Bu tur iki yolu da gösterir, hiçbir işlem başlatmaz."
+				},
+				"offer": {
+					"title": "Kendi danışmanlığınızı devretmek",
+					"intro": "Açık bir danışmanlıkta başlıktaki „+“ simgesini ve ardından „Danışmanlığı devret“i seçin. Yetkili bir meslektaş seçip bir gerekçe yazın. Gerekli tüm onaylar gelene kadar sorumluluk sizde kalır."
+				},
+				"search": {
+					"title": "Meslektaş aramak",
+					"intro": "Burada „Kişiler“ altında bir meslektaş arayın. Liste, biriminize ve konularınıza göre devralabileceğiniz vakalarını gösterir."
+				},
+				"requestAccess": {
+					"title": "Erişim talep etmek",
+					"intro": "„Erişim talep et“ ile bir vakayı gerekçesiyle istersiniz. ▾ ve „Birden fazla vaka seç“ ile birkaç vakayı aynı anda talep edersiniz."
+				},
+				"status": {
+					"title": "Durumu takip etmek",
+					"intro": "Vakada durum görünür, örneğin „Onay bekleniyor“. Meslektaşınızın yanıtı ve kural gerektiriyorsa danışanın onayı zaman çizelgesinde görünür."
+				},
+				"done": {
+					"title": "Kısaca",
+					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Sohbet çemberi oluşturmak",
+			"summary": "Moderasyonlu bir sohbet çemberi oluşturun, paylaşın ve başlatın.",
+			"step": {
+				"intro": {
+					"title": "Sohbet çemberleri",
+					"intro": "Sohbet çemberi, danışmanların yönettiği anonim bir gruptur – tek seferlik ya da düzenli. Bu tur nerede oluşturulduğunu gösterir. Hiçbir şey oluşturulmaz."
+				},
+				"create": {
+					"title": "Oluştur",
+					"intro": "Danışmanlık listenizdeki „Oluştur“ ile yeni sohbetler başlatırsınız. Hangi formatları göreceğinizi kurum ve danışma merkezi belirler."
+				},
+				"format": {
+					"title": "„Sohbet çemberi“ formatı",
+					"intro": "„Görüşme formatını seçin“ altında çember diğer formatların yanında yer alır. Yalnızca bir format açıksa bu seçim atlanır."
+				},
+				"topic": {
+					"title": "Konu seçmek",
+					"intro": "Önce „Konu / uzmanlık alanı“ seçin. Ardından çemberin ayarları açılır."
+				},
+				"settings": {
+					"title": "Ayarla, paylaş, başlat",
+					"intro": "Ayarlarda tarih, tekrar, ortam ve dili belirler, „Ek moderasyon“ altında yardımcı moderatör eklersiniz. Ardından davet bağlantısını veya QR kodunu paylaşın. Katılımcılar siz „Sohbet başlat“ ile başlayıp onları içeri alana kadar bekleme odasında bekler."
+				},
+				"done": {
+					"title": "Hazır",
+					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				}
+			}
+		},
+		"profile": {
+			"title": "Profiliniz",
+			"summary": "Profil, yokluk, bildirimler, güvenlik ve ekran ayarları artık nerede.",
+			"step": {
+				"overview": {
+					"title": "Profiliniz",
+					"intro": "Profilinizde verileriniz ve ayarlarınız Genel, Etkinliklerim, Ayarlar ve Yardım bölümlerinde yer alır. Bu tur en önemli kartları gösterir."
+				},
+				"public": {
+					"title": "Kamu verileri",
+					"intro": "Danışanlar bu bilgileri görür: adınız, dilleriniz ve danışma merkezleriniz. Bunları güncel tutun."
+				},
+				"absence": {
+					"title": "Yokluğum",
+					"intro": "Yokluğunuzu buraya girin. Danışanlar o zaman yokluk mesajınızı görür."
+				},
+				"notifications": {
+					"title": "Bildirimler",
+					"intro": "E-posta ve tarayıcıda neler hakkında bilgilendirileceğinizi burada seçersiniz."
+				},
+				"security": {
+					"title": "Güvenlik",
+					"intro": "„Giriş ve hesap“ altında şifrenizi değiştirir ve iki faktörlü doğrulamayı yönetirsiniz. Yeni: eski mesajları kurtarma – şifreli mesajları yeni bir cihazda da okuyabilmek için bunu kurun."
+				},
+				"display": {
+					"title": "Ekran",
+					"intro": "Burada efektleri, zaman çizelgesini ve arayüz dilini ayarlarsınız."
+				},
+				"shortcuts": {
+					"title": "Klavye kısayolları",
+					"intro": "Yeni: birçok işlem klavyeyle yapılabilir. Tüm kısayollar burada."
+				},
+				"helpTours": {
+					"title": "Turlar",
+					"intro": "Herhangi bir turu buradan yeniden başlatın. „Tur düğmesini göster“ sağ alttaki „?“ düğmesini gösterir veya gizler."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Takvim",
+			"summary": "Randevu, kapalı zaman ve yokluk girin, çalışma saatlerini belirleyin, takvim bağlayın.",
+			"step": {
+				"nav": {
+					"title": "Randevularım",
+					"intro": "Yeni: takviminiz platformun bir parçası. Danışanlarla tüm randevularınızı – isterseniz meslektaşlarınızınkileri de – burada görürsünüz."
+				},
+				"create": {
+					"title": "Yeni kayıt",
+					"intro": "„Yeni“ ile randevu, engellenmiş zaman veya yokluk girersiniz – tek pencerede üç sekme."
+				},
+				"viewSwitch": {
+					"title": "Görünüm",
+					"intro": "Gün, hafta, ay ve liste arasında geçiş yapın. Liste ayrıca randevusuz bağlantılarınızı da gösterir."
+				},
+				"quickEntry": {
+					"title": "Hızlı kayıt",
+					"intro": "Pencere açmadan kayıt: türü ve kişiyi seçin, gün ve başlangıcı girin ya da boş bir zamana dokunun, sonra kaydedin."
+				},
+				"workingHours": {
+					"title": "Çalışma saatleri",
+					"intro": "Çalışma saatleriniz danışanların ne zaman randevu alabileceğini belirler. „Değiştir“ ile ayarlayın."
+				},
+				"settings": {
+					"title": "Takvim ayarları",
+					"intro": "⋮ altında çalışma ve görüşme saatlerini belirler, tekrarlanan kapalı zaman ve boş günler girer, Outlook veya Google bağlarsınız."
+				},
+				"links": {
+					"title": "Randevusuz bağlantılar",
+					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
+				}
+			}
 		}
 	},
 	"weekday": {

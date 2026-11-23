@@ -20,6 +20,8 @@ interface FormatCardProps {
 	children: React.ReactNode;
 	className?: string;
 	headerAction?: React.ReactNode;
+	/** Product-tour anchor (`data-tour-target`) on the card; inert. */
+	tourTarget?: string;
 }
 
 export const FormatCard = ({
@@ -31,9 +33,13 @@ export const FormatCard = ({
 	mediaOverlay,
 	children,
 	className,
-	headerAction
+	headerAction,
+	tourTarget
 }: FormatCardProps) => (
-	<section className={`formatCard${className ? ` ${className}` : ''}`}>
+	<section
+		className={`formatCard${className ? ` ${className}` : ''}`}
+		data-tour-target={tourTarget}
+	>
 		<header className="formatCard__header">
 			<span className="formatCard__avatar" aria-hidden>
 				{avatar}

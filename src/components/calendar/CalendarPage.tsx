@@ -2465,6 +2465,7 @@ export const CalendarPage = ({
 		switcherStyle === 'digits' && !compact ? (
 			<div
 				className="calendarStage__digits"
+				data-tour-target="calendar-view-switch"
 				role="radiogroup"
 				aria-label={t('calendar.viewSwitch')}
 			>
@@ -2497,6 +2498,7 @@ export const CalendarPage = ({
 				})}
 				onClick={openAt('view')}
 				data-cy="calendar-view-menu"
+				data-tour-target="calendar-view-switch"
 			>
 				<span className="calendarStage__viewIcon" aria-hidden="true">
 					{VIEW_ICON[view]}
@@ -2525,6 +2527,7 @@ export const CalendarPage = ({
 						aria-label={t('calendar.header.newEntry')}
 						onClick={() => setDialog({ type: 'appointment' })}
 						data-cy="calendar-create"
+						data-tour-target="calendar-create"
 					>
 						<AddIcon aria-hidden />
 						<span
@@ -2613,6 +2616,7 @@ export const CalendarPage = ({
 							aria-expanded={menu?.type === 'settings'}
 							onClick={openAt('settings')}
 							data-cy="calendar-settings"
+							data-tour-target="calendar-settings"
 						>
 							<MoreVertIcon />
 						</button>

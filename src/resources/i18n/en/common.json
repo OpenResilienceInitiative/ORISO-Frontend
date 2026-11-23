@@ -6342,6 +6342,138 @@
 			"open": "Open tours",
 			"close": "Close tours",
 			"manage": "Manage tours"
+		},
+		"caseHandover": {
+			"title": "Handing over cases",
+			"summary": "Hand one of your consultations over to a colleague, or request access to theirs.",
+			"step": {
+				"intro": {
+					"title": "Handover in both directions",
+					"intro": "New: cases change hands directly in the platform. You can offer one of your consultations or request access to a colleague's case. This tour shows both ways without triggering anything."
+				},
+				"offer": {
+					"title": "Hand over your own consultation",
+					"intro": "In an open consultation, choose \"+\" in the header and then \"Hand over consultation\". Pick an eligible colleague and give a reason. You stay responsible until every required approval is in."
+				},
+				"search": {
+					"title": "Find a colleague",
+					"intro": "Search for a colleague here under \"People\". The list then shows the cases of theirs you may take over – depending on your department and topics."
+				},
+				"requestAccess": {
+					"title": "Request access",
+					"intro": "\"Request access\" asks for one case and a reason. Use ▾ and \"Select multiple cases\" to ask for several cases at once."
+				},
+				"status": {
+					"title": "Follow the status",
+					"intro": "The case shows its status, for example \"Awaiting approval\". Your colleague's answer and – if the policy requires it – the help seeker's consent appear in the timeline."
+				},
+				"done": {
+					"title": "In short",
+					"intro": "Offer your own cases in the consultation via \"+\" → \"Hand over consultation\". Request colleagues' cases through the people search. Follow the status in the timeline."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Setting up a conversation circle",
+			"summary": "Create, share and start a moderated conversation circle.",
+			"step": {
+				"intro": {
+					"title": "Conversation circles",
+					"intro": "A conversation circle is an anonymous group moderated by counsellors – one-off or recurring. This tour shows where to set one up. Nothing is created."
+				},
+				"create": {
+					"title": "Create",
+					"intro": "Use \"Create\" in your consultation list to start new conversations. Which formats you see is set by your organisation and counselling centre."
+				},
+				"format": {
+					"title": "The \"Conversation circle\" format",
+					"intro": "Under \"Choose conversation format\" the circle sits next to the other formats. If only one format is enabled, this choice is skipped."
+				},
+				"topic": {
+					"title": "Choose a topic",
+					"intro": "First choose \"Topic / subject area\". The circle's settings open next."
+				},
+				"settings": {
+					"title": "Set up, share, start",
+					"intro": "In the settings you choose date, repeats, medium and language, and add co-moderators under \"Additional moderation\". Then share the invitation link or QR code. Participants wait in the waiting room until you begin with \"Start chat\" and let them in."
+				},
+				"done": {
+					"title": "Ready",
+					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				}
+			}
+		},
+		"profile": {
+			"title": "Your profile",
+			"summary": "Where profile, absence, notifications, security and display live now.",
+			"step": {
+				"overview": {
+					"title": "Your profile",
+					"intro": "Your profile holds your data and settings, split into General, My activities, Settings and Help. This tour shows the most important cards."
+				},
+				"public": {
+					"title": "Public data",
+					"intro": "Help seekers see these details: your name, your languages and your counselling centres. Keep them up to date."
+				},
+				"absence": {
+					"title": "My absence",
+					"intro": "Enter your absence here. Help seekers then see your absence message."
+				},
+				"notifications": {
+					"title": "Notifications",
+					"intro": "Choose here what you are told about by e-mail and in the browser."
+				},
+				"security": {
+					"title": "Security",
+					"intro": "Under \"Sign-in & account\" you change your password and manage two-factor authentication. New: recovering old messages – set it up so you can read encrypted messages on a new device too."
+				},
+				"display": {
+					"title": "Display",
+					"intro": "Under \"Display\" you set effects, the timeline and the interface language."
+				},
+				"shortcuts": {
+					"title": "Keyboard shortcuts",
+					"intro": "New: many actions work from the keyboard. All shortcuts are listed here."
+				},
+				"helpTours": {
+					"title": "Tours",
+					"intro": "Restart any tour here. \"Show the tour button\" shows or hides the \"?\" button at the bottom right."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Calendar",
+			"summary": "Add appointments, blocked time and absences, set working hours, connect calendars.",
+			"step": {
+				"nav": {
+					"title": "My dates",
+					"intro": "New: your calendar is part of the platform. It shows all appointments with help seekers – and, if you like, your colleagues' too."
+				},
+				"create": {
+					"title": "Add an entry",
+					"intro": "\"New\" adds an appointment, blocked time or an absence – three tabs in one dialog."
+				},
+				"viewSwitch": {
+					"title": "View",
+					"intro": "Switch between day, week, month and list. The list also shows your links without an appointment."
+				},
+				"quickEntry": {
+					"title": "Quick entry",
+					"intro": "An entry without a dialog: choose the kind and person, set day and start or tap a free slot, then save."
+				},
+				"workingHours": {
+					"title": "Working hours",
+					"intro": "Your working hours decide when help seekers can book. Adjust them with \"Change\"."
+				},
+				"settings": {
+					"title": "Calendar settings",
+					"intro": "Under ⋮ you set working and consultation hours, add repeating blocked time and days off, and connect Outlook or Google."
+				},
+				"links": {
+					"title": "Links without an appointment",
+					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				}
+			}
 		}
 	},
 	"weekday": {

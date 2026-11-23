@@ -739,6 +739,7 @@ const CreateConversationFlow = ({
 	const circleCard = (
 		<FormatCard
 			className="conversationCreate__formatCard"
+			tourTarget="groupchat-format-circle"
 			title={translate('groupChat.circle.title')}
 			subtitle={translate('groupChat.circle.subtitle')}
 			avatar={<CircleIcon />}
@@ -766,6 +767,7 @@ const CreateConversationFlow = ({
 					<>
 						<SplitButton
 							ref={pickerSplitButtonRef}
+							tourTarget="groupchat-topic-picker"
 							fullWidth
 							icon={<TopicIcon filled={Boolean(pickerTopic)} />}
 							label={
