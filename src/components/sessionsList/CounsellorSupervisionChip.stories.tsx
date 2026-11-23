@@ -21,6 +21,10 @@ import {
 	SESSION_STORY_LABELS
 } from '../displayFilter/displayFilterStoryData';
 import { desktop1440Globals } from '../message/messageStoryShell';
+import { useActiveListItem } from '../../hooks/useActiveListItem';
+import { buildExtendedSession } from '../../globalState/helpers/stateHelpers';
+import { SupervisionIconButton } from '../sessionsListItem/SupervisionIconButton';
+import { TeamDiscussionIconButton } from '../teamDiscussion/TeamDiscussionBadge';
 import './sessionsList.styles.scss';
 
 /**
@@ -104,7 +108,16 @@ function CounsellorList({
 		initialChip
 	);
 	const supervised = rows.filter(isSupervision);
+	const { isActive } = useActiveListItem();
 	const visible = chip === 'supervision' ? supervised : rows;
+	const activeIndex = visible.findIndex((raw) => {
+		const session = buildExtendedSession(raw, '');
+		return isActive({
+			groupId: session.item.matrixRoomId,
+			rid: session.rid,
+			sessionId: session.item.id
+		});
+	});
 	return (
 		<div style={shell}>
 			<SessionsListToolbar
@@ -137,8 +150,17 @@ function CounsellorList({
 								session={raw}
 								index={index}
 								grouped
-								isGroupStart={index === 0}
-								isGroupEnd={index === visible.length - 1}
+								/* The same grouping as SessionsList: the open
+								   row stands apart, its neighbours round. */
+								isBeforeActive={index === activeIndex - 1}
+								isAfterActive={index === activeIndex + 1}
+								isGroupStart={
+									index === 0 || index === activeIndex + 1
+								}
+								isGroupEnd={
+									index === visible.length - 1 ||
+									index === activeIndex - 1
+								}
 							/>
 						</div>
 					))}
@@ -236,5 +258,32 @@ export const PinInSettings: Story = {
 		await expect(
 			await body.findByRole('menuitemradio', { name: 'Fest' })
 		).toBeVisible();
+	}
+};
+
+/**
+ * 5 (Frank, 24 Nov): the marker in a row is one 32px round icon. Hover:
+ * "Supervision: <Name>"; click opens the Supervision side panel (also on a
+ * phone). Next to it the existing Team-Besprechung icon, the same pattern —
+ * shown only while the team chat is active, not for archived cases.
+ */
+export const RowIcons: Story = {
+	name: '5 · Zeile: Supervision- und Team-Icon (32 px)',
+	render: () => (
+		<div style={{ ...shell, display: 'flex', gap: 8 }}>
+			<SupervisionIconButton
+				supervisorNames={['Angela K']}
+				onOpen={() => undefined}
+			/>
+			<TeamDiscussionIconButton onOpen={() => undefined} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const button = canvas.getByRole('button', {
+			name: 'Supervision: Angela K'
+		});
+		await expect(button).toHaveAttribute('title', 'Supervision: Angela K');
+		await expect(button.getBoundingClientRect().width).toBe(32);
 	}
 };
