@@ -102,6 +102,7 @@ import {
 	loadInternalChatColleagues
 } from './internal/loadInternalChatColleagues';
 import { internalSubsetErrorKey } from './internal/internalSubsetMessages';
+import { peopleForInternalChatPicker } from './internal/peopleForInternalChatPicker';
 import './conversationCreate.styles.scss';
 
 /**
@@ -527,15 +528,7 @@ const CreateConversationFlow = ({
 		[availableConsultants]
 	);
 	const internalPeople = useMemo(
-		() =>
-			internalColleagues.map(
-				({ consultantId, displayName, tenantName }) => ({
-					id: consultantId,
-					label: tenantName
-						? `${displayName} (${tenantName})`
-						: displayName
-				})
-			),
+		() => peopleForInternalChatPicker(internalColleagues),
 		[internalColleagues]
 	);
 

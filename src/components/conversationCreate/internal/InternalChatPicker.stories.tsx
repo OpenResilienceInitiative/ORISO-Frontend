@@ -15,6 +15,7 @@ import {
 	filterColleaguesForScope,
 	InternalChatRecipientScope
 } from './recipientScope';
+import { peopleForInternalChatPicker } from './peopleForInternalChatPicker';
 import '../conversationCreate.styles.scss';
 
 /**
@@ -151,6 +152,39 @@ const optionNames = (list: HTMLElement) =>
 	within(list)
 		.getAllByRole('option')
 		.map((option) => option.textContent?.trim());
+
+export const SameNameColleagues: Story = {
+	name: 'Same-name colleagues with different counselling centres',
+	render: () => (
+		<Flow
+			scope="TENANT"
+			people={peopleForInternalChatPicker([
+				{
+					consultantId: 'c-1',
+					displayName: 'Anna Becker',
+					tenantName: 'Springfield',
+					agencies: [{ id: 410, name: 'Allgemeine Sozialberatung' }]
+				},
+				{
+					consultantId: 'c-2',
+					displayName: 'Anna Becker',
+					tenantName: 'Springfield',
+					agencies: [
+						{ id: 410, name: 'Allgemeine Sozialberatung' },
+						{ id: 411, name: 'Schuldnerberatung' }
+					]
+				}
+			])}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const list = await openPersonList(canvasElement);
+		await expect(optionNames(list)).toEqual([
+			'Anna Becker (Springfield) · Allgemeine Sozialberatung',
+			'Anna Becker (Springfield) · Allgemeine Sozialberatung, Schuldnerberatung'
+		]);
+	}
+};
 
 export const ScopeCounsellingCentre: Story = {
 	name: 'Scope: counselling centre',
