@@ -28,6 +28,8 @@ export interface UseSessionPassageRepliesOptions {
 	sharedVoice?: ReturnType<typeof useSelectionVoiceRecorder>;
 	/** Team room: announce with the team-discussion flag, like its composer. */
 	teamDiscussion?: boolean;
+	/** Supervision room: announce through the protected feedback-mail path. */
+	feedbackMailIntent?: boolean;
 }
 
 /**
@@ -42,7 +44,8 @@ export const useSessionPassageReplies = ({
 	isSupervisor,
 	senderDisplayName,
 	sharedVoice,
-	teamDiscussion
+	teamDiscussion,
+	feedbackMailIntent
 }: UseSessionPassageRepliesOptions) => {
 	const { t: translate } = useTranslation();
 	const addNotification = useContext(NotificationsContext)?.addNotification;
@@ -59,6 +62,7 @@ export const useSessionPassageReplies = ({
 				typedText,
 				supervisorMessage: !!isSupervisor,
 				teamDiscussion: !!teamDiscussion,
+				feedbackMailIntent: !!feedbackMailIntent,
 				senderDisplayName,
 				labels: {
 					voice: (seconds) =>
@@ -89,6 +93,7 @@ export const useSessionPassageReplies = ({
 			matrixRoomId,
 			isSupervisor,
 			teamDiscussion,
+			feedbackMailIntent,
 			senderDisplayName,
 			translate,
 			takeFor

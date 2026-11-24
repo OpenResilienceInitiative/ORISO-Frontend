@@ -69,7 +69,6 @@ export const VoiceRecordingBar = ({
 								: 'voice.recording.pause'
 							: 'app.stop'
 					)}
-					aria-pressed={onPause ? paused : undefined}
 				>
 					<svg
 						width={14}
