@@ -64,6 +64,19 @@
 	}
 }
 
+// FE#2494: the team chat as a pennant, in the Teamberatung's own pair; it
+// opens the team chat at once (no menu). Pressed: the team chat is open.
+.appointmentPennant.appointmentPennant--team {
+	--pennant-accent: var(--m3-secondary-fixed, #dae3f0);
+	--pennant-on-accent: var(--m3-on-secondary-fixed, #141c25);
+	--pennant-edge: var(--m3-secondary-fixed-dim, #bec7d4);
+
+	&.appointmentPennant--pressed {
+		border-color: var(--pennant-on-accent);
+		background: var(--pennant-accent);
+	}
+}
+
 // The Art: a round bubble that peeks 6px out below the pennant.
 .appointmentPennant__bubble {
 	position: relative;
@@ -235,4 +248,10 @@
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+// The team chat pennant holds one word (desktop) or its bubble (phone): it
+// takes no minimum width of a date.
+.roomAppointmentPennants.roomTeamChatPennant > .appointmentPennant {
+	min-width: auto;
 }

@@ -1,4 +1,4 @@
-import { TeamDiscussionIconButton } from '../teamDiscussion/TeamDiscussionBadge';
+import { TeamChatPennant } from '../teamDiscussion/TeamChatPennant';
 import { FittedHeaderTitle } from './FittedHeaderTitle';
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
@@ -1262,18 +1262,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					!activeSession.isGroup &&
 					!activeSession.isEnquiry && <AddonSessionActions />}
-				{props.teamChatIndicator &&
-					hasUserAuthority(
-						AUTHORITIES.CONSULTANT_DEFAULT,
-						userData
-					) && (
-						<TeamDiscussionIconButton
-							showLabel
-							active={props.teamChatIndicator.active}
-							onOpen={props.teamChatIndicator.onOpen}
-							data-cy="session-header-team-chat"
-						/>
-					)}
+				{/* FE#2494: the Team-Chat hangs as a pennant beside the topic. */}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
@@ -1396,6 +1385,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						</div>
 					)}
 					{topic?.name && <SessionTopic name={topic.name} />}
+					{/* FE#2494: the team chat hangs beside the topic as a
+					    pennant; the name row keeps its width for the name. */}
+					{props.teamChatIndicator &&
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && (
+							<TeamChatPennant
+								active={props.teamChatIndicator.active}
+								onOpen={props.teamChatIndicator.onOpen}
+							/>
+						)}
 					{/* FE#2494: the appointments hang beside the topic. */}
 					{activeSession.isSession &&
 						(isAskerUser || isConsultantUser) && (

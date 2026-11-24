@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TopicTag } from '../../topicTag/TopicTag';
+import { TeamChatPennant } from '../../teamDiscussion/TeamChatPennant';
 import { RoomNextAppointment } from './AppointmentSplitButton';
 import type { FutureEntry } from './timelineModel';
 import '../../sessionHeader/sessionHeader.styles.scss';
@@ -160,6 +161,47 @@ export const Phone: Story = {
 	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	render: () => (
 		<Header width={375}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+			/>
+		</Header>
+	)
+};
+
+/**
+ * FE#2494 (Frank, 2026-11-24): the Team-Chat leaves the name row and hangs
+ * beside the topic as a pennant in the team's colours; the name keeps its
+ * width. A press opens the team chat.
+ */
+export const TeamChat: Story = {
+	name: 'Team-Chat als Wimpel + Termine',
+	render: () => (
+		<Header width={880}>
+			<TeamChatPennant active={false} onOpen={() => undefined} />
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+			/>
+		</Header>
+	),
+	play: async ({ canvasElement }) => {
+		const team = await within(canvasElement).findByRole('button', {
+			name: 'Team-Chat'
+		});
+		await expect(team).toHaveAttribute('aria-pressed', 'false');
+	}
+};
+
+/** Phone: the team chat is its bubble only; the topic stays whole. */
+export const TeamChatPhone: Story = {
+	name: 'Telefon: Team-Chat als Wimpel + Termine',
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
+	render: () => (
+		<Header width={375}>
+			<TeamChatPennant active onOpen={() => undefined} />
 			<RoomNextAppointment
 				entry={askerAppointment}
 				role="counsellor"
