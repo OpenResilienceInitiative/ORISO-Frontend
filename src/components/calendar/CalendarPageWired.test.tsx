@@ -2267,31 +2267,53 @@ describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
 });
 
 describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494 *2c)', () => {
-	const askerSessions = (status: number) =>
+	const askerSessions = (status: number, extra: unknown[] = []) =>
 		vi.mocked(askerListApi.apiGetAskerSessionList).mockResolvedValue({
 			sessions: [
 				{
-					session: { id: 12, status, matrixRoomId: '!room:oriso' },
+					session: {
+						id: 12,
+						status,
+						matrixRoomId: '!room:oriso',
+						agencyId: 7,
+						consultingType: 1
+					},
 					consultant: {
 						consultantId: 'c1',
 						displayName: 'Laura Berger'
 					}
-				}
+				},
+				...extra
 			]
 		} as never);
+
+	type FreeTimesProps = {
+		sessionId: number;
+		counsellorName: string;
+		agencyId?: number;
+		consultingTypeId?: number;
+		chatType: string;
+		onBooked: (appointment: unknown) => void;
+	};
+	const panelsOf = (beside: unknown) =>
+		React.Children.toArray(
+			(beside as React.ReactElement<{ children: React.ReactNode }>).props
+				.children
+		) as React.ReactElement<FreeTimesProps>[];
 
 	it('offers them for an active conversation and tells the counsellor of a booking in the chat', async () => {
 		consultant = false;
 		askerSessions(2);
 		render(<CalendarPageWired />);
 		await waitFor(() => expect(props.besidePanel).toBeTruthy());
-		const panel = props.besidePanel as React.ReactElement<{
-			sessionId: number;
-			counsellorName: string;
-			onBooked: (appointment: unknown) => void;
-		}>;
-		expect(panel.props.sessionId).toBe(12);
-		expect(panel.props.counsellorName).toBe('Laura Berger');
+		const [panel] = panelsOf(props.besidePanel);
+		expect(panel.props).toMatchObject({
+			sessionId: 12,
+			counsellorName: 'Laura Berger',
+			agencyId: 7,
+			consultingTypeId: 1,
+			chatType: 'oneOnOne'
+		});
 		act(() =>
 			panel.props.onBooked({
 				status: 'REQUESTED',
@@ -2306,6 +2328,25 @@ describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494
 			sessionId: 12,
 			matrixRoomId: '!room:oriso'
 		});
+	});
+
+	it('offers the free times of every active counsellor, each once', async () => {
+		consultant = false;
+		askerSessions(2, [
+			{
+				session: { id: 13, status: 2, matrixRoomId: '!b:oriso' },
+				consultant: { consultantId: 'c2', displayName: 'Tom Weber' }
+			},
+			{
+				session: { id: 14, status: 2, matrixRoomId: '!c:oriso' },
+				consultant: { consultantId: 'c1', displayName: 'Laura Berger' }
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		expect(
+			panelsOf(props.besidePanel).map((panel) => panel.props.sessionId)
+		).toEqual([12, 13]);
 	});
 
 	it('offers none for a finished conversation', async () => {

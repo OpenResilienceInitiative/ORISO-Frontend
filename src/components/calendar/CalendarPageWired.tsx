@@ -103,7 +103,10 @@ import {
 	saveAppointmentInvitation
 } from '../directInvitation/saveAppointmentInvitation';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
-import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
+import { AskerConversationFreeTimes } from './AskerConversationFreeTimes';
+import type { CallChatType } from '../call/callFeatureGates';
+import { getModality, Modality } from '../session/getModality';
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
 import { STATUS_ACTIVE } from '../../globalState/interfaces/SessionsDataInterface';
 import { parseCalendarDayParam } from '../message/appointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
@@ -188,6 +191,10 @@ interface ConversationRef extends CalendarConversation {
 	matrixRoomId?: string;
 	/** A counsellor is assigned: their free office hours can be booked. */
 	withCounsellor?: boolean;
+	counsellorId?: string;
+	agencyId?: number;
+	consultingTypeId?: number;
+	chatType?: CallChatType;
 }
 
 const toConversations = (
@@ -219,6 +226,14 @@ const toConversations = (
 			withCounsellor:
 				Boolean(item.consultant?.consultantId ?? item.consultant?.id) &&
 				item.session.status === STATUS_ACTIVE,
+			counsellorId: item.consultant?.consultantId ?? item.consultant?.id,
+			agencyId: resolveConversationAgencyId(item.session),
+			consultingTypeId: item.session.consultingType,
+			// The same chat type the conversation's call buttons ask for.
+			chatType:
+				getModality(item) === Modality.LIVE_CHAT
+					? 'anonymous'
+					: 'oneOnOne',
 			// FE#2325: the person's real avatar, as in the conversation list.
 			avatar: personAvatarOfSession(item, !!ownUserId)
 		}));
@@ -1242,34 +1257,51 @@ export const CalendarPageWired = () => {
 		conversations
 	);
 
-	/* *2c (FE#2494): beside "Meine Termine" the free office hours of the
-	   advice seeker's counsellor; the panel stays away while there are none. */
+	/* *2c (FE#2494): beside "Meine Termine" the free office hours of each
+	   counsellor the advice seeker has an active conversation with, in the
+	   media that conversation permits; a panel stays away while its
+	   counsellor has none. */
 	const freeTimesOf = consultant
-		? undefined
-		: conversations.find((c) => c.withCounsellor);
-	const freeTimesPanel = freeTimesOf && (
-		<AskerFreeTimesPanel
-			key={freeTimesOf.sessionId}
-			sessionId={freeTimesOf.sessionId}
-			counsellorName={freeTimesOf.username}
-			loadSlots={apiGetAppointmentSlots}
-			bookSlot={apiBookAppointmentSlot}
-			onBooked={(appointment) => {
-				afterChange();
-				/* The counsellor learns of it in the chat, as from the
-				   conversation's own "Termin buchen" (FE#1050, FE#2287). */
-				void sendNotice({
-					kind:
-						appointment.status === 'REQUESTED'
-							? 'requested'
-							: 'created',
-					start: new Date(appointment.startTime),
-					end: new Date(appointment.endTime),
-					sessionId: freeTimesOf.sessionId,
-					matrixRoomId: freeTimesOf.matrixRoomId
-				});
-			}}
-		/>
+		? []
+		: conversations.filter(
+				(c, index) =>
+					c.withCounsellor &&
+					conversations.findIndex(
+						(other) =>
+							other.withCounsellor &&
+							other.counsellorId === c.counsellorId
+					) === index
+			);
+	const freeTimesPanel = freeTimesOf.length > 0 && (
+		<>
+			{freeTimesOf.map((conversation) => (
+				<AskerConversationFreeTimes
+					key={conversation.sessionId}
+					sessionId={conversation.sessionId}
+					agencyId={conversation.agencyId}
+					consultingTypeId={conversation.consultingTypeId}
+					chatType={conversation.chatType ?? 'oneOnOne'}
+					counsellorName={conversation.username}
+					loadSlots={apiGetAppointmentSlots}
+					bookSlot={apiBookAppointmentSlot}
+					onBooked={(appointment) => {
+						afterChange();
+						/* The counsellor learns of it in the chat, as from the
+						   conversation's own "Termin buchen" (FE#1050, FE#2287). */
+						void sendNotice({
+							kind:
+								appointment.status === 'REQUESTED'
+									? 'requested'
+									: 'created',
+							start: new Date(appointment.startTime),
+							end: new Date(appointment.endTime),
+							sessionId: conversation.sessionId,
+							matrixRoomId: conversation.matrixRoomId
+						});
+					}}
+				/>
+			))}
+		</>
 	);
 
 	return (
