@@ -31,7 +31,6 @@ import {
 } from './internal/InternalChatCreateCard';
 import { DirectLinkCard, DirectLinkDraft } from './directLink/DirectLinkCard';
 import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
-import { actWarnings, suspendedInAct } from '../../../.storybook/actWarnings';
 import { useCreateViewExit } from './useCreateViewExit';
 import {
 	CounsellorDashboard,
@@ -1134,20 +1133,8 @@ const playCloseFromOutside = async (canvasElement: HTMLElement) => {
 	await waitFor(() => expect(trigger).toHaveFocus());
 };
 
-/* The dialog takes focus from the typed field: MUI's FormControl then updates
-   its focus state outside act's queue (a harness artefact, see actWarnings). */
-const closeFromOutsideVerification = (suspended: number) => ({
-	verification: {
-		expectedErrors: [
-			...actWarnings({ 'ForwardRef(FormControl)': 3 }),
-			...(suspended ? suspendedInAct(suspended) : [])
-		]
-	}
-});
-
 export const CloseFromOutsideDesktop: Story = {
 	name: 'Close view — empty space, Escape, unsaved input (desktop)',
-	parameters: closeFromOutsideVerification(1),
 	render: () => <CloseFromOutsideHarness compact={false} />,
 	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
 };
@@ -1155,7 +1142,6 @@ export const CloseFromOutsideDesktop: Story = {
 export const CloseFromOutsidePhone: Story = {
 	name: 'Close view — empty space, Escape, unsaved input (phone, 390px)',
 	globals: { viewport: { value: 'phone390' } },
-	parameters: closeFromOutsideVerification(0),
 	render: () => <CloseFromOutsideHarness compact />,
 	play: ({ canvasElement }) => playCloseFromOutside(canvasElement)
 };
