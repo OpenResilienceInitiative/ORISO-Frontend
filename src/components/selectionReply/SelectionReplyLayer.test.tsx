@@ -193,10 +193,14 @@ describe('SelectionReplyLayer voice recording', () => {
 		renderLayer(recorder);
 		startVoiceFromToolbar();
 		await act(async () => {});
-		// FE#2494: the take replaces the field while it records.
+		// FE#2494 (Frank, 24 Nov): the take plays in its own second row; the
+		// text field stays, so text can go with the voice note.
 		expect(
-			screen.queryByLabelText('message.selectionReply.inputLabel')
-		).toBeNull();
+			screen.getByLabelText('message.selectionReply.inputLabel')
+		).toHaveProperty(
+			'placeholder',
+			'message.selectionReply.placeholderWithVoice'
+		);
 		fireEvent.click(screen.getByLabelText('app.stop'));
 		await act(async () => stop.reject(new Error('broken')));
 		expect(screen.getByRole('alert')).toBeTruthy();

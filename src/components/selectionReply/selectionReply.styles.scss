@@ -292,21 +292,49 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		align-self: start;
 	}
 
+	// Frank (24 Nov): the voice note plays in its own second row across
+	// the whole box; the text field stays above it.
 	> .selectionReply__voiceField {
-		margin: 2px 4px;
+		grid-column: 1 / -1;
+		width: auto;
+		margin: 0 4px 4px 8px;
+
+		> .voicePlayer {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		// Not bigger than Send: the composer toolbar's 32px.
+		.voiceNoteRow__discard {
+			width: 32px;
+			height: 32px;
+			font-size: 18px;
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
 	}
 
 	> .selectionReply__send {
+		position: relative;
+		z-index: 1;
 		align-self: start;
 
 		// Sit on the frame, flush with the notch.
 		margin: -1px -1px 0 0;
 	}
 
-	// One line: Send fills the box's height, so its bottom-right corner
-	// follows the box's round one (Frank's green mark, 24 Nov).
-	&:not(.selectionReply__box--stacked) > .selectionReply__send .sendButton {
-		border-bottom-right-radius: 16px;
+	// One line: Send covers the frame on top, right and bottom, so the
+	// focused red line does not show beneath it (Frank, 24 Nov), and its
+	// bottom-right corner follows the box's round one.
+	&:not(.selectionReply__box--stacked, .selectionReply__box--withVoice)
+		> .selectionReply__send {
+		align-self: stretch;
+		margin-bottom: -1px;
+
+		.sendButton {
+			height: 100%;
+			min-height: 40px;
+			border-bottom-right-radius: 16px;
+		}
 	}
 
 	&--stacked {
@@ -322,6 +350,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		> .selectionReply__send {
 			grid-row: 1;
 			grid-column: 2;
+		}
+
+		> .selectionReply__voiceField {
+			grid-row: 4;
 		}
 
 		> .selectionReply__hintWrap:not(.selectionReply__send) {
@@ -494,12 +526,12 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-items: center;
 	gap: 4px;
 
-	// Flatter than a pill, with the send button's 4px top-right corner.
+	// Frank (24 Nov): a round chip, all four corners.
 	height: 24px;
 	margin: 0;
 	padding: 0 10px 0 6px;
 	border: 0;
-	border-radius: 12px 4px 12px 12px;
+	border-radius: 12px;
 
 	// Frank, 24 Nov: the side room's own chip colours — Supervision is the
 	// accent `primary-fixed-dim` with the dark `on-primary-fixed`, the

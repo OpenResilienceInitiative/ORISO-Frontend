@@ -319,10 +319,18 @@ export const VoiceIntoSupervision: Story = {
 				name: 'Mit Sprachnachricht antworten'
 			})
 		);
-		// The voice note takes the field's place; Pause, not Stop.
+		// The voice note plays in its own second row under the field
+		// (Frank, 24 Nov); Pause, not Stop.
 		await waitFor(() =>
-			expect(popover.querySelector('.selectionReply__input')).toBeNull()
+			expect(
+				popover.querySelector(
+					'.selectionReply__box--withVoice .selectionReply__voiceField'
+				)
+			).toBeTruthy()
 		);
+		await expect(
+			popover.querySelector('.selectionReply__input')
+		).toBeTruthy();
 		await expect(
 			within(popover).getByRole('button', { name: 'Aufnahme pausieren' })
 		).toBeTruthy();

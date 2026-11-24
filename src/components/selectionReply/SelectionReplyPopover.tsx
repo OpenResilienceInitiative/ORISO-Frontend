@@ -12,7 +12,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
-import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio.svg';
+import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio-filled.svg';
 import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-stack.svg';
 import type { MarkedPassage } from './useMessageSelection';
 
@@ -136,7 +136,7 @@ export const SelectionReplyPopover = forwardRef<
 			(isRecording && voice.durationSec > 0);
 		// A stand-in without pause keeps the old Stop; it must stay usable.
 		const blockWhileRecording = isRecording && !onPauseVoice;
-		const stacked = multiline && voice.mode === 'idle';
+		const stacked = multiline;
 
 		// The field grows with the answer, like the composer (up to 10 lines);
 		// measured before paint so the text never flickers.
@@ -330,47 +330,30 @@ export const SelectionReplyPopover = forwardRef<
 				<div
 					className={[
 						'selectionReply__box',
-						stacked ? 'selectionReply__box--stacked' : null
+						stacked ? 'selectionReply__box--stacked' : null,
+						voice.mode !== 'idle'
+							? 'selectionReply__box--withVoice'
+							: null
 					]
 						.filter(Boolean)
 						.join(' ')}
 				>
-					{voice.mode === 'recording' ? (
-						<VoiceNoteRow
-							className="selectionReply__voiceField"
-							mode="recording"
-							durationSec={voice.durationSec}
-							onStop={onStopVoice}
-							onPause={onPauseVoice}
-							paused={voice.paused}
-							onDiscard={onDiscardVoice}
-						/>
-					) : voice.mode === 'review' ? (
-						<VoiceNoteRow
-							className="selectionReply__voiceField"
-							mode="review"
-							src={voice.src}
-							durationSec={voice.durationSec}
-							onDiscard={onDiscardVoice}
-						/>
-					) : (
-						<textarea
-							ref={inputRef}
-							rows={1}
-							className="selectionReply__input"
-							value={draft}
-							onChange={(event) =>
-								onDraftChange(event.target.value)
-							}
-							placeholder={translate(
-								'message.selectionReply.placeholder'
-							)}
-							aria-label={translate(
-								'message.selectionReply.inputLabel'
-							)}
-							autoComplete="off"
-						/>
-					)}
+					<textarea
+						ref={inputRef}
+						rows={1}
+						className="selectionReply__input"
+						value={draft}
+						onChange={(event) => onDraftChange(event.target.value)}
+						placeholder={translate(
+							voice.mode === 'idle'
+								? 'message.selectionReply.placeholder'
+								: 'message.selectionReply.placeholderWithVoice'
+						)}
+						aria-label={translate(
+							'message.selectionReply.inputLabel'
+						)}
+						autoComplete="off"
+					/>
 					{/* Writing already: the mic would only take the field's room. */}
 					{showVoice && voice.mode === 'idle' && !draft.trim() && (
 						<button
@@ -459,6 +442,27 @@ export const SelectionReplyPopover = forwardRef<
 							</span>
 						)}
 					</span>
+					{/* FE#2494 (Frank, 24 Nov): the voice note gets its own second
+					    row across the box; the text field stays above it. */}
+					{voice.mode === 'recording' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="recording"
+							durationSec={voice.durationSec}
+							onStop={onStopVoice}
+							onPause={onPauseVoice}
+							paused={voice.paused}
+							onDiscard={onDiscardVoice}
+						/>
+					) : voice.mode === 'review' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="review"
+							src={voice.src}
+							durationSec={voice.durationSec}
+							onDiscard={onDiscardVoice}
+						/>
+					) : null}
 				</div>
 
 				{actions && (
