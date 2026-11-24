@@ -338,6 +338,9 @@ export const SelectionReplyPopover = forwardRef<
 						.filter(Boolean)
 						.join(' ')}
 				>
+					{/* The composer-like box owns frame, focus and growth (auto-grow with
+					    hysteresis); OrisoTextarea brings its own MUI frame. FE#2494. */}
+					{/* eslint-disable-next-line no-restricted-syntax */}
 					<textarea
 						ref={inputRef}
 						rows={1}

@@ -39,17 +39,19 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const waitForSelector = (root: HTMLElement, selector: string) =>
-	waitFor(
+const waitForSelector = async (root: HTMLElement, selector: string) => {
+	const found = await waitFor(
 		() => {
-			const found = root.querySelector<HTMLElement>(selector);
-			if (!found) {
+			const element = root.querySelector<HTMLElement>(selector);
+			if (!element) {
 				throw new Error(`${selector} not shown`);
 			}
-			return found;
+			return element;
 		},
 		{ timeout: 4000 }
 	);
+	return found;
+};
 
 /** Zum Durchklicken: markieren → Seitenchat wählen → sammeln → senden. */
 export const Experience: Story = {
