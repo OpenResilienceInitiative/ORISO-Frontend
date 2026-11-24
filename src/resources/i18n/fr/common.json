@@ -2253,6 +2253,13 @@
 			"quoteUnknown": "Message précédent",
 			"jumpToQuote": "Aller au passage cité de {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Masquage levé",
+			"by": "par {{name}}",
+			"byMe": "par vous",
+			"text": "Le message de {{name}} est de nouveau lisible.",
+			"textAnonymous": "Le message est de nouveau lisible."
+		},
 		"selectionReply": {
 			"blur": "Flouter",
 			"blurredLabel": "Passage flouté",
@@ -7539,7 +7546,8 @@
 			"text": "Voici le nouveau lien pour le rendez-vous :",
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
-		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe."
+		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
+		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",

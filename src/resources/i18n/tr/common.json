@@ -2253,6 +2253,13 @@
 			"quoteUnknown": "Önceki mesaj",
 			"jumpToQuote": "{{author}} adlı kişinin alıntılanan bölümüne git"
 		},
+		"blurRemoved": {
+			"title": "Karartma kaldırıldı",
+			"by": "{{name}} tarafından",
+			"byMe": "sizin tarafınızdan",
+			"text": "{{name}} kişisinin mesajı yeniden okunabilir.",
+			"textAnonymous": "Mesaj yeniden okunabilir."
+		},
 		"selectionReply": {
 			"blur": "Bulanıklaştır",
 			"blurredLabel": "Bulanıklaştırılmış bölüm",
@@ -7539,7 +7546,8 @@
 			"text": "Randevunun yeni bağlantısı:",
 			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
 		},
-		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun."
+		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun.",
+		"fromCalendarPopup": "Takvimden randevu: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Yükleniyor: {{names}}",

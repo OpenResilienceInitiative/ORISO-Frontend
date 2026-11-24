@@ -142,3 +142,28 @@ describe('sessionMatchesToolbar — supervision chip', () => {
 		});
 	});
 });
+
+describe('sessionMatchesToolbar — my own cases under supervision (#2494 *5)', () => {
+	const supervisedByColleague = {
+		supervision: {
+			supervisedByMe: false,
+			supervisorConsultantIds: ['consultant-angela'],
+			supervisorDisplayNames: ['Angela K']
+		}
+	};
+
+	it('matches my own case that a colleague supervises', () => {
+		expect(matches(raw(supervisedByColleague, ME))).toBe(true);
+	});
+
+	it("does not match a colleague's case that another colleague supervises", () => {
+		expect(matches(raw(supervisedByColleague, OWNER))).toBe(false);
+	});
+
+	it('keeps the kind of my own supervised case (display filter unchanged)', () => {
+		const r = raw(supervisedByColleague, ME);
+		expect(classifySession(r, extended(r), ME, true)).not.toBe(
+			'supervision'
+		);
+	});
+});

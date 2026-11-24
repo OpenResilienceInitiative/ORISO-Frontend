@@ -567,7 +567,10 @@ export const SupervisedByOthers: Story = {
 				'[data-testid="supervision-indicator"]'
 			);
 			expect(indicator).not.toBeNull();
-			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			// #2494 *5: a 32px round icon; the name shows on hover.
+			expect(indicator!.getAttribute('title')).toContain(
+				'Sabine Supervisor'
+			);
 			expect(
 				indicator!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();

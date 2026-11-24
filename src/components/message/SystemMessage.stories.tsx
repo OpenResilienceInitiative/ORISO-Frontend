@@ -26,7 +26,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Shared skeleton for in-chat system notices. `subject` is a React element (not a string), so callers can embed links and emphasis. `icon` accepts `info` or `call_off`; both carry a translated `title`/`aria-label`, which is why the icon is never decorative-only.'
+					'Shared skeleton and info icon behind the in-chat notices. **Not a design for a new notice:** a platform fact in a conversation (call, appointment, redaction removed) uses `ChatSystemMessageCard` (round info icon, incoming-message anatomy); Carimat is only the chatbot (guides). See AGENTS.md "Notices in a chat". `subject` is a React element (not a string), so callers can embed links and emphasis. `icon` accepts `info` or `call_off`; both carry a translated `title`/`aria-label`, which is why the icon is never decorative-only.'
 			}
 		}
 	},

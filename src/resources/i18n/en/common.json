@@ -2252,6 +2252,13 @@
 			"quoteUnknown": "Earlier message",
 			"jumpToQuote": "Jump to the quoted passage from {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Redaction removed",
+			"by": "by {{name}}",
+			"byMe": "by you",
+			"text": "The message from {{name}} is readable again.",
+			"textAnonymous": "The message is readable again."
+		},
 		"selectionReply": {
 			"blur": "Blur",
 			"blurredLabel": "Blurred passage",
@@ -7454,7 +7461,8 @@
 			"text": "Here is the new link to the appointment:",
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
-		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",

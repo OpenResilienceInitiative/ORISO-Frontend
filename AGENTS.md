@@ -55,6 +55,24 @@ three parts. Do not write a fourth.
   document load (#1219). Keep the load — it is how browsers offer to save the
   password (#1208) — and keep both sides identical instead.
 
+## Notices in a chat: one info card, nothing new
+
+A fact the platform reports inside a conversation — a call started or ended,
+an appointment set or moved, a redaction removed, an asker deleted — is one
+component. Do not design a fifth notice.
+
+- **Platform notice:** `ChatSystemMessageCard` (`src/components/message/`):
+  the ordinary incoming-message anatomy with the round info icon. Title =
+  what happened, subtitle "von <Name>", one short sentence in the bubble.
+  Examples: `AppointmentNoticeMessage`, `CallTimelineSystemMessage`,
+  `DeletedAskerNotice`.
+- **Carimat** (`CarimatMessageFrame`, `ErstantwortSequence`) is the chatbot:
+  guides, onboarding, step by step. Never for a platform fact.
+- **`SystemMessage`** is the skeleton and icon source behind the card, not a
+  design for new notices. No reply quotes, custom cards or banners as notices.
+- **Before building:** Storybook "Chat/System messages/Inventory". Product
+  owner's decision, 24 Nov 2026 (#2494 \*9).
+
 ## UI baselines set by the product owner
 
 - **Waiting-room step cards are a carousel with arrows and dots** (registration,

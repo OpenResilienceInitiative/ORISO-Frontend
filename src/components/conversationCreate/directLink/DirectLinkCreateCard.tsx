@@ -16,6 +16,7 @@ import type {
 	InvitationPreset
 } from '../../directInvitation/invitationModel';
 import { directInvitationSettings } from '../../directInvitation/directInvitationSettings';
+import { formatPresetRange } from '../../directInvitation/invitationModel';
 
 export interface DirectLinkCreateCardProps {
 	/** The counsellor's topics, `value` = topic id. */
@@ -61,6 +62,9 @@ export interface DirectInvitationSetupOptions {
 	 * opens with "Mit Termin" on and this time filled in.
 	 */
 	preset?: InvitationPreset;
+	/** #2494 *1: the topics failed to load; the popup offers a retry. */
+	topicsLoadFailed?: boolean;
+	onRetryTopics?: () => void;
 }
 
 /**
@@ -73,22 +77,41 @@ export const useDirectInvitationSetup = ({
 	agencies,
 	compact = false,
 	onCreated,
-	preset
+	preset,
+	topicsLoadFailed = false,
+	onRetryTopics
 }: DirectInvitationSetupOptions) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
 	const [submitting, setSubmitting] = useState(false);
 	const [failed, setFailed] = useState(false);
 	const [draft, setDraft] = useState<DirectLinkDraft>();
+	/* #2494 *1: opened from the calendar without the card, the dialog asks
+	   for Thema and Name itself. */
+	const [askDetails, setAskDetails] = useState(false);
 
 	const start = useCallback((next: DirectLinkDraft) => {
 		setFailed(false);
+		setAskDetails(false);
 		setDraft(next);
+	}, []);
+
+	/** #2494 *1: the popup on its own; the medium comes from the Art. */
+	const startWithDetails = useCallback((medium: DirectLinkMedium) => {
+		setFailed(false);
+		setAskDetails(true);
+		setDraft({
+			topic: '',
+			medium,
+			guestAccountMode: defaultGuestAccountMode(medium)
+		});
 	}, []);
 
 	const handleCreate = async (value: InvitationDialogValue) => {
 		if (!draft || submitting) return;
-		const { topic, medium, name } = draft;
+		const { medium } = draft;
+		const topic = value.linkDetails?.topic ?? draft.topic;
+		const name = value.linkDetails?.name ?? draft.name;
 		const topicId = Number(topic);
 		if (!Number.isFinite(topicId)) return;
 		setSubmitting(true);
@@ -133,6 +156,29 @@ export const useDirectInvitationSetup = ({
 						}
 					: undefined
 			}
+			{...(askDetails
+				? {
+						linkDetails: {
+							topics,
+							loadFailed: topicsLoadFailed,
+							onRetry: onRetryTopics
+						},
+						...(preset
+							? {
+									known: { slot: true },
+									description: t(
+										'directInvitation.fromCalendarPopup',
+										{
+											range: formatPresetRange(
+												preset,
+												i18n.language
+											)
+										}
+									)
+								}
+							: {})
+					}
+				: {})}
 			fullScreen={compact}
 			saving={submitting}
 			error={failed ? t('directLink.card.createFailed') : undefined}
@@ -141,11 +187,12 @@ export const useDirectInvitationSetup = ({
 				if (submitting) return;
 				setDraft(undefined);
 				setFailed(false);
+				setAskDetails(false);
 			}}
 		/>
 	) : null;
 
-	return { start, submitting, dialog };
+	return { start, startWithDetails, submitting, dialog };
 };
 
 /**

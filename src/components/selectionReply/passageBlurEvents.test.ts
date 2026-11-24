@@ -5,6 +5,8 @@ import {
 	extractPassageBlurEvents,
 	groupPassageBlurs,
 	PASSAGE_BLUR_EVENT_TYPE,
+	parsePassageBlurRemovedReason,
+	passageBlurRemovedReason,
 	withPassageBlurs
 } from './passageBlurEvents';
 
@@ -133,4 +135,25 @@ describe('withPassageBlurs', () => {
 		});
 		expect(untouched).toBe(plain);
 	});
+});
+
+describe('passage blur removed reason (#2494 *9)', () => {
+	it('round-trips the message id', () => {
+		expect(
+			parsePassageBlurRemovedReason(passageBlurRemovedReason('$msg:hs'))
+		).toEqual({ targetEventId: '$msg:hs' });
+	});
+
+	it('reads the marker without a message id', () => {
+		expect(
+			parsePassageBlurRemovedReason('org.oriso.passage_blur.removed')
+		).toEqual({ targetEventId: null });
+	});
+
+	it.each([undefined, '', 'spam', 'org.oriso.passage_blur'])(
+		'is null for %j',
+		(reason) => {
+			expect(parsePassageBlurRemovedReason(reason)).toBeNull();
+		}
+	);
 });
