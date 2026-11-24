@@ -166,7 +166,9 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-items: flex-start;
 	gap: 8px;
 	padding: 8px 8px 8px 12px;
-	border-radius: 12px 4px 12px 4px;
+
+	// Frank (24 Nov): 4px where the grey quote meets the field.
+	border-radius: 12px 4px 4px 4px;
 	background: var(--m3-surface-container-high, #eae7e8);
 	font-size: 12px;
 	line-height: 16px;
@@ -334,6 +336,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 			height: 100%;
 			min-height: 40px;
 			border-bottom-right-radius: 16px;
+
+			// No curve where Send meets the bottom frame (Frank, 24 Nov):
+			// the curve left a notch of red border beneath it.
+			border-bottom-left-radius: 0;
 		}
 	}
 
@@ -376,7 +382,9 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-self: start;
 	width: 32px;
 	height: 32px;
-	margin: 4px 2px 0;
+
+	// Frank (24 Nov): a little more room between mic and stack.
+	margin: 4px 4px 0;
 	border-radius: 50%;
 	background: var(--m3-surface-container-low, #f6f3f3);
 	color: var(--m3-on-surface-variant, #444748);
@@ -390,6 +398,11 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	svg {
 		width: 18px;
 		height: 18px;
+	}
+
+	.stackCountIcon svg {
+		width: 20px;
+		height: 20px;
 	}
 }
 
@@ -472,6 +485,13 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 .selectionReply__collectIcon {
 	width: 24px;
 	height: 24px;
+}
+
+// The numbered icon is centred by the button itself; the 24px box above
+// pushed it into the top-left corner (Frank, 24 Nov).
+.selectionReply__collectIcon.stackCountIcon {
+	width: auto;
+	height: auto;
 }
 
 .selectionReply__stackCount {
@@ -788,10 +808,12 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 // button is hovered or focused.
 .stackCountIcon {
 	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 
 	svg {
-		width: 18px;
-		height: 18px;
+		width: 20px;
+		height: 20px;
 		fill: currentColor;
 	}
 
