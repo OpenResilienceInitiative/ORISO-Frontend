@@ -11,8 +11,7 @@
 	white-space: nowrap;
 
 	&:focus-visible {
-		outline: $focus-outline;
-		outline-offset: 2px;
+		@include control-focus-ring;
 	}
 
 	&--pill {

@@ -16,7 +16,7 @@
 		padding-inline: 0.5rem;
 
 		&:focus-visible {
-			outline-color: var(--m3-outline, #747878);
+			@include control-focus-ring(-2px);
 		}
 	}
 }
@@ -41,8 +41,7 @@
 		line-height: 1;
 
 		&:focus-visible {
-			outline: 2px solid currentColor;
-			outline-offset: -4px;
+			@include control-focus-ring(-4px);
 		}
 
 		&:hover,
@@ -124,8 +123,11 @@
 		}
 
 		&:has(.Mui-focusVisible) {
-			outline: 2px solid currentColor;
-			outline-offset: -4px;
+			@include control-focus-ring(-4px);
+		}
+
+		&:has(.Mui-checked):has(.Mui-focusVisible) {
+			@include control-focus-ring-on-fill;
 		}
 	}
 
@@ -218,8 +220,7 @@ html[data-oriso-personal-scheme='dark'] {
 		color: var(--m3-on-surface, #1b1b1c);
 
 		&.Mui-focusVisible {
-			outline: 2px solid currentColor;
-			outline-offset: -4px;
+			@include control-focus-ring(-4px);
 		}
 	}
 }
@@ -237,8 +238,7 @@ html[data-oriso-personal-scheme='dark'] {
 	}
 
 	&.Mui-focusVisible {
-		outline: 2px solid currentColor;
-		outline-offset: -4px;
+		@include control-focus-ring(-4px);
 	}
 }
 

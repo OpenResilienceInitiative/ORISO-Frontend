@@ -99,9 +99,7 @@ $mobile-nav-top-inset: 0.375rem;
 		}
 
 		&:focus-visible {
-			outline: 2px solid
-				var(--oriso-primary-text, var(--m3-primary, #a5000a));
-			outline-offset: -2px;
+			@include control-focus-ring(-2px);
 		}
 	}
 
@@ -191,9 +189,7 @@ $mobile-nav-top-inset: 0.375rem;
 		text-align: start;
 
 		&:focus-visible {
-			outline: 2px solid
-				var(--oriso-primary-text, var(--m3-primary, #a5000a));
-			outline-offset: -2px;
+			@include control-focus-ring(-2px);
 		}
 
 		&[aria-current='page'] {

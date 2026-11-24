@@ -72,12 +72,17 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid currentColor;
-		outline-offset: -4px;
+		@include control-focus-ring(-4px);
 
 		@media (forced-colors: active) {
 			outline-color: Highlight;
 		}
+	}
+
+	// The primary-filled states carry the on-primary ring inside the fill.
+	&--ready:focus-visible,
+	&--sending:focus-visible {
+		@include control-focus-ring-on-fill;
 	}
 }
 
