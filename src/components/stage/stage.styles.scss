@@ -32,6 +32,9 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 }
 
 .stage {
+	// The stage is painted in the primary role, so the shared focus ring
+	// (Frontend#1134) switches to on-primary for every control on it.
+	--oriso-focus-ring-color: var(--m3-on-primary, #ffffff);
 	--stage-artwork-brand: var(--m3-primary, #{$primary});
 	--stage-artwork-container: var(--m3-primary-container, #da2530);
 	--stage-artwork-edge: var(--m3-primary-hover, #7c0d15);
@@ -43,6 +46,9 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		--stage-artwork-container: var(--oriso-stage-brand-container, #da2530);
 		--stage-artwork-edge: var(--oriso-stage-brand-edge, #7c0d15);
 		--stage-artwork-on-brand: var(--oriso-stage-brand-on, #{$text-invert});
+
+		// Branded artwork paints its own brand colour, not the primary role.
+		--oriso-focus-ring-color: var(--stage-artwork-on-brand);
 	}
 
 	width: 100vw;
@@ -50,10 +56,6 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	transition: width $animation-duration-width $animation-easing-width;
 	transition-delay: $animation-duration - $animation-duration-width;
 	text-align: center;
-
-	// The stage is painted in the primary role, so the shared focus ring
-	// (Frontend#1134) switches to on-primary for every control on it.
-	--oriso-focus-ring-color: var(--m3-on-primary, #ffffff);
 	background-color: var(--stage-artwork-brand);
 
 	// Baseline gradient: no color-mix() dependency, one declaration, so
