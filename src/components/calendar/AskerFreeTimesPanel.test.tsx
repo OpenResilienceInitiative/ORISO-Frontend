@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -10,6 +11,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import dayjs from 'dayjs';
 import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
+import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import type {
 	AppointmentSlot,
 	SessionAppointment
@@ -144,6 +146,26 @@ describe('Freie Sprechzeiten (FE#2494 *2c)', () => {
 				.getByRole('radio', { name: 'calendar.freeTimes.medium.phone' })
 				.getAttribute('aria-checked')
 		).toBe('true');
+	});
+
+	it('reads the free times again when appointments change elsewhere', async () => {
+		let found: AppointmentSlot[] = [];
+		const loadSlots = vi.fn(() => Promise.resolve(found));
+		const { container } = render(
+			<AskerFreeTimesPanel
+				sessionId={7}
+				counsellorName="Laura Berger"
+				loadSlots={loadSlots}
+				bookSlot={vi.fn()}
+				onBooked={vi.fn()}
+			/>
+		);
+		await waitFor(() => expect(container.innerHTML).toBe(''));
+		found = [slot()];
+		act(() => notifyAppointmentsChanged());
+		expect(
+			await screen.findByRole('button', { name: '10:00' })
+		).toBeTruthy();
 	});
 
 	it('changes between video and phone with the arrow keys', async () => {

@@ -9,6 +9,7 @@
  * requests, conflicts and the one-appointment limit.
  */
 import * as React from 'react';
+import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -110,6 +111,19 @@ export const AskerFreeTimesPanel = ({
 		// `probing` and `media` are read as they are when this medium loads.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sessionId, medium, loadSlots, reads]);
+
+	/* An appointment cancelled or moved elsewhere (this calendar, a
+	   conversation) frees or takes times: read them again, without the
+	   chosen time; while still probing, from the first medium. */
+	useEffect(
+		() =>
+			onAppointmentsChanged(() => {
+				setTime(null);
+				if (probing) setMedium(media[0]);
+				setReads((count) => count + 1);
+			}),
+		[probing, media]
+	);
 
 	const chooseMedium = (value: SelfBookingMedium) => {
 		if (value === medium) return;
