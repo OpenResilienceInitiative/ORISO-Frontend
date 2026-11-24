@@ -122,6 +122,12 @@ export const usePassageReplies = ({
 				if (keyRef.current === key) {
 					setPending((current) => [...rows, ...current]);
 					carriedTextRef.current = text;
+				} else {
+					// The conversation changed meanwhile: these rows never
+					// come back, so their takes are released now.
+					rows.forEach(
+						(row) => row.voice && releaseVoice?.(row.voice.src)
+					);
 				}
 				onSendFailed?.(error);
 			} finally {
