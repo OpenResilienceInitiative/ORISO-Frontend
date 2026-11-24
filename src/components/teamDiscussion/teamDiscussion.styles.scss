@@ -46,3 +46,24 @@
 .sessionCard .sessionCard__trailing > .teamDiscussionBadge {
 	height: 32px;
 }
+
+/* FE#2491 — the same marker as a chip in the case header while the team
+   chat of the enquiry is on. Active (panel on screen): outlined, so the
+   state does not rely on colour alone. */
+.teamDiscussionBadge--chip {
+	gap: 6px;
+	width: auto;
+	height: 32px;
+	padding: 0 12px 0 8px;
+	border-radius: 16px;
+	border: 2px solid transparent;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+	white-space: nowrap;
+}
+
+.teamDiscussionBadge--active {
+	border-color: var(--m3-on-tertiary-container, #5b4300);
+}

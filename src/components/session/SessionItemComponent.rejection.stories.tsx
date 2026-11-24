@@ -377,11 +377,11 @@ export const NoTeamRoom: Story = {
 				Number(canvas.getByTestId('team-lookup-proof').textContent)
 			).toBeGreaterThan(0)
 		);
-		// An open enquiry keeps its team action without a room: the click
-		// creates it (product decision, 21 Nov). No team-only switcher.
+		// FE#2491 (23 Nov): no team button beside "Annehmen" — the team chat
+		// is switched on in "Weitere Funktionen". No team-only switcher.
 		await expect(
 			canvasElement.querySelector('[data-cy="enquiry-open-team"]')
-		).not.toBeNull();
+		).toBeNull();
 		await expect(
 			canvasElement.querySelector('[data-cy="channel-switcher-fab"]')
 		).toBeNull();
@@ -404,18 +404,28 @@ export const NoTeamRoom: Story = {
 	}
 };
 
-/** Clicking the enquiry team action creates the team room and opens it beside the enquiry. */
+/** "Weitere Funktionen" → Team-Chat einschalten creates the team room and opens it beside the enquiry. */
 export const TeamActions: Story = {
 	args: { scenario: 'team-actions' },
 	play: async ({ canvasElement }) => {
+		const trigger = await waitFor(() => {
+			const node = Array.from(
+				canvasElement.querySelectorAll<HTMLButtonElement>(
+					'.sessionMenu__icon'
+				)
+			).find((button) => button.getClientRects().length > 0);
+			expect(node).toBeTruthy();
+			return node!;
+		});
+		expect(canvasElement.querySelector('.sidePanel')).toBeNull();
+		await userEvent.click(trigger);
 		const action = await waitFor(() => {
-			const node = canvasElement.querySelector<HTMLElement>(
-				'[data-cy="enquiry-open-team"]'
+			const node = canvasElement.ownerDocument.querySelector<HTMLElement>(
+				'[data-cy="session-menu-team-chat-on"]'
 			);
 			expect(node).not.toBeNull();
 			return node!;
 		});
-		expect(canvasElement.querySelector('.sidePanel')).toBeNull();
 		await userEvent.click(action);
 		await waitFor(
 			() =>

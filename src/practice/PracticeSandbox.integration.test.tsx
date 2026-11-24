@@ -654,11 +654,23 @@ describe('practice sandbox on the real session containers', () => {
 			);
 
 		await openThePracticeCase(view.container);
-		// The enquiry has no team room yet; its team action creates it.
+		// The enquiry has no team room yet; "Weitere Funktionen" → Team-Chat
+		// einschalten creates it (FE#2491: no button beside "Annehmen").
+		const [trigger] = await screen.findAllByRole(
+			'button',
+			{ name: /app\.menu/ },
+			{ timeout: 15000 }
+		);
+		fireEvent.click(trigger);
 		fireEvent.click(
-			await screen.findByRole(
-				'button',
-				{ name: 'enquiry.teamDiscussion.open' },
+			await waitFor(
+				() => {
+					const item = document.querySelector<HTMLButtonElement>(
+						'[data-cy="session-menu-team-chat-on"]'
+					);
+					expect(item).not.toBeNull();
+					return item!;
+				},
 				{ timeout: 15000 }
 			)
 		);

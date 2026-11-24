@@ -5952,7 +5952,29 @@
 		"send": "Send",
 		"error": {
 			"open": "The team chat could not be opened.",
-			"send": "The message could not be sent."
+			"send": "The message could not be sent.",
+			"switchOn": "The team chat could not be switched on. Please try again.",
+			"switchOff": "The team chat could not be switched off. Please try again.",
+			"switchOnNotAllowed": "The team chat cannot be switched on for this case, for example because the case was moved to another counselling centre."
+		},
+		"switchOn": {
+			"menu": "Switch on team chat",
+			"menuHint": "Starts the team chat for this enquiry. Advice seekers never see it.",
+			"again": "Switch team chat on again"
+		},
+		"switchOff": {
+			"menu": "Switch off team chat",
+			"menuHint": "Closes the team chat for this enquiry for everyone. The history stays readable.",
+			"confirm": {
+				"headline": "Switch off team chat?",
+				"copy": "Nobody in the team can write in it any more. The history stays readable, and you can switch the team chat on again while the enquiry is open.",
+				"confirm": "Switch off",
+				"cancel": "Cancel"
+			}
+		},
+		"closed": {
+			"title": "Team chat switched off",
+			"text": "The team chat for this enquiry is switched off and read-only. Switch it on again to keep writing."
 		}
 	},
 	"inviteLink": {
@@ -6472,6 +6494,96 @@
 				"links": {
 					"title": "Links without an appointment",
 					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				}
+			}
+		},
+		"liveChat": {
+			"title": "Live chat",
+			"summary": "How anonymous live chats arrive, how you mark yourself available and take over a chat.",
+			"step": {
+				"intro": {
+					"title": "Live chat: what is different",
+					"intro": "Live chats arrive through a link, without registration. Advice seekers write anonymously and on a specific topic. All available counsellors for the topic share one queue."
+				},
+				"availabilitySettings": {
+					"title": "Your availability",
+					"intro": "Switch “I'm available” on or off here. Only available counsellors are offered live chats. If you like, move the switch into the menu bar."
+				},
+				"availabilityToggle": {
+					"title": "Switch in the menu bar",
+					"intro": "With “Activate Live Chat via the menu bar” this switch appears. One click marks you available or unavailable — without opening the settings."
+				},
+				"queue": {
+					"title": "The shared queue",
+					"intro": "The “Live chat” filter shows every waiting live chat. Your colleagues see the same list."
+				},
+				"accept": {
+					"title": "Start chat",
+					"intro": "“Start chat” takes the chat over. Only the chat at the front of the queue can be accepted."
+				},
+				"done": {
+					"title": "End chat",
+					"intro": "When the conversation is over, end it in the ⋮ menu with “End chat”. You then return to the queue."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Timeline and drafts",
+			"summary": "Where you see every event in one place and where your unsent messages are kept.",
+			"step": {
+				"activityNav": {
+					"title": "Your timeline",
+					"intro": "The “Timeline” collects the events from all your chats. You no longer need to open each conversation to see what is new."
+				},
+				"timeline": {
+					"title": "Everything in one place",
+					"intro": "The list of events is on the left, the details of the selected entry on the right. From there you jump straight into the matching chat."
+				},
+				"filters": {
+					"title": "Search and filter",
+					"intro": "Search the timeline or filter by kind, for example “Unread” or “Mentions”. The filter button on the left adjusts what is shown."
+				},
+				"markAllRead": {
+					"title": "Mark all as read",
+					"intro": "One click marks every timeline entry as read. The messages in your chats are not affected."
+				},
+				"draftsChip": {
+					"title": "Drafts in your conversations",
+					"intro": "Unsent messages are not lost. The “Drafts” filter shows the conversations that still hold a draft."
+				},
+				"draftsCenter": {
+					"title": "All drafts",
+					"intro": "All drafts are listed here, saved per chat and thread. Open a draft to keep writing, or delete it."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Video call",
+			"summary": "How you call from within a conversation and let waiting people in.",
+			"step": {
+				"intro": {
+					"title": "Calls inside the conversation",
+					"intro": "You start video and audio calls right in the conversation, from its header. The advice seeker sees the call in their chat."
+				},
+				"sessionCallButton": {
+					"title": "Start a call",
+					"intro": "An open conversation shows “Start video call” and “Start audio call” in its header. On narrow screens both are in the ⋮ menu."
+				},
+				"groupCallButton": {
+					"title": "Calls in a group chat",
+					"intro": "In a group chat, too, you start the call from the chat header."
+				},
+				"knock": {
+					"title": "Letting waiting people in",
+					"intro": "Anyone who joins later knocks and waits. During the call, “People waiting” appears: “Let in” admits one person, “Decline” does not, “Let everyone in” admits all at once."
+				},
+				"help": {
+					"title": "Help with video calls",
+					"intro": "“Help” → “Video-Call” lists the browsers that support video calls. You can copy the login link here and pass it on to advice seekers."
+				},
+				"done": {
+					"title": "Ready for your first call",
+					"intro": "Open a conversation and start the call when it suits. After the call, the chat conversation carries on as usual."
 				}
 			}
 		}
