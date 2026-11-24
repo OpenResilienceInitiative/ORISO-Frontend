@@ -2330,23 +2330,42 @@ describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494
 		});
 	});
 
-	it('offers the free times of every active counsellor, each once', async () => {
+	it('offers the free times of every active counsellor, once per booking context', async () => {
 		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
 		askerSessions(2, [
 			{
 				session: { id: 13, status: 2, matrixRoomId: '!b:oriso' },
 				consultant: { consultantId: 'c2', displayName: 'Tom Weber' }
 			},
+			// Same counsellor, same gates as 12: no second panel.
 			{
-				session: { id: 14, status: 2, matrixRoomId: '!c:oriso' },
-				consultant: { consultantId: 'c1', displayName: 'Laura Berger' }
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			},
+			// Same counsellor, another consulting type: its own gates.
+			{
+				session: {
+					id: 15,
+					status: 2,
+					matrixRoomId: '!d:oriso',
+					agencyId: 7,
+					consultingType: 2
+				},
+				consultant: laura
 			}
 		]);
 		render(<CalendarPageWired />);
 		await waitFor(() => expect(props.besidePanel).toBeTruthy());
 		expect(
 			panelsOf(props.besidePanel).map((panel) => panel.props.sessionId)
-		).toEqual([12, 13]);
+		).toEqual([12, 13, 15]);
 	});
 
 	it('offers none for a finished conversation', async () => {

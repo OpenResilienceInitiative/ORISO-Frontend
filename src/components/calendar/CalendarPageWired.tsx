@@ -1261,6 +1261,12 @@ export const CalendarPageWired = () => {
 	   counsellor the advice seeker has an active conversation with, in the
 	   media that conversation permits; a panel stays away while its
 	   counsellor has none. */
+	/* One panel per booking context: conversations that share counsellor,
+	   agency, consulting type and chat type get the same media, so the
+	   first stands for them; a conversation whose gates differ keeps its
+	   own panel. */
+	const bookingContext = (c: ConversationRef) =>
+		[c.counsellorId, c.agencyId, c.consultingTypeId, c.chatType].join('|');
 	const freeTimesOf = consultant
 		? []
 		: conversations.filter(
@@ -1269,7 +1275,7 @@ export const CalendarPageWired = () => {
 					conversations.findIndex(
 						(other) =>
 							other.withCounsellor &&
-							other.counsellorId === c.counsellorId
+							bookingContext(other) === bookingContext(c)
 					) === index
 			);
 	const freeTimesPanel = freeTimesOf.length > 0 && (

@@ -99,7 +99,11 @@ export const AskerFreeTimesPanel = ({
 	}, [sessionId, medium, loadSlots, reads]);
 
 	const chooseMedium = (value: SelfBookingMedium) => {
+		if (value === medium) return;
 		setMedium(value);
+		/* The other medium's times are not this one's: none is shown or
+		   booked until this medium's own answer is in. */
+		setSlots('loading');
 		setTime(null);
 		setProblem(undefined);
 	};

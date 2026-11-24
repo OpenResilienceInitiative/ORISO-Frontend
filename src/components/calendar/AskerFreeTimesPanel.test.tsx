@@ -87,6 +87,42 @@ describe('Freie Sprechzeiten (FE#2494 *2c)', () => {
 		).toBe('videoCall.askerInfo.booking.booked');
 	});
 
+	it('shows and books none of the old times while the new medium loads', async () => {
+		let phoneAnswer: (found: AppointmentSlot[]) => void = () => {};
+		const loadSlots = vi.fn((_id: number, _from: Date, _to: Date, kind) =>
+			kind === 'PHONE'
+				? new Promise<AppointmentSlot[]>((resolve) => {
+						phoneAnswer = resolve;
+					})
+				: Promise.resolve([slot()])
+		);
+		render(
+			<AskerFreeTimesPanel
+				sessionId={7}
+				counsellorName="Laura Berger"
+				loadSlots={loadSlots}
+				bookSlot={vi.fn()}
+				onBooked={vi.fn()}
+			/>
+		);
+		fireEvent.click(await screen.findByRole('button', { name: '10:00' }));
+		fireEvent.click(
+			screen.getByRole('radio', {
+				name: 'calendar.freeTimes.medium.phone'
+			})
+		);
+		expect(screen.queryByRole('button', { name: '10:00' })).toBeNull();
+		expect(
+			screen.getByText('videoCall.askerInfo.booking.loading')
+		).toBeTruthy();
+		phoneAnswer([]);
+		await waitFor(() =>
+			expect(
+				screen.getByText('videoCall.askerInfo.booking.none')
+			).toBeTruthy()
+		);
+	});
+
 	it('changes between video and phone with the arrow keys', async () => {
 		panel([slot()]);
 		const video = await screen.findByRole('radio', {
