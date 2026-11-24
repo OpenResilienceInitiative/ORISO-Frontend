@@ -114,8 +114,23 @@
 		0 0 0 3px var(--m3-surface-container-lowest, #fff);
 }
 
-.appointmentPennant__label--short {
+.appointmentPennant__label.appointmentPennant__label--short {
 	display: none;
+}
+
+// Who it is with (advice seeker, supervision): an icon before the date,
+// on desktop and phone (Frank, 2026-11-24: "weniger lesen").
+.appointmentPennant__label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.appointmentPennant__with {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	fill: currentColor;
 }
 
 // Phone: the short date, no arrow bubble; the whole pennant opens the menu.
@@ -136,16 +151,10 @@
 		display: none;
 	}
 
-	.appointmentPennant__label--short {
+	.appointmentPennant__label.appointmentPennant__label--short {
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-	}
-
-	.appointmentPennant__with {
-		width: 16px;
-		height: 16px;
-		fill: currentColor;
 	}
 
 	// The topic stays whole, 6px from the edge; the centre and postcode
@@ -185,18 +194,6 @@
 		}
 	}
 
-	// S2 (review): the second pennant closes at the top, a rounded tag of
-	// its own hanging under the first.
-	.roomNextAppointment.roomAppointmentPennants--closed
-		> .appointmentPennant
-		+ .appointmentPennant {
-		height: var(--pennant-height);
-		margin-top: 4px;
-		padding-top: 0;
-		border-top: 1px solid var(--pennant-edge);
-		border-radius: 16px;
-	}
-
 	// The short dates stay whole.
 	.sessionInfo__metaInfo .roomAppointmentPennants,
 	.roomAppointmentPennants > .appointmentPennant {
@@ -226,77 +223,16 @@
 	align-items: flex-start;
 }
 
-/* ---- Variants for the review (Frank, 2026-11-24: "ein, zwei Varianten,
-   wie das runde Icon besser integriert ist"). ---- */
-
-// B "Flach": the bubble sits inside the pennant, the pennant is rose.
-.roomAppointmentPennants--flat .appointmentPennant {
-	background: var(--pennant-accent);
-	border-color: var(--pennant-accent);
-
-	&:hover {
-		border-color: var(--pennant-edge);
-	}
-
-	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
-		width: 24px;
-		height: 24px;
-		margin-top: 0;
-		box-shadow: none;
-	}
-
-	.appointmentPennant__bubble--arrow {
-		background: transparent;
-	}
-}
-
-// C "Knopf an der Linie": the bubble sits on the divider like a pin the
-// pennant hangs from; half above, half below the line.
-.roomAppointmentPennants--knob {
-	padding-left: 14px;
-
-	.appointmentPennant {
-		padding-left: 22px;
-		overflow: visible;
-	}
-
-	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
-		position: absolute;
-		top: -15px;
-		left: -15px;
-		margin: 0;
-	}
-}
-
-// Phone, stacked: the second pennant hangs from the first, one step in.
-.roomAppointmentPennants--stacked {
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 0;
-
-	> .appointmentPennant + .appointmentPennant {
-		margin-left: 16px;
-		margin-top: 0;
-	}
-}
-
-// Desktop: the centre and postcode give way first, then the dates.
-.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
-	> .sessionInfo__metaInfo__content:not(.topicTag) {
-		flex: 0 100 auto;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	> .topicTag {
-		flex-shrink: 0;
-	}
-}
-
 // Two kinds of appointment: the centre and postcode step aside entirely
 // (they show in the conversation's details too).
 .sessionInfo__metaInfo:has(.appointmentPennant + .appointmentPennant)
 	> .sessionInfo__metaInfo__content:not(.topicTag) {
 	display: none;
+}
+
+.appointmentPennant__text {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }

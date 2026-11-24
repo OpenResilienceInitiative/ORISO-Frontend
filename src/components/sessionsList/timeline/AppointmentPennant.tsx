@@ -65,13 +65,14 @@ export const AppointmentPennant = ({
 	// Phone: weekday and start only ("Di 14:30"); the menu has the rest.
 	const short = `${entry.start.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '')} ${entry.start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
 	// FE#2287: the state first, so a cut label still says "angefragt".
+	// On screen the icon says who it is with; the screen reader hears it.
 	const label = [
 		entry.requested && t('sessionList.timeline.appointment.request.marker'),
-		withLabel,
 		slot
 	]
 		.filter(Boolean)
 		.join(' · ');
+	const spoken = [withLabel, label].filter(Boolean).join(' · ');
 	const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
 	const ref = useRef<HTMLButtonElement | null>(null);
 	const menuId = useId();
@@ -98,14 +99,19 @@ export const AppointmentPennant = ({
 				aria-haspopup="menu"
 				aria-expanded={Boolean(anchor)}
 				aria-controls={anchor ? menuId : undefined}
-				aria-label={`${t('sessionList.timeline.appointment.menu', 'Terminmenü')}: ${label}`}
+				aria-label={`${t('sessionList.timeline.appointment.menu', 'Terminmenü')}: ${spoken}`}
 				onClick={toggle}
 				data-cy="room-appointment-pennant"
 			>
 				<span className="appointmentPennant__bubble" aria-hidden>
 					<Icon />
 				</span>
-				<span className="appointmentPennant__label">{label}</span>
+				<span className="appointmentPennant__label">
+					{WithIcon && (
+						<WithIcon className="appointmentPennant__with" />
+					)}
+					<span className="appointmentPennant__text">{label}</span>
+				</span>
 				<span
 					className="appointmentPennant__label appointmentPennant__label--short"
 					aria-hidden

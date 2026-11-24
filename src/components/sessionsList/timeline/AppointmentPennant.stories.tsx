@@ -109,77 +109,15 @@ const two = [
 	}
 ];
 
-/** Variant A: the Art bubble peeks out below the pennant. */
-export const VariantA: Story = {
-	name: 'Variante A — Boppel guckt unten raus',
+/** With the advice seeker and with the supervisor: an icon says who. */
+export const Two: Story = {
+	name: 'Zwei Termine: Ratsuchende + Supervision',
 	render: () => (
 		<Header width={880}>
 			<RoomNextAppointment
 				entry={askerAppointment}
 				role="counsellor"
 				extra={two}
-			/>
-		</Header>
-	)
-};
-
-/** Variant B: flat, the bubble inside a rose pennant. */
-export const VariantB: Story = {
-	name: 'Variante B — flach, Boppel innen',
-	render: () => (
-		<Header width={880}>
-			<RoomNextAppointment
-				entry={askerAppointment}
-				role="counsellor"
-				extra={two}
-				look="flat"
-			/>
-		</Header>
-	)
-};
-
-/** Variant C: the bubble is the pin on the divider the pennant hangs from. */
-export const VariantC: Story = {
-	name: 'Variante C — Knopf auf der Linie',
-	render: () => (
-		<Header width={880}>
-			<RoomNextAppointment
-				entry={askerAppointment}
-				role="counsellor"
-				extra={two}
-				look="knob"
-			/>
-		</Header>
-	)
-};
-
-/** Phone: the second pennant hangs from the first. */
-export const PhoneStacked: Story = {
-	name: 'Telefon — gestapelt',
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
-	render: () => (
-		<Header width={375}>
-			<RoomNextAppointment
-				entry={askerAppointment}
-				role="counsellor"
-				extra={two}
-				look="stacked"
-			/>
-		</Header>
-	)
-};
-
-/** Phone, stacked, the second pennant closed at the top. */
-export const PhoneStackedClosed: Story = {
-	name: 'Telefon — gestapelt, zweiter Wimpel oben geschlossen',
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
-	render: () => (
-		<Header width={375}>
-			<RoomNextAppointment
-				entry={askerAppointment}
-				role="counsellor"
-				extra={two}
-				look="closed"
 			/>
 		</Header>
 	)
@@ -206,20 +144,6 @@ export const One: Story = {
 	}
 };
 
-/** With the advice seeker and with the supervisor: two pennants. */
-export const Two: Story = {
-	name: 'Zwei Termine: Ratsuchende + Supervision',
-	render: () => (
-		<Header width={880}>
-			<RoomNextAppointment
-				entry={askerAppointment}
-				role="counsellor"
-				extra={two}
-			/>
-		</Header>
-	)
-};
-
 /** An unanswered request: dashed, "Angefragt" first. */
 export const Requested: Story = {
 	name: 'Angefragter Termin',
@@ -232,7 +156,7 @@ export const Requested: Story = {
 
 /** Phone: the pennants wrap under the topic, nothing lies on the chat. */
 export const Phone: Story = {
-	name: 'Telefon: zwei Termine',
+	name: 'Telefon: zwei Termine gestapelt',
 	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	render: () => (
 		<Header width={375}>
