@@ -41,7 +41,8 @@ describe('useSessionPassageReplies (FE#2494 *7)', () => {
 			useSessionPassageReplies({
 				matrixRoomId: '!supervision:oriso',
 				canReply: true,
-				sharedVoice: sharedVoice as never
+				sharedVoice: sharedVoice as never,
+				teamDiscussion: true
 			})
 		);
 
@@ -51,6 +52,7 @@ describe('useSessionPassageReplies (FE#2494 *7)', () => {
 		expect(sendPassageReplies).toHaveBeenCalledWith(
 			expect.objectContaining({
 				matrixRoomId: '!supervision:oriso',
+				teamDiscussion: true,
 				replies: [
 					expect.objectContaining({
 						voice: { file, durationMs: 4000 }

@@ -93,6 +93,13 @@ export interface SelectionReplyLayerProps {
 	 */
 	voiceInToolbar?: boolean;
 	/**
+	 * FE#2494 *7 (review): false when this person may not write in this
+	 * chat (supervisor, read-only co-access) but may answer in a side room.
+	 * Then only the side-room entries are offered, and nothing is ever
+	 * handed to `onAddToComposer` / `onSendNow`.
+	 */
+	canReplyHere?: boolean;
+	/**
 	 * FE#2494 *7 variant: 'bubble' shows a small reply handle at the top
 	 * right of the marked passage instead of the bar; the handle opens one
 	 * speech-bubble menu with the field and every other action.
@@ -164,6 +171,7 @@ export const SelectionReplyLayer = ({
 	onReplyInSideRoom,
 	collectedCount,
 	voiceInToolbar = true,
+	canReplyHere = true,
 	menu = 'toolbar',
 	badgeOn = 'bubble',
 	stackIcon = 'count',
@@ -527,6 +535,11 @@ export const SelectionReplyLayer = ({
 	) => {
 		if (voice.mode === 'recording') {
 			const take = await stopVoice();
+			if (!take) {
+				// Finishing the take failed (or it was discarded meanwhile):
+				// keep the draft and the error, never send text alone.
+				return;
+			}
 			const next = answer(take);
 			if (next && (next.text || next.voice)) {
 				deliver(next);
@@ -567,8 +580,10 @@ export const SelectionReplyLayer = ({
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onCollect(next);
-			} else {
+			} else if (canReplyHere) {
 				onAddToComposer(next);
+			} else {
+				return;
 			}
 			focusComposer?.();
 			reset();
@@ -582,8 +597,10 @@ export const SelectionReplyLayer = ({
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onSend(next);
-			} else {
+			} else if (canReplyHere) {
 				onSendNow(next);
+			} else {
+				return;
 			}
 			focusComposer?.();
 			reset();
@@ -956,7 +973,9 @@ export const SelectionReplyLayer = ({
 							? () => replyInSideRoom('team')
 							: undefined
 					}
-					onReply={() => openPopover(false)}
+					onReply={
+						canReplyHere ? () => openPopover(false) : undefined
+					}
 					onReplyWithVoice={() => openPopover(true)}
 					onStartThread={startThread}
 					onBlur={onBlurPassage ? blurPassage : undefined}

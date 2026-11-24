@@ -26,6 +26,8 @@ export interface UseSessionPassageRepliesOptions {
 	 * recorder the main selection layer records into.
 	 */
 	sharedVoice?: ReturnType<typeof useSelectionVoiceRecorder>;
+	/** Team room: announce with the team-discussion flag, like its composer. */
+	teamDiscussion?: boolean;
 }
 
 /**
@@ -39,7 +41,8 @@ export const useSessionPassageReplies = ({
 	canReply,
 	isSupervisor,
 	senderDisplayName,
-	sharedVoice
+	sharedVoice,
+	teamDiscussion
 }: UseSessionPassageRepliesOptions) => {
 	const { t: translate } = useTranslation();
 	const addNotification = useContext(NotificationsContext)?.addNotification;
@@ -55,6 +58,7 @@ export const useSessionPassageReplies = ({
 				matrixRoomId,
 				typedText,
 				supervisorMessage: !!isSupervisor,
+				teamDiscussion: !!teamDiscussion,
 				senderDisplayName,
 				labels: {
 					voice: (seconds) =>
@@ -81,7 +85,14 @@ export const useSessionPassageReplies = ({
 				})
 			});
 		},
-		[matrixRoomId, isSupervisor, senderDisplayName, translate, takeFor]
+		[
+			matrixRoomId,
+			isSupervisor,
+			teamDiscussion,
+			senderDisplayName,
+			translate,
+			takeFor
+		]
 	);
 
 	const onSendFailed = useCallback(() => {

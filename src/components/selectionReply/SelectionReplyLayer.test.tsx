@@ -515,3 +515,70 @@ describe('SelectionReplyLayer voice: stack and send stop the take (FE#2494)', ()
 		);
 	});
 });
+
+describe('SelectionReplyLayer review fixes (#2505)', () => {
+	afterEach(cleanup);
+
+	it('a failed stop while sending keeps the typed text and sends nothing', async () => {
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(async () => {
+				throw new Error('broken');
+			}),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onSendNow = vi.fn();
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onSendNow, onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		const input = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
+		fireEvent.change(input, { target: { value: 'Dazu noch:' } });
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		await act(async () => {});
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).not.toHaveBeenCalled();
+		expect(onSendNow).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert')).toBeTruthy();
+		expect(
+			(
+				screen.getByLabelText(
+					'message.selectionReply.inputLabel'
+				) as HTMLTextAreaElement
+			).value
+		).toBe('Dazu noch:');
+	});
+
+	it('without a right to write here, only the side-room entries are offered', () => {
+		renderLayer(
+			{
+				start: vi.fn(async () => {}),
+				stop: vi.fn(),
+				cancel: vi.fn()
+			},
+			{
+				canReplyHere: false,
+				onReplyInSideRoom: {
+					supervision: { onCollect: vi.fn(), onSend: vi.fn() }
+				}
+			}
+		);
+		expect(
+			screen.queryByLabelText('message.selectionReply.reply')
+		).toBeNull();
+		expect(
+			screen.queryByLabelText('message.selectionReply.replyVoice')
+		).toBeNull();
+		expect(
+			screen.getAllByLabelText(
+				'message.selectionReply.replyInSupervision'
+			).length
+		).toBeGreaterThan(0);
+	});
+});

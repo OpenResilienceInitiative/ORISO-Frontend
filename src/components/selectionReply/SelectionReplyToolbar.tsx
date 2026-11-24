@@ -16,7 +16,8 @@ export interface SelectionReplyToolbarProps {
 	showVoice?: boolean;
 	/** Show "Thread" (hidden where threads are off). */
 	showThread?: boolean;
-	onReply: () => void;
+	/** Missing = this person may not answer in this chat (side rooms only). */
+	onReply?: () => void;
 	onReplyWithVoice: () => void;
 	onStartThread: () => void;
 	/**
@@ -118,12 +119,14 @@ export const SelectionReplyToolbar = forwardRef<
 				// Keep the native selection while a button is pressed.
 				onMouseDown={(event) => event.preventDefault()}
 			>
-				<ToolbarAction
-					label={translate('message.selectionReply.reply')}
-					icon={<ReplyArrowIcon />}
-					onClick={onReply}
-				/>
-				{showVoice && (
+				{onReply && (
+					<ToolbarAction
+						label={translate('message.selectionReply.reply')}
+						icon={<ReplyArrowIcon />}
+						onClick={onReply}
+					/>
+				)}
+				{onReply && showVoice && (
 					<ToolbarAction
 						label={translate('message.selectionReply.replyVoice')}
 						icon={<MicIcon fontSize="inherit" aria-hidden />}
