@@ -214,6 +214,8 @@ export interface SideChatReplyStageProps {
 	menu?: 'toolbar' | 'bubble';
 	/** Variant: the side-chat badge hangs on the grey quote. */
 	badgeOn?: 'bubble' | 'quote' | 'bottom';
+	/** Stack button icon: numbered cards (default) or reply-all. */
+	stackIcon?: 'count' | 'replyAll';
 	/** The side chat that is open on load. */
 	openRoom?: SideRoom | null;
 	/** Passages already waiting in the open side chat's reply field. */
@@ -236,6 +238,7 @@ export function SideChatReplyStage({
 	presetTarget = null,
 	menu = 'toolbar',
 	badgeOn = 'bubble',
+	stackIcon = 'count',
 	openRoom = null,
 	collected = [],
 	sent = null,
@@ -556,6 +559,7 @@ export function SideChatReplyStage({
 						voiceInToolbar={false}
 						menu={menu}
 						badgeOn={badgeOn}
+						stackIcon={stackIcon}
 						initialSelection={sidePresetSelection}
 						initialMode={presetMode}
 					>
@@ -658,6 +662,7 @@ export function SideChatReplyStage({
 									onStartThread={() => setRoom('thread')}
 									menu={menu}
 									badgeOn={badgeOn}
+									stackIcon={stackIcon}
 									onReplyInSideRoom={{
 										supervision: withSupervision
 											? {

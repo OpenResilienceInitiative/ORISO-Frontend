@@ -13,7 +13,8 @@ import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio-filled.svg';
-import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-all.svg';
+import { ReactComponent as ReplyAllIcon } from '../../resources/img/icons/reply-all.svg';
+import { StackCountIcon } from './StackCountIcon';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
@@ -71,6 +72,11 @@ export interface SelectionReplyPopoverProps {
 	badgeOn?: 'bubble' | 'quote' | 'bottom';
 	/** Answers already stacked for that message; the stack shows the next number. */
 	collectedCount?: number;
+	/**
+	 * Stack button icon. `count` (default, Frank 24 Nov): stacked cards
+	 * with the next number. `replyAll`: the earlier two-arrow variant.
+	 */
+	stackIcon?: 'count' | 'replyAll';
 }
 
 const isMacLike = () =>
@@ -108,7 +114,8 @@ export const SelectionReplyPopover = forwardRef<
 			bubble = false,
 			targetBadge,
 			badgeOn = 'bubble',
-			collectedCount = 0
+			collectedCount = 0,
+			stackIcon = 'count'
 		},
 		ref
 	) => {
@@ -399,11 +406,18 @@ export const SelectionReplyPopover = forwardRef<
 							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							<CollectIcon
-								aria-hidden
-								className="selectionReply__collectIcon"
-							/>
-							{collectedCount > 0 && (
+							{stackIcon === 'count' ? (
+								<StackCountIcon
+									next={collectedCount + 1}
+									className="selectionReply__collectIcon"
+								/>
+							) : (
+								<ReplyAllIcon
+									aria-hidden
+									className="selectionReply__collectIcon"
+								/>
+							)}
+							{stackIcon === 'replyAll' && collectedCount > 0 && (
 								<span
 									className="selectionReply__stackCount"
 									data-cy="selection-reply-stack-count"

@@ -139,6 +139,14 @@ export const StackNumber: Story = {
 		preset: P7_PASSAGES.sleep,
 		presetMode: 'popover',
 		presetTarget: 'supervision'
+	},
+	play: async ({ canvasElement }) => {
+		const count = await waitForSelector(
+			canvasElement,
+			'[data-cy="selection-reply-stack-count"]'
+		);
+		// Stacked cards with „3“ (Material Symbols filter_3).
+		await expect(count.getAttribute('data-next')).toBe('3');
 	}
 };
 
@@ -360,6 +368,12 @@ export const VoiceIntoSupervision: Story = {
 };
 
 /** Variante · Das Supervision-Badge hängt auf dem grauen Zitat (spart Abstand). */
+/** Frank, 24 Nov: compare the stack icons — numbered cards (default) vs. reply-all. */
+export const StackIconReplyAll: Story = {
+	name: 'Variante · Stapel-Knopf als „Allen antworten“ (zwei Pfeile)',
+	args: { ...StackNumber.args, stackIcon: 'replyAll' }
+};
+
 export const BadgeOnQuote: Story = {
 	name: 'Variante · Badge auf dem grauen Zitat',
 	args: {

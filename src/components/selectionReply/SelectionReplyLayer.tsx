@@ -13,7 +13,7 @@ import { ReactComponent as ReplyBubbleIcon } from '../../resources/img/icons/rep
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/team-discussion-compact.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { PassageBlurBar } from './PassageBlurBar';
 import { passageBlurFromRange, type PassageBlur } from './passageBlur';
 import {
@@ -100,6 +100,8 @@ export interface SelectionReplyLayerProps {
 	menu?: 'toolbar' | 'bubble';
 	/** FE#2494 variant: the side-chat badge hangs on the quote. */
 	badgeOn?: 'bubble' | 'quote' | 'bottom';
+	/** Stack button icon: numbered cards (default) or reply-all. */
+	stackIcon?: 'count' | 'replyAll';
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -164,6 +166,7 @@ export const SelectionReplyLayer = ({
 	voiceInToolbar = true,
 	menu = 'toolbar',
 	badgeOn = 'bubble',
+	stackIcon = 'count',
 	focusComposer,
 	recorder,
 	onBlurPassage,
@@ -1016,6 +1019,7 @@ export const SelectionReplyLayer = ({
 					// shows only the field for that chat.
 					actions={target ? undefined : bubbleActions}
 					badgeOn={badgeOn}
+					stackIcon={stackIcon}
 					targetBadge={
 						target === 'supervision'
 							? {

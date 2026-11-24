@@ -776,3 +776,37 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		display: none;
 	}
 }
+
+// FE#2494 *8: the numbered stack icon — outline at rest, filled while the
+// button is hovered or focused.
+.stackCountIcon {
+	display: inline-flex;
+
+	// 24px: at 20px the thin number is hard to read (FE#2494).
+	svg {
+		width: 24px;
+		height: 24px;
+		fill: currentColor;
+	}
+
+	&__filled {
+		display: none;
+	}
+}
+
+// Wins over the box's 20px rule for toolbar icons.
+.selectionReply__box .selectionReply__collect .stackCountIcon svg {
+	width: 24px;
+	height: 24px;
+}
+
+.selectionReply__collect:hover,
+.selectionReply__collect:focus-visible {
+	.stackCountIcon__outline {
+		display: none;
+	}
+
+	.stackCountIcon__filled {
+		display: block;
+	}
+}

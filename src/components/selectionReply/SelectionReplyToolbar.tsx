@@ -6,7 +6,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/team-discussion-compact.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 
 export interface SelectionReplyToolbarProps {
