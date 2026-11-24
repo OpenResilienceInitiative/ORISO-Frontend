@@ -52,7 +52,9 @@ import {
 	apiGetCalendarProposals,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
+	apiCreateCalendarConsultationOnce,
 	apiGetCalendarConsultationHours,
+	apiGetCalendarConsultationOnce,
 	apiSetCalendarConsultationHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
@@ -65,9 +67,11 @@ import {
 	type CalendarSyncDTO
 } from '../../api/apiCalendar';
 import {
+	apiBookAppointmentSlot,
 	apiCancelSessionAppointment,
 	apiConfirmSessionAppointment,
 	apiDeclineSessionAppointment,
+	apiGetAppointmentSlots,
 	apiMoveSessionAppointment
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
@@ -99,6 +103,8 @@ import {
 	saveAppointmentInvitation
 } from '../directInvitation/saveAppointmentInvitation';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
+import { STATUS_ACTIVE } from '../../globalState/interfaces/SessionsDataInterface';
 import { parseCalendarDayParam } from '../message/appointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
 import type { FreeHoursState } from './CalendarSidebar';
@@ -149,7 +155,9 @@ import {
 } from './calendarWorkingHours';
 import {
 	consultationHoursFromApi,
-	type ConsultationHours
+	oneOffFromApi,
+	type ConsultationHours,
+	type OneOffConsultation
 } from './calendarConsultationHours';
 import type { HolidayRegion } from './calendarHolidays';
 
@@ -178,6 +186,8 @@ const mergeEntries = (first: CalendarEntry[], second: CalendarEntry[]) => {
 
 interface ConversationRef extends CalendarConversation {
 	matrixRoomId?: string;
+	/** A counsellor is assigned: their free office hours can be booked. */
+	withCounsellor?: boolean;
 }
 
 const toConversations = (
@@ -203,6 +213,12 @@ const toConversations = (
 				item.consultant?.username ??
 				String(item.session.id),
 			matrixRoomId: item.session.matrixRoomId,
+			// The advice seeker's view names its counsellor `consultantId`;
+			// only an active conversation has office hours to book (dev,
+			// 24 Nov 2026: finished ones are status 4).
+			withCounsellor:
+				Boolean(item.consultant?.consultantId ?? item.consultant?.id) &&
+				item.session.status === STATUS_ACTIVE,
 			// FE#2325: the person's real avatar, as in the conversation list.
 			avatar: personAvatarOfSession(item, !!ownUserId)
 		}));
@@ -266,6 +282,8 @@ export const CalendarPageWired = () => {
 	   never offered for editing and saved as empty. */
 	const [consultationHours, setConsultationHours] =
 		useState<ConsultationHours>();
+	/** Undefined: this UserService keeps no one-off Sprechzeiten. */
+	const [oneOffs, setOneOffs] = useState<OneOffConsultation[]>();
 	const [consultationHoursFailed, setConsultationHoursFailed] =
 		useState(false);
 	/** Read once on mount; again from ⋮ when that failed. */
@@ -277,6 +295,12 @@ export const CalendarPageWired = () => {
 					!cancelled() &&
 					setConsultationHours(consultationHoursFromApi(dto)),
 				() => !cancelled() && setConsultationHoursFailed(true)
+			);
+			/* One-off Sprechzeiten (FE#2494 *2b): a UserService without
+			   them answers with an error, and "Einmalig" stays away. */
+			apiGetCalendarConsultationOnce().then(
+				(list) => !cancelled() && setOneOffs(list.map(oneOffFromApi)),
+				() => !cancelled() && setOneOffs(undefined)
 			);
 		},
 		[]
@@ -1033,6 +1057,20 @@ export const CalendarPageWired = () => {
 		setConsultationHours(consultationHoursFromApi(saved));
 	};
 
+	const saveOneOffConsultation = async (once: OneOffConsultation) => {
+		const saved = await apiCreateCalendarConsultationOnce({
+			start: once.start,
+			end: once.end,
+			noticeMinutes: once.noticeMinutes,
+			overBlocker: Boolean(once.overBlocker)
+		});
+		setOneOffs((known) =>
+			[...(known ?? []), oneOffFromApi(saved)].sort(
+				(a, b) => a.start.getTime() - b.start.getTime()
+			)
+		);
+	};
+
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
@@ -1204,9 +1242,26 @@ export const CalendarPageWired = () => {
 		conversations
 	);
 
+	/* *2c (FE#2494): beside "Meine Termine" the free office hours of the
+	   advice seeker's counsellor; the panel stays away while there are none. */
+	const freeTimesOf = consultant
+		? undefined
+		: conversations.find((c) => c.withCounsellor);
+	const freeTimesPanel = freeTimesOf && (
+		<AskerFreeTimesPanel
+			key={freeTimesOf.sessionId}
+			sessionId={freeTimesOf.sessionId}
+			counsellorName={freeTimesOf.username}
+			loadSlots={apiGetAppointmentSlots}
+			bookSlot={apiBookAppointmentSlot}
+			onBooked={afterChange}
+		/>
+	);
+
 	return (
 		<>
 			<CalendarPage
+				besidePanel={freeTimesPanel}
 				linksPanel={consultant ? <CalendarLinksSection /> : undefined}
 				role={consultant ? 'consultant' : 'asker'}
 				ownerId={ownerId}
@@ -1281,6 +1336,10 @@ export const CalendarPageWired = () => {
 				}
 				onSaveConsultationHours={
 					consultant ? saveConsultationHours : undefined
+				}
+				oneOffConsultations={consultant ? oneOffs : undefined}
+				onSaveOneOffConsultation={
+					consultant && oneOffs ? saveOneOffConsultation : undefined
 				}
 				onSaveDayException={consultant ? saveDayException : undefined}
 				onDeleteDayException={

@@ -49,24 +49,23 @@ const SAMPLE_HOURS: ConsultationHours = {
 	slotMinutes: 60
 };
 
-const linksBox = (el: HTMLElement) =>
-	waitFor(() => {
-		const box = el.querySelector<HTMLElement>('[data-cy="calendar-links"]');
-		expect(box).not.toBeNull();
-		return box!;
-	});
-
 /** *2a/*2b: compact rows, no illustration, no create button. */
 const expectCompactLinks = async (el: HTMLElement) => {
-	const box = await linksBox(el);
+	const links = await waitFor(() => {
+		const found = el.querySelector<HTMLElement>(
+			'[data-cy="calendar-links"]'
+		);
+		expect(found).not.toBeNull();
+		return found!;
+	});
 	await waitFor(() =>
 		expect(
-			box.querySelectorAll('[data-testid="direct-link-row"]').length
+			links.querySelectorAll('[data-testid="direct-link-row"]').length
 		).toBeGreaterThanOrEqual(3)
 	);
-	await expect(box.querySelector('.directLinkTile')).toBeNull();
+	await expect(links.querySelector('.directLinkTile')).toBeNull();
 	await expect(
-		box.querySelector('[data-testid="direct-links-create"]')
+		links.querySelector('[data-testid="direct-links-create"]')
 	).toBeNull();
 };
 

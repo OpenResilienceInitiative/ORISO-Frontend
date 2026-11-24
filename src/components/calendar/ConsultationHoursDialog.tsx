@@ -519,7 +519,8 @@ export const useConsultationHoursForm = ({
 							onSaveOneOff?.({
 								start: onceStart,
 								end: onceEnd,
-								noticeMinutes: once.notice
+								noticeMinutes: once.notice,
+								overBlocker
 							}),
 						testId: 'consultation-once-save'
 					}

@@ -91,6 +91,8 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarConsultationHours: vi.fn(() =>
 		Promise.resolve({ windows: [] })
 	),
+	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
+	apiCreateCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -111,7 +113,9 @@ vi.mock('../../api/apiCalendar', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(),
 	apiMoveSessionAppointment: vi.fn(),
-	apiCancelSessionAppointment: vi.fn()
+	apiCancelSessionAppointment: vi.fn(),
+	apiGetAppointmentSlots: vi.fn(() => Promise.resolve([])),
+	apiBookAppointmentSlot: vi.fn()
 }));
 vi.mock('../../api/apiGetConsultantSessionList', () => ({
 	apiGetConsultantSessionList: vi.fn(() => Promise.resolve({ sessions: [] }))

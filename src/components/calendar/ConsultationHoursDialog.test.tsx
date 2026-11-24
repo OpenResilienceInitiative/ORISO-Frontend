@@ -175,4 +175,46 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		fireEvent.click(screen.getByTestId('consultation-hours-save'));
 		expect(onSave).not.toHaveBeenCalled();
 	});
+
+	it('adds a second window to a day with "+" and saves both (FE#2494 *2b)', () => {
+		const onSave = open({
+			...none,
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+		});
+		fireEvent.click(
+			document.querySelector('[data-cy="consultation-add-2"]')!
+		);
+		expect(screen.getByTestId('consultation-window-2-1')).toBeTruthy();
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '09:00', end: '12:00' },
+			{ weekday: 2, start: '12:00', end: '14:00' }
+		]);
+	});
+
+	it('removes a window and keeps the rest of the day', () => {
+		const onSave = open({
+			...none,
+			windows: [
+				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 2, start: '16:00', end: '18:00' }
+			]
+		});
+		fireEvent.click(
+			document.querySelector('[data-cy="consultation-remove-2-0"]')!
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '16:00', end: '18:00' }
+		]);
+	});
+
+	it('offers "Einmalig" only where a one-off can be saved', () => {
+		open(none);
+		expect(
+			screen.queryByRole('radio', {
+				name: 'calendar.consultationHours.modes.once'
+			})
+		).toBeNull();
+	});
 });

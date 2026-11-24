@@ -7932,7 +7932,7 @@
 			},
 			"onceHint": "Libérez un créneau à court terme. Il ne vaut que pour ce jour.",
 			"onceDescription": "Les personnes en recherche de conseil peuvent réserver ce créneau une fois.",
-			"date": "Date",
+			"date": "Jour",
 			"from": "De",
 			"to": "À",
 			"onceNotice": "Réservable jusqu'à",

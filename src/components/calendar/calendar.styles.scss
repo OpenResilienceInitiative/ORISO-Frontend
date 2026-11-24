@@ -2183,6 +2183,10 @@ $cal-page-gap: 12px;
 	line-height: 18px;
 	cursor: pointer;
 
+	@include breakpoint($fromMedium) {
+		padding: 0 16px;
+	}
+
 	svg {
 		width: 16px;
 		height: 16px;
@@ -3732,13 +3736,8 @@ $cal-new-pill-hover: #4b4f51;
 .calendarNewEntry__tab {
 	flex: none;
 	height: 36px;
-	padding: 0 16px;
+	padding: 0 12px;
 	white-space: nowrap;
-
-	@media (width < 600px) {
-		padding: 0 12px;
-	}
-
 	border: 0;
 	border-radius: 999px;
 	background: transparent;

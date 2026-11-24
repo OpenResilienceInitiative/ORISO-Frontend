@@ -170,10 +170,29 @@ export const consultationHoursToApi = (
  * `noticeMinutes` before its start, whatever the weekly notice says.
  */
 export interface OneOffConsultation {
+	/** Set once UserService stored it. */
+	id?: string;
 	start: Date;
 	end: Date;
 	noticeMinutes: number;
+	/** Released over a Sperrzeit the counsellor was warned about. */
+	overBlocker?: boolean;
 }
+
+/** UserService's `CalendarConsultationOnceDTO` as the calendar keeps it. */
+export const oneOffFromApi = (dto: {
+	id: string;
+	start: string;
+	end: string;
+	noticeMinutes: number;
+	overBlocker: boolean;
+}): OneOffConsultation => ({
+	id: dto.id,
+	start: new Date(dto.start),
+	end: new Date(dto.end),
+	noticeMinutes: dto.noticeMinutes,
+	overBlocker: dto.overBlocker
+});
 
 /** "Buchbar bis …" for a one-off Sprechzeit, in minutes before the start. */
 export const ONE_OFF_NOTICE_MINUTES = [0, 30, 60, 120, 720, 1440] as const;

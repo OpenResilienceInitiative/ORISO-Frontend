@@ -44,7 +44,7 @@ export interface AskerFreeTimesPanelProps {
 	bookSlot: BookSlot;
 	onBooked: (appointment: SessionAppointment) => void;
 	/** The conversation already has an upcoming appointment. */
-	onLimitReached: () => void;
+	onLimitReached?: () => void;
 }
 
 type Slots = AppointmentSlot[] | 'loading' | 'error';
@@ -73,6 +73,8 @@ export const AskerFreeTimesPanel = ({
 	const [time, setTime] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [problem, setProblem] = useState<'taken' | 'failed'>();
+	/* What the last booking did, in the words of "Termin buchen". */
+	const [notice, setNotice] = useState<'booked' | 'requested' | 'limit'>();
 	const [reads, setReads] = useState(0);
 
 	useEffect(() => {
@@ -116,6 +118,7 @@ export const AskerFreeTimesPanel = ({
 		if (!chosen) return;
 		setBusy(true);
 		setProblem(undefined);
+		setNotice(undefined);
 		try {
 			const booked = await bookSlot(sessionId, {
 				startTime: chosen.startTime,
@@ -125,12 +128,14 @@ export const AskerFreeTimesPanel = ({
 			setBusy(false);
 			setTime(null);
 			setReads((count) => count + 1);
+			setNotice(booked.status === 'REQUESTED' ? 'requested' : 'booked');
 			onBooked(booked);
 		} catch (cause) {
 			setBusy(false);
 			const reason = conflictReason(cause);
 			if (reason === 'SELF_BOOKING_LIMIT_REACHED') {
-				onLimitReached();
+				setNotice('limit');
+				onLimitReached?.();
 			} else if (reason !== null) {
 				setProblem('taken');
 				setTime(null);
@@ -207,6 +212,15 @@ export const AskerFreeTimesPanel = ({
 			{Array.isArray(slots) && slots.length === 0 && (
 				<p className="calendarFreeTimes__status">
 					{t('videoCall.askerInfo.booking.none')}
+				</p>
+			)}
+			{notice && (
+				<p
+					className="calendarFreeTimes__status"
+					role="status"
+					data-testid="calendar-free-times-notice"
+				>
+					{t(`videoCall.askerInfo.booking.${notice}`)}
 				</p>
 			)}
 			{problem && (

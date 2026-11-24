@@ -116,6 +116,8 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiGetCalendarConsultationHours: vi.fn(),
+	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
+	apiCreateCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -136,7 +138,9 @@ vi.mock('../../api/apiCalendar', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(() => Promise.resolve({})),
 	apiMoveSessionAppointment: vi.fn(() => Promise.resolve({})),
-	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({}))
+	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({})),
+	apiGetAppointmentSlots: vi.fn(() => Promise.resolve([])),
+	apiBookAppointmentSlot: vi.fn()
 }));
 vi.mock('../../api/apiGetConsultantSessionList', () => ({
 	apiGetConsultantSessionList: vi.fn(() =>
@@ -2205,5 +2209,59 @@ describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
 			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
 		);
 		expect(props.consultationHours).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
+	it('shows the stored ones and saves a new one with its lead time', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const start = new Date('2026-11-24T13:00:00Z');
+		const end = new Date('2026-11-24T14:30:00Z');
+		api.apiCreateCalendarConsultationOnce.mockResolvedValue({
+			id: 'o2',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		await act(() =>
+			props.onSaveOneOffConsultation?.({
+				start,
+				end,
+				noticeMinutes: 30,
+				overBlocker: true
+			})
+		);
+		expect(api.apiCreateCalendarConsultationOnce).toHaveBeenCalledWith({
+			start,
+			end,
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		expect(props.oneOffConsultations?.map((o) => o.id)).toEqual([
+			'o2',
+			'o1'
+		]);
+	});
+
+	it('offers no "Einmalig" while UserService keeps no one-offs', async () => {
+		api.apiGetCalendarConsultationOnce.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationOnce).toHaveBeenCalled()
+		);
+		expect(props.onSaveOneOffConsultation).toBeUndefined();
 	});
 });
