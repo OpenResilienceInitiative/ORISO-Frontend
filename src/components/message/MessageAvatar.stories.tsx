@@ -227,6 +227,19 @@ export const WhiteRingOnBothSides: Story = {
 		</div>
 	),
 	play: async ({ canvasElement }) => {
+		// `.messageItem` fades in from scale(0.98) (appearMessageItem, 150ms
+		// plus a stagger delay). Measure the settled frame, not the first
+		// animation frame, or the 48px avatar reads as ~47px.
+		await Promise.all(
+			canvasElement
+				.getAnimations({ subtree: true })
+				.filter(
+					(animation) =>
+						animation.effect?.getComputedTiming().endTime !==
+						Infinity
+				)
+				.map((animation) => animation.finished)
+		);
 		for (const side of ['left', 'right']) {
 			const frame = canvasElement.querySelector(
 				`[data-testid="message-avatar-frame-${side}"]`

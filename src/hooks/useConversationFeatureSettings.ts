@@ -66,9 +66,14 @@ export const resolveFeaturesForAgencyPolicy = (
 		policy.agencyId === currentAgencyId &&
 		(policy.tenantId === undefined || policy.tenantId === tenantId);
 	if (!isCurrent || policy.state !== 'ready') {
-		return resolveConversationFeatureSettings(tenant, {
-			permissionPolicies: {}
-		});
+		// No agency answer yet (or not for this agency): grant nothing. The
+		// empty map would otherwise read the unset team-chat policy as on.
+		return {
+			...resolveConversationFeatureSettings(tenant, {
+				permissionPolicies: {}
+			}),
+			featureTeamDiscussionEnabled: false
+		};
 	}
 	return resolveConversationFeatureSettings(tenant, policy.settings);
 };

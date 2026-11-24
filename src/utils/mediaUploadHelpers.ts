@@ -1,6 +1,12 @@
 import { TenantDataSettingsInterface } from '../globalState/interfaces/TenantDataInterface';
 
-export type MediaChatType = 'anonymous' | 'oneOnOne' | 'group' | 'supervision';
+/** `team`: the team chat beside an open enquiry (FE#2491). */
+export type MediaChatType =
+	| 'anonymous'
+	| 'oneOnOne'
+	| 'group'
+	| 'supervision'
+	| 'team';
 
 /**
  * Effective "may media be uploaded" value for a chat type, from the
@@ -17,7 +23,8 @@ export const hasMediaUploadFeature = (
 		featureMediaUploadAnonymousChatsEnabled = true,
 		featureMediaUploadOneOnOneChatsEnabled = true,
 		featureMediaUploadGroupChatsEnabled = true,
-		featureMediaUploadSupervisionChatsEnabled = true
+		featureMediaUploadSupervisionChatsEnabled = true,
+		featureMediaUploadTeamDiscussionsEnabled = true
 	} = settings || {};
 
 	if (featureMediaUploadEnabled === false) {
@@ -30,6 +37,8 @@ export const hasMediaUploadFeature = (
 			return featureMediaUploadGroupChatsEnabled !== false;
 		case 'supervision':
 			return featureMediaUploadSupervisionChatsEnabled !== false;
+		case 'team':
+			return featureMediaUploadTeamDiscussionsEnabled !== false;
 		default:
 			return featureMediaUploadOneOnOneChatsEnabled !== false;
 	}
@@ -50,7 +59,8 @@ export const hasMediaInlineDisplayFeature = (
 		featureMediaInlineDisplayAnonymousChatsEnabled = true,
 		featureMediaInlineDisplayOneOnOneChatsEnabled = true,
 		featureMediaInlineDisplayGroupChatsEnabled = true,
-		featureMediaInlineDisplaySupervisionChatsEnabled = true
+		featureMediaInlineDisplaySupervisionChatsEnabled = true,
+		featureMediaInlineDisplayTeamDiscussionsEnabled = true
 	} = settings || {};
 
 	if (featureMediaInlineDisplayEnabled === false) {
@@ -63,6 +73,8 @@ export const hasMediaInlineDisplayFeature = (
 			return featureMediaInlineDisplayGroupChatsEnabled !== false;
 		case 'supervision':
 			return featureMediaInlineDisplaySupervisionChatsEnabled !== false;
+		case 'team':
+			return featureMediaInlineDisplayTeamDiscussionsEnabled !== false;
 		default:
 			return featureMediaInlineDisplayOneOnOneChatsEnabled !== false;
 	}

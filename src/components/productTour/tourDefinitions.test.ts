@@ -161,6 +161,9 @@ describe('frontendTours registry', () => {
 			'consultant-calendar',
 			'consultant-group-circle',
 			'consultant-profile',
+			'consultant-live-chat',
+			'consultant-timeline',
+			'consultant-video-call',
 			'consultant-mail-counselling',
 			'asker-first-steps',
 			'asker-settings'

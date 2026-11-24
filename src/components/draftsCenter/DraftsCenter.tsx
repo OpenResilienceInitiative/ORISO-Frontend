@@ -180,7 +180,7 @@ export const DraftsCenter = () => {
 	}, [nextDraftKey]);
 
 	return (
-		<div className="draftsCenter">
+		<div className="draftsCenter" data-tour-target="drafts-center">
 			<div className="draftsCenter__header">
 				<h2 className="draftsCenter__title">
 					{translate('drafts.center.title')}
