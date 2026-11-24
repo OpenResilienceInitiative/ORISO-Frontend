@@ -180,7 +180,10 @@ export const Profile = () => {
 											externalLink: element.externalLink
 										}
 									: {
-											component: <element.component />
+											component: <element.component />,
+											// Position in the unfiltered tab keeps the key stable
+											// when conditions hide other entries (#2518).
+											key: `${tab.url}-${tab.elements.indexOf(element)}`
 										}
 							)
 					})
