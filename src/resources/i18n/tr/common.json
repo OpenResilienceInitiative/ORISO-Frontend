@@ -7624,7 +7624,8 @@
 			"tabs": {
 				"appointment": "Randevu",
 				"blocker": "Engellenmiş zaman",
-				"absence": "Yokluk"
+				"absence": "Yokluk",
+				"consultation": "Görüşme saati"
 			},
 			"withWhom": "Randevu",
 			"withConversation": "Danışan kişi",
@@ -8107,7 +8108,50 @@
 			"minutes": "{{count}} dk",
 			"invalid": "Bitiş, başlangıçtan sonra olmalıdır.",
 			"loadFailed": "Yüklenemedi. Tekrar dene",
-			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor."
+			"overlaps": "Saatler bu gündeki başka bir görüşme saatiyle çakışıyor.",
+			"band": "Görüşme saati",
+			"mode": "Görüşme saati türü",
+			"modes": {
+				"once": "Tek seferlik",
+				"weekly": "Her hafta"
+			},
+			"onceHint": "Boş bir zamanı kısa sürede açın. Yalnızca bu gün için geçerlidir.",
+			"onceDescription": "Danışanlar bu zamanı sizden bir kez alabilir.",
+			"date": "Tarih",
+			"from": "Başlangıç",
+			"to": "Bitiş",
+			"onceNotice": "Şu zamana kadar alınabilir",
+			"onceNoticeHint": "Başlangıçtan ne kadar önce bu zaman hâlâ alınabilir.",
+			"onceNoticeNone": "Başlangıca kadar",
+			"onceNoticeMinutes": "{{count}} dk önce",
+			"onceNoticeHours": "{{count}} sa önce",
+			"onceNoticeHours_one": "{{count}} sa önce",
+			"overBlocker": "Bu zaman engellenmiş bir zamana denk geliyor. Görüşme saati onu yine de açar.",
+			"overBlockerConflict": "Bu zaman engellenmiş bir zamana denk geliyor. Yine de açmak için tekrar kaydedin.",
+			"onceInvalid": "Bitiş, başlangıçtan sonra ve gelecekte olmalı.",
+			"onceTooLate": "Bu zamanı artık kimse rezerve edemez: rezervasyon süresi geçti. Daha geç bir başlangıç veya daha kısa bir süre seçin.",
+			"onceTooShort": "Bu süre bir randevudan kısa ({{count}} dk). En az bu kadar süre seçin.",
+			"onceSave": "Görüşme saatini aç",
+			"addWindow": "{{day}} için başka zaman aralığı",
+			"addWindowShort": "Zaman aralığı",
+			"removeWindow": "{{day}} {{start}}–{{end}} aralığını kaldır",
+			"removeWindowShort": "Aralığı kaldır",
+			"menuItem": "Görüşme saati",
+			"menuHint": "Danışanlar için bir kez aç",
+			"bandOnce": "Tek seferlik görüşme saati",
+			"onceSaved": "Görüşme saati açıldı",
+			"onceTooLong": "Tek seferlik görüşme saati en fazla 12 saat sürer.",
+			"onceOverlap": "Bu zaman başka bir tek seferlik görüşme saatiyle çakışıyor.",
+			"onceLimit": "Zaten {{count}} yaklaşan tek seferlik görüşme saatiniz var. Yenisini açmak için birini geri çekin.",
+			"onceList": "Açılmış tek seferlik görüşme saatleri",
+			"onceWithdraw": "Geri çek",
+			"onceWithdrawAsk": {
+				"title": "Görüşme saati geri çekilsin mi?",
+				"description": "Danışanlar {{time}} zamanını artık rezerve edemez. Alınmış randevular kalır.",
+				"keep": "Koru",
+				"confirm": "Geri çek"
+			},
+			"onceWithdrawn": "Görüşme saati geri çekildi"
 		},
 		"appointmentRequest": {
 			"status": "Talep edildi · yanıtınızı bekliyor",
@@ -8156,6 +8200,15 @@
 			"hint": "Diğer herkesin randevuları siz kabul edene kadar bekler.",
 			"save": "Kaydet",
 			"saved": "Liste kaydedildi."
+		},
+		"freeTimes": {
+			"title": "Boş görüşme saatleri",
+			"description": "{{name}} ile kendiniz randevu alın.",
+			"counsellor": "Danışman",
+			"medium": {
+				"video": "Görüntülü",
+				"phone": "Telefon"
+			}
 		}
 	},
 	"guestAccountMode": {

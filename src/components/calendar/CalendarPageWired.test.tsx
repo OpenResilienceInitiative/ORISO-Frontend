@@ -116,6 +116,9 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiGetCalendarConsultationHours: vi.fn(),
+	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
+	apiCreateCalendarConsultationOnce: vi.fn(),
+	apiDeleteCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -136,7 +139,9 @@ vi.mock('../../api/apiCalendar', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(() => Promise.resolve({})),
 	apiMoveSessionAppointment: vi.fn(() => Promise.resolve({})),
-	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({}))
+	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({})),
+	apiGetAppointmentSlots: vi.fn(() => Promise.resolve([])),
+	apiBookAppointmentSlot: vi.fn()
 }));
 vi.mock('../../api/apiGetConsultantSessionList', () => ({
 	apiGetConsultantSessionList: vi.fn(() =>
@@ -2205,5 +2210,248 @@ describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
 			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
 		);
 		expect(props.consultationHours).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
+	it('shows the stored ones and saves a new one with its lead time', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const start = new Date('2026-11-24T13:00:00Z');
+		const end = new Date('2026-11-24T14:30:00Z');
+		api.apiCreateCalendarConsultationOnce.mockResolvedValue({
+			id: 'o2',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		await act(() =>
+			props.onSaveOneOffConsultation?.({
+				start,
+				end,
+				noticeMinutes: 30,
+				overBlocker: true
+			})
+		);
+		expect(api.apiCreateCalendarConsultationOnce).toHaveBeenCalledWith({
+			start,
+			end,
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		expect(props.oneOffConsultations?.map((o) => o.id)).toEqual([
+			'o2',
+			'o1'
+		]);
+	});
+
+	it('withdraws a released one-off', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		api.apiDeleteCalendarConsultationOnce.mockResolvedValue(undefined);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const [once] = props.oneOffConsultations ?? [];
+		await act(() => props.onWithdrawOneOffConsultation?.(once));
+		expect(api.apiDeleteCalendarConsultationOnce).toHaveBeenCalledWith(
+			'o1'
+		);
+		expect(props.oneOffConsultations).toEqual([]);
+	});
+
+	it('offers no "Einmalig" while UserService keeps no one-offs', async () => {
+		api.apiGetCalendarConsultationOnce.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationOnce).toHaveBeenCalled()
+		);
+		expect(props.onSaveOneOffConsultation).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494 *2c)', () => {
+	const askerSessions = (status: number, extra: unknown[] = []) =>
+		vi.mocked(askerListApi.apiGetAskerSessionList).mockResolvedValue({
+			sessions: [
+				{
+					session: {
+						id: 12,
+						status,
+						matrixRoomId: '!room:oriso',
+						agencyId: 7,
+						consultingType: 1
+					},
+					consultant: {
+						consultantId: 'c1',
+						displayName: 'Laura Berger'
+					}
+				},
+				...extra
+			]
+		} as never);
+
+	type FreeTimesProps = {
+		sessionId: number;
+		counsellorName: string;
+		agencyId?: number;
+		consultingTypeId?: number;
+		chatType: string;
+		onBooked: (appointment: unknown) => void;
+	};
+	const panelsOf = (beside: unknown) =>
+		React.Children.toArray(
+			(beside as React.ReactElement<{ children: React.ReactNode }>).props
+				.children
+		) as React.ReactElement<FreeTimesProps>[];
+
+	it('offers them for an active conversation and tells the counsellor of a booking in the chat', async () => {
+		consultant = false;
+		askerSessions(2);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		const [panel] = panelsOf(props.besidePanel);
+		expect(panel.props).toMatchObject({
+			sessionId: 12,
+			counsellorName: 'Laura Berger',
+			agencyId: 7,
+			consultingTypeId: 1,
+			chatType: 'oneOnOne'
+		});
+		act(() =>
+			panel.props.onBooked({
+				status: 'REQUESTED',
+				startTime: '2026-11-25T09:00:00Z',
+				endTime: '2026-11-25T10:00:00Z'
+			})
+		);
+		expect(sendNotice).toHaveBeenCalledWith({
+			kind: 'requested',
+			start: new Date('2026-11-25T09:00:00Z'),
+			end: new Date('2026-11-25T10:00:00Z'),
+			sessionId: 12,
+			matrixRoomId: '!room:oriso'
+		});
+	});
+
+	it('offers the free times of every active counsellor, once per booking context', async () => {
+		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
+		askerSessions(2, [
+			{
+				session: { id: 13, status: 2, matrixRoomId: '!b:oriso' },
+				consultant: { consultantId: 'c2', displayName: 'Tom Weber' }
+			},
+			// Same counsellor, same gates as 12: no second panel.
+			{
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			},
+			// Same counsellor, another consulting type: its own gates.
+			{
+				session: {
+					id: 15,
+					status: 2,
+					matrixRoomId: '!d:oriso',
+					agencyId: 7,
+					consultingType: 2
+				},
+				consultant: laura
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		expect(
+			panelsOf(props.besidePanel).map((panel) => panel.props.sessionId)
+		).toEqual([12, 13, 15]);
+	});
+
+	it('books through a conversation without an upcoming appointment', async () => {
+		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
+		askerSessions(2, [
+			{
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			}
+		]);
+		const later = new Date(Date.now() + 86_400_000);
+		api.apiGetCalendarEntries.mockResolvedValue([
+			{
+				...OWN,
+				sessionId: 12,
+				start: later.toISOString(),
+				end: new Date(later.getTime() + 3_600_000).toISOString()
+			}
+		]);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map(
+					(panel) => panel.props.sessionId
+				)
+			).toEqual([14])
+		);
+		const [panel] = panelsOf(props.besidePanel);
+		act(() =>
+			(
+				panel.props as unknown as { onLimitReached: () => void }
+			).onLimitReached()
+		);
+		// Both hold one now: the first stands for them.
+		expect(
+			panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+		).toEqual([12]);
+		// 14's appointment is cancelled elsewhere: it may book again.
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+			).toEqual([14])
+		);
+	});
+
+	it('offers none for a finished conversation', async () => {
+		consultant = false;
+		askerSessions(4);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(askerListApi.apiGetAskerSessionList).toHaveBeenCalled()
+		);
+		await waitFor(() => expect(props.role).toBe('asker'));
+		expect(props.besidePanel).toBeFalsy();
 	});
 });

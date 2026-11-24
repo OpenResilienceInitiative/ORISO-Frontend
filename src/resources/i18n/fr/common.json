@@ -7624,7 +7624,8 @@
 			"tabs": {
 				"appointment": "Rendez-vous",
 				"blocker": "Plage bloquée",
-				"absence": "Absence prévue"
+				"absence": "Absence prévue",
+				"consultation": "Permanence"
 			},
 			"withWhom": "Rendez-vous avec",
 			"withConversation": "Personne conseillée",
@@ -8107,7 +8108,50 @@
 			"minutes": "{{count}} minutes",
 			"invalid": "La fin doit être après le début.",
 			"loadFailed": "Chargement impossible. Réessayer",
-			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là."
+			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là.",
+			"band": "Permanence",
+			"mode": "Type de permanence",
+			"modes": {
+				"once": "Une fois",
+				"weekly": "Chaque semaine"
+			},
+			"onceHint": "Libérez un créneau à court terme. Il ne vaut que pour ce jour.",
+			"onceDescription": "Les personnes en recherche de conseil peuvent réserver ce créneau une fois.",
+			"date": "Jour",
+			"from": "De",
+			"to": "À",
+			"onceNotice": "Réservable jusqu'à",
+			"onceNoticeHint": "Combien de temps avant le début ce créneau peut encore être réservé.",
+			"onceNoticeNone": "Jusqu'au début",
+			"onceNoticeMinutes": "{{count}} min avant",
+			"onceNoticeHours": "{{count}} h avant",
+			"onceNoticeHours_one": "{{count}} h avant",
+			"overBlocker": "Ce créneau se trouve dans une période bloquée. La permanence le libère quand même.",
+			"overBlockerConflict": "Ce créneau se trouve dans une période bloquée. Enregistrez à nouveau pour le libérer quand même.",
+			"onceInvalid": "La fin doit être après le début et dans le futur.",
+			"onceTooLate": "Plus personne ne peut réserver ce créneau : le délai de réservation est passé. Choisissez un début plus tard ou un délai plus court.",
+			"onceTooShort": "Le créneau est plus court qu’un rendez-vous ({{count}} min). Choisissez au moins cette durée.",
+			"onceSave": "Libérer la permanence",
+			"addWindow": "Autre plage horaire le {{day}}",
+			"addWindowShort": "Plage horaire",
+			"removeWindow": "Supprimer la plage {{start}}–{{end}} le {{day}}",
+			"removeWindowShort": "Supprimer la plage",
+			"menuItem": "Permanence",
+			"menuHint": "Libérer une fois pour les personnes en recherche de conseil",
+			"bandOnce": "Permanence unique",
+			"onceSaved": "Permanence libérée",
+			"onceTooLong": "Une permanence ponctuelle dure au maximum 12 heures.",
+			"onceOverlap": "Ce créneau chevauche une autre permanence ponctuelle.",
+			"onceLimit": "Vous avez déjà {{count}} permanences ponctuelles à venir. Retirez-en une pour en ouvrir une nouvelle.",
+			"onceList": "Permanences ponctuelles ouvertes",
+			"onceWithdraw": "Retirer",
+			"onceWithdrawAsk": {
+				"title": "Retirer la permanence ?",
+				"description": "Les personnes en recherche de conseil ne pourront plus réserver {{time}}. Les rendez-vous déjà pris sont conservés.",
+				"keep": "Conserver",
+				"confirm": "Retirer"
+			},
+			"onceWithdrawn": "Permanence retirée"
 		},
 		"appointmentRequest": {
 			"status": "Demandé · attend votre réponse",
@@ -8156,6 +8200,15 @@
 			"hint": "Les rendez-vous de toutes les autres personnes attendent votre accord.",
 			"save": "Enregistrer",
 			"saved": "Liste enregistrée."
+		},
+		"freeTimes": {
+			"title": "Permanences libres",
+			"description": "Réservez vous-même un rendez-vous avec {{name}}.",
+			"counsellor": "Conseiller ou conseillère",
+			"medium": {
+				"video": "Vidéo",
+				"phone": "Téléphone"
+			}
 		}
 	},
 	"guestAccountMode": {
