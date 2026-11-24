@@ -9,7 +9,9 @@ import { UserDataContext } from '../../globalState';
  * There is no server-side store for UI preferences yet: the UserService
  * `tutorials/progress` API only accepts configured tour ids. So the choice is
  * kept per user in this browser, the same way the keyboard-shortcut
- * preferences are (`oriso.keyboardShortcuts.v1`, keyed by `userId`).
+ * preferences are (`oriso.keyboardShortcuts.v1`, keyed by `userId`). Unlike
+ * those, it survives sign-out (`RETAINED_STORAGE_PREFIXES`): "don't show
+ * again" must still hold at the next login. It holds user ids and booleans only.
  */
 export type SideChatIntroKind = 'team' | 'supervision';
 
@@ -31,7 +33,17 @@ const safeGetStorage = (): Storage | null => {
 	}
 };
 
+// When storage is blocked or full, the choice still holds for this page
+// load: the button must never do nothing.
+let memoryFallback: StoredBlobV1 | null = null;
+
+/** Test seam: forget the in-memory fallback. */
+export const resetSideChatIntroMemory = (): void => {
+	memoryFallback = null;
+};
+
 const readBlob = (): StoredBlobV1 => {
+	if (memoryFallback) return memoryFallback;
 	const storage = safeGetStorage();
 	try {
 		const raw = storage?.getItem(SIDE_CHAT_INTRO_STORAGE_KEY);
@@ -90,12 +102,14 @@ export const setSideChatIntroDismissed = (
 	}
 	blob.byUser[key] = entry;
 	try {
-		safeGetStorage()?.setItem(
-			SIDE_CHAT_INTRO_STORAGE_KEY,
-			JSON.stringify(blob)
-		);
+		const storage = safeGetStorage();
+		if (!storage) throw new Error('no storage');
+		storage.setItem(SIDE_CHAT_INTRO_STORAGE_KEY, JSON.stringify(blob));
+		memoryFallback = null;
 	} catch {
-		// Storage full or blocked: the hint simply comes back next time.
+		// Storage full or blocked: keep it in memory, so the hint stays hidden
+		// until the next reload.
+		memoryFallback = blob;
 	}
 	notify();
 };

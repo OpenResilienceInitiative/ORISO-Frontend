@@ -45,7 +45,10 @@ export const RETAINED_STORAGE_PREFIXES = [
 	'oriso.lastOpenSession.',
 	// Pending protected-feedback metadata contains IDs only, expires after 24h,
 	// and is retried only after the same Matrix account authenticates again.
-	'oriso.feedbackMailHint.'
+	'oriso.feedbackMailHint.',
+	// "Nicht mehr einblenden" for the side-chat intro hints: user ids and
+	// booleans only, and the choice must still hold at the next login.
+	'oriso.sideChatIntro.'
 ] as const;
 
 /**

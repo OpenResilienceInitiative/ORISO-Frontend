@@ -19,6 +19,7 @@ import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import { ChatStageProviders } from './__storybook__/ChatStageProviders';
 import {
 	CLIENT_MATRIX_ID,
+	CLIENT_NAME,
 	counsellorUserData,
 	isCounsellorMessage,
 	SUPERVISION_ROOM_ID,
@@ -71,6 +72,7 @@ function SideChatTimeline({ kind }: { kind: SideChatIntroKind }) {
 	return (
 		<MessageTimeline
 			messages={messages}
+			clientName={kind === 'team' ? CLIENT_NAME : SUPERVISOR_NAME}
 			renderMode="main"
 			threadsEnabled={false}
 			askerMatrixUserIdFor={() => CLIENT_MATRIX_ID}
