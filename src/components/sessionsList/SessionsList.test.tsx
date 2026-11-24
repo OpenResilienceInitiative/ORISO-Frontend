@@ -103,6 +103,34 @@ vi.mock('../../services/matrixLiveEventBridge', () => ({
 vi.mock('../../services/messageEventEmitter', () => ({
 	messageEventEmitter: { on: vi.fn(), off: vi.fn() }
 }));
+/* #2494 *5: a test can pin the Supervision chip ("Fest"). */
+const supervisionPin = vi.hoisted(() => ({ on: false }));
+vi.mock('../../hooks/useDisplayFilter', async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import('../../hooks/useDisplayFilter')>();
+	return {
+		...actual,
+		useDisplayFilter: (
+			...args: Parameters<typeof actual.useDisplayFilter>
+		) => {
+			const result = actual.useDisplayFilter(...args);
+			if (!supervisionPin.on) return result;
+			return {
+				...result,
+				effective: {
+					...result.effective,
+					kinds: {
+						...result.effective.kinds,
+						supervision: {
+							...result.effective.kinds?.supervision,
+							pillMode: 'fixed'
+						}
+					}
+				}
+			};
+		}
+	};
+});
 vi.mock('./SessionsListToolbar', () => ({
 	SessionsListToolbar: ({
 		showSupervisionChip,
@@ -629,6 +657,36 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 			'supervision'
 		);
 	});
+	it('keeps paging for supervision rows while the chip is only pinned (#2494 *5)', async () => {
+		supervisionPin.on = true;
+		try {
+			const total = SESSION_COUNT + 1;
+			// The first page holds only deleted people: the list drops them,
+			// so no row asks for the next page except the supervision scan.
+			const deletedOnly = page(0).map((raw) => ({
+				...raw,
+				user: { ...raw.user, deleted: true }
+			}));
+			getList.mockResolvedValueOnce({ sessions: deletedOnly, total });
+			const supervised = ordinary(total);
+			supervised.session.supervision = { supervisedByMe: true };
+			getList.mockResolvedValueOnce({ sessions: [supervised], total });
+			render(
+				<ListTree
+					consultant
+					fetched
+					initialPath="/sessions/consultant/sessionView?chip=supervision"
+				/>
+			);
+			expect(await screen.findByTestId(`case-${total}`)).toBeTruthy();
+			expect(
+				getList.mock.calls.map(([request]) => request.offset)
+			).toEqual([0, SESSION_COUNT]);
+		} finally {
+			supervisionPin.on = false;
+		}
+	});
+
 	it('retains the bookmarked filter after a failed page and retries that offset', async () => {
 		const total = SESSION_COUNT + 1;
 		getList.mockResolvedValueOnce({ sessions: page(0), total });

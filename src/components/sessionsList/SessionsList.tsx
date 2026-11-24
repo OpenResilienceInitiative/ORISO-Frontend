@@ -1803,8 +1803,9 @@ export const SessionsList = ({
 		kindPillMode(listDisplayFilter, 'supervision') === 'fixed';
 	/* #2494 *5: the chip has rows (or is pinned), so a chosen "supervision"
 	   chip stays; without this the list cleared it once all pages loaded. */
+	const supervisionRowsLoaded = canSupervise || hasOwnCaseUnderSupervision;
 	const supervisionChipBacked =
-		canSupervise || hasOwnCaseUnderSupervision || supervisionChipPinned;
+		supervisionRowsLoaded || supervisionChipPinned;
 	const showSupervisionChip =
 		canSupervise ||
 		hasOwnCaseUnderSupervision ||
@@ -2543,7 +2544,9 @@ export const SessionsList = ({
 		const needsSupervisionPage =
 			ownConversations &&
 			sessionToolbarChip === 'supervision' &&
-			!supervisionChipBacked;
+			// A pinned chip keeps the chip, not the scan: page on until a
+			// supervision row has loaded.
+			!supervisionRowsLoaded;
 		const visibleRows = pageSupervisionRows
 			? sessionToolbarFilteredPairs.length
 			: displayVisiblePairs.length;
@@ -2562,7 +2565,7 @@ export const SessionsList = ({
 		}
 		loadMoreSessions();
 	}, [
-		supervisionChipBacked,
+		supervisionRowsLoaded,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
 		hasMoreSessionPages,
