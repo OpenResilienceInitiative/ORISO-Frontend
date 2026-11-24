@@ -19,6 +19,7 @@ import {
 	SESSION_TYPE_GROUP,
 	SESSION_TYPE_SESSION
 } from './sessionHelpers';
+import { parseMessagePrefixes } from '../message/messageConstants';
 import {
 	STATUS_EMPTY,
 	STATUS_ARCHIVED,
@@ -239,6 +240,32 @@ describe('sessionHelpers', () => {
 					description: notice.description
 				})}`
 			);
+		});
+
+		it('carries the side-chat kind so the notice can offer "Nicht mehr einblenden"', () => {
+			const [item] = buildSupervisionTimeline([], {
+				...notice,
+				dismissKind: 'team'
+			});
+			const parsed = parseMessagePrefixes(item.message);
+
+			expect(parsed.systemNotificationDismissKind).toBe('team');
+			expect(parsed.systemNotificationType).toBe('SUPERVISION_NOTICE');
+		});
+
+		it('drops the notice once dismissed, and the first message keeps its day pill', () => {
+			const first = sideRoomMessage('$s1', 'message.today');
+			const timeline = buildSupervisionTimeline([first], {
+				...notice,
+				dismissKind: 'supervision',
+				dismissed: true
+			});
+
+			expect(timeline.map((m) => m._id)).toEqual(['$s1']);
+			expect(timeline[0].messageDate.str).toBe('message.today');
+			expect(
+				buildSupervisionTimeline([], { ...notice, dismissed: true })
+			).toEqual([]);
 		});
 
 		it('treats a missing list like an empty one', () => {

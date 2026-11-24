@@ -480,6 +480,7 @@
 		"panel": {
 			"channelOptions": "Сменить канал",
 			"channelOptionsEmpty": "Других каналов нет",
+			"dismissIntro": "Больше не показывать",
 			"participantCount": "Участников: {{count}}",
 			"participantCount_one": "1 участник",
 			"back": "Назад к чату консультации",
