@@ -118,7 +118,10 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
-import { ContactSheetRequest } from '../sessionHeader/ContactSheetRequest';
+import {
+	ContactSheetRequest,
+	useContactSheetRequest
+} from '../sessionHeader/ContactSheetRequest';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
@@ -255,6 +258,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// Bumped on every opening: remounts the foldable groups so each opening
 	// starts with them closed (the portal stays mounted between openings).
 	const [menuOpening, setMenuOpening] = useState(0);
+	// Held here, above the remounting groups, so reopening the menu keeps a
+	// contact-sheet request in flight and its result.
+	const contactSheetState = useContactSheetRequest(
+		props.contactSheet?.sessionId,
+		props.contactSheet?.email
+	);
 	useEffect(() => {
 		if (flyoutOpen) setMenuOpening((count) => count + 1);
 	}, [flyoutOpen]);
@@ -1616,6 +1625,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									<ContactSheetRequest
 										key={props.contactSheet.sessionId}
 										{...props.contactSheet}
+										state={contactSheetState}
 									/>
 								)}
 

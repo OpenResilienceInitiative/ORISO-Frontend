@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
 import {
 	ChatMenuDropdownItem,
@@ -8,33 +8,69 @@ import {
 import { useTranslation } from 'react-i18next';
 import { apiRequestContactSheetEmail } from '../../api/apiRequestContactSheetEmail';
 
+type ContactSheetResult = 'sent' | 'failed' | null;
+
+export interface ContactSheetRequestState {
+	recipient?: string;
+	pending: boolean;
+	result: ContactSheetResult;
+	request: () => Promise<void>;
+}
+
+/**
+ * The request's state, owned by whoever outlives the menu that shows it:
+ * a remounted menu keeps a request in flight and its result. A new session
+ * starts idle, and a late answer for the previous session is dropped.
+ */
+export const useContactSheetRequest = (
+	sessionId?: number,
+	email?: string
+): ContactSheetRequestState => {
+	const [state, setState] = useState<{
+		sessionId?: number;
+		pending: boolean;
+		result: ContactSheetResult;
+	}>({ sessionId, pending: false, result: null });
+	const currentSession = useRef(sessionId);
+	currentSession.current = sessionId;
+	const recipient = email?.trim();
+	const own = state.sessionId === sessionId;
+	const pending = own && state.pending;
+	const result = own ? state.result : null;
+
+	const request = async () => {
+		if (!recipient || pending || sessionId === undefined) return;
+		setState({ sessionId, pending: true, result: null });
+		let next: ContactSheetResult;
+		try {
+			await apiRequestContactSheetEmail(sessionId);
+			next = 'sent';
+		} catch {
+			next = 'failed';
+		}
+		if (currentSession.current === sessionId) {
+			setState({ sessionId, pending: false, result: next });
+		}
+	};
+
+	return { recipient, pending, result, request };
+};
+
 interface ContactSheetRequestProps {
 	sessionId: number;
 	email?: string;
+	/** State held above a remounting menu; without it the item keeps its own. */
+	state?: ContactSheetRequestState;
 }
 
 export const ContactSheetRequest = ({
 	sessionId,
-	email
+	email,
+	state
 }: ContactSheetRequestProps) => {
 	const { t } = useTranslation();
-	const [pending, setPending] = useState(false);
-	const [result, setResult] = useState<'sent' | 'failed' | null>(null);
-	const recipient = email?.trim();
-
-	const request = async () => {
-		if (!recipient || pending) return;
-		setPending(true);
-		setResult(null);
-		try {
-			await apiRequestContactSheetEmail(sessionId);
-			setResult('sent');
-		} catch {
-			setResult('failed');
-		} finally {
-			setPending(false);
-		}
-	};
+	const ownState = useContactSheetRequest(sessionId, email);
+	const { recipient, pending, result, request } = state ?? ownState;
 
 	return (
 		<>

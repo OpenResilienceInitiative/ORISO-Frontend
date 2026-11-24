@@ -334,6 +334,15 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 				background-color: var(--m3-surface-container-lowest, #fff);
 				border-color: $session-chip-hover-bg;
 				color: $session-chip-hover-bg;
+
+				// The dark secondary container is too dim as text on the
+				// near-black chip: keep the dark postcode ink on hover.
+				html[data-oriso-personal-scheme='dark'] & {
+					color: var(
+						--oriso-primary-text,
+						var(--m3-primary, #ffb4aa)
+					);
+				}
 			}
 
 			.sessionsListItem__consultingTypeIcon--kindIcon {
@@ -735,6 +744,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		color: var(--m3-secondary, #4c555f);
 		line-height: 24px;
 		flex: 1;
+
+		// The menu stays white in every scheme: keep a dark title on it.
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-secondary-fixed, #1a1c1e);
+		}
 
 		&--disabled {
 			color: var(--m3-tertiary-container, #9ba4b0);

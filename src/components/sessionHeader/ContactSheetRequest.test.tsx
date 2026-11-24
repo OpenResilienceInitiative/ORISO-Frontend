@@ -15,7 +15,10 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import { ContactSheetRequest } from './ContactSheetRequest';
+import {
+	ContactSheetRequest,
+	useContactSheetRequest
+} from './ContactSheetRequest';
 import { apiRequestContactSheetEmail } from '../../api/apiRequestContactSheetEmail';
 
 vi.mock('../../api/apiRequestContactSheetEmail', () => ({
@@ -98,5 +101,75 @@ describe('contact-sheet request', () => {
 		fireEvent.click(screen.getByRole('button'));
 		await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
 		expect(screen.queryByRole('status')).toBeNull();
+	});
+
+	it('keeps a request in flight when the menu remounts the item', async () => {
+		let complete = () => undefined;
+		vi.mocked(apiRequestContactSheetEmail).mockReturnValue(
+			new Promise<void>((resolve) => {
+				complete = resolve;
+			})
+		);
+		// The menu holds the state and remounts the item on every opening.
+		const Menu = ({ opening }: { opening: number }) => {
+			const state = useContactSheetRequest(42, 'seeker@example.org');
+			return (
+				<ContactSheetRequest
+					key={opening}
+					sessionId={42}
+					email="seeker@example.org"
+					state={state}
+				/>
+			);
+		};
+		const { rerender } = render(<Menu opening={1} />);
+		fireEvent.click(screen.getByRole('button'));
+		rerender(<Menu opening={2} />);
+
+		expect(screen.getByRole('status').textContent).toBe(
+			'contactSheet.sending'
+		);
+		expect(screen.getByRole('button')).toHaveProperty('disabled', true);
+		fireEvent.click(screen.getByRole('button'));
+		expect(apiRequestContactSheetEmail).toHaveBeenCalledTimes(1);
+
+		complete();
+		await waitFor(() =>
+			expect(screen.getByRole('status').textContent).toContain(
+				'contactSheet.sent'
+			)
+		);
+	});
+
+	it('starts idle for another session and drops the late answer', async () => {
+		let complete = () => undefined;
+		vi.mocked(apiRequestContactSheetEmail).mockReturnValue(
+			new Promise<void>((resolve) => {
+				complete = resolve;
+			})
+		);
+		const Menu = ({ sessionId }: { sessionId: number }) => {
+			const state = useContactSheetRequest(
+				sessionId,
+				'seeker@example.org'
+			);
+			return (
+				<ContactSheetRequest
+					sessionId={sessionId}
+					email="seeker@example.org"
+					state={state}
+				/>
+			);
+		};
+		const { rerender } = render(<Menu sessionId={42} />);
+		fireEvent.click(screen.getByRole('button'));
+		rerender(<Menu sessionId={43} />);
+		expect(screen.queryByRole('status')).toBeNull();
+
+		complete();
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(screen.queryByRole('status')).toBeNull();
+		expect(screen.getByRole('button')).toHaveProperty('disabled', false);
 	});
 });

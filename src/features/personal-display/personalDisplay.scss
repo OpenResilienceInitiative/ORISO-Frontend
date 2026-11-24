@@ -237,7 +237,12 @@ html[data-oriso-personal-scheme='dark'] {
 		color: var(--m3-on-surface-variant, #444748);
 	}
 
+	// Enabled Save is primary-filled: the on-primary ring inside the fill.
 	&.Mui-focusVisible {
+		@include control-focus-ring-on-fill;
+	}
+
+	&[aria-disabled='true'].Mui-focusVisible {
 		@include control-focus-ring(-4px);
 	}
 }
