@@ -9,6 +9,7 @@ import {
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import { MessageItemComponent } from '../message/MessageItemComponent';
+import { ChatSystemMessageCard } from '../message/ChatSystemMessageCard';
 import {
 	MOCK_ASKER_MATRIX_ID,
 	mockActiveSession1on1,
@@ -27,19 +28,12 @@ import '../message/message.styles.scss';
 
 /**
  * ORISO-Frontend#2494 *9 (P0 v2.0.18): removing a redaction (Schwärzung)
- * no longer shows "Diese Nachricht wurde gelöscht.". It is an ordinary
- * system notification in the chat — the same chat-message design as every
- * other platform notice (`MessageItemComponent` with a `[SYSTEM_NOTIFICATION]`
- * message; see "Components/Chat/MessageItem → System notification" and
- * "Chat/System messages/Inventory"). No new component, no reply quote.
- * The message itself is readable again.
+ * no longer shows "Diese Nachricht wurde gelöscht.". It is a platform notice
+ * in the chat: `ChatSystemMessageCard` — the ordinary incoming-message
+ * anatomy with the round info icon, as for calls and appointments. Not the
+ * Carimat frame (that is the chatbot: guides, step by step). No new
+ * component, no reply quote. The message itself is readable again.
  */
-const NOTICE = `[SYSTEM_NOTIFICATION]${JSON.stringify({
-	title: 'Schwärzung aufgehoben',
-	description: 'Schwärzung aufgehoben von Karina P',
-	type: 'INFO'
-})}`;
-
 const handlers = {
 	handleDecryptionErrors: () => {},
 	handleDecryptionSuccess: () => {},
@@ -84,19 +78,19 @@ const Timeline = () => (
 								})}
 								{...handlers}
 							/>
-							{/* The platform notice, in the chat-message design. */}
-							<MessageItemComponent
-								{...mockMessageItemComponentProps({
-									isMyMessage: false,
-									userId: 'system',
-									displayName: 'system',
-									username: 'system',
-									message: NOTICE
-								})}
-								/* Same day as the message above: one day pill. */
-								messageDate={undefined}
-								{...handlers}
-							/>
+							{/* The platform notice: the chat's info card (round i),
+							    as for calls and appointments. */}
+							<ChatSystemMessageCard
+								title="Schwärzung aufgehoben"
+								subtitle="von Karina P"
+								timestamp="09:20"
+								dataCy="blur-removed-notice"
+							>
+								<p>
+									Die Nachricht von Sanftes Alpaka Kala ist
+									wieder lesbar.
+								</p>
+							</ChatSystemMessageCard>
 						</div>
 					</ActiveSessionContext.Provider>
 				</UserDataContext.Provider>
@@ -113,7 +107,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#2494 *9: "Schwärzung aufgehoben von <Name>" as an ordinary system notification in the chat-message design (MessageItemComponent, [SYSTEM_NOTIFICATION]); the message is readable again. Replaces "Diese Nachricht wurde gelöscht.".'
+					'#2494 *9: "Schwärzung aufgehoben von <Name>" as the platform info card (ChatSystemMessageCard, round i), like call and appointment notices; the message is readable again. Replaces "Diese Nachricht wurde gelöscht.".'
 			}
 		}
 	},
@@ -124,20 +118,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Notice1440: Story = {
-	name: 'Systemnachricht im Chat · 1440',
+	name: 'Info-Hinweis im Chat · 1440',
 	globals: desktop1440Globals,
 	play: async ({ canvasElement }) => {
 		await waitFor(() =>
 			expect(
-				within(canvasElement).getByText(
-					'Schwärzung aufgehoben von Karina P'
-				)
+				within(canvasElement).getByText('Schwärzung aufgehoben')
 			).toBeInTheDocument()
 		);
 	}
 };
 
 export const Notice390: Story = {
-	name: 'Systemnachricht im Chat · 390',
+	name: 'Info-Hinweis im Chat · 390',
 	globals: phone390Globals
 };
