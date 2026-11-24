@@ -67,12 +67,13 @@ vi.mock('../conversationCreate/directLink/DirectLinkCreateCard', () => ({
 	}
 }));
 const topicsLoad = vi.hoisted(() => vi.fn());
+const topicsState = vi.hoisted(() => ({ loaded: false, failed: false }));
 vi.mock('../conversationCreate/directLink/useDirectLinkTopics', () => ({
 	useDirectLinkTopics: () => ({
 		topics: [{ value: '11', label: 'Schwangerschaftsberatung' }],
 		agencies: [],
-		loaded: false,
-		failed: false,
+		loaded: topicsState.loaded,
+		failed: topicsState.failed,
 		load: topicsLoad
 	})
 }));
@@ -469,6 +470,27 @@ describe('CalendarPageWired', () => {
 			expect((await view.findByTestId('share-dialog')).textContent).toBe(
 				'https://x/invite/new'
 			);
+		});
+
+		it('loads the topics once, and again after a failed load (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			topicsState.loaded = true;
+			try {
+				const view = render(<CalendarPageWired />);
+				await showWeek();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				topicsLoad.mockClear();
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).not.toHaveBeenCalled();
+				topicsState.failed = true;
+				view.rerender(<CalendarPageWired />);
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).toHaveBeenCalledTimes(1);
+			} finally {
+				topicsState.loaded = false;
+				topicsState.failed = false;
+			}
 		});
 
 		it('falls back to an allowed medium when the Art has none', async () => {

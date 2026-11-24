@@ -58,7 +58,7 @@ export const Ended: Story = {
 		expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
 		expect(getComputedStyle(avatar, '::after').content).toBe('none');
 		const icon = avatar.querySelector<SVGElement>('.systemMessage__icon')!;
-		expect(getComputedStyle(icon).width).toBe('40px');
+		expect(getComputedStyle(icon).width).toBe('48px');
 	}
 };
 export const AudioEnded: Story = {

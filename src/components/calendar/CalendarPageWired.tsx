@@ -748,7 +748,8 @@ export const CalendarPageWired = () => {
 				? fromKind
 				: inviteMedia[0];
 		if (!medium) return;
-		if (!directLinkTopics.loaded) void directLinkTopics.load();
+		if (!directLinkTopics.loaded || directLinkTopics.failed)
+			void directLinkTopics.load();
 		setInvitePreset(preset);
 		calendarInvitation.startWithDetails(medium);
 	};
