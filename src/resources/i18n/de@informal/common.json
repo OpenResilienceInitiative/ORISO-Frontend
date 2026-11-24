@@ -680,6 +680,9 @@
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
 		},
+		"blurRemoved": {
+			"byMe": "von dir"
+		},
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
@@ -2367,6 +2370,17 @@
 		"panel": {
 			"empty": {
 				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
+			}
+		},
+		"appointment": {
+			"description": "Wähle Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in deinem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreib {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut.",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuche es erneut.",
+			"menu": {
+				"calendar": {
+					"description": "Dort kannst du den Termin auch verschieben."
+				}
 			}
 		}
 	},

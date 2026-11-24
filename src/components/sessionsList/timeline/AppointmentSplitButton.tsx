@@ -15,6 +15,7 @@ import {
 	ChatMenuDropdownItem
 } from '../../chatMenuDropdown/ChatMenuDropdown';
 import { ReactComponent as EventBusyIcon } from '../../../resources/img/icons/timeline-event-busy.svg';
+import { ReactComponent as CalendarOutlineIcon } from '../../../resources/img/icons/calendar_outline.svg';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
@@ -23,8 +24,10 @@ import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { MODALITY_ICON } from './AppointmentKindGlyph';
+import { AppointmentPennant } from './AppointmentPennant';
 import {
 	entryMenu,
+	type EntryMenuItem,
 	formatEntrySlot,
 	type FutureEntry,
 	type TimelineRole
@@ -39,7 +42,9 @@ const MENU_ICON: Record<string, React.ElementType> = {
 	decline: CloseIcon,
 	duplicate: ContentCopyOutlinedIcon,
 	configure: SettingsOutlinedIcon,
-	reminder: NotificationsOutlinedIcon
+	reminder: NotificationsOutlinedIcon,
+	// FE#2494: an appointment with a colleague opens in the calendar.
+	calendar: CalendarOutlineIcon
 };
 
 export type MenuAnchor = Pick<DOMRect, 'top' | 'bottom' | 'right'>;
@@ -90,11 +95,14 @@ export const EntryMenu = ({
 	opener,
 	onClose,
 	onAction,
-	id
+	id,
+	items: ownItems
 }: {
 	entry: FutureEntry;
 	role: TimelineRole;
 	anchor: MenuAnchor;
+	/** A menu of its own (an appointment with a colleague, FE#2494). */
+	items?: EntryMenuItem[];
 	/** The id the opener's `aria-controls` names. */
 	id?: string;
 	/** The control that toggles the menu: a press on it is not "outside". */
@@ -102,7 +110,7 @@ export const EntryMenu = ({
 	onClose: () => void;
 	onAction?: AppointmentAction;
 }) => {
-	const items = entryMenu(entry, role);
+	const items = ownItems ?? entryMenu(entry, role);
 	const ref = useRef<HTMLDivElement>(null);
 	const [menuHeight, setMenuHeight] = useState(0);
 	useLayoutEffect(() => {
@@ -255,32 +263,57 @@ export const AppointmentSplitButton = ({
 };
 
 /**
- * The room's next appointment, directly below the header divider (ADR-021),
- * on phone and desktop. Group rooms show it after `sessionInfo__headerWrapper`
- * in `GroupChatHeader`, 1:1 rooms after `sessionInfo__metaInfo` in
- * `SessionHeaderComponent`. `action` sits beside it, also with no appointment.
+ * The room's appointments as pennants hanging from the header divider
+ * (FE#2494, replacing the split button of ADR-021). 1:1 rooms show them in
+ * the topic's row (`sessionInfo__metaInfo`), group rooms right below the
+ * header line. `extra` adds pennants of other kinds, e.g. the appointment
+ * with the supervisor. `action` sits beside them, also with none.
  */
 export const RoomNextAppointment = ({
 	entry,
 	role,
 	onAction,
-	action
+	action,
+	extra = []
 }: {
 	entry?: FutureEntry;
 	role: TimelineRole;
 	onAction?: AppointmentAction;
 	action?: React.ReactNode;
+	extra?: {
+		entry: FutureEntry;
+		withLabel: string;
+		withKind?: 'asker' | 'supervisor';
+		/** Its own menu and actions (FE#2494: with the supervisor). */
+		menuItems?: EntryMenuItem[];
+		onAction?: AppointmentAction;
+	}[];
 }) =>
-	entry || action ? (
-		<div className="roomNextAppointment" data-cy="room-next-appointment">
+	entry || extra.length > 0 || action ? (
+		<div
+			className="roomNextAppointment roomAppointmentPennants"
+			data-cy="room-next-appointment"
+		>
 			{entry && (
-				<AppointmentSplitButton
+				<AppointmentPennant
 					entry={entry}
 					role={role}
-					size="compact"
+					// Beside another kind, the phone tells them apart by icon.
+					withKind={extra.length > 0 ? 'asker' : undefined}
 					onAction={onAction}
 				/>
 			)}
+			{extra.map((item) => (
+				<AppointmentPennant
+					key={item.entry.key}
+					entry={item.entry}
+					withLabel={item.withLabel}
+					withKind={item.withKind}
+					role={role}
+					menuItems={item.menuItems}
+					onAction={item.onAction ?? onAction}
+				/>
+			))}
 			{action}
 		</div>
 	) : null;

@@ -19,6 +19,31 @@ import type { PassageBlur } from './passageBlur';
  */
 export const PASSAGE_BLUR_EVENT_TYPE = 'org.oriso.passage_blur';
 
+/**
+ * #2494 *9: the redaction that lifts a blur says so in its `reason`, with
+ * the message it belonged to: `org.oriso.passage_blur.removed $message`.
+ * Redactions travel unencrypted, and a redacted blur in an encrypted room
+ * falls back to `m.room.encrypted` with no content — without this marker the
+ * chat could only call it "Diese Nachricht wurde gelöscht.". The reason
+ * holds ids only, never text.
+ */
+export const PASSAGE_BLUR_REMOVED_REASON = 'org.oriso.passage_blur.removed';
+
+export const passageBlurRemovedReason = (targetEventId: string): string =>
+	`${PASSAGE_BLUR_REMOVED_REASON} ${targetEventId}`;
+
+/** The marker read back; `null` for any other redaction. */
+export const parsePassageBlurRemovedReason = (
+	reason: unknown
+): { targetEventId: string | null } | null => {
+	if (typeof reason !== 'string') return null;
+	const [marker, targetEventId] = reason.trim().split(/\s+/, 2);
+	if (marker !== PASSAGE_BLUR_REMOVED_REASON) return null;
+	return {
+		targetEventId: targetEventId?.startsWith('$') ? targetEventId : null
+	};
+};
+
 /** A message never carries more blurs than this; more are ignored. */
 export const MAX_BLURS_PER_MESSAGE = 50;
 /** Positions beyond this are not a chat message's text. */

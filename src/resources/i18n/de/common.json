@@ -801,7 +801,7 @@
 				"placeholder": {
 					"asker": "Schreiben Sie uns, was Sie bewegt.",
 					"askerAfterFirstMessage": "Etwas vergessen? Senden Sie einfach eine weitere Nachricht.",
-					"consultant": "Nachricht an Klient:in schreiben",
+					"consultant": "Nachricht an ratsuchende Person",
 					"groupChat": "Nachricht schreiben"
 				},
 				"forgotSomething": {
@@ -2274,6 +2274,13 @@
 			"quoteUnknown": "Frühere Nachricht",
 			"jumpToQuote": "Zur zitierten Stelle von {{author}} springen"
 		},
+		"blurRemoved": {
+			"title": "Schwärzung aufgehoben",
+			"by": "von {{name}}",
+			"byMe": "von Ihnen",
+			"text": "Die Nachricht von {{name}} ist wieder lesbar.",
+			"textAnonymous": "Die Nachricht ist wieder lesbar."
+		},
 		"selectionReply": {
 			"blur": "Schwärzen",
 			"blurredLabel": "Geschwärzte Stelle",
@@ -2282,8 +2289,10 @@
 			"removeBlurLabel": "Geschwärzte Stelle – Schwärzung aufheben",
 			"blurBar": "Aktionen für die geschwärzte Stelle",
 			"toolbar": "Aktionen für die markierte Stelle",
-			"reply": "Antworten",
+			"reply": "Hier antworten",
 			"replyVoice": "Mit Sprachnachricht antworten",
+			"replyInSupervision": "In Supervision antworten",
+			"replyInTeam": "Im Team-Chat antworten",
 			"startThread": "Thread",
 			"dialog": "Auf die markierte Stelle von {{author}} antworten",
 			"cancel": "Abbrechen",
@@ -4900,7 +4909,8 @@
 					"failedTitle": "Terminanfrage nicht beantwortet",
 					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
 					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
-				}
+				},
+				"menu": "Terminmenü"
 			}
 		},
 		"deletedAsker": {
@@ -5526,10 +5536,13 @@
 	"voice": {
 		"recording": {
 			"active": "Aufnahme läuft…",
+			"paused": "Aufnahme pausiert",
 			"error": {
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"pause": "Aufnahme pausieren",
+			"resume": "Aufnahme fortsetzen",
 			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}
@@ -5744,7 +5757,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Rat einholen"
+		"requestAdvice": "Rat einholen",
+		"group": {
+			"handover": "Beratung weitergeben",
+			"supervision": "Supervision verwalten",
+			"askerAccount": "Ratsuchende:r & Konto",
+			"settingsLegal": "Einstellungen & Rechtliches"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Wir suchen eine Beratung für Sie.",
@@ -5986,6 +6005,8 @@
 			},
 			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
 			"close": "Supervision schließen",
+			"changeSupervisor": "Supervisor:in ändern",
+			"bookAppointment": "Termin mit Supervisor:in vereinbaren",
 			"collapse": "Supervision minimieren",
 			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
 			"unread": "{{count}} ungelesene Nachrichten",
@@ -6012,6 +6033,33 @@
 				"divider": "Trennlinie – Pfeiltasten ändern die Breite der Supervision, Pos1 und Ende setzen Minimum und Maximum",
 				"mainPane": "Beratungschat",
 				"secondaryPane": "Nebenraum"
+			}
+		},
+		"appointment": {
+			"title": "Termin mit Supervisor:in vereinbaren",
+			"with": "Mit",
+			"description": "Wählen Sie Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in Ihrem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreiben Sie {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+			"menu": {
+				"accept": {
+					"title": "Termin annehmen",
+					"description": "Der Termin steht dann fest."
+				},
+				"decline": {
+					"title": "Termin ablehnen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"cancel": {
+					"title": "Termin absagen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"calendar": {
+					"title": "Im Kalender öffnen",
+					"description": "Dort können Sie den Termin auch verschieben."
+				}
 			}
 		}
 	},
@@ -7529,7 +7577,8 @@
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
-		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",

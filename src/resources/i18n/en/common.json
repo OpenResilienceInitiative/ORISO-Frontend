@@ -2252,6 +2252,13 @@
 			"quoteUnknown": "Earlier message",
 			"jumpToQuote": "Jump to the quoted passage from {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Redaction removed",
+			"by": "by {{name}}",
+			"byMe": "by you",
+			"text": "The message from {{name}} is readable again.",
+			"textAnonymous": "The message is readable again."
+		},
 		"selectionReply": {
 			"blur": "Blur",
 			"blurredLabel": "Blurred passage",
@@ -2260,8 +2267,10 @@
 			"removeBlurLabel": "Blurred passage – remove blur",
 			"blurBar": "Actions for the blurred passage",
 			"toolbar": "Actions for the marked passage",
-			"reply": "Reply",
+			"reply": "Reply here",
 			"replyVoice": "Reply with a voice message",
+			"replyInSupervision": "Reply in supervision",
+			"replyInTeam": "Reply in team chat",
 			"startThread": "Thread",
 			"dialog": "Reply to the passage marked from {{author}}",
 			"cancel": "Cancel",
@@ -4849,7 +4858,8 @@
 					"failedTitle": "Request not answered",
 					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
 					"failed": "That did not work. Please try again."
-				}
+				},
+				"menu": "Appointment menu"
 			}
 		},
 		"deletedAsker": {
@@ -5474,10 +5484,13 @@
 	"voice": {
 		"recording": {
 			"active": "Recording…",
+			"paused": "Recording paused",
 			"error": {
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"pause": "Pause recording",
+			"resume": "Resume recording",
 			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
@@ -5669,7 +5682,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Ask for advice"
+		"requestAdvice": "Ask for advice",
+		"group": {
+			"handover": "Pass on counselling",
+			"supervision": "Manage supervision",
+			"askerAccount": "Advice seeker & account",
+			"settingsLegal": "Settings & legal"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "We are looking for a counsellor for you.",
@@ -5911,6 +5930,8 @@
 			},
 			"privacyHint": "This channel is never visible to the person seeking advice.",
 			"close": "Close supervision",
+			"changeSupervisor": "Change supervisor",
+			"bookAppointment": "Book an appointment with the supervisor",
 			"collapse": "Minimise supervision",
 			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
 			"unread": "{{count}} unread messages",
@@ -5937,6 +5958,33 @@
 				"divider": "Divider – arrow keys change the supervision width, Home and End set minimum and maximum",
 				"mainPane": "Counselling chat",
 				"secondaryPane": "Side room"
+			}
+		},
+		"appointment": {
+			"title": "Book an appointment with the supervisor",
+			"with": "With",
+			"description": "Choose the day, time and kind. The appointment then shows in both calendars.",
+			"unreachable": "{{name}} cannot be reached from your calendar. An appointment is not possible here; write to {{name}} in the supervision chat.",
+			"failed": "The appointment could not be saved. Please try again.",
+			"withSupervision": "Supervision",
+			"changeFailed": "The appointment could not be changed. Please try again.",
+			"menu": {
+				"accept": {
+					"title": "Accept appointment",
+					"description": "The appointment is then fixed."
+				},
+				"decline": {
+					"title": "Decline appointment",
+					"description": "It leaves both calendars."
+				},
+				"cancel": {
+					"title": "Cancel appointment",
+					"description": "It leaves both calendars."
+				},
+				"calendar": {
+					"title": "Open in calendar",
+					"description": "You can also move the appointment there."
+				}
 			}
 		}
 	},
@@ -7454,7 +7502,8 @@
 			"text": "Here is the new link to the appointment:",
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
-		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",

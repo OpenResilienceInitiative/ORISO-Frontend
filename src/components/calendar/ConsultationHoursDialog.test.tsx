@@ -429,6 +429,61 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		).toBeTruthy();
 	});
 
+	it('takes a typed date at once, without leaving the field (Dev test 24 Nov)', () => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				slot: {
+					start: new Date(2026, 10, 26, 10, 0),
+					end: new Date(2026, 10, 26, 11, 0)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		const date = screen.getByLabelText(
+			'calendar.consultationHours.date'
+		) as HTMLInputElement;
+		fireEvent.change(date, { target: { value: '1.12.2026' } });
+		act(() =>
+			form?.actions
+				.find((a) => a.testId === 'consultation-once-save')
+				?.onClick?.()
+		);
+		expect(onSaveOneOff.mock.calls[0][0].start).toEqual(
+			new Date(2026, 11, 1, 10, 0)
+		);
+	});
+
+	it('says a one-off over 12 hours next to the times, and marks them', () => {
+		onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 6, 0),
+				end: new Date(2026, 10, 26, 19, 0)
+			}
+		});
+		const error = screen.getByText(
+			'calendar.consultationHours.onceTooLong'
+		);
+		const notice = screen.getByRole('combobox', {
+			name: 'calendar.consultationHours.onceNotice'
+		});
+		expect(
+			error.compareDocumentPosition(notice) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		const from = screen.getByLabelText(
+			'calendar.consultationHours.from'
+		) as HTMLInputElement;
+		expect(from.getAttribute('aria-invalid')).toBe('true');
+	});
+
 	it('refuses a one-off over another one and lists them to withdraw', () => {
 		const onWithdrawOneOff = vi.fn();
 		const other = released(26, 9, 11);

@@ -1317,7 +1317,7 @@ function ChatPanel() {
 						placeholder={
 							surfaceRole === 'asker'
 								? 'Nachricht schreiben'
-								: 'Nachricht an Klient:in schreiben'
+								: 'Nachricht an ratsuchende Person'
 						}
 						onSendButton={noop}
 						isTyping={noop}
@@ -1452,7 +1452,8 @@ const surfaceStory = (
 });
 
 /** The split button below the header, once the appointments are read. */
-const SPLIT_BUTTON = '[data-cy="room-next-appointment"] .splitButton__main';
+const SPLIT_BUTTON =
+	'[data-cy="room-next-appointment"] [data-cy="room-appointment-pennant"]';
 const splitButtonShown = (canvasElement: HTMLElement) => () => {
 	const found = canvasElement.querySelector<HTMLElement>(SPLIT_BUTTON);
 	if (!found) throw new Error('appointment not shown yet');

@@ -171,6 +171,10 @@ afterEach(() => {
 
 const openPrivacy = () => {
 	fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+	// Variant B (24.11.2026): legal links sit in a foldable group.
+	fireEvent.click(
+		screen.getByRole('button', { name: 'sessionMenu.group.settingsLegal' })
+	);
 	fireEvent.click(
 		screen.getByRole('button', { name: /legal\.privacy\.label/ })
 	);
