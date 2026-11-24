@@ -54,27 +54,56 @@ export const OrisoDatePicker = ({
 		value ? value.format(format) : ''
 	);
 
+	/* A new value from outside shows in the format; the text that typed
+	   this very day stays as it is (see typeInput). */
+	const typedDay = React.useRef<Dayjs | null>(null);
 	React.useEffect(() => {
+		if (value && typedDay.current?.isSame(value, 'day')) return;
+		typedDay.current = null;
 		setInputText(value ? value.format(format) : '');
 	}, [value, format]);
 
+	/* The date a typed text means: the format, or the same without leading
+	   zeros ("1.12.2026" for DD.MM.YYYY); null for anything else, or a day
+	   outside the allowed range. */
+	const parseInput = (text: string): Dayjs | null => {
+		const parsed = [format, format.replace(/DD/, 'D').replace(/MM/, 'M')]
+			.map((f) => dayjs(text.trim(), f, true))
+			.find((d) => d.isValid());
+		if (!parsed) return null;
+		const outOfRange =
+			(minDate && parsed.isBefore(minDate, 'day')) ||
+			(maxDate && parsed.isAfter(maxDate, 'day'));
+		return outOfRange ? null : parsed;
+	};
+
 	const commitInput = (text: string) => {
-		const trimmed = text.trim();
-		if (!trimmed) {
+		if (!text.trim()) {
 			onChange?.(null);
 			return;
 		}
 
-		const parsed = dayjs(trimmed, format, true);
-		const outOfRange =
-			(minDate && parsed.isBefore(minDate, 'day')) ||
-			(maxDate && parsed.isAfter(maxDate, 'day'));
-		if (!parsed.isValid() || outOfRange) {
+		const parsed = parseInput(text);
+		if (!parsed) {
 			// A refused entry is not left standing: the field only ever shows the date the form holds.
 			setInputText(value ? value.format(format) : '');
 			return;
 		}
+		typedDay.current = null;
+		setInputText(parsed.format(format));
 		onChange?.(parsed);
+	};
+
+	/* A complete date counts as soon as it is typed, so a save right after
+	   typing takes it, not only after leaving the field (Dev test, 24 Nov
+	   2026). The text stays as typed until the field is left. */
+	const typeInput = (text: string) => {
+		setInputText(text);
+		const parsed = parseInput(text);
+		if (parsed && !(value && parsed.isSame(value, 'day'))) {
+			typedDay.current = parsed;
+			onChange?.(parsed);
+		}
 	};
 
 	const openPicker = (anchor: HTMLElement | null) => {
@@ -100,7 +129,7 @@ export const OrisoDatePicker = ({
 				error={error}
 				disabled={disabled}
 				fullWidth={fullWidth}
-				onChange={(event) => setInputText(event.target.value)}
+				onChange={(event) => typeInput(event.target.value)}
 				onBlur={(event) => commitInput(event.target.value)}
 				onKeyDown={(event) => {
 					if (event.key === 'Enter') {

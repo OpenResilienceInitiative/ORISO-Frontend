@@ -143,7 +143,10 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 	const rows = () =>
 		document.body.textContent?.match(/sessionList\.user\.writeEnquiry/g)
 			?.length ?? 0;
-	await waitFor(() => expect(rows()).toBe(2));
+	// The burst is collected for 300 ms; a loaded CI runner needs more than
+	// waitFor's default 1 s around that.
+	const slow = { timeout: 5000 };
+	await waitFor(() => expect(rows()).toBe(2), slow);
 
 	// Advance the queue's debounce deterministically; the full CI suite can be
 	// too CPU-bound for a real 300 ms timer to fire inside waitFor's timeout.
@@ -167,4 +170,4 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 		'!r1:oriso',
 		'!r2:oriso'
 	]);
-});
+}, 15_000);

@@ -173,6 +173,10 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import {
+	createVoiceFile,
+	pickVoiceMimeType
+} from '../voicePlayer/voiceRecordingFile';
+import {
 	AttachmentFailureReason,
 	attachmentFailureStatus,
 	classifyAttachmentSendError
@@ -669,6 +673,8 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isTypingActive, setIsTypingActive] = useState(activeSession.isGroup);
 	const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+	// The live microphone, for the recorder's level dots.
+	const [voiceStream, setVoiceStream] = useState<MediaStream | null>(null);
 	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] =
 		useState(0);
 	const [voiceAttachmentDurationSec, setVoiceAttachmentDurationSec] =
@@ -1184,6 +1190,7 @@ export const MessageSubmitInterfaceComponent = ({
 			mediaStreamRef.current.getTracks().forEach((track) => track.stop());
 			mediaStreamRef.current = null;
 		}
+		setVoiceStream(null);
 	}, []);
 
 	const handleCardlessUploadError = useCallback(
@@ -3701,14 +3708,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 			mediaStreamRef.current = stream;
-			const mimeTypeCandidates = [
-				'audio/webm;codecs=opus',
-				'audio/ogg;codecs=opus',
-				'audio/webm'
-			];
-			const supportedMimeType = mimeTypeCandidates.find((mimeType) =>
-				MediaRecorder.isTypeSupported(mimeType)
-			);
+			const supportedMimeType = pickVoiceMimeType();
 			const recorder = supportedMimeType
 				? new MediaRecorder(stream, { mimeType: supportedMimeType })
 				: new MediaRecorder(stream);
@@ -3737,33 +3737,10 @@ export const MessageSubmitInterfaceComponent = ({
 				const blob = new Blob(chunks, { type: mimeType });
 				if (blob.size > 0) {
 					const elapsedMs = voiceRecordingStartedAtRef.current
-						? Math.max(
-								1000,
-								Date.now() - voiceRecordingStartedAtRef.current
-							)
-						: Math.max(
-								1000,
-								voiceRecordingDurationRef.current * 1000
-							);
-					const elapsedSec = Math.max(
-						1,
-						Math.round(elapsedMs / 1000)
-					);
-					// iOS Safari records audio/mp4; name it to match so the
-					// receiving side still recognises it as a voice note.
-					const extension = mimeType.includes('ogg')
-						? 'ogg'
-						: mimeType.includes('mp4')
-							? 'm4a'
-							: 'webm';
-					const voiceFile = new File(
-						[blob],
-						`voice-message-${Date.now()}-s${elapsedSec}-ms${elapsedMs}.${extension}`,
-						{
-							type: mimeType,
-							lastModified: Date.now()
-						}
-					);
+						? Date.now() - voiceRecordingStartedAtRef.current
+						: voiceRecordingDurationRef.current * 1000;
+					const { file: voiceFile, durationSec: elapsedSec } =
+						createVoiceFile(blob, mimeType, elapsedMs);
 					if (voicePreviewUrl) {
 						URL.revokeObjectURL(voicePreviewUrl);
 					}
@@ -3789,6 +3766,7 @@ export const MessageSubmitInterfaceComponent = ({
 			setVoiceRecordingDurationSec(0);
 			voiceRecordingStartedAtRef.current = Date.now();
 			setIsVoiceRecording(true);
+			setVoiceStream(stream);
 			voiceRecordingTimerRef.current = window.setInterval(() => {
 				setVoiceRecordingDurationSec((value) => {
 					const next = value + 1;
@@ -5126,6 +5104,7 @@ export const MessageSubmitInterfaceComponent = ({
 									<VoiceNoteRow
 										mode="recording"
 										durationSec={voiceRecordingDurationSec}
+										stream={voiceStream}
 										onStop={() => stopVoiceRecording()}
 										onDiscard={() =>
 											stopVoiceRecording({
