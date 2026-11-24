@@ -5695,7 +5695,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "ምኽሪ ሕተት"
+		"requestAdvice": "ምኽሪ ሕተት",
+		"group": {
+			"handover": "ምኽሪ ኣሕልፍ",
+			"supervision": "ሱፐርቪዥን ኣመሓድር",
+			"askerAccount": "ምኽሪ ደላዪ ከምኡውን ሕሳብ",
+			"settingsLegal": "ቅጥዕታትን ሕጋዊ ሓበሬታን"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "ኣማኻሪ ንደልየልኩም ኣለና።",

@@ -5743,7 +5743,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Rat einholen"
+		"requestAdvice": "Rat einholen",
+		"group": {
+			"handover": "Beratung weitergeben",
+			"supervision": "Supervision verwalten",
+			"askerAccount": "Ratsuchende:r & Konto",
+			"settingsLegal": "Einstellungen & Rechtliches"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Wir suchen eine Beratung für Sie.",

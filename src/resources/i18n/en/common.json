@@ -5668,7 +5668,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Ask for advice"
+		"requestAdvice": "Ask for advice",
+		"group": {
+			"handover": "Pass on counselling",
+			"supervision": "Manage supervision",
+			"askerAccount": "Advice seeker & account",
+			"settingsLegal": "Settings & legal"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "We are looking for a counsellor for you.",

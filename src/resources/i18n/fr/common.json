@@ -5721,7 +5721,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Demander conseil"
+		"requestAdvice": "Demander conseil",
+		"group": {
+			"handover": "Transmettre le conseil",
+			"supervision": "Gérer la supervision",
+			"askerAccount": "Personne conseillée & compte",
+			"settingsLegal": "Paramètres & mentions légales"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",

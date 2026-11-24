@@ -103,16 +103,17 @@ import './sessionMenu.styles';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
-import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
-import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import { ReactComponent as CreateAppointmentIcon } from '../../resources/img/icons/calendar-plus.svg';
+import { ReactComponent as KeepAccountIcon } from '../../resources/img/icons/add-shield.svg';
 import { useKeepAccountDialog } from '../temporaryAccount/KeepAccountEntry';
-import AddLinkOutlinedIcon from '@mui/icons-material/AddLinkOutlined';
+import { ReactComponent as SendNewLinkIcon } from '../../resources/img/icons/url.svg';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import {
 	ChatMenuDropdown,
+	ChatMenuDropdownCollapsibleGroup,
 	ChatMenuDropdownDivider,
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
@@ -360,6 +361,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			>[0]['current'],
 			sessions: Array.isArray(sessionList) ? sessionList : []
 		});
+	// Variant B (24.11.2026): which foldable groups have at least one row.
+	const hasHandoverGroup =
+		showRequestAdvice ||
+		showRecommendFurtherCounselling ||
+		showCaseHandover ||
+		showEndTopicDuplicate;
+	const hasAskerAccountGroup =
+		keepAccount.available || Boolean(props.onSendNewLink);
+	const showArchiveRow =
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		type !== SESSION_LIST_TYPES.ENQUIRY &&
+		!isRejectedCase &&
+		Boolean(activeSession.isSession) &&
+		!props.isSupervisor;
 
 	useEffect(() => {
 		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
@@ -1024,6 +1039,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								)}
 							/>
 							<ChatMenuDropdownDivider />
+							{/* Frank 24.11.2026 (variant B): daily rows on top without a
+							    heading; rows used now and then sit in foldable groups,
+							    closed whenever the menu opens; Archivieren stays last. */}
 							{/* D8 (05.09.2026): with `callsInMenu` the call buttons
 							    are rows of this menu instead of header buttons —
 							    the organism's rows (icon · title), same handlers
@@ -1086,6 +1104,27 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										</button>
 									)}
 								</>
+							)}
+
+							{props.onCreateAppointment && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onCreateAppointment?.();
+									}}
+									data-cy="session-menu-create-appointment"
+								>
+									<SessionMenuItemContent
+										icon={
+											<CreateAppointmentIcon data-icon-id="ui-icon:calendar-plus:base" />
+										}
+										title={translate(
+											'sessionList.timeline.appointment.create'
+										)}
+									/>
+								</button>
 							)}
 
 							{props.onOpenTeamChat && (
@@ -1162,113 +1201,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</button>
 							)}
 
-							{props.onCreateAppointment && (
-								<button
-									type="button"
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={() => {
-										closeMenu();
-										props.onCreateAppointment?.();
-									}}
-									data-cy="session-menu-create-appointment"
-								>
-									<SessionMenuItemContent
-										icon={<EventOutlinedIcon />}
-										title={translate(
-											'sessionList.timeline.appointment.create'
-										)}
-									/>
-								</button>
-							)}
-
-							{keepAccount.available && (
-								<button
-									type="button"
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={() => {
-										closeMenu();
-										keepAccount.openDialog();
-									}}
-									data-cy="session-menu-keep-account"
-								>
-									<SessionMenuItemContent
-										icon={<VerifiedUserOutlinedIcon />}
-										title={translate(
-											'guestAccountMode.keep.action'
-										)}
-									/>
-								</button>
-							)}
-
-							{props.onSendNewLink && (
-								<button
-									type="button"
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={() => {
-										closeMenu();
-										props.onSendNewLink?.();
-									}}
-									data-cy="session-menu-send-new-link"
-								>
-									<SessionMenuItemContent
-										icon={<AddLinkOutlinedIcon />}
-										title={translate(
-											'directInvitation.conversation.sendNewLink'
-										)}
-									/>
-								</button>
-							)}
-
-							{props.isAskerInfoAvailable && (
-								<Link
-									className="sessionMenu__item chatMenuDropdown__item"
-									to={userProfileLink}
-								>
-									<SessionMenuItemContent
-										icon={
-											<ProfileIcon data-icon-id="sidebar-icon:profil:outline" />
-										}
-										title={translate(
-											'chatFlyout.askerProfil'
-										)}
-										shortcut="⇧P"
-									/>
-								</Link>
-							)}
-
-							{!activeSession.isGroup && (
-								<AddonSessionMenuItems onSelect={closeMenu} />
-							)}
-
-							<div
-								role="button"
-								tabIndex={0}
-								onKeyDown={(event) => {
-									if (
-										event.key === 'Enter' ||
-										event.key === ' '
-									) {
-										event.preventDefault();
-										event.currentTarget.click();
-									}
-								}}
-								className="sessionMenu__item chatMenuDropdown__item"
-								onClick={() => {
-									closeMenu();
-									setNotifConfigOpen(true);
-								}}
-								data-cy="session-menu-notification-config"
-							>
-								<SessionMenuItemContent
-									icon={
-										<NotificationSettingsIcon data-icon-id="ui-icon:notification-settings:base" />
-									}
-									title={translate(
-										'profile.notifications.config.title'
-									)}
-								/>
-							</div>
-
 							{supervisionPanel?.visible && (
 								<button
 									type="button"
@@ -1309,33 +1241,25 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</button>
 							)}
 
-							{props.showMobileSupervisionAction && (
-								<div
-									role="button"
-									tabIndex={0}
-									onKeyDown={(event) => {
-										if (
-											event.key === 'Enter' ||
-											event.key === ' '
-										) {
-											event.preventDefault();
-											event.currentTarget.click();
-										}
-									}}
-									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-									onClick={() => {
-										closeMenu();
-										props.onMobileSupervisionAction?.();
-									}}
+							{props.isAskerInfoAvailable && (
+								<Link
+									className="sessionMenu__item chatMenuDropdown__item"
+									to={userProfileLink}
 								>
 									<SessionMenuItemContent
-										icon={<GroupChatInfoIcon />}
+										icon={
+											<ProfileIcon data-icon-id="sidebar-icon:profil:outline" />
+										}
 										title={translate(
-											'sessionHeader.supervisor.modal.title'
+											'chatFlyout.askerProfil'
 										)}
-										shortcut="⇧S"
+										shortcut="⇧P"
 									/>
-								</div>
+								</Link>
+							)}
+
+							{!activeSession.isGroup && (
+								<AddonSessionMenuItems onSelect={closeMenu} />
 							)}
 
 							{props.showMobileEndAnonymousChatAction && (
@@ -1407,192 +1331,6 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								</button>
 							)}
 
-							{showRequestAdvice && (
-								<div
-									className={`sessionMenu__item chatMenuDropdown__item ${
-										!ADVICE_REQUEST_ENABLED
-											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-											: ''
-									}`}
-									onClick={() => {
-										if (!ADVICE_REQUEST_ENABLED) {
-											return;
-										}
-										closeMenu();
-									}}
-									data-cy="session-menu-request-advice"
-								>
-									<SessionMenuItemContent
-										icon={
-											<AdviceRequestIcon data-icon-id="ui-icon:persons-two:base" />
-										}
-										title={translate(
-											'sessionMenu.requestAdvice'
-										)}
-										disabled={!ADVICE_REQUEST_ENABLED}
-									/>
-								</div>
-							)}
-
-							{showRecommendFurtherCounselling && (
-								<div
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={handleRecommendFurtherCounselling}
-									role="button"
-									tabIndex={0}
-									onKeyDown={(event) => {
-										if (
-											event.key === 'Enter' ||
-											event.key === ' '
-										) {
-											event.preventDefault();
-											event.currentTarget.click();
-										}
-									}}
-									data-cy="session-menu-recommend-further-counselling"
-								>
-									<SessionMenuItemContent
-										icon={<RecommendIcon />}
-										title={translate(
-											'furtherCounselling.menu.recommend'
-										)}
-									/>
-								</div>
-							)}
-
-							{showCaseHandover && (
-								<div
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={handleCaseHandover}
-									role="button"
-									tabIndex={0}
-									onKeyDown={(event) => {
-										if (
-											event.key === 'Enter' ||
-											event.key === ' '
-										) {
-											event.preventDefault();
-											event.currentTarget.click();
-										}
-									}}
-									data-cy="session-menu-case-handover"
-								>
-									<SessionMenuItemContent
-										icon={
-											<HandoverIcon
-												aria-hidden="true"
-												focusable="false"
-											/>
-										}
-										title={translate(
-											'caseHandover.offer.open'
-										)}
-									/>
-								</div>
-							)}
-
-							{showEndTopicDuplicate && (
-								<div
-									className="sessionMenu__item chatMenuDropdown__item"
-									onClick={handleEndTopicDuplicate}
-									role="button"
-									tabIndex={0}
-									onKeyDown={(event) => {
-										if (
-											event.key === 'Enter' ||
-											event.key === ' '
-										) {
-											event.preventDefault();
-											event.currentTarget.click();
-										}
-									}}
-									data-cy="session-menu-end-topic-duplicate"
-								>
-									<SessionMenuItemContent
-										icon={<EndDuplicateIcon />}
-										title={translate(
-											'furtherCounselling.menu.endDuplicate'
-										)}
-										description={translate(
-											'furtherCounselling.menu.endDuplicateDescription'
-										)}
-									/>
-								</div>
-							)}
-
-							{!hasUserAuthority(
-								AUTHORITIES.ASKER_DEFAULT,
-								userData
-							) &&
-								type !== SESSION_LIST_TYPES.ENQUIRY &&
-								!isRejectedCase &&
-								activeSession.isSession &&
-								!props.isSupervisor && (
-									<>
-										{sessionListTab !==
-										SESSION_LIST_TAB_ARCHIVE ? (
-											<div
-												onClick={handleArchiveSession}
-												role="button"
-												tabIndex={0}
-												onKeyDown={(event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														event.currentTarget.click();
-													}
-												}}
-												className="sessionMenu__item chatMenuDropdown__item"
-											>
-												<SessionMenuItemContent
-													icon={
-														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
-													}
-													title={translate(
-														'chatFlyout.archive'
-													)}
-													description={translate(
-														'chatFlyout.archiveDescription'
-													)}
-												/>
-											</div>
-										) : (
-											<div
-												onClick={handleDearchiveSession}
-												role="button"
-												tabIndex={0}
-												onKeyDown={(event) => {
-													if (
-														event.key === 'Enter' ||
-														event.key === ' '
-													) {
-														event.preventDefault();
-														event.currentTarget.click();
-													}
-												}}
-												className="sessionMenu__item chatMenuDropdown__item"
-											>
-												<SessionMenuItemContent
-													icon={
-														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
-													}
-													title={translate(
-														'chatFlyout.dearchive'
-													)}
-													description={translate(
-														'chatFlyout.dearchiveDescription'
-													)}
-												/>
-											</div>
-										)}
-									</>
-								)}
-
-							{/* No delete: it removed the chat for the advice seeker too
-							    (ORISO-Admin#1518). Counsellors archive instead. */}
-
 							{activeSession.isGroup && (
 								<SessionMenuFlyoutGroup
 									editGroupChatSettingsLink={
@@ -1609,51 +1347,371 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								/>
 							)}
 
-							<div className="legalInformationLinks--menu">
-								<LegalLinks
-									legalLinks={legalLinks}
-									params={{ aid: menuAgency?.id }}
+							{hasHandoverGroup && (
+								<ChatMenuDropdownCollapsibleGroup
+									label={translate(
+										'sessionMenu.group.handover'
+									)}
+									data-cy="session-menu-group-handover"
 								>
-									{(label, url, rawLabel) => {
-										const kind = getLegalLinkKind(
-											label,
-											url,
-											rawLabel
-										);
-										return (
-											<button
-												type="button"
-												className="sessionMenu__item chatMenuDropdown__item"
-												onClick={() => {
-													closeMenu();
-													setLegalModal({
-														title: label,
-														url
-													});
-												}}
-											>
-												<SessionMenuItemContent
-													icon={
-														<LegalLinkMenuIcon
-															title={label}
-															url={url}
-															rawLabel={rawLabel}
-														/>
-													}
-													title={label}
-													description={
-														kind === 'privacy'
-															? translate(
-																	'chatFlyout.privacyPolicyDescription'
-																)
-															: undefined
-													}
-												/>
-											</button>
-										);
+									{showRequestAdvice && (
+										<div
+											className={`sessionMenu__item chatMenuDropdown__item ${
+												!ADVICE_REQUEST_ENABLED
+													? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+													: ''
+											}`}
+											onClick={() => {
+												if (!ADVICE_REQUEST_ENABLED) {
+													return;
+												}
+												closeMenu();
+											}}
+											data-cy="session-menu-request-advice"
+										>
+											<SessionMenuItemContent
+												icon={
+													<AdviceRequestIcon data-icon-id="ui-icon:persons-two:base" />
+												}
+												title={translate(
+													'sessionMenu.requestAdvice'
+												)}
+												disabled={
+													!ADVICE_REQUEST_ENABLED
+												}
+											/>
+										</div>
+									)}
+
+									{showRecommendFurtherCounselling && (
+										<div
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={
+												handleRecommendFurtherCounselling
+											}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											data-cy="session-menu-recommend-further-counselling"
+										>
+											<SessionMenuItemContent
+												icon={<RecommendIcon />}
+												title={translate(
+													'furtherCounselling.menu.recommend'
+												)}
+											/>
+										</div>
+									)}
+
+									{showCaseHandover && (
+										<div
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={handleCaseHandover}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											data-cy="session-menu-case-handover"
+										>
+											<SessionMenuItemContent
+												icon={
+													<HandoverIcon
+														aria-hidden="true"
+														focusable="false"
+													/>
+												}
+												title={translate(
+													'caseHandover.offer.open'
+												)}
+											/>
+										</div>
+									)}
+
+									{showEndTopicDuplicate && (
+										<div
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={handleEndTopicDuplicate}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											data-cy="session-menu-end-topic-duplicate"
+										>
+											<SessionMenuItemContent
+												icon={<EndDuplicateIcon />}
+												title={translate(
+													'furtherCounselling.menu.endDuplicate'
+												)}
+												description={translate(
+													'furtherCounselling.menu.endDuplicateDescription'
+												)}
+											/>
+										</div>
+									)}
+								</ChatMenuDropdownCollapsibleGroup>
+							)}
+
+							{props.showMobileSupervisionAction && (
+								<ChatMenuDropdownCollapsibleGroup
+									label={translate(
+										'sessionMenu.group.supervision'
+									)}
+									data-cy="session-menu-group-supervision"
+								>
+									{props.showMobileSupervisionAction && (
+										<div
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
+											onClick={() => {
+												closeMenu();
+												props.onMobileSupervisionAction?.();
+											}}
+										>
+											<SessionMenuItemContent
+												icon={<GroupChatInfoIcon />}
+												title={translate(
+													'sessionHeader.supervisor.modal.title'
+												)}
+												shortcut="⇧S"
+											/>
+										</div>
+									)}
+								</ChatMenuDropdownCollapsibleGroup>
+							)}
+
+							{hasAskerAccountGroup && (
+								<ChatMenuDropdownCollapsibleGroup
+									label={translate(
+										'sessionMenu.group.askerAccount'
+									)}
+									data-cy="session-menu-group-asker-account"
+								>
+									{keepAccount.available && (
+										<button
+											type="button"
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												closeMenu();
+												keepAccount.openDialog();
+											}}
+											data-cy="session-menu-keep-account"
+										>
+											<SessionMenuItemContent
+												icon={
+													<KeepAccountIcon data-icon-id="ui-icon:add-shield:base" />
+												}
+												title={translate(
+													'guestAccountMode.keep.action'
+												)}
+											/>
+										</button>
+									)}
+
+									{props.onSendNewLink && (
+										<button
+											type="button"
+											className="sessionMenu__item chatMenuDropdown__item"
+											onClick={() => {
+												closeMenu();
+												props.onSendNewLink?.();
+											}}
+											data-cy="session-menu-send-new-link"
+										>
+											<SessionMenuItemContent
+												icon={
+													<SendNewLinkIcon data-icon-id="ui-icon:url:base" />
+												}
+												title={translate(
+													'directInvitation.conversation.sendNewLink'
+												)}
+											/>
+										</button>
+									)}
+								</ChatMenuDropdownCollapsibleGroup>
+							)}
+
+							<ChatMenuDropdownCollapsibleGroup
+								label={translate(
+									'sessionMenu.group.settingsLegal'
+								)}
+								data-cy="session-menu-group-settings-legal"
+							>
+								<div
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
 									}}
-								</LegalLinks>
-							</div>
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										setNotifConfigOpen(true);
+									}}
+									data-cy="session-menu-notification-config"
+								>
+									<SessionMenuItemContent
+										icon={
+											<NotificationSettingsIcon data-icon-id="ui-icon:notification-settings:base" />
+										}
+										title={translate(
+											'profile.notifications.config.title'
+										)}
+									/>
+								</div>
+
+								<div className="legalInformationLinks--menu">
+									<LegalLinks
+										legalLinks={legalLinks}
+										params={{ aid: menuAgency?.id }}
+									>
+										{(label, url, rawLabel) => {
+											const kind = getLegalLinkKind(
+												label,
+												url,
+												rawLabel
+											);
+											return (
+												<button
+													type="button"
+													className="sessionMenu__item chatMenuDropdown__item"
+													onClick={() => {
+														closeMenu();
+														setLegalModal({
+															title: label,
+															url
+														});
+													}}
+												>
+													<SessionMenuItemContent
+														icon={
+															<LegalLinkMenuIcon
+																title={label}
+																url={url}
+																rawLabel={
+																	rawLabel
+																}
+															/>
+														}
+														title={label}
+														description={
+															kind === 'privacy'
+																? translate(
+																		'chatFlyout.privacyPolicyDescription'
+																	)
+																: undefined
+														}
+													/>
+												</button>
+											);
+										}}
+									</LegalLinks>
+								</div>
+							</ChatMenuDropdownCollapsibleGroup>
+
+							{showArchiveRow && <ChatMenuDropdownDivider />}
+							{showArchiveRow && (
+								<>
+									{sessionListTab !==
+									SESSION_LIST_TAB_ARCHIVE ? (
+										<div
+											onClick={handleArchiveSession}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											className="sessionMenu__item chatMenuDropdown__item"
+										>
+											<SessionMenuItemContent
+												icon={
+													<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+												}
+												title={translate(
+													'chatFlyout.archive'
+												)}
+												description={translate(
+													'chatFlyout.archiveDescription'
+												)}
+											/>
+										</div>
+									) : (
+										<div
+											onClick={handleDearchiveSession}
+											role="button"
+											tabIndex={0}
+											onKeyDown={(event) => {
+												if (
+													event.key === 'Enter' ||
+													event.key === ' '
+												) {
+													event.preventDefault();
+													event.currentTarget.click();
+												}
+											}}
+											className="sessionMenu__item chatMenuDropdown__item"
+										>
+											<SessionMenuItemContent
+												icon={
+													<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+												}
+												title={translate(
+													'chatFlyout.dearchive'
+												)}
+												description={translate(
+													'chatFlyout.dearchiveDescription'
+												)}
+											/>
+										</div>
+									)}
+								</>
+							)}
+
+							{/* No delete: it removed the chat for the advice seeker too
+							    (ORISO-Admin#1518). Counsellors archive instead. */}
 						</ChatMenuDropdown>,
 						document.body
 					)}

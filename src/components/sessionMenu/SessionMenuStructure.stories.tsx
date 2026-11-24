@@ -36,6 +36,9 @@ import { ReactComponent as NotificationIcon } from '../../resources/img/icons/no
  * with a single divider. These stories lay the same rows out three ways so
  * the product owner can pick one before `SessionMenu` changes.
  *
+ * Decision 24.11.2026: the product owner chose Variant B; `SessionMenu`
+ * now follows it.
+ *
  * Every story shows the fullest counsellor case (1:1 session, mobile with
  * calls in the menu, team chat on, supervision active, guest account).
  * Rows marked "(in Arbeit)" come from the open side-chat/supervision branch.
@@ -262,7 +265,7 @@ export const VariantAGroups: Story = {
  * Archivieren stays visible at the bottom because it closes most cases.
  */
 export const VariantBFrequentFirst: Story = {
-	name: 'Variante B: Häufiges oben, Rest einklappbar (Empfehlung)',
+	name: 'Variante B: Häufiges oben, Rest einklappbar (gewählt)',
 	render: () => (
 		<Card>
 			<ChatMenuDropdownSection>

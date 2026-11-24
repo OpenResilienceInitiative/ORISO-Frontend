@@ -5721,7 +5721,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Tavsiye iste"
+		"requestAdvice": "Tavsiye iste",
+		"group": {
+			"handover": "Danışmanlığı devret",
+			"supervision": "Süpervizyonu yönet",
+			"askerAccount": "Danışan ve hesap",
+			"settingsLegal": "Ayarlar ve yasal bilgiler"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Sizin için bir danışman arıyoruz.",
