@@ -169,6 +169,22 @@ export const PhoneStacked: Story = {
 	)
 };
 
+/** Phone, stacked, the second pennant closed at the top. */
+export const PhoneStackedClosed: Story = {
+	name: 'Telefon — gestapelt, zweiter Wimpel oben geschlossen',
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
+	render: () => (
+		<Header width={375}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+				look="closed"
+			/>
+		</Header>
+	)
+};
+
 /** One appointment with the advice seeker. */
 export const One: Story = {
 	name: 'Ein Termin',

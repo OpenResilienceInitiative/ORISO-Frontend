@@ -165,14 +165,36 @@
 
 	// Two kinds on the phone hang stacked: the second from the first, one
 	// step in, so the topic keeps its whole word (Frank, 2026-11-24).
-	.roomAppointmentPennants {
+	.roomNextAppointment.roomAppointmentPennants {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0;
 
+		// S1: the second pennant hangs from the divider too, behind the
+		// first: its side lines run up to the line, its top is hidden.
 		> .appointmentPennant + .appointmentPennant {
+			z-index: 0;
+			height: calc(2 * var(--pennant-height));
+			margin-top: calc(-1 * var(--pennant-height));
 			margin-left: 16px;
+			padding-top: var(--pennant-height);
 		}
+
+		> .appointmentPennant:first-child {
+			z-index: 1;
+		}
+	}
+
+	// S2 (review): the second pennant closes at the top, a rounded tag of
+	// its own hanging under the first.
+	.roomNextAppointment.roomAppointmentPennants--closed
+		> .appointmentPennant
+		+ .appointmentPennant {
+		height: var(--pennant-height);
+		margin-top: 4px;
+		padding-top: 0;
+		border-top: 1px solid var(--pennant-edge);
+		border-radius: 16px;
 	}
 
 	// The short dates stay whole.

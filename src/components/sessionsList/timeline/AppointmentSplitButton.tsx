@@ -280,7 +280,7 @@ export const RoomNextAppointment = ({
 		withKind?: 'asker' | 'supervisor';
 	}[];
 	/** Design review only: the pennant variants (FE#2494). */
-	look?: 'flat' | 'knob' | 'stacked';
+	look?: 'flat' | 'knob' | 'stacked' | 'closed';
 }) =>
 	entry || extra.length > 0 || action ? (
 		<div
