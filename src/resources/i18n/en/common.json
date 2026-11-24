@@ -475,6 +475,7 @@
 		"panel": {
 			"channelOptions": "Switch channel",
 			"channelOptionsEmpty": "No other channels",
+			"dismissIntro": "Don't show again",
 			"participantCount": "{{count}} participants",
 			"participantCount_one": "1 participant",
 			"close": "Close side panel",
