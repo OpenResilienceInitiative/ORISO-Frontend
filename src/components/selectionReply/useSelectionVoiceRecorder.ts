@@ -31,12 +31,20 @@ export const useSelectionVoiceRecorder = (): {
 	takeFor: (src: string) => SelectionVoiceTake | undefined;
 	release: (src: string) => void;
 } => {
+	const rejectStoppingRef = useRef<((reason: Error) => void) | null>(null);
+	const stoppingRef = useRef<Promise<{
+		src: string;
+		durationSec: number;
+	}> | null>(null);
 	const takesRef = useRef(new Map<string, SelectionVoiceTake>());
 	const activeRef = useRef<{
 		recorder: MediaRecorder;
 		stream: MediaStream;
 		chunks: BlobPart[];
 		startedAt: number;
+		/** FE#2494: time spent paused does not count as recorded. */
+		pausedMs: number;
+		pausedAt: number | null;
 	} | null>(null);
 	// Bumped by every start and cancel: a microphone that opens after a
 	// newer start, a cancel or unmount is closed again at once.
@@ -47,6 +55,12 @@ export const useSelectionVoiceRecorder = (): {
 
 	const cancel = useCallback(() => {
 		generationRef.current += 1;
+		// A stop still waiting for the recorder's last event never gets it
+		// now: settle it, so the next take stops on its own.
+		const rejectStopping = rejectStoppingRef.current;
+		rejectStoppingRef.current = null;
+		stoppingRef.current = null;
+		rejectStopping?.(new Error('Recording cancelled'));
 		const active = activeRef.current;
 		activeRef.current = null;
 		if (!active) {
@@ -106,19 +120,30 @@ export const useSelectionVoiceRecorder = (): {
 					recorder: mediaRecorder,
 					stream,
 					chunks,
-					startedAt: Date.now()
+					startedAt: Date.now(),
+					pausedMs: 0,
+					pausedAt: null
 				};
 				mediaRecorder.start();
 				return stream;
 			},
-			stop: () =>
-				new Promise((resolve, reject) => {
+			stop: () => {
+				// Several callers may ask while the recorder still flushes
+				// its last chunk: all get the same take.
+				if (stoppingRef.current) {
+					return stoppingRef.current;
+				}
+				const stopping = new Promise<{
+					src: string;
+					durationSec: number;
+				}>((resolve, reject) => {
+					rejectStoppingRef.current = reject;
 					const active = activeRef.current;
 					if (!active) {
 						reject(new Error('Not recording'));
 						return;
 					}
-					active.recorder.onstop = () => {
+					const finish = () => {
 						activeRef.current = null;
 						stopStream(active.stream);
 						const type = active.recorder.mimeType || 'audio/webm';
@@ -127,17 +152,61 @@ export const useSelectionVoiceRecorder = (): {
 							reject(new Error('Empty recording'));
 							return;
 						}
+						const pausedMs =
+							active.pausedMs +
+							(active.pausedAt
+								? Date.now() - active.pausedAt
+								: 0);
+						// Paused time is not part of the take.
 						const { file, durationSec } = createVoiceFile(
 							blob,
 							type,
-							Date.now() - active.startedAt
+							Date.now() - active.startedAt - pausedMs
 						);
 						const src = URL.createObjectURL(blob);
 						takesRef.current.set(src, { src, durationSec, file });
 						resolve({ src, durationSec });
 					};
+					// The browser may have ended the take by itself (the
+					// microphone track ended, e.g. while paused); stop() on an
+					// inactive recorder fires no second `stop` event, so
+					// finish with the chunks it already delivered.
+					if (active.recorder.state === 'inactive') {
+						finish();
+						return;
+					}
+					active.recorder.onstop = finish;
 					active.recorder.stop();
-				}),
+				});
+				stoppingRef.current = stopping;
+				const clear = () => {
+					if (stoppingRef.current === stopping) {
+						stoppingRef.current = null;
+						rejectStoppingRef.current = null;
+					}
+				};
+				stopping.then(clear, clear);
+				return stopping;
+			},
+			// FE#2494 (Frank, 24 Nov): Pause instead of Stop; stacking or
+			// sending stops the take cleanly first.
+			pause: () => {
+				const active = activeRef.current;
+				if (active && active.recorder.state === 'recording') {
+					active.recorder.pause();
+					active.pausedAt = Date.now();
+				}
+			},
+			resume: () => {
+				const active = activeRef.current;
+				if (active && active.recorder.state === 'paused') {
+					active.recorder.resume();
+					if (active.pausedAt) {
+						active.pausedMs += Date.now() - active.pausedAt;
+					}
+					active.pausedAt = null;
+				}
+			},
 			cancel
 		};
 	}, [cancel]);

@@ -147,7 +147,7 @@ describe('My direct links (#1894)', () => {
 			})
 		);
 
-		expect(tile.className).toContain('directLinkTile--off');
+		expect(tile.className).toContain('directLinkRow--off');
 		expect(apiUpdateDirectLink).toHaveBeenCalledWith('7', {
 			active: false
 		});

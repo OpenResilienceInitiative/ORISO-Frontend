@@ -203,4 +203,30 @@ describe('VoiceRecordingBar', () => {
 		unmount();
 		expect(FakeAudioContext.instances[0].close).toHaveBeenCalledTimes(1);
 	});
+
+	it('rests the dots and releases the audio while the take is paused', () => {
+		const stream = fakeStream();
+		const { rerender } = render(
+			<VoiceRecordingBar
+				durationSec={3}
+				onStop={() => undefined}
+				onPause={() => undefined}
+				stream={stream}
+			/>
+		);
+		expect(FakeAudioContext.instances).toHaveLength(1);
+		rerender(
+			<VoiceRecordingBar
+				durationSec={3}
+				onStop={() => undefined}
+				onPause={() => undefined}
+				paused
+				stream={stream}
+			/>
+		);
+		const row = screen.getByTestId('voice-level-dots');
+		expect(row.getAttribute('data-state')).toBe('paused');
+		expect(row.querySelectorAll('.voiceLevelDots__dot')).toHaveLength(20);
+		expect(FakeAudioContext.instances[0].close).toHaveBeenCalledTimes(1);
+	});
 });

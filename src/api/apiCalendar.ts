@@ -287,6 +287,62 @@ export const apiSetCalendarConsultationHours = (
 		responseHandling: WRITE_HANDLING
 	});
 
+/**
+ * A one-off Sprechzeit (FE#2494 *2b): a stretch released once, bookable
+ * until `noticeMinutes` before its start, also over a Sperrzeit when
+ * `overBlocker` says the counsellor saw the warning (else 409
+ * `CONSULTATION_ONCE_OVER_BLOCKER`).
+ */
+export interface CalendarConsultationOnceDTO {
+	id: string;
+	start: string;
+	end: string;
+	noticeMinutes: number;
+	overBlocker: boolean;
+}
+
+/** The caller's one-offs that have not ended, by start. */
+export const apiGetCalendarConsultationOnce = (): Promise<
+	CalendarConsultationOnceDTO[]
+> =>
+	fetchData({
+		url: `${base()}/consultation-hours/once`,
+		method: FETCH_METHODS.GET,
+		responseHandling: READ_HANDLING
+	}).then((list) => list ?? []);
+
+export const apiCreateCalendarConsultationOnce = (once: {
+	start: Date;
+	end: Date;
+	noticeMinutes: number;
+	overBlocker: boolean;
+}): Promise<CalendarConsultationOnceDTO> =>
+	fetchData({
+		url: `${base()}/consultation-hours/once`,
+		method: FETCH_METHODS.POST,
+		bodyData: JSON.stringify({
+			start: once.start.toISOString(),
+			end: once.end.toISOString(),
+			noticeMinutes: once.noticeMinutes,
+			overBlocker: once.overBlocker
+		}),
+		// A refusal carries why in X-Reason: a Sperrzeit the form could not
+		// see (409), or a limit (400).
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED,
+			FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE
+		]
+	});
+
+export const apiDeleteCalendarConsultationOnce = (id: string): Promise<void> =>
+	fetchData({
+		url: `${base()}/consultation-hours/once/${encodeURIComponent(id)}`,
+		method: FETCH_METHODS.DELETE,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
+	});
+
 export const apiGetCalendarWorkingHours =
 	(): Promise<CalendarWorkingHoursDTO> =>
 		fetchData({

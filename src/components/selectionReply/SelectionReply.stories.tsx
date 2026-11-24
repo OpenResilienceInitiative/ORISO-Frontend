@@ -41,6 +41,7 @@ import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import type { MessageItem } from '../message/MessageItemComponent';
 import type { StackParticipant } from '../message/participantStack';
 import { phone320Globals, phone390Globals } from '../message/messageStoryShell';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { createSilentWavUrl } from '../voicePlayer/__storybook__/silentAudio';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { ChatStageProviders } from '../chatStage/__storybook__/ChatStageProviders';
@@ -616,7 +617,7 @@ export const Toolbar: Story = {
 			{ timeout: 3000 }
 		);
 		const buttons = within(bar).getAllByRole('button');
-		await expect(buttons[0]).toHaveTextContent('Antworten');
+		await expect(buttons[0]).toHaveTextContent('Hier antworten');
 		await expect(buttons[buttons.length - 1]).toHaveAccessibleName(
 			'Thread'
 		);
@@ -756,6 +757,12 @@ export const PhonePopover: Story = {
 export const PhonePopoverRecording320: Story = {
 	name: 'Telefon 320 — Sprachnachricht, Aufnahme läuft',
 	globals: phone320Globals,
+	parameters: {
+		// The close glyph is 20 px, its touch area 44 px (`::before`, inset
+		// -12 px). axe does not count the pseudo-element, and at 320 px the
+		// popover sits next to a message's ⋮ button.
+		a11y: a11yExcept({ 'target-size': ['.selectionReply__close'] })
+	},
 	args: {
 		preset: {
 			eventId: '$m5',
@@ -984,9 +991,7 @@ export const FourAnswersLongMessage: Story = {
 };
 
 const pressAnswer = (bar: HTMLElement) =>
-	within(bar)
-		.getByRole('button', { name: /Antworten/ })
-		.click();
+	within(bar).getByRole('button', { name: 'Hier antworten' }).click();
 
 const pressVoice = (bar: HTMLElement) =>
 	within(bar)

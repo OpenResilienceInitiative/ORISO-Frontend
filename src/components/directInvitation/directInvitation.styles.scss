@@ -27,7 +27,8 @@
 		min-width: 0;
 	}
 
-	&__slot {
+	&__slot,
+	&__details {
 		display: flex;
 		flex-direction: column;
 		gap: 16px;

@@ -34,15 +34,50 @@ const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
 /* "Direkteinladung erlauben" needs the tenant and agencies; off unless a
    test switches it on. */
-const directLinks = vi.hoisted(() => ({ allowed: false }));
+const directLinks = vi.hoisted(() => ({
+	allowed: false,
+	media: ['CHAT', 'AUDIO', 'VIDEO']
+}));
 vi.mock('../directLinks/useDirectLinksAllowed', () => ({
-	useDirectLinkMedia: () =>
-		directLinks.allowed ? ['CHAT', 'AUDIO', 'VIDEO'] : []
+	useDirectLinkMedia: () => (directLinks.allowed ? directLinks.media : [])
 }));
 const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
 	apiCreateSessionDirectInvitation: invite
+}));
+/* #2494 *1: the calendar's own Direkteinladung popup. The hook is the one
+   "Chat erstellen" uses; here it only records how the calendar drives it. */
+const invitationSetup = vi.hoisted(() => ({
+	options: undefined as
+		| undefined
+		| {
+				preset?: unknown;
+				onCreated: (link: { url: string }) => void;
+		  },
+	startWithDetails: vi.fn()
+}));
+vi.mock('../conversationCreate/directLink/DirectLinkCreateCard', () => ({
+	useDirectInvitationSetup: (options: typeof invitationSetup.options) => {
+		invitationSetup.options = options;
+		return {
+			start: vi.fn(),
+			startWithDetails: invitationSetup.startWithDetails,
+			submitting: false,
+			dialog: null
+		};
+	}
+}));
+const topicsLoad = vi.hoisted(() => vi.fn());
+const topicsState = vi.hoisted(() => ({ loaded: false, failed: false }));
+vi.mock('../conversationCreate/directLink/useDirectLinkTopics', () => ({
+	useDirectLinkTopics: () => ({
+		topics: [{ value: '11', label: 'Schwangerschaftsberatung' }],
+		agencies: [],
+		loaded: topicsState.loaded,
+		failed: topicsState.failed,
+		load: topicsLoad
+	})
 }));
 vi.mock('../conversationCreate/directLink/DirectLinkShareDialog', () => ({
 	DirectLinkShareDialog: ({ link }: { link: { url: string } }) => (
@@ -116,6 +151,9 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarWorkingHours: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiGetCalendarConsultationHours: vi.fn(),
+	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
+	apiCreateCalendarConsultationOnce: vi.fn(),
+	apiDeleteCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -136,7 +174,9 @@ vi.mock('../../api/apiCalendar', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(() => Promise.resolve({})),
 	apiMoveSessionAppointment: vi.fn(() => Promise.resolve({})),
-	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({}))
+	apiCancelSessionAppointment: vi.fn(() => Promise.resolve({})),
+	apiGetAppointmentSlots: vi.fn(() => Promise.resolve([])),
+	apiBookAppointmentSlot: vi.fn()
 }));
 vi.mock('../../api/apiGetConsultantSessionList', () => ({
 	apiGetConsultantSessionList: vi.fn(() =>
@@ -409,28 +449,85 @@ describe('CalendarPageWired', () => {
 			expect(props.onInviteNewPerson).toBeUndefined();
 		});
 
-		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {
+		it('opens the Direkteinladung popup with the slot and Art, staying in the calendar (#2494 *1)', async () => {
 			directLinks.allowed = true;
-			render(<CalendarPageWired />);
+			const view = render(<CalendarPageWired />);
 			await showWeek();
 			expect(props.allowGuestInvite).toBe(true);
 			const start = new Date('2026-11-17T09:00:00Z');
 			const end = new Date('2026-11-17T10:00:00Z');
+			act(() => props.onInviteNewPerson?.({ start, end, kind: 'video' }));
+			expect(navigate).not.toHaveBeenCalled();
+			expect(topicsLoad).toHaveBeenCalled();
+			expect(invitationSetup.startWithDetails).toHaveBeenCalledWith(
+				'VIDEO'
+			);
+			await waitFor(() =>
+				expect(invitationSetup.options?.preset).toEqual({
+					start,
+					end,
+					kind: 'video'
+				})
+			);
 			act(() =>
-				props.onInviteNewPerson?.({ start, end, kind: 'onsite' })
+				invitationSetup.options?.onCreated({
+					url: 'https://x/invite/new'
+				})
 			);
-			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/consultant/sessionView/createGroupChat/',
-				{
-					state: {
-						invitationPreset: {
-							start: start.toISOString(),
-							end: end.toISOString(),
-							kind: 'onsite'
-						}
-					}
-				}
+			expect((await view.findByTestId('share-dialog')).textContent).toBe(
+				'https://x/invite/new'
 			);
+		});
+
+		it('loads the topics once, and again after a failed load (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			topicsState.loaded = true;
+			try {
+				const view = render(<CalendarPageWired />);
+				await showWeek();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				topicsLoad.mockClear();
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).not.toHaveBeenCalled();
+				topicsState.failed = true;
+				view.rerender(<CalendarPageWired />);
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).toHaveBeenCalledTimes(1);
+			} finally {
+				topicsState.loaded = false;
+				topicsState.failed = false;
+			}
+		});
+
+		it('falls back to an allowed medium when the Art has none', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			act(() => props.onInviteNewPerson?.({ start, end }));
+			expect(invitationSetup.startWithDetails).toHaveBeenLastCalledWith(
+				'CHAT'
+			);
+		});
+
+		it('never swaps a not-allowed Art medium for another one (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			directLinks.media = ['CHAT'];
+			try {
+				render(<CalendarPageWired />);
+				await showWeek();
+				invitationSetup.startWithDetails.mockClear();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				act(() =>
+					props.onInviteNewPerson?.({ start, end, kind: 'video' })
+				);
+				expect(invitationSetup.startWithDetails).not.toHaveBeenCalled();
+			} finally {
+				directLinks.media = ['CHAT', 'AUDIO', 'VIDEO'];
+			}
 		});
 
 		it('binds the invitation to the new appointment and shows its link', async () => {
@@ -2205,5 +2302,248 @@ describe('CalendarPageWired — Sprechstunden (FE#2287)', () => {
 			expect(api.apiGetCalendarConsultationHours).toHaveBeenCalled()
 		);
 		expect(props.consultationHours).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
+	it('shows the stored ones and saves a new one with its lead time', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const start = new Date('2026-11-24T13:00:00Z');
+		const end = new Date('2026-11-24T14:30:00Z');
+		api.apiCreateCalendarConsultationOnce.mockResolvedValue({
+			id: 'o2',
+			start: start.toISOString(),
+			end: end.toISOString(),
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		await act(() =>
+			props.onSaveOneOffConsultation?.({
+				start,
+				end,
+				noticeMinutes: 30,
+				overBlocker: true
+			})
+		);
+		expect(api.apiCreateCalendarConsultationOnce).toHaveBeenCalledWith({
+			start,
+			end,
+			noticeMinutes: 30,
+			overBlocker: true
+		});
+		expect(props.oneOffConsultations?.map((o) => o.id)).toEqual([
+			'o2',
+			'o1'
+		]);
+	});
+
+	it('withdraws a released one-off', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		api.apiDeleteCalendarConsultationOnce.mockResolvedValue(undefined);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const [once] = props.oneOffConsultations ?? [];
+		await act(() => props.onWithdrawOneOffConsultation?.(once));
+		expect(api.apiDeleteCalendarConsultationOnce).toHaveBeenCalledWith(
+			'o1'
+		);
+		expect(props.oneOffConsultations).toEqual([]);
+	});
+
+	it('offers no "Einmalig" while UserService keeps no one-offs', async () => {
+		api.apiGetCalendarConsultationOnce.mockRejectedValue(new Error('404'));
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(api.apiGetCalendarConsultationOnce).toHaveBeenCalled()
+		);
+		expect(props.onSaveOneOffConsultation).toBeUndefined();
+	});
+});
+
+describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494 *2c)', () => {
+	const askerSessions = (status: number, extra: unknown[] = []) =>
+		vi.mocked(askerListApi.apiGetAskerSessionList).mockResolvedValue({
+			sessions: [
+				{
+					session: {
+						id: 12,
+						status,
+						matrixRoomId: '!room:oriso',
+						agencyId: 7,
+						consultingType: 1
+					},
+					consultant: {
+						consultantId: 'c1',
+						displayName: 'Laura Berger'
+					}
+				},
+				...extra
+			]
+		} as never);
+
+	type FreeTimesProps = {
+		sessionId: number;
+		counsellorName: string;
+		agencyId?: number;
+		consultingTypeId?: number;
+		chatType: string;
+		onBooked: (appointment: unknown) => void;
+	};
+	const panelsOf = (beside: unknown) =>
+		React.Children.toArray(
+			(beside as React.ReactElement<{ children: React.ReactNode }>).props
+				.children
+		) as React.ReactElement<FreeTimesProps>[];
+
+	it('offers them for an active conversation and tells the counsellor of a booking in the chat', async () => {
+		consultant = false;
+		askerSessions(2);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		const [panel] = panelsOf(props.besidePanel);
+		expect(panel.props).toMatchObject({
+			sessionId: 12,
+			counsellorName: 'Laura Berger',
+			agencyId: 7,
+			consultingTypeId: 1,
+			chatType: 'oneOnOne'
+		});
+		act(() =>
+			panel.props.onBooked({
+				status: 'REQUESTED',
+				startTime: '2026-11-25T09:00:00Z',
+				endTime: '2026-11-25T10:00:00Z'
+			})
+		);
+		expect(sendNotice).toHaveBeenCalledWith({
+			kind: 'requested',
+			start: new Date('2026-11-25T09:00:00Z'),
+			end: new Date('2026-11-25T10:00:00Z'),
+			sessionId: 12,
+			matrixRoomId: '!room:oriso'
+		});
+	});
+
+	it('offers the free times of every active counsellor, once per booking context', async () => {
+		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
+		askerSessions(2, [
+			{
+				session: { id: 13, status: 2, matrixRoomId: '!b:oriso' },
+				consultant: { consultantId: 'c2', displayName: 'Tom Weber' }
+			},
+			// Same counsellor, same gates as 12: no second panel.
+			{
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			},
+			// Same counsellor, another consulting type: its own gates.
+			{
+				session: {
+					id: 15,
+					status: 2,
+					matrixRoomId: '!d:oriso',
+					agencyId: 7,
+					consultingType: 2
+				},
+				consultant: laura
+			}
+		]);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		expect(
+			panelsOf(props.besidePanel).map((panel) => panel.props.sessionId)
+		).toEqual([12, 13, 15]);
+	});
+
+	it('books through a conversation without an upcoming appointment', async () => {
+		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
+		askerSessions(2, [
+			{
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			}
+		]);
+		const later = new Date(Date.now() + 86_400_000);
+		api.apiGetCalendarEntries.mockResolvedValue([
+			{
+				...OWN,
+				sessionId: 12,
+				start: later.toISOString(),
+				end: new Date(later.getTime() + 3_600_000).toISOString()
+			}
+		]);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map(
+					(panel) => panel.props.sessionId
+				)
+			).toEqual([14])
+		);
+		const [panel] = panelsOf(props.besidePanel);
+		act(() =>
+			(
+				panel.props as unknown as { onLimitReached: () => void }
+			).onLimitReached()
+		);
+		// Both hold one now: the first stands for them.
+		expect(
+			panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+		).toEqual([12]);
+		// 14's appointment is cancelled elsewhere: it may book again.
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+			).toEqual([14])
+		);
+	});
+
+	it('offers none for a finished conversation', async () => {
+		consultant = false;
+		askerSessions(4);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(askerListApi.apiGetAskerSessionList).toHaveBeenCalled()
+		);
+		await waitFor(() => expect(props.role).toBe('asker'));
+		expect(props.besidePanel).toBeFalsy();
 	});
 });

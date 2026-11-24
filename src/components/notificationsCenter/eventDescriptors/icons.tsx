@@ -35,7 +35,7 @@ import { ReactComponent as AppointmentCancelledIcon } from '../../../resources/i
 import { ReactComponent as AppointmentScheduledIcon } from '../../../resources/img/icons/calendar-check.svg';
 import { ReactComponent as AppointmentBriefingIcon } from '../../../resources/img/icons/timeline-schedule.svg';
 import { ReactComponent as WaitingRoomIcon } from '../../../resources/img/icons/timeline-hourglass-top.svg';
-import { ReactComponent as TeamDiscussionIcon } from '../../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamDiscussionIcon } from '../../../resources/img/icons/team-chat-3p.svg';
 import { ReactComponent as AddonIcon } from '../../../resources/img/icons/tools_outline.svg';
 import { EventIconId } from './types';
 

@@ -22,6 +22,9 @@ export type VoiceNoteRowProps = {
 			stream?: MediaStream | null;
 			/** Fixed levels instead of the microphone (Storybook). */
 			levels?: readonly number[];
+			/** FE#2494: pause/resume instead of stop (see VoiceRecordingBar). */
+			onPause?: () => void;
+			paused?: boolean;
 	  }
 	| {
 			mode: 'review';
@@ -70,6 +73,8 @@ export const VoiceNoteRow = forwardRef<HTMLDivElement, VoiceNoteRowProps>(
 						onStop={props.onStop}
 						stream={props.stream}
 						levels={props.levels}
+						onPause={props.onPause}
+						paused={props.paused}
 						className="voicePlayer--composer"
 					/>
 				)}

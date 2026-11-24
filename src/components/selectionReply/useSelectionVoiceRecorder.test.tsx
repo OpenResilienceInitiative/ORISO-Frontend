@@ -118,6 +118,27 @@ describe('useSelectionVoiceRecorder', () => {
 		expect(stopTrack).toHaveBeenCalledTimes(1);
 	});
 
+	it('a take cancelled while it stops does not block the next one (#2505)', async () => {
+		// The browser holds the last event back: stop() stays pending.
+		const realStop = FakeMediaRecorder.prototype.stop;
+		FakeMediaRecorder.prototype.stop = function (this: FakeMediaRecorder) {
+			this.state = 'inactive';
+		};
+		const { result } = renderHook(() => useSelectionVoiceRecorder());
+		await act(() => result.current.recorder!.start());
+		const first = result.current.recorder!.stop();
+		act(() => result.current.recorder!.cancel());
+		await expect(first).rejects.toThrow('Recording cancelled');
+
+		FakeMediaRecorder.prototype.stop = realStop;
+		await act(() => result.current.recorder!.start());
+		let take: { src: string; durationSec: number } | undefined;
+		await act(async () => {
+			take = await result.current.recorder!.stop();
+		});
+		expect(take).toEqual({ src: 'blob:take', durationSec: 1 });
+	});
+
 	it('offers no microphone where the browser cannot record', () => {
 		vi.stubGlobal('MediaRecorder', undefined);
 		const { result } = renderHook(() => useSelectionVoiceRecorder());

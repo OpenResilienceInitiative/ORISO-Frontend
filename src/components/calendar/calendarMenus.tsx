@@ -6,6 +6,7 @@
  * every choice goes out through a callback.
  */
 import * as React from 'react';
+import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import CheckIcon from '@mui/icons-material/Check';
@@ -93,6 +94,11 @@ export interface SlotMenuContentProps {
 	onPick?: (sessionId: number) => void;
 	/** "Mehr Angaben …": the full dialog, time and kind filled in. */
 	onMore?: () => void;
+	/**
+	 * "Sprechzeit": the range released once for advice seekers to book
+	 * (FE#2494 *2b); without it the item is not offered.
+	 */
+	onConsultation?: () => void;
 }
 
 /** The most conversations the second step lists; the search finds the rest. */
@@ -200,7 +206,8 @@ export const SlotMenuContent = ({
 	kind,
 	conversations = [],
 	onPick,
-	onMore
+	onMore,
+	onConsultation
 }: SlotMenuContentProps) => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -247,6 +254,17 @@ export const SlotMenuContent = ({
 				onClick={() => onChoose('blocker')}
 				data-cy="calendar-slot-blocker"
 			/>
+			{onConsultation && (
+				<ChatMenuDropdownItem
+					role="menuitem"
+					className="calendarMenu__kind calendarMenu__kind--consultation"
+					icon={<ClockIcon aria-hidden="true" focusable="false" />}
+					title={t('calendar.consultationHours.menuItem')}
+					description={t('calendar.consultationHours.menuHint')}
+					onClick={onConsultation}
+					data-cy="calendar-slot-consultation"
+				/>
+			)}
 		</>
 	);
 };

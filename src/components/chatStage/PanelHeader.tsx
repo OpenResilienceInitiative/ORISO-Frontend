@@ -33,7 +33,7 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import {
 	HEADER_STACK_PROPS,
 	ParticipantAvatarStack
@@ -93,6 +93,11 @@ export interface PanelHeaderProps {
 	 * the shown channel changes while this is on.
 	 */
 	'autoFocusChannelButton'?: boolean;
+	/**
+	 * FE#2494: the room's appointment pennants, hanging from the hairline
+	 * beside the channel tag as in the main chat. The host renders them.
+	 */
+	'appointments'?: React.ReactNode;
 	/** Phone: back to the main chat. Rendered before the title. */
 	'onBack'?: () => void;
 	/**
@@ -135,6 +140,7 @@ export const PanelHeader = ({
 	hideBackButton = false,
 	onClose,
 	actions,
+	appointments,
 	'data-cy': dataCy = 'panel-header'
 }: PanelHeaderProps) => {
 	const { t: translate } = useTranslation();
@@ -410,6 +416,14 @@ export const PanelHeader = ({
 						/>
 					</button>
 				</div>
+				{appointments && (
+					<div
+						className="panelHeader__appointments"
+						data-cy="panel-header-appointments"
+					>
+						{appointments}
+					</div>
+				)}
 			</div>
 			{optionsOpen && hasOptions && (
 				// T20: the channel card hangs below the whole header (hairline

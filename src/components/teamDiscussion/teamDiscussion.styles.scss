@@ -34,6 +34,19 @@
 	}
 }
 
+/* #2494: the Supervision side-panel icon in a list row — same shape, the
+   supervision role's secondary container (as the former supervision pill). */
+.teamDiscussionBadge--supervision {
+	background: var(--m3-secondary-container, #e8e6f0);
+	color: var(--m3-on-secondary-container, #4f5864);
+}
+
+/* A list row's trailing slot resets its children to `height: auto`; the side-panel
+   icons keep their 32px circle there (tap target on phones, #2494). */
+.sessionCard .sessionCard__trailing > .teamDiscussionBadge {
+	height: 32px;
+}
+
 /* FE#2491 — the same marker as a chip in the case header while the team
    chat of the enquiry is on. Active (panel on screen): outlined, so the
    state does not rely on colour alone. */

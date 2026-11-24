@@ -680,6 +680,9 @@
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
 		},
+		"blurRemoved": {
+			"byMe": "von dir"
+		},
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
@@ -2368,6 +2371,17 @@
 			"empty": {
 				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
 			}
+		},
+		"appointment": {
+			"description": "Wähle Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in deinem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreib {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut.",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuche es erneut.",
+			"menu": {
+				"calendar": {
+					"description": "Dort kannst du den Termin auch verschieben."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {
@@ -3341,7 +3355,9 @@
 		},
 		"consultationHours": {
 			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
-			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst.",
+			"onceHint": "Gib eine freie Zeit kurzfristig frei. Sie gilt nur an diesem Tag.",
+			"onceDescription": "Diese Zeit können Ratsuchende einmalig bei dir buchen."
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf dich",
@@ -3354,6 +3370,9 @@
 			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
 			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
 			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		},
+		"freeTimes": {
+			"description": "Hier buchst du selbst einen Termin bei {{name}}."
 		}
 	},
 	"guestAccountMode": {

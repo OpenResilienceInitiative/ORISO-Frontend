@@ -2253,6 +2253,13 @@
 			"quoteUnknown": "Message précédent",
 			"jumpToQuote": "Aller au passage cité de {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Masquage levé",
+			"by": "par {{name}}",
+			"byMe": "par vous",
+			"text": "Le message de {{name}} est de nouveau lisible.",
+			"textAnonymous": "Le message est de nouveau lisible."
+		},
 		"selectionReply": {
 			"blur": "Flouter",
 			"blurredLabel": "Passage flouté",
@@ -2261,8 +2268,10 @@
 			"removeBlurLabel": "Passage flouté – retirer le flou",
 			"blurBar": "Actions pour le passage flouté",
 			"toolbar": "Actions pour le passage marqué",
-			"reply": "Répondre",
+			"reply": "Répondre ici",
 			"replyVoice": "Répondre par message vocal",
+			"replyInSupervision": "Répondre en supervision",
+			"replyInTeam": "Répondre dans le chat d’équipe",
 			"startThread": "Démarrer un fil",
 			"dialog": "Répondre au passage marqué de {{author}}",
 			"cancel": "Annuler",
@@ -4883,7 +4892,8 @@
 					"failedTitle": "Demande sans réponse",
 					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
 					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
-				}
+				},
+				"menu": "Menu du rendez-vous"
 			}
 		},
 		"deletedAsker": {
@@ -5509,10 +5519,13 @@
 	"voice": {
 		"recording": {
 			"active": "Enregistrement en cours…",
+			"paused": "Enregistrement en pause",
 			"error": {
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"pause": "Mettre l’enregistrement en pause",
+			"resume": "Reprendre l’enregistrement",
 			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
@@ -5722,7 +5735,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Demander conseil"
+		"requestAdvice": "Demander conseil",
+		"group": {
+			"handover": "Transmettre le conseil",
+			"supervision": "Gérer la supervision",
+			"askerAccount": "Personne conseillée & compte",
+			"settingsLegal": "Paramètres & mentions légales"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
@@ -5964,6 +5983,8 @@
 			},
 			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
 			"close": "Fermer la supervision",
+			"changeSupervisor": "Changer de superviseur·e",
+			"bookAppointment": "Prendre rendez-vous avec le ou la superviseur·e",
 			"collapse": "Réduire la supervision",
 			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
 			"unread": "{{count}} messages non lus",
@@ -5990,6 +6011,33 @@
 				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
 				"mainPane": "Chat de conseil",
 				"secondaryPane": "Salle annexe"
+			}
+		},
+		"appointment": {
+			"title": "Prendre rendez-vous avec la supervision",
+			"with": "Avec",
+			"description": "Choisissez le jour, l'heure et le type. Le rendez-vous apparaît ensuite dans les deux agendas.",
+			"unreachable": "{{name}} n'est pas accessible depuis votre agenda. Un rendez-vous n'est pas possible ici ; écrivez à {{name}} dans le chat de supervision.",
+			"failed": "Le rendez-vous n'a pas pu être enregistré. Veuillez réessayer.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
+			"menu": {
+				"accept": {
+					"title": "Accepter le rendez-vous",
+					"description": "Le rendez-vous est alors confirmé."
+				},
+				"decline": {
+					"title": "Refuser le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"cancel": {
+					"title": "Annuler le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"calendar": {
+					"title": "Ouvrir dans l'agenda",
+					"description": "Vous pouvez aussi y déplacer le rendez-vous."
+				}
 			}
 		}
 	},
@@ -7539,7 +7587,8 @@
 			"text": "Voici le nouveau lien pour le rendez-vous :",
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
-		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe."
+		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
+		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",
@@ -7624,7 +7673,8 @@
 			"tabs": {
 				"appointment": "Rendez-vous",
 				"blocker": "Plage bloquée",
-				"absence": "Absence prévue"
+				"absence": "Absence prévue",
+				"consultation": "Permanence"
 			},
 			"withWhom": "Rendez-vous avec",
 			"withConversation": "Personne conseillée",
@@ -8107,7 +8157,50 @@
 			"minutes": "{{count}} minutes",
 			"invalid": "La fin doit être après le début.",
 			"loadFailed": "Chargement impossible. Réessayer",
-			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là."
+			"overlaps": "Les horaires chevauchent une autre plage de consultation ce jour-là.",
+			"band": "Permanence",
+			"mode": "Type de permanence",
+			"modes": {
+				"once": "Une fois",
+				"weekly": "Chaque semaine"
+			},
+			"onceHint": "Libérez un créneau à court terme. Il ne vaut que pour ce jour.",
+			"onceDescription": "Les personnes en recherche de conseil peuvent réserver ce créneau une fois.",
+			"date": "Jour",
+			"from": "De",
+			"to": "À",
+			"onceNotice": "Réservable jusqu'à",
+			"onceNoticeHint": "Combien de temps avant le début ce créneau peut encore être réservé.",
+			"onceNoticeNone": "Jusqu'au début",
+			"onceNoticeMinutes": "{{count}} min avant",
+			"onceNoticeHours": "{{count}} h avant",
+			"onceNoticeHours_one": "{{count}} h avant",
+			"overBlocker": "Ce créneau se trouve dans une période bloquée. La permanence le libère quand même.",
+			"overBlockerConflict": "Ce créneau se trouve dans une période bloquée. Enregistrez à nouveau pour le libérer quand même.",
+			"onceInvalid": "La fin doit être après le début et dans le futur.",
+			"onceTooLate": "Plus personne ne peut réserver ce créneau : le délai de réservation est passé. Choisissez un début plus tard ou un délai plus court.",
+			"onceTooShort": "Le créneau est plus court qu’un rendez-vous ({{count}} min). Choisissez au moins cette durée.",
+			"onceSave": "Libérer la permanence",
+			"addWindow": "Autre plage horaire le {{day}}",
+			"addWindowShort": "Plage horaire",
+			"removeWindow": "Supprimer la plage {{start}}–{{end}} le {{day}}",
+			"removeWindowShort": "Supprimer la plage",
+			"menuItem": "Permanence",
+			"menuHint": "Libérer une fois pour les personnes en recherche de conseil",
+			"bandOnce": "Permanence unique",
+			"onceSaved": "Permanence libérée",
+			"onceTooLong": "Une permanence ponctuelle dure au maximum 12 heures.",
+			"onceOverlap": "Ce créneau chevauche une autre permanence ponctuelle.",
+			"onceLimit": "Vous avez déjà {{count}} permanences ponctuelles à venir. Retirez-en une pour en ouvrir une nouvelle.",
+			"onceList": "Permanences ponctuelles ouvertes",
+			"onceWithdraw": "Retirer",
+			"onceWithdrawAsk": {
+				"title": "Retirer la permanence ?",
+				"description": "Les personnes en recherche de conseil ne pourront plus réserver {{time}}. Les rendez-vous déjà pris sont conservés.",
+				"keep": "Conserver",
+				"confirm": "Retirer"
+			},
+			"onceWithdrawn": "Permanence retirée"
 		},
 		"appointmentRequest": {
 			"status": "Demandé · attend votre réponse",
@@ -8156,6 +8249,15 @@
 			"hint": "Les rendez-vous de toutes les autres personnes attendent votre accord.",
 			"save": "Enregistrer",
 			"saved": "Liste enregistrée."
+		},
+		"freeTimes": {
+			"title": "Permanences libres",
+			"description": "Réservez vous-même un rendez-vous avec {{name}}.",
+			"counsellor": "Conseiller ou conseillère",
+			"medium": {
+				"video": "Vidéo",
+				"phone": "Téléphone"
+			}
 		}
 	},
 	"guestAccountMode": {

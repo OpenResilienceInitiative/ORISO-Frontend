@@ -2183,6 +2183,10 @@ $cal-page-gap: 12px;
 	line-height: 18px;
 	cursor: pointer;
 
+	@include breakpoint($fromMedium) {
+		padding: 0 16px;
+	}
+
 	svg {
 		width: 16px;
 		height: 16px;
@@ -3706,6 +3710,30 @@ $cal-new-pill-hover: #4b4f51;
 	line-height: 18px;
 }
 
+// FE#2494: the given colleague (the supervisor of a Supervision room) in
+// place of the choice: a label over the name, like a read-only field.
+.calendarDialog__fixedColleague {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 8px 16px;
+	border-radius: 8px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarDialog__fixedColleagueLabel {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.calendarDialog__fixedColleagueName {
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 16px;
+	line-height: 24px;
+}
+
 // "Neuer Eintrag": the tabs Termin | Sperrzeit above the form (prototype
 // v17), a filled segmented button.
 .calendarNewEntry {
@@ -3718,14 +3746,22 @@ $cal-new-pill-hover: #4b4f51;
 	display: inline-flex;
 	align-self: flex-start;
 	gap: 2px;
+	max-width: 100%;
+	box-sizing: border-box;
+	// Four tabs on a 390 px phone (FE#2494 *2b): words stay whole, the
+	// row scrolls sideways if it must.
+	overflow-x: auto;
+	scrollbar-width: none;
 	padding: 4px;
 	border-radius: 999px;
 	background: var(--m3-surface-container, #f0edee);
 }
 
 .calendarNewEntry__tab {
+	flex: none;
 	height: 36px;
-	padding: 0 16px;
+	padding: 0 12px;
+	white-space: nowrap;
 	border: 0;
 	border-radius: 999px;
 	background: transparent;
@@ -4110,5 +4146,329 @@ $cal-new-pill-hover: #4b4f51;
 
 	@include breakpoint($fromMedium) {
 		flex-direction: row;
+	}
+}
+
+// FE#2494 *3: one's own Sprechstunden as a quiet band behind the entries,
+// named by a pill like the pause (not by colour alone).
+.calendarView__consultation {
+	background: var(--m3-secondary-fixed, #dae3f0) !important;
+	opacity: 1 !important;
+	box-shadow: inset 3px 0 0 var(--m3-secondary, #4d5660);
+}
+
+// Bottom right: entries over the band start at its top.
+.calendarView__consultationLabel {
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	box-sizing: border-box;
+	height: 100%;
+	padding: 4px;
+}
+
+.calendarView__consultationPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: calc(100% - 8px);
+	overflow: hidden;
+	padding: 1px 8px 1px 6px;
+	border-radius: 999px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-secondary-fixed, #141c25);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 18px;
+	white-space: nowrap;
+
+	svg {
+		flex: none;
+		width: 14px;
+		height: 14px;
+	}
+}
+
+// FE#2494 *2c: the advice seeker's "Freie Sprechzeiten" beside "Meine
+// Termine", the same size; on the phone under it, the page scrolls.
+.calendarPage__beside {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	overflow: auto;
+	// The same card as the stage, so both take the same width.
+	padding: 14px 18px;
+	border: 1.5px solid $cal-stage-border;
+	border-radius: 32px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+}
+
+.calendarPage__beside:empty {
+	display: none;
+}
+
+// Only while the panel shows something (no office hours: no panel).
+.calendarPage--beside.calendarPage--compact:has(
+		.calendarPage__beside:not(:empty)
+	) {
+	overflow: auto;
+
+	.calendarStage {
+		flex: none;
+		min-height: 72vh;
+	}
+
+	.calendarPage__beside {
+		flex: none;
+		overflow: visible;
+		margin-top: 12px;
+		padding: 14px;
+		border-radius: 24px;
+	}
+}
+
+.calendarFreeTimes {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	&__icon {
+		flex: none;
+		width: 24px;
+		height: 24px;
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__title {
+		margin: 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 28px;
+		font-weight: 600;
+		line-height: 36px;
+
+		.calendarPage--compact & {
+			font-size: 22px;
+			line-height: 28px;
+		}
+	}
+
+	&__description,
+	&__status {
+		margin: 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	&__media {
+		align-self: flex-start;
+	}
+
+	&__problem {
+		margin: 0;
+		color: var(--m3-error, #ba1a1a);
+		font-size: 14px;
+	}
+
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
+	}
+}
+
+// FE#2494 *2b: a one-off Sprechzeit, dashed edge like a pending proposal.
+.calendarView__consultation--once {
+	box-shadow: inset 0 0 0 1.5px var(--m3-secondary, #4d5660) !important;
+	background-image: none !important;
+}
+
+// "Sprechzeit": a day takes several windows, "+" adds one.
+.calendarConsultation {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.calendarConsultation__windows {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+	margin-left: auto;
+
+	.calendarConsultation__times {
+		margin-left: 0;
+	}
+}
+
+.calendarConsultation__iconButton,
+.calendarConsultation__iconSpace {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+}
+
+.calendarConsultation__iconButton {
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarConsultation__add {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 32px;
+	margin-right: 40px;
+	padding: 0 12px 0 8px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(0);
+	}
+}
+
+.calendarConsultation__onceRow {
+	padding: 4px 0 8px;
+
+	// Date above, start and end beside each other: the Sperrzeit fields.
+	.calendarDialog__times > * {
+		flex: 1;
+		min-width: 0;
+	}
+}
+
+.calendarConsultation__label {
+	display: block;
+	margin-bottom: 4px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+// Released one-offs, each with "Zurückziehen" (FE#2494 review).
+.calendarConsultation__onceList {
+	margin-top: 8px;
+
+	ul {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+}
+
+.calendarConsultation__onceListTitle {
+	margin: 0 0 4px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 18px;
+}
+
+.calendarConsultation__onceItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 4px 0 12px;
+	border-radius: 12px;
+	background: var(--m3-surface-container, #f0edee);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 14px;
+}
+
+.calendarConsultation__onceWithdraw {
+	min-height: 40px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 20px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container-high, #eae7e8);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.38;
+	}
+}
+
+.calendarConsultation__warning {
+	margin: 0;
+	padding: 8px 12px;
+	border-radius: 12px;
+	background: var(--m3-surface-container, #f0edee);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 13px;
+	line-height: 18px;
+}
+
+// Several windows: switch and day stay beside the first one.
+.calendarConsultation__row:has(.calendarConsultation__windows) {
+	align-items: flex-start;
+
+	> .calendarHours__day {
+		line-height: 40px;
+	}
+
+	> :first-child {
+		margin-top: 4px;
 	}
 }
