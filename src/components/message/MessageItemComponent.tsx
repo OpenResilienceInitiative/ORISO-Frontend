@@ -90,6 +90,7 @@ import {
 	consultantRenamedNoticeText,
 	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
 } from './consultantRenamedNotice';
+import { supervisorReplacedNoticeText } from './supervisorReplacedNotice';
 import { directInvitationRenewedNoticeText } from './directInvitationRenewedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
@@ -1347,6 +1348,15 @@ export const MessageItemComponent = ({
 					translate
 				)
 			: null;
+	/* #2494 *6: the swap notice carries names and the reason only; it is
+	   worded here, in the reader's language, and drawn by the generic chrome. */
+	const supervisorReplacedText =
+		parsedMessage.systemNotificationSupervisorReplaced
+			? supervisorReplacedNoticeText(
+					parsedMessage.systemNotificationSupervisorReplaced,
+					translate
+				)
+			: null;
 	/* A rename event the parser rejected (blank or unchanged names) draws
 	   nothing — the generic chrome would otherwise show its raw JSON. */
 	const isRejectedConsultantRenamedEvent =
@@ -1395,11 +1405,13 @@ export const MessageItemComponent = ({
 	const systemNotificationTitle =
 		renewedText?.title ||
 		consultantRenamedText?.title ||
+		supervisorReplacedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
 		renewedText?.description ||
 		consultantRenamedText?.description ||
+		supervisorReplacedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
 	const systemNotificationReasonLabel = neutralLegacyReasonLabel(

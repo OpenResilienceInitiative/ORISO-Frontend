@@ -53,6 +53,8 @@ export class PersonChangeRefusedError extends Error {
 
 export interface ChangePersonInput {
 	reason?: string;
+	/** #2494 *6: tell the advice seeker about a replacement. */
+	notifyClient?: boolean;
 }
 
 export interface ManagedPeopleSource {
@@ -72,6 +74,11 @@ export interface ManagedPeopleSource {
 	) => Promise<void>;
 	/** Adding or replacing needs a written reason. */
 	requiresReason?: boolean;
+	/**
+	 * #2494 *6: a replacement can tell the advice seeker; the dialog offers
+	 * the choice (ticked by default).
+	 */
+	replaceCanNotifyClient?: boolean;
 }
 
 /**

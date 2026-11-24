@@ -2314,7 +2314,8 @@
 			}
 		},
 		"supervisionChangedTitle": "Süpervizyon değiştirildi",
-		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor."
+		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor.",
+		"supervisionChangedReason": "Gerekçe: {{reason}}"
 	},
 	"navigation": {
 		"appointments": "Video - Tarihler",
@@ -2530,6 +2531,10 @@
 			"supervisorAssigned": {
 				"title": "Süpervizör atandı",
 				"text": "Bu vakaya bir süpervizör atandı."
+			},
+			"supervisorReplaced": {
+				"title": "Süpervizyon değişti",
+				"text": "Bu sohbetteki danışmanlığa artık başka bir kişi süpervizyon veriyor."
 			},
 			"topicDuplicateStarted": {
 				"title": "Aynı konuda başka bir danışmanlık",
@@ -8283,6 +8288,8 @@
 			"confirm": "Gerçekten çıkarılsın mı?"
 		},
 		"replace": {
+			"notifyClient": "Danışanı değişiklik hakkında bilgilendir",
+			"done": "Değiştirildi: {{from}} → {{to}}. Süpervizyon sohbetinde bir not var.",
 			"action": "Değiştir",
 			"labelFor": "{{name}} değiştir",
 			"title": "{{name}} yerine kim geçsin?",

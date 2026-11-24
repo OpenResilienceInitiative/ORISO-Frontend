@@ -2314,7 +2314,8 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision modifiée",
-		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}.",
+		"supervisionChangedReason": "Motif : {{reason}}"
 	},
 	"navigation": {
 		"appointments": "Vidéo - Dates",
@@ -2530,6 +2531,10 @@
 			"supervisorAssigned": {
 				"title": "Superviseur·e attribué·e",
 				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision modifiée",
+				"text": "Une autre personne supervise désormais le conseil dans ce chat."
 			},
 			"topicDuplicateStarted": {
 				"title": "Un autre accompagnement sur le même thème",
@@ -8283,6 +8288,8 @@
 			"confirm": "Vraiment retirer ?"
 		},
 		"replace": {
+			"notifyClient": "Informer la personne conseillée du changement",
+			"done": "Changé : {{from}} → {{to}}. Une note figure dans le chat de supervision.",
 			"action": "Remplacer",
 			"labelFor": "Remplacer {{name}}",
 			"title": "Qui doit prendre la relève de {{name}} ?",

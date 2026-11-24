@@ -34,6 +34,11 @@ export const useManagedPeople = (
 	);
 	/** Who was just added, for the confirmation under the list. */
 	const [added, setAdded] = useState<PersonCandidate | null>(null);
+	/** #2494 *6: who was just replaced by whom, for the same confirmation. */
+	const [replaced, setReplaced] = useState<{
+		from: string;
+		to: string;
+	} | null>(null);
 	const requestRef = useRef(0);
 
 	const reload = useCallback(async () => {
@@ -81,6 +86,7 @@ export const useManagedPeople = (
 		setPendingId(id);
 		setActionError(null);
 		setAdded(null);
+		setReplaced(null);
 		try {
 			await change();
 			await reload();
@@ -121,16 +127,19 @@ export const useManagedPeople = (
 				: Promise.reject(new Error('remove'))
 		);
 
-	const replacePerson = (
+	const replacePerson = async (
 		person: ManagedPerson,
 		candidate: PersonCandidate,
 		input: ChangePersonInput
-	) =>
-		runChange(person.id, 'replace', () =>
+	) => {
+		const done = await runChange(person.id, 'replace', () =>
 			source.replacePerson
 				? source.replacePerson(person, candidate, input)
 				: Promise.reject(new Error('replace'))
 		);
+		if (done) setReplaced({ from: person.name, to: candidate.name });
+		return done;
+	};
 
 	const selectable = useMemo(
 		() => selectableCandidates(candidates, members, locale),
@@ -145,9 +154,11 @@ export const useManagedPeople = (
 		pendingId,
 		actionError,
 		added,
+		replaced,
 		clearActionError: () => {
 			setActionError(null);
 			setAdded(null);
+			setReplaced(null);
 		},
 		reload,
 		addPerson,
