@@ -5527,6 +5527,7 @@
 	"voice": {
 		"recording": {
 			"active": "Aufnahme läuft…",
+			"paused": "Aufnahme pausiert",
 			"error": {
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."

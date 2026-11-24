@@ -124,7 +124,11 @@ export const VoiceRecordingBar = ({
 					{formatClock(durationSec)}
 				</span>
 				<span className="sr-only" role="status">
-					{translate('voice.recording.active')}
+					{translate(
+						onPause && paused
+							? 'voice.recording.paused'
+							: 'voice.recording.active'
+					)}
 				</span>
 			</div>
 		</div>

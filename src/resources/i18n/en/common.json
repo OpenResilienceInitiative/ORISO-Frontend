@@ -5475,6 +5475,7 @@
 	"voice": {
 		"recording": {
 			"active": "Recording…",
+			"paused": "Recording paused",
 			"error": {
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."

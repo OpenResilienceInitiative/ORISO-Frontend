@@ -5510,6 +5510,7 @@
 	"voice": {
 		"recording": {
 			"active": "Kayıt sürüyor…",
+			"paused": "Kayıt duraklatıldı",
 			"error": {
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."

@@ -139,11 +139,15 @@ export const PanelCallActions = ({
 	// The placement can change under an open menu (the reader drags the
 	// divider); the row has nothing to close into.
 	const hasExtras = menuItems.length > 0;
+	// Also when the last extra disappears under an open menu: a hidden
+	// instance must not keep its Escape listener or reopen by itself.
+	const menuHasItems =
+		hasExtras || (state.visible && state.placement === 'menu');
 	useEffect(() => {
-		if (state.placement === 'row' && !hasExtras) {
+		if (!menuHasItems) {
 			setOpen(false);
 		}
-	}, [state.placement, hasExtras]);
+	}, [menuHasItems]);
 
 	if (!state.visible && !hasExtras) {
 		return null;
@@ -255,13 +259,13 @@ export const PanelCallActions = ({
 		</div>
 	);
 
-	return row ? (
+	// One tree shape for both placements (`row` is false when absent), so a
+	// resize never remounts the open menu and drops focus.
+	return (
 		<>
 			{row}
 			{menu}
 		</>
-	) : (
-		menu
 	);
 };
 

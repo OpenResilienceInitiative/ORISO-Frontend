@@ -3169,6 +3169,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// way supervision does in its own. Teamberatung is internal as well, so
 	// it shares supervision's tenant call flags; more than two people make
 	// it a group call.
+	// Teamberatung also runs on open enquiries (the team is consulted
+	// before someone takes the case), so it does not share supervision's
+	// enquiry exclusion; OPEN, rejected and the tenant flags are checked
+	// where the buttons render. Practice: nobody real to call.
+	const mayCallInTeamRoom = isConsultantUser && !isPracticing;
 	const startTeamCall = useCallback(
 		(isVideo: boolean) => {
 			if (!teamRoomId) {
@@ -3177,10 +3182,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			startRoomCall({
 				roomId: teamRoomId,
 				isVideo,
-				isGroup: teamParticipants.length > 2
+				// Read at the click: someone may have joined the team room
+				// without writing, which the memoised header list misses.
+				isGroup: stackParticipantsOf(teamRoomId, 'team').length > 2
 			});
 		},
-		[teamRoomId, teamParticipants.length]
+		[teamRoomId, stackParticipantsOf]
 	);
 
 	// T7: the side room opens with the system notice "Supervision durch
@@ -5128,7 +5135,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						participants={teamParticipants}
 						unreadCount={teamUnreadCount}
 						actions={
-							mayCallInSideRoom &&
+							mayCallInTeamRoom &&
 							props.teamDiscussionStatus === 'OPEN' &&
 							!isRejectedSession ? (
 								<PanelCallActions

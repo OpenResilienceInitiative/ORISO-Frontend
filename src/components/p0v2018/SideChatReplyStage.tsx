@@ -254,14 +254,31 @@ export function SideChatReplyStage({
 	const [room, setRoom] = useState<SideRoom | null>(openRoom);
 	const [pending, setPending] = useState<
 		Record<SideRoom, ComposerPendingQuote[]>
-	>(() => ({
-		supervision: openRoom === 'supervision' ? collected.map(toQuote) : [],
-		team: openRoom === 'team' ? collected.map(toQuote) : [],
-		thread: openRoom === 'thread' ? collected.map(toQuote) : []
-	}));
+	>(() => {
+		// Seeded rows carry the same answer fields as collected ones.
+		const seeded = collected.map((passage, index) => ({
+			...toQuote(passage, index),
+			replyText: passage.replyText || undefined,
+			voiceDurationSec: passage.voice?.durationSec ?? null
+		}));
+		return {
+			supervision: openRoom === 'supervision' ? seeded : [],
+			team: openRoom === 'team' ? seeded : [],
+			thread: openRoom === 'thread' ? seeded : []
+		};
+	});
 	const voiceByQuote = useRef(
-		new Map<string, { src: string; durationSec: number }>()
+		new Map<string, { src: string; durationSec: number }>(
+			collected.flatMap((passage, index) =>
+				passage.voice
+					? [[toQuote(passage, index).id, passage.voice] as const]
+					: []
+			)
+		)
 	);
+	// Every collected quote gets its own id: a removed quote's clip must
+	// never attach to a later answer that reused its position.
+	const quoteSeq = useRef(collected.length);
 	const [sideMessages, setSideMessages] = useState<
 		Record<SideRoom, MessageItem[]>
 	>(() => {
@@ -363,11 +380,13 @@ export function SideChatReplyStage({
 		setPending((all) => ({ ...all, [target]: [] }));
 	};
 
-	const removePending = (target: SideRoom) => (id: string) =>
+	const removePending = (target: SideRoom) => (id: string) => {
+		voiceByQuote.current.delete(id);
 		setPending((all) => ({
 			...all,
 			[target]: all[target].filter((q) => q.id !== id)
 		}));
+	};
 
 	/**
 	 * The answer joins that chat's composer as one stacked quote — from a
@@ -382,7 +401,7 @@ export function SideChatReplyStage({
 					excerpt: answer.passage.text,
 					author: answer.passage.author
 				},
-				all[target].length
+				quoteSeq.current++
 			);
 			if (answer.voice) {
 				voiceByQuote.current.set(quote.id, answer.voice);
@@ -400,7 +419,12 @@ export function SideChatReplyStage({
 			};
 		});
 
-	const sendInSide = (target: SideRoom) => (answer: SelectionAnswer) =>
+	// Like the app's `sendNow`: the answers already stacked go along.
+	const sendInSide = (target: SideRoom) => (answer: SelectionAnswer) => {
+		const stacked = pending[target].map((quote) => ({
+			...quote,
+			voice: voiceByQuote.current.get(quote.id) ?? null
+		}));
 		setSideMessages((all) => ({
 			...all,
 			[target]: [
@@ -408,6 +432,7 @@ export function SideChatReplyStage({
 				stackedReply(
 					target,
 					[
+						...stacked,
 						{
 							eventId: answer.passage.eventId,
 							excerpt: answer.passage.text,
@@ -421,6 +446,8 @@ export function SideChatReplyStage({
 				)
 			]
 		}));
+		setPending((all) => ({ ...all, [target]: [] }));
+	};
 
 	function sideAuthorFor(eventId: string) {
 		return room
@@ -560,7 +587,9 @@ export function SideChatReplyStage({
 						menu={menu}
 						badgeOn={badgeOn}
 						stackIcon={stackIcon}
-						initialSelection={sidePresetSelection}
+						initialSelection={
+							room === presetRoom ? sidePresetSelection : null
+						}
 						initialMode={presetMode}
 					>
 						<MessageTimeline
