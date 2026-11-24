@@ -360,7 +360,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 			grid-row: 2;
 			grid-column: 2;
 			justify-self: center;
-			margin-top: 2px;
+
+			// Frank (24 Nov): keep the grey circle clear of the box's round
+			// bottom-right corner, even at two lines.
+			margin: 2px 0 6px;
 		}
 	}
 }
@@ -472,18 +475,21 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 .selectionReply__stackCount {
 	position: absolute;
-	top: 2px;
-	right: 2px;
+
+	// Outside the circle's corner, so the reply-all arrows stay readable.
+	top: -4px;
+	right: -4px;
 	min-width: 16px;
 	height: 16px;
 	padding: 0 4px;
 	box-sizing: border-box;
+	border: 2px solid var(--m3-surface-container-lowest, #fff);
 	border-radius: 8px;
 	background: var(--m3-on-surface-variant, #444748);
 	color: var(--m3-surface-container-lowest, #fff);
-	font-size: 11px;
+	font-size: 10px;
 	font-weight: 600;
-	line-height: 16px;
+	line-height: 12px;
 	text-align: center;
 }
 

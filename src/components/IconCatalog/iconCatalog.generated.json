@@ -1155,8 +1155,8 @@
 		"fileName": "arrow_right_24px.svg",
 		"sourcePath": "src/resources/img/icons/arrow_right_24px.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/session/session.styles.scss"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:arrow-double-down:base",
@@ -1449,6 +1449,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/selectionReply/PassageBlurBar.tsx",
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
 			"src/components/selectionReply/SelectionReplyToolbar.tsx"
 		],
 		"usage": "app-used"
@@ -1583,8 +1584,8 @@
 		"fileName": "calendar-plus.svg",
 		"sourcePath": "src/resources/img/icons/calendar-plus.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": ["src/components/p0v2018/SideChatReplyStage.tsx"],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:calendar-reschedule:base",
@@ -2083,6 +2084,36 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:supervision:200",
+		"family": "supervision",
+		"state": "200",
+		"role": "alternate-outline",
+		"kind": "ui-icon",
+		"size": 32,
+		"fileName": "supervision_200_32.svg",
+		"sourcePath": "src/resources/img/icons/chatroom/supervision_200_32.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:supervision:400",
+		"family": "supervision",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "supervision_400_24.svg",
+		"sourcePath": "src/resources/img/icons/chatroom/supervision_400_24.svg",
+		"exportNames": [],
+		"usageFiles": [
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -2757,6 +2788,7 @@
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
 			"src/components/selectionReply/SelectionReplyToolbar.tsx",
 			"src/components/sessionsList/SessionRailPill.tsx",
 			"src/components/sessionsListItem/SessionListItemLastMessage.tsx"
@@ -3409,7 +3441,10 @@
 		"fileName": "modality-audio-filled.svg",
 		"sourcePath": "src/resources/img/icons/modality-audio-filled.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usageFiles": [
+			"src/components/icons/conversationCreateIcons.ts",
+			"src/components/selectionReply/SelectionReplyPopover.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -3424,8 +3459,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/call/states/IncomingCallCard.tsx",
-			"src/components/icons/conversationCreateIcons.ts",
-			"src/components/selectionReply/SelectionReplyPopover.tsx"
+			"src/components/icons/conversationCreateIcons.ts"
 		],
 		"usage": "app-used"
 	},
@@ -3988,6 +4022,7 @@
 		"sourcePath": "src/resources/img/icons/plus.svg",
 		"exportNames": ["NewEnquiryIcon"],
 		"usageFiles": [
+			"src/components/p0v2018/SideChatReplyStage.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/resources/img/icons.ts"
@@ -4096,6 +4131,47 @@
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:reply-all:base",
+		"family": "reply-all",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "reply-all.svg",
+		"sourcePath": "src/resources/img/icons/reply-all.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/selectionReply/SelectionReplyPopover.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:reply-bubble:base",
+		"family": "reply-bubble",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "reply-bubble.svg",
+		"sourcePath": "src/resources/img/icons/reply-bubble.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/selectionReply/SelectionReplyLayer.tsx"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:reply-stack:base",
+		"family": "reply-stack",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "reply-stack.svg",
+		"sourcePath": "src/resources/img/icons/reply-stack.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:richtext-toggle:base",
@@ -4372,8 +4448,6 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/selectionReply/SelectionReplyToolbar.tsx",
-			"src/components/session/EnquiryTeamAction.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/teamDiscussion/TeamDiscussionBadge.tsx",
 			"src/resources/img/icons.ts"
@@ -4484,6 +4558,8 @@
 		"usageFiles": [
 			"src/components/chatStage/ChannelMenu.tsx",
 			"src/components/message/MessageItemComponent.tsx",
+			"src/components/p0v2018/SideChatReplyStage.tsx",
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
 			"src/components/selectionReply/SelectionReplyToolbar.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsList/SessionRailPill.tsx",
@@ -4502,6 +4578,22 @@
 		"sourcePath": "src/resources/img/icons/supervision_on_400_24px.svg",
 		"exportNames": [],
 		"usageFiles": ["src/components/chatStage/ChannelSwitcherFab.tsx"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:team-discussion-compact:base",
+		"family": "team-discussion-compact",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "team-discussion-compact.svg",
+		"sourcePath": "src/resources/img/icons/team-discussion-compact.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
+			"src/components/selectionReply/SelectionReplyToolbar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -5032,13 +5124,14 @@
 			"src/components/notifications/EventNotice.tsx",
 			"src/components/notifications/Notification.tsx",
 			"src/components/overlay/Overlay.tsx",
+			"src/components/p0v2018/SideChatReplyStage.tsx",
 			"src/components/productTour/ProductTourTooltip.tsx",
 			"src/components/profile/AskerAboutMeData.tsx",
 			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
 			"src/components/selectionReply/SelectionReplyToolbar.tsx",
 			"src/components/session/AcceptAssign.tsx",
 			"src/components/session/EnquiryTakenNotice.tsx",
-			"src/components/session/session.styles.scss",
 			"src/components/session/SessionStream.tsx",
 			"src/components/sessionHeader/HeaderPlusMenu.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",

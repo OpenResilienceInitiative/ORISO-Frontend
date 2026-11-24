@@ -13,7 +13,7 @@ import { ReactComponent as ReplyBubbleIcon } from '../../resources/img/icons/rep
 import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/team-discussion-compact.svg';
 import { PassageBlurBar } from './PassageBlurBar';
 import { passageBlurFromRange, type PassageBlur } from './passageBlur';
 import {

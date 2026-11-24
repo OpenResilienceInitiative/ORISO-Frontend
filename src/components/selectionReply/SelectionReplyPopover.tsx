@@ -13,7 +13,7 @@ import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
 import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio-filled.svg';
-import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-stack.svg';
+import { ReactComponent as CollectIcon } from '../../resources/img/icons/reply-all.svg';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
@@ -148,12 +148,21 @@ export const SelectionReplyPopover = forwardRef<
 			// Resetting the height to measure it throws away the scroll
 			// position; keep it, or the caret falls out of view (Frank,
 			// Shift+Enter on line 10).
-			const scrollTop = field.scrollTop;
-			field.style.height = 'auto';
 			// FE#2494 (Frank): more room when writing — up to 10 lines, then
 			// the field scrolls inside and keeps the caret in view.
-			field.style.height = `${Math.min(field.scrollHeight, 10 * 20 + 16)}px`;
-			field.scrollTop = scrollTop;
+			const maxHeight = 10 * 20 + 16;
+			if (field.scrollHeight > field.clientHeight) {
+				// Growing (or already full): never collapse the field to
+				// measure it. Collapsing a full field on every key made
+				// Chrome skip repainting the newest letters (Frank, line 9+).
+				field.style.height = `${Math.min(field.scrollHeight, maxHeight)}px`;
+			} else {
+				// Possibly shrinking: measure from 'auto'.
+				const scrollTop = field.scrollTop;
+				field.style.height = 'auto';
+				field.style.height = `${Math.min(field.scrollHeight, maxHeight)}px`;
+				field.scrollTop = scrollTop;
+			}
 			// Typing at the end keeps the newest line in view.
 			if (
 				document.activeElement === field &&
