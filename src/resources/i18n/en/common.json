@@ -2251,6 +2251,13 @@
 			"quoteUnknown": "Earlier message",
 			"jumpToQuote": "Jump to the quoted passage from {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Redaction removed",
+			"by": "by {{name}}",
+			"byMe": "by you",
+			"text": "The message from {{name}} is readable again.",
+			"textAnonymous": "The message is readable again."
+		},
 		"selectionReply": {
 			"blur": "Blur",
 			"blurredLabel": "Blurred passage",

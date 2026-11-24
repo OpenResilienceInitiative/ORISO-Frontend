@@ -9,7 +9,6 @@ import {
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import { MessageItemComponent } from '../message/MessageItemComponent';
-import { ChatSystemMessageCard } from '../message/ChatSystemMessageCard';
 import {
 	MOCK_ASKER_MATRIX_ID,
 	mockActiveSession1on1,
@@ -80,36 +79,25 @@ const Timeline = ({ mine = false }: { mine?: boolean }) => (
 								})}
 								{...handlers}
 							/>
-							{mine ? (
-								/* I removed it: my side, avatar right
-								   (Figma 8606:42438). */
-								<ChatSystemMessageCard
-									isMyMessage
-									title="Schwärzung aufgehoben"
-									subtitle="von Ihnen"
-									timestamp="09:20"
-									dataCy="blur-removed-notice"
-								>
-									<p>
-										Die Nachricht von Sanftes Alpaka Kala
-										ist wieder lesbar.
-									</p>
-								</ChatSystemMessageCard>
-							) : (
-								/* Someone else removed it: avatar left
-								   (Figma 9895:31375). */
-								<ChatSystemMessageCard
-									title="Schwärzung aufgehoben"
-									subtitle="von Karina P"
-									timestamp="09:20"
-									dataCy="blur-removed-notice"
-								>
-									<p>
-										Die Nachricht von Sanftes Alpaka Kala
-										ist wieder lesbar.
-									</p>
-								</ChatSystemMessageCard>
-							)}
+							{/* The real row: the formatter turns the lifting
+							   redaction into `t: 'blur-removed'`. */}
+							<MessageItemComponent
+								{...mockMessageItemComponentProps({
+									_id: '$redaction',
+									t: 'blur-removed',
+									message: '',
+									isMyMessage: mine,
+									userId: mine ? '@me:hs' : '@karina:hs',
+									displayName: 'Karina P',
+									username: 'karina',
+									messageDate: undefined,
+									blurRemoved: {
+										targetEventId: '$msg',
+										targetSenderName: 'Sanftes Alpaka Kala'
+									}
+								} as never)}
+								{...handlers}
+							/>
 						</div>
 					</ActiveSessionContext.Provider>
 				</UserDataContext.Provider>

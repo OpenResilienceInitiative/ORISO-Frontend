@@ -680,6 +680,13 @@
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
 		},
+		"blurRemoved": {
+			"title": "Schwärzung aufgehoben",
+			"by": "von {{name}}",
+			"byMe": "von dir",
+			"text": "Die Nachricht von {{name}} ist wieder lesbar.",
+			"textAnonymous": "Die Nachricht ist wieder lesbar."
+		},
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."

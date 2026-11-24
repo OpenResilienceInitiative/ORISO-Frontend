@@ -2226,6 +2226,13 @@
 			"quoteUnknown": "ቀዳማይ መልእኽቲ",
 			"jumpToQuote": "ናብቲ ካብ {{author}} ዝተጠቕሰ ክፋል ኪድ"
 		},
+		"blurRemoved": {
+			"title": "ምሕባእ ተላዒሉ",
+			"by": "ብ{{name}}",
+			"byMe": "ብኣኹም",
+			"text": "መልእኽቲ {{name}} ደጊሙ ይንበብ።",
+			"textAnonymous": "እቲ መልእኽቲ ደጊሙ ይንበብ።"
+		},
 		"selectionReply": {
 			"blur": "ሕባእ",
 			"blurredLabel": "ዝተሓብአ ክፋል",

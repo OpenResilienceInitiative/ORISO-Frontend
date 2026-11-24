@@ -6,6 +6,7 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { parsePassageBlurRemovedReason } from '../components/selectionReply/passageBlurEvents';
 import { parseCallLifecycleMessage } from './callLifecycleMessage';
 import {
 	getPassageReplies,
@@ -86,12 +87,69 @@ export const passageReplyAudioAttachment = (
 	};
 };
 
+/** Timeline marker of a lifted blur (#2494 *9); `MessageItem.t`. */
+export const BLUR_REMOVED_MESSAGE_TYPE = 'blur-removed';
+
+const memberName = (matrixRoom: any, userId: string): string => {
+	const member = matrixRoom?.getMember?.(userId);
+	return (
+		member?.name ||
+		member?.rawDisplayName ||
+		userId?.split(':')[0]?.substring(1) ||
+		''
+	);
+};
+
+/**
+ * #2494 *9: the redaction that lifted a blur becomes the platform notice
+ * "Schwärzung aufgehoben von <Name>" at the moment it happened; the
+ * redacted blur itself shows nothing (it was never a message).
+ */
+const formatBlurRemoval = (event: any, matrixRoom: any) => {
+	const removal = parsePassageBlurRemovedReason(
+		event?.getContent?.()?.reason
+	);
+	if (!removal) return null;
+	const removerId = event?.getSender?.() || '';
+	const target = removal.targetEventId
+		? matrixRoom?.findEventById?.(removal.targetEventId)
+		: undefined;
+	const targetSenderId = target?.getSender?.();
+	return {
+		_id: event?.getId?.() || `${removerId}-${event?.getTs?.()}`,
+		msg: '',
+		ts: new Date(event?.getTs?.() || Date.now()),
+		t: BLUR_REMOVED_MESSAGE_TYPE,
+		u: {
+			_id: removerId,
+			username: removerId?.split(':')[0]?.substring(1) || 'unknown',
+			name: memberName(matrixRoom, removerId)
+		},
+		blurRemoved: {
+			targetEventId: removal.targetEventId,
+			targetSenderName: targetSenderId
+				? memberName(matrixRoom, targetSenderId)
+				: undefined
+		}
+	};
+};
+
+const isLiftedBlur = (event: any): boolean => {
+	const redaction =
+		event?.getUnsigned?.()?.redacted_because ??
+		event?.getRedactionEvent?.();
+	return Boolean(parsePassageBlurRemovedReason(redaction?.content?.reason));
+};
+
 export const formatMatrixTimelineEvent = (
 	event: any,
 	matrixRoom: any,
 	encryptedFallbackText: string
 ) => {
 	const eventType = event?.getType?.();
+	if (eventType === 'm.room.redaction') {
+		return formatBlurRemoval(event, matrixRoom);
+	}
 	if (eventType !== 'm.room.message' && eventType !== 'm.room.encrypted') {
 		return null;
 	}
@@ -105,6 +163,9 @@ export const formatMatrixTimelineEvent = (
 	// Matrix redact (#827): redacted events keep m.room.message type but
 	// empty content — surface as legacy deleted state for MessageItem.
 	if (event?.isRedacted?.()) {
+		if (isLiftedBlur(event)) {
+			return null;
+		}
 		return {
 			_id:
 				event?.getId?.() ||

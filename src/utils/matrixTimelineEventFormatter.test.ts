@@ -575,3 +575,67 @@ describe('answered passages (ADR-022, #2202)', () => {
 		expect(voiceDurationMsFromFileName(voice.file.name)).toBe(4000);
 	});
 });
+
+describe('lifted blur (#2494 *9)', () => {
+	const room = {
+		getMember: (id: string) =>
+			({
+				'@karina:hs': { name: 'Karina P' },
+				'@kala:hs': { name: 'Sanftes Alpaka Kala' }
+			})[id],
+		findEventById: (id: string) =>
+			id === '$msg:hs' ? { getSender: () => '@kala:hs' } : undefined
+	};
+	const redaction = (reason?: string) => ({
+		getType: () => 'm.room.redaction',
+		getContent: () => (reason ? { reason } : {}),
+		getSender: () => '@karina:hs',
+		getId: () => '$redaction:hs',
+		getTs: () => 1700000600000
+	});
+
+	it('turns the redaction that lifted a blur into the notice', () => {
+		const formatted = formatMatrixTimelineEvent(
+			redaction('org.oriso.passage_blur.removed $msg:hs'),
+			room,
+			''
+		);
+		expect(formatted).toMatchObject({
+			_id: '$redaction:hs',
+			t: 'blur-removed',
+			u: { _id: '@karina:hs', name: 'Karina P' },
+			blurRemoved: {
+				targetEventId: '$msg:hs',
+				targetSenderName: 'Sanftes Alpaka Kala'
+			}
+		});
+		expect(formatted?.ts.getTime()).toBe(1700000600000);
+	});
+
+	it('ignores every other redaction', () => {
+		expect(formatMatrixTimelineEvent(redaction(), room, '')).toBeNull();
+		expect(
+			formatMatrixTimelineEvent(redaction('spam'), room, '')
+		).toBeNull();
+	});
+
+	it('shows nothing for the redacted blur itself (not "gelöscht")', () => {
+		const formatted = formatMatrixTimelineEvent(
+			{
+				...makeEvent({}),
+				getType: () => 'm.room.encrypted',
+				isRedacted: () => true,
+				getUnsigned: () => ({
+					redacted_because: {
+						content: {
+							reason: 'org.oriso.passage_blur.removed $msg:hs'
+						}
+					}
+				})
+			},
+			room,
+			''
+		);
+		expect(formatted).toBeNull();
+	});
+});

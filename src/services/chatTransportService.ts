@@ -105,6 +105,8 @@ export interface SendPassageBlurOptions {
 export interface RedactMessageOptions {
 	matrixRoomId: string;
 	targetEventId: string;
+	/** Matrix redaction `reason` (#2494 *9: marks a lifted blur). */
+	reason?: string;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -365,6 +367,7 @@ class ChatTransportService {
 	public async redactMessage({
 		matrixRoomId,
 		targetEventId,
+		reason,
 		matrixClientServiceOverride
 	}: RedactMessageOptions): Promise<any> {
 		const matrixClientService =
@@ -373,10 +376,16 @@ class ChatTransportService {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
-		const response = await matrixClientService.redactEvent(
-			matrixRoomId,
-			targetEventId
-		);
+		const response = reason
+			? await matrixClientService.redactEvent(
+					matrixRoomId,
+					targetEventId,
+					{ reason }
+				)
+			: await matrixClientService.redactEvent(
+					matrixRoomId,
+					targetEventId
+				);
 
 		return { success: true, event_id: response.event_id };
 	}
