@@ -81,6 +81,11 @@ export interface ConsultationHoursFormProps {
 	slot?: { start: Date; end: Date };
 	/** One's entries, to say when a one-off lies over a Sperrzeit. */
 	entries?: CalendarEntry[];
+	/**
+	 * The last save met a Sperrzeit outside the loaded entries: the form
+	 * says so, and saving again releases over it.
+	 */
+	blockerConflict?: boolean;
 	now?: Date;
 	onClose: () => void;
 }
@@ -97,6 +102,7 @@ export const useConsultationHoursForm = ({
 	onSaveOneOff,
 	slot,
 	entries = [],
+	blockerConflict = false,
 	now = new Date(),
 	onClose
 }: ConsultationHoursFormProps): DialogForm => {
@@ -169,17 +175,29 @@ export const useConsultationHoursForm = ({
 		});
 
 	const onceStart = onTheDay(once.day, once.start);
-	const onceEnd = onTheDay(once.day, once.end);
+	/* An end at 00:00 after a later start is the next midnight, so
+	   23:00–00:00 stays one hour. */
+	const endsAtMidnight =
+		once.start !== null &&
+		once.end !== null &&
+		once.end.hour() === 0 &&
+		once.end.minute() === 0 &&
+		(once.start.hour() > 0 || once.start.minute() > 0);
+	const onceEnd = endsAtMidnight
+		? onTheDay(once.day?.add(1, 'day') ?? null, once.end)
+		: onTheDay(once.day, once.end);
 	const onceInvalid =
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
 	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
 	   overrides what was blocked). */
-	const overBlocker = entries.some(
-		(e) =>
-			e.type === 'blocker' &&
-			new Date(e.start) < onceEnd &&
-			new Date(e.end) > onceStart
-	);
+	const overBlocker =
+		blockerConflict ||
+		entries.some(
+			(e) =>
+				e.type === 'blocker' &&
+				new Date(e.start) < onceEnd &&
+				new Date(e.end) > onceStart
+		);
 
 	const modeSwitch = onSaveOneOff && (
 		<div

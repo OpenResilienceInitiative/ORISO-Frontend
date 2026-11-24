@@ -7969,6 +7969,7 @@
 			"onceNoticeHours": "{{count}} hours before",
 			"onceNoticeHours_one": "{{count}} hour before",
 			"overBlocker": "This time lies in a blocked time. The office hours release it for advice seekers anyway.",
+			"overBlockerConflict": "This time lies in a blocked time. Save again to release it for advice seekers anyway.",
 			"onceInvalid": "The end must be after the start and in the future.",
 			"onceSave": "Release office hours",
 			"addWindow": "Another time window on {{day}}",

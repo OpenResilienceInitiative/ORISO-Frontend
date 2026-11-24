@@ -301,9 +301,13 @@ export const CalendarPageWired = () => {
 	const [oneOffs, setOneOffs] = useState<OneOffConsultation[]>();
 	const [consultationHoursFailed, setConsultationHoursFailed] =
 		useState(false);
+	/** The latest one-off read: an older answer never replaces it. */
+	const oneOffRead = useRef(0);
 	/** Read once on mount; again from ⋮ when that failed. */
 	const loadConsultationHours = useCallback(
 		(cancelled: () => boolean = () => false) => {
+			const read = ++oneOffRead.current;
+			const stale = () => cancelled() || read !== oneOffRead.current;
 			setConsultationHoursFailed(false);
 			apiGetCalendarConsultationHours().then(
 				(dto) =>
@@ -312,10 +316,12 @@ export const CalendarPageWired = () => {
 				() => !cancelled() && setConsultationHoursFailed(true)
 			);
 			/* One-off Sprechzeiten (FE#2494 *2b): a UserService without
-			   them answers with an error, and "Einmalig" stays away. */
+			   them answers with an error, and "Einmalig" stays away. A list
+			   read before is kept: a later failure is a hiccup, not a
+			   UserService without them. */
 			apiGetCalendarConsultationOnce().then(
-				(list) => !cancelled() && setOneOffs(list.map(oneOffFromApi)),
-				() => !cancelled() && setOneOffs(undefined)
+				(list) => !stale() && setOneOffs(list.map(oneOffFromApi)),
+				() => undefined
 			);
 		},
 		[]

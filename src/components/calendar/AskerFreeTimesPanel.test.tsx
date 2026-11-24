@@ -123,6 +123,29 @@ describe('Freie Sprechzeiten (FE#2494 *2c)', () => {
 		);
 	});
 
+	it('offers phone when video has no free times', async () => {
+		const loadSlots = vi.fn((_id: number, _from: Date, _to: Date, kind) =>
+			Promise.resolve(kind === 'PHONE' ? [slot()] : [])
+		);
+		render(
+			<AskerFreeTimesPanel
+				sessionId={7}
+				counsellorName="Laura Berger"
+				loadSlots={loadSlots}
+				bookSlot={vi.fn()}
+				onBooked={vi.fn()}
+			/>
+		);
+		expect(
+			await screen.findByRole('button', { name: '10:00' })
+		).toBeTruthy();
+		expect(
+			screen
+				.getByRole('radio', { name: 'calendar.freeTimes.medium.phone' })
+				.getAttribute('aria-checked')
+		).toBe('true');
+	});
+
 	it('changes between video and phone with the arrow keys', async () => {
 		panel([slot()]);
 		const video = await screen.findByRole('radio', {

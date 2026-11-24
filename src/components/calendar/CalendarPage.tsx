@@ -187,9 +187,10 @@ import {
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
 import { ConsultationHoursDialog } from './ConsultationHoursDialog';
-import type {
-	ConsultationHours,
-	OneOffConsultation
+import {
+	isConsultationOnceOverBlocker,
+	type ConsultationHours,
+	type OneOffConsultation
 } from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
@@ -1617,10 +1618,7 @@ export const CalendarPage = ({
 	   tab "Sprechzeit" of "Neuer Eintrag", FE#2494 *2b) would show the old
 	   set and save it back over this one. A failed save keeps the draft
 	   for a retry. */
-	const saveConsultationHours = (hours: ConsultationHours) => {
-		const saved = run(onSaveConsultationHours?.(hours), {
-			message: t('calendar.consultationHours.saved')
-		});
+	const settleConsultationSave = (saved: boolean | Promise<boolean>) => {
 		if (typeof saved === 'boolean') {
 			if (saved) setDialog(null);
 			return;
@@ -1631,20 +1629,35 @@ export const CalendarPage = ({
 			if (ok) setDialog(null);
 		});
 	};
-	const saveOneOffConsultation = (oneOff: OneOffConsultation) => {
-		const saved = run(onSaveOneOffConsultation?.(oneOff), {
-			message: t('calendar.consultationHours.onceSaved')
-		});
-		if (typeof saved === 'boolean') {
-			if (saved) setDialog(null);
-			return;
-		}
-		setSavingConsultationHours(true);
-		void saved.then((ok) => {
-			setSavingConsultationHours(false);
-			if (ok) setDialog(null);
-		});
-	};
+	const saveConsultationHours = (hours: ConsultationHours) =>
+		settleConsultationSave(
+			run(onSaveConsultationHours?.(hours), {
+				message: t('calendar.consultationHours.saved')
+			})
+		);
+	/* A Sperrzeit the loaded entries do not show refuses the release: the
+	   form says so, and saving again releases over it. */
+	const [oneOffBlockerConflict, setOneOffBlockerConflict] = useState(false);
+	useEffect(() => {
+		if (!dialog) setOneOffBlockerConflict(false);
+	}, [dialog]);
+	const saveOneOffConsultation = (oneOff: OneOffConsultation) =>
+		settleConsultationSave(
+			run(
+				onSaveOneOffConsultation?.(oneOff),
+				{ message: t('calendar.consultationHours.onceSaved') },
+				(error) => {
+					if (!isConsultationOnceOverBlocker(error))
+						return { message: t('calendar.saveFailed') };
+					setOneOffBlockerConflict(true);
+					return {
+						message: t(
+							'calendar.consultationHours.overBlockerConflict'
+						)
+					};
+				}
+			)
+		);
 
 	const editConsultationHours =
 		consultant && !!consultationHours && !!onSaveConsultationHours;
@@ -3460,6 +3473,7 @@ export const CalendarPage = ({
 							: undefined
 					}
 					savingConsultationHours={savingConsultationHours}
+					oneOffBlockerConflict={oneOffBlockerConflict}
 					onSaveOneOffConsultation={
 						editConsultationHours && onSaveOneOffConsultation
 							? saveOneOffConsultation

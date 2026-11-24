@@ -1,7 +1,10 @@
 /**
  * *19 (Frank, 2026-11-17): "Links ohne Termin" in the calendar list. The
  * former "Meine Direktlinks" page lives here now: copy, QR code, edit.
- * FE#2494 *2a/*2b: as compact rows, without a create button of its own.
+ * FE#2494 *2a/*2b: as compact rows, without a create button of its own
+ * (product decision). New links come from "Chat erstellen" (direct link)
+ * and, from the calendar, "Neuer Eintrag" → Termin → "Neue Person per
+ * Direkteinladung", which hands the chosen time to that flow.
  */
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';

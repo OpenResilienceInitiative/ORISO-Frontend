@@ -243,10 +243,11 @@ const DAY_TO = 21 * 60;
  * the grid widens to them, so a grip always sits at its own time and
  * never at a cut-off edge of the grid (review 4574981882).
  */
-const planBounds = (plan?: WorkingPlan) => {
+const planBounds = (plan?: WorkingPlan, consultation: WorkingHours = []) => {
 	const windows = [
 		...(plan?.hours ?? []),
-		...Object.values(plan?.exceptions ?? {}).flat()
+		...Object.values(plan?.exceptions ?? {}).flat(),
+		...consultation
 	];
 	return windows.reduce(
 		(bounds, w) => ({
@@ -271,12 +272,21 @@ const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
 const gridHours = (
 	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
 	plan?: WorkingPlan,
-	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = [],
+	/* One's own Sprechstunden (FE#2494 *3): their band must be visible too. */
+	consultation: {
+		windows?: WorkingHours;
+		once?: { start: Date; end: Date }[];
+	} = {}
 ) => {
-	const bounds = planBounds(plan);
+	const bounds = planBounds(plan, consultation.windows);
 	return visibleHours(
 		[
 			...entries,
+			...(consultation.once ?? []).map((once) => ({
+				start: once.start.toISOString(),
+				end: once.end.toISOString()
+			})),
 			...proposals.map(({ proposal }) => ({
 				start: proposal.start,
 				end: proposal.end
@@ -288,12 +298,8 @@ const gridHours = (
 };
 
 /** {@link gridHours} as minutes since midnight. */
-export const gridMinutes = (
-	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
-	plan?: WorkingPlan,
-	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
-) => {
-	const hours = gridHours(entries, plan, proposals);
+export const gridMinutes = (...args: Parameters<typeof gridHours>) => {
+	const hours = gridHours(...args);
 	return {
 		firstMinute: slotMinutes(hours.min),
 		lastMinute: slotMinutes(hours.max)
@@ -676,8 +682,12 @@ export const CalendarView = ({
 	// The usual working day, widened so no entry, no proposal and no grip
 	// falls outside the grid.
 	const hours = useMemo(
-		() => gridHours(entries, workingPlan, proposals),
-		[entries, workingPlan, proposals]
+		() =>
+			gridHours(entries, workingPlan, proposals, {
+				windows: consultationWindows,
+				once: consultationOnce
+			}),
+		[entries, workingPlan, proposals, consultationWindows, consultationOnce]
 	);
 	const firstMinute = slotMinutes(hours.min);
 	const lastMinute = slotMinutes(hours.max);

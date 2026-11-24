@@ -426,8 +426,9 @@
 		gap: 4px;
 	}
 
-	&--off &__medium,
-	&--off .invitationRow__body {
+	/* Inactive: only the medium icon is greyed; name, details and chip
+	   keep their full contrast (WCAG AA). */
+	&--off &__medium {
 		opacity: 0.6;
 	}
 }

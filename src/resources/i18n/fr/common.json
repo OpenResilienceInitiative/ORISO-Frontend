@@ -8054,6 +8054,7 @@
 			"onceNoticeHours": "{{count}} h avant",
 			"onceNoticeHours_one": "{{count}} h avant",
 			"overBlocker": "Ce créneau se trouve dans une période bloquée. La permanence le libère quand même.",
+			"overBlockerConflict": "Ce créneau se trouve dans une période bloquée. Enregistrez à nouveau pour le libérer quand même.",
 			"onceInvalid": "La fin doit être après le début et dans le futur.",
 			"onceSave": "Libérer la permanence",
 			"addWindow": "Autre plage horaire le {{day}}",

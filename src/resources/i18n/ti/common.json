@@ -8021,6 +8021,7 @@
 			"onceNoticeHours": "{{count}} ሰዓት ቅድሚኡ",
 			"onceNoticeHours_one": "{{count}} ሰዓት ቅድሚኡ",
 			"overBlocker": "እዚ ግዜ ኣብ ዕጹው ግዜ እዩ። ግዜ ምኽሪ ግን ይኸፍቶ።",
+			"overBlockerConflict": "እዚ ግዜ ኣብ ዕጹው ግዜ እዩ። ብዝኾነ ኽትከፍቶ እንደገና ዓቅብ።",
 			"onceInvalid": "መወዳእታ ድሕሪ መጀመርታን ኣብ መጻእን ክኸውን ኣለዎ።",
 			"onceSave": "ግዜ ምኽሪ ክፈት",
 			"addWindow": "ካልእ ናይ ግዜ መስኮት ኣብ {{day}}",

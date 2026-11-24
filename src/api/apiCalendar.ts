@@ -326,7 +326,12 @@ export const apiCreateCalendarConsultationOnce = (once: {
 			noticeMinutes: once.noticeMinutes,
 			overBlocker: once.overBlocker
 		}),
-		responseHandling: WRITE_HANDLING
+		// The 409 carries why: a Sperrzeit the form could not see.
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+		]
 	});
 
 export const apiDeleteCalendarConsultationOnce = (id: string): Promise<void> =>

@@ -84,6 +84,8 @@ export interface NewEntryDialogProps {
 	savingConsultationHours?: boolean;
 	/** "Einmalig": releases the chosen stretch once (FE#2494 *2b). */
 	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => void;
+	/** The last one-off save met a Sperrzeit the form could not see. */
+	oneOffBlockerConflict?: boolean;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
@@ -138,6 +140,7 @@ export const NewEntryDialog = ({
 	onSaveConsultationHours,
 	savingConsultationHours,
 	onSaveOneOffConsultation,
+	oneOffBlockerConflict,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -209,6 +212,7 @@ export const NewEntryDialog = ({
 		onSaveOneOff: onSaveOneOffConsultation,
 		slot: initialTab === 'consultation' ? slot : undefined,
 		entries,
+		blockerConflict: oneOffBlockerConflict,
 		now,
 		onClose
 	});

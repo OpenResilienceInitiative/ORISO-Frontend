@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	ConsultationHoursDialog,
@@ -274,6 +280,55 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 				(w: { weekday: number }) => w.weekday
 			)
 		).toEqual([4]);
+	});
+
+	const saveOnce = (props: {
+		slot: { start: Date; end: Date };
+		blockerConflict?: boolean;
+	}) => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined,
+				...props
+			});
+			return null;
+		};
+		render(<Form />);
+		const save = form?.actions.find(
+			(a) => a.testId === 'consultation-once-save'
+		);
+		expect(save?.disabled).toBe(false);
+		act(() => save?.onClick?.());
+		return onSaveOneOff.mock.calls[0][0];
+	};
+
+	it('keeps a one-off that ends at midnight on the next day', () => {
+		const saved = saveOnce({
+			slot: {
+				start: new Date(2026, 10, 25, 23, 0),
+				end: new Date(2026, 10, 26, 0, 0)
+			}
+		});
+		expect(saved.start).toEqual(new Date(2026, 10, 25, 23, 0));
+		expect(saved.end).toEqual(new Date(2026, 10, 26, 0, 0));
+	});
+
+	it('releases over a Sperrzeit the server named, though none is loaded', () => {
+		const slot = {
+			start: new Date(2026, 11, 20, 10, 0),
+			end: new Date(2026, 11, 20, 11, 0)
+		};
+		expect(saveOnce({ slot }).overBlocker).toBe(false);
+		cleanup();
+		expect(saveOnce({ slot, blockerConflict: true }).overBlocker).toBe(
+			true
+		);
 	});
 
 	it('switches "Einmalig" and "Jede Woche" with the arrow keys', () => {

@@ -8054,6 +8054,7 @@
 			"onceNoticeHours": "{{count}} sa önce",
 			"onceNoticeHours_one": "{{count}} sa önce",
 			"overBlocker": "Bu zaman engellenmiş bir zamana denk geliyor. Görüşme saati onu yine de açar.",
+			"overBlockerConflict": "Bu zaman engellenmiş bir zamana denk geliyor. Yine de açmak için tekrar kaydedin.",
 			"onceInvalid": "Bitiş, başlangıçtan sonra ve gelecekte olmalı.",
 			"onceSave": "Görüşme saatini aç",
 			"addWindow": "{{day}} için başka zaman aralığı",

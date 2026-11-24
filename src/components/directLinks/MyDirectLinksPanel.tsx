@@ -105,7 +105,8 @@ export const MyDirectLinksPanel = ({
 	description?: string;
 	/**
 	 * FE#2494 *2a/*2b: the calendar lists links as compact rows and has no
-	 * create button of its own: "Neuer Eintrag" creates them.
+	 * create button of its own (product decision); see CalendarLinksSection
+	 * for where new links come from.
 	 */
 	compact?: boolean;
 } = {}) => {

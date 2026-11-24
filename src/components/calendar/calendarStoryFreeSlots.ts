@@ -43,12 +43,16 @@ export const storyFreeSlots = (
 	_medium: SelfBookingMedium
 ) => Promise.resolve(storyFreeSlotList(from));
 
+/** Books like UserService: a request-mode slot comes back as a request. */
 export const storyBookSlot = (
-	_sessionId: number,
+	sessionId: number,
 	slot: AppointmentSlot & { kind: SelfBookingMedium }
-) =>
+): Promise<SessionAppointment> =>
 	Promise.resolve({
-		id: 1,
+		id: `story-${slot.startTime}`,
+		sessionId,
 		startTime: slot.startTime,
-		endTime: slot.endTime
-	} as unknown as SessionAppointment);
+		endTime: slot.endTime,
+		status: slot.bookingMode === 'REQUEST' ? 'REQUESTED' : 'SCHEDULED',
+		kind: slot.kind
+	});

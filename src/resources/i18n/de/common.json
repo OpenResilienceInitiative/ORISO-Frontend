@@ -8044,6 +8044,7 @@
 			"onceNoticeHours": "{{count}} Std. vorher",
 			"onceNoticeHours_one": "{{count}} Std. vorher",
 			"overBlocker": "Diese Zeit liegt in einer Sperrzeit. Die Sprechzeit gibt sie trotzdem für Ratsuchende frei.",
+			"overBlockerConflict": "Diese Zeit liegt in einer Sperrzeit. Speichern Sie erneut, um sie trotzdem für Ratsuchende freizugeben.",
 			"onceInvalid": "Das Ende muss nach dem Beginn und in der Zukunft liegen.",
 			"onceSave": "Sprechzeit freigeben",
 			"addWindow": "Weiteres Zeitfenster am {{day}}",

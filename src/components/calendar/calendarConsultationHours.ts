@@ -197,3 +197,9 @@ export const oneOffFromApi = (dto: {
 /** "Buchbar bis …" for a one-off Sprechzeit, in minutes before the start. */
 export const ONE_OFF_NOTICE_MINUTES = [0, 30, 60, 120, 720, 1440] as const;
 export const DEFAULT_ONE_OFF_NOTICE = 60;
+
+/** A one-off save refused: it lies over a Sperrzeit and was not released over it. */
+export const isConsultationOnceOverBlocker = (error: unknown) =>
+	error instanceof Response &&
+	error.status === 409 &&
+	error.headers.get('X-Reason') === 'CONSULTATION_ONCE_OVER_BLOCKER';

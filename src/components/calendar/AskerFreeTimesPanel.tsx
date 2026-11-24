@@ -77,6 +77,9 @@ export const AskerFreeTimesPanel = ({
 	/* What the last booking did, in the words of "Termin buchen". */
 	const [notice, setNotice] = useState<'booked' | 'requested' | 'limit'>();
 	const [reads, setReads] = useState(0);
+	/* Until the asker picks a medium, an empty one hands over to the next:
+	   the panel stays away only when no permitted medium has free times. */
+	const [probing, setProbing] = useState(true);
 
 	useEffect(() => {
 		let active = true;
@@ -84,6 +87,14 @@ export const AskerFreeTimesPanel = ({
 		loadSlots(sessionId, from, to, medium).then(
 			(found) => {
 				if (!active) return;
+				if (probing) {
+					const next = media[media.indexOf(medium) + 1];
+					if (found.length === 0 && next) {
+						setMedium(next);
+						return;
+					}
+					if (found.length > 0) setProbing(false);
+				}
 				setSlots(found);
 				setDay((chosen) =>
 					chosen && slotTimesOn(found, chosen).length > 0
@@ -96,10 +107,13 @@ export const AskerFreeTimesPanel = ({
 		return () => {
 			active = false;
 		};
+		// `probing` and `media` are read as they are when this medium loads.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sessionId, medium, loadSlots, reads]);
 
 	const chooseMedium = (value: SelfBookingMedium) => {
 		if (value === medium) return;
+		setProbing(false);
 		setMedium(value);
 		/* The other medium's times are not this one's: none is shown or
 		   booked until this medium's own answer is in. */
@@ -157,12 +171,11 @@ export const AskerFreeTimesPanel = ({
 		}
 	};
 
-	/* No office hours (or none left) in the booking window of the first
-	   medium read: no panel at all (decision *2c). A failed read also
+	/* No office hours (or none left) in the booking window of any
+	   permitted medium: no panel at all (decision *2c). A failed read also
 	   stays quiet: "Meine Termine" next to it is what the asker came for. */
 	if (slots === 'error') return null;
-	if (Array.isArray(slots) && slots.length === 0 && medium === media[0])
-		return null;
+	if (Array.isArray(slots) && slots.length === 0 && probing) return null;
 
 	return (
 		<section
