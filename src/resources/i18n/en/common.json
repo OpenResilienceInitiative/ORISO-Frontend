@@ -4279,7 +4279,8 @@
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
 			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
-			"extend": "Extend access"
+			"extend": "Extend access",
+			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",
@@ -4753,7 +4754,8 @@
 				"agencyFallback": "Counseling center {{id}}",
 				"filteredOutAll": "Your search and filters hide every consultation.",
 				"removeFilters": "Remove filters",
-				"removeFiltersKeepSearch": "Remove filters, keep search"
+				"removeFiltersKeepSearch": "Remove filters, keep search",
+				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
 			},
 			"menu": {
 				"ariaLabel": "List options"

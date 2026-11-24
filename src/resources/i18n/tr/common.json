@@ -4313,7 +4313,8 @@
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
 			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"extend": "Erişimi uzat"
+			"extend": "Erişimi uzat",
+			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
@@ -4770,7 +4771,8 @@
 				"agencyFallback": "Danışma merkezi {{id}}",
 				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
 				"removeFilters": "Filtreleri kaldır",
-				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru",
+				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

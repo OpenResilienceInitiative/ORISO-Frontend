@@ -4320,7 +4320,8 @@
 		"readOnly": {
 			"notice": "Доступ только для чтения: вы можете читать эту консультацию, но не можете отправлять сообщения.",
 			"noticeUntil": "Доступ только для чтения до {{until}}: вы можете читать эту консультацию, но не можете отправлять сообщения.",
-			"extend": "Продлить доступ"
+			"extend": "Продлить доступ",
+			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
 		},
 		"standingPreference": {
 			"label": "Всегда спрашивать перед предоставлением дополнительного доступа",
@@ -4777,7 +4778,8 @@
 				"agencyFallback": "Консультационный центр {{id}}",
 				"filteredOutAll": "Поиск и фильтры скрывают все консультации.",
 				"removeFilters": "Сбросить фильтры",
-				"removeFiltersKeepSearch": "Сбросить фильтры, сохранить поиск"
+				"removeFiltersKeepSearch": "Сбросить фильтры, сохранить поиск",
+				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
 			},
 			"menu": {
 				"ariaLabel": "Параметры списка"

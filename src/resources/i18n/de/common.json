@@ -4333,7 +4333,8 @@
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
 			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"extend": "Zugriff verlängern"
+			"extend": "Zugriff verlängern",
+			"teamNotice": "Teamberatung: Sie lesen mit. Nur {{name}} schreibt in diesem Fall Nachrichten."
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
@@ -4804,7 +4805,8 @@
 				"agencyFallback": "Beratungsstelle {{id}}",
 				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
 				"removeFilters": "Filter entfernen",
-				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten"
+				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten",
+				"teamPeopleHint": "Teamberatung: Wählen Sie eine Kolleg:in Ihrer Beratungsstelle und drücken Sie Enter. Dann sehen Sie ihre Fälle und können sie mitlesen."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

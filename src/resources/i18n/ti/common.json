@@ -4287,7 +4287,8 @@
 		"readOnly": {
 			"notice": "ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
 			"noticeUntil": "ክሳብ {{until}} ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
-			"extend": "ፍቓድ ኣናውሕ"
+			"extend": "ፍቓድ ኣናውሕ",
+			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
 		},
 		"standingPreference": {
 			"label": "ቅድሚ ተወሳኺ መእተዊ ምሃብ ኩሉ ግዜ ሕተቱ",
@@ -4744,7 +4745,8 @@
 				"agencyFallback": "ማእከል ምኽሪ {{id}}",
 				"filteredOutAll": "ምድላይኩምን መጻረዪታትኩምን ንኹሉ ምኽርታት ይሓብእዎ ኣለዉ።",
 				"removeFilters": "መጻረዪታት ኣልግስ",
-				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ"
+				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ",
+				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
 			},
 			"menu": {
 				"ariaLabel": "ዝርዝር ኣማራጺታት"
