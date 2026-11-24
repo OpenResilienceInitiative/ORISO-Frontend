@@ -2416,8 +2416,13 @@ export const SupervisionRowLabel: Story = {
 				'[data-testid="supervision-modality"]'
 			);
 			expect(modality).not.toBeNull();
-			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
-			expect(modality!.querySelector('svg')).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since
+			// FE#2494 it is the same 32 px kind icon (a mask) as Mail.
+			expect(
+				modality!.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
+			).not.toBeNull();
 			// The mail label is gone for this viewer.
 			expect(
 				canvasElement.querySelector(

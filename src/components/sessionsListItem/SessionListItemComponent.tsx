@@ -54,6 +54,8 @@ import { SupervisionIconButton } from './SupervisionIconButton';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 // Self-help consulting-type icon (not the supervision marker).
 import selfHelpIcon from '../../resources/img/icons/chatroom/self_help_group_200_32.svg';
+import supervisionKindIcon from '../../resources/img/icons/chatroom/supervision_200_32.svg';
+import supervisionKindHoverIcon from '../../resources/img/icons/chatroom/supervision_400_24.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -2031,9 +2033,11 @@ export const SessionListItemComponent = ({
 									className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--supervision"
 									data-testid="supervision-modality"
 								>
-									<SupervisionIcon
-										aria-hidden="true"
-										focusable="false"
+									{/* FE#2494: the same 32 px, weight-200 kind
+									    icon and grey as Mail (Frank, 23 Nov). */}
+									<ConsultingKindIcon
+										src={supervisionKindIcon}
+										hoverSrc={supervisionKindHoverIcon}
 									/>
 									<span
 										className="sessionsListItem__consultingTypeIcon--supervisionLabel"

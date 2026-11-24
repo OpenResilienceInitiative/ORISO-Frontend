@@ -124,7 +124,7 @@ import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotifi
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
-import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/team-chat-3p.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';

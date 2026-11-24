@@ -1,18 +1,25 @@
 import * as React from 'react';
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import {
+	forwardRef,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import MicIcon from '@mui/icons-material/Mic';
-import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import { SendButton } from '../messageSubmitInterface/inputField/SendButton';
 import { ReplyArrowIcon } from './ReplyArrowIcon';
+import { ReactComponent as MicIcon } from '../../resources/img/icons/modality-audio-filled.svg';
+import { ReactComponent as ReplyAllIcon } from '../../resources/img/icons/reply-all.svg';
+import { StackCountIcon } from './StackCountIcon';
 import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
 	| { mode: 'idle' }
-	| { mode: 'recording'; durationSec: number }
+	| { mode: 'recording'; durationSec: number; paused?: boolean }
 	| { mode: 'review'; src: string; durationSec: number };
 
 export interface SelectionReplyPopoverProps {
@@ -27,6 +34,8 @@ export interface SelectionReplyPopoverProps {
 	showVoice?: boolean;
 	onStartVoice: () => void;
 	onStopVoice: () => void;
+	/** FE#2494: when given, the take is paused/resumed instead of stopped. */
+	onPauseVoice?: () => void;
 	onDiscardVoice: () => void;
 	/** Enter: the answer goes into the composer as its own reply bar. */
 	onAddToComposer: () => void;
@@ -35,6 +44,39 @@ export interface SelectionReplyPopoverProps {
 	onClose: () => void;
 	/** Focus the text field on open (off when the take starts with voice). */
 	autoFocus?: boolean;
+	/**
+	 * FE#2494 *7 bubble variant: the passage's other actions (side chats,
+	 * thread, blur) as one row under the field.
+	 */
+	actions?: React.ReactNode;
+	/**
+	 * FE#2494 *7 bubble variant: drawn as a speech bubble from the handle,
+	 * its tail on the side facing the passage.
+	 */
+	bubble?: false | 'below' | 'above';
+	/**
+	 * FE#2494 *7: the side chat this answer goes to — a badge attached on top
+	 * of the bubble (icon + room), the full sentence as its accessible name.
+	 */
+	targetBadge?: {
+		label: string;
+		short: string;
+		icon: React.ReactNode;
+		/** Colours of that side room's own chip (Supervision / Team). */
+		kind?: 'supervision' | 'team';
+	};
+	/**
+	 * Where the badge hangs: on the bubble's edge, or (variant, Frank
+	 * 24 Nov) on the grey quote, which saves the bubble's top spacing.
+	 */
+	badgeOn?: 'bubble' | 'quote' | 'bottom';
+	/** Answers already stacked for that message; the stack shows the next number. */
+	collectedCount?: number;
+	/**
+	 * Stack button icon. `count` (default, Frank 24 Nov): stacked cards
+	 * with the next number. `replyAll`: the earlier two-arrow variant.
+	 */
+	stackIcon?: 'count' | 'replyAll';
 }
 
 const isMacLike = () =>
@@ -62,16 +104,23 @@ export const SelectionReplyPopover = forwardRef<
 			showVoice = true,
 			onStartVoice,
 			onStopVoice,
+			onPauseVoice,
 			onDiscardVoice,
 			onAddToComposer,
 			onSendNow,
 			onClose,
-			autoFocus = true
+			autoFocus = true,
+			actions,
+			bubble = false,
+			targetBadge,
+			badgeOn = 'bubble',
+			collectedCount = 0,
+			stackIcon = 'count'
 		},
 		ref
 	) => {
 		const { t: translate } = useTranslation();
-		const inputRef = useRef<HTMLInputElement | null>(null);
+		const inputRef = useRef<HTMLTextAreaElement | null>(null);
 		const rootRef = useRef<HTMLDivElement | null>(null);
 		const setRoot = (element: HTMLDivElement | null) => {
 			rootRef.current = element;
@@ -82,9 +131,61 @@ export const SelectionReplyPopover = forwardRef<
 			}
 		};
 		const [hint, setHint] = useState<'add' | 'send' | null>(null);
+		// FE#2494 (Frank): from the second line on, Stack sits above Send.
+		const [multiline, setMultiline] = useState(false);
 		const sendKey = isMacLike() ? '⌘' : 'Strg';
-		const hasAnswer = Boolean(draft.trim()) || voice.mode === 'review';
 		const isRecording = voice.mode === 'recording';
+		// FE#2494: stacking or sending a running take stops it first, so a
+		// take counts as an answer once it has a second in it.
+		const hasAnswer =
+			Boolean(draft.trim()) ||
+			voice.mode === 'review' ||
+			(isRecording && voice.durationSec > 0);
+		// A stand-in without pause keeps the old Stop; it must stay usable.
+		const blockWhileRecording = isRecording && !onPauseVoice;
+		const stacked = multiline;
+
+		// The field grows with the answer, like the composer (up to 10 lines);
+		// measured before paint so the text never flickers.
+		useLayoutEffect(() => {
+			const field = inputRef.current;
+			if (!field) {
+				return;
+			}
+			// Resetting the height to measure it throws away the scroll
+			// position; keep it, or the caret falls out of view (Frank,
+			// Shift+Enter on line 10).
+			// FE#2494 (Frank): more room when writing — up to 10 lines, then
+			// the field scrolls inside and keeps the caret in view.
+			const maxHeight = 10 * 20 + 16;
+			if (field.scrollHeight > field.clientHeight) {
+				// Growing (or already full): never collapse the field to
+				// measure it. Collapsing a full field on every key made
+				// Chrome skip repainting the newest letters (Frank, line 9+).
+				field.style.height = `${Math.min(field.scrollHeight, maxHeight)}px`;
+			} else {
+				// Possibly shrinking: measure from 'auto'.
+				const scrollTop = field.scrollTop;
+				field.style.height = 'auto';
+				field.style.height = `${Math.min(field.scrollHeight, maxHeight)}px`;
+				field.scrollTop = scrollTop;
+			}
+			// Typing at the end keeps the newest line in view.
+			if (
+				document.activeElement === field &&
+				field.selectionEnd >= field.value.length
+			) {
+				field.scrollTop = field.scrollHeight;
+			}
+			// Hysteresis: once the answer wraps, Stack stays under Send until
+			// the field is empty again. Otherwise the wider field unwraps the
+			// line, the buttons move back, it wraps again — and words jump.
+			if (!draft) {
+				setMultiline(false);
+			} else if (field.scrollHeight > 44) {
+				setMultiline(true);
+			}
+		}, [draft, multiline]);
 
 		useEffect(() => {
 			if (autoFocus) {
@@ -152,7 +253,9 @@ export const SelectionReplyPopover = forwardRef<
 				return;
 			}
 			event.preventDefault();
-			if (isRecording) {
+			// Same guard as the buttons: with pause support, Enter and
+			// Cmd/Ctrl+Enter stop the take and go on, like Stack and Send.
+			if (blockWhileRecording) {
 				return;
 			}
 			if (event.metaKey || event.ctrlKey) {
@@ -164,6 +267,22 @@ export const SelectionReplyPopover = forwardRef<
 			onAddToComposer();
 		};
 
+		const badge = targetBadge ? (
+			<p
+				className={`selectionReply__target selectionReply__target--${
+					targetBadge.kind ?? 'supervision'
+				}`}
+				data-cy="selection-reply-target"
+				title={targetBadge.label}
+			>
+				<span className="selectionReply__targetIcon" aria-hidden="true">
+					{targetBadge.icon}
+				</span>
+				<span aria-hidden="true">{targetBadge.short}</span>
+				<span className="sr-only">{targetBadge.label}</span>
+			</p>
+		) : null;
+
 		const addLabel = translate('message.selectionReply.addToComposer');
 
 		return (
@@ -174,12 +293,29 @@ export const SelectionReplyPopover = forwardRef<
 				aria-label={translate('message.selectionReply.dialog', {
 					author: passage.author
 				})}
-				className="selectionReply__popover"
+				className={[
+					'selectionReply__popover',
+					bubble && 'selectionReply__popover--bubble',
+					bubble === 'above' && 'selectionReply__popover--above',
+					targetBadge &&
+						badgeOn === 'bubble' &&
+						'selectionReply__popover--targeted',
+					targetBadge &&
+						badgeOn === 'quote' &&
+						'selectionReply__popover--targetedQuote',
+					targetBadge &&
+						badgeOn === 'bottom' &&
+						'selectionReply__popover--targetedBottom'
+				]
+					.filter(Boolean)
+					.join(' ')}
 				data-cy="selection-reply-popover"
 				style={style}
 				onKeyDown={handleKeyDown}
 			>
+				{(badgeOn === 'bubble' || badgeOn === 'bottom') && badge}
 				<div className="selectionReply__quote">
+					{badgeOn === 'quote' && badge}
 					<ReplyArrowIcon className="selectionReply__quoteIcon" />
 					<span className="selectionReply__quoteBody">
 						<span className="selectionReply__quoteAuthor">
@@ -206,45 +342,44 @@ export const SelectionReplyPopover = forwardRef<
 						{translate('voice.recording.error.message')}
 					</p>
 				)}
-				{voice.mode === 'recording' && (
-					<VoiceNoteRow
-						mode="recording"
-						durationSec={voice.durationSec}
-						onStop={onStopVoice}
-						onDiscard={onDiscardVoice}
-					/>
-				)}
-				{voice.mode === 'review' && (
-					<VoiceNoteRow
-						mode="review"
-						src={voice.src}
-						durationSec={voice.durationSec}
-						onDiscard={onDiscardVoice}
-					/>
-				)}
-
-				<div className="selectionReply__inputRow">
-					<input
+				{/* FE#2494 (Frank, 24 Nov): one box like the chat's own composer —
+				    accent frame, Send docked in the top-right corner; from the
+				    second line on, Stack sits under Send. */}
+				<div
+					className={[
+						'selectionReply__box',
+						stacked ? 'selectionReply__box--stacked' : null,
+						voice.mode !== 'idle'
+							? 'selectionReply__box--withVoice'
+							: null
+					]
+						.filter(Boolean)
+						.join(' ')}
+				>
+					{/* The composer-like box owns frame, focus and growth (auto-grow with
+					    hysteresis); OrisoTextarea brings its own MUI frame. FE#2494. */}
+					{/* eslint-disable-next-line no-restricted-syntax */}
+					<textarea
 						ref={inputRef}
-						type="text"
+						rows={1}
 						className="selectionReply__input"
 						value={draft}
 						onChange={(event) => onDraftChange(event.target.value)}
 						placeholder={translate(
-							voice.mode === 'review'
-								? 'message.selectionReply.placeholderWithVoice'
-								: 'message.selectionReply.placeholder'
+							voice.mode === 'idle'
+								? 'message.selectionReply.placeholder'
+								: 'message.selectionReply.placeholderWithVoice'
 						)}
 						aria-label={translate(
 							'message.selectionReply.inputLabel'
 						)}
-						disabled={isRecording}
 						autoComplete="off"
 					/>
-					{showVoice && voice.mode === 'idle' && (
+					{/* Writing already: the mic would only take the field's room. */}
+					{showVoice && voice.mode === 'idle' && !draft.trim() && (
 						<button
 							type="button"
-							className="selectionReply__iconButton"
+							className="selectionReply__iconButton selectionReply__fieldMic"
 							onClick={onStartVoice}
 							aria-label={translate(
 								'message.selectionReply.replyVoice'
@@ -253,7 +388,10 @@ export const SelectionReplyPopover = forwardRef<
 								'message.selectionReply.replyVoice'
 							)}
 						>
-							<MicIcon fontSize="inherit" aria-hidden />
+							<MicIcon
+								aria-hidden
+								className="selectionReply__micIcon"
+							/>
 						</button>
 					)}
 					<span className="selectionReply__hintWrap">
@@ -262,7 +400,7 @@ export const SelectionReplyPopover = forwardRef<
 							className="selectionReply__collect"
 							data-cy="selection-reply-collect"
 							onClick={onAddToComposer}
-							disabled={isRecording}
+							disabled={blockWhileRecording}
 							aria-label={addLabel}
 							aria-describedby="selection-reply-keys"
 							onMouseEnter={() => setHint('add')}
@@ -270,7 +408,25 @@ export const SelectionReplyPopover = forwardRef<
 							onFocus={() => setHint('add')}
 							onBlur={() => setHint(null)}
 						>
-							<AddIcon fontSize="inherit" aria-hidden />
+							{stackIcon === 'count' ? (
+								<StackCountIcon
+									next={collectedCount + 1}
+									className="selectionReply__collectIcon"
+								/>
+							) : (
+								<ReplyAllIcon
+									aria-hidden
+									className="selectionReply__collectIcon"
+								/>
+							)}
+							{stackIcon === 'replyAll' && collectedCount > 0 && (
+								<span
+									className="selectionReply__stackCount"
+									data-cy="selection-reply-stack-count"
+								>
+									{collectedCount + 1}
+								</span>
+							)}
 						</button>
 						{hint === 'add' && (
 							<span
@@ -292,7 +448,7 @@ export const SelectionReplyPopover = forwardRef<
 						<SendButton
 							type="button"
 							state={
-								isRecording
+								blockWhileRecording
 									? 'disabled'
 									: hasAnswer
 										? 'ready'
@@ -314,7 +470,38 @@ export const SelectionReplyPopover = forwardRef<
 							</span>
 						)}
 					</span>
+					{/* FE#2494 (Frank, 24 Nov): the voice note gets its own second
+					    row across the box; the text field stays above it. */}
+					{voice.mode === 'recording' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="recording"
+							durationSec={voice.durationSec}
+							onStop={onStopVoice}
+							onPause={onPauseVoice}
+							paused={voice.paused}
+							onDiscard={onDiscardVoice}
+						/>
+					) : voice.mode === 'review' ? (
+						<VoiceNoteRow
+							className="selectionReply__voiceField"
+							mode="review"
+							src={voice.src}
+							durationSec={voice.durationSec}
+							onDiscard={onDiscardVoice}
+						/>
+					) : null}
 				</div>
+
+				{actions && (
+					<div
+						className="selectionReply__bubbleActions"
+						role="group"
+						aria-label={translate('message.selectionReply.toolbar')}
+					>
+						{actions}
+					</div>
+				)}
 
 				{/* Keys and Esc for screen readers; sighted users get them as
 				    tooltips, and clicking beside the field closes it. */}

@@ -760,9 +760,14 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 			makeUserData(ME)
 		);
 		await nextTick();
-		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since FE#2494
+		// it is the 32px kind icon (CSS mask), grey like the Mail icon.
 		expect(
-			screen.getByTestId('supervision-modality').querySelector('svg')
+			screen
+				.getByTestId('supervision-modality')
+				.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
 		).toBeTruthy();
 	});
 

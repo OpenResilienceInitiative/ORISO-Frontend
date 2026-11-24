@@ -2244,6 +2244,8 @@
 			"toolbar": "ንዝተመልከተ ክፋል ዝኸውን ተግባራት",
 			"reply": "መልሲ",
 			"replyVoice": "ብድምጻዊ መልእኽቲ መልሲ ሃብ",
+			"replyInSupervision": "ኣብ ሱፐርቪዥን መልሲ ሃብ",
+			"replyInTeam": "ኣብ ቻት ጉጅለ መልሲ ሃብ",
 			"startThread": "ዛዕባ ጀምር",
 			"dialog": "ነቲ ካብ {{author}} ዝተመልከተ ክፋል መልሲ",
 			"cancel": "ሰርዝ",
@@ -5490,10 +5492,13 @@
 	"voice": {
 		"recording": {
 			"active": "ይቕዳሕ ኣሎ…",
+			"paused": "ምቕዳሕ ደው ኢሉ ኣሎ",
 			"error": {
 				"headline": "ናይ ድምጺ ቅዳሕ ኣይርከብን",
 				"message": "በጃኹም ንማይክሮፎን ፍቓድ ሃቡ እሞ ደጊምኩም ፈትኑ።"
 			},
+			"pause": "ምቕዳሕ ኣቋርጽ",
+			"resume": "ምቕዳሕ ቀጽል",
 			"discard": "ናይ ድምጺ መልእኽቲ ኣወግድ",
 			"preview": "ናይ ድምጺ መልእኽቲ"
 		}
@@ -5945,6 +5950,8 @@
 			},
 			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
 			"close": "ሱፐርቪዥን ዕጸው",
+			"changeSupervisor": "ተቆጻጻሪ ቀይር",
+			"bookAppointment": "ምስ ተቆጻጻሪ ቆጸራ ሓዝ",
 			"collapse": "ሱፐርቪዥን ኣንኣእስ",
 			"dragHandle": "መስኮት ሱፐርቪዥን ኣንቀሳቕስ – መልክዕ ፍላጻ የንቀሳቕስ፣ Shift + ፍላጻ ዓቐን ይቕይር",
 			"unread": "{{count}} ዘይተነብቡ መልእኽትታት",

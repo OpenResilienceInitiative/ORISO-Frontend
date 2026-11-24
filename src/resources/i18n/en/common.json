@@ -2267,8 +2267,10 @@
 			"removeBlurLabel": "Blurred passage – remove blur",
 			"blurBar": "Actions for the blurred passage",
 			"toolbar": "Actions for the marked passage",
-			"reply": "Reply",
+			"reply": "Reply here",
 			"replyVoice": "Reply with a voice message",
+			"replyInSupervision": "Reply in supervision",
+			"replyInTeam": "Reply in team chat",
 			"startThread": "Thread",
 			"dialog": "Reply to the passage marked from {{author}}",
 			"cancel": "Cancel",
@@ -5481,10 +5483,13 @@
 	"voice": {
 		"recording": {
 			"active": "Recording…",
+			"paused": "Recording paused",
 			"error": {
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"pause": "Pause recording",
+			"resume": "Resume recording",
 			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
@@ -5918,6 +5923,8 @@
 			},
 			"privacyHint": "This channel is never visible to the person seeking advice.",
 			"close": "Close supervision",
+			"changeSupervisor": "Change supervisor",
+			"bookAppointment": "Book an appointment with the supervisor",
 			"collapse": "Minimise supervision",
 			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
 			"unread": "{{count}} unread messages",

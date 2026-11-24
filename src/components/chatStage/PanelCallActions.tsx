@@ -64,6 +64,20 @@ export interface PanelCallActionsProps {
 	'width'?: number | null;
 	/** Viewport phone (`useResponsive().untilM`). */
 	'phone'?: boolean;
+	/**
+	 * FE#2494: more actions of the side room (e.g. change the supervisor,
+	 * book an appointment). They always live in the ⋮ menu, after the calls
+	 * when those fold in too.
+	 */
+	'menuItems'?: PanelMenuItem[];
+	'data-cy'?: string;
+}
+
+export interface PanelMenuItem {
+	'id': string;
+	'icon': React.ReactNode;
+	'title': string;
+	'onClick': () => void;
 	'data-cy'?: string;
 }
 
@@ -78,6 +92,7 @@ export const PanelCallActions = ({
 	participantCount,
 	width = null,
 	phone = false,
+	menuItems = [],
 	'data-cy': dataCy = 'panel-call-actions'
 }: PanelCallActionsProps) => {
 	const state = resolvePanelCallActions({
@@ -123,15 +138,22 @@ export const PanelCallActions = ({
 
 	// The placement can change under an open menu (the reader drags the
 	// divider); the row has nothing to close into.
+	const hasExtras = menuItems.length > 0;
+	// Also when the last extra disappears under an open menu: a hidden
+	// instance must not keep its Escape listener or reopen by itself.
+	const menuHasItems =
+		hasExtras || (state.visible && state.placement === 'menu');
 	useEffect(() => {
-		if (state.placement === 'row') {
+		if (!menuHasItems) {
 			setOpen(false);
 		}
-	}, [state.placement]);
+	}, [menuHasItems]);
 
-	if (!state.visible) {
+	if (!state.visible && !hasExtras) {
 		return null;
 	}
+	const callsInMenu = state.visible && state.placement === 'menu';
+	const callsInRow = state.visible && state.placement === 'row';
 
 	const labelFor = (kind: PanelCallKind) =>
 		kind === 'video' ? copy.video : copy.audio;
@@ -140,37 +162,39 @@ export const PanelCallActions = ({
 			? `${labelFor(kind)} – ${copy.participants}`
 			: labelFor(kind);
 
-	if (state.placement === 'row') {
-		return (
-			<div
-				className="panelCallActions panelCallActions--row"
-				data-cy={dataCy}
-				data-placement="row"
-				data-disabled={state.disabled ? 'true' : 'false'}
-			>
-				{state.kinds.map((kind) => {
-					const item: ButtonItem = {
-						type: BUTTON_TYPES.SMALL_ICON,
-						smallIconBackgroundColor: 'transparent',
-						title: titleFor(kind),
-						icon: glyphFor(kind)
-					};
-					return (
-						<Button
-							key={kind}
-							item={item}
-							disabled={state.disabled}
-							buttonHandle={() => onStartCall(kind === 'video')}
-							className={`panelCallActions__button panelCallActions__button--${kind}`}
-							testingAttribute={`panel-call-${kind}`}
-						/>
-					);
-				})}
-			</div>
-		);
+	const row = callsInRow && (
+		<div
+			className="panelCallActions panelCallActions--row"
+			data-cy={dataCy}
+			data-placement="row"
+			data-disabled={state.disabled ? 'true' : 'false'}
+		>
+			{state.kinds.map((kind) => {
+				const item: ButtonItem = {
+					type: BUTTON_TYPES.SMALL_ICON,
+					smallIconBackgroundColor: 'transparent',
+					title: titleFor(kind),
+					icon: glyphFor(kind)
+				};
+				return (
+					<Button
+						key={kind}
+						item={item}
+						disabled={state.disabled}
+						buttonHandle={() => onStartCall(kind === 'video')}
+						className={`panelCallActions__button panelCallActions__button--${kind}`}
+						testingAttribute={`panel-call-${kind}`}
+					/>
+				);
+			})}
+		</div>
+	);
+
+	if (!hasExtras && !callsInMenu) {
+		return row || null;
 	}
 
-	return (
+	const menu = (
 		<div
 			ref={rootRef}
 			className="panelCallActions panelCallActions--menu"
@@ -199,25 +223,49 @@ export const PanelCallActions = ({
 					className="panelCallActions__menu"
 					data-cy="panel-call-menu"
 				>
-					{state.kinds.map((kind) => (
+					{callsInMenu &&
+						state.kinds.map((kind) => (
+							<ChatMenuDropdownItem
+								key={kind}
+								icon={glyphFor(kind)}
+								title={labelFor(kind)}
+								description={
+									state.disabled
+										? copy.participants
+										: undefined
+								}
+								disabled={state.disabled}
+								data-cy={`panel-call-menu-${kind}`}
+								onClick={() => {
+									closeAndRefocus();
+									onStartCall(kind === 'video');
+								}}
+							/>
+						))}
+					{menuItems.map((item) => (
 						<ChatMenuDropdownItem
-							key={kind}
-							icon={glyphFor(kind)}
-							title={labelFor(kind)}
-							description={
-								state.disabled ? copy.participants : undefined
-							}
-							disabled={state.disabled}
-							data-cy={`panel-call-menu-${kind}`}
+							key={item.id}
+							icon={item.icon}
+							title={item.title}
+							data-cy={item['data-cy']}
 							onClick={() => {
 								closeAndRefocus();
-								onStartCall(kind === 'video');
+								item.onClick();
 							}}
 						/>
 					))}
 				</ChatMenuDropdown>
 			)}
 		</div>
+	);
+
+	// One tree shape for both placements (`row` is false when absent), so a
+	// resize never remounts the open menu and drops focus.
+	return (
+		<>
+			{row}
+			{menu}
+		</>
 	);
 };
 

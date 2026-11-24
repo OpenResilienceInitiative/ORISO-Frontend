@@ -1317,7 +1317,7 @@ function ChatPanel() {
 						placeholder={
 							surfaceRole === 'asker'
 								? 'Nachricht schreiben'
-								: 'Nachricht an Klient:in schreiben'
+								: 'Nachricht an ratsuchende Person'
 						}
 						onSendButton={noop}
 						isTyping={noop}

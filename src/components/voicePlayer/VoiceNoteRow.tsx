@@ -18,6 +18,9 @@ export type VoiceNoteRowProps = {
 			/** Seconds recorded so far. */
 			durationSec: number;
 			onStop: () => void;
+			/** FE#2494: pause/resume instead of stop (see VoiceRecordingBar). */
+			onPause?: () => void;
+			paused?: boolean;
 	  }
 	| {
 			mode: 'review';
@@ -64,6 +67,8 @@ export const VoiceNoteRow = forwardRef<HTMLDivElement, VoiceNoteRowProps>(
 					<VoiceRecordingBar
 						durationSec={props.durationSec}
 						onStop={props.onStop}
+						onPause={props.onPause}
+						paused={props.paused}
 						className="voicePlayer--composer"
 					/>
 				)}

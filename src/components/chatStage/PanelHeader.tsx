@@ -33,7 +33,7 @@ import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg
 import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import {
 	HEADER_STACK_PROPS,
 	ParticipantAvatarStack

@@ -71,6 +71,8 @@ export interface SendPassageRepliesOptions {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
+	/** Supervision side room: same protected-feedback mail path as its composer. */
+	feedbackMailIntent?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -247,6 +249,7 @@ class ChatTransportService {
 		supervisorMessage,
 		senderDisplayName,
 		teamDiscussion,
+		feedbackMailIntent,
 		matrixClientServiceOverride
 	}: SendPassageRepliesOptions): Promise<any> {
 		const matrixClientService =
@@ -255,12 +258,27 @@ class ChatTransportService {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
+		const withFeedbackMail = !!feedbackMailIntent && !teamDiscussion;
+		const matrixSenderUserId = withFeedbackMail
+			? matrixClientService.getClient()?.getUserId() || null
+			: null;
 		const response = await matrixClientService.sendPassageReplies(
 			matrixRoomId,
 			replies,
 			typedText,
 			labels
 		);
+
+		if (withFeedbackMail) {
+			// Same as a typed supervision message: only immutable IDs are
+			// queued, never the content (FE-H01).
+			void feedbackMailIntentQueue.enqueue(matrixSenderUserId, {
+				roomId: matrixRoomId,
+				matrixEventId: response?.event_id || '',
+				threadRootId: null
+			});
+			return { success: true, event_id: response?.event_id };
+		}
 
 		apiPostMessageEventNotification({
 			roomId: matrixRoomId,

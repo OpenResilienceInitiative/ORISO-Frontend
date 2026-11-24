@@ -2268,8 +2268,10 @@
 			"removeBlurLabel": "Bulanıklaştırılmış bölüm – bulanıklığı kaldır",
 			"blurBar": "Bulanıklaştırılmış bölüm için işlemler",
 			"toolbar": "İşaretlenen bölüm için işlemler",
-			"reply": "Yanıtla",
+			"reply": "Burada yanıtla",
 			"replyVoice": "Sesli mesajla yanıtla",
+			"replyInSupervision": "Süpervizyonda yanıtla",
+			"replyInTeam": "Ekip sohbetinde yanıtla",
 			"startThread": "Konu başlat",
 			"dialog": "{{author}} adlı kişinin işaretlenen bölümüne yanıt",
 			"cancel": "İptal",
@@ -5516,10 +5518,13 @@
 	"voice": {
 		"recording": {
 			"active": "Kayıt sürüyor…",
+			"paused": "Kayıt duraklatıldı",
 			"error": {
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"pause": "Kaydı duraklat",
+			"resume": "Kayda devam et",
 			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}
@@ -5971,6 +5976,8 @@
 			},
 			"privacyHint": "Bu kanal danışan tarafından hiçbir zaman görülemez.",
 			"close": "Süpervizyonu kapat",
+			"changeSupervisor": "Süpervizörü değiştir",
+			"bookAppointment": "Süpervizörle randevu al",
 			"collapse": "Süpervizyonu küçült",
 			"dragHandle": "Süpervizyon penceresini taşı – ok tuşları taşır, Shift + ok tuşları boyutu değiştirir",
 			"unread": "{{count}} okunmamış mesaj",
