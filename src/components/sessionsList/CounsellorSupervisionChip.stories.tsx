@@ -11,10 +11,7 @@ import {
 	RuntimeSessionProviders,
 	runtimeSession
 } from '../sessionsListItem/__storybook__/runtimeSessionCard';
-import {
-	DisplayFilterDialog,
-	SESSION_COLUMNS
-} from '../displayFilter/DisplayFilterDialog';
+import { DisplayFilterDialog } from '../displayFilter/DisplayFilterDialog';
 import {
 	EMPTY_DISPLAY_FILTER,
 	type DisplayFilterValue

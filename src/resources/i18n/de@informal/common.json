@@ -681,11 +681,7 @@
 			"unknownRoot": "Frühere Nachricht"
 		},
 		"blurRemoved": {
-			"title": "Schwärzung aufgehoben",
-			"by": "von {{name}}",
-			"byMe": "von dir",
-			"text": "Die Nachricht von {{name}} ist wieder lesbar.",
-			"textAnonymous": "Die Nachricht ist wieder lesbar."
+			"byMe": "von dir"
 		},
 		"selectionReply": {
 			"sendFailed": {
@@ -3234,8 +3230,7 @@
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
 		},
-		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung.",
-		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung."
 	},
 	"calendar": {
 		"grip": {
