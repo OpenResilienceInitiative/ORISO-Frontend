@@ -4965,6 +4965,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
+	// FE#2494 *7: a quote in a side chat points into the client chat. On a
+	// phone the panel covers it, so close the panel first and jump once
+	// the main timeline is back on screen.
+	const handleJumpFromSideRoom = useCallback(
+		(reply: PassageReply) => {
+			if (isPhoneLayout) {
+				closeChannel();
+				window.requestAnimationFrame(() => handleJumpToPassage(reply));
+				return;
+			}
+			handleJumpToPassage(reply);
+		},
+		[isPhoneLayout, closeChannel, handleJumpToPassage]
+	);
+
 	const supervisionPanel =
 		openPanel === 'supervision' ? (
 			<SidePanel
@@ -5090,6 +5105,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					>
 						<MessageTimeline
 							keyPrefix="supervision-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={supervisionTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
@@ -5296,6 +5312,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<>
 						<MessageTimeline
 							keyPrefix="team-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={teamTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
