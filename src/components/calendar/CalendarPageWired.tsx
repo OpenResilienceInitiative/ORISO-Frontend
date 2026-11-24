@@ -275,7 +275,8 @@ export const CalendarPageWired = () => {
 	   popup here; the counsellor stays in the calendar. The full page stays
 	   for "Chat erstellen" in Gespräche only. */
 	const [invitePreset, setInvitePreset] = useState<InvitationPreset>();
-	const directLinkTopics = useDirectLinkTopics();
+	// #2523: advice seekers use this page too; only counsellors invite.
+	const directLinkTopics = useDirectLinkTopics(consultant);
 	const calendarInvitation = useDirectInvitationSetup({
 		topics: directLinkTopics.topics,
 		agencies: directLinkTopics.agencies,
