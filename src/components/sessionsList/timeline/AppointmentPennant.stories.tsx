@@ -56,7 +56,7 @@ const Header = ({
 				gap: 12,
 				height: 64,
 				padding: '0 16px',
-				borderBottom: '1px solid var(--m3-outline-variant, #f3c5c5)',
+				borderBottom: '1px solid var(--m3-primary-fixed, #ffdad5)',
 				fontSize: 22
 			}}
 		>
@@ -97,6 +97,68 @@ const meta: Meta = {
 };
 export default meta;
 type Story = StoryObj;
+
+const two = [{ entry: supervisorAppointment, withLabel: 'Supervision' }];
+
+/** Variant A: the Art bubble peeks out below the pennant. */
+export const VariantA: Story = {
+	name: 'Variante A — Boppel guckt unten raus',
+	render: () => (
+		<Header width={880}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+			/>
+		</Header>
+	)
+};
+
+/** Variant B: flat, the bubble inside a rose pennant. */
+export const VariantB: Story = {
+	name: 'Variante B — flach, Boppel innen',
+	render: () => (
+		<Header width={880}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+				look="flat"
+			/>
+		</Header>
+	)
+};
+
+/** Variant C: the bubble is the pin on the divider the pennant hangs from. */
+export const VariantC: Story = {
+	name: 'Variante C — Knopf auf der Linie',
+	render: () => (
+		<Header width={880}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+				look="knob"
+			/>
+		</Header>
+	)
+};
+
+/** Phone: the second pennant hangs from the first. */
+export const PhoneStacked: Story = {
+	name: 'Telefon — gestapelt',
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
+	render: () => (
+		<Header width={375}>
+			<RoomNextAppointment
+				entry={askerAppointment}
+				role="counsellor"
+				extra={two}
+				look="stacked"
+			/>
+		</Header>
+	)
+};
 
 /** One appointment with the advice seeker. */
 export const One: Story = {

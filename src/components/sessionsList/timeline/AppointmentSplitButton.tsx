@@ -267,17 +267,20 @@ export const RoomNextAppointment = ({
 	role,
 	onAction,
 	action,
-	extra = []
+	extra = [],
+	look
 }: {
 	entry?: FutureEntry;
 	role: TimelineRole;
 	onAction?: AppointmentAction;
 	action?: React.ReactNode;
 	extra?: { entry: FutureEntry; withLabel: string }[];
+	/** Design review only: the pennant variants (FE#2494). */
+	look?: 'flat' | 'knob' | 'stacked';
 }) =>
 	entry || extra.length > 0 || action ? (
 		<div
-			className="roomNextAppointment roomAppointmentPennants"
+			className={`roomNextAppointment roomAppointmentPennants${look ? ` roomAppointmentPennants--${look}` : ''}`}
 			data-cy="room-next-appointment"
 		>
 			{entry && (

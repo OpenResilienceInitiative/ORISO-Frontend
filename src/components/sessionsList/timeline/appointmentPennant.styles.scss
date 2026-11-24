@@ -15,12 +15,20 @@
 	height: var(--pennant-height);
 	margin: 0;
 	padding: 0 4px 0 3px;
-	// The divider's own colour, a step darker: it hangs from that line.
-	border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+	// Accent (the topic tag's rose) with the dark primary on top (Frank,
+	// 2026-11-24): the pennant belongs to the rose divider it hangs from.
+	--pennant-accent: var(
+		--oriso-topic-tag-bg,
+		var(--m3-primary-fixed, #ffdad5)
+	);
+	--pennant-on-accent: var(--oriso-topic-tag-fg, #930008);
+	--pennant-edge: var(--m3-primary-fixed-dim, #ffb4aa);
+
+	border: 1px solid var(--pennant-edge);
 	border-top: 0;
 	border-radius: 0 0 16px 16px;
 	background: var(--m3-surface-container-lowest, #fff);
-	color: var(--m3-on-surface, #1b1b1c);
+	color: var(--pennant-on-accent);
 	font: inherit;
 	font-size: 13px;
 	line-height: 18px;
@@ -36,7 +44,7 @@
 	}
 
 	&:hover {
-		background: var(--m3-surface-container-low, #f6f3f3);
+		background: color-mix(in srgb, var(--pennant-accent) 45%, #fff);
 	}
 
 	&:focus-visible {
@@ -45,8 +53,8 @@
 	}
 
 	&[aria-expanded='true'] {
-		border-color: var(--m3-outline, #747775);
-		background: var(--m3-surface-container, #f0edee);
+		border-color: var(--pennant-on-accent);
+		background: var(--pennant-accent);
 	}
 
 	// FE#2287: a request nobody answered yet: same pennant, dashed.
@@ -67,8 +75,8 @@
 	height: 30px;
 	margin-top: 12px;
 	border-radius: 50%;
-	background: var(--m3-secondary-container, #e2dfe0);
-	color: var(--m3-on-secondary-container, #1b1b1c);
+	background: var(--pennant-on-accent);
+	color: var(--pennant-accent);
 	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
 
 	svg {
@@ -83,8 +91,8 @@
 		height: 22px;
 		margin-top: 0;
 		box-shadow: none;
-		background: var(--m3-surface-container-high, #eae7e8);
-		color: var(--m3-on-surface-variant, #444748);
+		background: var(--pennant-accent);
+		color: var(--pennant-on-accent);
 	}
 }
 
@@ -95,12 +103,15 @@
 	text-overflow: ellipsis;
 }
 
-// Another kind of appointment (e.g. with the supervisor): the Art bubble in
-// the tertiary tone, so the two pennants tell apart without words.
+// Another kind of appointment (e.g. with the supervisor): the Art bubble
+// inverted (rose with dark red), so the two pennants tell apart.
 .appointmentPennant--other
 	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
-	background: var(--m3-tertiary-container, #d8e2ff);
-	color: var(--m3-on-tertiary-container, #001a41);
+	background: var(--pennant-accent);
+	color: var(--pennant-on-accent);
+	box-shadow:
+		0 0 0 1px var(--pennant-edge),
+		0 0 0 3px var(--m3-surface-container-lowest, #fff);
 }
 
 .appointmentPennant__label--short {
@@ -156,4 +167,58 @@
 // The topic and the pennants hang from the divider: top-aligned.
 .sessionInfo__metaInfo:has(.roomAppointmentPennants) {
 	align-items: flex-start;
+}
+
+/* ---- Variants for the review (Frank, 2026-11-24: "ein, zwei Varianten,
+   wie das runde Icon besser integriert ist"). ---- */
+
+// B "Flach": the bubble sits inside the pennant, the pennant is rose.
+.roomAppointmentPennants--flat .appointmentPennant {
+	background: var(--pennant-accent);
+	border-color: var(--pennant-accent);
+
+	&:hover {
+		border-color: var(--pennant-edge);
+	}
+
+	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
+		width: 24px;
+		height: 24px;
+		margin-top: 0;
+		box-shadow: none;
+	}
+
+	.appointmentPennant__bubble--arrow {
+		background: transparent;
+	}
+}
+
+// C "Knopf an der Linie": the bubble sits on the divider like a pin the
+// pennant hangs from; half above, half below the line.
+.roomAppointmentPennants--knob {
+	padding-left: 14px;
+
+	.appointmentPennant {
+		padding-left: 22px;
+		overflow: visible;
+	}
+
+	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
+		position: absolute;
+		top: -15px;
+		left: -15px;
+		margin: 0;
+	}
+}
+
+// Phone, stacked: the second pennant hangs from the first, one step in.
+.roomAppointmentPennants--stacked {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0;
+
+	> .appointmentPennant + .appointmentPennant {
+		margin-left: 16px;
+		margin-top: 0;
+	}
 }
