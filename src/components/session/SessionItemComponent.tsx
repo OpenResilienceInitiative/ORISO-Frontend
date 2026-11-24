@@ -72,6 +72,7 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { useSideChatIntroDismissed } from '../chatStage/sideChatIntroPreference';
 import { resolveEnquiryTeamChatState } from '../teamDiscussion/enquiryTeamChatState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
@@ -3158,6 +3159,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[supervisionRoomId, supervisionParticipants.length]
 	);
 
+	// "Nicht mehr einblenden": a counsellor who dismissed a side chat's
+	// intro notice starts that room with its first message.
+	const [supervisionIntroDismissed] =
+		useSideChatIntroDismissed('supervision');
+	const [teamIntroDismissed] = useSideChatIntroDismissed('team');
+
 	// T7: the side room opens with the system notice "Supervision durch
 	// {name} ist aktiv …" as its first item (frontend-rendered, exactly as
 	// on the stage; never counted as unread).
@@ -3180,9 +3187,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			description: translate('supervision.panel.systemNotice', {
 				name: supervisorName
 			}),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'supervision',
+			dismissed: supervisionIntroDismissed
 		});
 	}, [
+		supervisionIntroDismissed,
 		hasSupervisionSideRoom,
 		supervisionMessages,
 		supervisionRoomId,
@@ -3205,11 +3215,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			roomId: teamRoomId || '',
 			title: teamChannelTitle,
 			description: teamText('chatStage.panel.team.systemNotice'),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'team',
+			dismissed: teamIntroDismissed
 		});
 		// teamText is rebuilt each render from `translate` (stable per locale).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		teamIntroDismissed,
 		hasTeamSideRoom,
 		teamMessages,
 		teamRoomId,
