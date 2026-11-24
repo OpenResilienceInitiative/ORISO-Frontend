@@ -2,7 +2,6 @@ import { expect, test, BrowserContext, Page } from '@playwright/test';
 import {
 	actor,
 	assertLoginRejected,
-	conversationMessage,
 	login,
 	passwordReady,
 	phase,
@@ -11,6 +10,52 @@ import {
 	sendMessage,
 	waitForRecoveryStartup
 } from './recovery-fixtures';
+import {
+	hasExactRecoveryEvent,
+	readEncryptedSendReceipt,
+	type EncryptedSendReceipt
+} from './recovery-event-witness';
+
+const backupKey = ({
+	homeserverOrigin,
+	roomId,
+	sessionId
+}: Omit<EncryptedSendReceipt, 'eventId'>) =>
+	JSON.stringify([homeserverOrigin, roomId, sessionId]);
+
+async function receiptForMessage(
+	page: Page,
+	marker: string,
+	receipts: Map<string, EncryptedSendReceipt>
+) {
+	let verified: EncryptedSendReceipt | undefined;
+	await expect
+		.poll(
+			async () => {
+				const matching: EncryptedSendReceipt[] = [];
+				for (const receipt of receipts.values()) {
+					if (
+						await hasExactRecoveryEvent(
+							page,
+							receipt.eventId,
+							marker
+						)
+					) {
+						matching.push(receipt);
+					}
+				}
+				verified = matching.length === 1 ? matching[0] : undefined;
+				return Boolean(verified);
+			},
+			{
+				message:
+					'Expected one confirmed encrypted Matrix event for the sent marker'
+			}
+		)
+		.toBe(true);
+	if (!verified) throw new Error('Missing encrypted recovery witness');
+	return { ...verified, marker };
+}
 
 type Settings = { asker: string; consultant: string; revision: number };
 const settingResponse =
@@ -193,46 +238,38 @@ test('fresh asker and consultant restore encrypted history with every original p
 		const originalConsultant = await newDevice();
 		const askerPage = await originalAsker.newPage();
 		const consultantPage = await originalConsultant.newPage();
-		const sentSessions = new Map<Page, Set<string>>();
-		const backedUpSessions = new Map<Page, Set<string>>();
-		const encryptedSends = new Set<Page>();
-		for (const page of [askerPage, consultantPage]) {
-			sentSessions.set(page, new Set());
-			backedUpSessions.set(page, new Set());
-			page.on('response', (response) => {
+		const senders = {
+			asker: {
+				page: askerPage,
+				events: new Map<string, EncryptedSendReceipt>(),
+				backups: new Set<string>()
+			},
+			consultant: {
+				page: consultantPage,
+				events: new Map<string, EncryptedSendReceipt>(),
+				backups: new Set<string>()
+			}
+		};
+		for (const { page, events, backups } of Object.values(senders)) {
+			page.on('response', async (response) => {
 				if (!response.ok() || response.request().method() !== 'PUT')
 					return;
 				try {
-					const path = new URL(response.url()).pathname;
-					const send = path.match(
-						/\/rooms\/([^/]+)\/send\/m\.room\.encrypted\//
+					const receipt = await readEncryptedSendReceipt(response);
+					if (receipt) events.set(receipt.eventId, receipt);
+					const url = new URL(response.url());
+					const backup = url.pathname.match(
+						/\/_matrix\/client\/v3\/room_keys\/keys(?:\/([^/]+)(?:\/([^/]+))?)?$/
 					);
-					if (send) {
-						// Parse in memory only. Keep room/session identifiers, never ciphertext.
-						const body = response.request().postDataJSON();
-						if (
-							typeof body?.session_id === 'string' &&
-							body.session_id
-						) {
-							sentSessions
-								.get(page)
-								.add(
-									JSON.stringify([
-										decodeURIComponent(send[1]),
-										body.session_id
-									])
-								);
-							encryptedSends.add(page);
-						}
-					}
-					const backup = path.match(
-						/\/room_keys\/keys(?:\/([^/]+)(?:\/([^/]+))?)?$/
-					);
-					if (backup) {
-						const addPair = (room: string, session: string) =>
-							backedUpSessions
-								.get(page)
-								.add(JSON.stringify([room, session]));
+					if (backup && url.searchParams.get('version')) {
+						const addPair = (roomId: string, sessionId: string) =>
+							backups.add(
+								backupKey({
+									homeserverOrigin: url.origin,
+									roomId,
+									sessionId
+								})
+							);
 						if (backup[1] && backup[2]) {
 							addPair(
 								decodeURIComponent(backup[1]),
@@ -276,43 +313,58 @@ test('fresh asker and consultant restore encrypted history with every original p
 		await askerPage.goto(asker.conversationURL);
 		await consultantPage.goto(consultant.conversationURL);
 		await sendMessage(askerPage, messages[0]);
-		await expect(
-			conversationMessage(consultantPage, messages[0])
-		).toBeVisible();
+		const askerSent = await receiptForMessage(
+			consultantPage,
+			messages[0],
+			senders.asker.events
+		);
 		await sendMessage(consultantPage, messages[1]);
-		await expect(conversationMessage(askerPage, messages[1])).toBeVisible();
-		await expect
-			.poll(() => encryptedSends.size, {
-				message: 'Both sends must use Matrix encrypted events'
-			})
-			.toBe(2);
+		const consultantSent = await receiptForMessage(
+			askerPage,
+			messages[1],
+			senders.consultant.events
+		);
+		expect(
+			askerSent.homeserverOrigin === consultantSent.homeserverOrigin &&
+				askerSent.roomId === consultantSent.roomId &&
+				askerSent.eventId !== consultantSent.eventId,
+			'Expected two confirmed encrypted events in the same Matrix room'
+		).toBe(true);
+		const verifyHistory = async (page: Page) => {
+			for (const { eventId, marker } of [askerSent, consultantSent]) {
+				await expect
+					.poll(() => hasExactRecoveryEvent(page, eventId, marker), {
+						message:
+							'Expected the exact encrypted event body in the recovery timeline'
+					})
+					.toBe(true);
+			}
+		};
+		await Promise.all([
+			verifyHistory(askerPage),
+			verifyHistory(consultantPage)
+		]);
 
 		// Configuration status alone is insufficient. This matches each sent room/session to a successful backup ACK;
 		// the definitive key-availability assertion is the offline restore below.
 		await expect
 			.poll(
 				() =>
-					[askerPage, consultantPage].filter((page) => {
-						const targets = sentSessions.get(page);
-						return (
-							targets.size > 0 &&
-							[...targets].every((pair) =>
-								backedUpSessions.get(page).has(pair)
-							)
-						);
-					}).length,
+					senders.asker.backups.has(backupKey(askerSent)) &&
+					senders.consultant.backups.has(backupKey(consultantSent)),
 				{
 					timeout: 60_000,
 					message:
 						'Each sender must back up the exact room/session used by its encrypted message before closing originals'
 				}
 			)
-			.toBe(2);
+			.toBe(true);
 		await screenshots(
 			askerPage,
 			testInfo,
 			'original-encrypted-exchange',
-			messages
+			messages,
+			() => verifyHistory(askerPage)
 		);
 		await closeDevice(originalAsker);
 		await closeDevice(originalConsultant);
@@ -334,13 +386,13 @@ test('fresh asker and consultant restore encrypted history with every original p
 			);
 			await page.goto(account.conversationURL);
 			phase(`Fresh ${role} conversation loaded; checking prior history`);
-			for (const message of messages)
-				await expect(conversationMessage(page, message)).toBeVisible();
+			await verifyHistory(page);
 			await screenshots(
 				page,
 				testInfo,
 				`fresh-${role}-history-peers-offline`,
-				messages
+				messages,
+				() => verifyHistory(page)
 			);
 			await closeDevice(fresh);
 		}
@@ -350,6 +402,7 @@ test('fresh asker and consultant restore encrypted history with every original p
 				actors: [asker.username, consultant.username],
 				messages,
 				originalsClosedBeforeFreshDevices: true,
+				exactEncryptedEventReadback: true,
 				credentialPath: 'normal password + mandatory OTP',
 				scope: 'existing dedicated conversation; fresh devices; engine emulation, not physical device'
 			}),

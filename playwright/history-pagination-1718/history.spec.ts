@@ -1,4 +1,8 @@
 import { expect, test, Page } from '@playwright/test';
+import {
+	hasExactRecoveryEvent,
+	readEncryptedSendReceipt
+} from '../recovery-event-witness';
 
 const roomId = '!history:example.org';
 const reader = '@history-reader:example.org';
@@ -320,6 +324,112 @@ const prepareHistory = async (
 		}
 	};
 };
+
+test('recovery witness requires the exact event row and the full visible message', async ({
+	page
+}) => {
+	await prepareHistory(page, { firstMessage: 140 });
+	await page.goto('/playwright/history-pagination-1718/index.html');
+	const event = message(140);
+	const marker = event.content.body.trim();
+	await expect
+		.poll(() => hasExactRecoveryEvent(page, event.event_id, marker), {
+			timeout: 20_000
+		})
+		.toBe(true);
+
+	expect(await hasExactRecoveryEvent(page, '$another-event', marker)).toBe(
+		false
+	);
+	expect(
+		await hasExactRecoveryEvent(
+			page,
+			event.event_id,
+			'History message 140.'
+		)
+	).toBe(false);
+	await page.locator('[data-message-id="$history-140"]').evaluate((row) => {
+		row.after(row.cloneNode(true));
+	});
+	expect(await hasExactRecoveryEvent(page, event.event_id, marker)).toBe(
+		false
+	);
+});
+
+test('the recovery receipt comes from an acknowledged encrypted Matrix send', async ({
+	page
+}) => {
+	await page.route('**/recovery-witness-document', (route) =>
+		route.fulfill({
+			contentType: 'text/html',
+			body: '<title>Recovery fixture</title>'
+		})
+	);
+	await page.goto('/recovery-witness-document');
+	const roomPath = '/rooms/%21history%3Aexample.org/send/';
+	const matrixPath = `/_matrix/client/v3${roomPath}`;
+	await page.route(
+		(url) => url.pathname.includes(roomPath),
+		(route) => {
+			const transaction = new URL(route.request().url()).pathname
+				.split('/')
+				.pop();
+			return route.fulfill({
+				status: transaction === 'rejected' ? 403 : 200,
+				json: { event_id: '$accepted-history' }
+			});
+		}
+	);
+	const encryptedBody = {
+		algorithm: 'm.megolm.v1.aes-sha2',
+		ciphertext: 'opaque-fixture',
+		session_id: 'fixture-session'
+	};
+	const send = async (path: string, body: object) => {
+		const [response] = await Promise.all([
+			page.waitForResponse(
+				(candidate) => new URL(candidate.url()).pathname === path
+			),
+			page.evaluate(
+				async ({ path, body }) => {
+					await fetch(path, {
+						method: 'PUT',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(body)
+					});
+				},
+				{ path, body }
+			)
+		]);
+		return readEncryptedSendReceipt(response);
+	};
+	const sendPath = `${matrixPath}m.room.encrypted/`;
+	expect(await send(`${sendPath}fixture`, encryptedBody)).toEqual({
+		eventId: '$accepted-history',
+		homeserverOrigin: new URL(page.url()).origin,
+		roomId,
+		sessionId: 'fixture-session'
+	});
+	expect(
+		await send(`${matrixPath}m.room.message/fixture`, encryptedBody)
+	).toBeNull();
+	expect(
+		await send(`/other${roomPath}m.room.encrypted/fixture`, encryptedBody)
+	).toBeNull();
+	expect(
+		await send(`${sendPath}fixture`, {
+			session_id: 'fixture-session',
+			body: 'plaintext'
+		})
+	).toBeNull();
+	expect(
+		await send(`${sendPath}fixture`, {
+			...encryptedBody,
+			session_id: undefined
+		})
+	).toBeNull();
+	expect(await send(`${sendPath}rejected`, encryptedBody)).toBeNull();
+});
 
 test('top-scroll reveals the complete earlier chat without duplicates or moving the reading anchor', async ({
 	page

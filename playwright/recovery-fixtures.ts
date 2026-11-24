@@ -422,7 +422,8 @@ export async function screenshots(
 	page: Page,
 	testInfo: TestInfo,
 	label: string,
-	messages: string[] = []
+	messages: string[] = [],
+	verifyHistory?: () => Promise<void>
 ) {
 	if (label.startsWith('fresh-')) {
 		// Preserve the already-proven original viewport before a responsive reload.
@@ -450,8 +451,14 @@ export async function screenshots(
 			// The app chooses parts of its responsive layout during initialization.
 			await page.emulateMedia({ reducedMotion: 'reduce' });
 			await page.reload();
-			for (const message of messages) {
-				await expect(conversationMessage(page, message)).toBeVisible();
+			if (verifyHistory) {
+				await verifyHistory();
+			} else {
+				for (const message of messages) {
+					await expect(
+						conversationMessage(page, message)
+					).toBeVisible();
+				}
 			}
 			if (label.startsWith('admin-')) {
 				await page
