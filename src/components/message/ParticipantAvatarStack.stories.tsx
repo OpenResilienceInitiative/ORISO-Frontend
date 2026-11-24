@@ -350,7 +350,7 @@ export const OverflowBadgeOpensList: Story = {
 		// Tab closes it and continues from the badge, not from the portal:
 		// Shift+Tab lands on the avatar right before the badge. Real browser
 		// keys: the simulated Tab cannot follow focus out of a removed node.
-		const browser = await import('@vitest/browser/context');
+		const browser = await import('vitest/browser');
 		await browser.userEvent.keyboard('{Shift>}{Tab}{/Shift}');
 		await waitFor(() =>
 			expect(
