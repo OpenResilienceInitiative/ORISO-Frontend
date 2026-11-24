@@ -8043,6 +8043,7 @@
 			"overBlocker": "This time lies in a blocked time. The office hours release it for advice seekers anyway.",
 			"overBlockerConflict": "This time lies in a blocked time. Save again to release it for advice seekers anyway.",
 			"onceInvalid": "The end must be after the start and in the future.",
+			"onceTooLate": "Nobody can book this time any more: the booking deadline has passed. Choose a later start or a shorter \"Bookable until\".",
 			"onceSave": "Release office hours",
 			"addWindow": "Another time window on {{day}}",
 			"addWindowShort": "Time window",

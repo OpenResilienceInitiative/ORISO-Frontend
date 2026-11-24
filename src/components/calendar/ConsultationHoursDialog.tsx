@@ -121,13 +121,21 @@ export const useConsultationHoursForm = ({
 	const [slotMinutes, setSlotMinutes] = useState<SlotMinutes>(
 		hours.slotMinutes
 	);
-	/* Einmalig: the chosen range, or the next full hour for one hour. */
+	/* Einmalig: the chosen range, or one hour from the first full hour
+	   that can still be booked with the default notice. */
 	const [once, setOnce] = useState(() => {
-		const start = dayjs(slot?.start ?? now)
-			.add(slot ? 0 : 1, 'hour')
-			.minute(slot ? dayjs(slot.start).minute() : 0)
-			.second(0)
-			.millisecond(0);
+		const bookableFrom = dayjs(now).add(DEFAULT_ONE_OFF_NOTICE, 'minute');
+		const start = slot
+			? dayjs(slot.start).second(0).millisecond(0)
+			: bookableFrom.minute() === 0 &&
+				  bookableFrom.second() === 0 &&
+				  bookableFrom.millisecond() === 0
+				? bookableFrom
+				: bookableFrom
+						.add(1, 'hour')
+						.minute(0)
+						.second(0)
+						.millisecond(0);
 		const end = slot ? dayjs(slot.end) : start.add(1, 'hour');
 		return {
 			day: start.startOf('day') as Dayjs | null,
@@ -189,6 +197,12 @@ export const useConsultationHoursForm = ({
 		: onTheDay(once.day, once.end);
 	const onceInvalid =
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
+	/* Its last slot must still be bookable: start before the end by one
+	   slot, and the notice before that start still ahead. */
+	const onceTooLate =
+		!onceInvalid &&
+		onceEnd.getTime() - (slotMinutes + once.notice) * 60_000 <=
+			now.getTime();
 	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
 	   overrides what was blocked). */
 	const refusedHere =
@@ -310,6 +324,11 @@ export const useConsultationHoursForm = ({
 			{onceInvalid && (
 				<p className="calendarDialog__error" role="alert">
 					{t('calendar.consultationHours.onceInvalid')}
+				</p>
+			)}
+			{onceTooLate && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceTooLate')}
 				</p>
 			)}
 		</div>
@@ -562,7 +581,7 @@ export const useConsultationHoursForm = ({
 				? {
 						label: t('calendar.consultationHours.onceSave'),
 						primary: true,
-						disabled: saving || onceInvalid,
+						disabled: saving || onceInvalid || onceTooLate,
 						onClick: () =>
 							onSaveOneOff?.({
 								start: onceStart,

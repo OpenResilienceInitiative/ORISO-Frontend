@@ -308,6 +308,61 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		return onSaveOneOff.mock.calls[0][0];
 	};
 
+	it('proposes a one-off that can still be booked with the default notice', () => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				now: new Date(2026, 10, 25, 10, 15),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		fireEvent.click(
+			screen.getByRole('radio', {
+				name: 'calendar.consultationHours.modes.once'
+			})
+		);
+		act(() =>
+			form?.actions
+				.find((a) => a.testId === 'consultation-once-save')
+				?.onClick?.()
+		);
+		expect(onSaveOneOff.mock.calls[0][0].start).toEqual(
+			new Date(2026, 10, 25, 12, 0)
+		);
+	});
+
+	it('does not release a one-off nobody can book any more', () => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				slot: {
+					start: new Date(2026, 10, 25, 8, 30),
+					end: new Date(2026, 10, 25, 9, 30)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		expect(
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled
+		).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooLate')
+		).toBeTruthy();
+	});
+
 	it('keeps a one-off that ends at midnight on the next day', () => {
 		const saved = saveOnce({
 			slot: {
