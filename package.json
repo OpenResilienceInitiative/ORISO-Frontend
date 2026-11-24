@@ -291,7 +291,7 @@
 					"paths": [
 						{
 							"name": "antd",
-							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+							"message": "Use the documented ORISO component and its import from Storybook (ORISO-Admin#1171)."
 						}
 					],
 					"patterns": [
@@ -300,7 +300,7 @@
 								"antd/*",
 								"@ant-design/*"
 							],
-							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+							"message": "Use the documented ORISO component and its import from Storybook (ORISO-Admin#1171)."
 						}
 					]
 				}
