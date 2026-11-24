@@ -3394,7 +3394,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		canReply: hasSupervisionSideRoom && !isRejectedSession,
 		isSupervisor,
 		senderDisplayName,
-		sharedVoice: passageReplies.voice
+		sharedVoice: passageReplies.voice,
+		// The supervision composer sets `feedbackMailIntent`; answers to
+		// marked passages take the same protected mail path.
+		feedbackMailIntent: true
 	});
 	const teamPassageReplies = useSessionPassageReplies({
 		matrixRoomId: hasTeamSideRoom ? teamRoomId : null,
