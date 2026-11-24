@@ -221,6 +221,53 @@ export const MailberatungPrototype: Story = {
 	}
 };
 
+/**
+ * **U25 demo** (ADR-036 decision 42, ORISO-Admin#1660): the editor created an
+ * accordion box in the U25 journey, dragged it onto the on-board phase and
+ * removed the old greeting. The journey has no safety box of its own, so the
+ * server appended the platform emergency panel. Saving the journey makes it
+ * live at once — there is no draft yet.
+ */
+export const U25JourneyReplacesGreeting: Story = {
+	args: {
+		sections: fromEvent([
+			{
+				id: 'u25:welcome:aspect',
+				kind: 'panel',
+				title: 'Schön, dass Du da bist',
+				display: 'open',
+				body: 'Hier antworten Dir junge Menschen, die dafür ausgebildet sind. Du bekommst innerhalb von 7 Tagen eine Antwort.'
+			},
+			{
+				id: 'platform:emergencyNumbers',
+				kind: 'panel',
+				title: 'Wenn es nicht warten kann',
+				display: 'collapsed',
+				body: 'Bei einer akuten Notlage erreichst Du rund um die Uhr die Telefonseelsorge unter 0800 111 0 111 oder 0800 111 0 222 und den Rettungsdienst unter 112.',
+				safety: true
+			}
+		])
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByText('Schön, dass Du da bist')).toBeVisible();
+		await expect(
+			canvas.getByText(/junge Menschen, die dafür ausgebildet sind/)
+		).toBeVisible();
+		/* The old greeting is gone ... */
+		await expect(
+			canvas.queryByText(/Schön, dass Sie sich gemeldet haben/)
+		).toBeNull();
+		/* ... the emergency numbers are not. */
+		const emergencyRow = canvas
+			.getByText('Wenn es nicht warten kann')
+			.closest('details');
+		await expect(emergencyRow?.className).toContain(
+			'erstantwort__faq--emergency'
+		);
+	}
+};
+
 /** A Beratungsstelle reordered the module and opened the emergency panel. */
 export const ReorderedByCentre: Story = {
 	args: {

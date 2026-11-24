@@ -394,3 +394,61 @@ it('does not offer a dead email action after the server denies collection', () =
 		screen.queryByRole('button', { name: /notificationChoice.email / })
 	).toBeNull();
 });
+
+/* ADR-036 decision 42 (ORISO-Admin#1660): the first reply built from the
+   journey arrives as version 2 and is drawn by the module renderer. */
+const journeyFirstReply = (sections: unknown[]) =>
+	SYSTEM_NOTIFICATION_PREFIX +
+	JSON.stringify({
+		type: 'FIRST_RESPONSE',
+		version: 2,
+		conversationType: 'AGENCY_COUNSELLING',
+		sections
+	});
+
+it('draws a first reply from the journey: an editor panel and the emergency numbers', () => {
+	setup(
+		false,
+		'AGENCY_COUNSELLING',
+		undefined,
+		journeyFirstReply([
+			{
+				id: 'u25:info:aspect',
+				kind: 'panel',
+				title: 'Neu bei U25',
+				display: 'open',
+				body: 'Wir antworten Dir bald.'
+			},
+			{
+				id: 'platform:emergencyNumbers',
+				kind: 'panel',
+				title: 'Wenn es nicht warten kann',
+				display: 'collapsed',
+				body: 'Telefonseelsorge 0800 111 0 111',
+				safety: true
+			}
+		]),
+		'event-v2'
+	);
+	expect(screen.getByTestId('erstantwort-module-sequence')).toBeTruthy();
+	expect(screen.getByText('Neu bei U25')).toBeTruthy();
+	expect(screen.getByText('Wir antworten Dir bald.')).toBeTruthy();
+	expect(screen.getByText('Wenn es nicht warten kann')).toBeTruthy();
+});
+
+it('places the notification setup where the journey puts the e-mail module', () => {
+	setup(
+		false,
+		'AGENCY_COUNSELLING',
+		undefined,
+		journeyFirstReply([
+			{ id: 'greeting', kind: 'message', body: 'Hallo!' },
+			{ id: 'email', kind: 'fixed', module: 'email' }
+		]),
+		'event-v2-email'
+	);
+	expect(screen.getByText('Hallo!')).toBeTruthy();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});

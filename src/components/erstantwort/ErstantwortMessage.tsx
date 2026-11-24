@@ -42,6 +42,8 @@ import {
 	resolveErstantwortBausteine
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
+import { ErstantwortModuleSequence } from './ErstantwortModuleSequence';
+import { parseErstantwortModule } from './erstantwortModulePayload';
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import {
 	getAuthenticatedAccountIdentity,
@@ -358,6 +360,32 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const offersActions =
 		!readOnly &&
 		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+
+	/* ADR-036 decision 42 (ORISO-Admin#1660): a first reply built from the
+	   journey arrives as version 2 — the sections the editor arranged, in their
+	   order, with the words frozen at send time. It is drawn by the module
+	   renderer; the e-mail setup is the one platform component it can place. */
+	const journeyModule = parseErstantwortModule(rawMessage);
+	if (journeyModule.status === 'ok') {
+		return (
+			<ErstantwortModuleSequence
+				sections={journeyModule.sections}
+				slots={{
+					email:
+						!readOnly && showSetupSlot ? (
+							<NotificationSetupCollapse
+								messageId={messageId}
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
+							/>
+						) : undefined
+				}}
+			/>
+		);
+	}
 
 	if (!bausteine.length && !emailOverlay) return null;
 
