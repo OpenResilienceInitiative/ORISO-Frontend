@@ -62,6 +62,7 @@ import {
 	takeCallAutoJoin
 } from '../groupChat/waitingAdmission/callAutoJoin';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { SideChatIntroDismissButton } from '../chatStage/SideChatIntroDismissButton';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
@@ -3131,6 +3132,7 @@ export const MessageItemComponent = ({
 	}
 
 	if (isSupervisionNoticeEvent) {
+		const dismissKind = parsedMessage.systemNotificationDismissKind;
 		return (
 			<div
 				className="messageItem messageItem--erstantwort messageItem--supervisionNotice"
@@ -3146,6 +3148,17 @@ export const MessageItemComponent = ({
 							body: systemNotificationDescription
 						}
 					]}
+					slots={
+						dismissKind && !blocksLeavingActions
+							? {
+									'supervision-notice': (
+										<SideChatIntroDismissButton
+											kind={dismissKind}
+										/>
+									)
+								}
+							: undefined
+					}
 					skipAnimation
 				/>
 			</div>

@@ -3340,7 +3340,9 @@
 		},
 		"consultationHours": {
 			"description": "In diesen Zeiten können Ratsuchende selbst einen Termin bei dir buchen. Sie gelten unabhängig von deiner Arbeitszeit.",
-			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst."
+			"autoAcceptOff": "Jede Buchung ist eine Anfrage, die du bestätigst.",
+			"onceHint": "Gib eine freie Zeit kurzfristig frei. Sie gilt nur an diesem Tag.",
+			"onceDescription": "Diese Zeit können Ratsuchende einmalig bei dir buchen."
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf dich",
@@ -3353,6 +3355,9 @@
 			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
 			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
 			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+		},
+		"freeTimes": {
+			"description": "Hier buchst du selbst einen Termin bei {{name}}."
 		}
 	},
 	"guestAccountMode": {

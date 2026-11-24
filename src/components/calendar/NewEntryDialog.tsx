@@ -4,7 +4,8 @@
  * shared invitation form (one flow with "Chat erstellen" and the 1:1's
  * "Termin anlegen"), "Sperrzeit" the blocker form; switching keeps what was
  * entered in the other. A counsellor also gets "Abwesenheit", a planned
- * absence over whole days (ORISO-Frontend#2303).
+ * absence over whole days (ORISO-Frontend#2303), and "Sprechzeit", the
+ * weekly office hours of the Sprechstunden dialog (ORISO-Frontend#2494 *2b).
  *
  * The switch is a WAI-ARIA tab list, since it changes the form below: one
  * Tab stop on the selected tab, the arrow keys (wrapping), Home and End
@@ -19,6 +20,12 @@ import { useCalendarInvitationForm } from './useCalendarInvitationForm';
 import { useBlockerForm } from './BlockerDialog';
 import { useAbsenceForm, type AbsenceDraft } from './AbsenceForm';
 import { useColleagueAppointmentForm } from './ColleagueAppointmentForm';
+import { useConsultationHoursForm } from './ConsultationHoursDialog';
+import {
+	consultationHoursFromApi,
+	type ConsultationHours,
+	type OneOffConsultation
+} from './calendarConsultationHours';
 import type { InvitationPreset } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
@@ -29,7 +36,11 @@ import type {
 	Colleague
 } from './calendarModel';
 
-export type NewEntryTab = 'appointment' | 'blocker' | 'absence';
+export type NewEntryTab =
+	| 'appointment'
+	| 'blocker'
+	| 'absence'
+	| 'consultation';
 
 export interface NewEntryDialogProps {
 	open: boolean;
@@ -63,6 +74,21 @@ export interface NewEntryDialogProps {
 	onSaveAbsence?: (draft: AbsenceDraft) => void;
 	/** The absence the profile holds already, to edit it here. */
 	initialAbsence?: Partial<AbsenceDraft>;
+	/**
+	 * The stored Sprechstunden; with them and `onSaveConsultationHours`
+	 * the tab "Sprechzeit" edits them (FE#2494 *2b).
+	 */
+	consultationHours?: ConsultationHours;
+	onSaveConsultationHours?: (hours: ConsultationHours) => void;
+	/** A Sprechzeit save is on its way. */
+	savingConsultationHours?: boolean;
+	/** "Einmalig": releases the chosen stretch once (FE#2494 *2b). */
+	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => void;
+	/** The last one-off save met a Sperrzeit the form could not see. */
+	oneOffBlockerConflict?: { start: Date; end: Date };
+	/** One's released one-offs, to list, check against and withdraw. */
+	oneOffConsultations?: OneOffConsultation[];
+	onWithdrawOneOffConsultation?: (oneOff: OneOffConsultation) => void;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
@@ -72,7 +98,15 @@ export interface NewEntryDialogProps {
 	onClose: () => void;
 }
 
-const TABS: NewEntryTab[] = ['appointment', 'blocker', 'absence'];
+const TABS: NewEntryTab[] = [
+	'appointment',
+	'consultation',
+	'blocker',
+	'absence'
+];
+
+/** The form's start while the office hours are not passed. */
+const NO_CONSULTATION_HOURS = consultationHoursFromApi(undefined);
 
 type WithWhom = 'conversation' | 'colleague';
 const WITH_WHOM: WithWhom[] = ['conversation', 'colleague'];
@@ -105,6 +139,13 @@ export const NewEntryDialog = ({
 	onWorkingHours,
 	onSaveAbsence,
 	initialAbsence,
+	consultationHours,
+	onSaveConsultationHours,
+	savingConsultationHours,
+	onSaveOneOffConsultation,
+	oneOffBlockerConflict,
+	oneOffConsultations,
+	onWithdrawOneOffConsultation,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -117,8 +158,14 @@ export const NewEntryDialog = ({
 	const tabId = (value: NewEntryTab) => `${ids}-tab-${value}`;
 	const panelId = `${ids}-panel`;
 	const tabRefs = useRef<Partial<Record<NewEntryTab, HTMLButtonElement>>>({});
-	// "Abwesenheit" only where an absence can be stored (#2303).
-	const tabs = TABS.filter((value) => value !== 'absence' || onSaveAbsence);
+	// "Abwesenheit" only where an absence can be stored (#2303),
+	// "Sprechzeit" only where the office hours were read (#2494 *2b).
+	const tabs = TABS.filter(
+		(value) =>
+			(value !== 'absence' || onSaveAbsence) &&
+			(value !== 'consultation' ||
+				(consultationHours && onSaveConsultationHours))
+	);
 	const shown = tabs.includes(tab) ? tab : 'appointment';
 	const onTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
 		const step = TAB_KEYS[event.key];
@@ -163,6 +210,19 @@ export const NewEntryDialog = ({
 		onSave: (draft) => onSaveAbsence?.(draft),
 		onClose
 	});
+	const consultation = useConsultationHoursForm({
+		hours: consultationHours ?? NO_CONSULTATION_HOURS,
+		saving: savingConsultationHours,
+		onSave: (hours) => onSaveConsultationHours?.(hours),
+		onSaveOneOff: onSaveOneOffConsultation,
+		slot: initialTab === 'consultation' ? slot : undefined,
+		entries,
+		blockerConflict: oneOffBlockerConflict,
+		oneOffs: oneOffConsultations,
+		onWithdrawOneOff: onWithdrawOneOffConsultation,
+		now,
+		onClose
+	});
 	const colleague = useColleagueAppointmentForm({
 		slot,
 		colleagues,
@@ -177,9 +237,11 @@ export const NewEntryDialog = ({
 			? withWhom === 'colleague'
 				? colleague
 				: appointment
-			: shown === 'blocker'
-				? blocker
-				: absence;
+			: shown === 'consultation'
+				? consultation
+				: shown === 'blocker'
+					? blocker
+					: absence;
 	// "Ratsuchende Person | Kolleg:in" on the line of the tabs (Frank,
 	// 2026-11-17: "alles in eine Linie").
 	const showWithWhom = shown === 'appointment' && colleagues.length > 0;
