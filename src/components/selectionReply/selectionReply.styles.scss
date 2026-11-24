@@ -386,9 +386,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		color: var(--m3-primary-container, #cc1e1c);
 	}
 
+	// Frank (24 Nov): smaller icons in the small circles.
 	svg {
-		width: 20px;
-		height: 20px;
+		width: 18px;
+		height: 18px;
 	}
 }
 
@@ -685,6 +686,12 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		width: 40px;
 		height: 40px;
 		border-radius: 0 4px 0 20px;
+
+		// Frank (24 Nov): a lighter send glyph than the composer's 24px.
+		svg {
+			width: 20px;
+			height: 20px;
+		}
 	}
 }
 
@@ -782,22 +789,15 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 .stackCountIcon {
 	display: inline-flex;
 
-	// 24px: at 20px the thin number is hard to read (FE#2494).
 	svg {
-		width: 24px;
-		height: 24px;
+		width: 18px;
+		height: 18px;
 		fill: currentColor;
 	}
 
 	&__filled {
 		display: none;
 	}
-}
-
-// Wins over the box's 20px rule for toolbar icons.
-.selectionReply__box .selectionReply__collect .stackCountIcon svg {
-	width: 24px;
-	height: 24px;
 }
 
 .selectionReply__collect:hover,

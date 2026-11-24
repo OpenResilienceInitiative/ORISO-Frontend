@@ -4449,8 +4449,6 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/selectionReply/SelectionReplyLayer.tsx",
-			"src/components/selectionReply/SelectionReplyToolbar.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/teamDiscussion/TeamDiscussionBadge.tsx",
 			"src/resources/img/icons.ts"
@@ -4841,6 +4839,22 @@
 		"sourcePath": "src/resources/img/icons/supervision_on_400_24px.svg",
 		"exportNames": [],
 		"usageFiles": ["src/components/chatStage/ChannelSwitcherFab.tsx"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:team-chat-3p:base",
+		"family": "team-chat-3p",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "team-chat-3p.svg",
+		"sourcePath": "src/resources/img/icons/team-chat-3p.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/selectionReply/SelectionReplyLayer.tsx",
+			"src/components/selectionReply/SelectionReplyToolbar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
