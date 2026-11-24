@@ -3710,6 +3710,30 @@ $cal-new-pill-hover: #4b4f51;
 	line-height: 18px;
 }
 
+// FE#2494: the given colleague (the supervisor of a Supervision room) in
+// place of the choice: a label over the name, like a read-only field.
+.calendarDialog__fixedColleague {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 8px 16px;
+	border-radius: 8px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+.calendarDialog__fixedColleagueLabel {
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.calendarDialog__fixedColleagueName {
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 16px;
+	line-height: 24px;
+}
+
 // "Neuer Eintrag": the tabs Termin | Sperrzeit above the form (prototype
 // v17), a filled segmented button.
 .calendarNewEntry {

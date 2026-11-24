@@ -123,6 +123,7 @@ import {
 } from '../sessionsListItem/supervisionListState';
 import {
 	pickDisplayOrUsername,
+	pickAppointmentSupervisor,
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
@@ -142,7 +143,10 @@ import {
 } from '../../utils/threadUnread';
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
-import { PanelCallActions } from '../chatStage/PanelCallActions';
+import {
+	PanelCallActions,
+	type PanelMenuItem
+} from '../chatStage/PanelCallActions';
 import { resolveSupervisionCallFeatureGates } from '../call/callFeatureGates';
 import { startRoomCall } from '../call/startRoomCall';
 import {
@@ -258,6 +262,10 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import { ReactComponent as CalendarPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
+import { AppointmentPennant } from '../sessionsList/timeline/AppointmentPennant';
+import { useSupervisorPennant } from '../sessionsList/timeline/useSupervisorPennant';
+import { SupervisorAppointmentDialogWired } from '../supervisionPanel/SupervisorAppointmentDialog';
 import {
 	parseAddonPanel,
 	useOpenAddonPanel,
@@ -3152,6 +3160,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!isOnlyEnquiry &&
 		!activeSession.isEnquiry &&
 		!isPracticing;
+	// FE#2494: the counsellor books an appointment with the supervisor from
+	// the Supervision ⋮ (the calendar's colleague appointment as a popup).
+	// The supervisor side has nobody fixed to book: no entry there.
+	// Id and name from the same supervisor (`pickAppointmentSupervisor`).
+	const appointmentSupervisor = useMemo(
+		() =>
+			isSupervisor || isPracticing || !isConsultantUser
+				? undefined
+				: pickAppointmentSupervisor(
+						sessionSupervisors,
+						userData?.userId,
+						supervisionPeople
+					),
+		[
+			isSupervisor,
+			isPracticing,
+			isConsultantUser,
+			sessionSupervisors,
+			userData?.userId,
+			supervisionPeople
+		]
+	);
+	// FE#2494: the next appointment with the supervisor hangs from the
+	// Supervision panel's hairline, as the main chat's pennants do.
+	const supervisorPennant = useSupervisorPennant(appointmentSupervisor?.id);
+	const [bookingSupervisor, setBookingSupervisor] = useState(false);
+	const supervisionMenuItems: PanelMenuItem[] = appointmentSupervisor
+		? [
+				{
+					'id': 'appointment',
+					'icon': <CalendarPlusIcon aria-hidden />,
+					'title': translate('supervision.panel.bookAppointment'),
+					'onClick': () => setBookingSupervisor(true),
+					'data-cy': 'panel-menu-book-appointment'
+				}
+			]
+		: [];
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -4970,36 +5015,83 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
-						actions={
-							mayCallInSideRoom ? (
-								<PanelCallActions
-									onStartCall={startSupervisionCall}
-									audioEnabled={supervisionCallGates.audio}
-									videoEnabled={supervisionCallGates.video}
-									participantCount={
-										supervisionParticipants.length
-									}
-									// The panel fills the screen on the phone;
-									// on the desktop it is as wide as the drag
-									// left it.
-									width={isPhoneLayout ? null : panelWidth}
-									phone={isPhoneLayout}
-									copy={{
-										video: translate(
-											'videoCall.button.startVideoCall'
-										),
-										audio: translate(
-											'videoCall.button.startCall'
-										),
-										menu: translate('app.menu'),
-										participants: translate(
-											'chatStage.panel.participantCount',
-											{
-												count: supervisionParticipants.length
-											}
-										)
-									}}
+						appointments={
+							supervisorPennant && (
+								<AppointmentPennant
+									entry={supervisorPennant.entry}
+									role="counsellor"
+									menuItems={supervisorPennant.menuItems}
+									onAction={supervisorPennant.onAction}
 								/>
+							)
+						}
+						actions={
+							mayCallInSideRoom ||
+							supervisionMenuItems.length > 0 ? (
+								<>
+									<PanelCallActions
+										menuItems={supervisionMenuItems}
+										onStartCall={startSupervisionCall}
+										audioEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.audio
+										}
+										videoEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.video
+										}
+										participantCount={
+											supervisionParticipants.length
+										}
+										// The panel fills the screen on the phone;
+										// on the desktop it is as wide as the drag
+										// left it.
+										width={
+											isPhoneLayout ? null : panelWidth
+										}
+										phone={isPhoneLayout}
+										copy={{
+											video: translate(
+												'videoCall.button.startVideoCall'
+											),
+											audio: translate(
+												'videoCall.button.startCall'
+											),
+											menu: translate('app.menu'),
+											participants: translate(
+												'chatStage.panel.participantCount',
+												{
+													count: supervisionParticipants.length
+												}
+											)
+										}}
+									/>
+									{bookingSupervisor &&
+										appointmentSupervisor && (
+											<SupervisorAppointmentDialogWired
+												supervisor={
+													appointmentSupervisor
+												}
+												ownerId={userData?.userId ?? ''}
+												fullScreen={isPhoneLayout}
+												supervisionRoom={
+													supervisionRoomId
+														? {
+																sessionId:
+																	activeSession
+																		.item
+																		.id,
+																matrixRoomId:
+																	supervisionRoomId
+															}
+														: undefined
+												}
+												onClose={() =>
+													setBookingSupervisor(false)
+												}
+											/>
+										)}
+								</>
 							) : undefined
 						}
 						{...panelHeaderNav}

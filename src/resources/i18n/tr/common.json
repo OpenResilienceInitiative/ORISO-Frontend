@@ -4915,7 +4915,8 @@
 					"failedTitle": "Talep yanıtlanmadı",
 					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
 					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
-				}
+				},
+				"menu": "Randevu menüsü"
 			}
 		},
 		"deletedAsker": {
@@ -6033,6 +6034,33 @@
 				"divider": "Ayırıcı – ok tuşları süpervizyon genişliğini değiştirir, Home ve End en küçük ve en büyük değeri ayarlar",
 				"mainPane": "Danışmanlık sohbeti",
 				"secondaryPane": "Yan oda"
+			}
+		},
+		"appointment": {
+			"title": "Süpervizörle randevu al",
+			"with": "İle",
+			"description": "Gün, saat ve türü seçin. Randevu ardından iki takvimde de görünür.",
+			"unreachable": "{{name}} takviminizden ulaşılamıyor. Burada randevu mümkün değil; {{name}} kişisine süpervizyon sohbetinde yazın.",
+			"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin.",
+			"withSupervision": "Süpervizyon",
+			"changeFailed": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
+			"menu": {
+				"accept": {
+					"title": "Randevuyu kabul et",
+					"description": "Randevu böylece kesinleşir."
+				},
+				"decline": {
+					"title": "Randevuyu reddet",
+					"description": "Her iki takvimden de kaldırılır."
+				},
+				"cancel": {
+					"title": "Randevuyu iptal et",
+					"description": "Her iki takvimden de kaldırılır."
+				},
+				"calendar": {
+					"title": "Takvimde aç",
+					"description": "Randevuyu orada da taşıyabilirsiniz."
+				}
 			}
 		}
 	},

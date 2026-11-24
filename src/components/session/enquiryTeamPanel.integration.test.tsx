@@ -132,6 +132,11 @@ vi.mock('../../api/apiGetSessionRooms', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiGetSessionAppointments: async () => []
 }));
+// FE#2494: the supervisor's appointment pennant reads the own calendar.
+vi.mock('../../api/apiCalendar', async (original) => ({
+	...(await original<typeof import('../../api/apiCalendar')>()),
+	apiGetCalendarEntries: async () => []
+}));
 vi.mock('../../api/apiDirectLinks', async (original) => ({
 	...(await original<typeof import('../../api/apiDirectLinks')>()),
 	apiGetOwnDirectLinks: async () => []

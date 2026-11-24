@@ -1,0 +1,258 @@
+// FE#2494: the appointment pennant hangs from the header divider beside the
+// topic tag: no top edge (the divider is it), rounded bottom, outline only.
+// A touch larger than the topic tag; the Art bubble in front and the arrow
+// bubble at the back peek out below the pennant.
+.appointmentPennant {
+	--pennant-height: 30px;
+
+	position: relative;
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+	height: var(--pennant-height);
+	margin: 0;
+	padding: 0 4px 0 3px;
+
+	// Accent (the topic tag's rose) with the dark primary on top (Frank,
+	// 2026-11-24): the pennant belongs to the rose divider it hangs from.
+	--pennant-accent: var(
+		--oriso-topic-tag-bg,
+		var(--m3-primary-fixed, #ffdad5)
+	);
+	--pennant-on-accent: var(--oriso-topic-tag-fg, #930008);
+	--pennant-edge: var(--m3-primary-fixed-dim, #ffb4aa);
+
+	border: 1px solid var(--pennant-edge);
+	border-top: 0;
+	border-radius: 0 0 16px 16px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--pennant-on-accent);
+	font: inherit;
+	font-size: 13px;
+	line-height: 18px;
+	font-weight: 500;
+	letter-spacing: 0.1px;
+	cursor: pointer;
+
+	// 48px touch target around the pennant, without moving anything.
+	&::before {
+		content: '';
+		position: absolute;
+		inset: -4px -4px -14px;
+	}
+
+	&:hover {
+		background: color-mix(in srgb, var(--pennant-accent) 45%, #fff);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a8001c);
+		outline-offset: 2px;
+	}
+
+	&[aria-expanded='true'] {
+		border-color: var(--pennant-on-accent);
+		background: var(--pennant-accent);
+	}
+
+	// FE#2287: a request nobody answered yet: same pennant, dashed.
+	&--requested {
+		border-style: dashed;
+		border-top: 0;
+	}
+}
+
+// FE#2494: the team chat as a pennant, in the Teamberatung's own pair; it
+// opens the team chat at once (no menu). Pressed: the team chat is open.
+.appointmentPennant.appointmentPennant--team {
+	--pennant-accent: var(--m3-secondary-fixed, #dae3f0);
+	--pennant-on-accent: var(--m3-on-secondary-fixed, #141c25);
+	--pennant-edge: var(--m3-secondary-fixed-dim, #bec7d4);
+
+	&.appointmentPennant--pressed {
+		border-color: var(--pennant-on-accent);
+		background: var(--pennant-accent);
+	}
+}
+
+// The Art: a round bubble that peeks 6px out below the pennant.
+.appointmentPennant__bubble {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	margin-top: 12px;
+	border-radius: 50%;
+	background: var(--pennant-on-accent);
+	color: var(--pennant-accent);
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+
+	svg {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+
+	// The arrow at the back: smaller, inside the pennant.
+	&--arrow {
+		width: 22px;
+		height: 22px;
+		margin-top: 0;
+		box-shadow: none;
+		background: var(--pennant-accent);
+		color: var(--pennant-on-accent);
+	}
+}
+
+.appointmentPennant__label {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+// Another kind of appointment (e.g. with the supervisor): the Art bubble
+// inverted (rose with dark red), so the two pennants tell apart.
+.appointmentPennant--other
+	.appointmentPennant__bubble:not(.appointmentPennant__bubble--arrow) {
+	background: var(--pennant-accent);
+	color: var(--pennant-on-accent);
+	box-shadow:
+		0 0 0 1px var(--pennant-edge),
+		0 0 0 3px var(--m3-surface-container-lowest, #fff);
+}
+
+.appointmentPennant__label.appointmentPennant__label--short {
+	display: none;
+}
+
+// Who it is with (advice seeker, supervision): an icon before the date,
+// on desktop and phone (Frank, 2026-11-24: "weniger lesen").
+.appointmentPennant__label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.appointmentPennant__with {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	fill: currentColor;
+}
+
+// Phone: the short date, no arrow bubble; the whole pennant opens the menu.
+@media (width < 600px) {
+	.appointmentPennant {
+		gap: 6px;
+		padding-right: 10px;
+	}
+
+	.appointmentPennant__bubble {
+		width: 26px;
+		height: 26px;
+		margin-top: 14px;
+	}
+
+	.appointmentPennant__bubble--arrow,
+	.appointmentPennant__label:not(.appointmentPennant__label--short) {
+		display: none;
+	}
+
+	.appointmentPennant__label.appointmentPennant__label--short {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	// The topic stays whole, 6px from the edge; the centre and postcode
+	// give way (they show elsewhere too).
+	.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
+		padding-left: 6px;
+
+		> .topicTag {
+			flex-shrink: 0;
+			min-width: auto;
+		}
+
+		> .sessionInfo__metaInfo__content:not(.topicTag) {
+			display: none;
+		}
+	}
+
+	// Two kinds on the phone hang stacked: the second from the first, one
+	// step in, so the topic keeps its whole word (Frank, 2026-11-24).
+	.roomNextAppointment.roomAppointmentPennants {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0;
+
+		// S1: the second pennant hangs from the divider too, behind the
+		// first: its side lines run up to the line, its top is hidden.
+		> .appointmentPennant + .appointmentPennant {
+			z-index: 0;
+			height: calc(2 * var(--pennant-height));
+			margin-top: calc(-1 * var(--pennant-height));
+			margin-left: 16px;
+			padding-top: var(--pennant-height);
+		}
+
+		> .appointmentPennant:first-child {
+			z-index: 1;
+		}
+	}
+
+	// The short dates stay whole.
+	.sessionInfo__metaInfo .roomAppointmentPennants,
+	.roomAppointmentPennants > .appointmentPennant {
+		flex-shrink: 0;
+		min-width: auto;
+	}
+}
+
+// The pennants of a room: in the topic's row, hanging from the divider.
+.roomAppointmentPennants {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+	align-self: flex-start;
+}
+
+// With pennants beside it the topic may shorten ("Familien…").
+.sessionInfo__metaInfo:has(.roomAppointmentPennants) > .topicTag {
+	flex: 0 1 auto;
+	min-width: 72px;
+}
+
+// The topic and the pennants hang from the divider: top-aligned.
+.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
+	align-items: flex-start;
+}
+
+// Two kinds of appointment: the centre and postcode step aside entirely
+// (they show in the conversation's details too).
+.sessionInfo__metaInfo:has(.appointmentPennant + .appointmentPennant)
+	> .sessionInfo__metaInfo__content:not(.topicTag) {
+	display: none;
+}
+
+.appointmentPennant__text {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+// The team chat pennant holds one word (desktop) or its bubble (phone): it
+// takes no minimum width of a date.
+.roomAppointmentPennants.roomTeamChatPennant > .appointmentPennant {
+	min-width: auto;
+}

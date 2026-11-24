@@ -41,11 +41,20 @@ export interface ColleagueAppointmentFormProps
 	extends Omit<AppointmentFormProps, 'conversations' | 'initialSessionId'> {
 	/** The calendar's colleague list (calendar reach). */
 	colleagues: Colleague[];
+	/**
+	 * FE#2494: the colleague is given, e.g. the supervisor of a Supervision
+	 * room. The form shows the name instead of the choice.
+	 */
+	fixedColleague?: { id: string; displayName: string };
+	/** Says who the fixed colleague is, e.g. "Supervisor:in". */
+	fixedColleagueLabel?: string;
 }
 
 export const useColleagueAppointmentForm = ({
 	slot,
 	colleagues,
+	fixedColleague,
+	fixedColleagueLabel,
 	entries,
 	ownerId,
 	now,
@@ -72,7 +81,7 @@ export const useColleagueAppointmentForm = ({
 		timedSlot ? dayjs(timedSlot.end) : initial.add(1, 'hour')
 	);
 	const [kind, setKind] = useState<AppointmentKind>(slot?.kind ?? 'video');
-	const [colleagueId, setColleagueId] = useState('');
+	const [colleagueId, setColleagueId] = useState(fixedColleague?.id ?? '');
 	const [showError, setShowError] = useState(false);
 
 	const onsiteOnly =
@@ -150,19 +159,36 @@ export const useColleagueAppointmentForm = ({
 					</div>
 				)}
 				<div className="calendarDialog__fields">
-					<OrisoSelect
-						label={t('calendar.dialog.colleague')}
-						value={colleagueId}
-						options={colleagues.map((c) => ({
-							value: c.id,
-							label: c.agencyName
-								? `${c.displayName} · ${c.agencyName}`
-								: c.displayName
-						}))}
-						onChange={(event) => setColleagueId(event.target.value)}
-						error={showError && error === 'colleague'}
-						fullWidth
-					/>
+					{fixedColleague ? (
+						<p
+							className="calendarDialog__fixedColleague"
+							data-cy="calendar-dialog-fixed-colleague"
+						>
+							<span className="calendarDialog__fixedColleagueLabel">
+								{fixedColleagueLabel ??
+									t('calendar.dialog.colleague')}
+							</span>
+							<span className="calendarDialog__fixedColleagueName">
+								{fixedColleague.displayName}
+							</span>
+						</p>
+					) : (
+						<OrisoSelect
+							label={t('calendar.dialog.colleague')}
+							value={colleagueId}
+							options={colleagues.map((c) => ({
+								value: c.id,
+								label: c.agencyName
+									? `${c.displayName} · ${c.agencyName}`
+									: c.displayName
+							}))}
+							onChange={(event) =>
+								setColleagueId(event.target.value)
+							}
+							error={showError && error === 'colleague'}
+							fullWidth
+						/>
+					)}
 					<p className="calendarDialog__note">
 						{t(
 							onsiteOnly

@@ -69,3 +69,34 @@ export const pickSupervisionCounterpartName = ({
 		fallback
 	);
 };
+
+export interface AppointmentSupervisorSource {
+	supervisorConsultantId?: string | null;
+	supervisorUsername?: string | null;
+	supervisorMatrixUserId?: string | null;
+}
+
+/**
+ * The supervisor an appointment is booked with (FE#2494). Id and name come
+ * from the same supervisor row, so a case with two supervisors never books
+ * one person under the other's (or a combined) name: the name is that
+ * person's resolved side-room name, else their username.
+ */
+export const pickAppointmentSupervisor = (
+	supervisors: ReadonlyArray<AppointmentSupervisorSource>,
+	ownUserId: string | null | undefined,
+	peopleByMatrixId: ReadonlyMap<string, { name?: string | null }>
+): { id: string; displayName: string } | undefined => {
+	const supervisor = supervisors.find(
+		(s) =>
+			s.supervisorConsultantId && s.supervisorConsultantId !== ownUserId
+	);
+	if (!supervisor?.supervisorConsultantId) return undefined;
+	const person = supervisor.supervisorMatrixUserId
+		? peopleByMatrixId.get(supervisor.supervisorMatrixUserId)
+		: undefined;
+	return {
+		id: supervisor.supervisorConsultantId,
+		displayName: clean(person?.name) || clean(supervisor.supervisorUsername)
+	};
+};
