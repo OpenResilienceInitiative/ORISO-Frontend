@@ -15,6 +15,7 @@ import {
 	ChatMenuDropdownItem
 } from '../../chatMenuDropdown/ChatMenuDropdown';
 import { ReactComponent as EventBusyIcon } from '../../../resources/img/icons/timeline-event-busy.svg';
+import { ReactComponent as CalendarOutlineIcon } from '../../../resources/img/icons/calendar_outline.svg';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
@@ -26,6 +27,7 @@ import { MODALITY_ICON } from './AppointmentKindGlyph';
 import { AppointmentPennant } from './AppointmentPennant';
 import {
 	entryMenu,
+	type EntryMenuItem,
 	formatEntrySlot,
 	type FutureEntry,
 	type TimelineRole
@@ -40,7 +42,9 @@ const MENU_ICON: Record<string, React.ElementType> = {
 	decline: CloseIcon,
 	duplicate: ContentCopyOutlinedIcon,
 	configure: SettingsOutlinedIcon,
-	reminder: NotificationsOutlinedIcon
+	reminder: NotificationsOutlinedIcon,
+	// FE#2494: an appointment with a colleague opens in the calendar.
+	calendar: CalendarOutlineIcon
 };
 
 export type MenuAnchor = Pick<DOMRect, 'top' | 'bottom' | 'right'>;
@@ -91,11 +95,14 @@ export const EntryMenu = ({
 	opener,
 	onClose,
 	onAction,
-	id
+	id,
+	items: ownItems
 }: {
 	entry: FutureEntry;
 	role: TimelineRole;
 	anchor: MenuAnchor;
+	/** A menu of its own (an appointment with a colleague, FE#2494). */
+	items?: EntryMenuItem[];
 	/** The id the opener's `aria-controls` names. */
 	id?: string;
 	/** The control that toggles the menu: a press on it is not "outside". */
@@ -103,7 +110,7 @@ export const EntryMenu = ({
 	onClose: () => void;
 	onAction?: AppointmentAction;
 }) => {
-	const items = entryMenu(entry, role);
+	const items = ownItems ?? entryMenu(entry, role);
 	const ref = useRef<HTMLDivElement>(null);
 	const [menuHeight, setMenuHeight] = useState(0);
 	useLayoutEffect(() => {
@@ -277,6 +284,9 @@ export const RoomNextAppointment = ({
 		entry: FutureEntry;
 		withLabel: string;
 		withKind?: 'asker' | 'supervisor';
+		/** Its own menu and actions (FE#2494: with the supervisor). */
+		menuItems?: EntryMenuItem[];
+		onAction?: AppointmentAction;
 	}[];
 }) =>
 	entry || extra.length > 0 || action ? (
@@ -300,7 +310,8 @@ export const RoomNextAppointment = ({
 					withLabel={item.withLabel}
 					withKind={item.withKind}
 					role={role}
-					onAction={onAction}
+					menuItems={item.menuItems}
+					onAction={item.onAction ?? onAction}
 				/>
 			))}
 			{action}

@@ -6002,7 +6002,27 @@
 			"with": "İle",
 			"description": "Gün, saat ve türü seçin. Randevu ardından iki takvimde de görünür.",
 			"unreachable": "{{name}} takviminizden ulaşılamıyor. Burada randevu mümkün değil; {{name}} kişisine süpervizyon sohbetinde yazın.",
-			"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+			"failed": "Randevu kaydedilemedi. Lütfen tekrar deneyin.",
+			"withSupervision": "Süpervizyon",
+			"changeFailed": "Randevu değiştirilemedi. Lütfen tekrar deneyin.",
+			"menu": {
+				"accept": {
+					"title": "Randevuyu kabul et",
+					"description": "Randevu böylece kesinleşir."
+				},
+				"decline": {
+					"title": "Randevuyu reddet",
+					"description": "Her iki takvimden de kaldırılır."
+				},
+				"cancel": {
+					"title": "Randevuyu iptal et",
+					"description": "Her iki takvimden de kaldırılır."
+				},
+				"calendar": {
+					"title": "Takvimde aç",
+					"description": "Randevuyu orada da taşıyabilirsiniz."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {

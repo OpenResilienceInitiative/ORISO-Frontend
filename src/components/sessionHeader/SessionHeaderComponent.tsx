@@ -569,6 +569,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isConsultantUser =
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('CONSULTANT');
+	// FE#2494: the counsellor's appointment with the supervisor hangs as a
+	// second pennant; the supervisor's own view has nobody fixed to show.
+	const appointmentSupervisorId =
+		isConsultantUser && !isSupervisor
+			? supervisors.find(
+					(s) =>
+						s.supervisorConsultantId &&
+						s.supervisorConsultantId !== userData.userId
+				)?.supervisorConsultantId
+			: undefined;
 	const isAskerUser =
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
@@ -1391,6 +1401,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						(isAskerUser || isConsultantUser) && (
 							<ConversationAppointmentSlot
 								onCreateChange={handleCreateAppointmentChange}
+								supervisorId={appointmentSupervisorId}
 								canChange={
 									// Handover co-access may create too: the backend decides
 									// for a colleague who is not the assigned counsellor.

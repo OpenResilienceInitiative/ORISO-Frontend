@@ -26,6 +26,7 @@ import {
 } from './AppointmentSplitButton';
 import {
 	formatEntrySlot,
+	type EntryMenuItem,
 	type FutureEntry,
 	type TimelineRole
 } from './timelineModel';
@@ -43,6 +44,8 @@ export interface AppointmentPennantProps {
 	 * fit (Frank, 2026-11-24). Absent: the room has only one kind.
 	 */
 	withKind?: 'asker' | 'supervisor';
+	/** A menu of its own (an appointment with a colleague). */
+	menuItems?: EntryMenuItem[];
 	onAction?: AppointmentAction;
 }
 
@@ -53,6 +56,7 @@ export const AppointmentPennant = ({
 	role,
 	withLabel,
 	withKind,
+	menuItems,
 	onAction
 }: AppointmentPennantProps) => {
 	const WithIcon = withKind ? WITH_ICON[withKind] : undefined;
@@ -133,6 +137,7 @@ export const AppointmentPennant = ({
 					id={menuId}
 					entry={entry}
 					role={role}
+					items={menuItems}
 					anchor={anchor}
 					opener={ref}
 					onClose={() => setAnchor(null)}

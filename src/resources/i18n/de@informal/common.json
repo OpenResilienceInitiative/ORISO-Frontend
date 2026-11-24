@@ -2374,7 +2374,27 @@
 			"with": "Mit",
 			"description": "Wähle Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
 			"unreachable": "{{name}} ist in deinem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreib {{name}} im Supervisions-Chat.",
-			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut."
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuche es erneut.",
+			"menu": {
+				"accept": {
+					"title": "Termin annehmen",
+					"description": "Der Termin steht dann fest."
+				},
+				"decline": {
+					"title": "Termin ablehnen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"cancel": {
+					"title": "Termin absagen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"calendar": {
+					"title": "Im Kalender öffnen",
+					"description": "Dort kannst du den Termin auch verschieben."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {

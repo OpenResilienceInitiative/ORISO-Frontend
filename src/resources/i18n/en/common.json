@@ -5949,7 +5949,27 @@
 			"with": "With",
 			"description": "Choose the day, time and kind. The appointment then shows in both calendars.",
 			"unreachable": "{{name}} cannot be reached from your calendar. An appointment is not possible here; write to {{name}} in the supervision chat.",
-			"failed": "The appointment could not be saved. Please try again."
+			"failed": "The appointment could not be saved. Please try again.",
+			"withSupervision": "Supervision",
+			"changeFailed": "The appointment could not be changed. Please try again.",
+			"menu": {
+				"accept": {
+					"title": "Accept appointment",
+					"description": "The appointment is then fixed."
+				},
+				"decline": {
+					"title": "Decline appointment",
+					"description": "It leaves both calendars."
+				},
+				"cancel": {
+					"title": "Cancel appointment",
+					"description": "It leaves both calendars."
+				},
+				"calendar": {
+					"title": "Open in calendar",
+					"description": "You can also move the appointment there."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {
