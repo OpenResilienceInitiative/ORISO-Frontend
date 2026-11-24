@@ -7456,7 +7456,8 @@
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
-		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",

@@ -85,14 +85,15 @@ import {
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
 import { useTranslation } from 'react-i18next';
 import { notifyDirectLinksChanged } from '../../api/apiDirectLinks';
-import { CREATE_CHAT_PATH } from '../app/routePaths';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
 import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
 import {
-	toInvitationPresetState,
+	MEDIUM_FOR_KIND,
 	type InvitationPreset
 } from '../directInvitation/invitationModel';
+import { useDirectInvitationSetup } from '../conversationCreate/directLink/DirectLinkCreateCard';
+import { useDirectLinkTopics } from '../conversationCreate/directLink/useDirectLinkTopics';
 import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
 import {
 	InvitationAfterAppointmentError,
@@ -238,6 +239,23 @@ export const CalendarPageWired = () => {
 	const inviteMedia = useDirectLinkMedia(consultant);
 	const allowGuestInvite = inviteMedia.length > 0;
 	const [sharedInvitation, setSharedInvitation] = useState<DirectLink>();
+	/* #2494 *1: "Neue Person per Direkteinladung …" opens the Direkteinladung
+	   popup here; the counsellor stays in the calendar. The full page stays
+	   for "Chat erstellen" in Gespräche only. */
+	const [invitePreset, setInvitePreset] = useState<InvitationPreset>();
+	const directLinkTopics = useDirectLinkTopics();
+	const calendarInvitation = useDirectInvitationSetup({
+		topics: directLinkTopics.topics,
+		agencies: directLinkTopics.agencies,
+		compact,
+		preset: invitePreset,
+		onCreated: (link) => {
+			// The link carries the slot: the calendar shows it as an entry.
+			notifyAppointmentsChanged();
+			notifyDirectLinksChanged();
+			setSharedInvitation(link);
+		}
+	});
 	/* "Im Kalender öffnen" on an appointment's card in the chat: the page
 	   mounts fresh from that link, so the first address is the one meant. */
 	const [openOnDay] = useState(() =>
@@ -723,8 +741,17 @@ export const CalendarPageWired = () => {
 	};
 
 	/* "Neue Person per Direkteinladung …": door A with the calendar's slot. */
-	const inviteNewPerson = (preset: InvitationPreset) =>
-		navigate(CREATE_CHAT_PATH, { state: toInvitationPresetState(preset) });
+	const inviteNewPerson = (preset: InvitationPreset) => {
+		const fromKind = preset.kind ? MEDIUM_FOR_KIND[preset.kind] : undefined;
+		const medium =
+			fromKind && inviteMedia.includes(fromKind)
+				? fromKind
+				: inviteMedia[0];
+		if (!medium) return;
+		if (!directLinkTopics.loaded) void directLinkTopics.load();
+		setInvitePreset(preset);
+		calendarInvitation.startWithDetails(medium);
+	};
 
 	const move = async (entry: CalendarEntry, start: Date, end: Date) => {
 		const slot = {
@@ -1314,6 +1341,7 @@ export const CalendarPageWired = () => {
 					})
 				}
 			/>
+			{calendarInvitation.dialog}
 			{sharedInvitation && (
 				<DirectLinkShareDialog
 					open

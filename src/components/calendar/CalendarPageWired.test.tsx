@@ -44,6 +44,38 @@ vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
 	apiCreateSessionDirectInvitation: invite
 }));
+/* #2494 *1: the calendar's own Direkteinladung popup. The hook is the one
+   "Chat erstellen" uses; here it only records how the calendar drives it. */
+const invitationSetup = vi.hoisted(() => ({
+	options: undefined as
+		| undefined
+		| {
+				preset?: unknown;
+				onCreated: (link: { url: string }) => void;
+		  },
+	startWithDetails: vi.fn()
+}));
+vi.mock('../conversationCreate/directLink/DirectLinkCreateCard', () => ({
+	useDirectInvitationSetup: (options: typeof invitationSetup.options) => {
+		invitationSetup.options = options;
+		return {
+			start: vi.fn(),
+			startWithDetails: invitationSetup.startWithDetails,
+			submitting: false,
+			dialog: null
+		};
+	}
+}));
+const topicsLoad = vi.hoisted(() => vi.fn());
+vi.mock('../conversationCreate/directLink/useDirectLinkTopics', () => ({
+	useDirectLinkTopics: () => ({
+		topics: [{ value: '11', label: 'Schwangerschaftsberatung' }],
+		agencies: [],
+		loaded: false,
+		failed: false,
+		load: topicsLoad
+	})
+}));
 vi.mock('../conversationCreate/directLink/DirectLinkShareDialog', () => ({
 	DirectLinkShareDialog: ({ link }: { link: { url: string } }) => (
 		<div data-testid="share-dialog">{link.url}</div>
@@ -409,27 +441,45 @@ describe('CalendarPageWired', () => {
 			expect(props.onInviteNewPerson).toBeUndefined();
 		});
 
-		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {
+		it('opens the Direkteinladung popup with the slot and Art, staying in the calendar (#2494 *1)', async () => {
 			directLinks.allowed = true;
-			render(<CalendarPageWired />);
+			const view = render(<CalendarPageWired />);
 			await showWeek();
 			expect(props.allowGuestInvite).toBe(true);
 			const start = new Date('2026-11-17T09:00:00Z');
 			const end = new Date('2026-11-17T10:00:00Z');
-			act(() =>
-				props.onInviteNewPerson?.({ start, end, kind: 'onsite' })
+			act(() => props.onInviteNewPerson?.({ start, end, kind: 'video' }));
+			expect(navigate).not.toHaveBeenCalled();
+			expect(topicsLoad).toHaveBeenCalled();
+			expect(invitationSetup.startWithDetails).toHaveBeenCalledWith(
+				'VIDEO'
 			);
-			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/consultant/sessionView/createGroupChat/',
-				{
-					state: {
-						invitationPreset: {
-							start: start.toISOString(),
-							end: end.toISOString(),
-							kind: 'onsite'
-						}
-					}
-				}
+			await waitFor(() =>
+				expect(invitationSetup.options?.preset).toEqual({
+					start,
+					end,
+					kind: 'video'
+				})
+			);
+			act(() =>
+				invitationSetup.options?.onCreated({
+					url: 'https://x/invite/new'
+				})
+			);
+			expect((await view.findByTestId('share-dialog')).textContent).toBe(
+				'https://x/invite/new'
+			);
+		});
+
+		it('falls back to an allowed medium when the Art has none', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			act(() => props.onInviteNewPerson?.({ start, end }));
+			expect(invitationSetup.startWithDetails).toHaveBeenLastCalledWith(
+				'CHAT'
 			);
 		});
 

@@ -7381,7 +7381,8 @@
 			"text": "Here is the new link to the appointment:",
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
-		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation."
+		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",

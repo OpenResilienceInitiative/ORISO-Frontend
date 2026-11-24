@@ -3227,7 +3227,8 @@
 		"notice": {
 			"failed": "Der neue Link konnte nicht erstellt werden. Bitte versuche es erneut."
 		},
-		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung."
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wähle Thema und Medium, dann erstellst du die Direkteinladung.",
+		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {
 		"grip": {
