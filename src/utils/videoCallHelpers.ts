@@ -103,7 +103,7 @@ export const isVideoCallFromMatrixInviteContent = (
 export const hasVideoCallFeature = (userData, consultingTypes) =>
 	userData &&
 	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-	userData.agencies.some(
+	(userData.agencies ?? []).some(
 		(agency) =>
 			!!(consultingTypes || []).find(
 				(consultingType) =>
