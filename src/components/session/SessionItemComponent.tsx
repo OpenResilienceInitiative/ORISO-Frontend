@@ -122,6 +122,7 @@ import {
 } from '../sessionsListItem/supervisionListState';
 import {
 	pickDisplayOrUsername,
+	pickAppointmentSupervisor,
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
@@ -3161,27 +3162,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// FE#2494: the counsellor books an appointment with the supervisor from
 	// the Supervision ⋮ (the calendar's colleague appointment as a popup).
 	// The supervisor side has nobody fixed to book: no entry there.
-	const appointmentSupervisor = useMemo(() => {
-		if (isSupervisor || isPracticing || !isConsultantUser) return undefined;
-		const supervisor = sessionSupervisors.find(
-			(s) =>
-				s.supervisorConsultantId &&
-				s.supervisorConsultantId !== userData?.userId
-		);
-		return supervisor
-			? {
-					id: supervisor.supervisorConsultantId,
-					displayName: supervisionHeaderName
-				}
-			: undefined;
-	}, [
-		isSupervisor,
-		isPracticing,
-		isConsultantUser,
-		sessionSupervisors,
-		userData?.userId,
-		supervisionHeaderName
-	]);
+	// Id and name from the same supervisor (`pickAppointmentSupervisor`).
+	const appointmentSupervisor = useMemo(
+		() =>
+			isSupervisor || isPracticing || !isConsultantUser
+				? undefined
+				: pickAppointmentSupervisor(
+						sessionSupervisors,
+						userData?.userId,
+						supervisionPeople
+					),
+		[
+			isSupervisor,
+			isPracticing,
+			isConsultantUser,
+			sessionSupervisors,
+			userData?.userId,
+			supervisionPeople
+		]
+	);
 	// FE#2494: the next appointment with the supervisor hangs from the
 	// Supervision panel's hairline, as the main chat's pennants do.
 	const supervisorPennant = useSupervisorPennant(appointmentSupervisor?.id);

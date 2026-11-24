@@ -29,7 +29,14 @@ const MODALITY: Record<AppointmentKindDTO, EntryModality> = {
 	CHAT: 'chat'
 };
 
-/** The nearest appointment with that colleague that has not ended yet. */
+/**
+ * The nearest appointment with that colleague that has not ended yet.
+ *
+ * Per supervision pair, not per case, on purpose: a colleague appointment
+ * carries no case (UserService `ColleagueAppointmentCreateDTO` has only
+ * colleague, slot and kind), so every case with this supervisor shows the
+ * same next meeting with them.
+ */
 export const nextColleagueAppointment = (
 	entries: CalendarEntryDTO[],
 	colleagueId: string,

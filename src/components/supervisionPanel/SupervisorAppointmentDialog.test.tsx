@@ -103,8 +103,17 @@ describe('SupervisorAppointmentDialog (FE#2494)', () => {
 		);
 		// Frank 2026-11-24: the card shows in the Supervision room too.
 		expect(sendNotice).toHaveBeenCalledWith(
-			expect.objectContaining({ kind: 'created', ...SUPERVISION_ROOM })
+			expect.objectContaining({
+				kind: 'created',
+				...SUPERVISION_ROOM,
+				feedbackMailIntent: true
+			})
 		);
+		// The private chat of the two has no advice seeker: generic path.
+		const internal = sendNotice.mock.calls.find(
+			([n]) => n.matrixRoomId === '!internal:oriso'
+		)?.[0];
+		expect(internal?.feedbackMailIntent).toBeUndefined();
 	});
 
 	it('offers no save when the supervisor is outside the calendar reach', async () => {

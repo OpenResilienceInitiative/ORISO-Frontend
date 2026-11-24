@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+	pickAppointmentSupervisor,
 	pickDisplayOrUsername,
 	pickSupervisionCounterpartName
 } from './supervisionCounterpart';
@@ -148,5 +149,55 @@ describe('pickDisplayOrUsername', () => {
 	it('returns an empty string for nothing', () => {
 		expect(pickDisplayOrUsername(undefined)).toBe('');
 		expect(pickDisplayOrUsername({})).toBe('');
+	});
+});
+
+describe('pickAppointmentSupervisor', () => {
+	const people = new Map([
+		['@sup-a:oriso', { name: 'Anna (Supervision)' }],
+		['@sup-b:oriso', { name: 'Bert (Supervision)' }]
+	]);
+	const rows = [
+		{
+			supervisorConsultantId: 'sup-a',
+			supervisorUsername: 'anna.a',
+			supervisorMatrixUserId: '@sup-a:oriso'
+		},
+		{
+			supervisorConsultantId: 'sup-b',
+			supervisorUsername: 'bert.b',
+			supervisorMatrixUserId: '@sup-b:oriso'
+		}
+	];
+
+	it('takes id and name from the same supervisor', () => {
+		expect(pickAppointmentSupervisor(rows, 'me', people)).toEqual({
+			id: 'sup-a',
+			displayName: 'Anna (Supervision)'
+		});
+	});
+
+	it('skips the own row and keeps id and name together', () => {
+		expect(pickAppointmentSupervisor(rows, 'sup-a', people)).toEqual({
+			id: 'sup-b',
+			displayName: 'Bert (Supervision)'
+		});
+	});
+
+	it("falls back to that supervisor's username, never another's name", () => {
+		expect(pickAppointmentSupervisor([rows[1]], 'me', new Map())).toEqual({
+			id: 'sup-b',
+			displayName: 'bert.b'
+		});
+	});
+
+	it('has nobody to book without a supervisor id', () => {
+		expect(
+			pickAppointmentSupervisor(
+				[{ supervisorConsultantId: '', supervisorUsername: 'x' }],
+				'me',
+				people
+			)
+		).toBeUndefined();
 	});
 });

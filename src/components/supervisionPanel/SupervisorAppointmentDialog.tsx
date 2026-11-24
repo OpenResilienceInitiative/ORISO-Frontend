@@ -207,7 +207,9 @@ export const SupervisorAppointmentDialogWired = (
 						kind: 'created',
 						start: draft.start,
 						end: draft.end,
-						...props.supervisionRoom
+						...props.supervisionRoom,
+						// Same protected path as the supervision composer.
+						feedbackMailIntent: true
 					})
 				);
 			// The appointment stands; a failed notice only tells the person.
