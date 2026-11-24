@@ -33,6 +33,8 @@ import '../message/message.styles.scss';
  * anatomy with the round info icon, as for calls and appointments. Not the
  * Carimat frame (that is the chatbot: guides, step by step). No new
  * component, no reply quote. The message itself is readable again.
+ * Two variants, as for every message (Figma App.Oriso 9895:31375 left,
+ * 8606:42438 right): someone else removed it, or I did.
  */
 const handlers = {
 	handleDecryptionErrors: () => {},
@@ -40,7 +42,7 @@ const handlers = {
 	e2eeParams: mockE2eeParams()
 };
 
-const Timeline = () => (
+const Timeline = ({ mine = false }: { mine?: boolean }) => (
 	<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
 		<ConsultantListContext.Provider
 			value={mockConsultantListContext() as never}
@@ -78,19 +80,36 @@ const Timeline = () => (
 								})}
 								{...handlers}
 							/>
-							{/* The platform notice: the chat's info card (round i),
-							    as for calls and appointments. */}
-							<ChatSystemMessageCard
-								title="Schwärzung aufgehoben"
-								subtitle="von Karina P"
-								timestamp="09:20"
-								dataCy="blur-removed-notice"
-							>
-								<p>
-									Die Nachricht von Sanftes Alpaka Kala ist
-									wieder lesbar.
-								</p>
-							</ChatSystemMessageCard>
+							{mine ? (
+								/* I removed it: my side, avatar right
+								   (Figma 8606:42438). */
+								<ChatSystemMessageCard
+									isMyMessage
+									title="Schwärzung aufgehoben"
+									subtitle="von Ihnen"
+									timestamp="09:20"
+									dataCy="blur-removed-notice"
+								>
+									<p>
+										Die Nachricht von Sanftes Alpaka Kala
+										ist wieder lesbar.
+									</p>
+								</ChatSystemMessageCard>
+							) : (
+								/* Someone else removed it: avatar left
+								   (Figma 9895:31375). */
+								<ChatSystemMessageCard
+									title="Schwärzung aufgehoben"
+									subtitle="von Karina P"
+									timestamp="09:20"
+									dataCy="blur-removed-notice"
+								>
+									<p>
+										Die Nachricht von Sanftes Alpaka Kala
+										ist wieder lesbar.
+									</p>
+								</ChatSystemMessageCard>
+							)}
 						</div>
 					</ActiveSessionContext.Provider>
 				</UserDataContext.Provider>
@@ -117,8 +136,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** Someone else removed the redaction: info avatar left. */
 export const Notice1440: Story = {
-	name: 'Info-Hinweis im Chat · 1440',
+	name: 'Von jemand anderem aufgehoben · 1440',
 	globals: desktop1440Globals,
 	play: async ({ canvasElement }) => {
 		await waitFor(() =>
@@ -129,7 +149,20 @@ export const Notice1440: Story = {
 	}
 };
 
+/** I removed it: my side, info avatar right. */
+export const Mine1440: Story = {
+	name: 'Von mir aufgehoben · 1440',
+	globals: desktop1440Globals,
+	render: () => <Timeline mine />
+};
+
 export const Notice390: Story = {
-	name: 'Info-Hinweis im Chat · 390',
+	name: 'Von jemand anderem aufgehoben · 390',
 	globals: phone390Globals
+};
+
+export const Mine390: Story = {
+	name: 'Von mir aufgehoben · 390',
+	globals: phone390Globals,
+	render: () => <Timeline mine />
 };
