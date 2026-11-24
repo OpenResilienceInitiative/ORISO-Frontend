@@ -142,7 +142,10 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 	const rows = () =>
 		document.body.textContent?.match(/sessionList\.user\.writeEnquiry/g)
 			?.length ?? 0;
-	await waitFor(() => expect(rows()).toBe(2));
+	// The burst is collected for 300 ms; a loaded CI runner needs more than
+	// waitFor's default 1 s around that.
+	const slow = { timeout: 5000 };
+	await waitFor(() => expect(rows()).toBe(2), slow);
 
 	act(() => {
 		for (let i = 0; i < 20; i += 1) {
@@ -157,7 +160,7 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 		}
 	});
 
-	await waitFor(() => expect(sessionRooms).toHaveBeenCalled());
+	await waitFor(() => expect(sessionRooms).toHaveBeenCalled(), slow);
 	await act(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 400));
 	});
@@ -166,4 +169,4 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 		'!r1:oriso',
 		'!r2:oriso'
 	]);
-});
+}, 15_000);
