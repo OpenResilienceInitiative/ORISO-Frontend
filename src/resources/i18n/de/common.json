@@ -4901,7 +4901,8 @@
 					"failedTitle": "Terminanfrage nicht beantwortet",
 					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
 					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
-				}
+				},
+				"menu": "Terminmenü"
 			}
 		},
 		"deletedAsker": {

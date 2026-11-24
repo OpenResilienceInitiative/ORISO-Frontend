@@ -4884,7 +4884,8 @@
 					"failedTitle": "Demande sans réponse",
 					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
 					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
-				}
+				},
+				"menu": "Menu du rendez-vous"
 			}
 		},
 		"deletedAsker": {

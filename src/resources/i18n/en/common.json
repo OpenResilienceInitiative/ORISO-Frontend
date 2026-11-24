@@ -4850,7 +4850,8 @@
 					"failedTitle": "Request not answered",
 					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
 					"failed": "That did not work. Please try again."
-				}
+				},
+				"menu": "Appointment menu"
 			}
 		},
 		"deletedAsker": {

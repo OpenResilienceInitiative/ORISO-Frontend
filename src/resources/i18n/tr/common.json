@@ -4884,7 +4884,8 @@
 					"failedTitle": "Talep yanıtlanmadı",
 					"taken": "Bu zaman artık dolu. Talebi reddedin veya sohbette başka bir zaman önerin.",
 					"failed": "Bu işe yaramadı. Lütfen tekrar deneyin."
-				}
+				},
+				"menu": "Randevu menüsü"
 			}
 		},
 		"deletedAsker": {
