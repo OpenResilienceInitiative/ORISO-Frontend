@@ -3442,7 +3442,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			props.teamDiscussionStatus === 'OPEN' &&
 			!isRejectedSession,
 		senderDisplayName,
-		sharedVoice: passageReplies.voice
+		sharedVoice: passageReplies.voice,
+		teamDiscussion: true
 	});
 	const {
 		enabled: supervisionReplyEnabled,
@@ -4061,6 +4062,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
 									onReplyInSideRoom={replyInSideRoom}
+									canReplyHere={passageReplies.enabled}
 									collectedCount={collectedPassageCount}
 									onStartThread={
 										isThreadsEnabled
