@@ -233,7 +233,11 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 				}
 			}
 		],
-		['the advice seeker', { user: asker }]
+		['the advice seeker', { user: asker }],
+		[
+			'a Teamberatung case (FE#2494 *4)',
+			{ activeSession: oneOnOne(sessionItem(1, { isTeamSession: true })) }
+		]
 	])('is not offered to %s', (_label, change) => {
 		renderMenu({
 			user: counsellor,

@@ -128,6 +128,7 @@ import {
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
+import { offersCaseHandoverIn } from '../session/caseHandoverHelpers';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { isPracticeId, isPracticeRoomId } from '../../practice/practiceIds';
@@ -1122,6 +1123,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						const canHandOverHere =
 							!untilL &&
 							!isPracticeConversation &&
+							offersCaseHandoverIn(activeSession) &&
 							canRecommendFurtherCounselling({
 								isRejectedCase:
 									Number(activeSession.item.status) ===

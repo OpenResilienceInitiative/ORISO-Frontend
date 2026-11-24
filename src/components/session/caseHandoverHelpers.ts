@@ -29,6 +29,8 @@ interface CaseHandoverSessionInput {
 		status?: number | string;
 		/** ADR-008 marker — an active supervisor already has read access. */
 		supervision?: SupervisionMarker | null;
+		/** Teamberatung (FE#2494 *4): colleagues read, only the owner writes. */
+		isTeamSession?: boolean;
 	};
 	consultant?: {
 		id?: string | number;
@@ -100,6 +102,25 @@ export const isCaseHandoverCandidate = ({
 	}
 	return isCaseHandoverAccessControlled({ activeSession, userData, type });
 };
+
+/**
+ * FE#2494 *4 (decision d): in Teamberatung a colleague of the department reads
+ * an accepted case without a request but never writes; only the assigned
+ * counsellor does. The server enforces it with the Matrix reader power level.
+ */
+export const isTeamCounsellingReader = (
+	input: Omit<CaseHandoverCandidateInput, 'sessionListTab'>
+): boolean =>
+	Boolean(input.activeSession?.item?.isTeamSession) &&
+	isCaseHandoverAccessControlled(input);
+
+/**
+ * FE#2494 *4: a Teamberatung centre has no case handover, so "Beratung
+ * übergeben" is not offered in its cases (header "+", session menu, profile).
+ */
+export const offersCaseHandoverIn = (
+	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined
+): boolean => !activeSession?.item?.isTeamSession;
 
 export const isCaseHandoverPending = (status?: string | null): boolean =>
 	Boolean(status && CASE_HANDOVER_PENDING_STATUSES.includes(status));

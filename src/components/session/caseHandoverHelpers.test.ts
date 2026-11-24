@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { STATUS_ENQUIRY, STATUS_ACTIVE } from '../../globalState/interfaces';
 import {
 	isCaseHandoverAccessControlled,
+	isTeamCounsellingReader,
+	offersCaseHandoverIn,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -50,6 +52,47 @@ const consultantUser = {
 };
 
 describe('caseHandoverHelpers', () => {
+	it('offers no case handover in a Teamberatung case', () => {
+		expect(offersCaseHandoverIn({ item: { isTeamSession: true } })).toBe(
+			false
+		);
+		expect(offersCaseHandoverIn({ item: { isTeamSession: false } })).toBe(
+			true
+		);
+		expect(offersCaseHandoverIn({ item: {} })).toBe(true);
+	});
+
+	it('makes a colleague a reader in an accepted team case, never the owner', () => {
+		const teamCase = {
+			...baseSession,
+			item: { ...baseSession.item, isTeamSession: true }
+		};
+		expect(
+			isTeamCounsellingReader({
+				activeSession: teamCase,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(true);
+		expect(
+			isTeamCounsellingReader({
+				activeSession: {
+					...teamCase,
+					consultant: { id: consultantUser.userId }
+				},
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+		expect(
+			isTeamCounsellingReader({
+				activeSession: baseSession,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+	});
+
 	it('marks another counsellor owned my-session as handover candidate', () => {
 		expect(
 			isCaseHandoverCandidate({

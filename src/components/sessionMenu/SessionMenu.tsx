@@ -1,3 +1,4 @@
+import { offersCaseHandoverIn } from '../session/caseHandoverHelpers';
 import {
 	useConversationFeatureSettings,
 	useConversationFeatureSettingsSettled
@@ -348,7 +349,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const [recommendDialogOpen, setRecommendDialogOpen] = useState(false);
 	// FE#2250: "Beratung übergeben" — same audience as the recommend item,
 	// same offer flow (and pending state) as the profile button.
-	const showCaseHandover = showRequestAdvice;
+	// FE#2494 *4: not in a Teamberatung case, where there is no handover.
+	const showCaseHandover =
+		showRequestAdvice && offersCaseHandoverIn(activeSession);
 	const caseHandover = useCaseHandoverOffer();
 	const showEndTopicDuplicate =
 		!activeSession.isGroup &&
