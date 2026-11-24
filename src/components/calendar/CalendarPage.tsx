@@ -189,6 +189,7 @@ import {
 import { ConsultationHoursDialog } from './ConsultationHoursDialog';
 import {
 	isConsultationOnceOverBlocker,
+	oneOffRefusalKey,
 	type ConsultationHours,
 	type OneOffConsultation
 } from './calendarConsultationHours';
@@ -306,6 +307,8 @@ export interface CalendarPageProps {
 	 * without it "Sprechzeit" offers only the weekly hours.
 	 */
 	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => ChangeResult;
+	/** Withdraws a released one-off Sprechzeit (FE#2494 review). */
+	onWithdrawOneOffConsultation?: (oneOff: OneOffConsultation) => ChangeResult;
 	/** One's own one-off Sprechzeiten, banded in the time grid. */
 	oneOffConsultations?: OneOffConsultation[];
 	/** Storybook: colleagues shown from the start. */
@@ -611,6 +614,7 @@ export const CalendarPage = ({
 	besidePanel,
 	onSaveOneOffConsultation,
 	oneOffConsultations,
+	onWithdrawOneOffConsultation,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -766,6 +770,10 @@ export const CalendarPage = ({
 	/** A new entry onto other entries, made outside a dialog, waits too. */
 	/** "Absagen" asks first: the advice seeker is told at once (test C10). */
 	const [cancelAsk, setCancelAsk] = useState<CalendarEntry | null>(null);
+	/** A released one-off asked to be withdrawn (FE#2494 review). */
+	const [withdrawAsk, setWithdrawAsk] = useState<OneOffConsultation | null>(
+		null
+	);
 	const [createAsk, setCreateAsk] = useState<{
 		conflicts: CalendarEntry[];
 		blocker: boolean;
@@ -1655,6 +1663,8 @@ export const CalendarPage = ({
 				onSaveOneOffConsultation?.(oneOff),
 				{ message: t('calendar.consultationHours.onceSaved') },
 				(error) => {
+					const refusal = oneOffRefusalKey(error);
+					if (refusal) return { message: t(refusal, { count: 50 }) };
 					if (!isConsultationOnceOverBlocker(error))
 						return { message: t('calendar.saveFailed') };
 					setOneOffBlockerConflict({
@@ -3485,6 +3495,12 @@ export const CalendarPage = ({
 					}
 					savingConsultationHours={savingConsultationHours}
 					oneOffBlockerConflict={oneOffBlockerConflict}
+					oneOffConsultations={oneOffConsultations}
+					onWithdrawOneOffConsultation={
+						onWithdrawOneOffConsultation
+							? setWithdrawAsk
+							: undefined
+					}
 					onSaveOneOffConsultation={
 						editConsultationHours && onSaveOneOffConsultation
 							? saveOneOffConsultation
@@ -3558,6 +3574,47 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{withdrawAsk && (
+				<M3Dialog
+					open
+					data-testid="calendar-once-withdraw-dialog"
+					title={t(
+						'calendar.consultationHours.onceWithdrawAsk.title'
+					)}
+					description={t(
+						'calendar.consultationHours.onceWithdrawAsk.description',
+						{ time: format(withdrawAsk.start, withdrawAsk.end) }
+					)}
+					severity="error"
+					fullScreen={false}
+					onClose={() => setWithdrawAsk(null)}
+					closeLabel={t('app.close')}
+					actions={[
+						{
+							label: t(
+								'calendar.consultationHours.onceWithdrawAsk.keep'
+							),
+							onClick: () => setWithdrawAsk(null)
+						},
+						{
+							label: t(
+								'calendar.consultationHours.onceWithdrawAsk.confirm'
+							),
+							primary: true,
+							onClick: () => {
+								const oneOff = withdrawAsk;
+								setWithdrawAsk(null);
+								run(onWithdrawOneOffConsultation?.(oneOff), {
+									message: t(
+										'calendar.consultationHours.onceWithdrawn'
+									)
+								});
+							},
+							testId: 'calendar-once-withdraw-confirm'
+						}
+					]}
 				/>
 			)}
 			{cancelAsk && (

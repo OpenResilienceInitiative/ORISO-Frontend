@@ -53,6 +53,7 @@ import {
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
 	apiCreateCalendarConsultationOnce,
+	apiDeleteCalendarConsultationOnce,
 	apiGetCalendarConsultationHours,
 	apiGetCalendarConsultationOnce,
 	apiSetCalendarConsultationHours,
@@ -1099,6 +1100,14 @@ export const CalendarPageWired = () => {
 		);
 	};
 
+	const withdrawOneOffConsultation = async (once: OneOffConsultation) => {
+		if (!once.id) return;
+		await apiDeleteCalendarConsultationOnce(once.id);
+		// A read started before this withdrawal still lists it: drop it.
+		oneOffRead.current += 1;
+		setOneOffs((known) => known?.filter((o) => o.id !== once.id));
+	};
+
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
@@ -1435,6 +1444,11 @@ export const CalendarPageWired = () => {
 				oneOffConsultations={consultant ? oneOffs : undefined}
 				onSaveOneOffConsultation={
 					consultant && oneOffs ? saveOneOffConsultation : undefined
+				}
+				onWithdrawOneOffConsultation={
+					consultant && oneOffs
+						? withdrawOneOffConsultation
+						: undefined
 				}
 				onSaveDayException={consultant ? saveDayException : undefined}
 				onDeleteDayException={

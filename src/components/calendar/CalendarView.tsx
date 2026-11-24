@@ -616,7 +616,17 @@ export const CalendarView = ({
 			let day = startOfDay(shownRange.start);
 			day < shownRange.end;
 			day = nextDay(day)
-		)
+		) {
+			/* No weekly Sprechstunde on a day off or public holiday: UserService
+			   offers none there either. */
+			const effective = workingPlan && effectiveDay(day, workingPlan);
+			if (
+				effective &&
+				(effective.source === 'holiday' ||
+					(effective.source === 'exception' &&
+						effective.windows.length === 0))
+			)
+				continue;
 			for (const w of windowsOn(consultationWindows ?? [], day.getDay()))
 				out.push({
 					id: `consultation-${day.getTime()}-${w.start}`,
@@ -625,6 +635,7 @@ export const CalendarView = ({
 					display: 'background',
 					extendedProps: { consultation: 'weekly' }
 				});
+		}
 		for (const once of consultationOnce ?? [])
 			out.push({
 				id: `consultation-once-${once.start.getTime()}`,
@@ -634,7 +645,13 @@ export const CalendarView = ({
 				extendedProps: { consultation: 'once' }
 			});
 		return out;
-	}, [consultationWindows, consultationOnce, shownRange, timeGrid]);
+	}, [
+		consultationWindows,
+		consultationOnce,
+		shownRange,
+		timeGrid,
+		workingPlan
+	]);
 
 	// The grips go into FullCalendar's day columns themselves: inside a
 	// background event they would sit in a layer FullCalendar hides from

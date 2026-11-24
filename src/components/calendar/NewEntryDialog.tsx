@@ -86,6 +86,9 @@ export interface NewEntryDialogProps {
 	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => void;
 	/** The last one-off save met a Sperrzeit the form could not see. */
 	oneOffBlockerConflict?: { start: Date; end: Date };
+	/** One's released one-offs, to list, check against and withdraw. */
+	oneOffConsultations?: OneOffConsultation[];
+	onWithdrawOneOffConsultation?: (oneOff: OneOffConsultation) => void;
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */
@@ -141,6 +144,8 @@ export const NewEntryDialog = ({
 	savingConsultationHours,
 	onSaveOneOffConsultation,
 	oneOffBlockerConflict,
+	oneOffConsultations,
+	onWithdrawOneOffConsultation,
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
@@ -213,6 +218,8 @@ export const NewEntryDialog = ({
 		slot: initialTab === 'consultation' ? slot : undefined,
 		entries,
 		blockerConflict: oneOffBlockerConflict,
+		oneOffs: oneOffConsultations,
+		onWithdrawOneOff: onWithdrawOneOffConsultation,
 		now,
 		onClose
 	});

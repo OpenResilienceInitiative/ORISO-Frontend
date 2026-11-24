@@ -10,7 +10,7 @@
  */
 import * as React from 'react';
 import { onAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Button } from '@mui/material';
@@ -62,13 +62,18 @@ const conflictReason = (cause: unknown): string | null =>
 export const AskerFreeTimesPanel = ({
 	sessionId,
 	counsellorName,
-	media = MEDIA,
+	media: mediaProp = MEDIA,
 	loadSlots,
 	bookSlot,
 	onBooked,
 	onLimitReached
 }: AskerFreeTimesPanelProps) => {
 	const { t } = useTranslation();
+	/* The same media, however often the caller builds the list anew: the
+	   effects below depend on it. */
+	const mediaKey = mediaProp.join(',');
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const media = useMemo(() => mediaProp, [mediaKey]);
 	const [medium, setMedium] = useState<SelfBookingMedium>(media[0]);
 	const [slots, setSlots] = useState<Slots>('loading');
 	const [day, setDay] = useState<Dayjs | null>(null);

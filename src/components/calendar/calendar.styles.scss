@@ -4366,6 +4366,66 @@ $cal-new-pill-hover: #4b4f51;
 	font-weight: 500;
 }
 
+// Released one-offs, each with "Zurückziehen" (FE#2494 review).
+.calendarConsultation__onceList {
+	margin-top: 8px;
+
+	ul {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+}
+
+.calendarConsultation__onceListTitle {
+	margin: 0 0 4px;
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 18px;
+}
+
+.calendarConsultation__onceItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 4px 0 12px;
+	border-radius: 12px;
+	background: var(--m3-surface-container, #f0edee);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 14px;
+}
+
+.calendarConsultation__onceWithdraw {
+	min-height: 40px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 20px;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container-high, #eae7e8);
+	}
+
+	&:focus-visible {
+		@include control-focus-ring(2px);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.38;
+	}
+}
+
 .calendarConsultation__warning {
 	margin: 0;
 	padding: 8px 12px;

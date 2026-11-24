@@ -93,6 +93,7 @@ vi.mock('../../api/apiCalendar', () => ({
 	),
 	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
 	apiCreateCalendarConsultationOnce: vi.fn(),
+	apiDeleteCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),

@@ -389,6 +389,82 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		).toBeTruthy();
 	});
 
+	const onceForm = (
+		props: Partial<Parameters<typeof useConsultationHoursForm>[0]>
+	) => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined,
+				...props
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		return () =>
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled;
+	};
+	const released = (day: number, from: number, to: number) => ({
+		id: `o${day}-${from}`,
+		start: new Date(2026, 10, day, from, 0),
+		end: new Date(2026, 10, day, to, 0),
+		noticeMinutes: 60
+	});
+
+	it('refuses a one-off longer than 12 hours', () => {
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 6, 0),
+				end: new Date(2026, 10, 26, 19, 0)
+			}
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooLong')
+		).toBeTruthy();
+	});
+
+	it('refuses a one-off over another one and lists them to withdraw', () => {
+		const onWithdrawOneOff = vi.fn();
+		const other = released(26, 9, 11);
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 10, 0),
+				end: new Date(2026, 10, 26, 12, 0)
+			},
+			oneOffs: [other],
+			onWithdrawOneOff
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceOverlap')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('consultation-once-withdraw'));
+		expect(onWithdrawOneOff).toHaveBeenCalledWith(other);
+	});
+
+	it('refuses a 51st upcoming one-off', () => {
+		const many = Array.from({ length: 50 }, (_, i) =>
+			released(27 + Math.floor(i / 10), 8 + (i % 10), 9 + (i % 10))
+		);
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 10, 0),
+				end: new Date(2026, 10, 26, 12, 0)
+			},
+			oneOffs: many
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceLimit:50')
+		).toBeTruthy();
+	});
+
 	it('keeps a one-off that ends at midnight on the next day', () => {
 		const saved = saveOnce({
 			slot: {

@@ -8129,7 +8129,19 @@
 			"menuItem": "Sprechzeit",
 			"menuHint": "Einmalig für Ratsuchende freigeben",
 			"bandOnce": "Sprechzeit einmalig",
-			"onceSaved": "Sprechzeit freigegeben"
+			"onceSaved": "Sprechzeit freigegeben",
+			"onceTooLong": "Eine einmalige Sprechzeit dauert höchstens 12 Stunden.",
+			"onceOverlap": "Diese Zeit überschneidet sich mit einer anderen einmaligen Sprechzeit.",
+			"onceLimit": "Sie haben schon {{count}} kommende einmalige Sprechzeiten. Ziehen Sie eine zurück, um eine neue freizugeben.",
+			"onceList": "Freigegebene einmalige Sprechzeiten",
+			"onceWithdraw": "Zurückziehen",
+			"onceWithdrawAsk": {
+				"title": "Sprechzeit zurückziehen?",
+				"description": "Ratsuchende können {{time}} dann nicht mehr buchen. Schon gebuchte Termine bleiben bestehen.",
+				"keep": "Behalten",
+				"confirm": "Zurückziehen"
+			},
+			"onceWithdrawn": "Sprechzeit zurückgezogen"
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",

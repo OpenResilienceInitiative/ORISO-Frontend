@@ -11,7 +11,10 @@ import CalendarPageStories from './CalendarPage.stories';
 import { NewEntryDialog } from './NewEntryDialog';
 import type { CalendarEntry } from './calendarModel';
 import { phone390Globals } from '../message/messageStoryShell';
-import type { ConsultationHours } from './calendarConsultationHours';
+import type {
+	ConsultationHours,
+	OneOffConsultation
+} from './calendarConsultationHours';
 import './calendar.styles';
 
 const Harness = CalendarPageStories.component!;
@@ -261,6 +264,54 @@ export const SprechzeitEinmaligPhone: StoryObj<typeof NewEntryDialog> = {
 	globals: phone390Globals,
 	play: expectOnce
 };
+
+/** Two released one-offs: listed under the form, each to withdraw. */
+const RELEASED: OneOffConsultation[] = [
+	{
+		id: 'o1',
+		start: new Date(2026, 10, 25, 10, 0),
+		end: new Date(2026, 10, 25, 12, 0),
+		noticeMinutes: 60
+	},
+	{
+		id: 'o2',
+		start: new Date(2026, 10, 27, 15, 0),
+		end: new Date(2026, 10, 27, 16, 0),
+		noticeMinutes: 30
+	}
+];
+
+/** Review: a released one-off can be withdrawn; an overlapping one is refused. */
+export const SprechzeitEinmaligZurueckziehen: StoryObj<typeof NewEntryDialog> =
+	{
+		name: '*2b Sprechzeit einmalig — freigegebene zurückziehen',
+		render: () => (
+			<NewEntryDialog
+				{...onceArgs}
+				slot={{
+					start: new Date(2026, 10, 25, 11, 0),
+					end: new Date(2026, 10, 25, 13, 0)
+				}}
+				oneOffConsultations={RELEASED}
+				onWithdrawOneOffConsultation={fn()}
+			/>
+		),
+		play: async () => {
+			const body = within(document.body);
+			const list = await body.findByTestId('consultation-once-list');
+			await expect(
+				within(list).getAllByTestId('consultation-once-withdraw')
+			).toHaveLength(2);
+			await expect(
+				body.getByText(
+					'Diese Zeit überschneidet sich mit einer anderen einmaligen Sprechzeit.'
+				)
+			).toBeTruthy();
+			await expect(
+				body.getByTestId('consultation-once-save')
+			).toBeDisabled();
+		}
+	};
 
 /** *2c: "Freie Sprechzeiten" beside "Meine Termine". */
 const expectFreeTimes = async (el: HTMLElement) => {

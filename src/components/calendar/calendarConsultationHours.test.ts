@@ -8,6 +8,7 @@ import {
 	isNoticeDays,
 	nextConsultationWindow,
 	oneOffFromApi,
+	oneOffRefusalKey,
 	overlappingConsultationDays
 } from './calendarConsultationHours';
 
@@ -182,5 +183,27 @@ describe('Sprechstunden (FE#2287)', () => {
 			noticeMinutes: 30,
 			overBlocker: true
 		});
+	});
+});
+
+describe('oneOffRefusalKey (FE#2494 review)', () => {
+	const refused = (reason: string) =>
+		new Response(null, { status: 400, headers: { 'X-Reason': reason } });
+
+	it('names each limit UserService refuses a one-off for', () => {
+		expect(oneOffRefusalKey(refused('CONSULTATION_ONCE_TOO_LONG'))).toBe(
+			'calendar.consultationHours.onceTooLong'
+		);
+		expect(oneOffRefusalKey(refused('CONSULTATION_ONCE_OVERLAP'))).toBe(
+			'calendar.consultationHours.onceOverlap'
+		);
+		expect(
+			oneOffRefusalKey(refused('CONSULTATION_ONCE_LIMIT_REACHED'))
+		).toBe('calendar.consultationHours.onceLimit');
+	});
+
+	it('names nothing for another failure', () => {
+		expect(oneOffRefusalKey(refused('SOMETHING_ELSE'))).toBeUndefined();
+		expect(oneOffRefusalKey(new Error('CATCH_ALL'))).toBeUndefined();
 	});
 });

@@ -8139,7 +8139,19 @@
 			"menuItem": "Görüşme saati",
 			"menuHint": "Danışanlar için bir kez aç",
 			"bandOnce": "Tek seferlik görüşme saati",
-			"onceSaved": "Görüşme saati açıldı"
+			"onceSaved": "Görüşme saati açıldı",
+			"onceTooLong": "Tek seferlik görüşme saati en fazla 12 saat sürer.",
+			"onceOverlap": "Bu zaman başka bir tek seferlik görüşme saatiyle çakışıyor.",
+			"onceLimit": "Zaten {{count}} yaklaşan tek seferlik görüşme saatiniz var. Yenisini açmak için birini geri çekin.",
+			"onceList": "Açılmış tek seferlik görüşme saatleri",
+			"onceWithdraw": "Geri çek",
+			"onceWithdrawAsk": {
+				"title": "Görüşme saati geri çekilsin mi?",
+				"description": "Danışanlar {{time}} zamanını artık rezerve edemez. Alınmış randevular kalır.",
+				"keep": "Koru",
+				"confirm": "Geri çek"
+			},
+			"onceWithdrawn": "Görüşme saati geri çekildi"
 		},
 		"appointmentRequest": {
 			"status": "Talep edildi · yanıtınızı bekliyor",

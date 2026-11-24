@@ -40,6 +40,11 @@ import {
 	type SlotMinutes
 } from './calendarConsultationHours';
 import type { CalendarEntry } from './calendarModel';
+import { useRangeFormat } from './useEntryLabel';
+
+/** UserService's limits for one-off Sprechzeiten. */
+const MAX_ONE_OFF_MINUTES = 12 * 60;
+const MAX_UPCOMING_ONE_OFFS = 50;
 
 export interface ConsultationHoursDialogProps {
 	open: boolean;
@@ -87,6 +92,10 @@ export interface ConsultationHoursFormProps {
 	 * saving again releases over it.
 	 */
 	blockerConflict?: { start: Date; end: Date };
+	/** One's released one-offs: listed to withdraw, and checked against. */
+	oneOffs?: OneOffConsultation[];
+	/** Asks to withdraw a released one-off (FE#2494 review). */
+	onWithdrawOneOff?: (oneOff: OneOffConsultation) => void;
 	now?: Date;
 	onClose: () => void;
 }
@@ -104,11 +113,14 @@ export const useConsultationHoursForm = ({
 	slot,
 	entries = [],
 	blockerConflict,
+	oneOffs = [],
+	onWithdrawOneOff,
 	now = new Date(),
 	onClose
 }: ConsultationHoursFormProps): DialogForm => {
 	const { t } = useTranslation();
 	const dayName = useWeekdayNames();
+	const formatRange = useRangeFormat();
 	const [mode, setMode] = useState<Mode>(
 		slot && onSaveOneOff ? 'once' : 'weekly'
 	);
@@ -197,6 +209,18 @@ export const useConsultationHoursForm = ({
 		: onTheDay(once.day, once.end);
 	const onceInvalid =
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
+	/* What UserService refuses, said before saving: at most 12 hours, no
+	   overlap with another one-off, at most 50 upcoming. */
+	const upcomingOneOffs = oneOffs.filter(
+		(o) => o.end.getTime() > now.getTime()
+	);
+	const onceTooLong =
+		!onceInvalid &&
+		onceEnd.getTime() - onceStart.getTime() > MAX_ONE_OFF_MINUTES * 60_000;
+	const onceOverlaps =
+		!onceInvalid &&
+		upcomingOneOffs.some((o) => o.start < onceEnd && o.end > onceStart);
+	const onceLimitReached = upcomingOneOffs.length >= MAX_UPCOMING_ONE_OFFS;
 	/* At least one appointment must fit, in the saved slot length
 	   UserService cuts the window into. */
 	const savedSlotMs = hours.slotMinutes * 60_000;
@@ -342,6 +366,57 @@ export const useConsultationHoursForm = ({
 				<p className="calendarDialog__error" role="alert">
 					{t('calendar.consultationHours.onceTooLate')}
 				</p>
+			)}
+			{onceTooLong && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceTooLong')}
+				</p>
+			)}
+			{onceOverlaps && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceOverlap')}
+				</p>
+			)}
+			{onceLimitReached && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceLimit', {
+						count: MAX_UPCOMING_ONE_OFFS
+					})}
+				</p>
+			)}
+			{upcomingOneOffs.length > 0 && (
+				<section
+					className="calendarConsultation__onceList"
+					aria-label={t('calendar.consultationHours.onceList')}
+					data-testid="consultation-once-list"
+				>
+					<h3 className="calendarConsultation__onceListTitle">
+						{t('calendar.consultationHours.onceList')}
+					</h3>
+					<ul>
+						{upcomingOneOffs.map((o) => (
+							<li
+								key={o.id ?? o.start.toISOString()}
+								className="calendarConsultation__onceItem"
+							>
+								<span>{formatRange(o.start, o.end)}</span>
+								{onWithdrawOneOff && o.id && (
+									<button
+										type="button"
+										className="calendarConsultation__onceWithdraw"
+										onClick={() => onWithdrawOneOff(o)}
+										disabled={saving}
+										data-testid="consultation-once-withdraw"
+									>
+										{t(
+											'calendar.consultationHours.onceWithdraw'
+										)}
+									</button>
+								)}
+							</li>
+						))}
+					</ul>
+				</section>
 			)}
 		</div>
 	);
@@ -597,7 +672,10 @@ export const useConsultationHoursForm = ({
 							saving ||
 							onceInvalid ||
 							onceTooShort ||
-							onceTooLate,
+							onceTooLate ||
+							onceTooLong ||
+							onceOverlaps ||
+							onceLimitReached,
 						onClick: () =>
 							onSaveOneOff?.({
 								start: onceStart,

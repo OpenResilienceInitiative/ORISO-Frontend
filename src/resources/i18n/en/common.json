@@ -8054,7 +8054,19 @@
 			"menuItem": "Office hours",
 			"menuHint": "Release once for advice seekers",
 			"bandOnce": "Office hours, once",
-			"onceSaved": "Office hours released"
+			"onceSaved": "Office hours released",
+			"onceTooLong": "A one-off office hour lasts at most 12 hours.",
+			"onceOverlap": "This time overlaps another one-off office hour.",
+			"onceLimit": "You already have {{count}} upcoming one-off office hours. Withdraw one to release a new one.",
+			"onceList": "Released one-off office hours",
+			"onceWithdraw": "Withdraw",
+			"onceWithdrawAsk": {
+				"title": "Withdraw office hours?",
+				"description": "Advice seekers can then no longer book {{time}}. Appointments already booked stay.",
+				"keep": "Keep",
+				"confirm": "Withdraw"
+			},
+			"onceWithdrawn": "Office hours withdrawn"
 		},
 		"appointmentRequest": {
 			"status": "Requested · waiting for you",

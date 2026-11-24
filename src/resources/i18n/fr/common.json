@@ -8139,7 +8139,19 @@
 			"menuItem": "Permanence",
 			"menuHint": "Libérer une fois pour les personnes en recherche de conseil",
 			"bandOnce": "Permanence unique",
-			"onceSaved": "Permanence libérée"
+			"onceSaved": "Permanence libérée",
+			"onceTooLong": "Une permanence ponctuelle dure au maximum 12 heures.",
+			"onceOverlap": "Ce créneau chevauche une autre permanence ponctuelle.",
+			"onceLimit": "Vous avez déjà {{count}} permanences ponctuelles à venir. Retirez-en une pour en ouvrir une nouvelle.",
+			"onceList": "Permanences ponctuelles ouvertes",
+			"onceWithdraw": "Retirer",
+			"onceWithdrawAsk": {
+				"title": "Retirer la permanence ?",
+				"description": "Les personnes en recherche de conseil ne pourront plus réserver {{time}}. Les rendez-vous déjà pris sont conservés.",
+				"keep": "Conserver",
+				"confirm": "Retirer"
+			},
+			"onceWithdrawn": "Permanence retirée"
 		},
 		"appointmentRequest": {
 			"status": "Demandé · attend votre réponse",

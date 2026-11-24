@@ -198,6 +198,22 @@ export const oneOffFromApi = (dto: {
 export const ONE_OFF_NOTICE_MINUTES = [0, 30, 60, 120, 720, 1440] as const;
 export const DEFAULT_ONE_OFF_NOTICE = 60;
 
+/** Why UserService refused a one-off, as the form names it. */
+const ONE_OFF_REFUSALS: Record<string, string> = {
+	CONSULTATION_ONCE_END_NOT_AFTER_START:
+		'calendar.consultationHours.onceInvalid',
+	CONSULTATION_ONCE_END_IN_PAST: 'calendar.consultationHours.onceInvalid',
+	CONSULTATION_ONCE_TOO_LONG: 'calendar.consultationHours.onceTooLong',
+	CONSULTATION_ONCE_OVERLAP: 'calendar.consultationHours.onceOverlap',
+	CONSULTATION_ONCE_LIMIT_REACHED: 'calendar.consultationHours.onceLimit'
+};
+
+/** The i18n key for a refused one-off save; undefined for another failure. */
+export const oneOffRefusalKey = (error: unknown): string | undefined =>
+	error instanceof Response
+		? ONE_OFF_REFUSALS[error.headers.get('X-Reason') ?? '']
+		: undefined;
+
 /** A one-off save refused: it lies over a Sperrzeit and was not released over it. */
 export const isConsultationOnceOverBlocker = (error: unknown) =>
 	error instanceof Response &&

@@ -118,6 +118,7 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarConsultationHours: vi.fn(),
 	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
 	apiCreateCalendarConsultationOnce: vi.fn(),
+	apiDeleteCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarConsultationHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -2254,6 +2255,29 @@ describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
 			'o2',
 			'o1'
 		]);
+	});
+
+	it('withdraws a released one-off', async () => {
+		api.apiGetCalendarConsultationOnce.mockResolvedValue([
+			{
+				id: 'o1',
+				start: '2026-11-25T13:00:00Z',
+				end: '2026-11-25T14:00:00Z',
+				noticeMinutes: 60,
+				overBlocker: false
+			}
+		]);
+		api.apiDeleteCalendarConsultationOnce.mockResolvedValue(undefined);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(props.oneOffConsultations?.map((o) => o.id)).toEqual(['o1'])
+		);
+		const [once] = props.oneOffConsultations ?? [];
+		await act(() => props.onWithdrawOneOffConsultation?.(once));
+		expect(api.apiDeleteCalendarConsultationOnce).toHaveBeenCalledWith(
+			'o1'
+		);
+		expect(props.oneOffConsultations).toEqual([]);
 	});
 
 	it('offers no "Einmalig" while UserService keeps no one-offs', async () => {

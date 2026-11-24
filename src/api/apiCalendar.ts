@@ -326,11 +326,13 @@ export const apiCreateCalendarConsultationOnce = (once: {
 			noticeMinutes: once.noticeMinutes,
 			overBlocker: once.overBlocker
 		}),
-		// The 409 carries why: a Sperrzeit the form could not see.
+		// A refusal carries why in X-Reason: a Sperrzeit the form could not
+		// see (409), or a limit (400).
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.CONFLICT_WITH_RESPONSE,
-			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED
+			FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED,
+			FETCH_ERRORS.CATCH_ALL_WITH_RESPONSE
 		]
 	});
 
