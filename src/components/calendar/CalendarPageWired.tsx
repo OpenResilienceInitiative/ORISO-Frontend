@@ -743,10 +743,11 @@ export const CalendarPageWired = () => {
 	/* "Neue Person per Direkteinladung …": door A with the calendar's slot. */
 	const inviteNewPerson = (preset: InvitationPreset) => {
 		const fromKind = preset.kind ? MEDIUM_FOR_KIND[preset.kind] : undefined;
-		const medium =
-			fromKind && inviteMedia.includes(fromKind)
-				? fromKind
-				: inviteMedia[0];
+		/* An Art with a medium that is not allowed gets no link at all (the
+		   form refuses it); only an Art-less slot takes the first allowed
+		   medium. Never swap the medium silently. */
+		if (fromKind && !inviteMedia.includes(fromKind)) return;
+		const medium = fromKind ?? inviteMedia[0];
 		if (!medium) return;
 		if (!directLinkTopics.loaded || directLinkTopics.failed)
 			void directLinkTopics.load();

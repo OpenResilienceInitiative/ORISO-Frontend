@@ -363,6 +363,16 @@ export const useInvitationForm = ({
 			});
 			return;
 		}
+		/* #2494 *1 review: the Direkteinladung takes the Art's medium. An Art
+		   whose medium is not allowed is refused here, never swapped for
+		   another medium the counsellor did not choose. */
+		if (newPerson && kindMediumOff) {
+			setFormError({
+				text: t(`${KEYS}.inviteOthersMediumOff`),
+				field: 'conversation'
+			});
+			return;
+		}
 		setFormError(undefined);
 		if (newPerson && appointment) {
 			conversations?.onInviteNewPerson?.({

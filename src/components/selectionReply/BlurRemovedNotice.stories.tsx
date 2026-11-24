@@ -41,7 +41,14 @@ const handlers = {
 	e2eeParams: mockE2eeParams()
 };
 
-const Timeline = ({ mine = false }: { mine?: boolean }) => (
+const Timeline = ({
+	mine = false,
+	before = false
+}: {
+	mine?: boolean;
+	/** Before #2494 *9: the lifted blur came back as a deleted row. */
+	before?: boolean;
+}) => (
 	<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
 		<ConsultantListContext.Provider
 			value={mockConsultantListContext() as never}
@@ -82,20 +89,37 @@ const Timeline = ({ mine = false }: { mine?: boolean }) => (
 							{/* The real row: the formatter turns the lifting
 							   redaction into `t: 'blur-removed'`. */}
 							<MessageItemComponent
-								{...mockMessageItemComponentProps({
-									_id: '$redaction',
-									t: 'blur-removed',
-									message: '',
-									isMyMessage: mine,
-									userId: mine ? '@me:hs' : '@karina:hs',
-									displayName: 'Karina P',
-									username: 'karina',
-									messageDate: undefined,
-									blurRemoved: {
-										targetEventId: '$msg',
-										targetSenderName: 'Sanftes Alpaka Kala'
-									}
-								} as never)}
+								{...mockMessageItemComponentProps(
+									(before
+										? {
+												/* Before #2494 *9: the lifted
+												   blur came back as a deleted row. */
+												_id: '$blur',
+												t: 'rm',
+												message: '',
+												isMyMessage: false,
+												userId: '@karina:hs',
+												displayName: 'Karina P',
+												username: 'karina'
+											}
+										: {
+												_id: '$redaction',
+												t: 'blur-removed',
+												message: '',
+												isMyMessage: mine,
+												userId: mine
+													? '@me:hs'
+													: '@karina:hs',
+												displayName: 'Karina P',
+												username: 'karina',
+												messageDate: undefined,
+												blurRemoved: {
+													targetEventId: '$msg',
+													targetSenderName:
+														'Sanftes Alpaka Kala'
+												}
+											}) as never
+								)}
 								{...handlers}
 							/>
 						</div>
@@ -123,6 +147,20 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/** Before: the lifted redaction read "Diese Nachricht wurde gelöscht.". */
+export const Before1440: Story = {
+	name: 'Vorher: „Diese Nachricht wurde gelöscht.“ · 1440',
+	globals: desktop1440Globals,
+	render: () => <Timeline before />,
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				within(canvasElement).getByText(/wurde gelöscht/)
+			).toBeInTheDocument()
+		);
+	}
+};
 
 /** Someone else removed the redaction: info avatar left. */
 export const Notice1440: Story = {

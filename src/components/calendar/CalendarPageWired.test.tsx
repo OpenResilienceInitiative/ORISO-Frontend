@@ -34,10 +34,12 @@ const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
 /* "Direkteinladung erlauben" needs the tenant and agencies; off unless a
    test switches it on. */
-const directLinks = vi.hoisted(() => ({ allowed: false }));
+const directLinks = vi.hoisted(() => ({
+	allowed: false,
+	media: ['CHAT', 'AUDIO', 'VIDEO']
+}));
 vi.mock('../directLinks/useDirectLinksAllowed', () => ({
-	useDirectLinkMedia: () =>
-		directLinks.allowed ? ['CHAT', 'AUDIO', 'VIDEO'] : []
+	useDirectLinkMedia: () => (directLinks.allowed ? directLinks.media : [])
 }));
 const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
@@ -503,6 +505,24 @@ describe('CalendarPageWired', () => {
 			expect(invitationSetup.startWithDetails).toHaveBeenLastCalledWith(
 				'CHAT'
 			);
+		});
+
+		it('never swaps a not-allowed Art medium for another one (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			directLinks.media = ['CHAT'];
+			try {
+				render(<CalendarPageWired />);
+				await showWeek();
+				invitationSetup.startWithDetails.mockClear();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				act(() =>
+					props.onInviteNewPerson?.({ start, end, kind: 'video' })
+				);
+				expect(invitationSetup.startWithDetails).not.toHaveBeenCalled();
+			} finally {
+				directLinks.media = ['CHAT', 'AUDIO', 'VIDEO'];
+			}
 		});
 
 		it('binds the invitation to the new appointment and shows its link', async () => {

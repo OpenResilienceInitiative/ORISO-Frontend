@@ -223,6 +223,28 @@ describe('one invitation form behind three doors', () => {
 		expect(onSubmit).not.toHaveBeenCalled();
 	});
 
+	it('refuses a new person for an Art whose medium is not allowed, instead of swapping the medium', async () => {
+		const onInviteNewPerson = vi.fn();
+		open({
+			conversations: {
+				options: [{ sessionId: 7, label: 'mutige_eule' }],
+				onInviteNewPerson
+			},
+			withKind: true,
+			allowGuestInvite: true,
+			inviteMedia: ['CHAT'],
+			initial: { start: START, end: END, kind: 'video' },
+			known: { slot: true, kind: true }
+		});
+		fireEvent.change(conversation(), { target: { value: 'new-person' } });
+		await click(`${KEYS}.newPerson.action`);
+		expect(onInviteNewPerson).not.toHaveBeenCalled();
+		expect(onSubmit).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert').textContent).toBe(
+			`${KEYS}.inviteOthersMediumOff`
+		);
+	});
+
 	it('offers no new person where the door cannot hand over', () => {
 		open({
 			conversations: { options: [{ sessionId: 7, label: 'mutige_eule' }] }
