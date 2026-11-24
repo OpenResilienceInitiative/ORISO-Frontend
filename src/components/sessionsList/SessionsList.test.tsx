@@ -606,6 +606,29 @@ describe('Supervision filter over fetched pages (#1306)', () => {
 			SESSION_COUNT
 		]);
 	});
+	it("keeps a counsellor's chosen chip for their own supervised case once all pages loaded (#2494 *5)", async () => {
+		const own = ordinary(1) as any;
+		own.consultant = { ...(own.consultant ?? {}), id: 'c1' };
+		own.session.supervision = {
+			supervisedByMe: false,
+			supervisorConsultantIds: ['c9']
+		};
+		getList.mockResolvedValueOnce({ sessions: [own], total: 1 });
+		render(
+			<ListTree
+				consultant
+				fetched
+				initialPath="/sessions/consultant/sessionView?chip=supervision"
+			/>
+		);
+		expect(await screen.findByTestId('case-1')).toBeTruthy();
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		});
+		expect(screen.getByTestId('active-chip').textContent).toBe(
+			'supervision'
+		);
+	});
 	it('retains the bookmarked filter after a failed page and retries that offset', async () => {
 		const total = SESSION_COUNT + 1;
 		getList.mockResolvedValueOnce({ sessions: page(0), total });
