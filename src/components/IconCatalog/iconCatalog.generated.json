@@ -4443,17 +4443,9 @@
 		"size": null,
 		"fileName": "speech-bubble-team.svg",
 		"sourcePath": "src/resources/img/icons/speech-bubble-team.svg",
-		"exportNames": ["SpeechBubbleTeamIcon"],
-		"usageFiles": [
-			"src/components/chatStage/ChannelMenu.tsx",
-			"src/components/chatStage/ChannelSwitcherFab.tsx",
-			"src/components/chatStage/PanelHeader.tsx",
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/sessionMenu/SessionMenu.tsx",
-			"src/components/teamDiscussion/TeamDiscussionBadge.tsx",
-			"src/resources/img/icons.ts"
-		],
-		"usage": "app-used"
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:speech-bubble:base",
@@ -4850,10 +4842,17 @@
 		"size": null,
 		"fileName": "team-chat-3p.svg",
 		"sourcePath": "src/resources/img/icons/team-chat-3p.svg",
-		"exportNames": [],
+		"exportNames": ["SpeechBubbleTeamIcon"],
 		"usageFiles": [
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/selectionReply/SelectionReplyLayer.tsx",
-			"src/components/selectionReply/SelectionReplyToolbar.tsx"
+			"src/components/selectionReply/SelectionReplyToolbar.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/components/teamDiscussion/TeamDiscussionBadge.tsx",
+			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
 	},

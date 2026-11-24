@@ -13,7 +13,7 @@ import {
 	invalidateTeamDiscussionCache,
 	subscribeTeamDiscussionCache
 } from '../../services/teamDiscussionCache';
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import './teamDiscussion.styles.scss';
 
 export { getCachedTeamDiscussion, invalidateTeamDiscussionCache };
