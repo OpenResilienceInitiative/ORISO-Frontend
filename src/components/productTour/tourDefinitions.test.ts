@@ -153,7 +153,7 @@ describe('consultantMailCounsellingTour', () => {
 });
 
 describe('frontendTours registry', () => {
-	it('lists the consultant tours in priority order with unique ids', () => {
+	it('lists the introduction first, then the topic tours, with unique ids', () => {
 		const ids = frontendTours.map((t) => t.id);
 		expect(ids).toEqual([
 			'consultant-walkthrough',
@@ -164,7 +164,9 @@ describe('frontendTours registry', () => {
 			'consultant-live-chat',
 			'consultant-timeline',
 			'consultant-video-call',
-			'consultant-mail-counselling'
+			'consultant-mail-counselling',
+			'asker-first-steps',
+			'asker-settings'
 		]);
 		expect(new Set(ids).size).toBe(ids.length);
 	});

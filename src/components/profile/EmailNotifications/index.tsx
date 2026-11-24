@@ -70,6 +70,7 @@ export const EmailNotification = () => {
 			ref={rootRef}
 			id="email-notifications"
 			className="notifications__content notifications__content--enhanced"
+			data-tour-target="settings-notifications"
 		>
 			<div className="profile__content__title notifications__hero">
 				<Headline

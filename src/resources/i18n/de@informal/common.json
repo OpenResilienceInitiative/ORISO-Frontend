@@ -2928,6 +2928,61 @@
 					"intro": "Öffne ein Gespräch und starte den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
 				}
 			}
+		},
+		"askerFirstSteps": {
+			"summary": "Wo du deine Nachrichten, Termine und dein Profil findest.",
+			"step": {
+				"welcome": {
+					"intro": "Schön, dass du da bist. Dieser kurze Rundgang zeigt dir, wo du alles Wichtige findest. Mit „Weiter“ geht es zum nächsten Schritt."
+				},
+				"sessions": {
+					"intro": "Hier findest du deine Gespräche mit der Beratung. Ein Klick auf ein Gespräch öffnet es."
+				},
+				"composer": {
+					"intro": "Hier schreibst du deine Nachricht an die Beratung. Nimm dir ruhig Zeit. Die Antwort erscheint im selben Gespräch."
+				},
+				"appointments": {
+					"intro": "Hier findest du deine Termine mit der Beratung, zum Beispiel für ein Video-Gespräch."
+				},
+				"tools": {
+					"intro": "Hier findest du Hilfsmittel, die deine Beratungsstelle für dich bereitstellt."
+				},
+				"profile": {
+					"intro": "In deinem Profil änderst du deine Angaben und Einstellungen, zum Beispiel Passwort, Benachrichtigungen und Sprache."
+				},
+				"helpTours": {
+					"intro": "Unter Profil → Hilfe → Rundgänge kannst du jeden Rundgang noch einmal starten. Schneller geht es mit dem Knopf „?“ unten rechts."
+				}
+			}
+		},
+		"askerSettings": {
+			"step": {
+				"intro": {
+					"title": "Deine Einstellungen",
+					"intro": "Hier passt du die App an deine Wünsche an. Wir zeigen dir die wichtigsten Punkte. Dabei wird nichts verändert."
+				},
+				"password": {
+					"intro": "Hier kannst du dein Passwort ändern. Wähle ein Passwort, das nur du kennst."
+				},
+				"twoFactor": {
+					"intro": "Damit schützt du deine Anmeldung zusätzlich. Neben dem Passwort brauchst du dann einen Code, zum Beispiel aus einer App."
+				},
+				"recovery": {
+					"intro": "Deine Nachrichten sind verschlüsselt. Mit einem Ersatzschlüssel kannst du sie auch auf einem neuen Gerät lesen. Bewahre ihn gut auf."
+				},
+				"deleteAccount": {
+					"intro": "Hier kannst du deinen Account löschen, wenn du ihn nicht mehr brauchst. Vorher fragt die App noch einmal nach — ohne deine Bestätigung passiert nichts."
+				},
+				"notifications": {
+					"intro": "Hier legst du fest, wie du von neuen Nachrichten erfährst, zum Beispiel per E-Mail."
+				},
+				"display": {
+					"intro": "Hier änderst du, wie die App aussieht, zum Beispiel die Menüdarstellung oder die Sprache."
+				},
+				"done": {
+					"intro": "Jetzt kennst du deine Einstellungen. Du findest sie jederzeit unter Profil → Einstellungen."
+				}
+			}
 		}
 	},
 	"liveChat": {
