@@ -7616,7 +7616,8 @@
 			"tabs": {
 				"appointment": "Termin",
 				"blocker": "Sperrzeit",
-				"absence": "Abwesenheit"
+				"absence": "Abwesenheit",
+				"consultation": "Sprechzeit"
 			},
 			"withWhom": "Termin mit",
 			"withConversation": "Ratsuchende Person",
@@ -8099,7 +8100,50 @@
 			"minutes": "{{count}} Min.",
 			"invalid": "Das Ende muss nach dem Beginn liegen.",
 			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
-			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag.",
+			"band": "Sprechstunde",
+			"mode": "Art der Sprechzeit",
+			"modes": {
+				"once": "Einmalig",
+				"weekly": "Jede Woche"
+			},
+			"onceHint": "Geben Sie eine freie Zeit kurzfristig frei. Sie gilt nur an diesem Tag.",
+			"onceDescription": "Diese Zeit können Ratsuchende einmalig bei Ihnen buchen.",
+			"date": "Datum",
+			"from": "Von",
+			"to": "Bis",
+			"onceNotice": "Buchbar bis",
+			"onceNoticeHint": "So lange vor dem Beginn können Ratsuchende diese Zeit noch buchen.",
+			"onceNoticeNone": "Bis zum Beginn",
+			"onceNoticeMinutes": "{{count}} Min. vorher",
+			"onceNoticeHours": "{{count}} Std. vorher",
+			"onceNoticeHours_one": "{{count}} Std. vorher",
+			"overBlocker": "Diese Zeit liegt in einer Sperrzeit. Die Sprechzeit gibt sie trotzdem für Ratsuchende frei.",
+			"overBlockerConflict": "Diese Zeit liegt in einer Sperrzeit. Speichern Sie erneut, um sie trotzdem für Ratsuchende freizugeben.",
+			"onceInvalid": "Das Ende muss nach dem Beginn und in der Zukunft liegen.",
+			"onceTooLate": "Diese Zeit kann niemand mehr buchen: Die Buchungsfrist ist vorbei. Wählen Sie einen späteren Beginn oder „Buchbar bis“ kürzer.",
+			"onceTooShort": "Die Zeit ist kürzer als ein Termin ({{count}} Min.). Wählen Sie mindestens so viel Zeit.",
+			"onceSave": "Sprechzeit freigeben",
+			"addWindow": "Weiteres Zeitfenster am {{day}}",
+			"addWindowShort": "Zeitfenster",
+			"removeWindow": "Zeitfenster {{start}}–{{end}} am {{day}} entfernen",
+			"removeWindowShort": "Zeitfenster entfernen",
+			"menuItem": "Sprechzeit",
+			"menuHint": "Einmalig für Ratsuchende freigeben",
+			"bandOnce": "Sprechzeit einmalig",
+			"onceSaved": "Sprechzeit freigegeben",
+			"onceTooLong": "Eine einmalige Sprechzeit dauert höchstens 12 Stunden.",
+			"onceOverlap": "Diese Zeit überschneidet sich mit einer anderen einmaligen Sprechzeit.",
+			"onceLimit": "Sie haben schon {{count}} kommende einmalige Sprechzeiten. Ziehen Sie eine zurück, um eine neue freizugeben.",
+			"onceList": "Freigegebene einmalige Sprechzeiten",
+			"onceWithdraw": "Zurückziehen",
+			"onceWithdrawAsk": {
+				"title": "Sprechzeit zurückziehen?",
+				"description": "Ratsuchende können {{time}} dann nicht mehr buchen. Schon gebuchte Termine bleiben bestehen.",
+				"keep": "Behalten",
+				"confirm": "Zurückziehen"
+			},
+			"onceWithdrawn": "Sprechzeit zurückgezogen"
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",
@@ -8148,6 +8192,15 @@
 			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
 			"save": "Speichern",
 			"saved": "Liste gespeichert."
+		},
+		"freeTimes": {
+			"title": "Freie Sprechzeiten",
+			"description": "Hier buchen Sie selbst einen Termin bei {{name}}.",
+			"counsellor": "Beratungsperson",
+			"medium": {
+				"video": "Video",
+				"phone": "Telefon"
+			}
 		}
 	},
 	"guestAccountMode": {

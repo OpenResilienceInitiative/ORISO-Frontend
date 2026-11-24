@@ -7593,7 +7593,8 @@
 			"tabs": {
 				"appointment": "ቆጸራ",
 				"blocker": "ዝተዓጽወ ግዜ",
-				"absence": "ዘይምህላው"
+				"absence": "ዘይምህላው",
+				"consultation": "ግዜ ምኽሪ"
 			},
 			"withWhom": "ቆጸራ ምስ",
 			"withConversation": "ምኽሪ ዝደሊ ሰብ",
@@ -8076,7 +8077,50 @@
 			"minutes": "{{count}} ደቒቕ",
 			"invalid": "መወዳእታ ድሕሪ መጀመርታ ክኸውን ኣለዎ።",
 			"loadFailed": "ክጽዕን ኣይተኻእለን። ደጊምካ ፈትን",
-			"overlaps": "እቲ ሰዓታት ምስ ካልእ ናይ ምኽሪ ግዜ ኣብዚ መዓልቲ ይጋጠም።"
+			"overlaps": "እቲ ሰዓታት ምስ ካልእ ናይ ምኽሪ ግዜ ኣብዚ መዓልቲ ይጋጠም።",
+			"band": "ግዜ ምኽሪ",
+			"mode": "ዓይነት ግዜ ምኽሪ",
+			"modes": {
+				"once": "ሓንሳብ",
+				"weekly": "ነፍሲ ወከፍ ሰሙን"
+			},
+			"onceHint": "ነጻ ግዜ ብቕጽበት ክፈት። ነዛ መዓልቲ ጥራይ እዩ።",
+			"onceDescription": "ሓገዝ ዝደልዩ ነዚ ግዜ ሓንሳብ ክሕዝዎ ይኽእሉ።",
+			"date": "ዕለት",
+			"from": "ካብ",
+			"to": "ክሳብ",
+			"onceNotice": "ክሳብ ክሕዝ ዝከኣል",
+			"onceNoticeHint": "ቅድሚ ምጅማሩ ክንደይ ግዜ ክሕዝ ይከኣል።",
+			"onceNoticeNone": "ክሳብ ምጅማሩ",
+			"onceNoticeMinutes": "{{count}} ደቒቕ ቅድሚኡ",
+			"onceNoticeHours": "{{count}} ሰዓት ቅድሚኡ",
+			"onceNoticeHours_one": "{{count}} ሰዓት ቅድሚኡ",
+			"overBlocker": "እዚ ግዜ ኣብ ዕጹው ግዜ እዩ። ግዜ ምኽሪ ግን ይኸፍቶ።",
+			"overBlockerConflict": "እዚ ግዜ ኣብ ዕጹው ግዜ እዩ። ብዝኾነ ኽትከፍቶ እንደገና ዓቅብ።",
+			"onceInvalid": "መወዳእታ ድሕሪ መጀመርታን ኣብ መጻእን ክኸውን ኣለዎ።",
+			"onceTooLate": "ነዚ ግዜ ሓደ እኳ ክሕዞ ኣይክእልን፡ ግዜ ምሓዝ ሓሊፉ። ዝደንጎየ መጀመርታ ወይ ዝሓጸረ ግዜ ምረጽ።",
+			"onceTooShort": "እዚ ግዜ ካብ ሓደ ቆጸራ ({{count}} ደቒቕ) ይሓጽር። እንተወሓደ ከምኡ ዝኣክል ግዜ ምረጽ።",
+			"onceSave": "ግዜ ምኽሪ ክፈት",
+			"addWindow": "ካልእ ናይ ግዜ መስኮት ኣብ {{day}}",
+			"addWindowShort": "ናይ ግዜ መስኮት",
+			"removeWindow": "ናይ ግዜ መስኮት {{start}}–{{end}} ኣብ {{day}} ኣልግስ",
+			"removeWindowShort": "ናይ ግዜ መስኮት ኣልግስ",
+			"menuItem": "ግዜ ምኽሪ",
+			"menuHint": "ሓንሳብ ንሓገዝ ዝደልዩ ክፈት",
+			"bandOnce": "ግዜ ምኽሪ ሓንሳብ",
+			"onceSaved": "ግዜ ምኽሪ ተኸፊቱ",
+			"onceTooLong": "ሓደ ግዜ ዝኸውን ግዜ ምኽሪ ልዕሊ 12 ሰዓት ኣይነውሕን።",
+			"onceOverlap": "እዚ ግዜ ምስ ካልእ ሓደ ግዜ ዝኸውን ግዜ ምኽሪ ይጋጠም።",
+			"onceLimit": "ድሮ {{count}} ዝመጹ ሓደ ግዜ ዝኾኑ ግዜ ምኽሪ ኣለዉኻ። ሓድሽ ንምኽፋት ሓደ ኣልዕል።",
+			"onceList": "ዝተኸፍቱ ሓደ ግዜ ዝኾኑ ግዜ ምኽሪ",
+			"onceWithdraw": "ኣልዕል",
+			"onceWithdrawAsk": {
+				"title": "ግዜ ምኽሪ ይለዓል?",
+				"description": "ምኽሪ ዝደልዩ {{time}} ድሕሪ ሕጂ ክሕዙ ኣይክእሉን። ዝተሓዙ ቆጸራታት ይጸንሑ።",
+				"keep": "ሓዝ",
+				"confirm": "ኣልዕል"
+			},
+			"onceWithdrawn": "ግዜ ምኽሪ ተለዒሉ"
 		},
 		"appointmentRequest": {
 			"status": "ተሓቲቱ · ንመልስኹም ይጽበ",
@@ -8125,6 +8169,15 @@
 			"hint": "ናይ ካልኦት ኩሎም ቆጸራታት ክሳብ እትቕበልዎ ይጽበዩ።",
 			"save": "ዓቅብ",
 			"saved": "ዝርዝር ተዓቂቡ።"
+		},
+		"freeTimes": {
+			"title": "ነጻ ግዜታት ምኽሪ",
+			"description": "ምስ {{name}} ባዕልኻ ቈጸራ ሓዝ።",
+			"counsellor": "ኣማኻሪ",
+			"medium": {
+				"video": "ቪድዮ",
+				"phone": "ተሌፎን"
+			}
 		}
 	},
 	"guestAccountMode": {

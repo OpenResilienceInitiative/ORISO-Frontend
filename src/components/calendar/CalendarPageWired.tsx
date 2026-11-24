@@ -52,7 +52,10 @@ import {
 	apiGetCalendarProposals,
 	apiGetCalendarSync,
 	apiGetCalendarWorkingHours,
+	apiCreateCalendarConsultationOnce,
+	apiDeleteCalendarConsultationOnce,
 	apiGetCalendarConsultationHours,
+	apiGetCalendarConsultationOnce,
 	apiSetCalendarConsultationHours,
 	apiGetColleagueCalendarEntries,
 	apiMoveCalendarBlocker,
@@ -65,9 +68,11 @@ import {
 	type CalendarSyncDTO
 } from '../../api/apiCalendar';
 import {
+	apiBookAppointmentSlot,
 	apiCancelSessionAppointment,
 	apiConfirmSessionAppointment,
 	apiDeclineSessionAppointment,
+	apiGetAppointmentSlots,
 	apiMoveSessionAppointment
 } from '../../api/apiSessionAppointments';
 import { apiGetConsultantSessionList } from '../../api/apiGetConsultantSessionList';
@@ -99,6 +104,11 @@ import {
 	saveAppointmentInvitation
 } from '../directInvitation/saveAppointmentInvitation';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import { AskerConversationFreeTimes } from './AskerConversationFreeTimes';
+import type { CallChatType } from '../call/callFeatureGates';
+import { getModality, Modality } from '../session/getModality';
+import { resolveConversationAgencyId } from '../../utils/conversationFeatureSettings';
+import { STATUS_ACTIVE } from '../../globalState/interfaces/SessionsDataInterface';
 import { parseCalendarDayParam } from '../message/appointmentNotice';
 import { CalendarPage, type CalendarLoadState } from './CalendarPage';
 import type { FreeHoursState } from './CalendarSidebar';
@@ -149,7 +159,9 @@ import {
 } from './calendarWorkingHours';
 import {
 	consultationHoursFromApi,
-	type ConsultationHours
+	oneOffFromApi,
+	type ConsultationHours,
+	type OneOffConsultation
 } from './calendarConsultationHours';
 import type { HolidayRegion } from './calendarHolidays';
 
@@ -178,6 +190,12 @@ const mergeEntries = (first: CalendarEntry[], second: CalendarEntry[]) => {
 
 interface ConversationRef extends CalendarConversation {
 	matrixRoomId?: string;
+	/** A counsellor is assigned: their free office hours can be booked. */
+	withCounsellor?: boolean;
+	counsellorId?: string;
+	agencyId?: number;
+	consultingTypeId?: number;
+	chatType?: CallChatType;
 }
 
 const toConversations = (
@@ -203,6 +221,20 @@ const toConversations = (
 				item.consultant?.username ??
 				String(item.session.id),
 			matrixRoomId: item.session.matrixRoomId,
+			// The advice seeker's view names its counsellor `consultantId`;
+			// only an active conversation has office hours to book (dev,
+			// 24 Nov 2026: finished ones are status 4).
+			withCounsellor:
+				Boolean(item.consultant?.consultantId ?? item.consultant?.id) &&
+				item.session.status === STATUS_ACTIVE,
+			counsellorId: item.consultant?.consultantId ?? item.consultant?.id,
+			agencyId: resolveConversationAgencyId(item.session),
+			consultingTypeId: item.session.consultingType,
+			// The same chat type the conversation's call buttons ask for.
+			chatType:
+				getModality(item) === Modality.LIVE_CHAT
+					? 'anonymous'
+					: 'oneOnOne',
 			// FE#2325: the person's real avatar, as in the conversation list.
 			avatar: personAvatarOfSession(item, !!ownUserId)
 		}));
@@ -248,6 +280,8 @@ export const CalendarPageWired = () => {
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
 	const [own, setOwn] = useState<CalendarEntry[]>([]);
+	/** Conversations whose booking UserService refused: one is upcoming. */
+	const [limitedSessions, setLimitedSessions] = useState<number[]>([]);
 	/** Own entries of the next days, when the grid shows another time. */
 	const [nearby, setNearby] = useState<CalendarEntry[]>([]);
 	const [colleagueEntries, setColleagueEntries] = useState<
@@ -266,17 +300,31 @@ export const CalendarPageWired = () => {
 	   never offered for editing and saved as empty. */
 	const [consultationHours, setConsultationHours] =
 		useState<ConsultationHours>();
+	/** Undefined: this UserService keeps no one-off Sprechzeiten. */
+	const [oneOffs, setOneOffs] = useState<OneOffConsultation[]>();
 	const [consultationHoursFailed, setConsultationHoursFailed] =
 		useState(false);
+	/** The latest one-off read: an older answer never replaces it. */
+	const oneOffRead = useRef(0);
 	/** Read once on mount; again from ⋮ when that failed. */
 	const loadConsultationHours = useCallback(
 		(cancelled: () => boolean = () => false) => {
+			const read = ++oneOffRead.current;
+			const stale = () => cancelled() || read !== oneOffRead.current;
 			setConsultationHoursFailed(false);
 			apiGetCalendarConsultationHours().then(
 				(dto) =>
 					!cancelled() &&
 					setConsultationHours(consultationHoursFromApi(dto)),
 				() => !cancelled() && setConsultationHoursFailed(true)
+			);
+			/* One-off Sprechzeiten (FE#2494 *2b): a UserService without
+			   them answers with an error, and "Einmalig" stays away. A list
+			   read before is kept: a later failure is a hiccup, not a
+			   UserService without them. */
+			apiGetCalendarConsultationOnce().then(
+				(list) => !stale() && setOneOffs(list.map(oneOffFromApi)),
+				() => undefined
 			);
 		},
 		[]
@@ -499,6 +547,9 @@ export const CalendarPageWired = () => {
 	);
 
 	useEffect(() => onAppointmentsChanged(load), [load]);
+	/* A refused booking said "one is upcoming" for its moment only: after a
+	   change (cancelled, moved) the reloaded entries decide again. */
+	useEffect(() => onAppointmentsChanged(() => setLimitedSessions([])), []);
 
 	/**
 	 * The conversations appointments belong to: every page of the
@@ -1033,6 +1084,30 @@ export const CalendarPageWired = () => {
 		setConsultationHours(consultationHoursFromApi(saved));
 	};
 
+	const saveOneOffConsultation = async (once: OneOffConsultation) => {
+		const saved = await apiCreateCalendarConsultationOnce({
+			start: once.start,
+			end: once.end,
+			noticeMinutes: once.noticeMinutes,
+			overBlocker: Boolean(once.overBlocker)
+		});
+		// A read started before this save knows nothing of it: drop it.
+		oneOffRead.current += 1;
+		setOneOffs((known) =>
+			[...(known ?? []), oneOffFromApi(saved)].sort(
+				(a, b) => a.start.getTime() - b.start.getTime()
+			)
+		);
+	};
+
+	const withdrawOneOffConsultation = async (once: OneOffConsultation) => {
+		if (!once.id) return;
+		await apiDeleteCalendarConsultationOnce(once.id);
+		// A read started before this withdrawal still lists it: drop it.
+		oneOffRead.current += 1;
+		setOneOffs((known) => known?.filter((o) => o.id !== once.id));
+	};
+
 	const saveWorkingHours = async (
 		hours: WorkingHours,
 		holidayRegion: HolidayRegion | null
@@ -1204,9 +1279,93 @@ export const CalendarPageWired = () => {
 		conversations
 	);
 
+	/* *2c (FE#2494): beside "Meine Termine" the free office hours of each
+	   counsellor the advice seeker has an active conversation with, in the
+	   media that conversation permits; a panel stays away while its
+	   counsellor has none. */
+	/* One panel per booking context: conversations that share counsellor,
+	   agency, consulting type and chat type get the same media and slots.
+	   One booking per conversation is upcoming at most (UserService), so the
+	   panel books through one that has none yet; only when all have one, the
+	   first stands for them (and the panel says the limit is reached). */
+	const bookingContext = (c: ConversationRef) =>
+		[c.counsellorId, c.agencyId, c.consultingTypeId, c.chatType].join('|');
+	const nowMs = Date.now();
+	/* Known to hold an upcoming appointment: from the loaded entries, and
+	   from a booking UserService refused for that reason (an appointment
+	   outside the loaded weeks). */
+	const withUpcoming = new Set([
+		...limitedSessions,
+		...mergeEntries(own, nearby)
+			.filter(
+				(e) =>
+					e.type === 'appointment' &&
+					e.sessionId !== undefined &&
+					new Date(e.end).getTime() > nowMs
+			)
+			.map((e) => e.sessionId)
+	]);
+	const freeTimesOf = consultant
+		? []
+		: [
+				...conversations
+					.filter((c) => c.withCounsellor)
+					.reduce((byContext, c) => {
+						const key = bookingContext(c);
+						const chosen = byContext.get(key);
+						if (
+							!chosen ||
+							(withUpcoming.has(chosen.sessionId) &&
+								!withUpcoming.has(c.sessionId))
+						)
+							byContext.set(key, c);
+						return byContext;
+					}, new Map<string, ConversationRef>())
+					.values()
+			];
+	const freeTimesPanel = freeTimesOf.length > 0 && (
+		<>
+			{freeTimesOf.map((conversation) => (
+				<AskerConversationFreeTimes
+					key={conversation.sessionId}
+					sessionId={conversation.sessionId}
+					agencyId={conversation.agencyId}
+					consultingTypeId={conversation.consultingTypeId}
+					chatType={conversation.chatType ?? 'oneOnOne'}
+					counsellorName={conversation.username}
+					onLimitReached={() =>
+						setLimitedSessions((known) =>
+							known.includes(conversation.sessionId)
+								? known
+								: [...known, conversation.sessionId]
+						)
+					}
+					loadSlots={apiGetAppointmentSlots}
+					bookSlot={apiBookAppointmentSlot}
+					onBooked={(appointment) => {
+						afterChange();
+						/* The counsellor learns of it in the chat, as from the
+						   conversation's own "Termin buchen" (FE#1050, FE#2287). */
+						void sendNotice({
+							kind:
+								appointment.status === 'REQUESTED'
+									? 'requested'
+									: 'created',
+							start: new Date(appointment.startTime),
+							end: new Date(appointment.endTime),
+							sessionId: conversation.sessionId,
+							matrixRoomId: conversation.matrixRoomId
+						});
+					}}
+				/>
+			))}
+		</>
+	);
+
 	return (
 		<>
 			<CalendarPage
+				besidePanel={freeTimesPanel}
 				linksPanel={consultant ? <CalendarLinksSection /> : undefined}
 				role={consultant ? 'consultant' : 'asker'}
 				ownerId={ownerId}
@@ -1281,6 +1440,15 @@ export const CalendarPageWired = () => {
 				}
 				onSaveConsultationHours={
 					consultant ? saveConsultationHours : undefined
+				}
+				oneOffConsultations={consultant ? oneOffs : undefined}
+				onSaveOneOffConsultation={
+					consultant && oneOffs ? saveOneOffConsultation : undefined
+				}
+				onWithdrawOneOffConsultation={
+					consultant && oneOffs
+						? withdrawOneOffConsultation
+						: undefined
 				}
 				onSaveDayException={consultant ? saveDayException : undefined}
 				onDeleteDayException={

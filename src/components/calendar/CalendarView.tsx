@@ -29,6 +29,7 @@ import interactionPlugin from '@fullcalendar/react/interaction';
 import deLocale from '@fullcalendar/react/locales/de';
 import { Popper } from '@mui/material';
 import FreeBreakfastOutlinedIcon from '@mui/icons-material/FreeBreakfastOutlined';
+import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import enGbLocale from '@fullcalendar/react/locales/en-gb';
 import frLocale from '@fullcalendar/react/locales/fr';
 import ruLocale from '@fullcalendar/react/locales/ru';
@@ -55,6 +56,8 @@ import {
 	effectiveDay,
 	minutesOf,
 	offRangesOf,
+	windowsOn,
+	type WorkingHours,
 	type WorkingPlan
 } from './calendarWorkingHours';
 import {
@@ -157,6 +160,14 @@ export interface CalendarViewProps {
 	/** Weekly hours, day exceptions and the holiday region. */
 	workingPlan?: WorkingPlan;
 	/**
+	 * One's own Sprechstunden: a background band in the time grid
+	 * (FE#2494 *3). Entries still go over them; UserService then takes
+	 * that time out of the advice seekers' free times.
+	 */
+	consultationWindows?: WorkingHours;
+	/** One-off Sprechzeiten released from the calendar (FE#2494 *2b). */
+	consultationOnce?: { start: Date; end: Date }[];
+	/**
 	 * A grip on the edge of one's own working day was moved; without it the
 	 * grips are not drawn.
 	 */
@@ -219,6 +230,8 @@ interface EventProps {
 	holiday?: PublicHoliday;
 	/** Background: colleagues busy in this stretch. */
 	band?: ColleagueBand;
+	/** Background: one's own Sprechstunde (FE#2494 *3). */
+	consultation?: 'weekly' | 'once';
 }
 
 /** The usual working day the time grid shows, before any widening. */
@@ -230,10 +243,11 @@ const DAY_TO = 21 * 60;
  * the grid widens to them, so a grip always sits at its own time and
  * never at a cut-off edge of the grid (review 4574981882).
  */
-const planBounds = (plan?: WorkingPlan) => {
+const planBounds = (plan?: WorkingPlan, consultation: WorkingHours = []) => {
 	const windows = [
 		...(plan?.hours ?? []),
-		...Object.values(plan?.exceptions ?? {}).flat()
+		...Object.values(plan?.exceptions ?? {}).flat(),
+		...consultation
 	];
 	return windows.reduce(
 		(bounds, w) => ({
@@ -258,12 +272,21 @@ const slotMinutes = (slot: string) => minutesOf(slot.slice(0, 5));
 const gridHours = (
 	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
 	plan?: WorkingPlan,
-	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
+	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = [],
+	/* One's own Sprechstunden (FE#2494 *3): their band must be visible too. */
+	consultation: {
+		windows?: WorkingHours;
+		once?: { start: Date; end: Date }[];
+	} = {}
 ) => {
-	const bounds = planBounds(plan);
+	const bounds = planBounds(plan, consultation.windows);
 	return visibleHours(
 		[
 			...entries,
+			...(consultation.once ?? []).map((once) => ({
+				start: once.start.toISOString(),
+				end: once.end.toISOString()
+			})),
 			...proposals.map(({ proposal }) => ({
 				start: proposal.start,
 				end: proposal.end
@@ -275,12 +298,8 @@ const gridHours = (
 };
 
 /** {@link gridHours} as minutes since midnight. */
-export const gridMinutes = (
-	entries: Pick<CalendarEntry, 'start' | 'end' | 'allDay'>[],
-	plan?: WorkingPlan,
-	proposals: { proposal: Pick<MoveProposal, 'start' | 'end'> }[] = []
-) => {
-	const hours = gridHours(entries, plan, proposals);
+export const gridMinutes = (...args: Parameters<typeof gridHours>) => {
+	const hours = gridHours(...args);
 	return {
 		firstMinute: slotMinutes(hours.min),
 		lastMinute: slotMinutes(hours.max)
@@ -461,6 +480,8 @@ export const CalendarView = ({
 	now,
 	initialDate,
 	workingPlan,
+	consultationWindows,
+	consultationOnce,
 	onEdgeChange,
 	proposals = [],
 	highlight,
@@ -583,6 +604,55 @@ export const CalendarView = ({
 		return out;
 	}, [workingPlan, shownRange, timeGrid]);
 
+	const consultationEvents = useMemo<EventInput[]>(() => {
+		if (
+			!timeGrid ||
+			!shownRange ||
+			(!consultationWindows?.length && !consultationOnce?.length)
+		)
+			return [];
+		const out: EventInput[] = [];
+		for (
+			let day = startOfDay(shownRange.start);
+			day < shownRange.end;
+			day = nextDay(day)
+		) {
+			/* No weekly Sprechstunde on a day off or public holiday: UserService
+			   offers none there either. */
+			const effective = workingPlan && effectiveDay(day, workingPlan);
+			if (
+				effective &&
+				(effective.source === 'holiday' ||
+					(effective.source === 'exception' &&
+						effective.windows.length === 0))
+			)
+				continue;
+			for (const w of windowsOn(consultationWindows ?? [], day.getDay()))
+				out.push({
+					id: `consultation-${day.getTime()}-${w.start}`,
+					start: atMinutes(day, minutesOf(w.start)),
+					end: atMinutes(day, minutesOf(w.end)),
+					display: 'background',
+					extendedProps: { consultation: 'weekly' }
+				});
+		}
+		for (const once of consultationOnce ?? [])
+			out.push({
+				id: `consultation-once-${once.start.getTime()}`,
+				start: once.start,
+				end: once.end,
+				display: 'background',
+				extendedProps: { consultation: 'once' }
+			});
+		return out;
+	}, [
+		consultationWindows,
+		consultationOnce,
+		shownRange,
+		timeGrid,
+		workingPlan
+	]);
+
 	// The grips go into FullCalendar's day columns themselves: inside a
 	// background event they would sit in a layer FullCalendar hides from
 	// assistive technology (aria-hidden), where nothing may take focus.
@@ -629,8 +699,12 @@ export const CalendarView = ({
 	// The usual working day, widened so no entry, no proposal and no grip
 	// falls outside the grid.
 	const hours = useMemo(
-		() => gridHours(entries, workingPlan, proposals),
-		[entries, workingPlan, proposals]
+		() =>
+			gridHours(entries, workingPlan, proposals, {
+				windows: consultationWindows,
+				once: consultationOnce
+			}),
+		[entries, workingPlan, proposals, consultationWindows, consultationOnce]
 	);
 	const firstMinute = slotMinutes(hours.min);
 	const lastMinute = slotMinutes(hours.max);
@@ -668,6 +742,7 @@ export const CalendarView = ({
 				extendedProps: { entry, proposal }
 			})),
 			...offEvents,
+			...consultationEvents,
 			...bands.map((band) => ({
 				id: `band-${bandKey(band)}`,
 				start: band.start,
@@ -676,7 +751,17 @@ export const CalendarView = ({
 				extendedProps: { band }
 			}))
 		],
-		[gridEntries, proposals, ownerId, role, label, t, offEvents, bands]
+		[
+			gridEntries,
+			proposals,
+			ownerId,
+			role,
+			label,
+			t,
+			offEvents,
+			consultationEvents,
+			bands
+		]
 	);
 
 	// "Beginnt gleich" in words and a clock, not by colour alone, on the
@@ -837,7 +922,11 @@ export const CalendarView = ({
 	};
 
 	const backgroundClass = (info: EventDisplayInfo) => {
-		const { off, band } = propsOf(info);
+		const { off, band, consultation } = propsOf(info);
+		if (consultation)
+			return consultation === 'once'
+				? 'calendarView__consultation calendarView__consultation--once'
+				: 'calendarView__consultation';
 		if (band)
 			return allBusy(band)
 				? 'calendarView__band calendarView__band--all'
@@ -850,7 +939,23 @@ export const CalendarView = ({
 	};
 
 	const backgroundContent = (info: EventDisplayInfo) => {
-		const { off, band } = propsOf(info);
+		const { off, band, consultation } = propsOf(info);
+		if (consultation)
+			return (
+				<span
+					className="calendarView__consultationLabel"
+					data-cy="calendar-consultation-band"
+				>
+					<span className="calendarView__consultationPill">
+						<ClockIcon aria-hidden focusable="false" />
+						{t(
+							consultation === 'once'
+								? 'calendar.consultationHours.bandOnce'
+								: 'calendar.consultationHours.band'
+						)}
+					</span>
+				</span>
+			);
 		if (band) {
 			const busy = band.busy
 				.map((id) => bandPeopleById.get(id))

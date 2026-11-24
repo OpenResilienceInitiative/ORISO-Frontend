@@ -96,12 +96,19 @@ const useUpcomingAppointments = (enabled: boolean) => {
 export const MyDirectLinksPanel = ({
 	overview = false,
 	title,
-	description
+	description,
+	compact = false
 }: {
 	overview?: boolean;
 	/** *19: the calendar shows the list as "Links ohne Termin". */
 	title?: string;
 	description?: string;
+	/**
+	 * FE#2494 *2a/*2b: the calendar lists links as compact rows and has no
+	 * create button of its own (product decision); see CalendarLinksSection
+	 * for where new links come from.
+	 */
+	compact?: boolean;
 } = {}) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -296,10 +303,13 @@ export const MyDirectLinksPanel = ({
 					pendingIds={pendingIds}
 					onShowQr={setQrLink}
 					onEdit={setEditing}
-					onCreate={() => navigate(CREATE_CHAT_PATH)}
+					onCreate={
+						compact ? undefined : () => navigate(CREATE_CHAT_PATH)
+					}
 					onRetry={reload}
 					title={title}
 					description={description}
+					variant={compact ? 'rows' : 'tiles'}
 				/>
 			)}
 			{editingInvitation && (
