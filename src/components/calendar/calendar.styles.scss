@@ -4358,6 +4358,14 @@ $cal-new-pill-hover: #4b4f51;
 	}
 }
 
+// What is wrong with the times, right under them (Dev test, 24 Nov 2026).
+.calendarConsultation__onceErrors {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-bottom: 8px;
+}
+
 .calendarConsultation__label {
 	display: block;
 	margin-bottom: 4px;
