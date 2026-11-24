@@ -1,3 +1,4 @@
+import { FittedHeaderTitle } from '../FittedHeaderTitle';
 import { useConversationFeatureSettings } from '../../../hooks/useConversationFeatureSettings';
 import React, { useContext, useMemo, useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -436,11 +437,11 @@ export const GroupChatHeader = ({
 							/>
 						</div>
 						{!hideTopic && (
-							<h3 data-cy="group-header-topic">
+							<FittedHeaderTitle data-cy="group-header-topic">
 								{typeof activeSession.item.topic === 'string'
 									? activeSession.item.topic
 									: activeSession.item.topic?.name || ''}
-							</h3>
+							</FittedHeaderTitle>
 						)}
 					</div>
 					{isLoadingMembers && (

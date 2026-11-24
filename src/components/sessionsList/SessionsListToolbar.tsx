@@ -237,6 +237,8 @@ type FilterChipConfig = {
 	labelKey: string;
 	Icon: React.ComponentType<SessionToolbarFilterIconProps>;
 	dataCy: string;
+	/** Product-tour anchor on this chip (inert `data-tour-target`). */
+	tourTarget?: string;
 };
 
 const FILTER_CHIPS: FilterChipConfig[] = [
@@ -250,7 +252,8 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'drafts',
 		labelKey: 'sessionList.toolbar.chips.drafts',
 		Icon: DraftFilterIcon,
-		dataCy: 'sessions-list-chip-drafts'
+		dataCy: 'sessions-list-chip-drafts',
+		tourTarget: 'sessions-drafts-chip'
 	},
 	{
 		id: 'nearby',
@@ -268,7 +271,8 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'liveChat',
 		labelKey: 'sessionList.toolbar.chips.liveChat',
 		Icon: LiveChatFilterIcon,
-		dataCy: 'sessions-list-chip-live-chat'
+		dataCy: 'sessions-list-chip-live-chat',
+		tourTarget: 'livechat-queue'
 	},
 	{
 		id: 'internalGroup',
@@ -339,6 +343,7 @@ const FilterChip = ({
 			onClick={onClick}
 			onDeactivatedClick={onDeactivatedClick}
 			data-cy={chip.dataCy}
+			tourTarget={chip.tourTarget}
 		/>
 	);
 };
@@ -714,6 +719,7 @@ export const SessionsListToolbar = ({
 			<div
 				className="sessionsListToolbar__search"
 				ref={searchRootRef}
+				data-tour-target="sessions-search"
 				onKeyDown={closeSearchOnEscape}
 			>
 				<div

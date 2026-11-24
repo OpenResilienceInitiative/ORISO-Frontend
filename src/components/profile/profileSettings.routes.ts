@@ -44,6 +44,7 @@ export const profileRoutesSettings = (
 		elements: [
 			{
 				component: SecurityPrivacySettings,
+				tourTarget: 'profile-security',
 				boxed: false,
 				fullWidth: true,
 				order: 1
@@ -64,12 +65,14 @@ export const profileRoutesSettings = (
 						? usesNewNotifications(settings)
 						: askerHasEmailSettings(settings, tenantSettings)),
 				component: EmailNotification,
+				tourTarget: 'profile-notifications',
 				column: COLUMN_LEFT,
 				order: 1
 			},
 			{
 				condition: () => usesNewNotifications(settings),
 				component: NotificationSettingsPanel,
+				tourTarget: 'profile-notifications',
 				column: COLUMN_RIGHT,
 				order: 1
 			},
@@ -80,6 +83,7 @@ export const profileRoutesSettings = (
 						userData
 					) && !usesNewNotifications(settings),
 				component: ConsultantNotifications,
+				tourTarget: 'profile-notifications',
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 4
@@ -92,6 +96,7 @@ export const profileRoutesSettings = (
 					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,
+				tourTarget: 'profile-notifications',
 				icon: NotificationsActiveOutlinedIcon,
 				column: COLUMN_LEFT,
 				order: 4
@@ -128,6 +133,7 @@ export const profileRoutesSettings = (
 			},
 			{
 				component: MenuEffectsSettings,
+				tourTarget: 'profile-display',
 				icon: AnimationOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 2
@@ -153,6 +159,7 @@ export const profileRoutesSettings = (
 		elements: [
 			{
 				component: KeyboardShortcutsSettings,
+				tourTarget: 'profile-shortcuts',
 				icon: KeyboardOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 6

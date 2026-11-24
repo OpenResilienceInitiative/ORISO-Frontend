@@ -44,6 +44,11 @@
 	}
 
 	.EmojiPickerReact {
+		// Height is set by floating-ui's available room. Animating it feeds
+		// intermediate sizes back into ResizeObserver and can keep the picker
+		// outside the viewport for seconds while each transition restarts.
+		transition: background-color 0.1s ease-in-out;
+
 		--epr-emoji-size: 22px;
 		--emoji-picker-text-size: calc(
 			1rem * var(--oriso-personal-text-scale, 1)
@@ -140,5 +145,11 @@ html[data-oriso-personal-scheme='dark'] .emojiPickerPopup .EmojiPickerReact {
 
 	.epr-icn-clear-search {
 		background-position-y: -40px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.emojiPickerPopup .EmojiPickerReact {
+		transition: none;
 	}
 }

@@ -314,6 +314,54 @@ export const SupervisionReplace: Story = {
 	}
 };
 
+/**
+ * The real case: the counsellor chose this supervisor, so the person can be
+ * swapped in one step. The old one goes, the new one comes, one dialog.
+ */
+const SUPERVISION_SWAPPABLE: MemorySourceOptions = {
+	...SUPERVISION,
+	members: [
+		{ ...SELMA, isStanding: false, canRemove: true, canReplace: true }
+	],
+	newPerson: { role: 'supervisor', canRemove: true, canReplace: true }
+};
+
+const swapSupervisor = async () => {
+	const canvas = dialogCanvas();
+	await userEvent.click(
+		await canvas.findByRole('button', { name: 'Selma Bouvier wechseln' })
+	);
+	await canvas.findByRole('heading', {
+		name: 'Wer soll Selma Bouvier ablösen?'
+	});
+	await userEvent.click(
+		await canvas.findByRole('button', { name: 'Herb Powell auswählen' })
+	);
+	await userEvent.type(
+		canvas.getByRole('textbox', { name: /Grund/ }),
+		'Selma ist im Urlaub'
+	);
+	await userEvent.click(
+		canvas.getByRole('button', { name: 'Zu Herb Powell wechseln' })
+	);
+	await waitFor(() => expect(canvas.queryByText('Selma Bouvier')).toBeNull());
+	await canvas.findByText('Herb Powell');
+	await canvas.findByText('Selma ist im Urlaub');
+};
+
+/** Swap the supervisor in one step: pick, give the reason, confirm. */
+export const SupervisionSwapInOneStep: Story = {
+	render: () => <SessionStageDialog options={SUPERVISION_SWAPPABLE} />,
+	play: swapSupervisor
+};
+
+/** The same swap on the phone, full screen. */
+export const PhoneSupervisionSwapInOneStep: Story = {
+	globals: phone390Globals,
+	render: () => <SessionStageDialog options={SUPERVISION_SWAPPABLE} phone />,
+	play: swapSupervisor
+};
+
 /** Today's Dev data: nobody is marked as a supervisor, so nobody can take over. */
 export const SupervisionNobodyAvailable: Story = {
 	render: () => (

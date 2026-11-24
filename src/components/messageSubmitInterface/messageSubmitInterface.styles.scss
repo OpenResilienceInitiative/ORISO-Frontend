@@ -175,7 +175,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				max-width: var(--composer-max-width, 895px);
 				position: relative;
 				margin: 0 auto;
-				background-color: var(--m3-surface-container-lowest, #ffffff) !important;
+				background-color: var(
+					--m3-surface-container-lowest,
+					#ffffff
+				) !important;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;

@@ -14,6 +14,7 @@ import {
 import { PersonalDisplayEntry } from '../../features/personal-display/PersonalDisplayEntry';
 import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import { NavigationBar } from './NavigationBar';
+import { SectionFavicon } from './sectionFavicon/SectionFavicon';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
 import { Walkthrough } from '../walkthrough/Walkthrough';
@@ -133,6 +134,9 @@ export const Routing = (props: RoutingProps) => {
 											<PersonalDisplayEntry />
 										) : undefined
 									}
+								/>
+								<SectionFavicon
+									navigation={routerConfig.navigation}
 								/>
 								<section className="contentWrapper">
 									<Header />

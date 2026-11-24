@@ -67,6 +67,15 @@
 		}
 	}
 
+	&--onPrimaryContainer {
+		color: var(--m3-on-primary-container, #410002);
+		background: color-mix(in srgb, currentColor 12%, transparent);
+
+		&:hover {
+			background: color-mix(in srgb, currentColor 20%, transparent);
+		}
+	}
+
 	&__globe {
 		display: inline-flex;
 		align-items: center;

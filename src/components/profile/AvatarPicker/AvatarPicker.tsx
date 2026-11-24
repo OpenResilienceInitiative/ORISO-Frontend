@@ -11,13 +11,14 @@ import {
 import './avatarPicker.styles.scss';
 
 export type AvatarPickerRole = 'asker' | 'consultant';
+export const INITIALS_TILE = 'initials';
 
 interface AvatarPickerProps {
 	role: AvatarPickerRole;
-	/** Selected animal file, e.g. `magpie.svg`; null selects the default tile. */
+	/** Selected motif filename, INITIALS_TILE, or null for the default tile. */
 	value?: string | null;
-	/** The chosen file, or null for the default tile. */
-	onChange: (file: string | null) => void;
+	/** The chosen motif filename, INITIALS_TILE, or null for the default tile. */
+	onChange: (selection: string | null) => void;
 	/** Accessible name of the grid. */
 	label: string;
 	/** Defaults to every animal the app ships. */
@@ -26,6 +27,8 @@ interface AvatarPickerProps {
 	layout?: 'grid' | 'row';
 	/** First tile: the avatar the app derives from the user id, which clears the choice. */
 	defaultTile?: { avatar: Avatar; label: string; selected?: boolean };
+	/** Optional initials preview for counsellor profiles. */
+	initialsTile?: { label: string; content: React.ReactNode };
 	/**
 	 * Advice seekers keep the colours derived from their id, so each tile is
 	 * previewed in them; without it every tile gets its own colour.
@@ -49,8 +52,7 @@ const FOCUS_KEYS: Readonly<
 /**
  * Grid of the app's animal avatars (#1540). Advice seekers pick an animal on
  * a pastel ground; counsellors always appear on primary / on-primary, so
- * their tiles share one colour. Counsellors will use their own motif set
- * (US#1046) once it reaches the app; the animals stand in until then.
+ * their motif and initials tiles share one colour.
  */
 export const AvatarPicker = ({
 	role,
@@ -60,6 +62,7 @@ export const AvatarPicker = ({
 	files = ALL_ANIMAL_FILES,
 	layout = 'grid',
 	defaultTile,
+	initialsTile,
 	askerColors,
 	disabled = false
 }: AvatarPickerProps) => {
@@ -81,32 +84,53 @@ export const AvatarPicker = ({
 		[files, role, askerColors]
 	);
 	const groupRef = useRef<HTMLDivElement>(null);
-	const hasPickedTile = !!value && avatars.some(({ file }) => file === value);
-	const defaultSelected = defaultTile?.selected ?? !value;
-	// The group is one tab stop (ARIA radio group): the picked tile, else the first.
-	const isTabStop = (file: string | null, index: number) =>
-		file === null
-			? !value || (!hasPickedTile && index === 0)
-			: file === value || (!hasPickedTile && !defaultTile && index === 0);
+	const tiles = avatars.map<{
+		id: string | null;
+		label: string;
+		selected: boolean;
+		content: React.ReactNode;
+	}>((avatar) => ({
+		id: avatar.file,
+		label: avatar.file.replace(/\.svg$/, ''),
+		selected: avatar.file === value,
+		content: <AnimalAvatar avatar={avatar} size={52} />
+	}));
+	if (initialsTile) {
+		tiles.unshift({
+			...initialsTile,
+			id: INITIALS_TILE,
+			selected: value === INITIALS_TILE
+		});
+	}
+	if (defaultTile) {
+		tiles.unshift({
+			id: null,
+			label: defaultTile.label,
+			selected: defaultTile.selected ?? !value,
+			content: <AnimalAvatar avatar={defaultTile.avatar} size={52} />
+		});
+	}
+	// The selected tile is the only tab stop. Fall back to the first for stale values.
+	const tabStop = Math.max(
+		0,
+		tiles.findIndex(({ selected }) => selected)
+	);
 
 	// Arrows only move focus; Enter or Space picks, because every pick is saved at once.
 	const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
 		const move = FOCUS_KEYS[event.key];
-		const tiles = Array.from(
+		const buttons = Array.from(
 			groupRef.current?.querySelectorAll<HTMLButtonElement>(
 				'[role="radio"]'
 			) ?? []
 		);
-		const current = tiles.indexOf(
+		const current = buttons.indexOf(
 			document.activeElement as HTMLButtonElement
 		);
 		if (!move || current < 0) return;
 		event.preventDefault();
-		const last = tiles.length - 1;
-		tiles[Math.min(Math.max(move(current, last), 0), last)].focus();
-	};
-	const pick = (file: string | null) => {
-		if (!disabled) onChange(file);
+		const last = buttons.length - 1;
+		buttons[Math.min(Math.max(move(current, last), 0), last)].focus();
 	};
 
 	return (
@@ -118,52 +142,30 @@ export const AvatarPicker = ({
 			aria-busy={disabled || undefined}
 			onKeyDown={onKeyDown}
 		>
-			{defaultTile && (
+			{tiles.map(({ id, label: tileLabel, selected, content }, index) => (
 				<button
+					key={id ?? 'default'}
 					type="button"
 					role="radio"
-					aria-checked={defaultSelected}
-					aria-label={defaultTile.label}
+					aria-checked={selected}
+					aria-label={tileLabel}
 					aria-disabled={disabled || undefined}
-					tabIndex={isTabStop(null, 0) ? 0 : -1}
-					className={`avatarPicker__tile avatarPicker__tile--default${
-						defaultSelected ? ' avatarPicker__tile--selected' : ''
+					tabIndex={index === tabStop ? 0 : -1}
+					className={`avatarPicker__tile${id === null ? ' avatarPicker__tile--default' : ''}${
+						selected ? ' avatarPicker__tile--selected' : ''
 					}`}
-					onClick={() => pick(null)}
+					onClick={() => {
+						if (!disabled) onChange(id);
+					}}
 				>
-					<AnimalAvatar avatar={defaultTile.avatar} size={52} />
-					{defaultSelected && (
+					{content}
+					{selected && (
 						<span className="avatarPicker__check">
 							<CheckRoundedIcon aria-hidden="true" />
 						</span>
 					)}
 				</button>
-			)}
-			{avatars.map((avatar, index) => {
-				const selected = avatar.file === value;
-				return (
-					<button
-						key={avatar.file}
-						type="button"
-						role="radio"
-						aria-checked={selected}
-						aria-label={avatar.file.replace(/\.svg$/, '')}
-						aria-disabled={disabled || undefined}
-						tabIndex={isTabStop(avatar.file, index) ? 0 : -1}
-						className={`avatarPicker__tile${
-							selected ? ' avatarPicker__tile--selected' : ''
-						}`}
-						onClick={() => pick(avatar.file)}
-					>
-						<AnimalAvatar avatar={avatar} size={52} />
-						{selected && (
-							<span className="avatarPicker__check">
-								<CheckRoundedIcon aria-hidden="true" />
-							</span>
-						)}
-					</button>
-				);
-			})}
+			))}
 		</div>
 	);
 };

@@ -857,6 +857,67 @@ export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
 	}
 };
 
+/**
+ * D7 on the phone, 1-on-1: the header as `SessionItemComponent` mounts it.
+ * With a composer the composer's action bar leads with the back arrow, so the
+ * header drops its own and the avatar and name get the width. Without a
+ * composer (an enquiry, a supervisor's or co-access read-only view, a
+ * rejected or finished conversation) the header keeps the arrow — otherwise
+ * the phone has no way back to the list.
+ */
+const renderOneOnOnePhoneHeader = (
+	preset: ReturnType<typeof mockActiveConversation>,
+	hasComposer: boolean
+) => (
+	<StoryProviders session={preset.session} userData={storyUserData}>
+		<SessionHeaderComponent
+			bannedUsers={[]}
+			hideBackButton={hasComposer}
+			callsInMenu
+		/>
+	</StoryProviders>
+);
+
+export const OneOnOnePhoneComposerCarriesBack: Story = {
+	name: '1:1 header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockActiveConversation(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+		// The freed width goes to the name: it starts where the arrow was.
+		const row = canvasElement
+			.querySelector('.sessionInfo__headerWrapper')!
+			.getBoundingClientRect();
+		const first = canvasElement
+			.querySelector('.sessionInfo__username')!
+			.getBoundingClientRect();
+		await expect(first.left - row.left).toBeLessThan(1);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/** Control: an enquiry has no composer, so the header keeps its arrow. */
+export const OneOnOnePhoneWithoutComposerKeepsBack: Story = {
+	name: '1:1 header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockInquiry(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
 export const GroupChatBeforeConsentHidesTopic: Story = {
 	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
 	play: async ({ canvasElement }) => {
@@ -1921,4 +1982,104 @@ export const GroupRoomHeaderAt200InNarrowPane: Story = {
 	},
 	render: () => inNarrowPaneAt200(renderGroupHeader(mockGroupSessionSmall())),
 	play: async ({ canvasElement }) => expectWholeHeaderText(canvasElement)
+};
+
+/** A longer room name in the real group header; the wrapper models a resizable chat pane. */
+export const LongRoomTitleInResizablePane: Story = {
+	name: 'Long room title in a resizable pane',
+	globals: desktop1440Globals,
+	render: () => {
+		const preset = mockGroupSessionSmall();
+		preset.session.item.topic = 'Fallbesprechung Schulden · Team Moabit';
+		return (
+			<div
+				data-testid="title-fit-pane"
+				style={{ width: 1100, maxWidth: '100%' }}
+			>
+				{renderGroupHeader(preset)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const pane = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="title-fit-pane"]'
+		)!;
+		const title = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="group-header-topic"]'
+		)!;
+		const text = title.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		const fontSize = () =>
+			Number.parseFloat(getComputedStyle(text).fontSize);
+		const expectSpaceBeforeCalls = () => {
+			const calls = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-video-call-buttons"]'
+			)!;
+			expect(
+				calls.getBoundingClientRect().left -
+					title.getBoundingClientRect().right
+			).toBeGreaterThanOrEqual(7.5);
+		};
+		if (window.innerWidth < 900) {
+			pane.style.width = '660px';
+			await waitFor(() => expect(text.style.fontSize).not.toBe(''));
+			expect(fontSize()).toBeGreaterThanOrEqual(16);
+			expect(fontSize()).toBeLessThanOrEqual(18);
+			expect(title.title).toBe(title.textContent);
+			expectSpaceBeforeCalls();
+			return;
+		}
+		pane.style.maxWidth = 'none';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = 'none';
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '780px';
+		await waitFor(() => {
+			expect(fontSize()).toBeLessThan(22);
+			expect(fontSize()).toBeGreaterThan(16);
+			expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth + 1);
+			expectSpaceBeforeCalls();
+		});
+		pane.style.width = '550px';
+		await waitFor(() => {
+			expect(fontSize()).toBe(16);
+			expect(text.scrollWidth).toBeGreaterThan(text.clientWidth);
+			expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+		});
+		await expect(title.textContent).toBe(
+			'Fallbesprechung Schulden · Team Moabit'
+		);
+		await expect(title.getAttribute('title')).toBe(title.textContent);
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '660px';
+		pane.style.maxWidth = '100%';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = '';
+	}
+};
+
+/** The 1:1 title uses the same fitting behavior and retains the complete accessible name. */
+export const LongPersonTitle: Story = {
+	render: () => {
+		const preset = mockActiveConversationWithParticipants();
+		if (preset.session.user) {
+			preset.session.user.displayName =
+				'Eine sehr lange Gesprächsbezeichnung zur Familienberatung';
+		}
+		return renderSessionHeader(preset);
+	},
+	play: async ({ canvasElement }) => {
+		const heading = canvasElement.querySelector<HTMLElement>(
+			'.sessionInfo__username h3'
+		)!;
+		const visible = heading.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		await waitFor(() => expect(visible.style.fontSize).not.toBe(''));
+		expect(
+			Number.parseFloat(getComputedStyle(visible).fontSize)
+		).toBeGreaterThanOrEqual(16);
+		expect(heading.title).toBe(heading.textContent);
+	}
 };

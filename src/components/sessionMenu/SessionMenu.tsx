@@ -64,7 +64,9 @@ import {
 	leaveGroupChatSecurityOverlayItem,
 	leaveGroupChatSuccessOverlayItem,
 	stopGroupChatSecurityOverlayItem,
-	stopGroupChatSuccessOverlayItem
+	stopGroupChatSuccessOverlayItem,
+	SWITCH_OFF_TEAM_CHAT,
+	teamChatSwitchOffConfirmOverlayItem
 } from './sessionMenuHelpers';
 import {
 	apiPutArchive,
@@ -123,6 +125,7 @@ import { hasEmailSettingsPanel } from '../profile/EmailNotifications/emailNotifi
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ReactComponent as RecommendIcon } from '../../resources/img/icons/arrow-forward.svg';
 import { ReactComponent as EndDuplicateIcon } from '../../resources/img/icons/close-circle.svg';
 import { apiPutEndTopicDuplicate } from '../../api/apiFurtherCounselling';
@@ -166,6 +169,19 @@ export interface SessionMenuProps {
 	 * counsellor may create one here and the backend can store it.
 	 */
 	onCreateAppointment?: () => void;
+	/** Opens the existing team conversation when available to this viewer. */
+	onOpenTeamChat?: () => void;
+	teamChatUnreadCount?: number;
+	/**
+	 * FE#2491: switches the team chat of an open enquiry on (none or
+	 * switched off). Set only while it is not on — like supervision, the
+	 * switch lives here in "Weitere Funktionen".
+	 */
+	onSwitchTeamChatOn?: () => void;
+	/** FE#2491: switches it off (after a confirmation). Set only while on. */
+	onSwitchTeamChatOff?: () => Promise<void> | void;
+	/** The team-chat switch in flight; its row is disabled meanwhile. */
+	teamChatToggling?: 'on' | 'off' | null;
 	/**
 	 * #2252: "Neuen Link senden" for an expired Direkteinladung of this
 	 * conversation. Set only while there is one.
@@ -190,6 +206,16 @@ const CALL_MENU_ROW: Record<CallKind, string> = {
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	const teamUnreadCount = props.onOpenTeamChat
+		? Math.max(0, props.teamChatUnreadCount ?? 0)
+		: 0;
+	const teamUnreadLabel =
+		teamUnreadCount > 0
+			? `${translate('enquiry.teamDiscussion.open')}: ${translate('supervision.panel.unread', { count: teamUnreadCount })}`
+			: '';
+	const menuLabel = [translate('app.menu'), teamUnreadLabel]
+		.filter(Boolean)
+		.join(', ');
 
 	const legalLinks = useContext(LegalLinksContext);
 
@@ -425,6 +451,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		caseHandover.handleOpen();
 	};
 
+	// FE#2491: the confirmation belongs to the case that opened it.
+	const switchOffSessionIdRef = useRef<number | undefined>(undefined);
+	const handleSwitchOffTeamChat = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
+		switchOffSessionIdRef.current = activeSession?.item?.id;
+		setOverlayItem(teamChatSwitchOffConfirmOverlayItem);
+		setOverlayActive(true);
+	};
+
 	const handleEndTopicDuplicate = () => {
 		closeMenu();
 		setOverlayItem(endTopicDuplicateConfirmOverlayItem);
@@ -552,6 +588,19 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			closeMenu();
 			mobileListView();
 			navigate(listPath);
+		} else if (buttonFunction === SWITCH_OFF_TEAM_CHAT) {
+			// The case changed while the confirmation was open: never switch
+			// off the team chat of a case nobody confirmed it for.
+			const confirmedForThisCase =
+				switchOffSessionIdRef.current === activeSession?.item?.id;
+			switchOffSessionIdRef.current = undefined;
+			Promise.resolve(
+				confirmedForThisCase ? props.onSwitchTeamChatOff?.() : undefined
+			).finally(() => {
+				setOverlayActive(false);
+				setOverlayItem(null);
+				setIsRequestInProgress(false);
+			});
 		} else if (buttonFunction === 'END_TOPIC_DUPLICATE') {
 			const sessionId = activeSession.item.id;
 			const sessionGroupId = activeSession.item.matrixRoomId;
@@ -649,9 +698,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		Boolean(props.showMobileEndAnonymousChatAction) ||
 		Boolean(props.showMobileDeleteAnonymousAccountAction) ||
 		Boolean(props.showMobileSupervisionAction);
+	// FE#2491: an open enquiry gets "Weitere Funktionen" for its team chat
+	// switch, as supervision has it in a case.
+	const showTeamChatSwitch =
+		Boolean(props.onSwitchTeamChatOn) ||
+		Boolean(props.onSwitchTeamChatOff) ||
+		Boolean(props.onOpenTeamChat);
 	const showSessionMenu =
 		!activeSession.isEnquiry ||
 		showAnonymousMobileMenu ||
+		showTeamChatSwitch ||
 		Boolean(props.contactSheet);
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		props.isSupervisor
@@ -857,6 +913,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								buttonHandle={() => handleCallButton(true)}
 								item={buttonStartVideoCall}
 								testingAttribute={CALL_HEADER_BUTTON.video}
+								tourTarget="session-video-call-button"
 								className={
 									offeredCall === 'video'
 										? 'sessionMenu__callOffer'
@@ -891,12 +948,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
-						aria-label={translate('app.menu')}
+						aria-label={menuLabel}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
-							aria-label={translate('app.menu')}
+							aria-hidden="true"
 						/>
+						{teamUnreadCount > 0 && (
+							<span
+								className="sessionMenu__teamUnread"
+								aria-hidden="true"
+							>
+								{teamUnreadCount > 99 ? '99+' : teamUnreadCount}
+							</span>
+						)}
 					</button>
 					<button
 						type="button"
@@ -908,12 +973,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
-						aria-label={translate('app.menu')}
+						aria-label={menuLabel}
 					>
 						<MenuVerticalIcon
 							title={translate('app.menu')}
-							aria-label={translate('app.menu')}
+							aria-hidden="true"
 						/>
+						{teamUnreadCount > 0 && (
+							<span
+								className="sessionMenu__teamUnread"
+								aria-hidden="true"
+							>
+								{teamUnreadCount > 99 ? '99+' : teamUnreadCount}
+							</span>
+						)}
 					</button>
 
 					{/* Escape the header stacking context so the menu remains above its backdrop. */}
@@ -1016,6 +1089,80 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										</button>
 									)}
 								</>
+							)}
+
+							{props.onOpenTeamChat && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									onClick={() => {
+										closeMenu();
+										props.onOpenTeamChat?.();
+									}}
+									aria-label={teamUnreadLabel || undefined}
+									data-cy="session-menu-team-chat"
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'enquiry.teamDiscussion.open'
+										)}
+										shortcut={
+											teamUnreadCount > 0
+												? teamUnreadCount
+												: undefined
+										}
+									/>
+								</button>
+							)}
+
+							{props.onSwitchTeamChatOn && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									disabled={props.teamChatToggling === 'on'}
+									onClick={() => {
+										closeMenu();
+										props.onSwitchTeamChatOn?.();
+									}}
+									data-cy="session-menu-team-chat-on"
+									title={translate(
+										'teamDiscussion.switchOn.menuHint'
+									)}
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'teamDiscussion.switchOn.menu'
+										)}
+										disabled={
+											props.teamChatToggling === 'on'
+										}
+									/>
+								</button>
+							)}
+
+							{props.onSwitchTeamChatOff && (
+								<button
+									type="button"
+									className="sessionMenu__item chatMenuDropdown__item"
+									disabled={props.teamChatToggling === 'off'}
+									onClick={handleSwitchOffTeamChat}
+									data-cy="session-menu-team-chat-off"
+									title={translate(
+										'teamDiscussion.switchOff.menuHint'
+									)}
+								>
+									<SessionMenuItemContent
+										icon={<TeamChatIcon />}
+										title={translate(
+											'teamDiscussion.switchOff.menu'
+										)}
+										disabled={
+											props.teamChatToggling === 'off'
+										}
+									/>
+								</button>
 							)}
 
 							{props.onCreateAppointment && (

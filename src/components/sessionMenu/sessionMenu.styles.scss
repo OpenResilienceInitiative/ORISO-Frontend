@@ -17,6 +17,7 @@ $iconSize: 20px;
 	}
 
 	&__icon {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -216,6 +217,14 @@ $iconSize: 20px;
 	&__callOffer .button__item,
 	&__item.sessionMenu__callOffer {
 		@include control-focus-ring;
+	}
+
+	&__teamUnread {
+		@include unread-count-badge;
+		position: absolute;
+		top: -4px;
+		right: -4px;
+		font-weight: 600;
 	}
 
 	&__icon {

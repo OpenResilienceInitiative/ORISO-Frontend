@@ -1756,11 +1756,26 @@ export const MessageItemComponent = ({
 			computePosition(actionMenuAnchor, menuEl, {
 				strategy: 'fixed',
 				placement: actionMenuPlacement,
-				middleware: [offset(10), flip(), shift({ padding: 12 })]
+				middleware: [
+					offset(10),
+					flip({
+						padding: 12,
+						fallbackPlacements: actionMenuPlacement.startsWith(
+							'left'
+						)
+							? ['right-start', 'bottom-end', 'top-end']
+							: ['left-start', 'bottom-start', 'top-start']
+					}),
+					shift({ padding: 12, crossAxis: true })
+				]
 			}).then(({ x, y, placement }) => {
 				setActionMenuPosition({ left: x, top: y });
 				setActionMenuOrigin(
-					placement.startsWith('left') ? 'right top' : 'left top'
+					placement.startsWith('left')
+						? 'right top'
+						: placement.startsWith('top')
+							? 'left bottom'
+							: 'left top'
 				);
 			});
 		});
@@ -3218,7 +3233,13 @@ export const MessageItemComponent = ({
 					!isSystemNotification && (
 						<div className="messageItem__sideColumn messageItem__sideColumn--left">
 							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-								<div className="messageItem__avatar">
+								<div
+									className={clsx(
+										'messageItem__avatar',
+										isSupervisorFeedback &&
+											'messageItem__avatar--supervisor'
+									)}
+								>
 									{supervisionPerson ? (
 										// FE#2344: the same avatar as in the panel
 										// header; the "Feedback" tag in the bubble

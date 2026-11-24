@@ -359,7 +359,11 @@ describe('CreateConversationView - leaving the view', () => {
 			new Promise(() => undefined)
 		);
 		await open();
-		click(await screen.findByText('groupChat.internal.title'));
+		click(
+			await screen.findByRole('button', {
+				name: 'groupChat.internal.title: groupChat.format.choose'
+			})
+		);
 		click(
 			await screen.findByRole('button', {
 				name: 'groupChat.internal.addPerson'

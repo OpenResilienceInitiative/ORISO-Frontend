@@ -686,7 +686,11 @@ export const PasswordReset = ({
 	}
 
 	return (
-		<div id="passwordReset" className="passwordReset">
+		<div
+			id="passwordReset"
+			className="passwordReset"
+			data-tour-target="settings-password"
+		>
 			{!hideIntro && (
 				<div className="profile__content__title">
 					<Headline

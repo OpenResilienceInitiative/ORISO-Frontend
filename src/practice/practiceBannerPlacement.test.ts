@@ -44,7 +44,6 @@ const MEASURED_LAYOUTS: MeasuredLayout[] = [
 				[689, 615, 889, 663],
 				[357, 614, 557, 662]
 			],
-			'enquiry-team-button': [[905, 615, 1223, 663]],
 			'team-discussion-panel': [[734, 26, 1254, 694]],
 			'session-composer': [
 				[752, 573, 1238, 678],
@@ -78,7 +77,6 @@ const MEASURED_LAYOUTS: MeasuredLayout[] = [
 				[849, 795, 1049, 843],
 				[437, 794, 637, 842]
 			],
-			'enquiry-team-button': [[1065, 795, 1383, 843]],
 			'team-discussion-panel': [[894, 26, 1414, 874]],
 			'session-composer': [
 				[912, 753, 1397, 857],
@@ -112,7 +110,6 @@ const MEASURED_LAYOUTS: MeasuredLayout[] = [
 				[1329, 975, 1529, 1023],
 				[847, 975, 1047, 1023]
 			],
-			'enquiry-team-button': [[1545, 975, 1863, 1023]],
 			'team-discussion-panel': [[1375, 25, 1895, 1055]],
 			'session-composer': [
 				[1393, 933, 1878, 1038],
@@ -144,7 +141,6 @@ const MEASURED_LAYOUTS: MeasuredLayout[] = [
 				[689, 975, 889, 1023],
 				[357, 974, 557, 1022]
 			],
-			'enquiry-team-button': [[905, 975, 1223, 1023]],
 			'team-discussion-panel': [[734, 26, 1254, 1054]],
 			'session-composer': [
 				[752, 933, 1237, 1037],
@@ -178,7 +174,6 @@ const MEASURED_LAYOUTS: MeasuredLayout[] = [
 				[1329, 615, 1529, 663],
 				[847, 615, 1047, 663]
 			],
-			'enquiry-team-button': [[1545, 615, 1863, 663]],
 			'team-discussion-panel': [[1375, 25, 1895, 695]],
 			'session-composer': [
 				[1393, 573, 1878, 678],

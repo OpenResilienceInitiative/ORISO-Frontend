@@ -307,12 +307,7 @@ export const Profile = () => {
 										avatarDisplayName={
 											userData.displayName ||
 											(isConsultant
-												? [
-														userData.firstName,
-														userData.lastName
-													]
-														.filter(Boolean)
-														.join(' ')
+												? ''
 												: userData.userName)
 										}
 										userId={ownAvatarUserId}

@@ -80,6 +80,10 @@ import { useRunningCall } from './runningCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
 import {
+	isTeamDiscussionEnabled,
+	resolveConversationFeatureSettings
+} from '../../utils/conversationFeatureSettings';
+import {
 	TeamDiscussionBadge,
 	getCachedTeamDiscussion
 } from '../teamDiscussion/TeamDiscussionBadge';
@@ -561,7 +565,16 @@ export const SessionListItemComponent = ({
 			: [];
 
 	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
-	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	// FE#2491: the effective team-chat policy, never the raw tenant value —
+	// resolved with this row's own agency policy when the list carries it.
+	// Without one this is the platform/Träger cap; a Beratungsstelle that has
+	// it off answers 403, which reads as "none".
+	const featureTeamDiscussionEnabled = isTeamDiscussionEnabled(
+		resolveConversationFeatureSettings(
+			getTenantSettings(),
+			activeSession?.agency?.settings
+		)
+	);
 	const isAgencyCounselling =
 		!!activeSession &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING;
@@ -1158,6 +1171,7 @@ export const SessionListItemComponent = ({
 		};
 		const railAvatar = activeSession.isGroup ? (
 			<UserAvatar
+				chatOutline
 				username={activeSession.item.matrixRoomId || 'group'}
 				displayName={railName}
 				userId={
@@ -1183,6 +1197,7 @@ export const SessionListItemComponent = ({
 			/>
 		) : (
 			<UserAvatar
+				chatOutline
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
 				userId={
@@ -1816,6 +1831,7 @@ export const SessionListItemComponent = ({
 								/>
 							) : (
 								<UserAvatar
+									chatOutline
 									username={
 										activeSession.consultant?.username ||
 										'User'
@@ -1973,6 +1989,11 @@ export const SessionListItemComponent = ({
 									!canBatchSelectCaseHandover
 								}
 								onRequestAccess={handleOnClick}
+								tourTarget={
+									index === 0
+										? 'case-handover-request-access'
+										: undefined
+								}
 								onToggleSelect={() =>
 									onCaseHandoverSelect?.(
 										activeSession.item.id
@@ -2154,6 +2175,7 @@ export const SessionListItemComponent = ({
 							{/* FE#514: team-only discussion exists on this
 								    enquiry (consultants only, ADR-016). */}
 							{!isAsker &&
+								featureTeamDiscussionEnabled &&
 								activeSession.isEnquiry &&
 								modality === Modality.AGENCY_COUNSELLING &&
 								activeSession.item?.id && (

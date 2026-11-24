@@ -105,7 +105,8 @@ import {
 	showsConversationPreview,
 	activityEventRoomId,
 	activityEventSessionId,
-	describeActivityEvent
+	describeActivityEvent,
+	shouldMarkActivityEventReadOnOpen
 } from './activityEvent';
 import { useTimelineConversation } from './useTimelineConversation';
 import { useTimelineFeed } from './useTimelineFeed';
@@ -795,13 +796,19 @@ export const NotificationsCenter = () => {
 		openActivityConversation(item);
 	};
 
+	const markOpenedNotificationRead = (item: NotificationFeedItem) => {
+		if (shouldMarkActivityEventReadOnOpen(item)) {
+			markNotificationAsRead(item.id);
+		}
+	};
+
 	const openNotification = (
 		item: (typeof notificationFeed)[number],
 		// "Next notification" browses: it never starts a call (camera,
 		// microphone) behind the counsellor's back.
 		{ browsing = false }: { browsing?: boolean } = {}
 	) => {
-		markNotificationAsRead(item.id);
+		markOpenedNotificationRead(item);
 		if (!browsing && openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
 		if (isSinglePane && statusPage.linksToStatusPage) {
@@ -822,14 +829,13 @@ export const NotificationsCenter = () => {
 
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
+		markOpenedNotificationRead(selectedNotification);
 		if (selectedLinksToStatusPage) {
-			markNotificationAsRead(selectedNotification.id);
 			if (selectedStatusPageUrl) {
 				openStatusPage(selectedStatusPageUrl);
 			}
 			return;
 		}
-		markNotificationAsRead(selectedNotification.id);
 		if (leadsToCalendar(selectedNotification)) {
 			navigate(CALENDAR_PATH);
 			return;
@@ -852,7 +858,7 @@ export const NotificationsCenter = () => {
 	// only. It never knocks or joins; the event bar's button does that.
 	const handleOpenConversation = () => {
 		if (!selectedNotification) return;
-		markNotificationAsRead(selectedNotification.id);
+		markOpenedNotificationRead(selectedNotification);
 		if (nextUnreadId) {
 			selectNotification(nextUnreadId);
 		}
@@ -910,7 +916,10 @@ export const NotificationsCenter = () => {
 	if (notificationFeed.length === 0) {
 		if (isSinglePane) {
 			return (
-				<div className="notificationsCenter notificationsCenter--empty">
+				<div
+					className="notificationsCenter notificationsCenter--empty"
+					data-tour-target="timeline-page"
+				>
 					<ActivityTimelineEmptyState />
 				</div>
 			);
@@ -918,12 +927,17 @@ export const NotificationsCenter = () => {
 		// Desktop: the same two panes as Conversations, with the white
 		// divider that only an empty page shows (Frank, 2026-11-16).
 		return (
-			<div className="notificationsCenter notificationsCenter--emptySplit">
+			<div
+				className="notificationsCenter notificationsCenter--emptySplit"
+				data-tour-target="timeline-page"
+			>
 				<div
 					className="notificationsCenter__listColumn"
 					style={{ width: `${listWidth}px` }}
 				>
-					<ActivityTimelineEmptyState variant="conversation-history" />
+					{!isIconRail && (
+						<ActivityTimelineEmptyState variant="conversation-history" />
+					)}
 					<ResizableHandle
 						currentWidth={listWidth}
 						onResize={handleListResize}
@@ -950,6 +964,7 @@ export const NotificationsCenter = () => {
 					? 'notificationsCenter--detailFocused'
 					: ''
 			}`}
+			data-tour-target="timeline-page"
 		>
 			{messagePreviewSources.map((source) => (
 				<MatrixActivityPreviewHydrator
@@ -967,6 +982,11 @@ export const NotificationsCenter = () => {
 				<div
 					className="sessionsListToolbar notificationsCenter__toolbar"
 					hidden={isIconRail}
+					// No anchor while the icon rail hides the toolbar: the
+					// tour would point at an invisible element.
+					data-tour-target={
+						isIconRail ? undefined : 'timeline-filters'
+					}
 				>
 					<ListSearchField
 						leading={
@@ -1117,6 +1137,11 @@ export const NotificationsCenter = () => {
 								label={translate(
 									'notifications.center.markAllRead'
 								)}
+								tourTarget={
+									isIconRail
+										? undefined
+										: 'timeline-mark-all-read'
+								}
 							/>
 						</FilterChipRow>
 					)}

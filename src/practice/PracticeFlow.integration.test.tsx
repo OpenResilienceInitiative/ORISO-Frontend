@@ -632,54 +632,27 @@ describe('practice flows on the real app shell', () => {
 		expect(getMatrixClientService()).toBe(realMatrixService);
 	});
 
-	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
-		const app = renderApp({ teamDiscussion: true });
-		expect(uiVersionSwitch()).not.toBeNull();
-		await app.start(ACCEPT);
-		await openThePracticeEnquiry();
-		expect(joyride!.steps).toHaveLength(8);
+	it.each([true, false])(
+		'F1 (team chat %s): six steps, no team button anchor, the same real actions (FE#2491)',
+		async (teamDiscussion) => {
+			const app = renderApp({ teamDiscussion });
+			await app.start(ACCEPT);
+			await openThePracticeEnquiry();
+			expect(joyride!.steps).toHaveLength(6);
 
-		// 3: the team button of the open enquiry. It stays until it is
-		// clicked: the step would hang if the panel opened by itself.
-		await expectStep(2);
-		await act(
-			() => new Promise<void>((resolve) => setTimeout(resolve, 300))
-		);
-		expect(route()).not.toContain('channel=');
-		const teamButton = await expectStep(2);
-		fireEvent.click(teamButton!);
+			// 3-5: accept straight away, Erstantwort, reply. The team chat
+			// lives in "Weitere Funktionen" now; no button beside "Annehmen".
+			await expectStep(2);
+			expect(
+				document.querySelector('[data-cy="enquiry-open-team"]')
+			).toBeNull();
+			await acceptAndAnswer(2);
 
-		// 4: the team panel; the reply lands in the team room only.
-		const panel = await expectStep(3);
-		const note = 'Ich übernehme das gern.';
-		await afterWorldEvent(PRACTICE_TOUR_EVENTS.teamMessageSent, () =>
-			typeAndSend(() => panel, note)
-		);
-		expect(textOf('.chatStage__mainPane')).not.toContain(note);
-
-		// 5-7: accept, Erstantwort, reply.
-		await acceptAndAnswer(4);
-
-		// 8: done.
-		await finish(7);
-	}, 120000);
-
-	it('F1 without the team step (Träger switched it off): six steps, no team anchor, the same real actions', async () => {
-		const app = renderApp({ teamDiscussion: false });
-		await app.start(ACCEPT);
-		await openThePracticeEnquiry();
-		expect(joyride!.steps).toHaveLength(6);
-
-		// 3-5: accept straight away, Erstantwort, reply.
-		await expectStep(2);
-		expect(
-			document.querySelector('[data-tour-target="enquiry-team-button"]')
-		).toBeNull();
-		await acceptAndAnswer(2);
-
-		// 6: done.
-		await finish(5);
-	}, 120000);
+			// 6: done.
+			await finish(5);
+		},
+		120000
+	);
 
 	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
 		const app = renderApp();
@@ -696,16 +669,16 @@ describe('practice flows on the real app shell', () => {
 			PRACTICE_TOUR_EVENTS.supervisorAdded,
 			async () => {
 				fireEvent.click(add!);
-				const picker = await screen.findByRole('combobox', {}, SLOW);
-				fireEvent.mouseDown(picker);
 				fireEvent.click(
-					await screen.findByRole('option', {
-						name: SCRIPT.cast.supervisor.displayName
-					})
+					await screen.findByRole(
+						'button',
+						{ name: 'managePeople.add.labelFor' },
+						SLOW
+					)
 				);
 				fireEvent.change(
-					screen.getByPlaceholderText(
-						'sessionHeader.supervisor.modal.reasonPlaceholder'
+					await screen.findByPlaceholderText(
+						'managePeople.supervision.reasonPlaceholder'
 					),
 					{
 						target: {
@@ -716,7 +689,7 @@ describe('practice flows on the real app shell', () => {
 				await act(async () => {
 					fireEvent.click(
 						screen.getByRole('button', {
-							name: 'sessionHeader.supervisor.modal.addButton'
+							name: 'managePeople.add.confirm'
 						})
 					);
 				});
@@ -837,9 +810,13 @@ describe('practice flows on the real app shell', () => {
 		await app.start(SUPERVISION);
 		const add = await expectStep(0);
 		fireEvent.click(add!);
-		await screen.findByRole('combobox', {}, SLOW);
+		await screen.findByRole(
+			'button',
+			{ name: 'managePeople.add.labelFor' },
+			SLOW
+		);
 		const dialog = screen.getByRole('dialog', {
-			name: 'sessionHeader.supervisor.modal.title'
+			name: 'managePeople.supervision.title'
 		});
 		const end = banner().getByRole('button', {
 			name: 'practice.banner.end'

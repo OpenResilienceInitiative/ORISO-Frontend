@@ -338,23 +338,40 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__otp {
-		max-height: 0;
-		overflow: hidden;
-		-webkit-transition: max-height 0.8s;
-		-moz-transition: max-height 0.8s;
-		transition: max-height 0.8s;
+		$reveal-duration: 260ms;
+
+		display: grid;
+		grid-template-rows: 0fr;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			grid-template-rows $reveal-duration cubic-bezier(0.2, 0, 0, 1),
+			opacity 180ms ease-out,
+			visibility 0s linear $reveal-duration;
 
 		&--active {
-			// Room for the e-mail hint, the code field and the resend block
-			// (link, "only the newest code" hint, status line) at 320px.
-			max-height: 480px;
-			overflow: visible;
+			grid-template-rows: 1fr;
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
 		}
 
 		.inputField__icon {
 			top: 50%;
 			transform: translateY(-50%);
 		}
+	}
+
+	&__otpContent {
+		// Clip the collapsing row and leave room around its focus outlines.
+		min-block-size: 0;
+		overflow: hidden;
+		margin-inline: -$grid-base;
+		padding-inline: $grid-base;
 	}
 
 	&__otpEmailResend {
@@ -573,5 +590,29 @@ body[data-oriso-login-dark] {
 
 	.m3Dialog .m3Dialog__backdrop {
 		background: color-mix(in srgb, var(--m3-scrim, #000) 80%, transparent);
+	}
+}
+
+.loginForm__wait {
+	position: fixed;
+	z-index: 5;
+	inset-block-end: 1rem;
+	inset-inline-start: 50%;
+	transform: translateX(-50%);
+	padding: 0.5rem 1rem;
+	border-radius: 2rem;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface, #1b1b1c);
+	box-shadow: 0 0.125rem 0.5rem rgb(0 0 0 / 12%);
+	pointer-events: none;
+
+	@media (prefers-reduced-motion: no-preference) {
+		animation: login-wait-label 120ms ease-out 350ms backwards;
+	}
+}
+
+@keyframes login-wait-label {
+	from {
+		opacity: 0;
 	}
 }

@@ -1,7 +1,12 @@
 module.exports = {
-	plugins: ['stylelint-scss', 'stylelint-no-unsupported-browser-features'],
+	plugins: [
+		'stylelint-scss',
+		'stylelint-no-unsupported-browser-features',
+		'./scripts/stylelint/chat-avatar-frame.cjs'
+	],
 	extends: ['stylelint-config-standard', 'stylelint-config-standard-scss'],
 	rules: {
+		'oriso/chat-avatar-frame': true,
 		'selector-max-id': 0,
 		'scss/dollar-variable-colon-space-after': 'always-single-line',
 		'scss/dollar-variable-colon-space-before': 'never',

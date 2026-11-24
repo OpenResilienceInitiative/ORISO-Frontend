@@ -63,7 +63,7 @@
 		outline: none;
 
 		.dragHandle__pill {
-			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline: $focus-outline;
 			outline-offset: 4px;
 		}
 	}

@@ -1,3 +1,4 @@
+@import './avatarFrame';
 $icon-size: 24px;
 $icon-size-small: 24px;
 
@@ -7,7 +8,6 @@ $icon-size-small: 24px;
 // `--thread-entry-font-size`, `--session-preview-font-size`); the fallbacks
 // here repeat the defaults (14/20, name 12/16, thread entry 14/20).
 $message-attachment-color: $secondary !default;
-$message-avatar-cutout: var(--m3-surface-container-lowest, #fff);
 
 // $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
 // to resources/styles/settings.scss so other bubble renderers (e.g. the
@@ -247,18 +247,12 @@ $message-avatar-overlap: -19px;
 	// so the visible avatar stays 48px and the ring cuts into the bubble
 	// corner without touching the kebab.
 	&__avatar {
-		width: 60px;
-		height: 60px;
-		min-width: 60px;
-		min-height: 60px;
-		border: 6px solid $message-avatar-cutout;
-		border-radius: 999px;
-		background: $message-avatar-cutout;
+		@include chat-avatar-frame;
+
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		box-sizing: border-box;
 		flex-shrink: 0;
 
 		// Force Compound avatar to render properly
@@ -778,6 +772,8 @@ $message-avatar-overlap: -19px;
 	// platform entry (#2237): its own size and colour, centred in the shared
 	// avatar frame instead of the inline offset it has beside a subject.
 	&__avatar--system .systemMessage__icon {
+		width: 40px;
+		height: 40px;
 		margin: 0;
 		padding: 0;
 	}
@@ -1695,8 +1691,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary-outline, #930008);
-			outline-offset: 2px;
+			@include control-focus-ring;
 		}
 	}
 
@@ -1917,13 +1912,19 @@ $message-avatar-overlap: -19px;
 
 // Quick-react emoji row inside the message action menu (long-press / kebab),
 // Slack-style. Lives in a portal, hence outside .messageItem.
+// Give all seven controls room while retaining the shared menu's viewport cap.
+.messageItem__actionMenu.chatMenuDropdown--compact {
+	width: 280px;
+}
+
 .messageItem__actionMenuReactions {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(24px, 1fr));
 	align-items: center;
-	justify-content: space-between;
-	gap: 2px;
-	padding: 4px 12px 8px;
+	overflow-x: auto;
+	scrollbar-width: thin;
+	gap: 0;
+	padding: 4px 0 8px;
 	margin-bottom: 4px;
 	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.12));
 
@@ -1932,7 +1933,9 @@ $message-avatar-overlap: -19px;
 		background: none;
 		font-size: 18px;
 		line-height: 1;
-		padding: 5px;
+		min-width: 0;
+		min-height: 36px;
+		padding: 5px 0;
 		cursor: pointer;
 		border-radius: 999px;
 
@@ -1958,7 +1961,9 @@ $message-avatar-overlap: -19px;
 		color: var(--m3-secondary, #4b515a);
 		font-size: 18px;
 		line-height: 1;
-		padding: 5px;
+		min-width: 0;
+		min-height: 36px;
+		padding: 5px 0;
 		cursor: pointer;
 		border-radius: 999px;
 

@@ -1298,7 +1298,9 @@
 			"back": "Retour",
 			"headerTitle": "Créer une nouvelle conversation",
 			"subtitle": "Nous proposons différents formats d'entretien spécialisés pour vous et les personnes en quête de conseils. La sélection est librement configurable par les organisations prestataires et votre service de consultation.",
-			"title": "Choisir le format d'entretien"
+			"title": "Choisir le format d'entretien",
+			"goToCard": "Aller au format de conversation {{position}} sur {{total}}",
+			"choose": "Choisir"
 		},
 		"internal": {
 			"addPerson": "Ajouter une personne",
@@ -1338,7 +1340,9 @@
 			"title": "Échanger en interne",
 			"togglePersonList": "Ouvrir ou fermer la liste des personnes",
 			"tooMany": "Vous pouvez sélectionner jusqu'à {{max}} personnes.",
-			"vacatedHint": "ne fait plus partie du service de consultation"
+			"vacatedHint": "ne fait plus partie du service de consultation",
+			"cardShort": "Se concerter en équipe – chat, audio, vidéo.",
+			"infoLabel": "En savoir plus sur « Discussions internes »"
 		},
 		"circle": {
 			"addModerator": "Ajouter une co-modération",
@@ -2328,7 +2332,9 @@
 				"createNew": "Créer un nouveau rendez-vous",
 				"openCalendar": "Ouvrir dans le calendrier"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision modifiée",
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
 	},
 	"navigation": {
 		"mobileMenu": "Navigation",
@@ -2853,7 +2859,8 @@
 		},
 		"avatar": {
 			"label": "Votre image",
-			"default": "Par défaut"
+			"default": "Par défaut",
+			"initials": "Initiales"
 		},
 		"appLanguage": {
 			"info": "Définissez ici la langue de l'application.",
@@ -5819,6 +5826,10 @@
 				"remove": {
 					"title": "Superviseur supprimé",
 					"text": "Le superviseur a été supprimé avec succès."
+				},
+				"replace": {
+					"title": "Superviseur remplacé",
+					"text": "Le superviseur a bien été remplacé."
 				}
 			},
 			"error": {
@@ -6017,7 +6028,29 @@
 		"send": "Envoyer",
 		"error": {
 			"open": "Le chat d'équipe n'a pas pu être ouvert.",
-			"send": "Le message n'a pas pu être envoyé."
+			"send": "Le message n'a pas pu être envoyé.",
+			"switchOn": "Le chat d’équipe n’a pas pu être activé. Veuillez réessayer.",
+			"switchOff": "Le chat d’équipe n’a pas pu être désactivé. Veuillez réessayer.",
+			"switchOnNotAllowed": "Le chat d’équipe ne peut pas être activé pour ce dossier, par exemple parce que le dossier a été transféré à un autre centre de conseil."
+		},
+		"switchOn": {
+			"menu": "Activer le chat d’équipe",
+			"menuHint": "Démarre le chat d’équipe pour cette demande. Les personnes en recherche de conseil ne le voient jamais.",
+			"again": "Réactiver le chat d’équipe"
+		},
+		"switchOff": {
+			"menu": "Désactiver le chat d’équipe",
+			"menuHint": "Ferme le chat d’équipe de cette demande pour tout le monde. L’historique reste lisible.",
+			"confirm": {
+				"headline": "Désactiver le chat d’équipe ?",
+				"copy": "Plus personne de l’équipe ne pourra y écrire. L’historique reste lisible, et vous pouvez réactiver le chat d’équipe tant que la demande est ouverte.",
+				"confirm": "Désactiver",
+				"cancel": "Annuler"
+			}
+		},
+		"closed": {
+			"title": "Chat d’équipe désactivé",
+			"text": "Le chat d’équipe de cette demande est désactivé et en lecture seule. Réactivez-le pour continuer à écrire."
 		}
 	},
 	"inviteLink": {
@@ -6166,6 +6199,17 @@
 			"dataProtection": "Que deviennent mes données ?",
 			"modalityNote": "Comment se déroule le conseil ?",
 			"title": "Questions fréquentes"
+		},
+		"questions": {
+			"title": "Quelques questions",
+			"send": "Envoyer les réponses",
+			"required": "Veuillez répondre à cette question.",
+			"requiredMark": "obligatoire",
+			"thanks": "Merci pour vos réponses.",
+			"choose": "Veuillez choisir",
+			"other": "Autre chose",
+			"otherPlaceholder": "Quoi exactement ?",
+			"failed": "Cela n’a pas fonctionné. Vos réponses sont toujours là – veuillez réessayer dans un instant."
 		}
 	},
 	"legal": {
@@ -6428,6 +6472,300 @@
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
 			"manage": "Gérer les visites guidées"
+		},
+		"caseHandover": {
+			"title": "Transférer des dossiers",
+			"summary": "Transférer une de vos consultations à un·e collègue ou demander l'accès à ses dossiers.",
+			"step": {
+				"intro": {
+					"title": "Un transfert dans les deux sens",
+					"intro": "Nouveau : les dossiers changent de responsable directement dans la plateforme. Vous proposez une de vos consultations ou demandez l'accès au dossier d'un·e collègue. Cette visite montre les deux voies sans rien déclencher."
+				},
+				"offer": {
+					"title": "Transférer votre consultation",
+					"intro": "Dans une consultation ouverte, choisissez « + » dans l'en-tête, puis « Transférer la consultation ». Choisissez un·e collègue habilité·e et indiquez un motif. Vous restez responsable jusqu'à ce que toutes les autorisations nécessaires soient réunies."
+				},
+				"search": {
+					"title": "Chercher un·e collègue",
+					"intro": "Cherchez ici un·e collègue sous « Personnes ». La liste affiche alors ses dossiers que vous pouvez reprendre – selon votre service et vos thèmes."
+				},
+				"requestAccess": {
+					"title": "Demander l'accès",
+					"intro": "« Demander l'accès » sollicite un dossier avec un motif. Avec ▾ et « Sélectionner plusieurs dossiers », vous en demandez plusieurs à la fois."
+				},
+				"status": {
+					"title": "Suivre l'état",
+					"intro": "Le dossier affiche son état, par exemple « En attente d'autorisation ». La réponse de votre collègue et, si la règle l'exige, l'accord de la personne accompagnée apparaissent dans la chronologie."
+				},
+				"done": {
+					"title": "En bref",
+					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Créer un cercle de parole",
+			"summary": "Créer, partager et lancer un cercle de parole modéré.",
+			"step": {
+				"intro": {
+					"title": "Cercles de parole",
+					"intro": "Un cercle de parole est un groupe anonyme animé par des conseiller·ères – ponctuel ou régulier. Cette visite montre où le créer. Rien n'est créé."
+				},
+				"create": {
+					"title": "Créer",
+					"intro": "« Créer » dans votre liste de consultations lance de nouvelles conversations. Les formats proposés dépendent de l'organisme et du centre de conseil."
+				},
+				"format": {
+					"title": "Le format « Cercle de parole »",
+					"intro": "Sous « Choisir le format d'entretien », le cercle figure à côté des autres formats. Si un seul format est activé, ce choix est sauté."
+				},
+				"topic": {
+					"title": "Choisir un sujet",
+					"intro": "Choisissez d'abord « Sujet / domaine spécialisé ». Les réglages du cercle s'ouvrent ensuite."
+				},
+				"settings": {
+					"title": "Régler, partager, lancer",
+					"intro": "Dans les réglages, vous fixez date, répétitions, média et langue, et ajoutez des co-modérateur·rices sous « Modération supplémentaire ». Partagez ensuite le lien d'invitation ou le QR code. Les participant·es attendent en salle d'attente jusqu'à ce que vous commenciez avec « Démarrer le chat » et les fassiez entrer."
+				},
+				"done": {
+					"title": "Prêt",
+					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				}
+			}
+		},
+		"profile": {
+			"title": "Votre profil",
+			"summary": "Où se trouvent désormais profil, absence, notifications, sécurité et affichage.",
+			"step": {
+				"overview": {
+					"title": "Votre profil",
+					"intro": "Votre profil regroupe vos données et réglages, répartis entre Général, Mes activités, Paramètres et Aide. Cette visite montre les cartes essentielles."
+				},
+				"public": {
+					"title": "Données publiques",
+					"intro": "Les personnes accompagnées voient ces informations : votre nom, vos langues et vos centres de conseil. Tenez-les à jour."
+				},
+				"absence": {
+					"title": "Mon absence",
+					"intro": "Indiquez ici votre absence. Les personnes accompagnées voient alors votre message d'absence."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Choisissez ici ce qui vous est signalé par e-mail et dans le navigateur."
+				},
+				"security": {
+					"title": "Sécurité",
+					"intro": "Sous « Connexion et compte », vous changez votre mot de passe et gérez l'authentification à deux facteurs. Nouveau : la récupération des anciens messages – configurez-la pour lire vos messages chiffrés aussi sur un nouvel appareil."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous réglez les effets, la chronologie et la langue de l'interface."
+				},
+				"shortcuts": {
+					"title": "Raccourcis clavier",
+					"intro": "Nouveau : de nombreuses actions se font au clavier. Tous les raccourcis sont listés ici."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Relancez ici n'importe quelle visite. « Afficher le bouton des visites guidées » affiche ou masque le bouton « ? » en bas à droite."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Calendrier",
+			"summary": "Saisir rendez-vous, plages bloquées et absences, définir ses horaires, connecter un agenda.",
+			"step": {
+				"nav": {
+					"title": "Mes rendez-vous",
+					"intro": "Nouveau : votre calendrier fait partie de la plateforme. Il montre tous vos rendez-vous avec les personnes accompagnées – et, si vous le souhaitez, ceux de vos collègues."
+				},
+				"create": {
+					"title": "Nouvelle saisie",
+					"intro": "« Nouveau » ajoute un rendez-vous, une plage bloquée ou une absence – trois onglets dans une seule fenêtre."
+				},
+				"viewSwitch": {
+					"title": "Affichage",
+					"intro": "Passez du jour à la semaine, au mois ou à la liste. La liste affiche aussi vos liens sans rendez-vous."
+				},
+				"quickEntry": {
+					"title": "Saisie rapide",
+					"intro": "Une saisie sans fenêtre : choisissez le type et la personne, fixez le jour et l'heure ou touchez un créneau libre, puis enregistrez."
+				},
+				"workingHours": {
+					"title": "Horaires de travail",
+					"intro": "Vos horaires déterminent quand les personnes accompagnées peuvent réserver. « Modifier » les ajuste."
+				},
+				"settings": {
+					"title": "Paramètres du calendrier",
+					"intro": "Sous ⋮, vous définissez horaires de travail et heures de consultation, saisissez des plages bloquées récurrentes et des jours libres, et connectez Outlook ou Google."
+				},
+				"links": {
+					"title": "Liens sans rendez-vous",
+					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				}
+			}
+		},
+		"liveChat": {
+			"title": "Chat en direct",
+			"summary": "Comment arrivent les chats en direct anonymes, comment vous signaler disponible et prendre en charge un chat.",
+			"step": {
+				"intro": {
+					"title": "Chat en direct : ce qui change",
+					"intro": "Les chats en direct arrivent par un lien, sans inscription. Les personnes en recherche de conseil écrivent de façon anonyme, sur un thème précis. Tous les conseillers disponibles pour ce thème partagent une seule file d'attente."
+				},
+				"availabilitySettings": {
+					"title": "Votre disponibilité",
+					"intro": "Activez ou désactivez ici « Je suis disponible ». Seules les personnes disponibles reçoivent des chats en direct. Si vous le souhaitez, placez l'interrupteur dans la barre de menu."
+				},
+				"availabilityToggle": {
+					"title": "Interrupteur dans la barre de menu",
+					"intro": "Avec « Activer le Live-Chat depuis la barre de menu », cet interrupteur apparaît. Un clic vous rend disponible ou indisponible — sans ouvrir les paramètres."
+				},
+				"queue": {
+					"title": "La file d'attente commune",
+					"intro": "Le filtre « Chat en direct » affiche tous les chats en attente. Vos collègues voient la même liste."
+				},
+				"accept": {
+					"title": "Démarrer le chat",
+					"intro": "« Démarrer le chat » vous attribue le chat. Seul le chat en tête de la file peut être accepté."
+				},
+				"done": {
+					"title": "Terminer le chat",
+					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Chronologie et brouillons",
+			"summary": "Où vous voyez tous les événements au même endroit et où se trouvent vos messages non envoyés.",
+			"step": {
+				"activityNav": {
+					"title": "Votre chronologie",
+					"intro": "La « Chronologie » rassemble les événements de tous vos chats. Vous n'avez plus besoin d'ouvrir chaque conversation pour voir ce qui est nouveau."
+				},
+				"timeline": {
+					"title": "Tout au même endroit",
+					"intro": "À gauche la liste des événements, à droite les détails de l'entrée choisie. De là, vous passez directement au chat correspondant."
+				},
+				"filters": {
+					"title": "Rechercher et filtrer",
+					"intro": "Cherchez dans la chronologie ou filtrez par type, par exemple « Non lus » ou « Mentions ». Le bouton de filtre à gauche règle l'affichage."
+				},
+				"markAllRead": {
+					"title": "Tout marquer comme lu",
+					"intro": "Un clic marque toutes les entrées de la chronologie comme lues. Les messages de vos chats ne changent pas."
+				},
+				"draftsChip": {
+					"title": "Brouillons dans vos conversations",
+					"intro": "Les messages non envoyés ne sont pas perdus. Le filtre « Brouillons » montre les conversations qui contiennent encore un brouillon."
+				},
+				"draftsCenter": {
+					"title": "Tous les brouillons",
+					"intro": "Tous les brouillons sont ici, enregistrés par chat et par fil. Ouvrez un brouillon pour continuer à écrire, ou supprimez-le."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Appel vidéo",
+			"summary": "Comment appeler depuis une conversation et laisser entrer les personnes en attente.",
+			"step": {
+				"intro": {
+					"title": "Les appels dans la conversation",
+					"intro": "Vous lancez les appels vidéo et audio directement dans la conversation, depuis son en-tête. La personne en recherche de conseil voit l'appel dans son chat."
+				},
+				"sessionCallButton": {
+					"title": "Lancer un appel",
+					"intro": "L'en-tête d'une conversation ouverte affiche « Démarrer un appel vidéo » et « Démarrer un appel audio ». Sur les écrans étroits, les deux se trouvent dans le menu ⋮."
+				},
+				"groupCallButton": {
+					"title": "Appel dans un chat de groupe",
+					"intro": "Dans un chat de groupe aussi, vous lancez l'appel depuis l'en-tête du chat."
+				},
+				"knock": {
+					"title": "Laisser entrer les personnes en attente",
+					"intro": "Qui arrive plus tard frappe et attend. Pendant l'appel apparaît « Personnes en attente » : « Laisser entrer » fait entrer une personne, « Refuser » non, « Laisser entrer tout le monde » toutes à la fois."
+				},
+				"help": {
+					"title": "Aide aux appels vidéo",
+					"intro": "« Aide » → « Appel vidéo » indique les navigateurs compatibles. Vous pouvez y copier le lien de connexion et le transmettre aux personnes en recherche de conseil."
+				},
+				"done": {
+					"title": "Prêt pour le premier appel",
+					"intro": "Ouvrez une conversation et lancez l'appel au bon moment. Après l'appel, la conversation par chat continue normalement."
+				}
+			}
+		},
+		"askerFirstSteps": {
+			"title": "Premiers pas",
+			"summary": "Où trouver vos messages, vos rendez-vous et votre profil.",
+			"step": {
+				"welcome": {
+					"title": "Bienvenue !",
+					"intro": "Nous sommes heureux de vous accueillir. Cette courte visite vous montre où trouver l’essentiel. Avec « Continuer », vous passez à l’étape suivante."
+				},
+				"sessions": {
+					"title": "Mes consultations",
+					"intro": "Vous trouvez ici vos conversations avec le service de conseil. Un clic sur une conversation l’ouvre."
+				},
+				"composer": {
+					"title": "Écrire un message",
+					"intro": "Écrivez ici votre message au service de conseil. Prenez votre temps. La réponse apparaît dans la même conversation."
+				},
+				"appointments": {
+					"title": "Mes rendez-vous",
+					"intro": "Vous trouvez ici vos rendez-vous avec le service de conseil, par exemple pour un appel vidéo."
+				},
+				"tools": {
+					"title": "Mes outils",
+					"intro": "Vous trouvez ici des outils utiles que votre centre de conseil met à votre disposition."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "Dans votre profil, vous modifiez vos données et vos réglages, par exemple le mot de passe, les notifications et la langue."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Sous Profil → Aide → Visites guidées, vous pouvez relancer chaque visite. Le bouton « ? » en bas à droite est encore plus rapide."
+				}
+			}
+		},
+		"askerSettings": {
+			"title": "Réglages",
+			"summary": "Mot de passe, clé de secours, notifications et affichage — expliqués en bref.",
+			"step": {
+				"intro": {
+					"title": "Vos réglages",
+					"intro": "Ici, vous adaptez l’application à vos besoins. Nous vous montrons les points les plus importants. Rien n’est modifié en chemin."
+				},
+				"password": {
+					"title": "Modifier le mot de passe",
+					"intro": "Ici, vous pouvez modifier votre mot de passe. Choisissez un mot de passe que vous seul connaissez."
+				},
+				"twoFactor": {
+					"title": "Authentification à deux facteurs",
+					"intro": "Elle protège davantage votre connexion. En plus du mot de passe, il vous faut alors un code, par exemple d’une application."
+				},
+				"recovery": {
+					"title": "Récupération des anciens messages",
+					"intro": "Vos messages sont chiffrés. Avec une clé de secours, vous pouvez aussi les lire sur un nouvel appareil. Conservez-la bien."
+				},
+				"deleteAccount": {
+					"title": "Supprimer un compte",
+					"intro": "Ici, vous pouvez supprimer votre compte si vous n’en avez plus besoin. L’application vous redemande d’abord — rien ne se passe sans votre confirmation."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Ici, vous choisissez comment vous êtes informé des nouveaux messages, par exemple par e-mail."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous changez l’apparence de l’application, par exemple l’affichage des menus ou la langue."
+				},
+				"done": {
+					"title": "C’est fait !",
+					"intro": "Vous connaissez maintenant vos réglages. Vous les trouvez à tout moment sous Profil → Réglages."
+				}
+			}
 		}
 	},
 	"weekday": {
@@ -7935,6 +8273,7 @@
 			"membersTitle": "Supervision actuelle",
 			"emptyMembers": "Ce dossier n’a pas encore de superviseur.",
 			"addTitle": "Ajouter un superviseur",
+			"unknownName": "Superviseur",
 			"emptyCandidates": "Personne d’autre dans ce centre n’est désigné comme superviseur. L’administration du centre en décide.",
 			"reasonLabel": "Motif de la supervision",
 			"reasonPlaceholder": "Pourquoi cette personne doit-elle superviser ce dossier ?",

@@ -173,6 +173,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 	}
 
 	&__acceptance {
+		container-type: inline-size;
 		text-align: center;
 		margin: $grid-base-four 0;
 	}
@@ -191,35 +192,49 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
-	&__teamDiscussionAction .button__secondary {
-		display: inline-flex;
+	&__decisionActions {
+		display: flex;
 		align-items: center;
 		justify-content: center;
+		flex-wrap: wrap;
 		gap: $grid-base;
-		color: var(--m3-on-secondary, $white);
-		background-color: var(--m3-secondary, $secondary);
-		border-color: var(--m3-secondary, $secondary);
+		min-inline-size: 0;
+		max-inline-size: 100%;
 
-		&::after {
-			content: '';
-			width: $grid-base-three;
-			height: $grid-base-three;
-			flex-shrink: 0;
-			background-color: currentColor;
-			mask: url('../../resources/img/icons/arrow_right_24px.svg') center /
-				contain no-repeat;
+		.button__wrapper {
+			max-inline-size: 100%;
 		}
 
-		&:hover {
-			background-color: var(--m3-secondary, $secondary);
-			border-color: var(--m3-secondary, $secondary);
+		.button__item {
+			min-inline-size: 0;
+			max-inline-size: 100%;
+			min-block-size: $grid-base-six;
+			block-size: auto;
+			padding: $grid-base;
+			overflow-wrap: anywhere;
 		}
 
-		svg {
-			width: $grid-base-three;
-			height: $grid-base-three;
-			fill: currentColor;
+		.button__primary {
+			padding-inline: clamp(0.625rem, 3cqi, 1.25rem);
 		}
+	}
+
+	&__declineAction .button__link {
+		font-weight: $font-weight-medium;
+		color: var(--m3-on-surface-variant, $tertiary);
+
+		&:not(:disabled):hover {
+			color: var(--m3-on-surface, $tertiary);
+			background-color: var(--m3-surface-container, rgba(0, 0, 0, 0.05));
+		}
+	}
+
+	// FE#2491: a switched-off team chat offers to switch it on where its
+	// composer was.
+	&__teamChatSwitchOn {
+		display: flex;
+		justify-content: center;
+		padding: $grid-base-two $grid-base-three;
 	}
 
 	&__content {
@@ -875,17 +890,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 }
 
 .session__threadListUnreadBadge {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 18px;
-	height: 18px;
-	padding: 0 5px;
-	border-radius: 999px;
-	background: var(--m3-primary, #a5000a);
-	color: var(--m3-on-primary, #fff);
-	font-size: 11px;
-	line-height: 1;
+	@include unread-count-badge;
 }
 
 .session__threadListPanel {

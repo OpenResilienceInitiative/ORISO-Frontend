@@ -48,6 +48,7 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			userId={userId}
 			size={size}
 			ring={false}
+			chatOutline
 			outline={outline}
 			choice={choice}
 		/>

@@ -2900,14 +2900,23 @@ export const SessionsList = ({
 			</div>
 		);
 
+	const listIsEmpty =
+		!isLoading &&
+		!isCreateChatActive &&
+		!isReloadButtonVisible &&
+		visibleListItemCount === 0;
+
 	return (
 		<div
 			ref={innerWrapperRef}
+			data-list-empty={listIsEmpty || undefined}
 			className="sessionsList__innerWrapper"
 			data-tour-target={
 				type === SESSION_LIST_TYPES.ENQUIRY
 					? 'consultant-enquiries-list'
-					: 'consultant-sessions-list'
+					: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+						? 'sessions-list'
+						: 'consultant-sessions-list'
 			}
 		>
 			{/* {showEnquiryFilterChips && (
@@ -3503,23 +3512,17 @@ export const SessionsList = ({
 
 			{/* Not in the rail: 80 px set the sentence one letter per line
 			    (Frank, 2026-11-17); the rail's search button stays. */}
-			{!isLoading &&
-				!isRail &&
-				!isCreateChatActive &&
-				!isReloadButtonVisible &&
-				visibleListItemCount === 0 && (
-					<EmptyListItem
-						headlineOverride={
-							toolbarFilteredOutAll
-								? translate(
-										'sessionList.toolbar.emptyFilterResult'
-									)
-								: undefined
-						}
-						sessionListTab={sessionListTab}
-						type={type}
-					/>
-				)}
+			{listIsEmpty && !isRail && (
+				<EmptyListItem
+					headlineOverride={
+						toolbarFilteredOutAll
+							? translate('sessionList.toolbar.emptyFilterResult')
+							: undefined
+					}
+					sessionListTab={sessionListTab}
+					type={type}
+				/>
+			)}
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				!caseHandoverReviewOpen && (

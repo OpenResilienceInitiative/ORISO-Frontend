@@ -3,6 +3,7 @@ import './headline.styles';
 
 export type HeadlineLevel = '1' | '2' | '3' | '4' | '5';
 interface HeadlineProps {
+	plainText?: boolean;
 	text: string;
 	semanticLevel: HeadlineLevel;
 	styleLevel?: HeadlineLevel;
@@ -10,7 +11,8 @@ interface HeadlineProps {
 }
 
 export const Headline = (props: HeadlineProps) => {
-	const Tag = ('h' + props.semanticLevel) as keyof React.JSX.IntrinsicElements;
+	const Tag = ('h' +
+		props.semanticLevel) as keyof React.JSX.IntrinsicElements;
 	const levelBasedClass = props.styleLevel
 		? props.styleLevel
 		: props.semanticLevel;
@@ -20,9 +22,11 @@ export const Headline = (props: HeadlineProps) => {
 			className={`headline headline--${levelBasedClass} ${
 				props.className ? props.className : ''
 			}`}
-			dangerouslySetInnerHTML={{
-				__html: props.text
-			}}
-		></Tag>
+			dangerouslySetInnerHTML={
+				props.plainText ? undefined : { __html: props.text }
+			}
+		>
+			{props.plainText ? props.text : undefined}
+		</Tag>
 	);
 };

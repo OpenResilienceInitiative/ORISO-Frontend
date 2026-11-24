@@ -1,3 +1,5 @@
+@import './avatarFrame';
+
 // Shared avatar stack. Default geometry is retained for existing consumers;
 // current headers supply 48px circles and a 24px step from HEADER_STACK_PROPS.
 // The white ring and count use the shared M3 tokens.
@@ -35,8 +37,7 @@
 		// Separates overlapping avatars like Figma's white gap. A host whose
 		// surface is not white (the session card while inactive) sets
 		// `--participant-ring` to its own colour, so the gap blends in.
-		box-shadow: 0 0 0 2px
-			var(--participant-ring, var(--m3-surface-container-lowest, #fff));
+		@include chat-avatar-small-halo;
 		background: var(--m3-surface-container-lowest, #fff);
 		cursor: default;
 		outline: none;

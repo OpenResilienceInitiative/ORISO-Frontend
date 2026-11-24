@@ -24,6 +24,7 @@ import { useStageEffect } from './effects/useStageEffect';
 import { resolveTenantStageEffect } from './effects/tenantStageEffect';
 
 export interface StageProps {
+	claim?: string;
 	className?: string;
 	hasAnimation?: boolean;
 	isReady?: boolean;
@@ -32,6 +33,7 @@ export interface StageProps {
 }
 
 export const Stage = ({
+	claim,
 	className,
 	hasAnimation,
 	isReady = true,
@@ -41,6 +43,7 @@ export const Stage = ({
 
 	const legalLinks = useContext(LegalLinksContext);
 	const tenant = useTenant();
+	const stageClaim = claim || tenant?.content?.claim;
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
 	const effectCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -223,7 +226,8 @@ export const Stage = ({
 					<Headline
 						className="stage__claim"
 						semanticLevel="4"
-						text={tenant?.content?.claim || translate('app.claim')}
+						text={stageClaim || translate('app.claim')}
+						plainText={Boolean(stageClaim)}
 					/>
 				</div>
 				{hasAnimation && !isReady ? (

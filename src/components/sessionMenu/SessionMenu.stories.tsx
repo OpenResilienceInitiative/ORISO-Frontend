@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, fn, userEvent, waitFor } from 'storybook/test';
 import { SessionMenu } from './SessionMenu';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
@@ -12,7 +12,7 @@ import {
 } from '../chatStage/__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
 import { SupervisionPanelContext } from '../supervisionPanel/SupervisionPanelContext';
-import { AUTHORITIES, UserDataContext } from '../../globalState';
+import { AUTHORITIES, ModalProvider, UserDataContext } from '../../globalState';
 import { counsellorUserData } from '../chatStage/__storybook__/chatStageFixtures';
 import type { UserDataInterface } from '../../globalState/interfaces';
 import './sessionMenu.styles.scss';
@@ -509,5 +509,98 @@ export const AdviceSeekerCallButtonsShowAppointment: Story = {
 			return found!;
 		});
 		await expect(card.textContent).toMatch(/Videoanruf|Video call/);
+	}
+};
+
+/** A counsellor opens the team conversation from the existing More menu. */
+export const TeamChatInMoreMenu: Story = {
+	name: 'Team-Chat im Mehr-Menü',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true,
+		onOpenTeamChat: fn(),
+		teamChatUnreadCount: 2
+	},
+	play: async ({ canvasElement, args }) => {
+		const flyout = await openTheKebab(canvasElement);
+		await expect(
+			canvasElement.querySelector('.sessionMenu__teamUnread')
+		).toHaveTextContent('2');
+		const item = flyout.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat"]'
+		);
+		await expect(item).not.toBeNull();
+		await userEvent.click(item!);
+		await expect(args.onOpenTeamChat).toHaveBeenCalledTimes(1);
+	}
+};
+
+/** FE#2491: the team chat of the enquiry is off — the row switches it on. */
+export const TeamChatSwitchOn: Story = {
+	name: 'Team-Chat — einschalten',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	decorators: [withStage],
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true,
+		onSwitchTeamChatOn: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const flyout = await openTheKebab(canvasElement);
+		const item = flyout.querySelector<HTMLButtonElement>(
+			'[data-cy="session-menu-team-chat-on"]'
+		);
+		await expect(item).not.toBeNull();
+		await expect(
+			flyout.querySelector('[data-cy="session-menu-team-chat-off"]')
+		).toBeNull();
+		await userEvent.click(item!);
+		await expect(args.onSwitchTeamChatOn).toHaveBeenCalledTimes(1);
+	}
+};
+
+/** FE#2491: the team chat is on — open it, or switch it off after a confirmation. */
+export const TeamChatOnWithSwitchOff: Story = {
+	name: 'Team-Chat — an, ausschalten mit Rückfrage',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true,
+		onOpenTeamChat: fn(),
+		onSwitchTeamChatOff: fn()
+	},
+	// The confirmation is the shared Overlay, which the app hosts in its
+	// ModalProvider.
+	decorators: [
+		(Story) => (
+			<ModalProvider>
+				<Story />
+				<div id="overlay" />
+			</ModalProvider>
+		),
+		withStage
+	],
+	play: async ({ canvasElement, args }) => {
+		const flyout = await openTheKebab(canvasElement);
+		await expect(
+			flyout.querySelector('[data-cy="session-menu-team-chat"]')
+		).not.toBeNull();
+		await userEvent.click(
+			flyout.querySelector<HTMLButtonElement>(
+				'[data-cy="session-menu-team-chat-off"]'
+			)!
+		);
+		const doc = canvasElement.ownerDocument;
+		await waitFor(() =>
+			expect(doc.body.textContent).toMatch(
+				/Team-Chat ausschalten\?|Switch off team chat\?/
+			)
+		);
+		await expect(args.onSwitchTeamChatOff).not.toHaveBeenCalled();
 	}
 };

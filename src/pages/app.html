@@ -69,13 +69,260 @@
 						return;
 					}
 					var html = document.documentElement;
+					var curtain = mark.curtain;
+					var validColor = function (value) {
+						return (
+							typeof value === 'string' &&
+							value.length <= 96 &&
+							/^(?:#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})|rgba?\([\d.,% /]+\)|color\(srgb [\d.% /]+\))$/i.test(
+								value
+							)
+						);
+					};
 					html.className += ' oriso-login-handover';
-					html.style.background =
-						(mark && mark.background) || '#fcf9f9';
+					html.style.backgroundColor = validColor(mark.background)
+						? mark.background
+						: '#fcf9f9';
+					if (
+						curtain &&
+						(curtain.axis === 'horizontal' ||
+							curtain.axis === 'vertical') &&
+						typeof curtain.split === 'number' &&
+						curtain.split >= 12 &&
+						curtain.split <= 72 &&
+						typeof curtain.radius === 'number' &&
+						curtain.radius >= 0 &&
+						curtain.radius <= 40 &&
+						[
+							curtain.stageColor,
+							curtain.stageTint,
+							curtain.stageShade,
+							curtain.panelColor,
+							curtain.inkColor
+						].every(validColor)
+					) {
+						if (!validColor(curtain.stageInk))
+							delete curtain.stageInk;
+						if (!validColor(curtain.stageFill))
+							delete curtain.stageFill;
+						if (!validColor(curtain.sheetColor))
+							delete curtain.sheetColor;
+						var split = curtain.split + '%';
+						var direction =
+							curtain.axis === 'horizontal' ? 'right' : 'bottom';
+						html.style.backgroundImage =
+							'linear-gradient(to ' +
+							direction +
+							', ' +
+							(curtain.stageFill || curtain.stageColor) +
+							' ' +
+							split +
+							', ' +
+							curtain.panelColor +
+							' ' +
+							split +
+							')';
+					} else {
+						delete mark.curtain;
+					}
 					window.__orisoLoginHandover = mark;
 				} catch (e) {}
 			})();
 		</script>
+
+		<style>
+			#loginHandoverSplash[data-login-curtain] {
+				overflow: hidden;
+				pointer-events: auto;
+			}
+			[data-login-curtain-panel] {
+				position: absolute;
+				inset: 0;
+				overflow: hidden;
+				transition: transform 480ms cubic-bezier(0.45, 0, 0.25, 1);
+			}
+			[data-login-curtain-panel='stage'] {
+				color: var(--stage-ink);
+				background:
+					radial-gradient(
+						circle at 32% 24%,
+						#ffffff26,
+						transparent 48%
+					),
+					linear-gradient(
+						152deg,
+						var(--stage-tint),
+						var(--stage-color) 46%,
+						var(--stage-shade)
+					);
+			}
+			[data-login-curtain-panel='stage']:not(
+					[data-login-curtain-solid]
+				)::after {
+				position: absolute;
+				inset: 0;
+				content: '';
+				pointer-events: none;
+				background: radial-gradient(#ffffff33 1px, transparent 1.5px) 0
+					0 / 19px 19px;
+				mask-image: radial-gradient(ellipse, #000, transparent 70%);
+			}
+			[data-login-curtain-solid] {
+				background: var(--stage-fill);
+			}
+			[data-login-curtain-solid]::before,
+			[data-login-curtain-solid]::after {
+				position: absolute;
+				top: -90px;
+				right: -70px;
+				width: 260px;
+				height: 260px;
+				border: 1px solid #ffffff29;
+				border-radius: 50%;
+				content: '';
+			}
+			[data-login-curtain-solid]::after {
+				top: -40px;
+				right: -20px;
+				width: 160px;
+				height: 160px;
+				border-color: #ffffff1f;
+			}
+			[data-login-curtain-panel='form'] {
+				color: var(--curtain-ink);
+				background: var(--curtain-page);
+			}
+			[data-login-curtain='horizontal']
+				[data-login-curtain-panel='stage'] {
+				right: calc(100% - var(--curtain-split));
+			}
+			[data-login-curtain='horizontal']
+				[data-login-curtain-panel='form'] {
+				left: var(--curtain-split);
+			}
+			[data-login-curtain='vertical'] [data-login-curtain-panel='stage'] {
+				bottom: calc(100% - var(--curtain-split));
+				border-radius: 0 0 var(--curtain-radius) var(--curtain-radius);
+			}
+			[data-login-curtain='vertical'] [data-login-curtain-panel='form'] {
+				top: calc(var(--curtain-split) - var(--curtain-radius));
+			}
+			[data-login-curtain-decoration] {
+				position: absolute;
+				inset: 0 auto auto 0;
+				width: 100vw;
+				height: 100dvh;
+			}
+			[data-login-curtain='horizontal'] [data-login-curtain-decoration] {
+				left: var(--curtain-offset);
+			}
+			[data-login-curtain='vertical'] [data-login-curtain-decoration] {
+				top: var(--curtain-offset);
+			}
+			[data-login-curtain-copy] {
+				z-index: 1;
+				text-align: center;
+				line-height: 1.1;
+				white-space: pre;
+				font-family: 'Inter Variable', Arial, sans-serif;
+			}
+			[data-login-curtain-copy='claim'] {
+				white-space: pre-wrap;
+			}
+			[data-login-curtain-shape] {
+				box-sizing: border-box;
+				border: 1px solid currentColor;
+				border-radius: 4px;
+				opacity: 0.2;
+			}
+			[data-login-curtain-shape='sheet'] {
+				background: var(--curtain-sheet);
+				border: 0;
+				border-radius: 24px;
+				opacity: 1;
+			}
+			[data-login-curtain-shape='field'] {
+				display: flex;
+				align-items: center;
+				padding-inline: 12px;
+				overflow: hidden;
+				font: 500 12px monospace;
+				letter-spacing: 0.1em;
+			}
+			[data-login-curtain-shape='field']::before {
+				content: '0 1 0 0 1 1 0 1';
+			}
+			[data-login-curtain-shape='field']:nth-of-type(even)::before {
+				content: '1 0 1 0 0 1 0 1';
+			}
+			[data-login-curtain-shape='button'] {
+				display: grid;
+				place-items: center;
+				overflow: hidden;
+				border: 0;
+				border-radius: 100px;
+				background: var(--stage-color);
+				color: var(--stage-ink);
+				opacity: 1;
+				font: 500 14px monospace;
+			}
+			[data-login-curtain-shape='button']::before,
+			[data-login-curtain-shape='button']::after {
+				grid-area: 1 / 1;
+				animation: loginCurtainDigits 3600ms steps(1) infinite;
+			}
+			[data-login-curtain-shape='button']::before {
+				content: '1 0 1 1 0 0 1 0';
+			}
+			[data-login-curtain-shape='button']::after {
+				content: '1 0 1 0 0 0 1 0';
+				opacity: 0;
+				animation-delay: -1800ms;
+			}
+			@keyframes loginCurtainDigits {
+				0%,
+				100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0;
+				}
+			}
+			#loginHandoverSplash[data-login-curtain][data-phase='revealing'] {
+				pointer-events: none;
+			}
+			[data-phase='revealing']
+				[data-login-curtain-shape='button']::before,
+			[data-phase='revealing']
+				[data-login-curtain-shape='button']::after {
+				animation-play-state: paused;
+			}
+			[data-login-curtain='horizontal'][data-phase='revealing']
+				[data-login-curtain-panel='stage'] {
+				transform: translateX(-100%);
+			}
+			[data-login-curtain='horizontal'][data-phase='revealing']
+				[data-login-curtain-panel='form'] {
+				transform: translateX(100%);
+			}
+			[data-login-curtain='vertical'][data-phase='revealing']
+				[data-login-curtain-panel='stage'] {
+				transform: translateY(-100%);
+			}
+			[data-login-curtain='vertical'][data-phase='revealing']
+				[data-login-curtain-panel='form'] {
+				transform: translateY(100%);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				[data-login-curtain-panel] {
+					transition: none;
+				}
+				[data-login-curtain-shape='button']::before,
+				[data-login-curtain-shape='button']::after {
+					animation: none;
+				}
+			}
+		</style>
 
 		<link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
 		<link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
@@ -93,20 +340,162 @@
 	</head>
 
 	<body role="document">
-		<!-- Login handover, continued: a still of the loading animation and
-		     its label at the exact spot the login page left them, until the
-		     app's own screen is up (LoginHandoverGate removes it). -->
+		<!-- Keep the login artwork in place during the document navigation.
+		     The split curtain stays until the real destination is ready;
+		     the earlier spinner handover is still used on other sign-ins. -->
 		<script>
 			(function () {
 				var mark = window.__orisoLoginHandover;
 				if (!mark) return;
 				try {
+					var within = function (value, min, max) {
+						return (
+							typeof value === 'number' &&
+							value >= min &&
+							value <= max
+						);
+					};
 					var splash = document.createElement('div');
 					splash.id = 'loginHandoverSplash';
 					splash.setAttribute('aria-hidden', 'true');
 					splash.style.cssText =
-						'position:fixed;inset:0;z-index:10001;pointer-events:none;background:' +
-						(mark.background || '#fcf9f9');
+						'position:fixed;inset:0;z-index:10001;';
+					splash.style.backgroundColor =
+						document.documentElement.style.backgroundColor;
+					var drawCurtain = function (curtain) {
+						splash.dataset.loginCurtain = curtain.axis;
+						splash.style.backgroundColor = 'transparent';
+						splash.style.setProperty(
+							'--curtain-split',
+							curtain.split + '%'
+						);
+						splash.style.setProperty(
+							'--curtain-radius',
+							curtain.radius + 'px'
+						);
+						splash.style.setProperty(
+							'--curtain-offset',
+							curtain.axis === 'horizontal'
+								? -curtain.split + 'vw'
+								: 'calc(' +
+										curtain.radius +
+										'px - ' +
+										curtain.split +
+										'dvh)'
+						);
+						splash.style.setProperty(
+							'--stage-color',
+							curtain.stageColor
+						);
+						splash.style.setProperty(
+							'--stage-tint',
+							curtain.stageTint
+						);
+						splash.style.setProperty(
+							'--stage-shade',
+							curtain.stageShade
+						);
+						splash.style.setProperty(
+							'--stage-ink',
+							curtain.stageInk || '#fff'
+						);
+						splash.style.setProperty(
+							'--curtain-page',
+							curtain.panelColor
+						);
+						splash.style.setProperty(
+							'--curtain-sheet',
+							curtain.sheetColor || curtain.panelColor
+						);
+						splash.style.setProperty(
+							'--curtain-ink',
+							curtain.inkColor
+						);
+
+						var form = document.createElement('div');
+						form.dataset.loginCurtainPanel = 'form';
+						var stage = document.createElement('div');
+						stage.dataset.loginCurtainPanel = 'stage';
+						if (curtain.stageFill) {
+							stage.dataset.loginCurtainSolid = '';
+							stage.style.setProperty(
+								'--stage-fill',
+								curtain.stageFill
+							);
+						}
+						var decoration = document.createElement('div');
+						decoration.dataset.loginCurtainDecoration = '';
+						form.appendChild(decoration);
+
+						var draw = function (parent, rect) {
+							if (
+								!rect ||
+								!within(rect.x, 0, 100) ||
+								!within(rect.y, 0, 100) ||
+								!within(rect.w, 0.1, 100) ||
+								!within(rect.h, 0.1, 100)
+							)
+								return;
+							var box = document.createElement('div');
+							box.style.position = 'absolute';
+							box.style.left = rect.x + '%';
+							box.style.top = rect.y + '%';
+							box.style.width = rect.w + '%';
+							box.style.height = rect.h + '%';
+							parent.appendChild(box);
+							return box;
+						};
+						var drawCopy = function (kind, copy, weight) {
+							if (
+								!copy ||
+								typeof copy.text !== 'string' ||
+								copy.text.length > 100 ||
+								!within(copy.fontSize, 10, 96)
+							)
+								return;
+							var box = draw(stage, copy.rect);
+							if (!box) return;
+							box.dataset.loginCurtainCopy = kind;
+							// The snapshot uses viewport percentages. The stage
+							// is only its share of the viewport on one axis.
+							if (curtain.axis === 'horizontal') {
+								box.style.left = copy.rect.x + 'vw';
+								box.style.width = copy.rect.w + 'vw';
+							} else {
+								box.style.top = copy.rect.y + 'dvh';
+								box.style.height = copy.rect.h + 'dvh';
+							}
+							box.textContent = copy.text;
+							box.style.fontSize = copy.fontSize + 'px';
+							box.style.fontWeight = weight;
+							if (within(copy.lineHeight, 10, 116)) {
+								box.style.lineHeight = copy.lineHeight + 'px';
+							}
+							if (
+								copy.align === 'left' ||
+								copy.align === 'center' ||
+								copy.align === 'right'
+							) {
+								box.style.textAlign = copy.align;
+							}
+						};
+						var drawShape = function (kind, rect) {
+							var box = draw(decoration, rect);
+							if (!box) return;
+							box.dataset.loginCurtainShape = kind;
+						};
+						drawCopy('title', curtain.title, '600');
+						drawCopy('claim', curtain.claim, '400');
+						drawShape('sheet', curtain.sheet);
+						if (Array.isArray(curtain.fields)) {
+							curtain.fields.slice(0, 3).forEach(function (rect) {
+								drawShape('field', rect);
+							});
+						}
+						drawShape('button', curtain.button);
+						splash.appendChild(form);
+						splash.appendChild(stage);
+					};
 					var place = function (el, rect) {
 						el.style.position = 'absolute';
 						el.style.left = rect.x + 'px';
@@ -115,7 +504,13 @@
 						el.style.height = rect.h + 'px';
 						el.style.margin = '0';
 					};
+					if (mark.curtain) {
+						drawCurtain(mark.curtain);
+					} else {
+						splash.style.pointerEvents = 'none';
+					}
 					if (
+						!mark.curtain &&
 						mark.animation &&
 						typeof mark.animation.src === 'string' &&
 						mark.animation.src.indexOf('data:image/png;base64,') ===
@@ -127,7 +522,7 @@
 						place(img, mark.animation.rect);
 						splash.appendChild(img);
 					}
-					if (mark.label && mark.label.text) {
+					if (!mark.curtain && mark.label && mark.label.text) {
 						var label = document.createElement('span');
 						label.textContent = mark.label.text;
 						place(label, mark.label.rect);
@@ -140,8 +535,15 @@
 					document.body.appendChild(splash);
 					// Never outlive a failed boot.
 					setTimeout(function () {
-						if (splash.parentNode)
-							splash.parentNode.removeChild(splash);
+						if (!splash.isConnected) return;
+						splash.remove();
+						document.documentElement.classList.remove(
+							'oriso-login-handover'
+						);
+						document.documentElement.style.background = '';
+						window.dispatchEvent(
+							new Event('oriso:login-handover-splash-expired')
+						);
 					}, 30000);
 				} catch (e) {}
 			})();

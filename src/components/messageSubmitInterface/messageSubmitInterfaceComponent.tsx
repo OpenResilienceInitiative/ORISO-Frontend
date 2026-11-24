@@ -2806,26 +2806,32 @@ export const MessageSubmitInterfaceComponent = ({
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
 	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
+	// FE#2491: the team chat composer asks its own chat features, like the
+	// supervision room does; the main-chat chat type stays as it is.
+	const featureChatType = teamDiscussion ? 'team' : currentChatType;
 	const hasUploadFunctionality =
 		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
-		hasMediaUploadFeature(effectiveFeatures, currentChatType);
+		hasMediaUploadFeature(effectiveFeatures, featureChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
 		featureVoiceMessagesOneOnOneChatsEnabled = true,
 		featureVoiceMessagesGroupChatsEnabled = true,
-		featureVoiceMessagesSupervisionChatsEnabled = true
+		featureVoiceMessagesSupervisionChatsEnabled = true,
+		featureVoiceMessagesTeamDiscussionsEnabled = true
 	} = effectiveFeatures;
 	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
-		(currentChatType === 'anonymous'
-			? featureVoiceMessagesAnonymousChatsEnabled !== false
-			: currentChatType === 'group'
-				? featureVoiceMessagesGroupChatsEnabled !== false
-				: currentChatType === 'supervision'
-					? featureVoiceMessagesSupervisionChatsEnabled !== false
-					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
+		(featureChatType === 'team'
+			? featureVoiceMessagesTeamDiscussionsEnabled !== false
+			: currentChatType === 'anonymous'
+				? featureVoiceMessagesAnonymousChatsEnabled !== false
+				: currentChatType === 'group'
+					? featureVoiceMessagesGroupChatsEnabled !== false
+					: currentChatType === 'supervision'
+						? featureVoiceMessagesSupervisionChatsEnabled !== false
+						: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 	// A voice note is never sent as an edit (m.replace has no attachment
 	// path): the microphone stays visible but unavailable while editing.
 	const isEditingAnyMessage = Boolean(editingMessage || editingMessageId);

@@ -50,6 +50,10 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	transition: width $animation-duration-width $animation-easing-width;
 	transition-delay: $animation-duration - $animation-duration-width;
 	text-align: center;
+
+	// The stage is painted in the primary role, so the shared focus ring
+	// (Frontend#1134) switches to on-primary for every control on it.
+	--oriso-focus-ring-color: var(--m3-on-primary, #ffffff);
 	background-color: var(--stage-artwork-brand);
 
 	// Baseline gradient: no color-mix() dependency, one declaration, so

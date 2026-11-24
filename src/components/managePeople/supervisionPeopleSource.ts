@@ -17,11 +17,17 @@ export interface SupervisionPeopleSourceOptions {
 	/** Directory of the case's agency; the caller resolves it from the session. */
 	agencyId: string | null;
 	currentConsultantId?: string | null;
+	/**
+	 * Shown for a supervisor the directory does not name. Never the login: it
+	 * would reach the dialog and the case room's system message.
+	 */
+	unknownName: string;
 	/** After a change: system message, notifications, practice refresh. */
 	onChanged?: (
 		change:
 			| { kind: 'added'; name: string }
 			| { kind: 'removed'; name: string }
+			| { kind: 'replaced'; from: string; to: string }
 	) => void | Promise<void>;
 }
 
@@ -43,6 +49,7 @@ export const createSupervisionPeopleSource = ({
 	sessionId,
 	agencyId,
 	currentConsultantId,
+	unknownName,
 	onChanged
 }: SupervisionPeopleSourceOptions): ManagedPeopleSource => {
 	let supervisors: SessionSupervisor[] = [];
@@ -53,13 +60,9 @@ export const createSupervisionPeopleSource = ({
 			({ consultantId }) =>
 				consultantId === supervisor.supervisorConsultantId
 		);
-		return known
-			? consultantName(known)
-			: readablePersonName(
-					null,
-					supervisor.supervisorUsername,
-					supervisor.supervisorConsultantId
-				);
+		// Without the directory only the login is known; a login is not a
+		// name to show in the dialog or to post into the case room.
+		return known ? consultantName(known) : unknownName;
 	};
 
 	return {
@@ -84,7 +87,7 @@ export const createSupervisionPeopleSource = ({
 						supervisor.supervisorConsultantId ===
 						currentConsultantId,
 					canRemove: true,
-					canReplace: false
+					canReplace: true
 				})
 			);
 		},
@@ -92,7 +95,12 @@ export const createSupervisionPeopleSource = ({
 			if (!agencyId) {
 				throw new Error('No agency for the supervisor directory');
 			}
-			directory = await fetchAgencyConsultantList(agencyId);
+			// The current supervisors are read here too: the members request
+			// runs in parallel and may not have answered yet.
+			[directory, supervisors] = await Promise.all([
+				fetchAgencyConsultantList(agencyId),
+				apiGetSessionSupervisors(sessionId)
+			]);
 			return filterEligibleSupervisorConsultants({
 				consultants: directory,
 				currentConsultantId,
@@ -107,6 +115,26 @@ export const createSupervisionPeopleSource = ({
 		addPerson: async (candidate, { reason }) => {
 			await apiAddSessionSupervisor(sessionId, candidate.id, reason);
 			await onChanged?.({ kind: 'added', name: candidate.name });
+		},
+		/**
+		 * One step for the counsellor: the old supervisor goes first, so nobody
+		 * keeps reading along after the counsellor chose to change. If adding
+		 * the new person then fails, the removal still stands and is reported,
+		 * and the error reaches the dialog, which reloads the real state.
+		 */
+		replacePerson: async (person, candidate, { reason }) => {
+			await apiRemoveSessionSupervisor(sessionId, Number(person.id));
+			try {
+				await apiAddSessionSupervisor(sessionId, candidate.id, reason);
+			} catch (error) {
+				await onChanged?.({ kind: 'removed', name: person.name });
+				throw error;
+			}
+			await onChanged?.({
+				kind: 'replaced',
+				from: person.name,
+				to: candidate.name
+			});
 		},
 		removePerson: async (person) => {
 			await apiRemoveSessionSupervisor(sessionId, Number(person.id));
