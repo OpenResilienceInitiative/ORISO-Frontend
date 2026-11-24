@@ -270,7 +270,11 @@ import {
 } from '../../addons/addonPanel';
 import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
 import { canRenderClientComposer } from './clientComposerPolicy';
-import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
+import {
+	SelectionReplyLayer,
+	type SideRoomReply,
+	type SideRoomTarget
+} from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
@@ -3204,6 +3208,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[supervisionRoomId, supervisionParticipants.length]
 	);
 
+	// FE#2494 *7: the team panel starts a call in the TEAM room, the same
+	// way supervision does in its own. Teamberatung is internal as well, so
+	// it shares supervision's tenant call flags; more than two people make
+	// it a group call.
+	const startTeamCall = useCallback(
+		(isVideo: boolean) => {
+			if (!teamRoomId) {
+				return;
+			}
+			startRoomCall({
+				roomId: teamRoomId,
+				isVideo,
+				isGroup: teamParticipants.length > 2
+			});
+		},
+		[teamRoomId, teamParticipants.length]
+	);
+
 	// T7: the side room opens with the system notice "Supervision durch
 	// {name} ist aktiv …" as its first item (frontend-rendered, exactly as
 	// on the stage; never counted as unread).
@@ -3397,6 +3419,78 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isSupervisor,
 		senderDisplayName: userData?.displayName || userData?.userName || null
 	});
+	// FE#2494 *7: "In Supervision antworten" / "Im Team-Chat antworten".
+	// The answer to a passage marked in the main chat collects in the side
+	// chat's own reply field and leaves only from there. Both side hooks
+	// share the main recorder, so a voice answer survives the hop.
+	const senderDisplayName =
+		userData?.displayName || userData?.userName || null;
+	const supervisionPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasSupervisionSideRoom ? supervisionRoomId : null,
+		canReply: hasSupervisionSideRoom && !isRejectedSession,
+		isSupervisor,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice
+	});
+	const teamPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasTeamSideRoom ? teamRoomId : null,
+		canReply:
+			hasTeamSideRoom &&
+			props.teamDiscussionStatus === 'OPEN' &&
+			!isRejectedSession,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice
+	});
+	const {
+		enabled: supervisionReplyEnabled,
+		collect: collectForSupervision,
+		sendNow: sendNowToSupervision
+	} = supervisionPassageReplies;
+	const {
+		enabled: teamReplyEnabled,
+		collect: collectForTeam,
+		sendNow: sendNowToTeam
+	} = teamPassageReplies;
+	const replyInSideRoom = useMemo(() => {
+		const handlers: Partial<Record<SideRoomTarget, SideRoomReply>> = {};
+		if (supervisionReplyEnabled) {
+			handlers.supervision = {
+				onCollect: (answer) => {
+					collectForSupervision(answer);
+					openChannel({ kind: 'supervision' });
+				},
+				onSend: sendNowToSupervision
+			};
+		}
+		if (teamReplyEnabled) {
+			handlers.team = {
+				onCollect: (answer) => {
+					collectForTeam(answer);
+					openChannel({ kind: 'team' });
+				},
+				onSend: sendNowToTeam
+			};
+		}
+		return Object.keys(handlers).length ? handlers : undefined;
+	}, [
+		supervisionReplyEnabled,
+		collectForSupervision,
+		sendNowToSupervision,
+		teamReplyEnabled,
+		collectForTeam,
+		sendNowToTeam,
+		openChannel
+	]);
+	const collectedPassageCount = useCallback(
+		(target: SideRoomTarget | null) =>
+			(target === 'supervision'
+				? supervisionPassageReplies
+				: target === 'team'
+					? teamPassageReplies
+					: passageReplies
+			).pending.length,
+		[passageReplies, supervisionPassageReplies, teamPassageReplies]
+	);
 	const authorForPassage = useCallback(
 		(eventId: string) =>
 			(messages || []).find(
@@ -3944,11 +4038,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								<SelectionReplyLayer
 									enabled={
 										passageReplies.enabled ||
-										passageBlur.canBlur
+										passageBlur.canBlur ||
+										!!replyInSideRoom
 									}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
+									onReplyInSideRoom={replyInSideRoom}
+									collectedCount={collectedPassageCount}
 									onStartThread={
 										isThreadsEnabled
 											? handleThreadFromPassage
@@ -5060,6 +5157,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						}
 						messages={supervisionMessages}
 						isOwnMessage={isMyMessageMatrix}
+						pendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.pending
+								: undefined
+						}
+						onRemovePendingQuote={supervisionPassageReplies.remove}
+						onSendPendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.sendCollected
+								: undefined
+						}
 					/>
 				}
 				switcher={phoneBackFab}
@@ -5094,6 +5202,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						chip={teamText('chatStage.panel.team.onlyMarker')}
 						participants={teamParticipants}
 						unreadCount={teamUnreadCount}
+						actions={
+							mayCallInSideRoom &&
+							props.teamDiscussionStatus === 'OPEN' &&
+							!isRejectedSession ? (
+								<PanelCallActions
+									onStartCall={startTeamCall}
+									audioEnabled={supervisionCallGates.audio}
+									videoEnabled={supervisionCallGates.video}
+									participantCount={teamParticipants.length}
+									width={isPhoneLayout ? null : panelWidth}
+									phone={isPhoneLayout}
+									copy={{
+										video: translate(
+											'videoCall.button.startVideoCall'
+										),
+										audio: translate(
+											'videoCall.button.startCall'
+										),
+										menu: translate('app.menu'),
+										participants: translate(
+											'chatStage.panel.participantCount',
+											{
+												count: teamParticipants.length
+											}
+										)
+									}}
+								/>
+							) : undefined
+						}
 						{...panelHeaderNav}
 					/>
 				}
@@ -5251,6 +5388,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}
 							messages={teamMessages}
 							isOwnMessage={isMyMessageMatrix}
+							pendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.pending
+									: undefined
+							}
+							onRemovePendingQuote={teamPassageReplies.remove}
+							onSendPendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.sendCollected
+									: undefined
+							}
 						/>
 					) : undefined
 				}

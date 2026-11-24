@@ -20,6 +20,12 @@ export interface UseSessionPassageRepliesOptions {
 	canReply: boolean;
 	isSupervisor?: boolean;
 	senderDisplayName?: string | null;
+	/**
+	 * FE#2494 *7: a side chat (Supervision, Teamberatung) answers passages
+	 * marked in the main chat, so it must read the takes from the SAME
+	 * recorder the main selection layer records into.
+	 */
+	sharedVoice?: ReturnType<typeof useSelectionVoiceRecorder>;
 }
 
 /**
@@ -32,11 +38,13 @@ export const useSessionPassageReplies = ({
 	matrixRoomId,
 	canReply,
 	isSupervisor,
-	senderDisplayName
+	senderDisplayName,
+	sharedVoice
 }: UseSessionPassageRepliesOptions) => {
 	const { t: translate } = useTranslation();
 	const addNotification = useContext(NotificationsContext)?.addNotification;
-	const { recorder, takeFor, release } = useSelectionVoiceRecorder();
+	const ownVoice = useSelectionVoiceRecorder();
+	const { recorder, takeFor, release } = sharedVoice ?? ownVoice;
 
 	const send = useCallback(
 		async (replies: PassageReplyToSend[], typedText: string) => {
@@ -94,6 +102,7 @@ export const useSessionPassageReplies = ({
 	return {
 		enabled: canReply && Boolean(matrixRoomId),
 		recorder,
+		voice: { recorder, takeFor, release },
 		...replies
 	};
 };
