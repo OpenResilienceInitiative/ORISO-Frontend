@@ -296,8 +296,12 @@ const avatarRingPlay: Story['play'] = async ({ canvasElement }) => {
 		'.messageItem__avatar'
 	) as HTMLElement;
 	const style = getComputedStyle(avatar);
+	// The shared chat avatar frame paints the ring with its own background
+	// through a transparent 6 px border (Frontend#2463).
 	await expect(style.borderTopWidth).toBe('6px');
-	await expect(style.borderTopColor).toBe(backdropOf(avatar.parentElement!));
+	await expect(style.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+	await expect(style.backgroundClip).toBe('border-box');
+	await expect(style.backgroundColor).toBe(backdropOf(avatar.parentElement!));
 };
 
 export const AvatarRingContractLight: Story = {
