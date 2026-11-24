@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Button } from '@mui/material';
+import { onRovingRadioKey } from './rovingRadio';
 import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import { AppointmentSlotPicker } from '../appointmentBooking/AppointmentSlotPicker';
 import type {
@@ -96,6 +97,12 @@ export const AskerFreeTimesPanel = ({
 			active = false;
 		};
 	}, [sessionId, medium, loadSlots, reads]);
+
+	const chooseMedium = (value: SelfBookingMedium) => {
+		setMedium(value);
+		setTime(null);
+		setProblem(undefined);
+	};
 
 	const slotsForDay = useCallback(
 		(on: Dayjs) => (Array.isArray(slots) ? slotTimesOn(slots, on) : []),
@@ -190,11 +197,15 @@ export const AskerFreeTimesPanel = ({
 							className="calendarNewEntry__tab"
 							aria-checked={medium === value}
 							tabIndex={medium === value ? 0 : -1}
-							onClick={() => {
-								setMedium(value);
-								setTime(null);
-								setProblem(undefined);
-							}}
+							onClick={() => chooseMedium(value)}
+							onKeyDown={(event) =>
+								onRovingRadioKey(
+									event,
+									media,
+									medium,
+									chooseMedium
+								)
+							}
 							data-cy={`calendar-free-times-${value.toLowerCase()}`}
 						>
 							{t(

@@ -86,4 +86,17 @@ describe('Freie Sprechzeiten (FE#2494 *2c)', () => {
 			screen.getByTestId('calendar-free-times-notice').textContent
 		).toBe('videoCall.askerInfo.booking.booked');
 	});
+
+	it('changes between video and phone with the arrow keys', async () => {
+		panel([slot()]);
+		const video = await screen.findByRole('radio', {
+			name: 'calendar.freeTimes.medium.video'
+		});
+		fireEvent.keyDown(video, { key: 'ArrowRight' });
+		const phone = screen.getByRole('radio', {
+			name: 'calendar.freeTimes.medium.phone'
+		});
+		expect(phone.getAttribute('aria-checked')).toBe('true');
+		expect(document.activeElement).toBe(phone);
+	});
 });

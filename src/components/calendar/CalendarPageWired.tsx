@@ -1254,7 +1254,21 @@ export const CalendarPageWired = () => {
 			counsellorName={freeTimesOf.username}
 			loadSlots={apiGetAppointmentSlots}
 			bookSlot={apiBookAppointmentSlot}
-			onBooked={afterChange}
+			onBooked={(appointment) => {
+				afterChange();
+				/* The counsellor learns of it in the chat, as from the
+				   conversation's own "Termin buchen" (FE#1050, FE#2287). */
+				void sendNotice({
+					kind:
+						appointment.status === 'REQUESTED'
+							? 'requested'
+							: 'created',
+					start: new Date(appointment.startTime),
+					end: new Date(appointment.endTime),
+					sessionId: freeTimesOf.sessionId,
+					matrixRoomId: freeTimesOf.matrixRoomId
+				});
+			}}
 		/>
 	);
 

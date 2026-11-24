@@ -2265,3 +2265,57 @@ describe('CalendarPageWired — one-off Sprechzeiten (FE#2494 *2b)', () => {
 		expect(props.onSaveOneOffConsultation).toBeUndefined();
 	});
 });
+
+describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494 *2c)', () => {
+	const askerSessions = (status: number) =>
+		vi.mocked(askerListApi.apiGetAskerSessionList).mockResolvedValue({
+			sessions: [
+				{
+					session: { id: 12, status, matrixRoomId: '!room:oriso' },
+					consultant: {
+						consultantId: 'c1',
+						displayName: 'Laura Berger'
+					}
+				}
+			]
+		} as never);
+
+	it('offers them for an active conversation and tells the counsellor of a booking in the chat', async () => {
+		consultant = false;
+		askerSessions(2);
+		render(<CalendarPageWired />);
+		await waitFor(() => expect(props.besidePanel).toBeTruthy());
+		const panel = props.besidePanel as React.ReactElement<{
+			sessionId: number;
+			counsellorName: string;
+			onBooked: (appointment: unknown) => void;
+		}>;
+		expect(panel.props.sessionId).toBe(12);
+		expect(panel.props.counsellorName).toBe('Laura Berger');
+		act(() =>
+			panel.props.onBooked({
+				status: 'REQUESTED',
+				startTime: '2026-11-25T09:00:00Z',
+				endTime: '2026-11-25T10:00:00Z'
+			})
+		);
+		expect(sendNotice).toHaveBeenCalledWith({
+			kind: 'requested',
+			start: new Date('2026-11-25T09:00:00Z'),
+			end: new Date('2026-11-25T10:00:00Z'),
+			sessionId: 12,
+			matrixRoomId: '!room:oriso'
+		});
+	});
+
+	it('offers none for a finished conversation', async () => {
+		consultant = false;
+		askerSessions(4);
+		render(<CalendarPageWired />);
+		await waitFor(() =>
+			expect(askerListApi.apiGetAskerSessionList).toHaveBeenCalled()
+		);
+		await waitFor(() => expect(props.role).toBe('asker'));
+		expect(props.besidePanel).toBeFalsy();
+	});
+});

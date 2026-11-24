@@ -10,7 +10,7 @@
  * the calendar ("Einmalig"), bookable until a lead time of its own.
  */
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs, { type Dayjs } from 'dayjs';
 import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
@@ -18,6 +18,7 @@ import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { DialogForm } from './dialogForm';
+import { onRovingRadioKey } from './rovingRadio';
 import { Switch } from '../Switch';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
@@ -128,6 +129,27 @@ export const useConsultationHoursForm = ({
 			notice: DEFAULT_ONE_OFF_NOTICE
 		};
 	});
+	/* The saved hours may arrive after the dialog opened: an untouched
+	   draft takes them, an edited one stays the user's (FE#2494 review). */
+	const shownHours = useRef(hours);
+	useEffect(() => {
+		const before = shownHours.current;
+		shownHours.current = hours;
+		if (before === hours) return;
+		const untouched =
+			JSON.stringify(days) ===
+				JSON.stringify(consultationDays(before.windows)) &&
+			autoAccept === before.autoAccept &&
+			noticeDays === before.noticeDays &&
+			slotMinutes === before.slotMinutes;
+		if (!untouched) return;
+		setDays(consultationDays(hours.windows));
+		setAutoAccept(hours.autoAccept);
+		setNoticeDays(hours.noticeDays);
+		setSlotMinutes(hours.slotMinutes);
+		// Only a new `hours` decides; the draft is read as it is then.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [hours]);
 	const invalid = invalidConsultationDays(days);
 	const overlapping = overlappingConsultationDays(days);
 	const empty = days.every((d) => !d.enabled);
@@ -174,6 +196,9 @@ export const useConsultationHoursForm = ({
 					aria-checked={shown === value}
 					tabIndex={shown === value ? 0 : -1}
 					onClick={() => setMode(value)}
+					onKeyDown={(event) =>
+						onRovingRadioKey(event, MODES, shown, setMode)
+					}
 					data-cy={`consultation-mode-${value}`}
 				>
 					{t(`calendar.consultationHours.modes.${value}`)}

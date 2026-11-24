@@ -2,7 +2,10 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { ConsultationHoursDialog } from './ConsultationHoursDialog';
+import {
+	ConsultationHoursDialog,
+	useConsultationHoursForm
+} from './ConsultationHoursDialog';
 import type { ConsultationHours } from './calendarConsultationHours';
 
 vi.mock('react-i18next', () => ({
@@ -216,5 +219,81 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 				name: 'calendar.consultationHours.modes.once'
 			})
 		).toBeNull();
+	});
+
+	it('takes saved hours that arrive after it opened, while untouched (FE#2494 review)', () => {
+		const props = {
+			open: true,
+			onSave: vi.fn(),
+			onClose: () => undefined
+		};
+		const { rerender } = render(
+			<ConsultationHoursDialog {...props} hours={none} />
+		);
+		rerender(
+			<ConsultationHoursDialog
+				{...props}
+				hours={{
+					...none,
+					windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+				}}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(props.onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '09:00', end: '12:00' }
+		]);
+	});
+
+	it('keeps an edited draft when the saved hours arrive later', () => {
+		const props = {
+			open: true,
+			onSave: vi.fn(),
+			onClose: () => undefined
+		};
+		const { rerender } = render(
+			<ConsultationHoursDialog {...props} hours={none} />
+		);
+		fireEvent.click(
+			screen
+				.getByTestId('consultation-hours-4')
+				.querySelector('input[type="checkbox"]')!
+		);
+		rerender(
+			<ConsultationHoursDialog
+				{...props}
+				hours={{
+					...none,
+					windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+				}}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(
+			props.onSave.mock.calls[0][0].windows.map(
+				(w: { weekday: number }) => w.weekday
+			)
+		).toEqual([4]);
+	});
+
+	it('switches "Einmalig" and "Jede Woche" with the arrow keys', () => {
+		const Form = () =>
+			useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				onClose: () => undefined
+			}).content as React.ReactElement;
+		render(<Form />);
+		const weekly = screen.getByRole('radio', {
+			name: 'calendar.consultationHours.modes.weekly'
+		});
+		expect(weekly.getAttribute('aria-checked')).toBe('true');
+		fireEvent.keyDown(weekly, { key: 'ArrowLeft' });
+		const once = screen.getByRole('radio', {
+			name: 'calendar.consultationHours.modes.once'
+		});
+		expect(once.getAttribute('aria-checked')).toBe('true');
+		expect(document.activeElement).toBe(once);
 	});
 });
