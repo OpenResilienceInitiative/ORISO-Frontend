@@ -580,7 +580,10 @@ export const SelectionReplyLayer = ({
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onCollect(next);
-			} else if (canReplyHere) {
+			} else if (!target && canReplyHere) {
+				// A side chat that closed while the answer was drafted
+				// (Team-Chat closed) is no reason to send it to the advice
+				// seeker: the draft stays.
 				onAddToComposer(next);
 			} else {
 				return;
@@ -597,7 +600,10 @@ export const SelectionReplyLayer = ({
 			const side = target && onReplyInSideRoom?.[target];
 			if (side) {
 				side.onSend(next);
-			} else if (canReplyHere) {
+			} else if (!target && canReplyHere) {
+				// A side chat that closed while the answer was drafted
+				// (Team-Chat closed) is no reason to send it to the advice
+				// seeker: the draft stays.
 				onSendNow(next);
 			} else {
 				return;

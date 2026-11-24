@@ -582,3 +582,44 @@ describe('SelectionReplyLayer review fixes (#2505)', () => {
 		).toBeGreaterThan(0);
 	});
 });
+
+describe('SelectionReplyLayer keeps a side-chat answer when the side chat closed (FE#2494 review)', () => {
+	afterEach(cleanup);
+
+	it('never falls back to this chat', () => {
+		const onAddToComposer = vi.fn();
+		const onSendNow = vi.fn();
+		renderLayer(
+			{
+				start: async () => {},
+				stop: async () => ({ src: 'blob:x', durationSec: 1 }),
+				cancel: () => {}
+			},
+			{
+				onAddToComposer,
+				onSendNow,
+				// Team-Chat closed: its handler is gone, the target stays.
+				onReplyInSideRoom: {},
+				initialTarget: 'team',
+				initialMode: 'popover'
+			}
+		);
+		const field = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
+		fireEvent.change(field, { target: { value: 'Nur fürs Team' } });
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		fireEvent.keyDown(field, { key: 'Enter', metaKey: true });
+		expect(onAddToComposer).not.toHaveBeenCalled();
+		expect(onSendNow).not.toHaveBeenCalled();
+		expect(
+			(
+				screen.getByLabelText(
+					'message.selectionReply.inputLabel'
+				) as HTMLTextAreaElement
+			).value
+		).toBe('Nur fürs Team');
+	});
+});
