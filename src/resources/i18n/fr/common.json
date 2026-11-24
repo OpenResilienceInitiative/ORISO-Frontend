@@ -6677,6 +6677,78 @@
 					"intro": "Ouvrez une conversation et lancez l'appel au bon moment. Après l'appel, la conversation par chat continue normalement."
 				}
 			}
+		},
+		"askerFirstSteps": {
+			"title": "Premiers pas",
+			"summary": "Où trouver vos messages, vos rendez-vous et votre profil.",
+			"step": {
+				"welcome": {
+					"title": "Bienvenue !",
+					"intro": "Nous sommes heureux de vous accueillir. Cette courte visite vous montre où trouver l’essentiel. Avec « Continuer », vous passez à l’étape suivante."
+				},
+				"sessions": {
+					"title": "Mes consultations",
+					"intro": "Vous trouvez ici vos conversations avec le service de conseil. Un clic sur une conversation l’ouvre."
+				},
+				"composer": {
+					"title": "Écrire un message",
+					"intro": "Écrivez ici votre message au service de conseil. Prenez votre temps. La réponse apparaît dans la même conversation."
+				},
+				"appointments": {
+					"title": "Mes rendez-vous",
+					"intro": "Vous trouvez ici vos rendez-vous avec le service de conseil, par exemple pour un appel vidéo."
+				},
+				"tools": {
+					"title": "Mes outils",
+					"intro": "Vous trouvez ici des outils utiles que votre centre de conseil met à votre disposition."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "Dans votre profil, vous modifiez vos données et vos réglages, par exemple le mot de passe, les notifications et la langue."
+				},
+				"helpTours": {
+					"title": "Visites guidées",
+					"intro": "Sous Profil → Aide → Visites guidées, vous pouvez relancer chaque visite. Le bouton « ? » en bas à droite est encore plus rapide."
+				}
+			}
+		},
+		"askerSettings": {
+			"title": "Réglages",
+			"summary": "Mot de passe, clé de secours, notifications et affichage — expliqués en bref.",
+			"step": {
+				"intro": {
+					"title": "Vos réglages",
+					"intro": "Ici, vous adaptez l’application à vos besoins. Nous vous montrons les points les plus importants. Rien n’est modifié en chemin."
+				},
+				"password": {
+					"title": "Modifier le mot de passe",
+					"intro": "Ici, vous pouvez modifier votre mot de passe. Choisissez un mot de passe que vous seul connaissez."
+				},
+				"twoFactor": {
+					"title": "Authentification à deux facteurs",
+					"intro": "Elle protège davantage votre connexion. En plus du mot de passe, il vous faut alors un code, par exemple d’une application."
+				},
+				"recovery": {
+					"title": "Récupération des anciens messages",
+					"intro": "Vos messages sont chiffrés. Avec une clé de secours, vous pouvez aussi les lire sur un nouvel appareil. Conservez-la bien."
+				},
+				"deleteAccount": {
+					"title": "Supprimer un compte",
+					"intro": "Ici, vous pouvez supprimer votre compte si vous n’en avez plus besoin. L’application vous redemande d’abord — rien ne se passe sans votre confirmation."
+				},
+				"notifications": {
+					"title": "Mes notifications",
+					"intro": "Ici, vous choisissez comment vous êtes informé des nouveaux messages, par exemple par e-mail."
+				},
+				"display": {
+					"title": "Affichage",
+					"intro": "Ici, vous changez l’apparence de l’application, par exemple l’affichage des menus ou la langue."
+				},
+				"done": {
+					"title": "C’est fait !",
+					"intro": "Vous connaissez maintenant vos réglages. Vous les trouvez à tout moment sous Profil → Réglages."
+				}
+			}
 		}
 	},
 	"weekday": {
