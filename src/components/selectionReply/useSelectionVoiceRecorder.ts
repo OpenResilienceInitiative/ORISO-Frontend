@@ -40,6 +40,11 @@ export const useSelectionVoiceRecorder = (): {
 	takeFor: (src: string) => SelectionVoiceTake | undefined;
 	release: (src: string) => void;
 } => {
+	const rejectStoppingRef = useRef<((reason: Error) => void) | null>(null);
+	const stoppingRef = useRef<Promise<{
+		src: string;
+		durationSec: number;
+	}> | null>(null);
 	const takesRef = useRef(new Map<string, SelectionVoiceTake>());
 	const activeRef = useRef<{
 		recorder: MediaRecorder;
@@ -55,6 +60,12 @@ export const useSelectionVoiceRecorder = (): {
 		stream.getTracks().forEach((track) => track.stop());
 
 	const cancel = useCallback(() => {
+		// A stop still waiting for the recorder's last event never gets it
+		// now: settle it, so the next take stops on its own.
+		const rejectStopping = rejectStoppingRef.current;
+		rejectStoppingRef.current = null;
+		stoppingRef.current = null;
+		rejectStopping?.(new Error('Recording cancelled'));
 		const active = activeRef.current;
 		activeRef.current = null;
 		if (!active) {
@@ -115,8 +126,17 @@ export const useSelectionVoiceRecorder = (): {
 				};
 				mediaRecorder.start();
 			},
-			stop: () =>
-				new Promise((resolve, reject) => {
+			stop: () => {
+				// Several callers may ask while the recorder still flushes
+				// its last chunk: all get the same take.
+				if (stoppingRef.current) {
+					return stoppingRef.current;
+				}
+				const stopping = new Promise<{
+					src: string;
+					durationSec: number;
+				}>((resolve, reject) => {
+					rejectStoppingRef.current = reject;
 					const active = activeRef.current;
 					if (!active) {
 						reject(new Error('Not recording'));
@@ -163,7 +183,17 @@ export const useSelectionVoiceRecorder = (): {
 					}
 					active.recorder.onstop = finish;
 					active.recorder.stop();
-				}),
+				});
+				stoppingRef.current = stopping;
+				const clear = () => {
+					if (stoppingRef.current === stopping) {
+						stoppingRef.current = null;
+						rejectStoppingRef.current = null;
+					}
+				};
+				stopping.then(clear, clear);
+				return stopping;
+			},
 			// FE#2494 (Frank, 24 Nov): Pause instead of Stop; stacking or
 			// sending stops the take cleanly first.
 			pause: () => {
