@@ -360,34 +360,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const offersActions =
 		!readOnly &&
 		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
-
-	/* ADR-036 decision 42 (ORISO-Admin#1660): a first reply built from the
-	   journey arrives as version 2 — the sections the editor arranged, in their
-	   order, with the words frozen at send time. It is drawn by the module
-	   renderer; the e-mail setup is the one platform component it can place. */
 	const journeyModule = parseErstantwortModule(rawMessage);
-	if (journeyModule.status === 'ok') {
-		return (
-			<ErstantwortModuleSequence
-				sections={journeyModule.sections}
-				slots={{
-					email:
-						!readOnly && showSetupSlot ? (
-							<NotificationSetupCollapse
-								messageId={messageId}
-								isEmailEnabled={emailAllowed}
-								isBrowserEnabled={channels.browserAllowed}
-								onStart={() =>
-									setNotificationSetupStarted(true)
-								}
-							/>
-						) : undefined
-				}}
-			/>
-		);
-	}
-
-	if (!bausteine.length && !emailOverlay) return null;
 
 	const setupKey = JSON.stringify([
 		emailScope.actorId,
@@ -407,8 +380,55 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				baustein: bausteine[index],
 				index
 			});
+		} else if (journeyModule.status === 'ok') {
+			/* Version 2 has no Baustein list; the record only keeps the slot
+			   visible through its saved confirmation. */
+			setAcceptedNotification({
+				scope: emailScope,
+				baustein: { id, body: '' },
+				index: 0
+			});
 		}
 	};
+
+	/* ADR-036 decision 42 (ORISO-Admin#1660): a first reply built from the
+	   journey arrives as version 2 — the sections the editor arranged, in their
+	   order, with the words frozen at send time. It is drawn by the module
+	   renderer; the e-mail setup is the one platform component it can place,
+	   wired exactly as in version 1. Question blocks wait until their answers
+	   can be saved: a form without a send button would only mislead. */
+	if (journeyModule.status === 'ok') {
+		return (
+			<ErstantwortModuleSequence
+				sections={journeyModule.sections.filter(
+					(section) => section.kind !== 'questions'
+				)}
+				skipAnimation={skipAnimation}
+				onFirstReveal={onFirstReveal}
+				slots={{
+					email:
+						!readOnly && showSetupSlot ? (
+							<NotificationSetupCollapse
+								messageId={messageId}
+								key={setupKey}
+								onEmailAccepted={() =>
+									recordAcceptedNotification(
+										'emailNotification'
+									)
+								}
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
+							/>
+						) : undefined
+				}}
+			/>
+		);
+	}
+
+	if (!bausteine.length && !emailOverlay) return null;
 
 	return (
 		<>

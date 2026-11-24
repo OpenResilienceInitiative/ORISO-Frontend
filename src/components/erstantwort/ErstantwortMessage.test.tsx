@@ -452,3 +452,25 @@ it('places the notification setup where the journey puts the e-mail module', () 
 		screen.getByRole('button', { name: /notificationChoice.email / })
 	).toBeTruthy();
 });
+
+it('leaves out a journey question block until its answers can be saved', () => {
+	setup(
+		false,
+		'AGENCY_COUNSELLING',
+		undefined,
+		journeyFirstReply([
+			{ id: 'greeting', kind: 'message', body: 'Hallo!' },
+			{
+				id: 'intake',
+				kind: 'questions',
+				title: 'Ein paar Fragen',
+				questions: [
+					{ id: 'age', type: 'text', label: 'Wie alt bist Du?' }
+				]
+			}
+		]),
+		'event-v2-questions'
+	);
+	expect(screen.getByText('Hallo!')).toBeTruthy();
+	expect(screen.queryByText('Wie alt bist Du?')).toBeNull();
+});
