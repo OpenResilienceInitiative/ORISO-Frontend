@@ -5511,6 +5511,7 @@
 	"voice": {
 		"recording": {
 			"active": "Enregistrement en cours…",
+			"paused": "Enregistrement en pause",
 			"error": {
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."

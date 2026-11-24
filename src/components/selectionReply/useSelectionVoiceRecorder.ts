@@ -122,7 +122,7 @@ export const useSelectionVoiceRecorder = (): {
 						reject(new Error('Not recording'));
 						return;
 					}
-					active.recorder.onstop = () => {
+					const finish = () => {
 						activeRef.current = null;
 						stopStream(active.stream);
 						const type = active.recorder.mimeType || 'audio/webm';
@@ -153,6 +153,15 @@ export const useSelectionVoiceRecorder = (): {
 						takesRef.current.set(src, { src, durationSec, file });
 						resolve({ src, durationSec });
 					};
+					// The browser may have ended the take by itself (the
+					// microphone track ended, e.g. while paused); stop() on an
+					// inactive recorder fires no second `stop` event, so
+					// finish with the chunks it already delivered.
+					if (active.recorder.state === 'inactive') {
+						finish();
+						return;
+					}
+					active.recorder.onstop = finish;
 					active.recorder.stop();
 				}),
 			// FE#2494 (Frank, 24 Nov): Pause instead of Stop; stacking or

@@ -253,7 +253,9 @@ export const SelectionReplyPopover = forwardRef<
 				return;
 			}
 			event.preventDefault();
-			if (isRecording) {
+			// Same guard as the buttons: with pause support, Enter and
+			// Cmd/Ctrl+Enter stop the take and go on, like Stack and Send.
+			if (blockWhileRecording) {
 				return;
 			}
 			if (event.metaKey || event.ctrlKey) {

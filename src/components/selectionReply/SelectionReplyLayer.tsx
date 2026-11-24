@@ -202,6 +202,13 @@ export const SelectionReplyLayer = ({
 		initialSelection ? initialMode || 'toolbar' : 'none'
 	);
 	const [draft, setDraft] = useState('');
+	// The stop of a running take is async: the delivery after it must read
+	// what is in the field THEN (edits made while it stopped included) and
+	// which side chats are still open THEN, not the values of the click.
+	const draftRef = useRef(draft);
+	draftRef.current = draft;
+	const sideRoomsRef = useRef(onReplyInSideRoom);
+	sideRoomsRef.current = onReplyInSideRoom;
 	const [voice, setVoice] = useState<SelectionReplyVoice>(
 		initialVoice || { mode: 'idle' }
 	);
@@ -517,7 +524,7 @@ export const SelectionReplyLayer = ({
 		active
 			? {
 					passage: active.passage,
-					text: draft.trim(),
+					text: draftRef.current.trim(),
 					voice:
 						take ??
 						(voice.mode === 'review'
@@ -577,7 +584,7 @@ export const SelectionReplyLayer = ({
 
 	const addToComposer = () =>
 		withFinishedTake((next) => {
-			const side = target && onReplyInSideRoom?.[target];
+			const side = target && sideRoomsRef.current?.[target];
 			if (side) {
 				side.onCollect(next);
 			} else if (!target && canReplyHere) {
@@ -597,7 +604,7 @@ export const SelectionReplyLayer = ({
 			if (!next.text && !next.voice) {
 				return;
 			}
-			const side = target && onReplyInSideRoom?.[target];
+			const side = target && sideRoomsRef.current?.[target];
 			if (side) {
 				side.onSend(next);
 			} else if (!target && canReplyHere) {
@@ -816,7 +823,10 @@ export const SelectionReplyLayer = ({
 
 	const { t: translate } = useTranslation();
 	const anchor = active?.anchor;
-	const isBubble = menu === 'bubble';
+	// The bubble opens this chat's answer field before a destination is
+	// chosen; without a right to write here only the bar is offered, which
+	// names the side chats only.
+	const isBubble = menu === 'bubble' && canReplyHere;
 	const HANDLE_SIZE = 32;
 	// The handle sits right after the end of the marked text (its last
 	// line), so it never covers words.

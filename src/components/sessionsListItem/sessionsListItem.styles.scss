@@ -1511,7 +1511,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	.sessionsListItem__consultingTypeIcon--nearbyLabel,
 	.sessionsListItem__consultingTypeIcon--internalLabel,
-	.sessionsListItem__consultingTypeIcon--selfHelpLabel {
+	.sessionsListItem__consultingTypeIcon--selfHelpLabel,
+	.sessionsListItem__consultingTypeIcon--supervisionLabel {
 		color: var(--m3-on-primary-fixed-variant, #930008) !important;
 	}
 }
