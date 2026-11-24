@@ -58,6 +58,37 @@ describe('buildMatrixActivityTextPreview', () => {
 		).toBe('Lisa: Schön, dass Sie sich gemeldet haben.');
 	});
 
+	it('previews a first reply from the journey by its first text (ADR-036 decision 42)', () => {
+		const event = new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${JSON.stringify({
+					type: 'FIRST_RESPONSE',
+					version: 2,
+					sections: [
+						{ id: 'email', kind: 'fixed', module: 'email' },
+						{
+							id: 'u25',
+							kind: 'panel',
+							title: 'Neu bei U25',
+							body: 'Wir antworten Dir bald.'
+						}
+					]
+				})}`
+			}
+		});
+
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event },
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Wir antworten Dir bald.');
+	});
+
 	it.each([
 		'{"type":"FIRST_RESPONSE","version":2,"bausteine":[{"id":"greeting","body":"Future body"}]}',
 		'{"type":"FIRST_RESPONSE","bausteine":[{"id":"greeting","body":"Unversioned body"}]}'

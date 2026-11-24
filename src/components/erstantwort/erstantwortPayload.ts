@@ -119,7 +119,8 @@ const normaliseAction = (raw: unknown): ErstantwortAction | undefined => {
 	return { kind, label: label.trim() };
 };
 
-const normaliseLinks = (raw: unknown): ErstantwortLink[] | undefined => {
+/** Shared with version 2 (`erstantwortModulePayload`): only http(s) links survive. */
+export const normaliseLinks = (raw: unknown): ErstantwortLink[] | undefined => {
 	if (!Array.isArray(raw)) return undefined;
 	const links = raw
 		.map((entry) => {

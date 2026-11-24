@@ -7,6 +7,7 @@ import {
 	toMessagePreviewText
 } from './messagePreviewText';
 import { parseErstantwortPayload } from '../components/erstantwort/erstantwortPayload';
+import { parseErstantwortModule } from '../components/erstantwort/erstantwortModulePayload';
 import {
 	type ChatEndedBy,
 	parseMessagePrefixes
@@ -125,6 +126,22 @@ export const buildMatrixActivityTextPreview = (
 	}
 
 	const rawBody = getDecryptedMatrixMessageText(resolution.event);
+	/* ADR-036 decision 42: a first reply from the journey (version 2) previews
+	   its first text, like version 1 previews its first Baustein. */
+	const journeyText = parseErstantwortModule(rawBody).sections.find(
+		(section) => section.kind === 'message' || section.kind === 'panel'
+	);
+	if (
+		journeyText &&
+		(journeyText.kind === 'message' || journeyText.kind === 'panel')
+	) {
+		return withSender(
+			senderName,
+			toMessagePreviewText(journeyText.body) ||
+				labels?.notice ||
+				fallbackText
+		);
+	}
 	const firstResponse = parseErstantwortPayload(rawBody);
 	if (firstResponse.status !== 'none') {
 		const preview =
