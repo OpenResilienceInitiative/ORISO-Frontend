@@ -96,7 +96,9 @@ import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLi
 import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
 import {
 	toInvitationPresetState,
-	type InvitationPreset
+	toOpenLinkPresetState,
+	type InvitationPreset,
+	type OpenLinkPreset
 } from '../directInvitation/invitationModel';
 import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
 import {
@@ -776,6 +778,9 @@ export const CalendarPageWired = () => {
 	/* "Neue Person per Direkteinladung …": door A with the calendar's slot. */
 	const inviteNewPerson = (preset: InvitationPreset) =>
 		navigate(CREATE_CHAT_PATH, { state: toInvitationPresetState(preset) });
+	/* FE#2510 *2: "Neuer Eintrag" without a date — door A's open link. */
+	const createOpenLink = (preset: OpenLinkPreset) =>
+		navigate(CREATE_CHAT_PATH, { state: toOpenLinkPresetState(preset) });
 
 	const move = async (entry: CalendarEntry, start: Date, end: Date) => {
 		const slot = {
@@ -1415,6 +1420,9 @@ export const CalendarPageWired = () => {
 				inviteMedia={inviteMedia}
 				onInviteNewPerson={
 					consultant && allowGuestInvite ? inviteNewPerson : undefined
+				}
+				onCreateOpenLink={
+					consultant && allowGuestInvite ? createOpenLink : undefined
 				}
 				onMove={consultant ? move : undefined}
 				onCancelAppointment={consultant ? cancel : undefined}

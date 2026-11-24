@@ -223,6 +223,106 @@ describe('one invitation form behind three doors', () => {
 		expect(onSubmit).not.toHaveBeenCalled();
 	});
 
+	describe('"Neuer Eintrag" without a date: the open link (FE#2510 *2)', () => {
+		const withDate = () =>
+			screen.getByRole('switch', { name: `${KEYS}.withAppointment` });
+		const calendarDoor = (props: Partial<InvitationDialogProps> = {}) =>
+			open({
+				conversations: {
+					options: [{ sessionId: 7, label: 'mutige_eule' }]
+				},
+				withKind: true,
+				allowGuestInvite: true,
+				dateLayout: 'month',
+				...props
+			});
+
+		it('turns "Mit Termin" off to ask only the Art, then hands it to the open link', async () => {
+			const onOpenLink = vi.fn();
+			const onWithAppointmentUsed = vi.fn();
+			calendarDoor({ onOpenLink, onWithAppointmentUsed });
+			expect((withDate() as HTMLInputElement).checked).toBe(true);
+			expect(screen.getByTestId('month')).toBeTruthy();
+			await act(async () => {
+				fireEvent.click(withDate());
+			});
+			expect(sections()).toEqual(['kind']);
+			expect(screen.queryByTestId('month')).toBeNull();
+			expect(screen.getByText(`${KEYS}.openLink.hint`)).toBeTruthy();
+			await act(async () => {
+				fireEvent.click(
+					document.querySelector<HTMLElement>(
+						'[data-cy="calendar-dialog-kind-phone"]'
+					)!
+				);
+			});
+			await click(`${KEYS}.openLink.action`);
+			expect(onOpenLink).toHaveBeenCalledWith({ kind: 'phone' });
+			expect(onWithAppointmentUsed).toHaveBeenCalledWith(false);
+			expect(onSubmit).not.toHaveBeenCalled();
+		});
+
+		it('opens with the setting last used and reports it on save', async () => {
+			const onWithAppointmentUsed = vi.fn();
+			calendarDoor({
+				onOpenLink: vi.fn(),
+				onWithAppointmentUsed,
+				initial: { withAppointment: false }
+			});
+			expect((withDate() as HTMLInputElement).checked).toBe(false);
+			await act(async () => {
+				fireEvent.click(withDate());
+			});
+			fireEvent.change(conversation(), { target: { value: '7' } });
+			await click(`${SLOT}.createAction`);
+			expect(onSubmit).toHaveBeenCalled();
+			expect(onWithAppointmentUsed).toHaveBeenCalledWith(true);
+		});
+
+		it('offers no open link where the date is known, when editing or without the door', () => {
+			calendarDoor({
+				onOpenLink: vi.fn(),
+				initial: { start: START, end: END },
+				known: { slot: true }
+			});
+			expect(
+				screen.queryByRole('switch', {
+					name: `${KEYS}.withAppointment`
+				})
+			).toBeNull();
+			cleanup();
+			calendarDoor({ onOpenLink: vi.fn(), mode: 'edit' });
+			expect(
+				screen.queryByRole('switch', {
+					name: `${KEYS}.withAppointment`
+				})
+			).toBeNull();
+			cleanup();
+			calendarDoor();
+			expect(
+				screen.queryByRole('switch', {
+					name: `${KEYS}.withAppointment`
+				})
+			).toBeNull();
+		});
+
+		it('refuses an Art whose medium "Direkteinladung erlauben" does not allow', async () => {
+			calendarDoor({
+				onOpenLink: vi.fn(),
+				inviteMedia: ['CHAT'],
+				initial: { withAppointment: false }
+			});
+			expect(screen.getByText(`${KEYS}.openLink.mediumOff`)).toBeTruthy();
+			expect(
+				(
+					screen.getByRole('button', {
+						name: `${KEYS}.openLink.action`
+					}) as HTMLButtonElement
+				).disabled
+			).toBe(true);
+		});
+	});
+
 	it('offers no new person where the door cannot hand over', () => {
 		open({
 			conversations: { options: [{ sessionId: 7, label: 'mutige_eule' }] }

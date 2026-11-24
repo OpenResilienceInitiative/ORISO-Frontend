@@ -91,6 +91,31 @@ export const toInvitationPresetState = (
 	}
 });
 
+/** FE#2510 *2: "Neuer Eintrag" without a date, for the open invitation link. */
+export interface OpenLinkPreset {
+	kind?: AppointmentKind;
+}
+
+export interface OpenLinkPresetState {
+	openLinkPreset?: { kind?: AppointmentKind };
+}
+
+export const toOpenLinkPresetState = (
+	preset: OpenLinkPreset
+): OpenLinkPresetState => ({
+	openLinkPreset: preset.kind ? { kind: preset.kind } : {}
+});
+
+/** The open-link preset back from router state; anything unreadable is none. */
+export const fromOpenLinkPresetState = (
+	state: unknown
+): OpenLinkPreset | undefined => {
+	const raw = (state as OpenLinkPresetState | null | undefined)
+		?.openLinkPreset;
+	if (!raw || typeof raw !== 'object') return undefined;
+	return raw.kind && raw.kind in MEDIUM_FOR_KIND ? { kind: raw.kind } : {};
+};
+
 /** The preset back from router state; anything unreadable is no preset. */
 export const fromInvitationPresetState = (
 	state: unknown

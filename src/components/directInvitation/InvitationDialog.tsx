@@ -16,6 +16,9 @@
  *   appointment conversation, valid until end + validity.
  * - `variant="appointment"`: date required. `allowGuestInvite` adds the
  *   section "Weitere Personen per Link einladen" (e.g. an interpreter).
+ *   With `onOpenLink` (the calendar's "Neuer Eintrag", FE#2510 *2) the
+ *   date is optional too: "Mit Termin" off hands the Art over to the open,
+ *   non-expiring invitation link of "Chat erstellen".
  *
  * `useInvitationForm` is the form without its frame, so the calendar's
  * "Neuer Eintrag" can show it as its "Termin" tab; `InvitationDialog` is the
@@ -163,6 +166,17 @@ export interface InvitationFormProps {
 	icon?: React.ReactNode;
 	/** Test ids the door's own tests rely on. */
 	testIds?: { root?: string; submit?: string };
+	/**
+	 * Appointment variant, new entry without a known slot: offers "Mit
+	 * Termin". Switched off, the action hands the Art to the open
+	 * invitation link (no date, no conversation, valid until deleted).
+	 */
+	onOpenLink?: (preset: { kind?: AppointmentKind }) => void;
+	/**
+	 * With `onOpenLink`: told the "Mit Termin" setting on each submit, so
+	 * the next form can open with it (`initial.withAppointment`).
+	 */
+	onWithAppointmentUsed?: (withAppointment: boolean) => void;
 }
 
 export interface InvitationDialogProps extends InvitationFormProps {
@@ -224,7 +238,9 @@ export const useInvitationForm = ({
 	now,
 	description,
 	icon,
-	testIds = {}
+	testIds = {},
+	onOpenLink,
+	onWithAppointmentUsed
 }: InvitationFormProps): InvitationForm => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -233,8 +249,13 @@ export const useInvitationForm = ({
 	const initialStart = initial.start
 		? dayjs(initial.start)
 		: dayjs(now).add(1, 'day').hour(DEFAULT_HOUR).minute(0);
+	/* FE#2510 *2: the calendar's date is optional; without it, the open link. */
+	const offersOpenLink =
+		!isInvitation && Boolean(onOpenLink) && mode === 'create' && !slotKnown;
 	const [withAppointment, setWithAppointment] = useState(
-		isInvitation ? Boolean(initial.withAppointment ?? initial.start) : true
+		isInvitation
+			? Boolean(initial.withAppointment ?? initial.start)
+			: !offersOpenLink || initial.withAppointment !== false
 	);
 	const [inviteOthers, setInviteOthers] = useState(
 		Boolean(initial.inviteOthers)
@@ -280,7 +301,8 @@ export const useInvitationForm = ({
 		field?: 'conversation';
 	}>();
 
-	const newPerson = conversation === NEW_PERSON;
+	const openLink = offersOpenLink && !withAppointment;
+	const newPerson = !openLink && conversation === NEW_PERSON;
 	/* The backend refuses a link whose medium is not allowed, after the
 	   appointment was stored: such an Art offers no link and says why. */
 	const kindMediumOff =
@@ -289,7 +311,8 @@ export const useInvitationForm = ({
 		!inviteMedia.includes(MEDIUM_FOR_KIND[kind]);
 	const invitingOthers = inviteOthers && !kindMediumOff;
 	const showLinkSettings =
-		isInvitation || (allowGuestInvite && invitingOthers && !newPerson);
+		isInvitation ||
+		(allowGuestInvite && invitingOthers && !newPerson && !openLink);
 	/* A known slot keeps its own end date (23:00 to midnight, over night). */
 	const slot: Partial<InvitationSlot> = slotKnown
 		? { start: initial.start, end: initial.end }
@@ -307,6 +330,12 @@ export const useInvitationForm = ({
 			: undefined;
 
 	const submit = () => {
+		if (openLink) {
+			setFormError(undefined);
+			onWithAppointmentUsed?.(false);
+			onOpenLink?.(withKind ? { kind } : {});
+			return;
+		}
 		let appointment: InvitationDialogValue['appointment'] = null;
 		if (withAppointment) {
 			const { start, end } = slot;
@@ -339,6 +368,7 @@ export const useInvitationForm = ({
 			return;
 		}
 		setFormError(undefined);
+		if (offersOpenLink) onWithAppointmentUsed?.(true);
 		if (newPerson && appointment) {
 			conversations?.onInviteNewPerson?.({
 				...appointment,
@@ -383,16 +413,18 @@ export const useInvitationForm = ({
 	const title = isInvitation
 		? t(`${KEYS}.${mode === 'edit' ? 'editTitle' : 'createTitle'}`)
 		: t(`${SLOT}.${mode === 'edit' ? 'moveTitle' : 'createTitle'}`);
-	const action = newPerson
-		? t(`${KEYS}.newPerson.action`)
-		: (conflict?.actionLabel ??
-			(isInvitation
-				? t(
-						`${KEYS}.${mode === 'edit' ? 'saveAction' : 'createAction'}`
-					)
-				: t(
-						`${SLOT}.${mode === 'edit' ? 'moveAction' : 'createAction'}`
-					)));
+	const action = openLink
+		? t(`${KEYS}.openLink.action`)
+		: newPerson
+			? t(`${KEYS}.newPerson.action`)
+			: (conflict?.actionLabel ??
+				(isInvitation
+					? t(
+							`${KEYS}.${mode === 'edit' ? 'saveAction' : 'createAction'}`
+						)
+					: t(
+							`${SLOT}.${mode === 'edit' ? 'moveAction' : 'createAction'}`
+						)));
 	const shownError = formError?.text ?? error;
 	const month = dateLayout === 'month' && withAppointment && !slotKnown;
 
@@ -427,7 +459,7 @@ export const useInvitationForm = ({
 
 	const fields = (
 		<div className="invitationDialog__fields">
-			{conversations && (
+			{conversations && !openLink && (
 				<section data-section="conversation">
 					<OrisoSelect
 						label={t('calendar.dialog.conversation')}
@@ -503,7 +535,7 @@ export const useInvitationForm = ({
 			{withKind && !known.kind && (
 				<AppointmentKindTiles value={kind} onChange={setKind} />
 			)}
-			{!isInvitation && allowGuestInvite && !newPerson && (
+			{!isInvitation && allowGuestInvite && !newPerson && !openLink && (
 				<section
 					className="invitationDialog__invite"
 					aria-labelledby={`${id}-inviteOthers`}
@@ -610,15 +642,20 @@ export const useInvitationForm = ({
 
 	return {
 		title,
-		description:
-			description ??
-			(isInvitation
-				? t(`${KEYS}.description`)
-				: t(`${SLOT}.description`)),
+		/* FE#2510 *2: without a date the form describes the open link. */
+		description: openLink
+			? t(`${KEYS}.description`)
+			: (description ??
+				(isInvitation
+					? t(`${KEYS}.description`)
+					: t(`${SLOT}.description`))),
 		/* Every creation dialog has an icon above its title (Frank *1). */
-		icon:
-			icon ??
-			(isInvitation ? <LinkOutlinedIcon /> : <EventOutlinedIcon />),
+		icon: openLink ? (
+			<LinkOutlinedIcon />
+		) : (
+			(icon ??
+			(isInvitation ? <LinkOutlinedIcon /> : <EventOutlinedIcon />))
+		),
 		width: month ? 680 : 480,
 		testId: testIds.root ?? 'invitation-dialog',
 		actions: [
@@ -627,15 +664,38 @@ export const useInvitationForm = ({
 				label: action,
 				onClick: submit,
 				primary: true,
-				disabled: saving,
+				disabled: saving || (openLink && kindMediumOff),
 				busy: saving,
 				...(testIds.submit ? { testId: testIds.submit } : {})
 			}
 		],
 		content: (
 			<div
-				className={`invitationDialog${month ? ' invitationDialog--withMonth' : ''}`}
+				className={`invitationDialog${month ? ' invitationDialog--withMonth' : ''}${
+					month && offersOpenLink
+						? ' invitationDialog--withDateSwitch'
+						: ''
+				}`}
 			>
+				{/* FE#2510 *2: first, above the month on phones, so the
+				    switch stays where it was when it is flipped. */}
+				{offersOpenLink && (
+					<div className="invitationDialog__dateSwitch">
+						{switchRow(
+							'withAppointment',
+							withAppointment,
+							setWithAppointment,
+							withAppointment
+								? undefined
+								: t(`${KEYS}.openLink.hint`)
+						)}
+						{openLink && kindMediumOff && (
+							<p className="invitationDialog__hint" role="status">
+								{t(`${KEYS}.openLink.mediumOff`)}
+							</p>
+						)}
+					</div>
+				)}
 				{month && (
 					<InvitationMonth value={day} onChange={setDay} now={now} />
 				)}

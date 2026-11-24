@@ -412,6 +412,18 @@ describe('CalendarPageWired', () => {
 			await showWeek();
 			expect(props.allowGuestInvite).toBe(false);
 			expect(props.onInviteNewPerson).toBeUndefined();
+			expect(props.onCreateOpenLink).toBeUndefined();
+		});
+
+		it('hands "Neuer Eintrag" without a date to "Chat erstellen" as the open link (FE#2510 *2)', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			act(() => props.onCreateOpenLink?.({ kind: 'phone' }));
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView/createGroupChat/',
+				{ state: { openLinkPreset: { kind: 'phone' } } }
+			);
 		});
 
 		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {

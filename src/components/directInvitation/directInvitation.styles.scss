@@ -14,6 +14,37 @@
 		}
 	}
 
+	/* FE#2510 *2: "Mit Termin" above the fields, right of the month. */
+	&--withDateSwitch {
+		@include breakpoint($fromMedium) {
+			align-items: start;
+			display: grid;
+			grid-template-areas:
+				'month switch'
+				'month fields';
+			grid-template-columns: auto minmax(0, 1fr);
+			grid-template-rows: auto 1fr;
+		}
+	}
+
+	&--withDateSwitch &__month {
+		grid-area: month;
+	}
+
+	&--withDateSwitch &__dateSwitch {
+		grid-area: switch;
+	}
+
+	&--withDateSwitch &__fields {
+		grid-area: fields;
+	}
+
+	&__dateSwitch {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
 	&__month {
 		flex: none;
 	}
