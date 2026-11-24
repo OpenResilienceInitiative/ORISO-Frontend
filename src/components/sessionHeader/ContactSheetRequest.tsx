@@ -26,21 +26,27 @@ export const useContactSheetRequest = (
 	sessionId?: number,
 	email?: string
 ): ContactSheetRequestState => {
+	// Each change of session is a new visit: A → B → A starts A idle again,
+	// and an answer only lands in the visit that asked.
+	const visit = useRef({ sessionId, count: 0 });
+	if (visit.current.sessionId !== sessionId) {
+		visit.current = { sessionId, count: visit.current.count + 1 };
+	}
+	const currentVisit = visit.current.count;
 	const [state, setState] = useState<{
-		sessionId?: number;
+		visit: number;
 		pending: boolean;
 		result: ContactSheetResult;
-	}>({ sessionId, pending: false, result: null });
-	const currentSession = useRef(sessionId);
-	currentSession.current = sessionId;
+	}>({ visit: currentVisit, pending: false, result: null });
 	const recipient = email?.trim();
-	const own = state.sessionId === sessionId;
+	const own = state.visit === currentVisit;
 	const pending = own && state.pending;
 	const result = own ? state.result : null;
 
 	const request = async () => {
 		if (!recipient || pending || sessionId === undefined) return;
-		setState({ sessionId, pending: true, result: null });
+		const askedIn = currentVisit;
+		setState({ visit: askedIn, pending: true, result: null });
 		let next: ContactSheetResult;
 		try {
 			await apiRequestContactSheetEmail(sessionId);
@@ -48,8 +54,8 @@ export const useContactSheetRequest = (
 		} catch {
 			next = 'failed';
 		}
-		if (currentSession.current === sessionId) {
-			setState({ sessionId, pending: false, result: next });
+		if (visit.current.count === askedIn) {
+			setState({ visit: askedIn, pending: false, result: next });
 		}
 	};
 

@@ -172,4 +172,44 @@ describe('contact-sheet request', () => {
 		expect(screen.queryByRole('status')).toBeNull();
 		expect(screen.getByRole('button')).toHaveProperty('disabled', false);
 	});
+
+	it('starts a returning session idle after an answer lands elsewhere', async () => {
+		let complete = () => undefined;
+		vi.mocked(apiRequestContactSheetEmail).mockReturnValue(
+			new Promise<void>((resolve) => {
+				complete = resolve;
+			})
+		);
+		const Menu = ({ sessionId }: { sessionId: number }) => {
+			const state = useContactSheetRequest(
+				sessionId,
+				'seeker@example.org'
+			);
+			return (
+				<ContactSheetRequest
+					sessionId={sessionId}
+					email="seeker@example.org"
+					state={state}
+				/>
+			);
+		};
+		const { rerender } = render(<Menu sessionId={42} />);
+		fireEvent.click(screen.getByRole('button'));
+		rerender(<Menu sessionId={43} />);
+		complete();
+		await Promise.resolve();
+		await Promise.resolve();
+		rerender(<Menu sessionId={42} />);
+
+		expect(screen.queryByRole('status')).toBeNull();
+		expect(screen.getByRole('button')).toHaveProperty('disabled', false);
+		vi.mocked(apiRequestContactSheetEmail).mockResolvedValue(undefined);
+		fireEvent.click(screen.getByRole('button'));
+		await waitFor(() =>
+			expect(screen.getByRole('status').textContent).toContain(
+				'contactSheet.sent'
+			)
+		);
+		expect(apiRequestContactSheetEmail).toHaveBeenCalledTimes(2);
+	});
 });
