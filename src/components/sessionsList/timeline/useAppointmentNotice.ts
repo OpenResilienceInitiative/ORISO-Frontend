@@ -36,6 +36,12 @@ export interface AppointmentNotice {
 	/** A move: the slot it had before, shown struck through. */
 	previousStart?: Date;
 	previousEnd?: Date;
+	/**
+	 * A Supervision room (FE#2494): the notice takes the supervision
+	 * composer's protected mail path, so only the supervision pair is
+	 * notified, never the advice seeker of the case.
+	 */
+	feedbackMailIntent?: boolean;
 }
 
 export const useAppointmentNotice = () => {
@@ -52,7 +58,8 @@ export const useAppointmentNotice = () => {
 			sessionId,
 			matrixRoomId,
 			previousStart,
-			previousEnd
+			previousEnd,
+			feedbackMailIntent = false
 		}: AppointmentNotice) => {
 			const date = formatEntrySlot(
 				{ start, end },
@@ -82,7 +89,12 @@ export const useAppointmentNotice = () => {
 				matrixRoomId,
 				null,
 				false,
-				senderName
+				senderName,
+				null,
+				null,
+				undefined,
+				false,
+				feedbackMailIntent
 			).catch(() => {
 				addNotification?.({
 					notificationType: NOTIFICATION_TYPE_ERROR,

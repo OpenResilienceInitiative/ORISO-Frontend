@@ -1,4 +1,4 @@
-import { TeamDiscussionIconButton } from '../teamDiscussion/TeamDiscussionBadge';
+import { TeamChatPennant } from '../teamDiscussion/TeamChatPennant';
 import { FittedHeaderTitle } from './FittedHeaderTitle';
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
@@ -569,6 +569,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isConsultantUser =
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('CONSULTANT');
+	// FE#2494: the counsellor's appointment with the supervisor hangs as a
+	// second pennant; the supervisor's own view has nobody fixed to show.
+	const appointmentSupervisorId =
+		isConsultantUser && !isSupervisor
+			? supervisors.find(
+					(s) =>
+						s.supervisorConsultantId &&
+						s.supervisorConsultantId !== userData.userId
+				)?.supervisorConsultantId
+			: undefined;
 	const isAskerUser =
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
@@ -576,6 +586,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(userData?.userRoles || []).includes('ANONYMOUS');
 	const isAnonymousAsker =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	// The agency line, topic and team chat are for registered users only.
+	const showMetaDetails =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// FE#2494: the appointment pennant also for anonymous advice seekers.
+	const showAppointmentSlot =
+		activeSession.isSession && (isAskerUser || isConsultantUser);
 	const assignedConsultantLabel = resolveAssignedConsultantLabel(
 		activeSession,
 		userData,
@@ -1252,18 +1269,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					!activeSession.isGroup &&
 					!activeSession.isEnquiry && <AddonSessionActions />}
-				{props.teamChatIndicator &&
-					hasUserAuthority(
-						AUTHORITIES.CONSULTANT_DEFAULT,
-						userData
-					) && (
-						<TeamDiscussionIconButton
-							showLabel
-							active={props.teamChatIndicator.active}
-							onOpen={props.teamChatIndicator.onOpen}
-							data-cy="session-header-team-chat"
-						/>
-					)}
+				{/* FE#2494: the Team-Chat hangs as a pennant beside the topic. */}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
@@ -1367,10 +1373,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				/>
 			</div>
 
-			{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
-				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) && (
+			{(showMetaDetails || showAppointmentSlot) && (
 				<div className="sessionInfo__metaInfo">
-					{agencyLine && (
+					{showMetaDetails && agencyLine && (
 						/*
 						 * The counselling centre with its postcode (#895). The
 						 * postcode is what the advice seeker chose their agency
@@ -1385,7 +1390,36 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							{agencyLine}
 						</div>
 					)}
-					{topic?.name && <SessionTopic name={topic.name} />}
+					{showMetaDetails && topic?.name && (
+						<SessionTopic name={topic.name} />
+					)}
+					{/* FE#2494: the team chat hangs beside the topic as a
+					    pennant; the name row keeps its width for the name. */}
+					{showMetaDetails &&
+						props.teamChatIndicator &&
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && (
+							<TeamChatPennant
+								active={props.teamChatIndicator.active}
+								onOpen={props.teamChatIndicator.onOpen}
+							/>
+						)}
+					{/* FE#2494: the appointments hang beside the topic. */}
+					{showAppointmentSlot && (
+						<ConversationAppointmentSlot
+							onCreateChange={handleCreateAppointmentChange}
+							supervisorId={appointmentSupervisorId}
+							canChange={
+								// Handover co-access may create too: the backend decides
+								// for a colleague who is not the assigned counsellor.
+								isConsultantUser &&
+								!isChatFinished &&
+								activeSession.item.status === STATUS_ACTIVE
+							}
+						/>
+					)}
 				</div>
 			)}
 			{activeSession.isSession && isConsultantUser && (
@@ -1396,18 +1430,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					   answers only for the invitation's own counsellor. */
 					enabled
 					onChange={handleSendNewLinkChange}
-				/>
-			)}
-			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
-				<ConversationAppointmentSlot
-					onCreateChange={handleCreateAppointmentChange}
-					canChange={
-						// Handover co-access may create too: the backend decides
-						// for a colleague who is not the assigned counsellor.
-						isConsultantUser &&
-						!isChatFinished &&
-						activeSession.item.status === STATUS_ACTIVE
-					}
 				/>
 			)}
 			{isAskerUser &&

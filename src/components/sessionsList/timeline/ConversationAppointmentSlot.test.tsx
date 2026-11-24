@@ -47,6 +47,10 @@ vi.mock('./useAppointmentNotice', () => ({
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
 }));
+// FE#2494: the supervisor's pennant has its own tests.
+vi.mock('./useSupervisorPennant', () => ({
+	useSupervisorPennant: () => undefined
+}));
 vi.mock('./useAppointmentActions', () => ({
 	useAppointmentActions: () => onAction
 }));
@@ -76,10 +80,11 @@ const requested = (days = 2) => ({
 });
 
 const MARKER = 'sessionList.timeline.appointment.request.marker';
+/* FE#2494: the pennant's date; a click on it opens the pennant's menu. */
 const splitButtonLabel = async (container: HTMLElement) => {
 	const main = await waitFor(() => {
 		const found = container.querySelector<HTMLElement>(
-			'[data-cy="room-next-appointment"] .splitButton__main'
+			'[data-cy="room-next-appointment"] .appointmentPennant__text'
 		);
 		expect(found).not.toBeNull();
 		return found!;
@@ -397,11 +402,12 @@ describe('ConversationAppointmentSlot', () => {
 					'[data-testid="appointment-request-card"]'
 				)
 			).toBeNull();
+			// FE#2494: one pennant, which opens the menu as a whole.
 			expect(
 				container.querySelectorAll(
 					'[data-cy="room-next-appointment"] button'
 				)
-			).toHaveLength(2);
+			).toHaveLength(1);
 		});
 
 		it('leaves the split button when its start passes, without a reload', async () => {

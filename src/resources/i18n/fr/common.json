@@ -4892,7 +4892,8 @@
 					"failedTitle": "Demande sans réponse",
 					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
 					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
-				}
+				},
+				"menu": "Menu du rendez-vous"
 			}
 		},
 		"deletedAsker": {
@@ -6010,6 +6011,33 @@
 				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
 				"mainPane": "Chat de conseil",
 				"secondaryPane": "Salle annexe"
+			}
+		},
+		"appointment": {
+			"title": "Prendre rendez-vous avec la supervision",
+			"with": "Avec",
+			"description": "Choisissez le jour, l'heure et le type. Le rendez-vous apparaît ensuite dans les deux agendas.",
+			"unreachable": "{{name}} n'est pas accessible depuis votre agenda. Un rendez-vous n'est pas possible ici ; écrivez à {{name}} dans le chat de supervision.",
+			"failed": "Le rendez-vous n'a pas pu être enregistré. Veuillez réessayer.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
+			"menu": {
+				"accept": {
+					"title": "Accepter le rendez-vous",
+					"description": "Le rendez-vous est alors confirmé."
+				},
+				"decline": {
+					"title": "Refuser le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"cancel": {
+					"title": "Annuler le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"calendar": {
+					"title": "Ouvrir dans l'agenda",
+					"description": "Vous pouvez aussi y déplacer le rendez-vous."
+				}
 			}
 		}
 	},
