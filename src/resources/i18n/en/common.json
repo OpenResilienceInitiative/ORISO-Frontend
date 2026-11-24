@@ -6620,6 +6620,78 @@
 					"intro": "Open a conversation and start the call when it suits. After the call, the chat conversation carries on as usual."
 				}
 			}
+		},
+		"askerFirstSteps": {
+			"title": "First steps",
+			"summary": "Where to find your messages, appointments and profile.",
+			"step": {
+				"welcome": {
+					"title": "Welcome!",
+					"intro": "Good to have you here. This short tour shows you where to find everything important. Press “Next” to go to the next step."
+				},
+				"sessions": {
+					"title": "My consultations",
+					"intro": "Here you find your conversations with the counselling service. Click a conversation to open it."
+				},
+				"composer": {
+					"title": "Write a message",
+					"intro": "Write your message to the counselling service here. Take your time. The reply appears in the same conversation."
+				},
+				"appointments": {
+					"title": "My dates",
+					"intro": "Here you find your appointments with the counselling service, for example for a video call."
+				},
+				"tools": {
+					"title": "My tools",
+					"intro": "Here you find helpful tools that your counselling centre provides for you."
+				},
+				"profile": {
+					"title": "Profile",
+					"intro": "In your profile you change your details and settings, for example password, notifications and language."
+				},
+				"helpTours": {
+					"title": "Tours",
+					"intro": "Under Profile → Help → Tours you can start any tour again. The “?” button at the bottom right is even quicker."
+				}
+			}
+		},
+		"askerSettings": {
+			"title": "Settings",
+			"summary": "Password, recovery key, notifications and display — briefly explained.",
+			"step": {
+				"intro": {
+					"title": "Your settings",
+					"intro": "Here you adapt the app to your needs. We show you the most important points. Nothing is changed along the way."
+				},
+				"password": {
+					"title": "Change password",
+					"intro": "Here you can change your password. Choose a password that only you know."
+				},
+				"twoFactor": {
+					"title": "Two-factor authentication",
+					"intro": "This gives your login extra protection. Besides your password you then need a code, for example from an app."
+				},
+				"recovery": {
+					"title": "Recovering old messages",
+					"intro": "Your messages are encrypted. With a recovery key you can read them on a new device too. Keep it in a safe place."
+				},
+				"deleteAccount": {
+					"title": "Delete account",
+					"intro": "Here you can delete your account if you no longer need it. The app asks you again first — nothing happens without your confirmation."
+				},
+				"notifications": {
+					"title": "Notifications",
+					"intro": "Here you decide how you hear about new messages, for example by e-mail."
+				},
+				"display": {
+					"title": "Display",
+					"intro": "Here you change how the app looks, for example the menu appearance or the language."
+				},
+				"done": {
+					"title": "Done!",
+					"intro": "Now you know your settings. You can find them any time under Profile → Settings."
+				}
+			}
 		}
 	},
 	"weekday": {

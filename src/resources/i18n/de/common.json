@@ -6695,6 +6695,78 @@
 					"intro": "Öffnen Sie ein Gespräch und starten Sie den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
 				}
 			}
+		},
+		"askerFirstSteps": {
+			"title": "Erste Schritte",
+			"summary": "Wo Sie Ihre Nachrichten, Termine und Ihr Profil finden.",
+			"step": {
+				"welcome": {
+					"title": "Willkommen!",
+					"intro": "Schön, dass Sie da sind. Dieser kurze Rundgang zeigt Ihnen, wo Sie alles Wichtige finden. Mit „Weiter“ geht es zum nächsten Schritt."
+				},
+				"sessions": {
+					"title": "Meine Beratungen",
+					"intro": "Hier finden Sie Ihre Gespräche mit der Beratung. Ein Klick auf ein Gespräch öffnet es."
+				},
+				"composer": {
+					"title": "Nachricht schreiben",
+					"intro": "Hier schreiben Sie Ihre Nachricht an die Beratung. Nehmen Sie sich ruhig Zeit. Die Antwort erscheint im selben Gespräch."
+				},
+				"appointments": {
+					"title": "Meine Termine",
+					"intro": "Hier finden Sie Ihre Termine mit der Beratung, zum Beispiel für ein Video-Gespräch."
+				},
+				"tools": {
+					"title": "Meine Tools",
+					"intro": "Hier finden Sie Hilfsmittel, die Ihre Beratungsstelle für Sie bereitstellt."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "In Ihrem Profil ändern Sie Ihre Angaben und Einstellungen, zum Beispiel Passwort, Benachrichtigungen und Sprache."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Unter Profil → Hilfe → Rundgänge können Sie jeden Rundgang noch einmal starten. Schneller geht es mit dem Knopf „?“ unten rechts."
+				}
+			}
+		},
+		"askerSettings": {
+			"title": "Einstellungen",
+			"summary": "Passwort, Ersatzschlüssel, Benachrichtigungen und Anzeige — kurz erklärt.",
+			"step": {
+				"intro": {
+					"title": "Ihre Einstellungen",
+					"intro": "Hier passen Sie die App an Ihre Wünsche an. Wir zeigen Ihnen die wichtigsten Punkte. Dabei wird nichts verändert."
+				},
+				"password": {
+					"title": "Passwort ändern",
+					"intro": "Hier können Sie Ihr Passwort ändern. Wählen Sie ein Passwort, das nur Sie kennen."
+				},
+				"twoFactor": {
+					"title": "Zwei-Faktor-Authentifizierung",
+					"intro": "Damit schützen Sie Ihre Anmeldung zusätzlich. Neben dem Passwort brauchen Sie dann einen Code, zum Beispiel aus einer App."
+				},
+				"recovery": {
+					"title": "Wiederherstellung alter Nachrichten",
+					"intro": "Ihre Nachrichten sind verschlüsselt. Mit einem Ersatzschlüssel können Sie sie auch auf einem neuen Gerät lesen. Bewahren Sie ihn gut auf."
+				},
+				"deleteAccount": {
+					"title": "Account löschen",
+					"intro": "Hier können Sie Ihren Account löschen, wenn Sie ihn nicht mehr brauchen. Vorher fragt die App noch einmal nach — ohne Ihre Bestätigung passiert nichts."
+				},
+				"notifications": {
+					"title": "Benachrichtigungen",
+					"intro": "Hier legen Sie fest, wie Sie von neuen Nachrichten erfahren, zum Beispiel per E-Mail."
+				},
+				"display": {
+					"title": "Anzeige",
+					"intro": "Hier ändern Sie, wie die App aussieht, zum Beispiel die Menüdarstellung oder die Sprache."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Jetzt kennen Sie Ihre Einstellungen. Sie finden sie jederzeit unter Profil → Einstellungen."
+				}
+			}
 		}
 	},
 	"weekday": {

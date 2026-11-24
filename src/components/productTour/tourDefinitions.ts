@@ -7,6 +7,8 @@ import {
 } from './tours/groupCircleTour';
 import { consultantProfileTour } from './tours/profileTour';
 import type { TourDefinition } from './types';
+import { askerFirstStepsTour } from './tours/askerFirstStepsTour';
+import { askerSettingsTour } from './tours/askerSettingsTour';
 import { consultantLiveChatTour } from './tours/liveChatTour';
 import { consultantTimelineTour } from './tours/timelineTour';
 import { consultantVideoCallTour } from './tours/videoCallTour';
@@ -145,7 +147,9 @@ export const frontendTopicTours: TourDefinition[] = [
 	consultantLiveChatTour,
 	consultantTimelineTour,
 	consultantVideoCallTour,
-	consultantMailCounsellingTour
+	consultantMailCounsellingTour,
+	askerFirstStepsTour,
+	askerSettingsTour
 ];
 
 // Gates beyond a tenant flag (`tourCatalogue.ts`).

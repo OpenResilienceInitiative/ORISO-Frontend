@@ -269,7 +269,10 @@ import {
 	withAddonPanel
 } from '../../addons/addonPanel';
 import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
-import { canRenderClientComposer } from './clientComposerPolicy';
+import {
+	canRenderClientComposer,
+	shouldHideHeaderBackOnPhone
+} from './clientComposerPolicy';
 import {
 	SelectionReplyLayer,
 	type SideRoomReply,
@@ -3552,6 +3555,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
 	// Phone: a side panel fills the screen instead of the main chat.
+	// The same guard that renders the main composer below; it carries the
+	// phone's back arrow (D7), so the header only drops its own then.
+	const mainComposerShown =
+		!shouldShowGroupConsentGate &&
+		!isRejectedSession &&
+		!isFinishedLiveChatOfLastingAccount &&
+		areRobotMessagesComplete &&
+		canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat: blocksConversation
+		});
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
 	const { onMainChatHiddenChange } = props;
 	useEffect(() => {
@@ -3719,12 +3734,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							// D7: the composer carries the phone's back arrow. The
-							// group privacy gate renders no composer, so its header
-							// keeps the arrow there.
-							hideBackButton={
-								isPhoneLayout && !shouldShowGroupConsentGate
-							}
+							// D7: the composer carries the phone's back arrow. Where
+							// no main composer renders (enquiry, read-only, closed,
+							// group privacy gate) the header keeps it.
+							hideBackButton={shouldHideHeaderBackOnPhone({
+								isPhoneLayout,
+								mainComposerShown
+							})}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
 							teamChatUnreadCount={teamUnreadCount}
