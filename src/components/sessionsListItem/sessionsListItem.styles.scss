@@ -680,6 +680,14 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
+			// Dark scheme: the hover surface is light, keep the dark ink.
+			html[data-oriso-personal-scheme='dark'] & {
+				.sessionsListItem__dropdownOptionTitle,
+				.sessionsListItem__dropdownOptionShortcut {
+					color: var(--m3-on-secondary-fixed, #1a1c1e);
+				}
+			}
+
 			.sessionsListItem__dropdownOptionDescription {
 				color: var(--m3-on-primary-fixed, #410001);
 			}
@@ -695,6 +703,14 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
 				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			}
+
+			// Dark scheme: the hover surface is light, keep the dark ink.
+			html[data-oriso-personal-scheme='dark'] & {
+				.sessionsListItem__dropdownOptionTitle,
+				.sessionsListItem__dropdownOptionShortcut {
+					color: var(--m3-on-secondary-fixed, #1a1c1e);
+				}
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
