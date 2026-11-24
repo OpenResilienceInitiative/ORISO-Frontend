@@ -40,6 +40,10 @@ export const useSelectionVoiceRecorder = (): {
 	takeFor: (src: string) => SelectionVoiceTake | undefined;
 	release: (src: string) => void;
 } => {
+	const stoppingRef = useRef<Promise<{
+		src: string;
+		durationSec: number;
+	}> | null>(null);
 	const takesRef = useRef(new Map<string, SelectionVoiceTake>());
 	const activeRef = useRef<{
 		recorder: MediaRecorder;
@@ -115,8 +119,16 @@ export const useSelectionVoiceRecorder = (): {
 				};
 				mediaRecorder.start();
 			},
-			stop: () =>
-				new Promise((resolve, reject) => {
+			stop: () => {
+				// Several callers may ask while the recorder still flushes
+				// its last chunk: all get the same take.
+				if (stoppingRef.current) {
+					return stoppingRef.current;
+				}
+				const stopping = new Promise<{
+					src: string;
+					durationSec: number;
+				}>((resolve, reject) => {
 					const active = activeRef.current;
 					if (!active) {
 						reject(new Error('Not recording'));
@@ -163,7 +175,16 @@ export const useSelectionVoiceRecorder = (): {
 					}
 					active.recorder.onstop = finish;
 					active.recorder.stop();
-				}),
+				});
+				stoppingRef.current = stopping;
+				const clear = () => {
+					if (stoppingRef.current === stopping) {
+						stoppingRef.current = null;
+					}
+				};
+				stopping.then(clear, clear);
+				return stopping;
+			},
 			// FE#2494 (Frank, 24 Nov): Pause instead of Stop; stacking or
 			// sending stops the take cleanly first.
 			pause: () => {

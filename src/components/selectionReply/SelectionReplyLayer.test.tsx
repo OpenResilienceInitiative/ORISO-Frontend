@@ -712,3 +712,31 @@ describe('SelectionReplyLayer: side chat closes while the take stops (#2505)', (
 		}
 	);
 });
+
+describe('SelectionReplyLayer: one delivery per take (#2505)', () => {
+	afterEach(cleanup);
+
+	it('a second Stack while the take stops neither stops twice nor delivers twice', async () => {
+		const stop = deferred<{ src: string; durationSec: number }>();
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(() => stop.promise),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		const stack = screen.getByLabelText(
+			'message.selectionReply.addToComposer'
+		);
+		fireEvent.click(stack);
+		fireEvent.click(stack);
+		await act(async () => stop.resolve({ src: 'blob:t', durationSec: 2 }));
+
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).toHaveBeenCalledTimes(1);
+	});
+});

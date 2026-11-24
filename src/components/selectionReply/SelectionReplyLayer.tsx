@@ -207,6 +207,7 @@ export const SelectionReplyLayer = ({
 	// which side chats are still open THEN, not the values of the click.
 	const draftRef = useRef(draft);
 	draftRef.current = draft;
+	const finishingRef = useRef(false);
 	const sideRoomsRef = useRef(onReplyInSideRoom);
 	sideRoomsRef.current = onReplyInSideRoom;
 	const [voice, setVoice] = useState<SelectionReplyVoice>(
@@ -541,7 +542,18 @@ export const SelectionReplyLayer = ({
 		deliver: (next: SelectionAnswer) => void
 	) => {
 		if (voice.mode === 'recording') {
-			const take = await stopVoice();
+			// A second Send/Stack while the take still stops would stop it
+			// twice and could deliver an empty take: one delivery at a time.
+			if (finishingRef.current) {
+				return;
+			}
+			finishingRef.current = true;
+			let take: Awaited<ReturnType<typeof stopVoice>>;
+			try {
+				take = await stopVoice();
+			} finally {
+				finishingRef.current = false;
+			}
 			if (!take) {
 				// Finishing the take failed (or it was discarded meanwhile):
 				// keep the draft and the error, never send text alone.
