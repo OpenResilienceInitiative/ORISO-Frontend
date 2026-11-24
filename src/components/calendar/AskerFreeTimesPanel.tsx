@@ -118,6 +118,7 @@ export const AskerFreeTimesPanel = ({
 	useEffect(
 		() =>
 			onAppointmentsChanged(() => {
+				setSlots('loading');
 				setTime(null);
 				if (probing) setMedium(media[0]);
 				setReads((count) => count + 1);

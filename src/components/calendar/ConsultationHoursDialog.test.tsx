@@ -284,7 +284,7 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 
 	const saveOnce = (props: {
 		slot: { start: Date; end: Date };
-		blockerConflict?: boolean;
+		blockerConflict?: { start: Date; end: Date };
 	}) => {
 		const onSaveOneOff = vi.fn();
 		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
@@ -326,9 +326,20 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		};
 		expect(saveOnce({ slot }).overBlocker).toBe(false);
 		cleanup();
-		expect(saveOnce({ slot, blockerConflict: true }).overBlocker).toBe(
+		expect(saveOnce({ slot, blockerConflict: slot }).overBlocker).toBe(
 			true
 		);
+		cleanup();
+		// Refused for another interval: no override for this one.
+		expect(
+			saveOnce({
+				slot,
+				blockerConflict: {
+					start: new Date(2026, 11, 20, 12, 0),
+					end: new Date(2026, 11, 20, 13, 0)
+				}
+			}).overBlocker
+		).toBe(false);
 	});
 
 	it('switches "Einmalig" and "Jede Woche" with the arrow keys', () => {

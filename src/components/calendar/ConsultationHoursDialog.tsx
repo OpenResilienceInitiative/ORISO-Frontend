@@ -82,10 +82,11 @@ export interface ConsultationHoursFormProps {
 	/** One's entries, to say when a one-off lies over a Sperrzeit. */
 	entries?: CalendarEntry[];
 	/**
-	 * The last save met a Sperrzeit outside the loaded entries: the form
-	 * says so, and saving again releases over it.
+	 * The interval the last save was refused for, over a Sperrzeit outside
+	 * the loaded entries: for that same interval the form says so, and
+	 * saving again releases over it.
 	 */
-	blockerConflict?: boolean;
+	blockerConflict?: { start: Date; end: Date };
 	now?: Date;
 	onClose: () => void;
 }
@@ -102,7 +103,7 @@ export const useConsultationHoursForm = ({
 	onSaveOneOff,
 	slot,
 	entries = [],
-	blockerConflict = false,
+	blockerConflict,
 	now = new Date(),
 	onClose
 }: ConsultationHoursFormProps): DialogForm => {
@@ -190,8 +191,12 @@ export const useConsultationHoursForm = ({
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
 	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
 	   overrides what was blocked). */
+	const refusedHere =
+		blockerConflict !== undefined &&
+		blockerConflict.start.getTime() === onceStart.getTime() &&
+		blockerConflict.end.getTime() === onceEnd.getTime();
 	const overBlocker =
-		blockerConflict ||
+		refusedHere ||
 		entries.some(
 			(e) =>
 				e.type === 'blocker' &&

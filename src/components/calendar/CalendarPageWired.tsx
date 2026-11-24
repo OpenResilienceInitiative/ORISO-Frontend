@@ -1085,6 +1085,8 @@ export const CalendarPageWired = () => {
 			noticeMinutes: once.noticeMinutes,
 			overBlocker: Boolean(once.overBlocker)
 		});
+		// A read started before this save knows nothing of it: drop it.
+		oneOffRead.current += 1;
 		setOneOffs((known) =>
 			[...(known ?? []), oneOffFromApi(saved)].sort(
 				(a, b) => a.start.getTime() - b.start.getTime()

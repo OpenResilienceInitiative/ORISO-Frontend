@@ -85,7 +85,7 @@ export interface NewEntryDialogProps {
 	/** "Einmalig": releases the chosen stretch once (FE#2494 *2b). */
 	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => void;
 	/** The last one-off save met a Sperrzeit the form could not see. */
-	oneOffBlockerConflict?: boolean;
+	oneOffBlockerConflict?: { start: Date; end: Date };
 	/** Termin: "Weitere Personen per Link einladen", as in the 1:1. */
 	allowGuestInvite?: boolean;
 	/** Termin: the media "Direkteinladung erlauben" allows (the Art's medium). */

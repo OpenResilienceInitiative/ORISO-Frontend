@@ -1618,15 +1618,20 @@ export const CalendarPage = ({
 	   tab "Sprechzeit" of "Neuer Eintrag", FE#2494 *2b) would show the old
 	   set and save it back over this one. A failed save keeps the draft
 	   for a retry. */
+	/* Closes only the dialog that saved: another opened meanwhile keeps
+	   its draft. */
 	const settleConsultationSave = (saved: boolean | Promise<boolean>) => {
+		const origin = dialog;
+		const close = () =>
+			setDialog((current) => (current === origin ? null : current));
 		if (typeof saved === 'boolean') {
-			if (saved) setDialog(null);
+			if (saved) close();
 			return;
 		}
 		setSavingConsultationHours(true);
 		void saved.then((ok) => {
 			setSavingConsultationHours(false);
-			if (ok) setDialog(null);
+			if (ok) close();
 		});
 	};
 	const saveConsultationHours = (hours: ConsultationHours) =>
@@ -1637,9 +1642,12 @@ export const CalendarPage = ({
 		);
 	/* A Sperrzeit the loaded entries do not show refuses the release: the
 	   form says so, and saving again releases over it. */
-	const [oneOffBlockerConflict, setOneOffBlockerConflict] = useState(false);
+	const [oneOffBlockerConflict, setOneOffBlockerConflict] = useState<{
+		start: Date;
+		end: Date;
+	}>();
 	useEffect(() => {
-		if (!dialog) setOneOffBlockerConflict(false);
+		if (!dialog) setOneOffBlockerConflict(undefined);
 	}, [dialog]);
 	const saveOneOffConsultation = (oneOff: OneOffConsultation) =>
 		settleConsultationSave(
@@ -1649,7 +1657,10 @@ export const CalendarPage = ({
 				(error) => {
 					if (!isConsultationOnceOverBlocker(error))
 						return { message: t('calendar.saveFailed') };
-					setOneOffBlockerConflict(true);
+					setOneOffBlockerConflict({
+						start: oneOff.start,
+						end: oneOff.end
+					});
 					return {
 						message: t(
 							'calendar.consultationHours.overBlockerConflict'

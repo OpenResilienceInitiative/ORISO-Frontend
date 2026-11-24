@@ -168,6 +168,39 @@ describe('Freie Sprechzeiten (FE#2494 *2c)', () => {
 		).toBeTruthy();
 	});
 
+	it('shows none of the old times while an appointment change reloads them', async () => {
+		let answer: (found: AppointmentSlot[]) => void = () => {};
+		const loadSlots = vi
+			.fn()
+			.mockResolvedValueOnce([slot()])
+			.mockImplementation(
+				() =>
+					new Promise<AppointmentSlot[]>((resolve) => {
+						answer = resolve;
+					})
+			);
+		render(
+			<AskerFreeTimesPanel
+				sessionId={7}
+				counsellorName="Laura Berger"
+				loadSlots={loadSlots}
+				bookSlot={vi.fn()}
+				onBooked={vi.fn()}
+			/>
+		);
+		fireEvent.click(await screen.findByRole('button', { name: '10:00' }));
+		act(() => notifyAppointmentsChanged());
+		expect(screen.queryByRole('button', { name: '10:00' })).toBeNull();
+		act(() => answer([slot()]));
+		expect(
+			await screen.findByRole('button', { name: '10:00' })
+		).toBeTruthy();
+		expect(screen.getByTestId('calendar-free-times-book')).toHaveProperty(
+			'disabled',
+			true
+		);
+	});
+
 	it('changes between video and phone with the arrow keys', async () => {
 		panel([slot()]);
 		const video = await screen.findByRole('radio', {
