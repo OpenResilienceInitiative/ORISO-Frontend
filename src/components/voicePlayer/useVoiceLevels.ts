@@ -87,6 +87,12 @@ export const useVoiceLevels = (
 			analyser = context.createAnalyser();
 			analyser.fftSize = 512;
 			source.connect(analyser);
+			// Opened after the permission prompt, i.e. outside the click:
+			// Safari/iOS and Chrome's autoplay policy start it suspended,
+			// and a suspended analyser only ever reads silence.
+			if (context.state === 'suspended') {
+				context.resume().catch(() => undefined);
+			}
 		} catch {
 			return undefined;
 		}

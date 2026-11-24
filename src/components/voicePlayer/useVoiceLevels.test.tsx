@@ -46,7 +46,12 @@ describe('levelFromSamples', () => {
 class FakeAudioContext {
 	static instances: FakeAudioContext[] = [];
 	static amplitude = 0;
-	state: 'running' | 'closed' = 'running';
+	static initialState: 'running' | 'suspended' = 'running';
+	state: 'running' | 'suspended' | 'closed' = FakeAudioContext.initialState;
+	resume = vi.fn(() => {
+		this.state = 'running';
+		return Promise.resolve();
+	});
 	source = { connect: vi.fn(), disconnect: vi.fn() };
 	close = vi.fn(() => {
 		this.state = 'closed';
@@ -73,6 +78,7 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	FakeAudioContext.instances = [];
 	FakeAudioContext.amplitude = 0;
+	FakeAudioContext.initialState = 'running';
 	vi.stubGlobal('AudioContext', FakeAudioContext);
 });
 
@@ -98,6 +104,21 @@ describe('useVoiceLevels', () => {
 		unmount();
 		expect(context.source.disconnect).toHaveBeenCalled();
 		expect(context.close).toHaveBeenCalledTimes(1);
+	});
+
+	it('resumes an audio context the browser started suspended', () => {
+		FakeAudioContext.initialState = 'suspended';
+		const stream = fakeStream();
+		renderHook(() => useVoiceLevels(stream, 4));
+		const [context] = FakeAudioContext.instances;
+		expect(context.resume).toHaveBeenCalledTimes(1);
+		expect(context.state).toBe('running');
+	});
+
+	it('does not resume a context that already runs', () => {
+		const stream = fakeStream();
+		renderHook(() => useVoiceLevels(stream, 4));
+		expect(FakeAudioContext.instances[0].resume).not.toHaveBeenCalled();
 	});
 
 	it('uses one audio context per stream and never leaves the old one open', () => {
