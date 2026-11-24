@@ -605,7 +605,7 @@ $profile-footer-justify-content: center !default;
 			box-shadow: none;
 
 			.profile__content__title {
-				background: #fff;
+				background: var(--m3-surface-container-lowest, #fff);
 				border: 1px solid #e5e7eb;
 				border-radius: 8px;
 				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);

@@ -202,6 +202,15 @@ describe('Personal display in the counsellor profile', () => {
 			});
 
 			cy.reload();
+			cy.get('html')
+				.should('have.attr', 'data-oriso-personal-scheme', 'dark')
+				.and('have.attr', 'data-oriso-contrast-level', 'high')
+				.and('have.attr', 'data-oriso-personal-text-size', '150');
+			cy.contains(card + ' h5', 'Zugänglichkeit').should(
+				'have.css',
+				'font-size',
+				'36px'
+			);
 			cy.get(card + ' output').should('have.text', '150 %');
 			cy.contains(card + ' label', /^Dunkel$/)
 				.find('input')

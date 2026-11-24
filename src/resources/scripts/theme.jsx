@@ -58,7 +58,7 @@ const createAppTheme = (
 				)
 			},
 			info: {
-				main: loginUsesDark()
+				main: dark
 					? getCssVarValue('--m3-on-surface', '#e4e2e2')
 					: getCssVarValue('--black', '#000000'),
 				light: getCssVarValue('--m3-on-surface-variant', '#6b7280')
@@ -289,7 +289,9 @@ const createAppTheme = (
 						'minHeight': 'auto',
 						'padding': '12px 16px',
 						'borderRadius': '8px',
-						'color': '#4c555f',
+						'color': dark
+							? getCssVarValue('--m3-on-surface', '#e4e2e2')
+							: '#4c555f',
 						'fontFamily': getCssVarValue(
 							'--font-family-sans-serif'
 						),

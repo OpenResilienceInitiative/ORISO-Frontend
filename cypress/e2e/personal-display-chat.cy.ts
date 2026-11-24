@@ -76,13 +76,6 @@ const mockChat = (deviceId: string) => {
 		`**/service/users/sessions/${sessionId}/appointments`,
 		[]
 	);
-	cy.intercept(
-		'PUT',
-		'https://matrix.test/_matrix/**/send/m.room.message/*',
-		() => {
-			throw new Error('This test only edits a draft');
-		}
-	);
 	cy.intercept('GET', '**/service/conversations/consultants/availability*', {
 		available: false
 	});
@@ -155,6 +148,15 @@ const mockChat = (deviceId: string) => {
 			request.reply({});
 		}
 	});
+	// Registered after the broad Matrix handler: Cypress tries the newest
+	// handler first, so a message send still reaches this guard.
+	cy.intercept(
+		'PUT',
+		'https://matrix.test/_matrix/**/send/m.room.message/*',
+		() => {
+			throw new Error('This test only edits a draft');
+		}
+	);
 
 	const session = generateAskerSession();
 	Object.assign(session.session, {
