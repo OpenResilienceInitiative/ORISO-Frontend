@@ -929,22 +929,6 @@ const preview: Preview = {
 		return () => finish.complete();
 	},
 	parameters: {
-		options: {
-			storySort: {
-				order: [
-					'Entry flows',
-					[
-						'Overview',
-						'Postcode counselling',
-						'Live chat',
-						'Self-help groups',
-						'Temporary guests',
-						'Existing account'
-					],
-					'*'
-				]
-			}
-		},
 		i18n,
 		a11y: {
 			options: {
