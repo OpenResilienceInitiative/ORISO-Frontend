@@ -108,15 +108,28 @@ const memberName = (matrixRoom: any, userId: string): string => {
  * default 50); the assigned counsellor holds 100, advice seekers 0,
  * supervisors 10 (UserService AssignEnquiryFacade, SessionSupervisorFacade).
  */
-const isRoomModerator = (matrixRoom: any, userId: string): boolean => {
+const isRoomModerator = (
+	matrixRoom: any,
+	userId: string,
+	/* The sender's member at the redaction (`MatrixEvent.sender`, from the
+	   timeline state): a removal stays a removal when the remover's power
+	   drops later. Falls back to the current member. */
+	memberAtEvent?: { powerLevel?: number } | null
+): boolean => {
 	if (!matrixRoom || !userId) return false;
 	const levels = matrixRoom.currentState
 		?.getStateEvents?.('m.room.power_levels', '')
 		?.getContent?.();
 	const redactLevel = typeof levels?.redact === 'number' ? levels.redact : 50;
-	const level = matrixRoom.getMember?.(userId)?.powerLevel;
+	const level =
+		typeof memberAtEvent?.powerLevel === 'number'
+			? memberAtEvent.powerLevel
+			: matrixRoom.getMember?.(userId)?.powerLevel;
 	return typeof level === 'number' && level >= redactLevel;
 };
+
+/* A redaction the server refused stays in the timeline as a local echo. */
+const NOT_SENT = 'not_sent';
 
 /**
  * #2494 *9: the redaction that lifted a blur becomes the platform notice
@@ -128,8 +141,9 @@ const formatBlurRemoval = (event: any, matrixRoom: any) => {
 		event?.getContent?.()?.reason
 	);
 	if (!removal) return null;
+	if (event?.status === NOT_SENT) return null;
 	const removerId = event?.getSender?.() || '';
-	if (!isRoomModerator(matrixRoom, removerId)) return null;
+	if (!isRoomModerator(matrixRoom, removerId, event?.sender)) return null;
 	const target = removal.targetEventId
 		? matrixRoom?.findEventById?.(removal.targetEventId)
 		: undefined;
@@ -146,6 +160,7 @@ const formatBlurRemoval = (event: any, matrixRoom: any) => {
 		},
 		blurRemoved: {
 			targetEventId: removal.targetEventId,
+			targetSenderId,
 			targetSenderName: targetSenderId
 				? memberName(matrixRoom, targetSenderId)
 				: undefined
@@ -157,9 +172,15 @@ const isLiftedBlur = (event: any, matrixRoom: any): boolean => {
 	const redaction =
 		event?.getUnsigned?.()?.redacted_because ??
 		event?.getRedactionEvent?.();
-	return (
-		Boolean(parsePassageBlurRemovedReason(redaction?.content?.reason)) &&
-		isRoomModerator(matrixRoom, redaction?.sender)
+	if (!parsePassageBlurRemovedReason(redaction?.content?.reason))
+		return false;
+	const redactionEvent = redaction?.event_id
+		? matrixRoom?.findEventById?.(redaction.event_id)
+		: undefined;
+	return isRoomModerator(
+		matrixRoom,
+		redaction?.sender,
+		redactionEvent?.sender
 	);
 };
 

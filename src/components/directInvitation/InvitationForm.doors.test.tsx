@@ -245,6 +245,23 @@ describe('one invitation form behind three doors', () => {
 		);
 	});
 
+	it('says when the topics could not load and retries in place (#2494 *1)', () => {
+		const onRetry = vi.fn();
+		open({
+			variant: 'invitation',
+			initial: { start: START, end: END, withAppointment: true },
+			known: { slot: true },
+			linkDetails: { topics: [], loadFailed: true, onRetry }
+		});
+		expect(screen.getByRole('alert').textContent).toContain(
+			'groupChat.loadError.topics'
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.loadError.retry' })
+		);
+		expect(onRetry).toHaveBeenCalledTimes(1);
+	});
+
 	it('offers no new person where the door cannot hand over', () => {
 		open({
 			conversations: { options: [{ sessionId: 7, label: 'mutige_eule' }] }

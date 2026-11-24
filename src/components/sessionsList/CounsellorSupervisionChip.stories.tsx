@@ -4,7 +4,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import { SessionsListToolbar } from './SessionsListToolbar';
-import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+import {
+	sessionMatchesToolbar,
+	type SessionToolbarChipFilter
+} from './sessionToolbarFilters';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	RuntimeSessionCard,
@@ -78,15 +81,17 @@ const ROWS = [
 	row(204, 'Freundlicher Igel Toni', 'Hallo, ich habe eine Frage.', false)
 ];
 
-/* Story stand-in for `isOwnCaseUnderSupervision` (sessionToolbarFilters):
-   my own cases that someone supervises, plus the cases I supervise. */
+/* The production chip filter (`sessionMatchesToolbar`, chip "supervision"),
+   so the story keeps the same membership rules as the list. */
 const isSupervision = (raw: ListItemInterface) =>
-	Boolean(
-		(
-			raw.session as unknown as {
-				supervision?: { supervisorConsultantIds?: string[] };
-			}
-		).supervision?.supervisorConsultantIds?.length
+	sessionMatchesToolbar(
+		raw,
+		buildExtendedSession(raw, ''),
+		'',
+		'supervision',
+		[],
+		[],
+		ME
 	);
 
 const shell: React.CSSProperties = {

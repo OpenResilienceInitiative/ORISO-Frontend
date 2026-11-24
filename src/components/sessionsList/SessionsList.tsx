@@ -1960,7 +1960,14 @@ export const SessionsList = ({
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'supervision':
-					return showSupervisionChip;
+					// #2494 *5: listed for every counsellor in "Meine
+					// Gespräche", so "Fest" can be chosen before any case is
+					// supervised; "Dynamisch" decides whether the chip shows.
+					return (
+						showSupervisionChip ||
+						(isEligibleForSupervision &&
+							type === SESSION_LIST_TYPES.MY_SESSION)
+					);
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -2010,6 +2017,7 @@ export const SessionsList = ({
 		);
 	}, [
 		hasDirectLinkRow,
+		isEligibleForSupervision,
 		rowsByKind,
 		showSupervisionChip,
 		showCreateGroupChatAction,

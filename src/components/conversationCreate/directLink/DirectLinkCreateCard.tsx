@@ -62,6 +62,9 @@ export interface DirectInvitationSetupOptions {
 	 * opens with "Mit Termin" on and this time filled in.
 	 */
 	preset?: InvitationPreset;
+	/** #2494 *1: the topics failed to load; the popup offers a retry. */
+	topicsLoadFailed?: boolean;
+	onRetryTopics?: () => void;
 }
 
 /**
@@ -74,7 +77,9 @@ export const useDirectInvitationSetup = ({
 	agencies,
 	compact = false,
 	onCreated,
-	preset
+	preset,
+	topicsLoadFailed = false,
+	onRetryTopics
 }: DirectInvitationSetupOptions) => {
 	const { t, i18n } = useTranslation();
 	const { create } = useDirectLinks({ load: false });
@@ -153,7 +158,11 @@ export const useDirectInvitationSetup = ({
 			}
 			{...(askDetails
 				? {
-						linkDetails: { topics },
+						linkDetails: {
+							topics,
+							loadFailed: topicsLoadFailed,
+							onRetry: onRetryTopics
+						},
 						...(preset
 							? {
 									known: { slot: true },

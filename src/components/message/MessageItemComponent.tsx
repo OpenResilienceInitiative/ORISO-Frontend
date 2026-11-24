@@ -312,6 +312,8 @@ export interface MessageItem {
 	 */
 	blurRemoved?: {
 		targetEventId?: string | null;
+		/** Matrix ID of that message's sender: the session alias applies. */
+		targetSenderId?: string | null;
 		targetSenderName?: string;
 	};
 	/**
@@ -1990,18 +1992,16 @@ export const MessageItemComponent = ({
 	 */
 	// Session aliases belong only to the exact asker of this session. The
 	// Matrix event can still contain the login or a previous session's name.
+	const isSessionAsker = (senderId?: string | null) =>
+		Boolean(activeSession?.item?.askerMatrixUserId) &&
+		senderId === activeSession?.item?.askerMatrixUserId;
+	const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+	const sessionAskerDeleted =
+		activeSession?.user?.deleted === true ||
+		isDeletedGuest(activeSession?.user?.temporaryAccount);
 	const sessionAskerName = (() => {
-		if (
-			!activeSession?.item?.askerMatrixUserId ||
-			userId !== activeSession.item.askerMatrixUserId
-		)
-			return null;
-		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
-		if (
-			activeSession.user?.deleted === true ||
-			isDeletedGuest(activeSession.user?.temporaryAccount)
-		)
-			return deletedGuestLabel;
+		if (!isSessionAsker(userId)) return null;
+		if (sessionAskerDeleted) return deletedGuestLabel;
 		// Preserve an already anonymized legacy event; it is never identity proof.
 		// The stored session owner above is the only basis for applying this alias.
 		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
@@ -2986,7 +2986,9 @@ export const MessageItemComponent = ({
 
 	if (
 		hideSystemMessages &&
-		(isSystemNotification || Boolean(alias?.messageType))
+		(isSystemNotification ||
+			Boolean(alias?.messageType) ||
+			t === BLUR_REMOVED_MESSAGE_TYPE)
 	) {
 		return null;
 	}
@@ -3065,7 +3067,15 @@ export const MessageItemComponent = ({
 	/* #2494 *9: a lifted blur is a platform notice, the chat's info card —
 	   on my side when I lifted it, else on the left. */
 	if (t === BLUR_REMOVED_MESSAGE_TYPE) {
-		const targetName = blurRemoved?.targetSenderName;
+		/* The same alias rules as a bubble (#1486): the session's asker shows
+		   under the session alias or as deleted guest, never the Matrix
+		   login or a previous session's name. */
+		const targetName = isSessionAsker(blurRemoved?.targetSenderId)
+			? sessionAskerDeleted
+				? deletedGuestLabel
+				: (resolveAssignedAskerDisplayName(activeSession?.user) ??
+					undefined)
+			: blurRemoved?.targetSenderName;
 		return (
 			<div className="messageItem" data-message-id={_id}>
 				{getMessageDate()}

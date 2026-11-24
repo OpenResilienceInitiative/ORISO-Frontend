@@ -249,6 +249,8 @@ export const CalendarPageWired = () => {
 		agencies: directLinkTopics.agencies,
 		compact,
 		preset: invitePreset,
+		topicsLoadFailed: directLinkTopics.failed,
+		onRetryTopics: () => void directLinkTopics.load(),
 		onCreated: (link) => {
 			// The link carries the slot: the calendar shows it as an entry.
 			notifyAppointmentsChanged();

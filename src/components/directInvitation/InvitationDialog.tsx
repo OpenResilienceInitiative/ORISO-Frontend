@@ -173,7 +173,12 @@ export interface InvitationFormProps {
 	 * the Direkteinladung in this one popup. The topic choice shows only
 	 * with more than one topic; the value carries `linkDetails`.
 	 */
-	linkDetails?: { topics: { value: string; label: string }[] };
+	linkDetails?: {
+		topics: { value: string; label: string }[];
+		/** The topics could not load: say so and offer a retry in place. */
+		loadFailed?: boolean;
+		onRetry?: () => void;
+	};
 }
 
 export interface InvitationDialogProps extends InvitationFormProps {
@@ -477,6 +482,19 @@ export const useInvitationForm = ({
 					className="invitationDialog__details"
 					data-section="details"
 				>
+					{linkDetails.loadFailed && (
+						<p className="invitationDialog__error" role="alert">
+							{t('groupChat.loadError.topics')}{' '}
+							{linkDetails.onRetry && (
+								<button
+									type="button"
+									onClick={linkDetails.onRetry}
+								>
+									{t('groupChat.loadError.retry')}
+								</button>
+							)}
+						</p>
+					)}
 					{detailTopics.length > 1 && (
 						<OrisoSelect
 							label={t('directLink.card.topicLabel')}

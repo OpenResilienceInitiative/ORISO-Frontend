@@ -371,6 +371,23 @@ describe('Supervision filter availability (#1306)', () => {
 		await screen.findAllByText('start-batch');
 		expect(screen.queryByText('supervision-filter')).toBeNull();
 	});
+	it('lists Supervision in "Ansicht einstellen" before any case is supervised, so "Fest" can be chosen (#2494 *5)', async () => {
+		render(<ListTree consultant />);
+		await screen.findAllByText('start-batch');
+		expect(screen.queryByText('supervision-filter')).toBeNull();
+		fireEvent.click(
+			document.querySelector<HTMLButtonElement>(
+				'button[type="button"]:not([aria-label])'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				document.querySelector(
+					'[data-cy="display-filter-row-supervision"]'
+				)
+			).not.toBeNull()
+		);
+	});
 	it('offers supervision when the consultant has an explicitly supervised case', async () => {
 		render(<ListTree consultant supervisedByMe />);
 		expect(await screen.findByText('supervision-filter')).toBeTruthy();

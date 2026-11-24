@@ -268,4 +268,34 @@ describe('useDirectInvitationSetup — calendar popup', () => {
 		);
 		expect(onCreated).toHaveBeenCalledWith({ id: '9' });
 	});
+
+	it('passes a failed topic load and its retry to the open popup', () => {
+		const retry = vi.fn();
+		const Failed = () => {
+			const setup = useDirectInvitationSetup({
+				topics: [],
+				agencies: [],
+				preset: { start, end },
+				topicsLoadFailed: true,
+				onRetryTopics: retry,
+				onCreated: vi.fn()
+			});
+			return (
+				<>
+					<button
+						type="button"
+						onClick={() => setup.startWithDetails('CHAT')}
+					>
+						open-popup
+					</button>
+					{setup.dialog}
+				</>
+			);
+		};
+		render(<Failed />);
+		fireEvent.click(screen.getByText('open-popup'));
+		expect(dialog.props.linkDetails.loadFailed).toBe(true);
+		dialog.props.linkDetails.onRetry();
+		expect(retry).toHaveBeenCalledTimes(1);
+	});
 });
