@@ -15,6 +15,7 @@
 	height: var(--pennant-height);
 	margin: 0;
 	padding: 0 4px 0 3px;
+
 	// Accent (the topic tag's rose) with the dark primary on top (Frank,
 	// 2026-11-24): the pennant belongs to the rose divider it hangs from.
 	--pennant-accent: var(
@@ -147,7 +148,7 @@
 }
 
 // Phone: the short date, no arrow bubble; the whole pennant opens the menu.
-@media (max-width: 599.98px) {
+@media (width < 600px) {
 	.appointmentPennant {
 		gap: 6px;
 		padding-right: 10px;
