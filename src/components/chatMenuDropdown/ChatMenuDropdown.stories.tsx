@@ -271,7 +271,7 @@ export const RepeatedDeleteActions: Story = {
 				0
 			);
 		}
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		try {
 			for (const [width, height] of [

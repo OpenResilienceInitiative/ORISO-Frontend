@@ -2568,7 +2568,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'
