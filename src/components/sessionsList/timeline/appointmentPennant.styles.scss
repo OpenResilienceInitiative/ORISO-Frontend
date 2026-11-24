@@ -137,10 +137,45 @@
 	}
 
 	.appointmentPennant__label--short {
-		display: inline;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 	}
 
-	// The short dates stay whole; the topic gives way ("Familien…").
+	.appointmentPennant__with {
+		width: 16px;
+		height: 16px;
+		fill: currentColor;
+	}
+
+	// The topic stays whole, 6px from the edge; the centre and postcode
+	// give way (they show elsewhere too).
+	.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
+		padding-left: 6px;
+
+		> .topicTag {
+			flex-shrink: 0;
+			min-width: auto;
+		}
+
+		> .sessionInfo__metaInfo__content:not(.topicTag) {
+			display: none;
+		}
+	}
+
+	// Two kinds on the phone hang stacked: the second from the first, one
+	// step in, so the topic keeps its whole word (Frank, 2026-11-24).
+	.roomAppointmentPennants {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0;
+
+		> .appointmentPennant + .appointmentPennant {
+			margin-left: 16px;
+		}
+	}
+
+	// The short dates stay whole.
 	.sessionInfo__metaInfo .roomAppointmentPennants,
 	.roomAppointmentPennants > .appointmentPennant {
 		flex-shrink: 0;
@@ -221,4 +256,25 @@
 		margin-left: 16px;
 		margin-top: 0;
 	}
+}
+
+// Desktop: the centre and postcode give way first, then the dates.
+.sessionInfo__metaInfo:has(.roomAppointmentPennants) {
+	> .sessionInfo__metaInfo__content:not(.topicTag) {
+		flex: 0 100 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	> .topicTag {
+		flex-shrink: 0;
+	}
+}
+
+// Two kinds of appointment: the centre and postcode step aside entirely
+// (they show in the conversation's details too).
+.sessionInfo__metaInfo:has(.appointmentPennant + .appointmentPennant)
+	> .sessionInfo__metaInfo__content:not(.topicTag) {
+	display: none;
 }

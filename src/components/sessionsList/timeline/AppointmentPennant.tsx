@@ -15,6 +15,8 @@ import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import './appointmentPennant.styles.scss';
 import { ReactComponent as ArrowDownIcon } from '../../../resources/img/icons/keyboard_arrow_down.svg';
+import { ReactComponent as PersonIcon } from '../../../resources/img/icons/person.svg';
+import { ReactComponent as SupervisionIcon } from '../../../resources/img/icons/supervision_nocirc_400_24px.svg';
 import { normalizeTimelineLocale } from '../futureTimelineTime';
 import { MODALITY_ICON } from './AppointmentKindGlyph';
 import {
@@ -36,15 +38,24 @@ export interface AppointmentPennantProps {
 	 * e.g. "Supervision". Absent: the room's own appointment.
 	 */
 	withLabel?: string;
+	/**
+	 * Who it is with, shown as an icon on the phone where the words do not
+	 * fit (Frank, 2026-11-24). Absent: the room has only one kind.
+	 */
+	withKind?: 'asker' | 'supervisor';
 	onAction?: AppointmentAction;
 }
+
+const WITH_ICON = { asker: PersonIcon, supervisor: SupervisionIcon };
 
 export const AppointmentPennant = ({
 	entry,
 	role,
 	withLabel,
+	withKind,
 	onAction
 }: AppointmentPennantProps) => {
+	const WithIcon = withKind ? WITH_ICON[withKind] : undefined;
 	const { t, i18n } = useTranslation();
 	const locale = normalizeTimelineLocale(
 		i18n.resolvedLanguage,
@@ -99,6 +110,9 @@ export const AppointmentPennant = ({
 					className="appointmentPennant__label appointmentPennant__label--short"
 					aria-hidden
 				>
+					{WithIcon && (
+						<WithIcon className="appointmentPennant__with" />
+					)}
 					{short}
 				</span>
 				<span

@@ -274,7 +274,11 @@ export const RoomNextAppointment = ({
 	role: TimelineRole;
 	onAction?: AppointmentAction;
 	action?: React.ReactNode;
-	extra?: { entry: FutureEntry; withLabel: string }[];
+	extra?: {
+		entry: FutureEntry;
+		withLabel: string;
+		withKind?: 'asker' | 'supervisor';
+	}[];
 	/** Design review only: the pennant variants (FE#2494). */
 	look?: 'flat' | 'knob' | 'stacked';
 }) =>
@@ -287,6 +291,8 @@ export const RoomNextAppointment = ({
 				<AppointmentPennant
 					entry={entry}
 					role={role}
+					// Beside another kind, the phone tells them apart by icon.
+					withKind={extra.length > 0 ? 'asker' : undefined}
 					onAction={onAction}
 				/>
 			)}
@@ -295,6 +301,7 @@ export const RoomNextAppointment = ({
 					key={item.entry.key}
 					entry={item.entry}
 					withLabel={item.withLabel}
+					withKind={item.withKind}
 					role={role}
 					onAction={onAction}
 				/>

@@ -78,9 +78,12 @@ const Header = ({
 				alignItems: 'flex-start',
 				flexWrap: 'nowrap',
 				gap: 8,
-				padding: '0 16px 0 54px'
+				paddingRight: 16
 			}}
 		>
+			<div className="sessionInfo__metaInfo__content">
+				Beratungsstelle Nord · 10115
+			</div>
 			<TopicTag className="sessionInfo__metaInfo__content">
 				Familienberatung
 			</TopicTag>
@@ -98,7 +101,13 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
-const two = [{ entry: supervisorAppointment, withLabel: 'Supervision' }];
+const two = [
+	{
+		entry: supervisorAppointment,
+		withLabel: 'Supervision',
+		withKind: 'supervisor' as const
+	}
+];
 
 /** Variant A: the Art bubble peeks out below the pennant. */
 export const VariantA: Story = {
@@ -189,12 +198,7 @@ export const Two: Story = {
 			<RoomNextAppointment
 				entry={askerAppointment}
 				role="counsellor"
-				extra={[
-					{
-						entry: supervisorAppointment,
-						withLabel: 'Supervision'
-					}
-				]}
+				extra={two}
 			/>
 		</Header>
 	)
@@ -219,12 +223,7 @@ export const Phone: Story = {
 			<RoomNextAppointment
 				entry={askerAppointment}
 				role="counsellor"
-				extra={[
-					{
-						entry: supervisorAppointment,
-						withLabel: 'Supervision'
-					}
-				]}
+				extra={two}
 			/>
 		</Header>
 	)
