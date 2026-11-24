@@ -857,6 +857,67 @@ export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
 	}
 };
 
+/**
+ * D7 on the phone, 1-on-1: the header as `SessionItemComponent` mounts it.
+ * With a composer the composer's action bar leads with the back arrow, so the
+ * header drops its own and the avatar and name get the width. Without a
+ * composer (an enquiry, a supervisor's or co-access read-only view, a
+ * rejected or finished conversation) the header keeps the arrow — otherwise
+ * the phone has no way back to the list.
+ */
+const renderOneOnOnePhoneHeader = (
+	preset: ReturnType<typeof mockActiveConversation>,
+	hasComposer: boolean
+) => (
+	<StoryProviders session={preset.session} userData={storyUserData}>
+		<SessionHeaderComponent
+			bannedUsers={[]}
+			hideBackButton={hasComposer}
+			callsInMenu
+		/>
+	</StoryProviders>
+);
+
+export const OneOnOnePhoneComposerCarriesBack: Story = {
+	name: '1:1 header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockActiveConversation(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+		// The freed width goes to the name: it starts where the arrow was.
+		const row = canvasElement
+			.querySelector('.sessionInfo__headerWrapper')!
+			.getBoundingClientRect();
+		const first = canvasElement
+			.querySelector('.sessionInfo__username')!
+			.getBoundingClientRect();
+		await expect(first.left - row.left).toBeLessThan(1);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/** Control: an enquiry has no composer, so the header keeps its arrow. */
+export const OneOnOnePhoneWithoutComposerKeepsBack: Story = {
+	name: '1:1 header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockInquiry(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
 export const GroupChatBeforeConsentHidesTopic: Story = {
 	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
 	play: async ({ canvasElement }) => {
