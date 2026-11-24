@@ -75,6 +75,5 @@ export const Blocked: Story = {
 
 export const Mobile: Story = {
 	args: { emailJustSaved: true },
-	globals: phone390Globals,
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: phone390Globals
 };

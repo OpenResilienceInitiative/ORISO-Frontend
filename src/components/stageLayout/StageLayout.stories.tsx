@@ -115,5 +115,5 @@ export const Mobile: Story = {
 			<LoginCard />
 		</StageLayout>
 	),
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: { viewport: { value: 'mobile1', isRotated: false } }
 };
