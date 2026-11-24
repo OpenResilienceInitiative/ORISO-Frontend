@@ -12,6 +12,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import dayjs, { type Dayjs } from 'dayjs';
 import { ReactComponent as ClockIcon } from '../../resources/img/icons/clock.svg';
 import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
@@ -19,6 +20,8 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import type { DialogForm } from './dialogForm';
 import { Switch } from '../Switch';
 import { OrisoSelect } from '../form/OrisoSelect';
+import { OrisoDatePicker } from '../form/OrisoDatePicker';
+import { OrisoTimePicker } from '../form/OrisoTimePicker';
 import { useWeekdayNames } from './WorkingHoursDialog';
 import {
 	consultationDays,
@@ -53,15 +56,16 @@ const NOTICE_DAYS = Array.from({ length: MAX_NOTICE_DAYS + 1 }, (_, n) => n);
 type Mode = 'once' | 'weekly';
 const MODES: Mode[] = ['once', 'weekly'];
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const dateValue = (d: Date) =>
-	`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const timeValue = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const atTime = (date: string, time: string) => {
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, min] = time.split(':').map(Number);
-	return new Date(y, m - 1, d, h, min);
-};
+/** The chosen day at the chosen clock time; an unset field gives an invalid date. */
+const onTheDay = (day: Dayjs | null, time: Dayjs | null) =>
+	day && time
+		? day
+				.hour(time.hour())
+				.minute(time.minute())
+				.second(0)
+				.millisecond(0)
+				.toDate()
+		: new Date(Number.NaN);
 
 export interface ConsultationHoursFormProps {
 	hours: ConsultationHours;
@@ -111,13 +115,16 @@ export const useConsultationHoursForm = ({
 	);
 	/* Einmalig: the chosen range, or the next full hour for one hour. */
 	const [once, setOnce] = useState(() => {
-		const start = slot?.start ?? new Date(now);
-		if (!slot) start.setHours(start.getHours() + 1, 0, 0, 0);
-		const end = slot?.end ?? new Date(start.getTime() + 60 * 60 * 1000);
+		const start = dayjs(slot?.start ?? now)
+			.add(slot ? 0 : 1, 'hour')
+			.minute(slot ? dayjs(slot.start).minute() : 0)
+			.second(0)
+			.millisecond(0);
+		const end = slot ? dayjs(slot.end) : start.add(1, 'hour');
 		return {
-			date: dateValue(start),
-			start: timeValue(start),
-			end: timeValue(end),
+			day: start.startOf('day') as Dayjs | null,
+			start: start as Dayjs | null,
+			end: end as Dayjs | null,
 			notice: DEFAULT_ONE_OFF_NOTICE
 		};
 	});
@@ -139,8 +146,8 @@ export const useConsultationHoursForm = ({
 			)
 		});
 
-	const onceStart = atTime(once.date, once.start);
-	const onceEnd = atTime(once.date, once.end);
+	const onceStart = onTheDay(once.day, once.start);
+	const onceEnd = onTheDay(once.day, once.end);
 	const onceInvalid =
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
 	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
@@ -184,60 +191,38 @@ export const useConsultationHoursForm = ({
 			<p className="calendarConsultation__hint">
 				{t('calendar.consultationHours.onceHint')}
 			</p>
-			<div className="calendarConsultation__onceRow">
-				<label className="calendarHours__time calendarConsultation__date">
-					<span className="calendarConsultation__label">
-						{t('calendar.consultationHours.date')}
-					</span>
-					<input
-						type="date"
-						value={once.date}
-						min={dateValue(now)}
+			<div className="calendarDialog__fields calendarConsultation__onceRow">
+				<OrisoDatePicker
+					label={t('calendar.consultationHours.date')}
+					value={once.day}
+					onChange={(day) => setOnce((o) => ({ ...o, day }))}
+					minDate={dayjs(now).startOf('day')}
+					weekStart={1}
+					disabled={saving}
+					id="consultation-once-date"
+				/>
+				<div className="calendarDialog__times">
+					<OrisoTimePicker
+						label={t('calendar.consultationHours.from')}
+						ampm={false}
+						value={once.start}
+						onChange={(start) => setOnce((o) => ({ ...o, start }))}
+						error={onceInvalid}
 						disabled={saving}
-						onChange={(e) =>
-							setOnce((o) => ({ ...o, date: e.target.value }))
-						}
-						data-cy="consultation-once-date"
+						cancelLabel={t('app.cancel')}
+						id="consultation-once-start"
 					/>
-				</label>
-				<span className="calendarConsultation__times">
-					<label className="calendarHours__time">
-						<span className="calendarConsultation__label">
-							{t('calendar.consultationHours.from')}
-						</span>
-						<input
-							type="time"
-							step={900}
-							value={once.start}
-							disabled={saving}
-							aria-invalid={onceInvalid || undefined}
-							onChange={(e) =>
-								setOnce((o) => ({
-									...o,
-									start: e.target.value
-								}))
-							}
-							data-cy="consultation-once-start"
-						/>
-					</label>
-					<span aria-hidden="true">–</span>
-					<label className="calendarHours__time">
-						<span className="calendarConsultation__label">
-							{t('calendar.consultationHours.to')}
-						</span>
-						<input
-							type="time"
-							step={900}
-							value={once.end}
-							disabled={saving}
-							aria-invalid={onceInvalid || undefined}
-							onChange={(e) =>
-								setOnce((o) => ({ ...o, end: e.target.value }))
-							}
-							data-cy="consultation-once-end"
-						/>
-					</label>
-				</span>
+					<OrisoTimePicker
+						label={t('calendar.consultationHours.to')}
+						ampm={false}
+						value={once.end}
+						onChange={(end) => setOnce((o) => ({ ...o, end }))}
+						error={onceInvalid}
+						disabled={saving}
+						cancelLabel={t('app.cancel')}
+						id="consultation-once-end"
+					/>
+				</div>
 			</div>
 			<div className="calendarHours__select">
 				<OrisoSelect

@@ -4350,11 +4350,13 @@ $cal-new-pill-hover: #4b4f51;
 }
 
 .calendarConsultation__onceRow {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-end;
-	gap: 12px;
 	padding: 4px 0 8px;
+
+	// Date above, start and end beside each other: the Sperrzeit fields.
+	.calendarDialog__times > * {
+		flex: 1;
+		min-width: 0;
+	}
 }
 
 .calendarConsultation__label {

@@ -36,6 +36,8 @@ import {
 	type MoveProposal
 } from './calendarActions';
 import type { CalendarViewName, ViewSwitcherStyle } from './calendarViews';
+import { COMPACT_MAX_WIDTH } from './calendarViews';
+import { useMediaQuery } from 'react-responsive';
 import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
@@ -74,6 +76,7 @@ interface HarnessProps {
 	showUsernames?: boolean;
 	state?: CalendarLoadState;
 	empty?: boolean;
+	/** Unset: follows the canvas width, as the app does. */
 	compact?: boolean;
 	/** With `compact`: a phone (three days at most); false = tablet. */
 	phone?: boolean;
@@ -163,7 +166,7 @@ const Scenario = ({
 	showUsernames = false,
 	state = 'ready',
 	empty = false,
-	compact = false,
+	compact: compactArg,
 	phone,
 	initialView,
 	links = false,
@@ -182,6 +185,10 @@ const Scenario = ({
 	shell = true,
 	freeTimes = false
 }: HarnessProps) => {
+	// Unset: as the app does, compact below 960 px of canvas (Frank, 24 Nov:
+	// the desktop layout squeezed into a narrow Storybook canvas broke).
+	const narrow = useMediaQuery({ maxWidth: COMPACT_MAX_WIDTH });
+	const compact = compactArg ?? narrow;
 	const visibility = { scope, showUsernames };
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
@@ -467,9 +474,14 @@ const Scenario = ({
 			<style>{`
 				.calendarStory { display: flex; height: 100vh; background: var(--m3-surface-container, #f0edee); }
 				.calendarStory__main { flex: 1; min-width: 0; padding: 12px 12px 12px 0; box-sizing: border-box; }
-				.calendarStory--compact { flex-direction: column; }
-				.calendarStory--compact .calendarStory__main { flex: 1; min-height: 0; padding: 0; overflow: auto; }
-				.calendarStory--compact .app__wrapper { flex: none; height: auto; order: 2; }
+				.calendarStory--compact .calendarStory__main { overflow: auto; }
+				/* The app's nav is a bottom bar below 900 px ($fromLarge) and a
+				   rail above, also while the calendar is compact (< 960 px). */
+				@media (max-width: 899px) {
+					.calendarStory--compact { flex-direction: column; }
+					.calendarStory--compact .calendarStory__main { flex: 1; min-height: 0; padding: 0; }
+					.calendarStory--compact .app__wrapper { flex: none; height: auto; order: 2; }
+				}
 			`}</style>
 			<NavigationStoryShell
 				role={role}

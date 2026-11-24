@@ -6,11 +6,9 @@
  */
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, fn, waitFor, within } from 'storybook/test';
 import CalendarPageStories from './CalendarPage.stories';
 import { NewEntryDialog } from './NewEntryDialog';
-import { SlotMenuContent } from './calendarMenus';
-import { ChatMenuDropdown } from '../chatMenuDropdown/ChatMenuDropdown';
 import type { CalendarEntry } from './calendarModel';
 import { phone390Globals } from '../message/messageStoryShell';
 import type { ConsultationHours } from './calendarConsultationHours';
@@ -24,8 +22,11 @@ const meta: Meta<typeof Harness> = {
 	globals: { locale: 'de' },
 	parameters: {
 		layout: 'fullscreen',
+		// Each story in its own frame: the open dialogs would otherwise
+		// cover the whole docs page (Frank, 24 Nov: *2c "zerschossen").
 		router: { initialPath: '/booking/events' },
 		docs: {
+			story: { inline: false, iframeHeight: 760 },
 			description: {
 				component:
 					'ORISO-Frontend#2494 *2 and *3 (Staging v2.0.17 findings, decisions of 23 Nov 2026). *2a: links without appointment are compact rows (small medium icon, name, topic, actions), no illustrated tiles. *2b: "Neuer Eintrag" has the tab "Sprechzeit" (same office hours as the Sprechstunden dialog); a weekday takes several windows ("+ Zeitfenster"); a stretch dragged in the grid can be released once ("Einmalig") with its own lead time ("Buchbar bis 30 Min. vorher"), also over a Sperrzeit (Frank, 23 Nov, round 2). The red round "+" next to "Links ohne Termin" is gone. *2c: advice seekers see "Freie Sprechzeiten" beside "Meine Termine", the same size, only while their counsellor offers office hours; stacked on the phone. *3: office hours are a background band in the counsellor\'s time grid; an appointment over it takes that time out of the advice seekers\' free times (UserService `CounsellorFreeTime`).'
@@ -142,32 +143,89 @@ export const NeuerEintragSprechzeitPhone: StoryObj<typeof NewEntryDialog> = {
 	play: expectSprechzeitTab
 };
 
-/** *2b (Frank, 23 Nov): a stretch in the grid → "Eintragen als" → Sprechzeit. */
-export const RasterSprechzeitMenue: StoryObj = {
-	name: '*2b Kalender — Zeitraum ziehen → „Sprechzeit“ im Menü',
-	render: () => (
-		<div style={{ padding: 24 }}>
-			<ChatMenuDropdown
-				density="compact"
-				role="menu"
-				ariaLabel="Eintragen"
-				style={{ width: 300 }}
-			>
-				<SlotMenuContent
-					range={{
-						start: new Date(2026, 10, 24, 14, 0),
-						end: new Date(2026, 10, 24, 15, 0)
-					}}
-					onChoose={fn()}
-					onConsultation={fn()}
-				/>
-			</ChatMenuDropdown>
-		</div>
-	),
+/** A click without movement, on whatever a real pointer would hit there. */
+const clickAt = async ({ x, y }: { x: number; y: number }) => {
+	const target = document.elementFromPoint(x, y) as HTMLElement;
+	const at = { clientX: x, clientY: y, button: 0 };
+	const pointer = { ...at, isPrimary: true, pointerId: 1 };
+	fireEvent.pointerDown(target, { ...pointer, buttons: 1 });
+	fireEvent.mouseDown(target, { ...at, buttons: 1 });
+	await new Promise((resolve) => setTimeout(resolve, 50));
+	fireEvent.pointerUp(target, pointer);
+	fireEvent.mouseUp(target, at);
+	fireEvent.click(target, { ...at, detail: 1 });
+};
+
+/** A free point at 14:00 or later in a day's time column. */
+const freeAfternoonPoint = (root: HTMLElement, date: string) => {
+	const view = root.querySelector('[data-testid="calendar-view"]')!;
+	const columns = view.querySelectorAll<HTMLElement>(
+		`[role="cell"][data-date="${date}"]`
+	);
+	const column = columns[columns.length - 1].getBoundingClientRect();
+	const x = column.left + column.width / 2;
+	for (const row of view.querySelectorAll<HTMLElement>('[data-time]')) {
+		if ((row.dataset.time ?? '') < '14:00') continue;
+		// A short canvas shows the morning only: bring the afternoon in.
+		// (Only when needed: scrolling closes an open menu.)
+		const seen = row.getBoundingClientRect();
+		if (seen.top < 0 || seen.bottom > window.innerHeight)
+			row.scrollIntoView({ block: 'center' });
+		const box = row.getBoundingClientRect();
+		const y = box.top + box.height / 2;
+		const top = document.elementFromPoint(x, y);
+		const taken = document
+			.elementsFromPoint(x, y)
+			.some((el) => el.closest('.calEntry, [data-band], .calendarGrip'));
+		if (top && view.contains(top) && !taken) return { x, y };
+	}
+	throw new Error(`no free time on ${date}`);
+};
+
+/** In the week: a click on free time opens "Eintragen als" with "Sprechzeit". */
+const openSlotMenu = async (el: HTMLElement) => {
+	await within(el).findByTestId('calendar-view');
+	// The grid settles (scroll to 08:00, layout) after it shows: measure
+	// and click again until the menu is open.
+	const slotMenu = () =>
+		document.querySelector<HTMLElement>('[data-cy="calendar-menu-slot"]');
+	for (let tries = 0; tries < 15 && !slotMenu(); tries += 1) {
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		await clickAt(freeAfternoonPoint(el, '2026-11-17'));
+	}
+	const menu = await waitFor(() => {
+		expect(slotMenu()).not.toBeNull();
+		return slotMenu()!;
+	});
+	await expect(within(menu).getByText('Sprechzeit')).toBeTruthy();
+	return menu;
+};
+
+/** *2b (Frank, 23 Nov): Sprechzeit is entered in the grid like a Sperrzeit. */
+export const RasterSprechzeitMenue: Story = {
+	name: '*2b Kalender — Zeit anklicken/ziehen → „Sprechzeit“ im Menü (Woche)',
+	args: { initialView: 'workWeek' },
 	play: async ({ canvasElement }) => {
+		await openSlotMenu(canvasElement);
+	}
+};
+
+export const RasterSprechzeitDialog: Story = {
+	name: '*2b Kalender — „Sprechzeit“ gewählt → Einmalig, mit Vorlauf',
+	args: { initialView: 'workWeek' },
+	play: async ({ canvasElement }) => {
+		const menu = await openSlotMenu(canvasElement);
+		fireEvent.click(
+			within(menu).getByText('Sprechzeit').closest('[role="menuitem"]') ??
+				within(menu).getByText('Sprechzeit')
+		);
+		const body = within(document.body);
 		await expect(
-			await within(canvasElement).findByText('Sprechzeit')
-		).toBeTruthy();
+			await body.findByRole('tab', { name: 'Sprechzeit' })
+		).toHaveAttribute('aria-selected', 'true');
+		await expect(
+			body.getByRole('radio', { name: 'Einmalig' })
+		).toHaveAttribute('aria-checked', 'true');
 	}
 };
 
