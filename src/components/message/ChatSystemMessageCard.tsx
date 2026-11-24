@@ -2,7 +2,10 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
-import { ICON_INFO, SystemMessageIcon } from './SystemMessage';
+// Figma App.Oriso "Important notification": filled circle on the left
+// (9895:31375), outlined on the right for my own notice (8606:42438).
+import { ReactComponent as NoticeFilledIcon } from '../../resources/img/icons/notice_important_filled_400_48.svg';
+import { ReactComponent as NoticeOutlineIcon } from '../../resources/img/icons/notice_important_outline_400_48.svg';
 import './message.styles.scss';
 
 export interface ChatSystemMessageCardProps {
@@ -64,7 +67,19 @@ export const ChatSystemMessageCard = ({
 			className="messageItem__avatar messageItem__avatar--system"
 			data-testid="chat-system-message-avatar"
 		>
-			<SystemMessageIcon icon={ICON_INFO} />
+			{isMyMessage ? (
+				<NoticeOutlineIcon
+					className="systemMessage__icon"
+					title={translate('notifications.info')}
+					aria-label={translate('notifications.info')}
+				/>
+			) : (
+				<NoticeFilledIcon
+					className="systemMessage__icon"
+					title={translate('notifications.info')}
+					aria-label={translate('notifications.info')}
+				/>
+			)}
 		</div>
 	);
 
