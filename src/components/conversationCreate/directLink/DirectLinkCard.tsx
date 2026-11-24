@@ -5,17 +5,23 @@ import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import { TopicIcon } from '../TopicIcon';
 import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
 import { SplitButton } from '../../splitButton/SplitButton';
-import { Switch } from '../../Switch';
 import { FormatCard } from '../FormatCard';
 import { RowMenu } from '../RowMenu';
 import { ArtworkImage } from '../ArtworkImage';
 import { FORMAT_ARTWORK } from '../../../resources/img/formats';
 import {
-	defaultTemporary,
 	DIRECT_LINK_MEDIA,
+	DIRECT_LINK_NAME_MAX,
 	DirectLinkMedium
 } from './directLink';
 import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
+import { OrisoTextField } from '../../form/OrisoTextField';
+import { toScheduledAt } from './directLinkSchedule';
+import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
+import {
+	defaultGuestAccountMode,
+	GuestAccountMode
+} from '../../guestAccountMode/guestAccountMode';
 import './directLink.styles.scss';
 
 /** Short segment labels; the full name is the accessible name. */
@@ -28,7 +34,12 @@ const MEDIUM_SHORT: Record<DirectLinkMedium, string> = {
 export interface DirectLinkDraft {
 	topic: string;
 	medium: DirectLinkMedium;
-	temporary: boolean;
+	/** UserService#1662: which account a new guest gets. */
+	guestAccountMode: GuestAccountMode;
+	/** #2142: optional; without it the link is named after its topic. */
+	name?: string;
+	/** #2142: optional, informational date and time (ISO instant). */
+	scheduledAt?: string;
 }
 
 interface DirectLinkCardProps {
@@ -45,12 +56,23 @@ interface DirectLinkCardProps {
 	/** The topics did not load; shown with a retry instead of the picker. */
 	topicsLoadFailed?: boolean;
 	onRetryTopics?: () => void;
+	/**
+	 * #2252: the shared Direkteinladung dialog asks for the appointment and
+	 * who may come in, so the card leaves out its own date and temporary
+	 * switch. Off: the card of #2142 with both (default).
+	 */
+	settingsInDialog?: boolean;
+	/**
+	 * Preselected medium, e.g. from the calendar's Art when "Neue Person per
+	 * Direkteinladung …" opened "Chat erstellen". Ignored when not allowed.
+	 */
+	initialMedium?: DirectLinkMedium;
 }
 
 /**
  * #1795: the "Direktlink" format card in "Create chat", next to the
  * self-help circle and the internal chat, in the same card shell.
- * Topic → medium → temporary account → create.
+ * Topic → medium → guest account → create.
  */
 export const DirectLinkCard = ({
 	topics,
@@ -60,7 +82,9 @@ export const DirectLinkCard = ({
 	isSubmitting = false,
 	errorMessage,
 	topicsLoadFailed = false,
-	onRetryTopics
+	onRetryTopics,
+	settingsInDialog = false,
+	initialMedium
 }: DirectLinkCardProps) => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -69,12 +93,26 @@ export const DirectLinkCard = ({
 	// Topics may arrive after the first render; a single one needs no choice.
 	const topic = topics.length === 1 ? topics[0].value : pickedTopic;
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
-	const [medium, setMedium] = useState<DirectLinkMedium>();
-	const [temporary, setTemporary] = useState(false);
+	const presetMedium =
+		initialMedium && media.includes(initialMedium)
+			? initialMedium
+			: undefined;
+	const [medium, setMedium] = useState<DirectLinkMedium | undefined>(
+		presetMedium
+	);
+	const [guestAccountMode, setGuestAccountMode] = useState<GuestAccountMode>(
+		presetMedium ? defaultGuestAccountMode(presetMedium) : 'PERMANENT'
+	);
+	const [name, setName] = useState('');
+	const [scheduledLocal, setScheduledLocal] = useState('');
+	/* A half-typed datetime-local reads as '' with `validity.badInput`;
+	   it must not silently create the link without its date. */
+	const scheduledRef = useRef<HTMLInputElement | null>(null);
+	const [scheduledIncomplete, setScheduledIncomplete] = useState(false);
 
 	const chooseMedium = (next: DirectLinkMedium) => {
 		setMedium(next);
-		setTemporary(defaultTemporary(next));
+		setGuestAccountMode(defaultGuestAccountMode(next));
 	};
 
 	const ready = Boolean(topic && medium) && !isSubmitting;
@@ -181,25 +219,50 @@ export const DirectLinkCard = ({
 						</button>
 					))}
 				</div>
+				{medium && !settingsInDialog && (
+					<GuestAccountModeSelect
+						value={guestAccountMode}
+						onChange={setGuestAccountMode}
+					/>
+				)}
 				{medium && (
-					<div className="directLinkCard__temporary">
-						<span className="directLinkCard__temporaryText">
-							<span id={`${id}-temp`}>
-								{t('directLink.card.temporary')}
-							</span>
-							<span
-								id={`${id}-temp-hint`}
-								className="directLinkCard__hint"
-							>
-								{t('directLink.card.temporaryHint')}
-							</span>
-						</span>
-						<Switch
-							checked={temporary}
-							onChange={setTemporary}
-							aria-labelledby={`${id}-temp`}
-							aria-describedby={`${id}-temp-hint`}
+					<div className="directLinkCard__details">
+						<OrisoTextField
+							id={`${id}-name`}
+							label={t('directLink.card.name')}
+							placeholder={topicLabel}
+							value={name}
+							onChange={(event) => setName(event.target.value)}
+							helperText={t('directLink.card.nameHint')}
+							inputProps={{ maxLength: DIRECT_LINK_NAME_MAX }}
+							InputLabelProps={{ shrink: true }}
+							size="small"
+							fullWidth
 						/>
+						{!settingsInDialog && (
+							<OrisoTextField
+								id={`${id}-scheduled`}
+								type="datetime-local"
+								label={t('directLink.card.scheduledAt')}
+								value={scheduledLocal}
+								inputRef={scheduledRef}
+								onChange={(event) => {
+									setScheduledLocal(event.target.value);
+									setScheduledIncomplete(
+										Boolean(event.target.validity?.badInput)
+									);
+								}}
+								error={scheduledIncomplete}
+								helperText={t(
+									scheduledIncomplete
+										? 'directLink.card.scheduledAtIncomplete'
+										: 'directLink.card.scheduledAtHint'
+								)}
+								InputLabelProps={{ shrink: true }}
+								size="small"
+								fullWidth
+							/>
+						)}
 					</div>
 				)}
 				<button
@@ -209,9 +272,23 @@ export const DirectLinkCard = ({
 					}`}
 					disabled={!ready}
 					aria-busy={isSubmitting || undefined}
-					onClick={() =>
-						medium && onCreate({ topic, medium, temporary })
-					}
+					onClick={() => {
+						if (!medium) return;
+						if (scheduledRef.current?.validity?.badInput) {
+							setScheduledIncomplete(true);
+							scheduledRef.current.focus();
+							return;
+						}
+						const trimmed = name.trim();
+						const scheduledAt = toScheduledAt(scheduledLocal);
+						onCreate({
+							topic,
+							medium,
+							guestAccountMode,
+							...(trimmed ? { name: trimmed } : {}),
+							...(scheduledAt ? { scheduledAt } : {})
+						});
+					}}
 				>
 					<AddCircleIcon aria-hidden />
 					{t('directLink.card.create')}

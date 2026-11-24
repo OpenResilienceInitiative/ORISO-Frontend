@@ -74,6 +74,36 @@ describe('apiPostRegistration', () => {
 		);
 	});
 
+	it('sends the ref of a registration add-on only when it is well formed', async () => {
+		const post = async (registrationRef: unknown) => {
+			vi.mocked(fetchData).mockClear();
+			await apiPostRegistration(
+				'/service/users/askers/new',
+				{
+					username: 'tender_frog_784',
+					password: 'TestPass123!',
+					agencyId: '3',
+					postcode: '12043',
+					registrationRef
+				},
+				false,
+				{} as any
+			);
+			return JSON.parse(
+				vi.mocked(fetchData).mock.calls[0][0].bodyData as string
+			);
+		};
+
+		expect((await post('answers_42-a')).registrationRef).toBe(
+			'answers_42-a'
+		);
+		expect(await post('x'.repeat(65))).not.toHaveProperty(
+			'registrationRef'
+		);
+		expect(await post('<script>')).not.toHaveProperty('registrationRef');
+		expect(await post(undefined)).not.toHaveProperty('registrationRef');
+	});
+
 	it('normalizes regional preferredLanguage values before posting', async () => {
 		await apiPostRegistration(
 			'/service/users/askers/new',

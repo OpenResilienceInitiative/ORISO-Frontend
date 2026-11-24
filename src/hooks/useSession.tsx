@@ -5,12 +5,13 @@ import {
 } from '../api/apiGetSessionRooms';
 import {
 	REGISTRATION_TYPE_REGISTERED,
+	STATUS_REJECTED,
 	type ListItemInterface
 } from '../globalState/interfaces';
 import { buildExtendedSession, ExtendedSessionInterface } from '../globalState';
 import { FETCH_ERRORS } from '../api';
 import { chatTransportService } from '../services/chatTransportService';
-import { isRoomUnread } from '../utils/sessionUnread';
+import { hasUnreadLatestEvent, isRoomUnread } from '../utils/sessionUnread';
 import { apiGetChatRoomById } from '../api/apiGetChatRoomById';
 import { apiGetCaseHandoverCandidates } from '../api/apiCaseHandover';
 import {
@@ -37,7 +38,8 @@ export const useSession = (
 	room: string | ExactCounsellingRoom | null,
 	requestedSessionId?: number,
 	requestedChatId?: number,
-	reconcilePendingEnquiry = false
+	reconcilePendingEnquiry = false,
+	requireRejectedEnquiry = false
 ): {
 	session: ExtendedSessionInterface;
 	/** Settles when the explicit session reload has finished. */
@@ -157,10 +159,24 @@ export const useSession = (
 				);
 			} else if (sessionId !== undefined && sessionId !== null) {
 				// console.log('🔍 useSession: Loading by sessionId:', sessionId);
-				promise = apiGetSessionRoomBySessionId(
+				const response = apiGetSessionRoomBySessionId(
 					sessionId,
 					controller.signal
 				);
+				promise = requireRejectedEnquiry
+					? response.then(({ sessions }) => {
+							// The numeric endpoint can return a group with the same ID.
+							const rejectedEnquiry = sessions.find(
+								({ session, chat }) =>
+									!chat &&
+									session?.id === sessionId &&
+									session?.status === STATUS_REJECTED
+							);
+							if (!rejectedEnquiry)
+								throw new Error(FETCH_ERRORS.EMPTY);
+							return { sessions: [rejectedEnquiry] };
+						})
+					: response;
 			}
 
 			if (exactCaseId !== undefined) {
@@ -215,6 +231,12 @@ export const useSession = (
 						return;
 					}
 
+					if (requireRejectedEnquiry) {
+						setSession(null);
+						setReady(true);
+						return;
+					}
+
 					if (background) {
 						// A temporary outage must not erase the visible conversation.
 						if (e.message === FETCH_ERRORS.FORBIDDEN) {
@@ -259,7 +281,14 @@ export const useSession = (
 					}
 				});
 		},
-		[rid, sessionId, chatId, loadCaseHandoverCandidateSession, exactCaseId]
+		[
+			rid,
+			sessionId,
+			chatId,
+			loadCaseHandoverCandidateSession,
+			requireRejectedEnquiry,
+			exactCaseId
+		]
 	);
 
 	const reconcileEnquiry = Boolean(
@@ -306,7 +335,12 @@ export const useSession = (
 		// hard-coded constant and must not gate the receipt. Sessions without
 		// a Matrix room cannot publish a receipt and are a safe no-op.
 		const { matrixRoomId } = chatTransportService.resolveSession(session);
-		if (matrixRoomId && isRoomUnread(matrixRoomId)) {
+		// FE#1802: `hasUnreadLatestEvent` also covers an encrypted message
+		// whose unread count is only computed after decryption.
+		if (
+			matrixRoomId &&
+			(isRoomUnread(matrixRoomId) || hasUnreadLatestEvent(matrixRoomId))
+		) {
 			chatTransportService.markRoomAsRead(matrixRoomId).catch(() => {});
 		}
 	}, [session]);

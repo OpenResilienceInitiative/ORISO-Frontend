@@ -49,18 +49,26 @@ import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
+import { AppointmentNoticeCard } from './AppointmentNoticeMessage';
+import { recognizeLegacyAppointmentNotice } from './appointmentNotice';
 import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
 import {
 	callCardMayKnock,
 	joinOrKnock
 } from '../directLinkEntry/callMessageKnock';
+import {
+	shouldAutoJoinCall,
+	takeCallAutoJoin
+} from '../groupChat/waitingAdmission/callAutoJoin';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
+import { MessageHtml } from './MessageHtml';
 import type { MediaCheckState } from './MessageAttachment';
+import { passageReplyAudioAttachment } from '../../utils/matrixTimelineEventFormatter';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
 import { getModality, Modality } from '../session/getModality';
 import {
@@ -81,6 +89,7 @@ import {
 	consultantRenamedNoticeText,
 	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
 } from './consultantRenamedNotice';
+import { directInvitationRenewedNoticeText } from './directInvitationRenewedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
@@ -92,6 +101,7 @@ import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
+import { useChatMessageDisplayConfig } from './chatMessageConfig';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
@@ -161,6 +171,14 @@ import {
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
+import {
+	PassageReplyBlocks,
+	type PassageReply
+} from '../selectionReply/PassageReplyBlocks';
+import {
+	applyPassageBlursToHtml,
+	type PassageBlur
+} from '../selectionReply/passageBlur';
 
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
@@ -268,6 +286,22 @@ export interface MessageItem {
 	callLifecycle?: CallLifecycleMessage;
 	/** Relations foundation (#435): id of the replied-to event, if a reply. */
 	replyToEventId?: string | null;
+	/**
+	 * Selection reply: the passage of the replied-to message the sender
+	 * marked. When set, the in-bubble quote shows this passage instead of the
+	 * start of the whole message.
+	 */
+	replyExcerpt?: string | null;
+	/**
+	 * Selection reply: several marked passages answered in this one message,
+	 * each with its own comment (text or voice note).
+	 */
+	passageReplies?: PassageReply[] | null;
+	/**
+	 * Passages a moderator blurred: shown as blurred random characters for
+	 * everyone. Positions only, never the hidden text.
+	 */
+	passageBlurs?: PassageBlur[] | null;
 	/** MSC3440: thread root event id when the message is a thread reply. */
 	threadRootEventId?: string | null;
 	/** Editing (m.replace, #435): true when a later m.replace was applied. */
@@ -299,6 +333,15 @@ interface MessageItemComponentProps extends MessageItem {
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
 	replyQuote?: { author: string; text: string } | null;
+	/**
+	 * Selection reply: jump back to the quoted passage. When set, the
+	 * in-bubble quote is a button.
+	 */
+	onJumpToReplyQuote?: () => void;
+	/** Selection reply: back from one of `passageReplies` to its passage. */
+	onJumpToPassage?: (reply: PassageReply) => void;
+	/** Moderators: blurred passages are buttons that offer "Remove blur". */
+	canRemovePassageBlur?: boolean;
 	/** Start a direct reply to THIS message (wires the composer). */
 	onReplyDirect?: () => void;
 	/** Start editing THIS message (wires the composer, own messages only). */
@@ -375,6 +418,12 @@ export const MessageItemComponent = ({
 	isEdited,
 	isTemporary,
 	replyQuote,
+	replyExcerpt,
+	onJumpToReplyQuote,
+	onJumpToPassage,
+	passageReplies,
+	passageBlurs,
+	canRemovePassageBlur,
 	onReplyDirect,
 	onEditDirect,
 	onDeleteDirect,
@@ -385,7 +434,7 @@ export const MessageItemComponent = ({
 	encryptionBroke,
 	previewMode
 }: MessageItemComponentProps) => {
-	const { t: translate } = useTranslation();
+	const { t: translate, i18n } = useTranslation();
 	const inPreview = previewMode !== undefined;
 	const readOnly = previewMode === 'read';
 	// Nothing in the preview may lead out of the Timeline (#1824).
@@ -578,8 +627,11 @@ export const MessageItemComponent = ({
 		string | null | undefined
 	>(() => initialDecryptedBody(isE2eeEnabled, message));
 
-	// Character limit for collapsing messages
-	const MESSAGE_CHAR_LIMIT = 300;
+	// Character limit for collapsing messages; 0 from the platform setting means
+	// never, which no text length can exceed.
+	const { collapseThreshold, widthStyle: messageWidthStyle } =
+		useChatMessageDisplayConfig();
+	const MESSAGE_CHAR_LIMIT = collapseThreshold || Infinity;
 
 	// Reset expanded state only when message ID changes (not when message content changes)
 	useEffect(() => {
@@ -1221,7 +1273,8 @@ export const MessageItemComponent = ({
 	);
 	const grantNotificationPolicy = emailCollectionSetupPolicy(
 		tenant?.settings,
-		erstantwortModality
+		erstantwortModality,
+		userData
 	);
 	useEffect(
 		() => setShowGrantNotifications(false),
@@ -1294,11 +1347,53 @@ export const MessageItemComponent = ({
 	const isRejectedConsultantRenamedEvent =
 		parsedMessage.systemNotificationType ===
 			SYSTEM_NOTIFICATION_CONSULTANT_RENAMED && !consultantRenamedText;
+	/* #2252: the "new link" notice carries the link and its end only; it is
+	   worded here and drawn as a notice card with the link. */
+	const parsedRenewedNotice =
+		parsedMessage.systemNotificationDirectInvitationRenewed;
+	/* The backend posts it as the conversation's counsellor; from anyone
+	   else it would be a system-styled card with a foreign link. */
+	const isUntrustedRenewedNotice =
+		Boolean(parsedRenewedNotice) &&
+		!isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const renewedNotice = isUntrustedRenewedNotice
+		? undefined
+		: parsedRenewedNotice;
+	const renewedText = renewedNotice
+		? directInvitationRenewedNoticeText(
+				renewedNotice,
+				translate,
+				i18n?.language || 'de'
+			)
+		: null;
+	const renewedBody =
+		renewedNotice && renewedText ? (
+			<>
+				{renewedText.description}{' '}
+				{/* A Timeline preview opens nothing: the link is plain text there. */}
+				{blocksLeavingActions ? (
+					<span>{renewedNotice.url}</span>
+				) : (
+					<a
+						href={renewedNotice.url}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{renewedNotice.url}
+					</a>
+				)}
+			</>
+		) : null;
 	const systemNotificationTitle =
+		renewedText?.title ||
 		consultantRenamedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
+		renewedText?.description ||
 		consultantRenamedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
@@ -1329,7 +1424,16 @@ export const MessageItemComponent = ({
 					advisor: parsedMessage.systemNotificationUsername
 				})
 			: parsedMessage.systemNotificationDescription;
-	const renderedMessageWithoutPrefix = renderedMessage;
+	const renderedMessageWithoutPrefix =
+		renderedMessage && passageBlurs?.length
+			? applyPassageBlursToHtml(renderedMessage, passageBlurs, {
+					label: translate('message.selectionReply.blurredLabel'),
+					removeLabel: canRemovePassageBlur
+						? translate('message.selectionReply.removeBlurLabel')
+						: undefined,
+					seed: _id
+				})
+			: renderedMessage;
 
 	const hasRenderedMessage =
 		renderedMessageWithoutPrefix && renderedMessageWithoutPrefix.length > 0;
@@ -2361,7 +2465,8 @@ export const MessageItemComponent = ({
 										) : (
 											systemNotificationBody && (
 												<p className="messageItem__systemNotificationDescription">
-													{systemNotificationBody}
+													{renewedBody ??
+														systemNotificationBody}
 												</p>
 											)
 										)}
@@ -2384,11 +2489,21 @@ export const MessageItemComponent = ({
 											// Timeline: never offered in a preview (#1824).
 											!readOnly &&
 											!blocksLeavingActions &&
-											hasUserAuthority(
+											(hasUserAuthority(
 												AUTHORITIES.ASKER_DEFAULT,
 												userData
-											)
+											) ||
+												hasUserAuthority(
+													AUTHORITIES.ANONYMOUS_DEFAULT,
+													userData
+												))
 										}
+										// FE#2251: a live-chat person converts the account first.
+										// Decided by the conversation, as SessionItemComponent does:
+										// a guest from a live chat link is a plain user
+										// (ASKER_DEFAULT), never ANONYMOUS_DEFAULT. An account that
+										// is already converted skips the form on the convert page.
+										viewerIsAnonymous={isLiveChatModality}
 										messageId={_id}
 									/>
 								)}
@@ -2398,35 +2513,108 @@ export const MessageItemComponent = ({
 								!isFurtherCounsellingNotice &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
-										{systemNotificationDescription}
+										{renewedBody ??
+											systemNotificationDescription}
 									</div>
+								)}
+							{Boolean(passageReplies?.length) &&
+								!isSystemNotification && (
+									<PassageReplyBlocks
+										replies={passageReplies!}
+										isMyMessage={isMyMessage}
+										onJump={onJumpToPassage}
+										renderAudio={(audio, index) => {
+											const voice =
+												passageReplyAudioAttachment(
+													audio
+												);
+											return (
+												<MessageAttachment
+													key={`passage-audio-${index}`}
+													attachment={
+														voice.attachment
+													}
+													rid={rid}
+													file={voice.file}
+													t="matrix-e2e-file"
+													hasRenderedMessage
+													mediaCheckState={getAttachmentMediaCheckState(
+														voice.attachment
+													)}
+													inlineDisplayEnabled={
+														attachmentInlineDisplayEnabled
+													}
+													isOwnMessage={isMyMessage}
+												/>
+											);
+										}}
+									/>
 								)}
 							{/* Relations foundation (#435): quote of the replied-to
 							    message, rendered from the m.in_reply_to relation. */}
-							{replyToEventId && !isSystemNotification && (
-								<div
-									className={`messageItem__replyQuote ${
-										isMyMessage
-											? 'messageItem__replyQuote--myMessage'
-											: ''
-									}`}
-									aria-label={translate(
-										'message.reply.quoteLabel'
-									)}
-								>
-									<span className="messageItem__replyQuoteAuthor">
-										{replyQuote?.author ||
-											translate(
-												'message.reply.quoteUnknown'
+							{replyToEventId &&
+								!passageReplies?.length &&
+								!isSystemNotification &&
+								(() => {
+									const quoteText =
+										replyExcerpt || replyQuote?.text;
+									const quoteClassName = clsx(
+										'messageItem__replyQuote',
+										isMyMessage &&
+											'messageItem__replyQuote--myMessage',
+										onJumpToReplyQuote &&
+											'messageItem__replyQuote--jump'
+									);
+									const quoteBody = (
+										<>
+											<span className="messageItem__replyQuoteAuthor">
+												{replyQuote?.author ||
+													translate(
+														'message.reply.quoteUnknown'
+													)}
+											</span>
+											{quoteText && (
+												<span className="messageItem__replyQuoteText">
+													{replyExcerpt
+														? `„${quoteText}“`
+														: quoteText}
+												</span>
 											)}
-									</span>
-									{replyQuote?.text && (
-										<span className="messageItem__replyQuoteText">
-											{replyQuote.text}
-										</span>
-									)}
-								</div>
-							)}
+										</>
+									);
+									return onJumpToReplyQuote ? (
+										<button
+											type="button"
+											className={quoteClassName}
+											data-cy="reply-quote-jump"
+											aria-label={translate(
+												'message.reply.jumpToQuote',
+												{
+													author:
+														replyQuote?.author ||
+														translate(
+															'message.reply.quoteUnknown'
+														)
+												}
+											)}
+											onClick={(event) => {
+												event.stopPropagation();
+												onJumpToReplyQuote();
+											}}
+										>
+											{quoteBody}
+										</button>
+									) : (
+										<div
+											className={quoteClassName}
+											aria-label={translate(
+												'message.reply.quoteLabel'
+											)}
+										>
+											{quoteBody}
+										</div>
+									);
+								})()}
 							{!isSystemNotification &&
 								renderedMessageWithoutPrefix &&
 								!attachments &&
@@ -2601,10 +2789,8 @@ export const MessageItemComponent = ({
 
 									return (
 										<>
-											<span
-												dangerouslySetInnerHTML={{
-													__html: displayMessage
-												}}
+											<MessageHtml
+												html={displayMessage}
 											/>
 											{isLongMessage && (
 												<button
@@ -2617,6 +2803,7 @@ export const MessageItemComponent = ({
 														);
 													}}
 													type="button"
+													aria-expanded={isExpanded}
 												>
 													{isExpanded
 														? translate(
@@ -2653,11 +2840,9 @@ export const MessageItemComponent = ({
 								(attachment) => attachment.hasCaption
 							) &&
 								renderedMessageWithoutPrefix && (
-									<span
+									<MessageHtml
 										className="messageItem__attachmentCaption"
-										dangerouslySetInnerHTML={{
-											__html: renderedMessageWithoutPrefix
-										}}
+										html={renderedMessageWithoutPrefix}
 									/>
 								)}
 							{/*
@@ -2785,6 +2970,11 @@ export const MessageItemComponent = ({
 				<CallTimelineMessage
 					call={callLifecycle}
 					loadState={apiCallStateRead}
+					/* #2237: let in from the group's waiting room: straight in. */
+					autoJoin={() => shouldAutoJoinCall(activeSession?.item?.id)}
+					onAutoJoined={() =>
+						takeCallAutoJoin(activeSession?.item?.id)
+					}
 					/* #2016: camera and microphone first, as guests get. */
 					deviceCheck={() =>
 						shouldShowDeviceCheck({
@@ -2828,6 +3018,44 @@ export const MessageItemComponent = ({
 										}
 									)
 					}
+				/>
+			</div>
+		);
+	}
+
+	/* A 1:1 appointment change (FE#1960 notice): its own card, booked / moved
+	   / cancelled, with the shortcuts this viewer may use. Only from the
+	   conversation's counsellor (or one's own as a counsellor): anyone else
+	   writing the same words keeps an ordinary bubble. Notices from before the
+	   payload are recognised by their sentence. */
+	const appointmentNoticeTrusted =
+		(isOwnEvent &&
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) ||
+		isTrustedRecommendationSender({
+			senderId: userId,
+			consultantMatrixUserId: activeSession?.item?.consultantMatrixUserId
+		});
+	const appointmentNotice = !appointmentNoticeTrusted
+		? null
+		: parsedMessage.isSystemNotification
+			? parsedMessage.systemNotificationAppointment
+			: attachments?.length
+				? null
+				: recognizeLegacyAppointmentNotice(
+						parsedMessage.cleanedMessage
+					);
+	if (appointmentNotice) {
+		return (
+			<div className="messageItem" data-message-id={_id}>
+				{getMessageDate()}
+				<AppointmentNoticeCard
+					notice={appointmentNotice}
+					sessionId={activeSession?.item?.id}
+					byName={formattedName || undefined}
+					timestamp={
+						messageTime ? formatToHHMM(messageTime) : undefined
+					}
+					readOnly={blocksLeavingActions}
 				/>
 			</div>
 		);
@@ -2901,7 +3129,11 @@ export const MessageItemComponent = ({
 		);
 	}
 
-	if (isUntrustedRecommendation || isRejectedConsultantRenamedEvent) {
+	if (
+		isUntrustedRecommendation ||
+		isRejectedConsultantRenamedEvent ||
+		isUntrustedRenewedNotice
+	) {
 		return null;
 	}
 
@@ -2953,6 +3185,7 @@ export const MessageItemComponent = ({
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
 			data-message-id={_id}
+			style={messageWidthStyle}
 			className={`messageItem ${isSystemNotification ? 'carimatMessageFrame' : ''} ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${

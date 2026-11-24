@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
 import { TenantContext, UserDataContext } from '../../globalState';
@@ -10,39 +10,9 @@ import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLi
 import { DirectLinkEditDialog } from './DirectLinkEditDialog';
 import { MyDirectLinksView } from './MyDirectLinksView';
 import { DirectLinksLoadState } from './useMyDirectLinks';
+import { SAMPLE_DIRECT_LINKS } from './directLinkSamples';
 
-const SAMPLE_LINKS: DirectLink[] = [
-	{
-		id: '1',
-		name: 'Flyer Schule',
-		topic: 'Schulden',
-		topicId: 3,
-		medium: 'VIDEO',
-		temporary: true,
-		active: true,
-		url: 'https://app.oriso.org/invite/Ab3dE6gH'
-	},
-	{
-		id: '2',
-		name: 'Plakat Rathaus',
-		topic: 'Sucht',
-		topicId: 4,
-		medium: 'CHAT',
-		temporary: false,
-		active: true,
-		url: 'https://app.oriso.org/invite/Zy8xW6vU'
-	},
-	{
-		id: '3',
-		name: 'Telefonsprechstunde',
-		topic: 'Schulden',
-		topicId: 3,
-		medium: 'AUDIO',
-		temporary: true,
-		active: false,
-		url: 'https://app.oriso.org/invite/Qr5sT2uV'
-	}
-];
+const SAMPLE_LINKS = SAMPLE_DIRECT_LINKS;
 
 const TOPICS = [
 	{ value: '3', label: 'Schulden' },
@@ -105,7 +75,9 @@ const PageStory = ({
 										...item,
 										...update,
 										topicId: update.topicId ?? item.topicId,
-										topic: topic?.label ?? item.topic
+										topic: topic?.label ?? item.topic,
+										// The edit sends appointment times; the story keeps the shown one.
+										appointment: item.appointment
 									}
 								: item
 						)
@@ -132,6 +104,26 @@ const meta: Meta<typeof PageStory> = {
 };
 export default meta;
 type Story = StoryObj<typeof PageStory>;
+
+/** UserService#1662: "Temporär" for TEMPORARY only, "Gast wählt" for GUEST_CHOOSES. */
+export const ModeChips: Story = {
+	name: 'Account chips per mode (#1662)',
+	args: { initial: SAMPLE_LINKS },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const chipsOf = async (name: string) =>
+			Array.from(
+				(await canvas.findByText(name))
+					.closest('li')!
+					.querySelectorAll('.directLinkChip')
+			).map((chip) => chip.textContent);
+		await expect(await chipsOf('Flyer Schule')).toEqual(['Temporär']);
+		await expect(await chipsOf('Plakat Rathaus')).toEqual([]);
+		await expect(await chipsOf('Telefonsprechstunde')).toEqual([
+			'Gast wählt'
+		]);
+	}
+};
 
 export const WithLinks: Story = {
 	name: 'Links (desktop)',

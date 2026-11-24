@@ -567,5 +567,19 @@ export const fr: Record<EmailId, EmailContent> = {
 			'Cet e-mail ne contient volontairement ni sujet, ni nom, ni information sur les participants.',
 		assurance,
 		footer
+	},
+
+	'calendar-move-proposal': {
+		subject: 'Proposition : déplacer un rendez-vous',
+		preheader:
+			'{{proposerName}} propose un nouvel horaire pour l’un de vos rendez-vous.',
+		headline: 'Proposition : déplacer un rendez-vous',
+		paragraphs: [
+			'{{proposerName}} propose de déplacer votre rendez-vous du {{currentDate}} à {{currentTime}} au {{proposedDate}} à {{proposedTime}}.',
+			'Vous pouvez accepter ou refuser cette proposition dans votre agenda. D’ici là, le rendez-vous reste en place.'
+		],
+		cta: { label: 'Voir dans l’agenda', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

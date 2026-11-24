@@ -24,7 +24,10 @@ export const AskerAboutMeData = () => {
 	const { t: translate } = useTranslation();
 
 	const { userData, reloadUserData } = useContext(UserDataContext);
-	const emailAllowed = useAccountEmailCollectionAllowed();
+	/* UserService#1662: a temporary account has no e-mail address until it
+	   is kept; the server refuses to save one. */
+	const temporary = Boolean(userData.temporaryAccount);
+	const emailAllowed = useAccountEmailCollectionAllowed() && !temporary;
 
 	const [isEmailDisabled, setIsEmailDisabled] = useState<boolean>(true);
 	const [overlay, setOverlay] = useState<OverlayItem>(null);
@@ -283,7 +286,7 @@ export const AskerAboutMeData = () => {
 				type="text"
 				isDisabled
 			/>
-			{(emailAllowed || userData.email) && (
+			{!temporary && (emailAllowed || userData.email) && (
 				<EditableData
 					label={emailLabel}
 					type="email"
@@ -304,7 +307,7 @@ export const AskerAboutMeData = () => {
 					isEmailAlreadyInUse={isEmailNotAvailable}
 				/>
 			)}
-			{!emailAllowed && userData.email && (
+			{!temporary && !emailAllowed && userData.email && (
 				<Button
 					item={{
 						label: translate(

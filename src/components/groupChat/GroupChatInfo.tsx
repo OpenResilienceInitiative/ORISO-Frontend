@@ -274,7 +274,10 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 			matrixUserId: getCurrentMatrixUserId()
 		});
 	const showInviteActions =
-		!!featureGroupChatV2Enabled && isV2GroupChat && isCurrentUserModerator;
+		!!featureGroupChatV2Enabled &&
+		isV2GroupChat &&
+		isCurrentUserModerator &&
+		getModality(activeSession) === Modality.SELF_HELP;
 	const durationOption = durationSelectOptionsSet.find(
 		({ value }) => Number(value) === activeSession.item.duration
 	);
@@ -710,7 +713,13 @@ export const GroupChatInfoM3Connected = ({
 			id: subscriber._id,
 			username,
 			name,
-			isModerator: moderators.includes(subscriber._id),
+			// Only advice seekers can be removed: the server refuses anybody
+			// else, so a counsellor's row gets no remove action
+			// (ORISO-Admin#1518 follow-up). While roles are unknown the
+			// action stays, as before.
+			isModerator:
+				moderators.includes(subscriber._id) ||
+				memberRoles.get(subscriber._id) === 'CONSULTANT',
 			roleLabel: roleLabelOf(subscriber),
 			statusLabel:
 				isCurrentUserModerator &&

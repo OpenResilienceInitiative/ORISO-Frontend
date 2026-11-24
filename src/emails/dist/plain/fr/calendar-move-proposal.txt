@@ -1,0 +1,25 @@
+Proposition : déplacer un rendez-vous
+=====================================
+
+{{proposerName}} propose de déplacer votre rendez-vous du {{currentDate}} à {{currentTime}} au {{proposedDate}} à {{proposedTime}}.
+
+Vous pouvez accepter ou refuser cette proposition dans votre agenda. D’ici là, le rendez-vous reste en place.
+
+Voir dans l’agenda:
+{{calendarUrl}}
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

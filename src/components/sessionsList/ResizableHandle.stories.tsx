@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { expect, fireEvent, userEvent, waitFor } from 'storybook/test';
 import { ResizableHandle } from './ResizableHandle';

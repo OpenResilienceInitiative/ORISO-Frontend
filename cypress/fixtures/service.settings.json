@@ -24,10 +24,6 @@
 		"value": false,
 		"readOnly": false
 	},
-	"calcomUrl": {
-		"value": "calcomUrl",
-		"readOnly": false
-	},
 	"budibaseAuthClientId": {
 		"value": "budibaseAuthClientId",
 		"readOnly": false

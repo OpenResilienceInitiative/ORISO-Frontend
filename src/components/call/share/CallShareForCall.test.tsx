@@ -8,6 +8,7 @@ import {
 	apiUpdateCallShareLink
 } from '../../../api/apiCallShareLink';
 import { CallShareForCall, SHARE_LINK_RETRY_MS } from './CallShareForCall';
+import type { CallShareSettings } from './callShareSettings';
 
 vi.mock('../../../api/apiCallShareLink', () => ({
 	apiCreateCallShareLink: vi.fn(),
@@ -19,8 +20,13 @@ vi.mock('../../../api/apiCallShareLink', () => ({
 const link = {
 	id: 7,
 	url: 'https://app.example/invite/abc',
-	settings: { knock: true, temporaryAccount: true },
-	temporaryAccountAllowed: true
+	settings: { knock: true, guestAccountMode: 'GUEST_CHOOSES' as const },
+	temporaryAccountAllowed: true,
+	allowedGuestAccountModes: [
+		'TEMPORARY' as const,
+		'GUEST_CHOOSES' as const,
+		'PERMANENT' as const
+	]
 };
 
 const openPanel = async () => {
@@ -28,6 +34,18 @@ const openPanel = async () => {
 		await screen.findByRole('button', { name: 'calls.share.open' })
 	);
 	return screen.findByRole('switch', { name: 'calls.share.knock.label' });
+};
+
+/* UserService#1662: the guest account select replaced the temporary switch. */
+const modeButton = (mode: string) =>
+	screen.getByRole('button', { name: `guestAccountMode.option.${mode}` });
+const chooseMode = async (from: string, to: string) => {
+	await userEvent.click(modeButton(from));
+	await userEvent.click(
+		await screen.findByRole('option', {
+			name: `guestAccountMode.option.${to}`
+		})
+	);
 };
 
 beforeEach(() => {
@@ -39,7 +57,7 @@ afterEach(cleanup);
 it('shows the link of this call with its server settings', async () => {
 	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
 		...link,
-		settings: { knock: false, temporaryAccount: true }
+		settings: { knock: false, guestAccountMode: 'GUEST_CHOOSES' as const }
 	});
 	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
 
@@ -71,7 +89,7 @@ it('shows no share button when the call cannot be shared', async () => {
 it('sends a changed setting to the same link', async () => {
 	vi.mocked(apiUpdateCallShareLink).mockResolvedValue({
 		knock: false,
-		temporaryAccount: true
+		guestAccountMode: 'GUEST_CHOOSES' as const
 	});
 	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
 
@@ -80,7 +98,7 @@ it('sends a changed setting to the same link', async () => {
 
 	expect(apiUpdateCallShareLink).toHaveBeenCalledWith(7, {
 		knock: false,
-		temporaryAccount: true
+		guestAccountMode: 'GUEST_CHOOSES' as const
 	});
 	await vi.waitFor(() => expect(knock.checked).toBe(false));
 });
@@ -103,52 +121,44 @@ it('falls back to what the server has when overlapping changes both fail', async
 	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
 
 	const knock = (await openPanel()) as HTMLInputElement;
-	const temporary = screen.getByRole('switch', {
-		name: 'calls.share.temporaryAccount.label'
-	}) as HTMLInputElement;
 	await userEvent.click(knock);
-	await userEvent.click(temporary);
+	await chooseMode('GUEST_CHOOSES', 'PERMANENT');
 	failures[0](new Error('CATCH_ALL'));
 	await vi.waitFor(() => expect(failures).toHaveLength(2));
 	failures[1](new Error('CATCH_ALL'));
 
 	await vi.waitFor(() => {
 		expect(knock.checked).toBe(true);
-		expect(temporary.checked).toBe(true);
+		expect(modeButton('GUEST_CHOOSES')).toBeTruthy();
 	});
 });
 
 /* Two PATCHes in flight could land out of order and leave the older one on the server. */
 it('sends one change at a time and skips changes a newer one replaced', async () => {
-	const answers: Array<
-		(saved: { knock: boolean; temporaryAccount: boolean }) => void
-	> = [];
+	const answers: Array<(saved: CallShareSettings) => void> = [];
 	vi.mocked(apiUpdateCallShareLink).mockImplementation(
 		() => new Promise((resolve) => answers.push(resolve))
 	);
 	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
 
 	const knock = (await openPanel()) as HTMLInputElement;
-	const temporary = screen.getByRole('switch', {
-		name: 'calls.share.temporaryAccount.label'
-	}) as HTMLInputElement;
 	await userEvent.click(knock);
-	await userEvent.click(temporary);
+	await chooseMode('GUEST_CHOOSES', 'PERMANENT');
 	await userEvent.click(knock);
 	expect(apiUpdateCallShareLink).toHaveBeenCalledTimes(1);
 
-	answers[0]({ knock: false, temporaryAccount: true });
+	answers[0]({ knock: false, guestAccountMode: 'GUEST_CHOOSES' as const });
 	await vi.waitFor(() =>
 		expect(apiUpdateCallShareLink).toHaveBeenCalledTimes(2)
 	);
 	expect(apiUpdateCallShareLink).toHaveBeenLastCalledWith(7, {
 		knock: true,
-		temporaryAccount: false
+		guestAccountMode: 'PERMANENT' as const
 	});
-	answers[1]({ knock: true, temporaryAccount: false });
+	answers[1]({ knock: true, guestAccountMode: 'PERMANENT' as const });
 	await vi.waitFor(() => {
 		expect(knock.checked).toBe(true);
-		expect(temporary.checked).toBe(false);
+		expect(modeButton('PERMANENT')).toBeTruthy();
 	});
 });
 
@@ -187,9 +197,7 @@ it.each(['phone', 'desktop'] as const)(
 );
 
 it('keeps a late answer for the previous call off the next call', async () => {
-	const answers: Array<
-		(saved: { knock: boolean; temporaryAccount: boolean }) => void
-	> = [];
+	const answers: Array<(saved: CallShareSettings) => void> = [];
 	vi.mocked(apiUpdateCallShareLink).mockImplementation(
 		() => new Promise((resolve) => answers.push(resolve))
 	);
@@ -202,7 +210,7 @@ it('keeps a late answer for the previous call off the next call', async () => {
 	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
 		...link,
 		id: 8,
-		settings: { knock: true, temporaryAccount: false }
+		settings: { knock: true, guestAccountMode: 'PERMANENT' as const }
 	});
 	rerender(
 		<CallShareForCall sourceRoomId="!r:x" callId="c2" layout="phone" />
@@ -213,7 +221,7 @@ it('keeps a late answer for the previous call off the next call', async () => {
 			callId: 'c2'
 		})
 	);
-	answers[0]({ knock: false, temporaryAccount: true });
+	answers[0]({ knock: false, guestAccountMode: 'GUEST_CHOOSES' as const });
 
 	const knock = (await openPanel()) as HTMLInputElement;
 	await new Promise((resolve) => setTimeout(resolve, 0));
@@ -224,7 +232,10 @@ it('does not hold the next call’s changes behind one still out for the previou
 	vi.mocked(apiUpdateCallShareLink).mockImplementation((id) =>
 		id === 7
 			? new Promise(() => {})
-			: Promise.resolve({ knock: false, temporaryAccount: false })
+			: Promise.resolve({
+					knock: false,
+					guestAccountMode: 'PERMANENT' as const
+				})
 	);
 	const { rerender } = render(
 		<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />
@@ -235,7 +246,7 @@ it('does not hold the next call’s changes behind one still out for the previou
 	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
 		...link,
 		id: 8,
-		settings: { knock: true, temporaryAccount: false }
+		settings: { knock: true, guestAccountMode: 'PERMANENT' as const }
 	});
 	rerender(
 		<CallShareForCall sourceRoomId="!r:x" callId="c2" layout="phone" />
@@ -244,7 +255,7 @@ it('does not hold the next call’s changes behind one still out for the previou
 	await vi.waitFor(() =>
 		expect(apiUpdateCallShareLink).toHaveBeenLastCalledWith(8, {
 			knock: false,
-			temporaryAccount: false
+			guestAccountMode: 'PERMANENT' as const
 		})
 	);
 });
@@ -280,4 +291,64 @@ it('opens inside the fullscreen call and closes when fullscreen changes', async 
 		delete (document as { fullscreenElement?: Element }).fullscreenElement;
 		fullscreen.remove();
 	}
+});
+
+/*
+ * #2215 review: with host chrome the call's header hands out the link, but
+ * the temporary-account switch exists only here, so the panel stays where
+ * the link may create one.
+ */
+it('stays reachable beside the header link when temporary accounts are allowed', async () => {
+	render(
+		<CallShareForCall
+			sourceRoomId="!r:x"
+			callId="c1"
+			layout="phone"
+			onlyForTemporaryAccounts
+		/>
+	);
+	expect(
+		await screen.findByRole('button', { name: 'calls.share.open' })
+	).toBeTruthy();
+});
+
+/* UserService#1662: the select offers only what platform and Träger allow. */
+it('offers only the guest account modes the server allows', async () => {
+	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
+		...link,
+		settings: { knock: true, guestAccountMode: 'PERMANENT' },
+		allowedGuestAccountModes: ['GUEST_CHOOSES', 'PERMANENT']
+	});
+	render(<CallShareForCall sourceRoomId="!r:x" callId="c1" layout="phone" />);
+	await openPanel();
+	expect(
+		screen.queryByRole('switch', { name: /temporaryAccount/ })
+	).toBeNull();
+
+	await userEvent.click(modeButton('PERMANENT'));
+	expect(
+		screen.getAllByRole('option').map((option) => option.textContent)
+	).toEqual([
+		'guestAccountMode.option.GUEST_CHOOSES',
+		'guestAccountMode.option.PERMANENT'
+	]);
+});
+
+it('stays out of the way of the header link when no temporary account is possible', async () => {
+	vi.mocked(apiCreateCallShareLink).mockResolvedValue({
+		...link,
+		temporaryAccountAllowed: false
+	});
+	render(
+		<CallShareForCall
+			sourceRoomId="!r:x"
+			callId="c1"
+			layout="phone"
+			onlyForTemporaryAccounts
+		/>
+	);
+	await vi.waitFor(() => expect(apiCreateCallShareLink).toHaveBeenCalled());
+	expect(
+		screen.queryByRole('button', { name: 'calls.share.open' })
+	).toBeNull();
 });

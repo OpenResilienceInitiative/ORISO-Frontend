@@ -569,5 +569,22 @@ export const deSie: Record<EmailId, EmailContent> = {
 			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
 		assurance,
 		footer
+	},
+
+	// A colleague proposes a new time for one of the recipient's appointments
+	// (calendar, ADR-032). Names only the proposing counsellor, never the
+	// advice seeker or anything from the conversation.
+	'calendar-move-proposal': {
+		subject: 'Vorschlag: Termin verschieben',
+		preheader:
+			'{{proposerName}} schlägt eine neue Zeit für einen Ihrer Termine vor.',
+		headline: 'Vorschlag: Termin verschieben',
+		paragraphs: [
+			'{{proposerName}} schlägt vor, Ihren Termin am {{currentDate}} um {{currentTime}} Uhr auf den {{proposedDate}} um {{proposedTime}} Uhr zu verschieben.',
+			'Sie können den Vorschlag im Kalender annehmen oder ablehnen. Bis dahin bleibt der Termin, wo er ist.'
+		],
+		cta: { label: 'Im Kalender ansehen', href: '{{calendarUrl}}' },
+		assurance: staffAssurance,
+		footer
 	}
 };

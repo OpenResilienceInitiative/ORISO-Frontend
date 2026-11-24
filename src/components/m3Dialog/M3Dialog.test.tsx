@@ -1,11 +1,80 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { M3Dialog } from './M3Dialog';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 
 describe('M3Dialog', () => {
 	afterEach(cleanup);
+
+	it('makes a standing notice step aside until it closes', async () => {
+		const screenWith = (open: boolean) => (
+			<>
+				<M3Snackbar
+					message="Standing"
+					testId="standing"
+					yieldToOthers
+				/>
+				<M3Dialog open={open} title="Sure?" onClose={() => undefined} />
+			</>
+		);
+		const { rerender } = render(screenWith(true));
+		await waitFor(() =>
+			expect(screen.queryByTestId('standing')).toBeNull()
+		);
+
+		rerender(screenWith(false));
+		expect(await screen.findByTestId('standing')).toBeTruthy();
+	});
+
+	it('hands keyboard focus back to the notice action after the dialog it opened closes', async () => {
+		const Screen = () => {
+			const [open, setOpen] = React.useState(false);
+			return (
+				<>
+					<M3Snackbar
+						message="Standing"
+						testId="standing"
+						yieldToOthers
+						action={{
+							label: 'Enter key',
+							onClick: () => setOpen(true)
+						}}
+					/>
+					<M3Dialog
+						open={open}
+						title="Recovery key"
+						closeLabel="Close"
+						onClose={() => setOpen(false)}
+					/>
+				</>
+			);
+		};
+		render(<Screen />);
+		const action = screen.getByRole('button', { name: 'Enter key' });
+		action.focus();
+		fireEvent.click(action);
+
+		await screen.findByRole('dialog');
+		await waitFor(() =>
+			expect(screen.queryByTestId('standing')).toBeNull()
+		);
+
+		fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByRole('button', { name: 'Enter key' })
+			)
+		);
+	});
 
 	it('renders the house anatomy: hero icon, title, description, body', () => {
 		render(

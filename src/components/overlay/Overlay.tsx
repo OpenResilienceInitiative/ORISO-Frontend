@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ModalContext } from '../../globalState';
 import { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 
 export const OVERLAY_FUNCTIONS = {
 	CLOSE: 'CLOSE',
@@ -106,6 +107,8 @@ export const Overlay: FC<OverlayProps> = ({ name, ...overlayProps }) => {
 
 const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	const { t: translate } = useTranslation();
+	// A standing notice would sit above the dialog and swallow clicks on its buttons.
+	useFloatingSnackbarPresence(true);
 	const [activeStep, setActiveStep] = useState<number>(0);
 	// Derived during render: a copy synced by an effect showed the previous
 	// item for one commit after every change (e.g. a late error alert).

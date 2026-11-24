@@ -24,6 +24,7 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { revealHoverArrow } from '../hoverScrollArrows/hoverScrollArrowsStoryPlay';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import { storyLegalLinks as legalLinks } from '../waitingRoom/storyLegalLinks';
 
@@ -510,4 +511,21 @@ export const StepClosedMobile: StoryObj = {
 	globals: phone375Globals,
 	render: () => <Closed />,
 	parameters: { layout: 'fullscreen' }
+};
+
+/* Hover arrows (2026-11-11): hover the right edge of the cards with a mouse.
+   In a narrow window: from `sm` up the fluid cards fit side by side
+   (2026-11-13), so there is nothing to scroll and no arrow. */
+export const StepWaitingHoverArrows: StoryObj = {
+	globals: phone390Globals,
+	name: 'B — Warteraum: Pfeile beim Darüberfahren (schmales Fenster, Maus)',
+	render: () => <Waiting />,
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
+		await revealHoverArrow(
+			canvasElement,
+			'end',
+			'handover-carousel-arrows'
+		);
+	}
 };

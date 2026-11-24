@@ -1,6 +1,7 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
+import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
@@ -243,7 +244,18 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import {
+	parseAddonPanel,
+	useOpenAddonPanel,
+	withAddonPanel
+} from '../../addons/addonPanel';
+import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
 import { canRenderClientComposer } from './clientComposerPolicy';
+import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
+import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
+import { jumpToPassage } from '../selectionReply/passageRange';
+import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
+import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
 import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
@@ -261,6 +273,11 @@ import { loadMessageComposer } from '../app/appChunks';
 const MessageSubmitInterfaceComponent = lazyWithReload(loadMessageComposer);
 
 interface SessionItemProps {
+	/**
+	 * Phone: a side panel (thread, supervision, team) fills the screen instead
+	 * of the main chat. Read receipts wait while it is hidden (FE#1802).
+	 */
+	onMainChatHiddenChange?: (hidden: boolean) => void;
 	/** Current-session Carimat continuation inside the main scrolling timeline. */
 	mainTimelineSupplement?: React.ReactNode;
 	mainTimelineSupplementTime?: number;
@@ -269,6 +286,8 @@ interface SessionItemProps {
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/** Moderator blurs (#2229): blur event id → Matrix id of who blurred. */
+	passageBlurSenders?: Map<string, string>;
 	/**
 	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
 	 * of `messages`; rendered in the SupervisionPanel next to the chat.
@@ -532,18 +551,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [robotSequenceVisibleCount, setRobotSequenceVisibleCount] =
 		useState(0);
 
-	// Threads feature toggle (tenant-level). Master switch disables for all chat types.
-	// When enabled, per-chat-type switches decide if threads are available in 1-on-1 vs group chats.
+	// Threads/supervision toggles: effective platform -> Traeger -> agency result.
+	// Master switch disables for all chat types; per-chat-type switches refine it.
+	const conversationFeatures =
+		useConversationFeatureSettings(getTenantSettings());
 	const {
-		featureSupervisionEnabled = true,
-		featureSupervisionAnonymousChatsEnabled = true,
-		featureSupervisionOneOnOneChatsEnabled = true,
 		featureThreadsEnabled = true,
 		featureThreadsAnonymousChatsEnabled = true,
 		featureThreadsGroupChatsEnabled = true,
 		featureThreadsOneOnOneEnabled = true,
 		featureThreadsSupervisionChatsEnabled = true
-	} = getTenantSettings();
+	} = conversationFeatures;
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
@@ -816,11 +834,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: chatType === 'supervision'
 					? featureThreadsSupervisionChatsEnabled !== false
 					: featureThreadsOneOnOneEnabled !== false);
-	const isSupervisionEnabledForCurrentChat =
-		featureSupervisionEnabled !== false &&
-		(isAnonymousChat
-			? featureSupervisionAnonymousChatsEnabled !== false
-			: featureSupervisionOneOnOneChatsEnabled !== false);
+	const isSupervisionEnabledForCurrentChat = isSupervisionEnabledForChat(
+		conversationFeatures,
+		isAnonymousChat
+	);
 
 	// WP-B2 safety net: the client-facing timeline never carries side-room
 	// items, whatever SessionStream handed over.
@@ -2378,7 +2395,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// The panel the URL asks for, resolved against what exists. A thread
 	// whose root is not in the loaded history keeps the main chat open
 	// while its authorized history is loading.
-	const openPanel: 'supervision' | 'team' | 'thread' | null =
+	const openAddonPanel = useOpenAddonPanel(
+		location.search,
+		{
+			agencyId: activeSession.item?.agencyId,
+			sessionId: activeSession.item?.id
+		},
+		isConsultantUser ? 'consultant' : 'asker'
+	);
+	const openPanel: 'supervision' | 'team' | 'thread' | 'addon' | null =
 		routeChannel?.kind === 'supervision'
 			? hasSupervisionSideRoom
 				? 'supervision'
@@ -2389,7 +2414,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: null
 				: activeThreadRootId && activeThreadRootMessage
 					? 'thread'
-					: null;
+					: openAddonPanel
+						? 'addon'
+						: null;
 	const shownChannelId =
 		openPanel === 'supervision'
 			? channelId({ kind: 'supervision' })
@@ -2461,6 +2488,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
 	// opening by itself would remove the button its step points at.
 	const isPracticing = usePracticeActive();
+	const addonPanelRequested = parseAddonPanel(location.search) !== null;
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2479,7 +2507,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
 				canOpenTeamSideRoom &&
-				!isPracticing
+				!isPracticing,
+			addonPanelRequested
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2498,7 +2527,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		canOpenTeamSideRoom,
 		isPracticing,
 		messages,
-		setChannelRoute
+		setChannelRoute,
+		addonPanelRequested
 	]);
 
 	// Unread side-room messages: foreign items newer than the last time the
@@ -2859,8 +2889,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
 	// the SIDE room, so its Element Call room is created from
 	// `supervisionRoomId` and admits exactly that room's members.
-	const supervisionFeatures =
-		useConversationFeatureSettings(getTenantSettings());
+	const supervisionFeatures = conversationFeatures;
 	const supervisionCallGates =
 		resolveSupervisionCallFeatureGates(supervisionFeatures);
 	// Role/session eligibility is separate from the feature-policy helper.
@@ -3054,9 +3083,74 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			if (!target) {
 				return null;
 			}
-			return buildReplyQuotePreview(target);
+			const quote = buildReplyQuotePreview(target);
+			// A blurred passage (#2229) must not come back in a quote.
+			return target.passageBlurs?.length
+				? {
+						...quote,
+						text: translate('message.selectionReply.blurredLabel')
+					}
+				: quote;
 		},
+		[messages, translate]
+	);
+
+	// Selection reply (#2202): mark a passage in a message, answer it, and
+	// send the collected answers as one message. Only where this person can
+	// write in the conversation: never for supervisors or a read-only
+	// co-access view.
+	const passageReplies = useSessionPassageReplies({
+		matrixRoomId: resolvedMatrixRoomId,
+		canReply:
+			!isRejectedSession &&
+			!isCoAccessViewer &&
+			!isSupervisorView &&
+			canRenderClientComposer({
+				canWriteMessage,
+				isSupervisor: isSupervisorView,
+				shouldBlockAnonymousInquiryChat: blocksConversation
+			}),
+		isSupervisor,
+		senderDisplayName: userData?.displayName || userData?.userName || null
+	});
+	const authorForPassage = useCallback(
+		(eventId: string) =>
+			(messages || []).find(
+				(candidate: MessageItem) => candidate._id === eventId
+			)?.displayName || '',
 		[messages]
+	);
+	const handleJumpToPassage = useCallback((reply: PassageReply) => {
+		if (scrollContainerRef.current) {
+			jumpToPassage(
+				scrollContainerRef.current,
+				reply.eventId,
+				reply.excerpt,
+				reply.start
+			);
+		}
+	}, []);
+	// Moderator blur (#2229): only the room's moderators blur a passage or
+	// lift a blur; everyone in the chat sees it.
+	const passageBlur = useSessionPassageBlur({
+		matrixRoomId: resolvedMatrixRoomId,
+		blurSenders: props.passageBlurSenders,
+		activeSession,
+		userData,
+		isConsultant: isConsultantUser,
+		isSupervisorView,
+		isReadOnly: isRejectedSession || isCoAccessViewer
+	});
+	const handleThreadFromPassage = useCallback(
+		(passage: { eventId: string }) => {
+			const root = (messages || []).find(
+				(candidate: MessageItem) => candidate._id === passage.eventId
+			);
+			if (root) {
+				handleOpenThread(root);
+			}
+		},
+		[messages, handleOpenThread]
 	);
 
 	// If threads become disabled while a thread panel is open, close it immediately.
@@ -3081,6 +3175,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Phone: a side panel fills the screen instead of the main chat.
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
+	const { onMainChatHiddenChange } = props;
+	useEffect(() => {
+		onMainChatHiddenChange?.(mainChatHidden);
+	}, [mainChatHidden, onMainChatHiddenChange]);
 	const shownThreadRootId =
 		openPanel === 'thread' ? activeThreadRootId : null;
 	useEffect(() => {
@@ -3243,7 +3341,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							hideBackButton={isPhoneLayout}
+							// D7: the composer carries the phone's back arrow. The
+							// group privacy gate renders no composer, so its header
+							// keeps the arrow there.
+							hideBackButton={
+								isPhoneLayout && !shouldShowGroupConsentGate
+							}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
 						/>
@@ -3518,90 +3621,121 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
-								<MessageTimeline
-									messages={messages}
-									renderMode="main"
-									supplement={props.mainTimelineSupplement}
-									supplementTime={
-										props.mainTimelineSupplementTime
+								<SelectionReplyLayer
+									enabled={
+										passageReplies.enabled ||
+										passageBlur.canBlur
 									}
-									clientName={
-										getContact(activeSession)?.username ||
-										translate(
-											'sessionList.user.consultantUnknown'
-										)
-									}
-									askerMatrixUserIdFor={() =>
-										activeSession.item.askerMatrixUserId
-									}
-									isOnlyEnquiry={isOnlyEnquiry}
-									hideSystemMessages={
-										isConsultantUser &&
-										(isOnlyEnquiry ||
-											Boolean(activeSession.isEnquiry))
-									}
-									showFullContent={
-										isOnlyEnquiry ||
-										Boolean(activeSession.isEnquiry)
-									}
-									isMyMessage={isMyMessageMatrix}
-									isUserBanned={(username) =>
-										props.bannedUsers.includes(username)
-									}
-									handleDecryptionErrors={
-										handleDecryptionErrors
-									}
-									handleDecryptionSuccess={
-										handleDecryptionSuccess
-									}
-									e2eeParams={{
-										key,
-										keyID,
-										encrypted,
-										subscriptionKeyLost
-									}}
-									decryptionFailures={decryptionFailures}
-									showDecryptionCardFor={(message) =>
-										!isThreadsEnabled ||
-										!message.threadRootEventId
-									}
-									threadsEnabled={isThreadsEnabled}
-									threadSummaryFor={(id) =>
-										threadSummaries.get(id)
-									}
-									onOpenThread={
+									authorFor={authorForPassage}
+									onAddToComposer={passageReplies.collect}
+									onSendNow={passageReplies.sendNow}
+									onStartThread={
 										isThreadsEnabled
-											? handleOpenThread
+											? handleThreadFromPassage
 											: undefined
 									}
-									resolveReplyQuote={resolveReplyQuote}
-									onReplyDirect={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleReplyDirect
-									}
-									onEditDirect={
-										isRejectedSession
-											? undefined
-											: handleEditDirect
-									}
-									onDeleteDirect={
-										isRejectedSession
-											? undefined
-											: handleDeleteDirect
-									}
-									reactionsFor={getReactionsFor}
-									onReact={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleReact
-									}
-									onUnreact={
-										isRejectedSession || isCoAccessViewer
-											? undefined
-											: handleUnreact
-									}
-								/>
+									recorder={passageReplies.recorder}
+									onBlurPassage={passageBlur.onBlurPassage}
+									onRemoveBlur={passageBlur.onRemoveBlur}
+									blurredByFor={passageBlur.blurredByFor}
+								>
+									<MessageTimeline
+										messages={messages}
+										renderMode="main"
+										supplement={
+											props.mainTimelineSupplement
+										}
+										supplementTime={
+											props.mainTimelineSupplementTime
+										}
+										clientName={
+											getContact(activeSession)
+												?.username ||
+											translate(
+												'sessionList.user.consultantUnknown'
+											)
+										}
+										askerMatrixUserIdFor={() =>
+											activeSession.item.askerMatrixUserId
+										}
+										isOnlyEnquiry={isOnlyEnquiry}
+										hideSystemMessages={
+											isConsultantUser &&
+											(isOnlyEnquiry ||
+												Boolean(
+													activeSession.isEnquiry
+												))
+										}
+										showFullContent={
+											isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry)
+										}
+										isMyMessage={isMyMessageMatrix}
+										isUserBanned={(username) =>
+											props.bannedUsers.includes(username)
+										}
+										handleDecryptionErrors={
+											handleDecryptionErrors
+										}
+										handleDecryptionSuccess={
+											handleDecryptionSuccess
+										}
+										e2eeParams={{
+											key,
+											keyID,
+											encrypted,
+											subscriptionKeyLost
+										}}
+										decryptionFailures={decryptionFailures}
+										showDecryptionCardFor={(message) =>
+											!isThreadsEnabled ||
+											!message.threadRootEventId
+										}
+										threadsEnabled={isThreadsEnabled}
+										threadSummaryFor={(id) =>
+											threadSummaries.get(id)
+										}
+										onOpenThread={
+											isThreadsEnabled
+												? handleOpenThread
+												: undefined
+										}
+										resolveReplyQuote={resolveReplyQuote}
+										onReplyDirect={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleReplyDirect
+										}
+										onEditDirect={
+											isRejectedSession
+												? undefined
+												: handleEditDirect
+										}
+										onDeleteDirect={
+											isRejectedSession
+												? undefined
+												: handleDeleteDirect
+										}
+										reactionsFor={getReactionsFor}
+										onReact={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleReact
+										}
+										onUnreact={
+											isRejectedSession ||
+											isCoAccessViewer
+												? undefined
+												: handleUnreact
+										}
+										onJumpToPassage={handleJumpToPassage}
+										canRemovePassageBlur={
+											passageBlur.canBlur
+										}
+									/>
+								</SelectionReplyLayer>
 							)}
 							{/* "Sending message failed" cards for sends that never
 						    reached the server (Figma 7086-57415). */}
@@ -3931,6 +4065,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											}
 											replyTo={replyTo}
 											onCancelReply={handleCancelReply}
+											pendingQuotes={
+												passageReplies.enabled
+													? passageReplies.pending
+													: undefined
+											}
+											onRemovePendingQuote={
+												passageReplies.remove
+											}
+											onSendPendingQuotes={
+												passageReplies.enabled
+													? passageReplies.sendCollected
+													: undefined
+											}
 											editingMessage={editingMessage}
 											onCancelEdit={handleCancelEdit}
 											mobileUnreadCount={newMessages}
@@ -4757,7 +4904,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
-	const sidePanel = threadPanel ?? supervisionPanel ?? teamPanel;
+	const addonPanel =
+		openPanel === 'addon' && openAddonPanel ? (
+			<AddonSessionPanel
+				{...openAddonPanel}
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				agencyId={activeSession.item?.agencyId}
+				sessionId={activeSession.item?.id}
+				onClose={() =>
+					navigate({
+						pathname: location.pathname,
+						search: withAddonPanel(location.search, null)
+					})
+				}
+			/>
+		) : null;
+
+	const sidePanel =
+		threadPanel ?? supervisionPanel ?? teamPanel ?? addonPanel;
 
 	// Desktop: the panel joins the card (`.chatStage__card--split`) behind
 	// the real `ResizableHandle` (T2). Phone: the panel fills the screen

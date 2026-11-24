@@ -8,6 +8,7 @@ import {
 	isSupported
 } from '../../utils/notificationHelpers';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
+import { effectiveBrowserNotificationsEnabled } from '../../utils/notificationSettings/browserMasterSwitch';
 import { BROWSER_SECTIONS, browserPopupsOff } from './browserAvailability';
 
 /** The Browser cells' unavailable reason, or `undefined` when pop-ups can show. */
@@ -21,7 +22,17 @@ export const useDisplayFilterBrowserUnavailable = (
 	const legacyEnabled = legacyType
 		? Boolean(isBrowserNotificationTypeEnabled(legacyType))
 		: false;
-	return browserPopupsOff(section, settings, crossDevicePanel, legacyEnabled)
+	// FE#1211: the master switch counts as on once the browser allows it.
+	const effective = {
+		...settings,
+		browserNotifications: {
+			...settings.browserNotifications,
+			enabled: effectiveBrowserNotificationsEnabled(
+				Boolean(settings.browserNotifications?.enabled)
+			)
+		}
+	};
+	return browserPopupsOff(section, effective, crossDevicePanel, legacyEnabled)
 		? t('notifications.displayFilter.browserOff')
 		: undefined;
 };

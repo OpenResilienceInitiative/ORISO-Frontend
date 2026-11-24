@@ -32,15 +32,22 @@
 		height: var(--participant-size, 40px);
 		border-radius: 50%;
 
-		// Separates overlapping avatars like Figma's white gap.
-		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+		// Separates overlapping avatars like Figma's white gap. A host whose
+		// surface is not white (the session card while inactive) sets
+		// `--participant-ring` to its own colour, so the gap blends in.
+		box-shadow: 0 0 0 2px
+			var(--participant-ring, var(--m3-surface-container-lowest, #fff));
 		background: var(--m3-surface-container-lowest, #fff);
 		cursor: default;
 		outline: none;
 
 		&:focus-visible {
 			box-shadow:
-				0 0 0 2px var(--m3-surface-container-lowest, #fff),
+				0 0 0 2px
+					var(
+						--participant-ring,
+						var(--m3-surface-container-lowest, #fff)
+					),
 				0 0 0 4px var(--m3-primary, #a5000a);
 		}
 	}

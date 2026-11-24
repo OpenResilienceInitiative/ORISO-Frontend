@@ -1,5 +1,6 @@
 import { apiUrl } from '../resources/scripts/endpoints';
 import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import type { GuestAccountMode } from '../components/guestAccountMode/guestAccountMode';
 
 /**
  * What an invite link leads to, readable without redeeming it — public, no
@@ -25,6 +26,22 @@ export interface InviteLinkContext {
 		| 'GUEST_DECIDES'
 		| 'ALWAYS_PERSISTENT'
 		| null;
+	/**
+	 * Direct and call links (UserService#1662): which account a person without
+	 * one gets. GUEST_CHOOSES lets the entry offer both ways.
+	 */
+	guestAccountMode?: GuestAccountMode | null;
+	/** #2252 Direkteinladung: who may enter; the older mirror of the mode. */
+	accessMode?: 'GUESTS_ONLY' | 'ACCOUNTS_ONLY' | 'BOTH' | null;
+	/** #2252: whether the call waits for the counsellor. */
+	knock?: boolean | null;
+	/** #2252, with an appointment only (ISO instants). */
+	appointmentStartTime?: string | null;
+	appointmentEndTime?: string | null;
+	/** #2252: the call waiting room opens then; the chat works at once. */
+	callOpensAt?: string | null;
+	/** #2252: afterwards the link answers 410 `DIRECT_LINK_EXPIRED`. */
+	expiresAt?: string | null;
 }
 
 /* The page waits on this before it either opens the live-chat room or falls

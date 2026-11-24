@@ -24,6 +24,7 @@ const fakes = vi.hoisted(() => ({
 	apiGetCaseHandoverStatus: vi.fn(),
 	apiGetGroupChatInfo: vi.fn(),
 	useTeamDiscussionChannel: vi.fn(),
+	agencyPolicy: undefined as any,
 	membership: 'join',
 	transport: {
 		getMatrixRoom: vi.fn(),
@@ -47,6 +48,10 @@ vi.mock('../../api/apiGetGroupChatInfo', () => ({
 }));
 vi.mock('../../hooks/useTeamDiscussionChannel', () => ({
 	useTeamDiscussionChannel: fakes.useTeamDiscussionChannel
+}));
+// #363: the preview reads the same effective agency policy as the chat.
+vi.mock('../../hooks/useSessionAgencyPolicy', () => ({
+	useSessionAgencyPolicy: () => ({ agency: null, policy: fakes.agencyPolicy })
 }));
 vi.mock('../../services/chatTransportService', () => ({
 	chatTransportService: fakes.transport
@@ -98,6 +103,7 @@ const render = (event: any, userData: any = consultant, visible = true) =>
 	});
 
 beforeEach(() => {
+	fakes.agencyPolicy = undefined;
 	fakes.membership = 'join';
 	fakes.transport.getMatrixRoom.mockImplementation(() => ({
 		getMyMembership: () => fakes.membership
@@ -151,6 +157,60 @@ describe('useConversationPreview (#1824)', () => {
 			isSupervisor: false,
 			supervisionRoomId: SIDE
 		});
+	});
+
+	it('hides the supervision side room when the agency policy turns supervision off (#363)', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({ item: { agencyId: 7 } }),
+			ready: true
+		});
+		fakes.agencyPolicy = {
+			agencyId: 7,
+			state: 'ready',
+			settings: {
+				permissionPolicies: {
+					featureSupervisionEnabled: {
+						value: false,
+						mode: 'ENFORCED',
+						inherited: true
+					}
+				}
+			}
+		};
+		fakes.apiGetSessionSupervisors.mockResolvedValue([
+			{ supervisorConsultantId: 'sup', matrixRoomId: SIDE }
+		]);
+		render(row({ params: { roomRef: SIDE, sourceSessionId: 13 } }));
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(fakes.apiGetSessionSupervisors).not.toHaveBeenCalled();
+	});
+
+	it('skips the supervision lookup in a 1:1 chat when 1:1 supervision is off (#363)', async () => {
+		fakes.useSession.mockReturnValue({
+			session: session({ item: { agencyId: 7 } }),
+			ready: true
+		});
+		fakes.agencyPolicy = {
+			agencyId: 7,
+			state: 'ready',
+			settings: {
+				permissionPolicies: {
+					featureSupervisionEnabled: {
+						value: true,
+						mode: 'SUGGESTED',
+						inherited: true
+					},
+					featureSupervisionOneOnOneChatsEnabled: {
+						value: false,
+						mode: 'ENFORCED',
+						inherited: true
+					}
+				}
+			}
+		};
+		render(row({ params: { roomRef: SIDE, sourceSessionId: 13 } }));
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(fakes.apiGetSessionSupervisors).not.toHaveBeenCalled();
 	});
 
 	it('resolves the team room, writable only while OPEN, never creating it', async () => {
@@ -408,6 +468,26 @@ describe('useConversationPreview (#1824)', () => {
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		expect(result.current?.capabilities.contentHidden).toBe(true);
 		expect(result.current?.capabilities.composer).toBe(false);
+	});
+
+	it('settles a failed session lookup as hidden, so the entry explains it (#2275 review)', async () => {
+		fakes.useSession.mockReturnValue({ session: null, ready: true });
+		const { result } = render(row());
+		await waitFor(() =>
+			expect(result.current?.hidesContentSettled).toBe(true)
+		);
+		expect(result.current?.capabilities.readOnlyReason).toBe(
+			'sessionUnknown'
+		);
+		expect(result.current?.capabilities.contentHidden).toBe(true);
+	});
+
+	it('does not settle while the session lookup is still running', async () => {
+		fakes.useSession.mockReturnValue({ session: null, ready: false });
+		const { result } = render(row());
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(result.current?.hidesContentSettled).toBe(false);
+		expect(result.current?.capabilities.contentHidden).toBe(true);
 	});
 
 	it('stays read only when the group info cannot be loaded', async () => {

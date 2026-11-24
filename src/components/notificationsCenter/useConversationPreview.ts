@@ -12,6 +12,12 @@ import {
 } from '../../globalState/helpers/stateHelpers';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import { useSession } from '../../hooks/useSession';
+import { resolveFeaturesForAgencyPolicy } from '../../hooks/useConversationFeatureSettings';
+import { useSessionAgencyPolicy } from '../../hooks/useSessionAgencyPolicy';
+import {
+	isSupervisionEnabledForChat,
+	resolveConversationAgencyId
+} from '../../utils/conversationFeatureSettings';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import { chatTransportService } from '../../services/chatTransportService';
 import { decodeUsername } from '../../utils/encryptionHelpers';
@@ -27,6 +33,7 @@ import { getModality, Modality } from '../session/getModality';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { isActiveSupervisorOf } from '../sessionsListItem/supervisionListState';
 import { activityEventConversation } from './activityEvent';
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import {
 	type PreviewCapabilities,
 	type PreviewCaseHandover,
@@ -56,6 +63,12 @@ export interface ConversationPreviewModel {
 	session: ReturnType<typeof useSession>['session'] | null;
 	roomKind: PreviewRoomKind | null;
 	capabilities: PreviewCapabilities;
+	/**
+	 * #2226: every lookup has answered and the preview still hides the
+	 * conversation (not joined, group not started, curtained). A call or
+	 * appointment entry then keeps its detail view instead of a blank notice.
+	 */
+	hidesContentSettled: boolean;
 	composerTarget: PreviewComposerTarget;
 	/** For the co-access notice (its end date). */
 	caseHandoverStatus: CaseHandoverStatus | null;
@@ -126,20 +139,37 @@ export const useConversationPreview = (
 		[event]
 	);
 	const roomId = visible ? (conversation?.roomId ?? null) : null;
-	const { session } = useSession(
+	const { session, ready: sessionLookupDone } = useSession(
 		roomId,
 		roomId ? (conversation?.sessionId ?? undefined) : undefined
 	);
 	const sessionId = session?.item?.id as number | undefined;
 	const isConsultant = userData ? isConsultantUser(userData) : undefined;
-	const tenant = getTenantSettings() || {};
+	// Same effective platform -> Traeger -> agency result the opened chat uses.
+	const agencyId = resolveConversationAgencyId(session?.item);
+	const { policy: agencyPolicy } = useSessionAgencyPolicy(
+		roomId ?? undefined,
+		agencyId
+	);
+	const tenant = resolveFeaturesForAgencyPolicy(
+		getTenantSettings() || {},
+		agencyPolicy,
+		agencyId,
+		agencyPolicy?.tenantId
+	);
 
 	// The chat learns the side room and the viewer's supervisor role from the
 	// same request (ADR-008).
 	const counselling =
 		Boolean(isConsultant) && Boolean(session) && !session?.isGroup;
+	// Same per-chat-type restriction as the opened chat (master + anonymous/1:1).
 	const supervisionLookup =
-		counselling && tenant.featureSupervisionEnabled !== false;
+		counselling &&
+		isSupervisionEnabledForChat(
+			tenant,
+			Boolean(session) &&
+				getModality(session as any) === Modality.LIVE_CHAT
+		);
 	const supervisors = useSessionLookup(
 		supervisionLookup ? sessionId : undefined,
 		supervisionLookup ? apiGetSessionSupervisors : null
@@ -212,6 +242,8 @@ export const useConversationPreview = (
 	// Membership is read from the Matrix client: follow its changes so an
 	// accepted knock or a kick is not served from stale permissions.
 	const [, setRoomVersion] = useState(0);
+	// ...and follow a replaced client, which learns the room only later.
+	const matrixRoomVersion = useMatrixRoomVersion(roomId);
 	useEffect(() => {
 		if (!roomId) {
 			return undefined;
@@ -229,7 +261,7 @@ export const useConversationPreview = (
 			detachLifecycle?.();
 			detachTimeline?.();
 		};
-	}, [roomId]);
+	}, [roomId, matrixRoomVersion]);
 	const roomJoined =
 		Boolean(roomId) &&
 		chatTransportService.getMatrixRoom(roomId!)?.getMyMembership?.() ===
@@ -307,12 +339,26 @@ export const useConversationPreview = (
 		groupJoinBlocked
 	});
 
+	// #2275 review: a lookup that finished without a session (a foreign case)
+	// settles too, so the entry says why it is hidden and offers no Open.
+	const sessionSettled =
+		Boolean(session?.item) || (Boolean(sessionLookupDone) && !session);
+	const settled =
+		sessionSettled &&
+		isConsultant !== undefined &&
+		caseHandover !== 'loading' &&
+		// A finished lookup settles even when it failed (value null);
+		// `stillLoading` stays fail-closed for the capabilities above.
+		!(supervisionLookup && !supervisors) &&
+		(!session?.isGroup || groupInfo !== null);
+
 	return {
 		roomId,
 		threadRootId: conversation.threadRootId,
 		session: session ?? null,
 		roomKind,
 		capabilities,
+		hidesContentSettled: settled && capabilities.contentHidden,
 		composerTarget:
 			roomKind === 'supervision'
 				? {

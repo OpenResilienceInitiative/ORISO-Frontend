@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react-vite';
 import { Checkbox } from './Checkbox';
 
 const meta = {
@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Checkbox component for boolean input with optional description.'
+				component:
+					'Checkbox component for boolean input with optional description.'
 			}
 		}
 	}

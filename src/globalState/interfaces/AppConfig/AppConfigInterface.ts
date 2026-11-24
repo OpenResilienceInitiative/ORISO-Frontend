@@ -45,6 +45,14 @@ export interface AppConfigInterface extends AppSettingsInterface {
 		 * backdrop and not a call.
 		 */
 		atmosphere?: string;
+		/**
+		 * Call design S2: the call draws minimise and full screen in its own
+		 * header and the host hides its corner buttons. On unless set to
+		 * `false` — the kill-switch for an Element Call image that does not
+		 * know `orisoHostChrome` yet and would otherwise show no way to
+		 * minimise.
+		 */
+		hostChrome?: boolean;
 	};
 	/**
 	 * Blocks accounts with the `consultant` realm role from the app login.

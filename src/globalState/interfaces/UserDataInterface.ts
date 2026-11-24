@@ -10,6 +10,13 @@ export interface UserDataInterface {
 	chatRecoveryPolicyRevision?: number | null;
 	absenceMessage?: string;
 	absent?: boolean;
+	/**
+	 * Planned absence (ORISO-Frontend#2303), YYYY-MM-DD, inclusive. Set only
+	 * while the absence is on and not over; absent=false with a start means
+	 * planned, not begun.
+	 */
+	absenceStart?: string | null;
+	absenceEnd?: string | null;
 	agencies: AgencyDataInterface[];
 	appointmentFeatureEnabled?: boolean;
 	available?: boolean;
@@ -53,6 +60,18 @@ export interface UserDataInterface {
 	 * predating the flag never send it.
 	 */
 	passwordChangeRequired?: boolean;
+	/**
+	 * UserService#1662: an asker who joined through an invitation without an
+	 * account. Display name, e-mail and notifications stay hidden until the
+	 * account is kept. Optional: older backends never send it.
+	 */
+	temporaryAccount?: boolean;
+	/**
+	 * UserService#1662: the temporary account may be kept ("Konto behalten"
+	 * will succeed). Optional: older backends never send it, and nothing is
+	 * offered then.
+	 */
+	temporaryAccountKeepAllowed?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];
@@ -114,6 +133,11 @@ export interface AgencySettingsInterface
 	featureDirectInviteChatEnabled?: boolean | null;
 	featureDirectInviteAudioEnabled?: boolean | null;
 	featureDirectInviteVideoEnabled?: boolean | null;
+	/**
+	 * Centre-owned "Weitere Beratung im Live-Chat empfehlen" (FE#2251), served
+	 * as stored by the AgencyService: absent or null means off.
+	 */
+	featureLiveChatFurtherCounsellingEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {

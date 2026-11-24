@@ -27,6 +27,14 @@
 		padding: 8px 16px 0;
 	}
 
+	&__content {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: hidden auto;
+		padding: 16px 20px;
+		overscroll-behavior: contain;
+	}
+
 	// Same inset as `.session__content` (Figma 8641-34699: 16 px, large
 	// bottom padding keeps the last message above the absolute composer).
 	&__timeline {

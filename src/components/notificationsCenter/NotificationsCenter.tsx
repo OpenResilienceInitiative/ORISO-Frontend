@@ -1,3 +1,4 @@
+import { useMatrixRoomVersion } from '../../hooks/useMatrixRoomVersion';
 import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
@@ -10,9 +11,10 @@ import {
 	useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import { ReactComponent as OpenInNewIcon } from '../../resources/img/icons/open-in-new-tab.svg';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -31,7 +33,8 @@ import {
 	getFamiliesInFeed,
 	TIMELINE_KIND_ORDER,
 	TimelineFamilyFilter,
-	TimelineKindId
+	TimelineKindId,
+	timelineKindOf
 } from './timelineFilter';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
 import {
@@ -86,6 +89,7 @@ import {
 } from './timelineListWidth';
 import { ReactComponent as LoadOlderIcon } from '../../resources/img/icons/arrow-down.svg';
 import { ListSearchField } from '../listSearchField/ListSearchField';
+import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MatrixActivityPreviewHydrator } from './MatrixActivityPreviewHydrator';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
@@ -93,9 +97,13 @@ import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/no
 import { ReactComponent as VideoMessageIcon } from '../../resources/img/icons/video-call.svg';
 import type { MatrixActivityPreviewKind } from '../../utils/matrixActivityPreview';
 import { ConversationPreview } from './ConversationPreview';
+import { ActivityEventBar } from './ActivityEventBar';
 import {
 	activityEventCaseHandoverRequestId,
-	activityEventCategory,
+	isMessageActivityEvent,
+	leadsToCalendar,
+	showsConversationPreview,
+	activityEventRoomId,
 	activityEventSessionId,
 	describeActivityEvent
 } from './activityEvent';
@@ -117,6 +125,7 @@ import {
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { EmptyState } from '../emptyState/EmptyState';
 import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
@@ -162,6 +171,36 @@ type JoinOutcome = Awaited<ReturnType<typeof callManager.joinExistingCall>>;
 const joinsOnOpen = (eventType?: string | null): boolean =>
 	eventType === 'group_chat.opened' || eventType === 'call.knock.requested';
 
+const isJoinCallEntry = (item: NotificationFeedItem): boolean =>
+	getEventDescriptor(item.eventType).resolveActionTarget(item.params || {})
+		.kind === 'join';
+
+/**
+ * #2226: whether pressing the entry's action really joins its call. The
+ * click (joinNotificationCall) and the label ("Beitreten" vs "Chat öffnen")
+ * use this one guard, so the label never promises the wrong thing.
+ */
+const canJoinNotificationCall = (
+	item: NotificationFeedItem,
+	topologyReady: boolean
+): boolean => {
+	const params = item.params || {};
+	return (
+		isJoinCallEntry(item) &&
+		typeof params.callId === 'string' &&
+		Boolean(params.callId.trim()) &&
+		typeof params.roomRef === 'string' &&
+		Boolean(params.roomRef.trim()) &&
+		typeof params.callRoomId === 'string' &&
+		Boolean(params.callRoomId.trim()) &&
+		(params.callType === 'audio' || params.callType === 'video') &&
+		// An empty session list would store a group call as one-to-one.
+		topologyReady &&
+		// FE#1893: a direct-link call knocks from its card in the conversation.
+		!isDirectLinkCallRoom(params.roomRef)
+	);
+};
+
 /**
  * Call cards join their existing authorized binding. A card that cannot join
  * here (incomplete, or group topology not loaded yet) opens its conversation.
@@ -175,25 +214,10 @@ const joinNotificationCall = (
 	onStart: (callId: string) => void
 ): boolean => {
 	const params = item.params || {};
-	if (
-		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
-		'join'
-	) {
+	if (!isJoinCallEntry(item)) {
 		return false;
 	}
-	if (
-		typeof params.callId !== 'string' ||
-		!params.callId.trim() ||
-		typeof params.roomRef !== 'string' ||
-		!params.roomRef.trim() ||
-		typeof params.callRoomId !== 'string' ||
-		!params.callRoomId.trim() ||
-		(params.callType !== 'audio' && params.callType !== 'video') ||
-		// An empty session list would store a group call as one-to-one.
-		!topologyReady ||
-		// FE#1893: a direct-link call knocks from its card in the conversation.
-		isDirectLinkCallRoom(params.roomRef)
-	) {
+	if (!canJoinNotificationCall(item, topologyReady)) {
 		onCannotJoin();
 		return true;
 	}
@@ -215,6 +239,9 @@ const joinNotificationCall = (
 	return true;
 };
 
+/** "Meine Termine": where an appointment without a conversation leads. */
+const CALENDAR_PATH = '/booking/events';
+
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -223,7 +250,9 @@ export const NotificationsCenter = () => {
 	// (master-detail) selection, but defers to the active conversation when one
 	// is open, so it can never disagree with the conversation/request lists.
 	const { selection: activeSelection } = useActiveListItem();
-	const { untilL, fromXL } = useResponsive();
+	// The split view starts where Conversations splits (900 px), not at 1200
+	// px: in between the timeline acted like a phone (Frank, 2026-11-16).
+	const { untilM: isSinglePane, fromL: isSplitView } = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
@@ -268,6 +297,7 @@ export const NotificationsCenter = () => {
 	const [activeFamily, setActiveFamily] =
 		useState<TimelineFamilyFilter>(null);
 	const [unreadOnly, setUnreadOnly] = useState(false);
+	const [mentionsOnly, setMentionsOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	// #924: decrypted card previews, behind the case-handover gate.
 	const {
@@ -353,7 +383,11 @@ export const NotificationsCenter = () => {
 	// Timeline redesign: resizable list column, same interaction pattern as the
 	// conversation page (SessionsListWrapper + ResizableHandle).
 	const [listWidth, setListWidth] = useState(loadTimelineListWidth);
-	const isIconRail = fromXL && listWidth === STAGE_LAYOUT.RAIL_WIDTH;
+	const isIconRail = isSplitView && listWidth === STAGE_LAYOUT.RAIL_WIDTH;
+	// Which pane the counsellor works in (Figma 7582:27615 vs 7576:22889):
+	// the list keeps the selected card primary; a click into the preview
+	// moves the focus ring there and tones the card down to the accent.
+	const [focusedPane, setFocusedPane] = useState<'list' | 'detail'>('list');
 	const railMarkLabels = {
 		thread: translate('chatStage.switcher.kind.thread'),
 		supervision: translate('sessionList.toolbar.chips.supervision'),
@@ -460,6 +494,7 @@ export const NotificationsCenter = () => {
 					family: activeFamily,
 					query: searchQuery,
 					unreadOnly,
+					mentionsOnly,
 					bundledUnderOther: kindsUnderOther(
 						timelineFilter,
 						timelineKinds
@@ -481,6 +516,7 @@ export const NotificationsCenter = () => {
 			timelineKinds,
 			searchQuery,
 			unreadOnly,
+			mentionsOnly,
 			translate,
 			i18n.language,
 			visiblePreview
@@ -498,7 +534,7 @@ export const NotificationsCenter = () => {
 	} = useActivityTimeline({
 		feed: filteredFeed,
 		routeSelection: activeSelection,
-		isPhone: untilL,
+		isPhone: isSinglePane,
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
@@ -520,12 +556,30 @@ export const NotificationsCenter = () => {
 	// menu (useActivityTimeline). E2EE note: the preview is the user's own
 	// session view rendered in the same client — decryption stays client-side
 	// (same boundary as ADR-AT-01).
-	const selectedNotificationCategory = useMemo(
-		() =>
-			selectedNotification
-				? activityEventCategory(selectedNotification)
-				: 'system',
-		[selectedNotification]
+	// #2226: call and appointment cards that name their room show their
+	// conversation too, under a compact bar with the Join action.
+	// Whether the room is joined is read from the Matrix client; a replaced
+	// client learns it only after its first sync, so render again then.
+	useMatrixRoomVersion(
+		selectedNotification ? activityEventRoomId(selectedNotification) : null
+	);
+	const canShowChatPreview = Boolean(
+		selectedNotification && showsConversationPreview(selectedNotification)
+	);
+	const showEventBar = Boolean(
+		selectedNotification && !isMessageActivityEvent(selectedNotification)
+	);
+	// Frank, 2026-11-17: an appointment shows its conversation when it has
+	// one, with "Zum Kalender" beside "Chat öffnen"; without a conversation
+	// its one way out is the calendar ("Meine Termine").
+	const selectedIsAppointment = Boolean(
+		selectedNotification &&
+			timelineKindOf(selectedNotification) === 'appointments'
+	);
+	// #2275 review: the calendar decision rests on whether the entry names a
+	// conversation, not on whether the preview can show it.
+	const opensCalendar = Boolean(
+		selectedNotification && leadsToCalendar(selectedNotification)
 	);
 
 	const selectedDisplay = useMemo(
@@ -546,14 +600,21 @@ export const NotificationsCenter = () => {
 		() => resolveStatusPageAction(selectedNotification),
 		[selectedNotification]
 	);
+	// #2226: "Beitreten" exactly when the action joins a call.
+	const joinsFromAction = (item: NotificationFeedItem) =>
+		joinsOnOpen(item.eventType) ||
+		canJoinNotificationCall(item, Boolean(sessionsContext?.ready));
 	const selectedOpenLabel = selectedLinksToStatusPage
 		? translate('notifications.center.openStatusPage')
-		: selectedNotification?.actionLabel ||
-			translate(
-				joinsOnOpen(selectedNotification?.eventType)
-					? 'notifications.center.join'
-					: 'notifications.center.open'
-			);
+		: opensCalendar
+			? translate('notifications.center.openCalendar')
+			: selectedNotification?.actionLabel ||
+				translate(
+					selectedNotification &&
+						joinsFromAction(selectedNotification)
+						? 'notifications.center.join'
+						: 'notifications.center.open'
+				);
 	const selectedSessionNumericId = useMemo(
 		() =>
 			selectedNotification
@@ -568,9 +629,8 @@ export const NotificationsCenter = () => {
 				: null,
 		[selectedNotification]
 	);
-	const canShowChatPreview = selectedNotificationCategory === 'message';
 	const showConsentDetail =
-		!untilL &&
+		!isSinglePane &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 		Boolean(userData?.userId) &&
 		selectedNotification?.eventType === 'case.handover.consent.requested' &&
@@ -612,7 +672,8 @@ export const NotificationsCenter = () => {
 			: getDefaultSessionsPath());
 	const canOpenSelected = selectedLinksToStatusPage
 		? selectedStatusPageUrl !== null
-		: Boolean(
+		: opensCalendar ||
+			Boolean(
 				selectedNotification &&
 					activityConversationPath(selectedNotification)
 			);
@@ -719,6 +780,21 @@ export const NotificationsCenter = () => {
 		return true;
 	};
 
+	// #2226: open the conversation an entry belongs to without joining. A
+	// join-kind call card has no path of its own, so it resolves its
+	// conversation like an ended call does instead of the list root.
+	const openConversationOnly = (item: NotificationFeedItem) => {
+		if (leadsToCalendar(item)) {
+			navigate(CALENDAR_PATH);
+			return;
+		}
+		if (isJoinCallEntry(item)) {
+			openConversation(item, translate('videoCall.timeline.joinFailed'));
+			return;
+		}
+		openActivityConversation(item);
+	};
+
 	const openNotification = (
 		item: (typeof notificationFeed)[number],
 		// "Next notification" browses: it never starts a call (camera,
@@ -728,15 +804,17 @@ export const NotificationsCenter = () => {
 		markNotificationAsRead(item.id);
 		if (!browsing && openKnock(item)) return;
 		const statusPage = resolveStatusPageAction(item);
-		if (untilL && statusPage.linksToStatusPage) {
+		if (isSinglePane && statusPage.linksToStatusPage) {
 			if (statusPage.url) {
 				openStatusPage(statusPage.url);
 			}
 			return;
 		}
-		if (untilL) {
-			if (joinCall(item)) return;
-			openActivityConversation(item);
+		if (isSinglePane) {
+			// #2226 (Frank, 2026-11-12): a tap on a phone opens the
+			// conversation, like selecting the card on a desktop; it never
+			// starts a call. Joining happens in the conversation itself.
+			openConversationOnly(item);
 			return;
 		}
 		selectNotification(item.id);
@@ -752,12 +830,33 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		markNotificationAsRead(selectedNotification.id);
+		if (leadsToCalendar(selectedNotification)) {
+			navigate(CALENDAR_PATH);
+			return;
+		}
 		if (nextUnreadId) {
 			selectNotification(nextUnreadId);
 		}
 		if (openKnock(selectedNotification)) return;
 		if (joinCall(selectedNotification)) return;
 		openActivityConversation(selectedNotification);
+	};
+
+	const handleOpenCalendar = () => {
+		if (!selectedNotification) return;
+		markNotificationAsRead(selectedNotification.id);
+		navigate(CALENDAR_PATH);
+	};
+
+	// #2226: "Open the conversation to reply" in the preview opens the chat
+	// only. It never knocks or joins; the event bar's button does that.
+	const handleOpenConversation = () => {
+		if (!selectedNotification) return;
+		markNotificationAsRead(selectedNotification.id);
+		if (nextUnreadId) {
+			selectNotification(nextUnreadId);
+		}
+		openConversationOnly(selectedNotification);
 	};
 
 	const handleNextNotification = () => {
@@ -785,17 +884,73 @@ export const NotificationsCenter = () => {
 		unreadOnly,
 		markRead: markNotificationAsRead
 	});
+	// #2226 (review): a call or appointment entry whose conversation the
+	// preview would hide (room not joined, group not started, curtained)
+	// keeps its detail view — the entry's text and "Next notification" —
+	// instead of a blank read-only notice. Message entries keep the notice.
+	const callEntryPreviewHidden = Boolean(
+		showEventBar && conversation.preview?.hidesContentSettled
+	);
+	const showConversationPane = showEmbeddedChat && !callEntryPreviewHidden;
+	// 2026-11-16: a hidden conversation says why, instead of a bare card. The
+	// case of someone else ("sessionUnknown") cannot be opened either: "Open
+	// chat" led to a not-found view, so the entry offers no Open there.
+	const hiddenReason = callEntryPreviewHidden
+		? (conversation.preview?.capabilities.readOnlyReason ?? null)
+		: null;
+	const hiddenConversationHint = !hiddenReason
+		? null
+		: hiddenReason === 'curtained'
+			? 'notifications.center.preview.curtained'
+			: hiddenReason === 'notJoined'
+				? 'notifications.center.preview.hiddenNotJoined'
+				: 'notifications.center.preview.hiddenNotYours';
+	const canOpenShown = canOpenSelected && hiddenReason !== 'sessionUnknown';
 
 	if (notificationFeed.length === 0) {
+		if (isSinglePane) {
+			return (
+				<div className="notificationsCenter notificationsCenter--empty">
+					<ActivityTimelineEmptyState />
+				</div>
+			);
+		}
+		// Desktop: the same two panes as Conversations, with the white
+		// divider that only an empty page shows (Frank, 2026-11-16).
 		return (
-			<div className="notificationsCenter notificationsCenter--empty">
-				<ActivityTimelineEmptyState />
+			<div className="notificationsCenter notificationsCenter--emptySplit">
+				<div
+					className="notificationsCenter__listColumn"
+					style={{ width: `${listWidth}px` }}
+				>
+					<ActivityTimelineEmptyState variant="conversation-history" />
+					<ResizableHandle
+						currentWidth={listWidth}
+						onResize={handleListResize}
+						minWidth={STAGE_LAYOUT.RAIL_WIDTH}
+						ariaLabel={translate('notifications.center.title')}
+						maxWidth={TIMELINE_MAX_WIDTH}
+					/>
+				</div>
+				<div className="notificationsCenter__detail notificationsCenter__detail--empty">
+					<EmptyState
+						className="notificationsCenter__emptyDetailState"
+						headline={translate('session.emptyAllCaughtUp')}
+						variant="conversation-nothing-to-do"
+					/>
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="notificationsCenter">
+		<div
+			className={`notificationsCenter ${
+				focusedPane === 'detail'
+					? 'notificationsCenter--detailFocused'
+					: ''
+			}`}
+		>
 			{messagePreviewSources.map((source) => (
 				<MatrixActivityPreviewHydrator
 					key={source.activityEventId}
@@ -805,7 +960,9 @@ export const NotificationsCenter = () => {
 			))}
 			<div
 				className={`notificationsCenter__listColumn ${isIconRail ? 'notificationsCenter__listColumn--rail' : ''}`}
-				style={{ width: fromXL ? `${listWidth}px` : undefined }}
+				style={{ width: isSplitView ? `${listWidth}px` : undefined }}
+				onPointerDownCapture={() => setFocusedPane('list')}
+				onFocusCapture={() => setFocusedPane('list')}
 			>
 				<div
 					className="sessionsListToolbar notificationsCenter__toolbar"
@@ -841,6 +998,13 @@ export const NotificationsCenter = () => {
 					{notificationFeed.length > 0 && (
 						<FilterChipRow
 							label={translate('notifications.center.title')}
+							// "Nur Text" draws the small, dense filter boxes of
+							// Gespräche, not full-size pills (Frank, 2026-11-17).
+							className={
+								chipPresentation.view === 'text'
+									? 'filterChipRow--dense'
+									: undefined
+							}
 						>
 							{pillKinds.map((kind) => (
 								<FilterChip
@@ -864,11 +1028,20 @@ export const NotificationsCenter = () => {
 							<button
 								type="button"
 								aria-pressed={unreadOnly}
-								className={`sessionsListToolbar__chip ${
-									unreadOnly
-										? 'sessionsListToolbar__chip--active'
-										: 'sessionsListToolbar__chip--iconOnly'
-								}`}
+								className={[
+									'sessionsListToolbar__chip',
+									unreadOnly &&
+										'sessionsListToolbar__chip--active',
+									!unreadOnly &&
+										chipPresentation.view === 'icons' &&
+										'sessionsListToolbar__chip--iconOnly',
+									chipPresentation.view === 'text' &&
+										'sessionsListToolbar__chip--text',
+									chipPresentation.view === 'labels' &&
+										'sessionsListToolbar__chip--labelled'
+								]
+									.filter(Boolean)
+									.join(' ')}
 								onClick={() => setUnreadOnly((value) => !value)}
 								title={translate(
 									'notifications.center.unreadFilter'
@@ -877,13 +1050,63 @@ export const NotificationsCenter = () => {
 									'notifications.center.unreadFilter'
 								)}
 							>
-								<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								{chipPresentation.view !== 'text' && (
+									<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								)}
 								<span
 									className="sessionsListToolbar__chipLabel"
-									aria-hidden={!unreadOnly}
+									aria-hidden={
+										!unreadOnly &&
+										chipPresentation.view === 'icons'
+									}
 								>
 									{translate(
 										'notifications.center.unreadFilter'
+									)}
+								</span>
+							</button>
+							{/* "@": only the entries that mention me (Frank,
+							    2026-11-17). */}
+							<button
+								type="button"
+								aria-pressed={mentionsOnly}
+								className={[
+									'sessionsListToolbar__chip',
+									mentionsOnly &&
+										'sessionsListToolbar__chip--active',
+									!mentionsOnly &&
+										chipPresentation.view === 'icons' &&
+										'sessionsListToolbar__chip--iconOnly',
+									chipPresentation.view === 'text' &&
+										'sessionsListToolbar__chip--text',
+									chipPresentation.view === 'labels' &&
+										'sessionsListToolbar__chip--labelled'
+								]
+									.filter(Boolean)
+									.join(' ')}
+								onClick={() =>
+									setMentionsOnly((value) => !value)
+								}
+								title={translate(
+									'notifications.center.mentionsFilter'
+								)}
+								aria-label={translate(
+									'notifications.center.mentionsFilter'
+								)}
+								data-cy="timeline-chip-mentions"
+							>
+								{chipPresentation.view !== 'text' && (
+									<AlternateEmailIcon className="sessionsListToolbar__chipIconSvg" />
+								)}
+								<span
+									className="sessionsListToolbar__chipLabel"
+									aria-hidden={
+										!mentionsOnly &&
+										chipPresentation.view === 'icons'
+									}
+								>
+									{translate(
+										'notifications.center.mentionsFilter'
 									)}
 								</span>
 							</button>
@@ -904,7 +1127,7 @@ export const NotificationsCenter = () => {
 					}
 					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
-					fullScreen={untilL}
+					fullScreen={isSinglePane}
 					onClose={() => setDisplayFilterOpen(false)}
 					kinds={timelineKinds}
 					email={displayFilterEmail}
@@ -1014,7 +1237,7 @@ export const NotificationsCenter = () => {
 											? 'notificationsCenter__listRow--active'
 											: ''
 									} ${
-										isActive
+										isActive && canOpenShown
 											? 'notificationsCenter__listRow--withExpander'
 											: ''
 									} ${
@@ -1101,7 +1324,7 @@ export const NotificationsCenter = () => {
 													)
 												}
 											>
-												<MoreHorizIcon />
+												<MenuVerticalIcon />
 											</button>
 										</span>
 									)}
@@ -1110,7 +1333,7 @@ export const NotificationsCenter = () => {
 									    origin (Figma arrow affordance) — it no longer
 									    toggles the preview, which is open by default
 									    for chat events. */}
-									{isActive && canOpenSelected && (
+									{isActive && canOpenShown && (
 										<button
 											type="button"
 											className="notificationsCenter__expander"
@@ -1119,8 +1342,8 @@ export const NotificationsCenter = () => {
 													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
 													: item.actionLabel ||
 														translate(
-															joinsOnOpen(
-																item.eventType
+															joinsFromAction(
+																item
 															)
 																? 'notifications.center.join'
 																: 'notifications.center.open'
@@ -1216,7 +1439,7 @@ export const NotificationsCenter = () => {
 					}}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 				>
-					{canOpenSelected && (
+					{canOpenShown && (
 						<MenuItem
 							onClick={() => {
 								setCardMenuAnchor(null);
@@ -1226,7 +1449,7 @@ export const NotificationsCenter = () => {
 							{selectedOpenLabel}
 						</MenuItem>
 					)}
-					{canShowChatPreview && (
+					{canShowChatPreview && !callEntryPreviewHidden && (
 						<MenuItem
 							onClick={() => {
 								toggleConversation();
@@ -1261,7 +1484,7 @@ export const NotificationsCenter = () => {
 						{translate('notifications.center.markAllRead')}
 					</MenuItem>
 				</Menu>
-				{fromXL && (
+				{isSplitView && (
 					<ResizableHandle
 						currentWidth={listWidth}
 						onResize={handleListResize}
@@ -1272,10 +1495,14 @@ export const NotificationsCenter = () => {
 					/>
 				)}
 			</div>
-			<div className="notificationsCenter__detail">
+			<div
+				className="notificationsCenter__detail"
+				onPointerDownCapture={() => setFocusedPane('detail')}
+				onFocusCapture={() => setFocusedPane('detail')}
+			>
 				<div
 					className={`notificationsCenter__detailCard ${
-						showEmbeddedChat
+						showConversationPane
 							? 'notificationsCenter__detailCard--embedded'
 							: ''
 					}`}
@@ -1284,25 +1511,69 @@ export const NotificationsCenter = () => {
 						<div className="notificationsCenter__emptyDetail">
 							{translate('notifications.center.emptyDetail')}
 						</div>
-					) : showEmbeddedChat ? (
-						<ConversationPreview
-							roomId={conversation.roomId}
-							threadRootId={conversation.preview?.threadRootId}
-							access={conversation.preview ?? undefined}
-							openedThreadRootId={conversation.openedThreadRootId}
-							onShownThreadChange={
-								conversation.setOpenedThreadRootId
-							}
-							conversationPath={
-								selectedNotification
-									? getNotificationActionPath(
-											selectedNotification
-										)
-									: null
-							}
-							onConversationRead={conversation.onConversationRead}
-							onOpenConversation={handleOpenAction}
-						/>
+					) : showConversationPane ? (
+						<>
+							{showEventBar && (
+								<ActivityEventBar
+									icon={SelectedIcon}
+									title={selectedDisplay?.title ?? ''}
+									time={formatAbsoluteTime(
+										selectedNotification.createdAt,
+										i18n.language
+									)}
+									actionLabel={
+										canOpenSelected
+											? selectedOpenLabel
+											: null
+									}
+									onAction={handleOpenAction}
+									secondaryLabel={
+										selectedIsAppointment && !opensCalendar
+											? translate(
+													'notifications.center.openCalendar'
+												)
+											: null
+									}
+									secondaryIcon={
+										<CalendarMonthOutlinedIcon aria-hidden="true" />
+									}
+									onSecondary={handleOpenCalendar}
+								/>
+							)}
+							<ConversationPreview
+								roomId={conversation.roomId}
+								threadRootId={
+									conversation.preview?.threadRootId
+								}
+								access={conversation.preview ?? undefined}
+								openedThreadRootId={
+									conversation.openedThreadRootId
+								}
+								onShownThreadChange={
+									conversation.setOpenedThreadRootId
+								}
+								conversationPath={
+									selectedNotification
+										? // #2226: a joinable call has no open
+											// path; its drafts belong to the
+											// conversation, not to Activity.
+											(getNotificationActionPath(
+												selectedNotification
+											) ??
+											toNonEmbeddedPath(
+												resolveEndedCallConversationPath(
+													selectedNotification,
+													getDefaultSessionsPath()
+												)
+											))
+										: null
+								}
+								onConversationRead={
+									conversation.onConversationRead
+								}
+								onOpenConversation={handleOpenConversation}
+							/>
+						</>
 					) : (
 						<div className="notificationsCenter__detailBody">
 							<div className="notificationsCenter__detailHeader">
@@ -1338,6 +1609,14 @@ export const NotificationsCenter = () => {
 											i18n.language
 										)}
 							</p>
+							{hiddenConversationHint && (
+								<p
+									className="notificationsCenter__detailHint"
+									data-cy="activity-conversation-hidden"
+								>
+									{translate(hiddenConversationHint)}
+								</p>
+							)}
 							{showConsentDetail && (
 								<TimelineConsentActions
 									key={JSON.stringify([
@@ -1386,16 +1665,43 @@ export const NotificationsCenter = () => {
 											</span>
 										</a>
 									)
-								) : canOpenSelected ? (
-									<button
-										type="button"
-										className="notificationsCenter__openButton"
-										onClick={handleOpenAction}
-									>
-										<OpenInFullIcon />
-										{selectedOpenLabel}
-									</button>
-								) : null}
+								) : (
+									<>
+										{/* #2275 review: an appointment
+										    whose conversation stays hidden
+										    keeps its way to the calendar,
+										    even where Open is withheld
+										    (sessionUnknown). */}
+										{selectedIsAppointment &&
+											!opensCalendar && (
+												<button
+													type="button"
+													className="notificationsCenter__openButton notificationsCenter__openButton--secondary"
+													data-cy="activity-detail-calendar"
+													onClick={handleOpenCalendar}
+												>
+													<CalendarMonthOutlinedIcon aria-hidden="true" />
+													{translate(
+														'notifications.center.openCalendar'
+													)}
+												</button>
+											)}
+										{canOpenShown && (
+											<button
+												type="button"
+												className="notificationsCenter__openButton"
+												onClick={handleOpenAction}
+											>
+												{opensCalendar ? (
+													<CalendarMonthOutlinedIcon />
+												) : (
+													<OpenInFullIcon />
+												)}
+												{selectedOpenLabel}
+											</button>
+										)}
+									</>
+								)}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"

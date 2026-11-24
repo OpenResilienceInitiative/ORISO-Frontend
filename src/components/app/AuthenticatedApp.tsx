@@ -40,6 +40,7 @@ import {
 import { loadEntryScreens } from './appChunks';
 import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
+import { endLoginHandover, finishLoginHandover } from './loginHandover';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
@@ -66,8 +67,7 @@ import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEnc
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
-import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
-import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { ConsultantRequestCenters } from './ConsultantRequestCenters';
 import {
 	getCurrentAuthSubject,
 	getMatrixAccessToken,
@@ -125,7 +125,13 @@ export const AuthenticatedApp = ({
 	// 2026-08-19). Withheld until the profile says the account is the counsellor's
 	// own: an account that still owes its password or second factor takes no calls,
 	// and the dialog would land over the setup gate. Unknown counts as pending here.
-	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
+	/* UserService#1662: a temporary account is never asked for browser
+	   notifications; it may be once it is kept. */
+	useNotificationPermission(
+		!!userData &&
+			!isAccountSetupPending(userData) &&
+			!userData.temporaryAccount
+	);
 	const mounted = useRef(true);
 	const [mountedSession] = useState(getAppSessionScope);
 	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
@@ -175,7 +181,10 @@ export const AuthenticatedApp = ({
 
 	useEffect(() => {
 		// The previous authenticated tree has been unmounted before navigation.
-		if (peerExitPath) window.location.replace(peerExitPath);
+		if (peerExitPath) {
+			endLoginHandover();
+			window.location.replace(peerExitPath);
+		}
 	}, [peerExitPath]);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
@@ -438,6 +447,13 @@ export const AuthenticatedApp = ({
 		onAppReady();
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
+	/* The login handover screen (#2272) stays up until the app is
+	   ready, or until the bootstrap gave up and the login page comes back. */
+	useEffect(() => {
+		if (appReady) finishLoginHandover();
+		else if (!loading) endLoginHandover();
+	}, [appReady, loading]);
+
 	const handleLogout = useCallback(() => {
 		matrixBootstrap.current?.controller.abort();
 		// Synchronously, before the async pre-logout handlers and the storage
@@ -523,11 +539,7 @@ export const AuthenticatedApp = ({
 						{hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData
-						) && (
-							<JoinRequestCenter
-								transport={httpJoinRequestTransport}
-							/>
-						)}
+						) && <ConsultantRequestCenters />}
 					</>
 				);
 			}

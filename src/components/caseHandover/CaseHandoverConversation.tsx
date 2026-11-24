@@ -31,9 +31,11 @@ export const CaseHandoverConversation = ({
 }) => {
 	const { t } = useTranslation();
 	const tenant = useTenant();
+	const { userData } = useContext(UserDataContext);
 	const channels = emailCollectionSetupPolicy(
 		tenant?.settings,
-		conversationType
+		conversationType,
+		userData
 	);
 	const future = useStandingAccessPreference(sessionId, true);
 	const { consentEmailActive } = useNotificationChannels(
@@ -43,7 +45,6 @@ export const CaseHandoverConversation = ({
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	const [recommendation, setRecommendation] = useState(false);
 	const [setupStarted, setSetupStarted] = useState(false);
-	const { userData } = useContext(UserDataContext);
 	const [focusRequest, setFocusRequest] = useState(0);
 	const notificationMessage = useRef<HTMLDivElement>(null);
 	useLayoutEffect(() => {

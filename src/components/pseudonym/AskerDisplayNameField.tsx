@@ -9,7 +9,11 @@ export interface AskerDisplayNameFieldProps {
 	disabled?: boolean;
 }
 
-/** The visible alias is independent of the immutable login credential/avatar. */
+/**
+ * The visible alias is independent of the immutable login credential/avatar.
+ * Counsellors read it as the client's name, so it carries a visible hint and
+ * opts out of password managers: a credential must never land here (#2073).
+ */
 export const AskerDisplayNameField = ({
 	value,
 	onChange,
@@ -19,7 +23,9 @@ export const AskerDisplayNameField = ({
 	const { t } = useTranslation();
 	return (
 		<OrisoTextField
+			name="displayName"
 			value={value}
+			placeholder={t('profile.data.displayName')}
 			fullWidth
 			disabled={disabled}
 			onChange={(event) => {
@@ -28,6 +34,10 @@ export const AskerDisplayNameField = ({
 			inputProps={{
 				'aria-label': t('profile.data.displayName'),
 				'autoComplete': 'off',
+				'data-1p-ignore': 'true',
+				'data-bwignore': 'true',
+				'data-form-type': 'other',
+				'data-lpignore': 'true',
 				'maxLength': 255,
 				'readOnly': !editable
 			}}

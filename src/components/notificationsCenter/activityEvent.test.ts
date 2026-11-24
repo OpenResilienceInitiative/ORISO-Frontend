@@ -8,7 +8,9 @@ import {
 	activityEventRouteIdentity,
 	activityEventSessionId,
 	describeActivityEvent,
-	isMessageActivityEvent
+	isMessageActivityEvent,
+	leadsToCalendar,
+	showsConversationPreview
 } from './activityEvent';
 
 const row = (overrides: Record<string, unknown> = {}): any => ({
@@ -306,5 +308,184 @@ describe('activityEvent (#1824: one place for an activity event’s facts)', () 
 				)
 			).toMatchObject({ title: 'T', text: 'X' });
 		});
+	});
+});
+
+describe('#2226 showsConversationPreview', () => {
+	const row = (eventType: string, params: Record<string, unknown> = {}) =>
+		({ eventType, category: 'system', params }) as any;
+	const joined = () => true;
+
+	it('shows the conversation for call and appointment entries that name their room', () => {
+		for (const eventType of [
+			'call.started',
+			'call.ended',
+			'call.missed',
+			'call.invited',
+			'group_chat.opened',
+			'group_chat.reminder',
+			'appointment.scheduled'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				)
+			).toBe(true);
+		}
+	});
+
+	it('keeps the detail view for an entry with nothing to open (#1159)', () => {
+		expect(
+			showsConversationPreview(
+				row('session.asker_deleted', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
+	});
+
+	it('keeps the detail view for a consent request, where its approve and decline buttons are', () => {
+		expect(
+			showsConversationPreview(
+				row('case.handover.consent.requested', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
+		expect(
+			showsConversationPreview(
+				row('case.handover.granted', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(true);
+	});
+
+	it('keeps the detail view when this app has not joined the named room', () => {
+		const asked: string[] = [];
+		const notJoined = (roomId: string) => {
+			asked.push(roomId);
+			return false;
+		};
+		expect(
+			showsConversationPreview(
+				row('group_chat.opened', { roomRef: '!room:x' }),
+				notJoined
+			)
+		).toBe(false);
+		expect(asked).toEqual(['!room:x']);
+		// Default check: no Matrix client means no joined room.
+		expect(
+			showsConversationPreview(
+				row('call.started', { roomRef: '!room:x' })
+			)
+		).toBe(false);
+	});
+
+	it('keeps the detail view when the entry names no room', () => {
+		expect(showsConversationPreview(row('group_chat.opened'))).toBe(false);
+		expect(showsConversationPreview(row('appointment.requested'))).toBe(
+			false
+		);
+	});
+
+	// Regression (Frank, 2026-11-16, fourth report): handover, supervision,
+	// "chat finished" and "request accepted" entries name their case room but
+	// only ever showed the summary card with "Open chat".
+	it('shows the conversation for every entry that belongs to one', () => {
+		for (const eventType of [
+			'inquiry.accepted',
+			'first_response.received',
+			'conversation.finished',
+			'supervisor.added',
+			'supervisor.removed',
+			'supervisor.assigned',
+			'counselor.renamed',
+			'handover.requested',
+			'case.handover.granted',
+			'case.handover.offer.received',
+			'case.handover.offer.sent',
+			'case.handover.consent.declined',
+			'call.knock.requested',
+			'group_chat.cancelled',
+			'appointment.cancelled'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				),
+				eventType
+			).toBe(true);
+		}
+	});
+
+	it('never shows an unaccepted enquiry, a draft or a status notice', () => {
+		for (const eventType of [
+			'request.new',
+			'request.denied',
+			'waiting_room.client.joined',
+			'draft.created',
+			'service.notice.planned'
+		]) {
+			expect(
+				showsConversationPreview(
+					row(eventType, { roomRef: '!room:x' }),
+					joined
+				),
+				eventType
+			).toBe(false);
+		}
+	});
+
+	it('still shows message entries and never system entries', () => {
+		expect(
+			showsConversationPreview({
+				eventType: 'message.new',
+				category: 'message',
+				params: {}
+			} as any)
+		).toBe(true);
+		expect(
+			showsConversationPreview(
+				row('request.new', { roomRef: '!room:x' }),
+				joined
+			)
+		).toBe(false);
+	});
+});
+
+describe('#2275 leadsToCalendar', () => {
+	const row = (eventType: string, extra: Record<string, unknown> = {}) =>
+		({ eventType, category: 'system', ...extra }) as any;
+
+	it('sends an appointment that names no conversation to the calendar', () => {
+		expect(leadsToCalendar(row('appointment.scheduled'))).toBe(true);
+	});
+
+	it('keeps the conversation of an appointment that names one, joined or not', () => {
+		expect(
+			leadsToCalendar(
+				row('appointment.scheduled', { params: { roomRef: '!r:x' } })
+			)
+		).toBe(false);
+		expect(
+			leadsToCalendar(
+				row('appointment.scheduled', { sourceSessionId: 7 })
+			)
+		).toBe(false);
+	});
+
+	it('keeps the join view of a group entry whose room is not joined yet', () => {
+		expect(
+			leadsToCalendar(
+				row('group_chat.opened', {
+					params: { roomRef: '!group:x', groupChatId: 'g-1' }
+				})
+			)
+		).toBe(false);
+	});
+
+	it('never sends other entries to the calendar', () => {
+		expect(leadsToCalendar(row('call.missed'))).toBe(false);
+		expect(leadsToCalendar(row('unknown.type'))).toBe(false);
 	});
 });

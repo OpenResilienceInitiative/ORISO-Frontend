@@ -1,0 +1,170 @@
+.addonPage {
+	padding: 24px;
+	overflow-y: auto;
+	height: 100%;
+	box-sizing: border-box;
+
+	&__title {
+		margin: 0 0 16px;
+		font-size: 24px;
+		line-height: 32px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+}
+
+.addonTile {
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0 0 12px;
+		font-size: 16px;
+		line-height: 24px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.addonMount {
+	&__error {
+		margin: 0;
+		color: var(--m3-error, #b1005e);
+	}
+}
+
+.addonPanel {
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px 20px;
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
+	}
+
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0;
+		font-size: 18px;
+		line-height: 24px;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
+
+	&__icon {
+		width: 20px;
+		height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__close {
+		display: inline-flex;
+		padding: 6px;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+	}
+}
+
+.addonActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-left: 12px;
+
+	&__button {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 14px;
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 999px;
+		background: var(--m3-surface, #fcf9f9);
+		color: var(--m3-on-surface, #1b1b1c);
+		font: inherit;
+		font-size: 14px;
+		cursor: pointer;
+
+		svg,
+		.addonActions__icon {
+			width: 18px;
+			height: 18px;
+		}
+
+		&[aria-pressed='true'] {
+			border-color: var(--m3-primary, #a5000a);
+			background: var(--m3-surface-container-high, #eae7e8);
+			font-weight: 600;
+		}
+	}
+}
+
+.addonCalendarEntry {
+	border-style: dashed;
+	border-color: var(--m3-outline, #747878);
+	background: var(--m3-surface-container-low, #f6f3f3);
+
+	&[aria-disabled='true'] {
+		cursor: default;
+	}
+
+	&__source {
+		flex: none;
+		max-width: 40%;
+		overflow: hidden;
+		padding: 2px 8px;
+		border-radius: 8px;
+		background: var(--m3-secondary-container, #e3e2e6);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.addonBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	margin-left: 6px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	border-radius: 9px;
+	background: var(--m3-error, #b1005e);
+	color: var(--m3-on-error, #ffffff);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 18px;
+	vertical-align: middle;
+}
+
+.addonIcon {
+	display: inline-block;
+	flex: none;
+	width: 1em;
+	height: 1em;
+	background-color: currentcolor;
+	mask: var(--addon-icon) center / contain no-repeat;
+}
+
+.addonMenuEntry__icon {
+	width: 100%;
+	height: 100%;
+}

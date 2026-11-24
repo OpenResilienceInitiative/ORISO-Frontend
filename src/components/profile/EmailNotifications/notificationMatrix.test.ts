@@ -141,6 +141,19 @@ describe('notification matrix (ADR-019)', () => {
 			).toBeUndefined();
 		});
 
+		it("resolves the move proposal footer to the counsellor's appointment flag (FE#1050)", () => {
+			expect(
+				switchForOccasion(CONSULTANT_SWITCHES, 'calendar-move-proposal')
+					?.id
+			).toBe('appointment');
+			expect(
+				switchForOccasion(
+					ADVICE_SEEKER_SWITCHES,
+					'calendar-move-proposal'
+				)
+			).toBeUndefined();
+		});
+
 		it('resolves the occasion a mail footer carries', () => {
 			expect(
 				switchForOccasion(CONSULTANT_SWITCHES, 'uebergabe-bestaetigt')
