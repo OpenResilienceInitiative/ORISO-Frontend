@@ -2,7 +2,6 @@ import { isTourAvailable } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
-	practiceEnquirySessionRoute,
 	PRACTICE_ENQUIRIES_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
@@ -18,13 +17,13 @@ import {
  * never mark the exercise skipped.
  */
 
-const TEAM_DISCUSSION_ON = { flag: 'featureTeamDiscussionEnabled' };
 const SUPERVISION_ON = { flag: 'featureSupervisionEnabled' };
 
 /**
- * Flow F1. The Team-Besprechung steps exist only where the Träger switched the
- * feature on; `resolveTourSteps` drops them otherwise, so the banner counts 8
- * or 6 steps.
+ * Flow F1. FE#2491 (Frank, 23 Nov): the team chat has no button of its own
+ * any more — it is switched on in "Weitere Funktionen", like supervision.
+ * A step inside the menu flyout cannot be pointed at reliably, so the two
+ * team steps (open the team chat, reply in it) left this flow; it has 6.
  */
 export const practiceAcceptTour: TourDefinition = {
 	id: PRACTICE_ACCEPT_TOUR_ID,
@@ -51,30 +50,6 @@ export const practiceAcceptTour: TourDefinition = {
 			advanceOn: { type: 'click' },
 			titleKey: 'tour.practiceAccept.step.openEnquiry.title',
 			contentKey: 'tour.practiceAccept.step.openEnquiry.intro'
-		},
-		{
-			id: 'open-team',
-			// Also what "Back" from the panel returns to: the button is only
-			// there while the panel is closed.
-			route: practiceEnquirySessionRoute(),
-			target: 'enquiry-team-button',
-			placement: 'top',
-			advanceOn: { type: 'click' },
-			when: TEAM_DISCUSSION_ON,
-			titleKey: 'tour.practiceAccept.step.openTeam.title',
-			contentKey: 'tour.practiceAccept.step.openTeam.intro'
-		},
-		{
-			id: 'team-reply',
-			target: 'team-discussion-panel',
-			placement: 'left',
-			advanceOn: {
-				type: 'event',
-				name: PRACTICE_TOUR_EVENTS.teamMessageSent
-			},
-			when: TEAM_DISCUSSION_ON,
-			titleKey: 'tour.practiceAccept.step.teamReply.title',
-			contentKey: 'tour.practiceAccept.step.teamReply.intro'
 		},
 		{
 			id: 'accept',

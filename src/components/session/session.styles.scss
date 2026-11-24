@@ -231,40 +231,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		}
 	}
 
-	&__teamDiscussionUnread {
-		@include unread-count-badge;
-		font-weight: 600;
-	}
-
-	&__teamDiscussionAction .button__secondary {
-		display: inline-flex;
-		align-items: center;
+	// FE#2491: a switched-off team chat offers to switch it on where its
+	// composer was.
+	&__teamChatSwitchOn {
+		display: flex;
 		justify-content: center;
-		gap: $grid-base;
-		color: var(--m3-on-secondary, $white);
-		background-color: var(--m3-secondary, $secondary);
-		border-color: var(--m3-secondary, $secondary);
-
-		&::after {
-			content: '';
-			width: $grid-base-three;
-			height: $grid-base-three;
-			flex-shrink: 0;
-			background-color: currentColor;
-			mask: url('../../resources/img/icons/arrow_right_24px.svg') center /
-				contain no-repeat;
-		}
-
-		&:hover {
-			background-color: var(--m3-secondary, $secondary);
-			border-color: var(--m3-secondary, $secondary);
-		}
-
-		svg {
-			width: $grid-base-three;
-			height: $grid-base-three;
-			fill: currentColor;
-		}
+		padding: $grid-base-two $grid-base-three;
 	}
 
 	&__content {

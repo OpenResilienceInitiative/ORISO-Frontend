@@ -28,3 +28,29 @@ export const Default: Story = {
 export const Disabled: Story = {
 	args: { onOpen: undefined }
 };
+
+/**
+ * FE#2491: the same marker as a chip in the case header while the team chat
+ * of the enquiry is on — the word written out, like supervision's people.
+ */
+export const HeaderChip: Story = {
+	args: { showLabel: true, active: false },
+	play: async ({ canvasElement, args }) => {
+		const chip = within(canvasElement).getByRole('button', {
+			name: /team/i
+		});
+		await expect(chip).toHaveAttribute('aria-pressed', 'false');
+		await userEvent.click(chip);
+		await expect(args.onOpen).toHaveBeenCalledTimes(1);
+	}
+};
+
+/** The team chat panel is on screen: outlined, not colour alone. */
+export const HeaderChipActive: Story = {
+	args: { showLabel: true, active: true },
+	play: async ({ canvasElement }) => {
+		await expect(
+			within(canvasElement).getByRole('button', { name: /team/i })
+		).toHaveAttribute('aria-pressed', 'true');
+	}
+};

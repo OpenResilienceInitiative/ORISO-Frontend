@@ -5,7 +5,10 @@ import {
 	CONVERSATION_FEATURE_KEYS,
 	type ConversationFeatureKey
 } from '../globalState/interfaces/ConversationFeatureSettings';
-import { resolveConversationFeatureSettings } from './conversationFeatureSettings';
+import {
+	resolveConversationFeatureSettings,
+	UNSET_MEANS_ON_POLICY_KEYS
+} from './conversationFeatureSettings';
 
 /**
  * OpenResilienceInitiative/ORISO-TenantService#363: every conversation feature the app
@@ -15,7 +18,7 @@ const SRC = join(__dirname, '..');
 const REGISTRY = new Set<string>(CONVERSATION_FEATURE_KEYS);
 /** Conversation capability families; any key of these families must be in the registry. */
 const CONVERSATION_FAMILY =
-	/\bfeature(?:Calls|AudioCalls|VideoCalls|VoiceMessages|MediaUpload|MediaInlineDisplay|Supervision|Threads|AnonymousChat|GroupChatV2|InternalGroupChat|SelfHelpGroups)[A-Za-z]*Enabled\b/g;
+	/\bfeature(?:Calls|AudioCalls|VideoCalls|VoiceMessages|MediaUpload|MediaInlineDisplay|MediaAiScanTeam|Supervision|TeamDiscussion|Threads|AnonymousChat|GroupChatV2|InternalGroupChat|SelfHelpGroups)[A-Za-z]*Enabled\b/g;
 
 const sourceFiles = (dir: string): string[] =>
 	readdirSync(dir).flatMap((name) => {
@@ -102,8 +105,21 @@ describe('conversation feature registry (#363)', () => {
 					{ [key]: true },
 					{ permissionPolicies: {} }
 				);
-				expect(effective[key]).toBe(false);
+				// FE#2491: UserService reads an unset team-chat policy as on,
+				// so only an explicit false (tenant or agency) hides it.
+				expect(effective[key]).toBe(
+					UNSET_MEANS_ON_POLICY_KEYS.has(key)
+				);
 			});
+			if (UNSET_MEANS_ON_POLICY_KEYS.has(key)) {
+				it('a missing agency key still honours a tenant false', () => {
+					const effective = resolveConversationFeatureSettings(
+						{ [key]: false },
+						{ permissionPolicies: {} }
+					);
+					expect(effective[key]).toBe(false);
+				});
+			}
 			it.each([true, false])(
 				'tenant-only path uses the served tenant value %s',
 				(value) => {
