@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { SelectionVoiceRecorder } from './SelectionReplyLayer';
+import {
+	createVoiceFile,
+	pickVoiceMimeType
+} from '../voicePlayer/voiceRecordingFile';
 
 /** A recorded answer: what plays in the field and what gets uploaded. */
 export interface SelectionVoiceTake {
@@ -8,19 +12,6 @@ export interface SelectionVoiceTake {
 	durationSec: number;
 	file: File;
 }
-
-const MIME_CANDIDATES = [
-	'audio/webm;codecs=opus',
-	'audio/ogg;codecs=opus',
-	'audio/webm'
-];
-
-const extensionFor = (mimeType: string) =>
-	mimeType.includes('ogg')
-		? 'ogg'
-		: mimeType.includes('mp4')
-			? 'm4a'
-			: 'webm';
 
 /** Whether this browser can record at all (microphone + MediaRecorder). */
 export const canRecordVoice = () =>
@@ -47,11 +38,15 @@ export const useSelectionVoiceRecorder = (): {
 		chunks: BlobPart[];
 		startedAt: number;
 	} | null>(null);
+	// Bumped by every start and cancel: a microphone that opens after a
+	// newer start, a cancel or unmount is closed again at once.
+	const generationRef = useRef(0);
 
 	const stopStream = (stream: MediaStream) =>
 		stream.getTracks().forEach((track) => track.stop());
 
 	const cancel = useCallback(() => {
+		generationRef.current += 1;
 		const active = activeRef.current;
 		activeRef.current = null;
 		if (!active) {
@@ -87,12 +82,17 @@ export const useSelectionVoiceRecorder = (): {
 		return {
 			start: async () => {
 				cancel();
+				const generation = generationRef.current;
 				const stream = await navigator.mediaDevices.getUserMedia({
 					audio: true
 				});
-				const mimeType = MIME_CANDIDATES.find((candidate) =>
-					MediaRecorder.isTypeSupported(candidate)
-				);
+				if (generation !== generationRef.current) {
+					// Cancelled (or unmounted) while the permission prompt
+					// was open: do not keep the microphone on.
+					stopStream(stream);
+					throw new Error('Recording cancelled');
+				}
+				const mimeType = pickVoiceMimeType();
 				const mediaRecorder = mimeType
 					? new MediaRecorder(stream, { mimeType })
 					: new MediaRecorder(stream);
@@ -109,6 +109,7 @@ export const useSelectionVoiceRecorder = (): {
 					startedAt: Date.now()
 				};
 				mediaRecorder.start();
+				return stream;
 			},
 			stop: () =>
 				new Promise((resolve, reject) => {
@@ -126,18 +127,10 @@ export const useSelectionVoiceRecorder = (): {
 							reject(new Error('Empty recording'));
 							return;
 						}
-						const elapsedMs = Math.max(
-							1000,
+						const { file, durationSec } = createVoiceFile(
+							blob,
+							type,
 							Date.now() - active.startedAt
-						);
-						const durationSec = Math.max(
-							1,
-							Math.round(elapsedMs / 1000)
-						);
-						const file = new File(
-							[blob],
-							`voice-message-${Date.now()}-s${durationSec}-ms${elapsedMs}.${extensionFor(type)}`,
-							{ type, lastModified: Date.now() }
 						);
 						const src = URL.createObjectURL(blob);
 						takesRef.current.set(src, { src, durationSec, file });

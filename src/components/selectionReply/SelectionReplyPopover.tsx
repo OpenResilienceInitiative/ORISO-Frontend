@@ -12,7 +12,7 @@ import type { MarkedPassage } from './useMessageSelection';
 
 export type SelectionReplyVoice =
 	| { mode: 'idle' }
-	| { mode: 'recording'; durationSec: number }
+	| { mode: 'recording'; durationSec: number; stream?: MediaStream | null }
 	| { mode: 'review'; src: string; durationSec: number };
 
 export interface SelectionReplyPopoverProps {
@@ -210,6 +210,7 @@ export const SelectionReplyPopover = forwardRef<
 					<VoiceNoteRow
 						mode="recording"
 						durationSec={voice.durationSec}
+						stream={voice.stream}
 						onStop={onStopVoice}
 						onDiscard={onDiscardVoice}
 					/>

@@ -87,6 +87,37 @@ describe('useSelectionVoiceRecorder', () => {
 		unmount();
 	});
 
+	it('hands back the live microphone for the level dots', async () => {
+		const { result } = renderHook(() => useSelectionVoiceRecorder());
+		let stream: unknown;
+		await act(async () => {
+			stream = await result.current.recorder!.start();
+		});
+		expect(stream).toEqual(
+			expect.objectContaining({ getTracks: expect.any(Function) })
+		);
+	});
+
+	it('closes a microphone that opens after the reply was cancelled', async () => {
+		let grant: (stream: unknown) => void = () => undefined;
+		(
+			navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>
+		).mockReturnValueOnce(
+			new Promise((resolve) => {
+				grant = resolve;
+			})
+		);
+		const { result, unmount } = renderHook(() =>
+			useSelectionVoiceRecorder()
+		);
+		const starting = result.current.recorder!.start();
+		unmount();
+		grant({ getTracks: () => [{ stop: stopTrack }] });
+
+		await expect(starting).rejects.toThrow('Recording cancelled');
+		expect(stopTrack).toHaveBeenCalledTimes(1);
+	});
+
 	it('offers no microphone where the browser cannot record', () => {
 		vi.stubGlobal('MediaRecorder', undefined);
 		const { result } = renderHook(() => useSelectionVoiceRecorder());

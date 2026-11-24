@@ -1,0 +1,41 @@
+// Level visual of the voice recorder: dots on a baseline that grow into bars.
+// Red stays the only signal colour (same roles as the voice player tiles).
+
+.voiceLevelDots {
+	--voice-level-dot: 4px;
+	--voice-level-max: var(--voice-player-tile-height, 26px);
+	--voice-level-gap: 3px;
+
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: var(--voice-level-gap);
+	height: var(--voice-level-max);
+	min-width: 0;
+	overflow: hidden;
+
+	&__dot {
+		flex: none;
+		width: var(--voice-level-dot);
+
+		// Never below the dot: silence keeps a visible resting row.
+		height: calc(
+			var(--voice-level-dot) +
+				(var(--voice-level-max) - var(--voice-level-dot)) *
+				var(--voice-level, 0)
+		);
+		border-radius: calc(var(--voice-level-dot) / 2);
+		background: var(--voice-player-tile-idle, rgba(165, 0, 10, 0.22));
+		transition: height 80ms linear;
+	}
+
+	&[data-state='recording'] &__dot {
+		background: var(--m3-primary, #a5000a);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.voiceLevelDots__dot {
+		transition: none;
+	}
+}

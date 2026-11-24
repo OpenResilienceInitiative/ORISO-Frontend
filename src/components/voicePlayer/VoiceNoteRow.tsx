@@ -18,6 +18,10 @@ export type VoiceNoteRowProps = {
 			/** Seconds recorded so far. */
 			durationSec: number;
 			onStop: () => void;
+			/** The microphone being recorded, for the level dots. */
+			stream?: MediaStream | null;
+			/** Fixed levels instead of the microphone (Storybook). */
+			levels?: readonly number[];
 	  }
 	| {
 			mode: 'review';
@@ -64,6 +68,8 @@ export const VoiceNoteRow = forwardRef<HTMLDivElement, VoiceNoteRowProps>(
 					<VoiceRecordingBar
 						durationSec={props.durationSec}
 						onStop={props.onStop}
+						stream={props.stream}
+						levels={props.levels}
 						className="voicePlayer--composer"
 					/>
 				)}

@@ -41,7 +41,8 @@ export interface SelectionAnswer {
  * MediaRecorder today; stories pass a stand-in.
  */
 export interface SelectionVoiceRecorder {
-	start: () => Promise<void> | void;
+	/** Resolves with the live microphone, for the level dots. */
+	start: () => Promise<MediaStream | void> | void;
 	stop: () => Promise<{ src: string; durationSec: number }>;
 	cancel: () => void;
 }
@@ -335,6 +336,7 @@ export const SelectionReplyLayer = ({
 		setVoiceError(false);
 		startPendingRef.current = true;
 		const previous = startSettlingRef.current;
+		let stream: MediaStream | null = null;
 		const run = (async () => {
 			if (previous) {
 				await previous;
@@ -344,7 +346,7 @@ export const SelectionReplyLayer = ({
 				}
 			}
 			try {
-				await recorder.start();
+				stream = (await recorder.start()) || null;
 			} catch {
 				if (op === voiceOpRef.current) {
 					startPendingRef.current = false;
@@ -370,13 +372,13 @@ export const SelectionReplyLayer = ({
 			return;
 		}
 		startPendingRef.current = false;
-		setVoice({ mode: 'recording', durationSec: 0 });
+		setVoice({ mode: 'recording', durationSec: 0, stream });
 		stopTimer();
 		timerRef.current = window.setInterval(() => {
 			setVoice((current) =>
 				current.mode === 'recording'
 					? {
-							mode: 'recording',
+							...current,
 							durationSec: current.durationSec + 1
 						}
 					: current
