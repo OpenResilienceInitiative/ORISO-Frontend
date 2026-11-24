@@ -546,6 +546,9 @@ export const CalendarPageWired = () => {
 	);
 
 	useEffect(() => onAppointmentsChanged(load), [load]);
+	/* A refused booking said "one is upcoming" for its moment only: after a
+	   change (cancelled, moved) the reloaded entries decide again. */
+	useEffect(() => onAppointmentsChanged(() => setLimitedSessions([])), []);
 
 	/**
 	 * The conversations appointments belong to: every page of the

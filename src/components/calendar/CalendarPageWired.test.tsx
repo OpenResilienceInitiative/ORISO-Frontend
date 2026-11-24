@@ -2411,6 +2411,13 @@ describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494
 		expect(
 			panelsOf(props.besidePanel).map((each) => each.props.sessionId)
 		).toEqual([12]);
+		// 14's appointment is cancelled elsewhere: it may book again.
+		act(() => notifyAppointmentsChanged());
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+			).toEqual([14])
+		);
 	});
 
 	it('offers none for a finished conversation', async () => {
