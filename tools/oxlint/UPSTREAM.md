@@ -11,3 +11,13 @@
   `scripts/oxlint-ratchet.mjs` fails when a count goes up.
 - Not enabled on purpose: `require-readable-spacing` (formatting taste, ~17k findings) and
   `no-module-mocking` (tests are out of scope).
+
+## Local checks
+
+- `npm run test:oxlint-ratchet` runs the regression tests of the gate.
+- `npm run lint:oxlint` runs the gate; it needs Node 22.18 or later (the `.nvmrc` version).
+- `npm run lint:oxlint:update` rewrites the baseline; regenerate it after merging the latest
+  `dev`, because PRs merged in the meantime can add findings.
+- Commands named inside `anti-slop/` (for example `pnpm check` or `sync:skill-assets` in
+  `anti-slop/vendor/eslint-stylistic/UPSTREAM.md`) belong to the upstream repositories and are
+  not runnable here. To update the vendored plugin, use the upstream `install-anti-slop` skill.

@@ -117,7 +117,20 @@ function runOxlint() {
 	return parseReport(output);
 }
 
+/** Oxlint loads the TypeScript anti-slop plugin natively only from Node 22.18 on. */
+export function supportsTypeScriptPlugins(version) {
+	const [major, minor] = version.split('.').map(Number);
+	return major > 22 || (major === 22 && minor >= 18);
+}
+
 function main() {
+	if (!supportsTypeScriptPlugins(process.versions.node)) {
+		console.error(
+			`Oxlint ratchet needs Node 22.18 or later to load the TypeScript plugin; this is ${process.versions.node}. ` +
+				'Use the version in .nvmrc.'
+		);
+		return 1;
+	}
 	const diagnostics = runOxlint();
 	const current = countByFileAndRule(diagnostics, root);
 

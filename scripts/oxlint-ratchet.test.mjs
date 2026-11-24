@@ -5,7 +5,8 @@ import {
 	compareToBaseline,
 	countByFileAndRule,
 	formatBaseline,
-	parseReport
+	parseReport,
+	supportsTypeScriptPlugins
 } from './oxlint-ratchet.mjs';
 
 const root = '/repo';
@@ -120,5 +121,15 @@ describe('parseReport', () => {
 			() => parseReport(JSON.stringify({ diagnostics: [], number_of_files: 0 })),
 			/checked no files/
 		);
+	});
+});
+
+describe('supportsTypeScriptPlugins', () => {
+	it('accepts Node 22.18 and later, rejects older 22.x', () => {
+		assert.equal(supportsTypeScriptPlugins('22.17.1'), false);
+		assert.equal(supportsTypeScriptPlugins('22.18.0'), true);
+		assert.equal(supportsTypeScriptPlugins('22.23.3'), true);
+		assert.equal(supportsTypeScriptPlugins('24.1.0'), true);
+		assert.equal(supportsTypeScriptPlugins('20.19.0'), false);
 	});
 });
