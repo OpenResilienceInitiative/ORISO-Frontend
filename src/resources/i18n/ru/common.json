@@ -5746,7 +5746,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Попросить совета"
+		"requestAdvice": "Попросить совета",
+		"group": {
+			"handover": "Передать консультацию",
+			"supervision": "Управление супервизией",
+			"askerAccount": "Клиент и аккаунт",
+			"settingsLegal": "Настройки и правовая информация"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Мы ищем для вас консультанта.",

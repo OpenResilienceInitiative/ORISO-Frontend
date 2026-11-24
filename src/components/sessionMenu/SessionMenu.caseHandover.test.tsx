@@ -216,6 +216,54 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		expect(items[recommendAt + 1]).toContain(HANDOVER);
 	});
 
+	it('sits in the folded "Beratung weitergeben" group, closed until opened', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+		const toggle = screen.getByRole('button', {
+			name: 'sessionMenu.group.handover'
+		});
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		expect(screen.queryByRole('button', { name: HANDOVER })).toBeNull();
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		expect(screen.getByRole('button', { name: HANDOVER })).toBeTruthy();
+	});
+
+	it('starts with the group closed again on the next opening', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		const trigger = screen.getAllByRole('button', { name: 'app.menu' })[0];
+		const handoverToggle = () =>
+			screen.getByRole('button', { name: 'sessionMenu.group.handover' });
+		fireEvent.click(trigger);
+		fireEvent.click(handoverToggle());
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('true');
+		fireEvent.click(trigger);
+		fireEvent.click(trigger);
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('false');
+	});
+
+	it('lets ArrowDown move past the closed group to the next row', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+		const toggle = screen.getByRole('button', {
+			name: 'sessionMenu.group.handover'
+		});
+		toggle.focus();
+		fireEvent.keyDown(toggle, { key: 'ArrowDown' });
+		const focused = document.activeElement as HTMLElement;
+		expect(focused).not.toBe(toggle);
+		expect(focused.closest('[hidden]')).toBeNull();
+	});
+
 	it.each([
 		[
 			'another counsellor',
