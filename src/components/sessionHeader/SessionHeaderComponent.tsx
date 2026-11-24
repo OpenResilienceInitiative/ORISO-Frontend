@@ -586,6 +586,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(userData?.userRoles || []).includes('ANONYMOUS');
 	const isAnonymousAsker =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	// The agency line, topic and team chat are for registered users only.
+	const showMetaDetails =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// FE#2494: the appointment pennant also for anonymous advice seekers.
+	const showAppointmentSlot =
+		activeSession.isSession && (isAskerUser || isConsultantUser);
 	const assignedConsultantLabel = resolveAssignedConsultantLabel(
 		activeSession,
 		userData,
@@ -1366,10 +1373,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				/>
 			</div>
 
-			{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
-				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) && (
+			{(showMetaDetails || showAppointmentSlot) && (
 				<div className="sessionInfo__metaInfo">
-					{agencyLine && (
+					{showMetaDetails && agencyLine && (
 						/*
 						 * The counselling centre with its postcode (#895). The
 						 * postcode is what the advice seeker chose their agency
@@ -1384,10 +1390,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							{agencyLine}
 						</div>
 					)}
-					{topic?.name && <SessionTopic name={topic.name} />}
+					{showMetaDetails && topic?.name && (
+						<SessionTopic name={topic.name} />
+					)}
 					{/* FE#2494: the team chat hangs beside the topic as a
 					    pennant; the name row keeps its width for the name. */}
-					{props.teamChatIndicator &&
+					{showMetaDetails &&
+						props.teamChatIndicator &&
 						hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,
 							userData
@@ -1398,20 +1407,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							/>
 						)}
 					{/* FE#2494: the appointments hang beside the topic. */}
-					{activeSession.isSession &&
-						(isAskerUser || isConsultantUser) && (
-							<ConversationAppointmentSlot
-								onCreateChange={handleCreateAppointmentChange}
-								supervisorId={appointmentSupervisorId}
-								canChange={
-									// Handover co-access may create too: the backend decides
-									// for a colleague who is not the assigned counsellor.
-									isConsultantUser &&
-									!isChatFinished &&
-									activeSession.item.status === STATUS_ACTIVE
-								}
-							/>
-						)}
+					{showAppointmentSlot && (
+						<ConversationAppointmentSlot
+							onCreateChange={handleCreateAppointmentChange}
+							supervisorId={appointmentSupervisorId}
+							canChange={
+								// Handover co-access may create too: the backend decides
+								// for a colleague who is not the assigned counsellor.
+								isConsultantUser &&
+								!isChatFinished &&
+								activeSession.item.status === STATUS_ACTIVE
+							}
+						/>
+					)}
 				</div>
 			)}
 			{activeSession.isSession && isConsultantUser && (

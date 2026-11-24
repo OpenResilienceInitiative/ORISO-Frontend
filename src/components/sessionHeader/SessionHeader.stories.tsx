@@ -1848,11 +1848,14 @@ const installAppointmentFetch = (items: unknown[]) => {
 
 const HeaderWithAppointments = ({
 	items,
-	calendar = []
+	calendar = [],
+	userData
 }: {
 	items: unknown[];
 	/** FE#2494: the own calendar, e.g. an appointment with the supervisor. */
 	calendar?: unknown[];
+	/** The viewer; the counsellor by default. */
+	userData?: typeof storyUserData;
 }) => {
 	// Installed during render: the slot fetches from a child effect.
 	const [restore] = React.useState(() => {
@@ -1860,8 +1863,17 @@ const HeaderWithAppointments = ({
 		return installAppointmentFetch(items);
 	});
 	React.useEffect(() => restore, [restore]);
-	return renderSessionHeader(mockActiveConversation());
+	return renderSessionHeader({ ...mockActiveConversation(), userData });
 };
+
+/* FE#2494 review: an anonymous guest of a conversation appointment. */
+const storyAnonymousUserData = {
+	...storyAskerUserData,
+	userName: 'gast-4401',
+	displayName: 'Gast 4401',
+	grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+	userRoles: ['ANONYMOUS']
+} as any;
 
 const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
 	const trigger = await waitFor(() => {
@@ -1937,6 +1949,36 @@ export const OneToOneAppointmentUpcoming: Story = {
 			1
 		);
 		await expect(bar.closest('.sessionInfo__metaInfo')).not.toBeNull();
+	}
+};
+
+/**
+ * FE#2494 review: the anonymous advice seeker keeps the appointment pennant
+ * now that it hangs in the topic's row, which registered users only get
+ * with the agency line and topic.
+ */
+export const OneToOneAppointmentAnonymousGuest: Story = {
+	name: '1:1 appointment — anonymous advice seeker sees the pennant (FE#2494)',
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			userData={storyAnonymousUserData}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(
+			() => {
+				const found = canvasElement.querySelector(
+					'[data-cy="room-next-appointment"]'
+				);
+				expect(found).not.toBeNull();
+				return found!;
+			},
+			{ timeout: 5000 }
+		);
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
 	}
 };
 
