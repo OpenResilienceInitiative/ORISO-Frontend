@@ -40,6 +40,7 @@ export const useSelectionVoiceRecorder = (): {
 	takeFor: (src: string) => SelectionVoiceTake | undefined;
 	release: (src: string) => void;
 } => {
+	const rejectStoppingRef = useRef<((reason: Error) => void) | null>(null);
 	const stoppingRef = useRef<Promise<{
 		src: string;
 		durationSec: number;
@@ -59,6 +60,12 @@ export const useSelectionVoiceRecorder = (): {
 		stream.getTracks().forEach((track) => track.stop());
 
 	const cancel = useCallback(() => {
+		// A stop still waiting for the recorder's last event never gets it
+		// now: settle it, so the next take stops on its own.
+		const rejectStopping = rejectStoppingRef.current;
+		rejectStoppingRef.current = null;
+		stoppingRef.current = null;
+		rejectStopping?.(new Error('Recording cancelled'));
 		const active = activeRef.current;
 		activeRef.current = null;
 		if (!active) {
@@ -129,6 +136,7 @@ export const useSelectionVoiceRecorder = (): {
 					src: string;
 					durationSec: number;
 				}>((resolve, reject) => {
+					rejectStoppingRef.current = reject;
 					const active = activeRef.current;
 					if (!active) {
 						reject(new Error('Not recording'));
@@ -180,6 +188,7 @@ export const useSelectionVoiceRecorder = (): {
 				const clear = () => {
 					if (stoppingRef.current === stopping) {
 						stoppingRef.current = null;
+						rejectStoppingRef.current = null;
 					}
 				};
 				stopping.then(clear, clear);
