@@ -16,6 +16,7 @@ import decodeHTML from './decodeHTML';
 import decodeTenantAsset from './decodeTenantAsset';
 import getSafeFaviconUrl from './getSafeFaviconUrl';
 import applyBrandingFavicon from './applyBrandingFavicon';
+import { applyTenantTitle } from '../components/app/sectionFavicon/tabTitle';
 import {
 	getAuthenticatedTenantId,
 	subscribeToAuthenticatedTenant
@@ -82,7 +83,7 @@ const applyTheming = (tenant: TenantDataInterface, previewApplied: boolean) => {
 	}
 
 	if (tenant.name) {
-		getOrCreateHeadNode('title').textContent = tenant.name;
+		applyTenantTitle(tenant.name);
 		getOrCreateHeadNode('meta', { property: 'og:title' }).setAttribute(
 			'content',
 			tenant.name

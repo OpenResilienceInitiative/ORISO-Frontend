@@ -42,6 +42,8 @@ import {
 import {
 	desktop1440Globals,
 	mobileParameters,
+	phone320Globals,
+	tablet820Globals,
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
@@ -1289,6 +1291,104 @@ export const KebabActiveState: Story = {
 	}
 };
 
+/** The six recent reactions and the more button remain visible in one line. */
+const checkQuickReactionRow = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const trigger = canvasElement.querySelector(
+		'.messageItem__kebabButton'
+	) as HTMLElement;
+	expect(trigger).toBeTruthy();
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector(
+			'.messageItem__actionMenuReactions'
+		) as HTMLElement;
+		expect(found).toBeTruthy();
+		expect(found.getBoundingClientRect().top).toBeGreaterThan(0);
+		return found;
+	});
+	const controls = [...row.querySelectorAll('button')];
+	expect(controls).toHaveLength(7);
+	const rowRect = row.getBoundingClientRect();
+	const menuRect = (
+		row.closest('.messageItem__actionMenu') as HTMLElement
+	).getBoundingClientRect();
+	expect(menuRect.left).toBeGreaterThanOrEqual(0);
+	expect(menuRect.right).toBeLessThanOrEqual(window.innerWidth);
+	const triggerRect = trigger.getBoundingClientRect();
+	expect(
+		menuRect.right <= triggerRect.left ||
+			menuRect.left >= triggerRect.right ||
+			menuRect.bottom <= triggerRect.top ||
+			menuRect.top >= triggerRect.bottom
+	).toBe(true);
+	const rects = controls.map((control) => control.getBoundingClientRect());
+	for (let index = 0; index < rects.length; index += 1) {
+		const rect = rects[index];
+		expect(Math.abs(rect.top - rects[0].top)).toBeLessThan(1);
+		expect(rect.width).toBeGreaterThanOrEqual(24);
+		expect(rect.height).toBeGreaterThanOrEqual(24);
+		expect(rect.left).toBeGreaterThanOrEqual(rowRect.left - 0.5);
+		expect(rect.right).toBeLessThanOrEqual(rowRect.right + 0.5);
+		if (index > 0)
+			expect(rect.left).toBeGreaterThanOrEqual(
+				rects[index - 1].right - 0.5
+			);
+	}
+	const more = row.querySelector(
+		'.messageItem__actionMenuReactionMore'
+	) as HTMLElement;
+	more.focus();
+	expect(document.activeElement).toBe(more);
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeTruthy()
+	);
+	await userEvent.click(more);
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeNull()
+	);
+	// Leave nothing open: the next story's accessibility audit must not see
+	// this story's action menu or emoji picker.
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() => {
+		expect(document.querySelector('.messageItem__actionMenu')).toBeNull();
+		expect(document.querySelector('.EmojiPickerReact')).toBeNull();
+	});
+};
+
+export const QuickReactionsDesktop: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row desktop',
+	globals: desktop1440Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsTablet: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row tablet',
+	globals: tablet820Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsMobile: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row mobile',
+	globals: phone390Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsNarrow: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
+};
+
 /**
  * Same pins as `KebabActiveState`, but for the **outgoing** side: the kebab
  * lives in the right side column (`--right`) and the menu is positioned from
@@ -1389,7 +1489,27 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
 			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
 		});
+
+		// Close the third-party picker again before the accessibility audit:
+		// its search field carries `aria-controls="epr-search-id"`, which axe
+		// rejects. Whether the audit saw that field depended on how fast the
+		// picker had rendered (the dev run happens to miss it). The menu stays
+		// open, so its own markup is still audited.
+		more.click();
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-testid="emoji-picker-popup"]')
+			).toBeNull()
+		);
 	}
+};
+
+/** The outgoing trigger also remains accessible at the narrowest supported width. */
+export const QuickReactionsOutgoingNarrow: Story = {
+	...KebabActiveStateOutgoing,
+	name: 'Quick reactions — outgoing one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
 };
 
 /**
@@ -2433,7 +2553,22 @@ export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
 export const InitialAcceptanceDefault: Story = {
 	...InitialAcceptanceWithScopedPreference,
 	name: 'Initial acceptance — default chat notice',
-	play: undefined
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!;
+			const bubble = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__bubble'
+			)!;
+			const avatarRect = avatar.getBoundingClientRect();
+			const bubbleRect = bubble.getBoundingClientRect();
+			expect(bubbleRect.left - avatarRect.left).toBeCloseTo(40, 0);
+			expect(bubbleRect.top - avatarRect.top).toBeLessThanOrEqual(44);
+			expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+			expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		});
+	}
 };
 export const InitialAcceptanceDefaultMobile: Story = {
 	...InitialAcceptanceDefault,
@@ -2569,6 +2704,12 @@ export const SupervisorFeedback: Story = {
 		expect(
 			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
 		).toBeTruthy();
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__avatar--supervisor'
+		)!;
+		expect(avatar).not.toBeNull();
+		expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
 	}
 };
 

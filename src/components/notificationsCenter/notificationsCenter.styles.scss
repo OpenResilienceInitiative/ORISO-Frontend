@@ -587,17 +587,6 @@
 		.notificationsCenter__listColumn {
 			justify-content: center;
 		}
-
-		.sessionsList__resizeHandle--end::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			left: calc(50% - 0.5px);
-			width: 1px;
-			background: #fff;
-			pointer-events: none;
-		}
 	}
 
 	&__detail--empty {

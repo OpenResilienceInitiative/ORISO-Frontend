@@ -71,7 +71,7 @@ $button-group-icon-size: 24px;
 			color 0.2s ease;
 
 		&:focus-visible {
-			outline: 3px solid var(--m3-primary-outline, #930008);
+			outline: $focus-outline;
 			outline-offset: 2px;
 		}
 

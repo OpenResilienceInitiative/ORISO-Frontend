@@ -92,6 +92,8 @@ export const useManagedPeople = (
 				await reload();
 			} else {
 				setActionError(kind);
+				// A replacement removes first, so a failed second half changes the list.
+				if (kind === 'replace') await reload();
 			}
 			return false;
 		} finally {

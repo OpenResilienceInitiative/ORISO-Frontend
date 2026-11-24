@@ -1,4 +1,17 @@
+import { tourAvailability } from './tourCatalogue';
+import { consultantCalendarTour } from './tours/calendarTour';
+import { consultantCaseHandoverTour } from './tours/caseHandoverTour';
+import {
+	consultantGroupCircleTour,
+	isGroupCircleTourAvailable
+} from './tours/groupCircleTour';
+import { consultantProfileTour } from './tours/profileTour';
 import type { TourDefinition } from './types';
+import { askerFirstStepsTour } from './tours/askerFirstStepsTour';
+import { askerSettingsTour } from './tours/askerSettingsTour';
+import { consultantLiveChatTour } from './tours/liveChatTour';
+import { consultantTimelineTour } from './tours/timelineTour';
+import { consultantVideoCallTour } from './tours/videoCallTour';
 
 /**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
@@ -127,8 +140,20 @@ export const consultantMailCounsellingTour: TourDefinition = {
  * sees its own (`getAvailableTours`).
  */
 export const frontendTopicTours: TourDefinition[] = [
-	consultantMailCounsellingTour
+	consultantCaseHandoverTour,
+	consultantCalendarTour,
+	consultantGroupCircleTour,
+	consultantProfileTour,
+	consultantLiveChatTour,
+	consultantTimelineTour,
+	consultantVideoCallTour,
+	consultantMailCounsellingTour,
+	askerFirstStepsTour,
+	askerSettingsTour
 ];
+
+// Gates beyond a tenant flag (`tourCatalogue.ts`).
+tourAvailability[consultantGroupCircleTour.id] = isGroupCircleTourAvailable;
 
 export const frontendTours: TourDefinition[] = [
 	consultantWalkthroughTour,

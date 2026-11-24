@@ -1,0 +1,336 @@
+.loginTransitionPrototype {
+	--prototype-primary: var(--m3-primary, #a5000a);
+	--prototype-press: var(--m3-primary-hover, var(--prototype-primary));
+	--prototype-surface: var(--m3-surface-container-lowest, #fff);
+	--prototype-page: var(--m3-surface-container-low, #faf7f7);
+	--prototype-line: var(--m3-outline-variant, #ded8d8);
+	--prototype-curtain-motion: 480ms cubic-bezier(0.45, 0, 0.25, 1) both;
+	--prototype-stage-exit: translateX(-100%);
+	--prototype-form-exit: translateX(100%);
+
+	position: relative;
+	isolation: isolate;
+	height: 100dvh;
+	overflow: hidden;
+	background: var(--prototype-page);
+
+	&__foreground,
+	&__app {
+		position: absolute;
+		inset: 0;
+	}
+
+	&__foreground {
+		z-index: 1;
+		overflow: auto;
+		background: var(--prototype-page);
+	}
+
+	&__area {
+		display: grid;
+		justify-items: center;
+		align-items: center;
+		position: relative;
+		width: min(100%, 520px);
+		min-height: min(470px, 64dvh);
+		margin-inline: auto;
+	}
+
+	&__form {
+		transition:
+			transform 350ms cubic-bezier(0.38, 0, 0.68, 0.24),
+			opacity 245ms ease-in;
+
+		button[type='submit']:enabled {
+			background-color: var(--prototype-primary);
+			color: var(--m3-on-primary, #fff);
+
+			&:hover {
+				background-color: var(--prototype-press);
+			}
+		}
+	}
+
+	&__submitRow {
+		position: relative;
+	}
+
+	&__pending {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: 0.75rem;
+		display: grid;
+		place-items: center;
+		pointer-events: none;
+	}
+
+	&__loader {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		pointer-events: none;
+		animation: prototype-loader-in 220ms 170ms ease-out both;
+	}
+
+	&:not([data-phase='form']) &__form {
+		transform: translateY(120px);
+		opacity: 0;
+	}
+
+	// The inbox is already behind the two opaque panels. Each panel owns its
+	// background so the opening between their moving edges is transparent.
+	.stageLayout__contentWrapper {
+		position: relative;
+	}
+
+	&[data-phase='revealing'] &__foreground {
+		overflow: hidden;
+		background: transparent;
+	}
+
+	&[data-phase='revealing'] {
+		.stageLayout__stage,
+		.stageMobileHero {
+			animation: prototype-stage-exit var(--prototype-curtain-motion);
+		}
+
+		.stageLayout__contentWrapper {
+			animation: prototype-form-exit var(--prototype-curtain-motion);
+		}
+	}
+
+	&[data-phase='revealing'] &__loader {
+		visibility: hidden;
+	}
+
+	&__binary {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		color: var(--prototype-primary);
+	}
+
+	&__matrixStatus {
+		position: absolute;
+		z-index: 2;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		pointer-events: none;
+	}
+
+	&[data-matrix-failed='true'] &__form {
+		visibility: hidden;
+	}
+
+	&[data-matrix-failed='true'] &__matrixStatus {
+		inset: 0;
+		display: grid;
+		width: auto;
+		height: auto;
+		place-items: center;
+		clip-path: none;
+	}
+
+	&[data-effect='matrix']:not([data-phase='form']) &__form {
+		transform: none;
+		opacity: 1;
+	}
+
+	&__app {
+		z-index: 0;
+		background: var(--prototype-page);
+		display: flex;
+		flex-direction: column;
+		color: var(--m3-on-surface, #1d1a1a);
+	}
+
+	&__appHeader {
+		background: var(--prototype-surface);
+		border-bottom: 1px solid var(--prototype-line);
+		padding: 14px clamp(16px, 3vw, 44px);
+	}
+
+	&__workArea {
+		display: grid;
+		grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
+		flex: 1;
+		min-height: 0;
+	}
+
+	&__inbox,
+	&__conversation {
+		padding: clamp(16px, 3vw, 36px);
+	}
+
+	&__inbox {
+		background: var(--prototype-surface);
+		border-right: 1px solid var(--prototype-line);
+	}
+
+	&__thread {
+		margin-top: 24px;
+		padding: 16px;
+		border-radius: 20px;
+		background: color-mix(
+			in srgb,
+			var(--prototype-primary) 10%,
+			var(--prototype-surface)
+		);
+		color: var(--m3-on-surface, #1d1a1a);
+	}
+
+	&__conversation {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		max-width: 960px;
+		margin-inline: auto;
+	}
+
+	&__message {
+		align-self: flex-start;
+		background: var(--prototype-surface);
+		padding: 16px 20px;
+		border-radius: 4px 20px 20px;
+	}
+
+	&__composer {
+		margin-top: auto;
+		padding-top: 16px;
+
+		.MuiInputBase-root {
+			background: var(--prototype-surface);
+		}
+	}
+}
+
+@keyframes prototype-loader-in {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes prototype-stage-exit {
+	to {
+		transform: var(--prototype-stage-exit);
+	}
+}
+
+@keyframes prototype-form-exit {
+	to {
+		transform: var(--prototype-form-exit);
+	}
+}
+
+@media (width >= 1200px) {
+	.loginTransitionPrototype {
+		// StageLayout normally places its content inside a full-width wrapper.
+		// Give the right curtain its actual width before the transition starts.
+		.stageLayout__contentWrapper {
+			flex: 1;
+			margin-left: 40vw;
+			background: var(--prototype-page);
+		}
+
+		.stageLayout__content,
+		.stageLayout__header {
+			padding-left: 1rem;
+		}
+
+		.stageLayout__header {
+			justify-content: flex-end;
+		}
+	}
+}
+
+@media (width < 720px) {
+	.loginTransitionPrototype {
+		&__workArea {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		&__inbox {
+			display: none;
+		}
+
+		&__area {
+			min-height: min(425px, 64dvh);
+		}
+	}
+}
+
+@media (width < 1200px) {
+	.loginTransitionPrototype {
+		--prototype-stage-exit: translateY(-100%);
+		--prototype-form-exit: translateY(100%);
+
+		&__foreground .stageLayout__contentWrapper {
+			min-height: 0;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loginTransitionPrototype {
+		&[data-effect='matrix'] button[type='submit']:enabled {
+			transition: none;
+			transform: none;
+			animation: none;
+		}
+
+		&__form {
+			transition: none;
+		}
+
+		&:not([data-phase='form']) &__form {
+			transform: none;
+		}
+
+		&__loader {
+			animation: none;
+		}
+
+		&__binary,
+		&__pending {
+			display: none;
+		}
+
+		&[data-phase='revealing'] &__foreground {
+			visibility: hidden;
+		}
+
+		&[data-phase='revealing'] {
+			.stageLayout__stage,
+			.stageMobileHero,
+			.stageLayout__contentWrapper {
+				animation: none;
+			}
+		}
+
+		&[data-effect='matrix']:not([data-phase='form']) &__form {
+			visibility: hidden;
+			animation: none;
+		}
+
+		&[data-effect='matrix'][data-phase='loading'] &__matrixStatus {
+			inset: 0;
+			display: grid;
+			width: auto;
+			height: auto;
+			place-items: center;
+			clip-path: none;
+		}
+	}
+}

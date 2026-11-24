@@ -89,6 +89,23 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		expect(circle().style.width).toBe('32px');
 	});
 
+	it('replaces the animal outline and shadow with the shared chat outline', () => {
+		render(
+			<UserAvatar
+				username="u"
+				userId="@u:x"
+				ring={false}
+				outline
+				chatOutline
+			/>
+		);
+		const avatar = screen.getByTestId('user-avatar');
+		const animal = avatar.firstElementChild as HTMLElement;
+		expect(avatar.classList.contains('chatAvatarOutline')).toBe(true);
+		expect(animal.style.borderWidth).toBe('0px');
+		expect(animal.style.boxShadow).toBe('none');
+	});
+
 	it('falls back to the username when there is no user id', () => {
 		render(<UserAvatar username="fallback-user" userId="" />);
 		expect(animalBackground(screen.getByTestId('user-avatar'))).toMatch(

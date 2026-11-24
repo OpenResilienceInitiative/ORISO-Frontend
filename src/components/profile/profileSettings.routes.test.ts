@@ -90,7 +90,9 @@ it('retains the security route with one full-width stable composer', () => {
 			component: SecurityPrivacySettings,
 			boxed: false,
 			fullWidth: true,
-			order: 1
+			order: 1,
+			// The profile tour points here (FE#2341).
+			tourTarget: 'profile-security'
 		}
 	]);
 	expect(groups.every(isTabGroup)).toBe(true);

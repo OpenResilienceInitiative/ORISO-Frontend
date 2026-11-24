@@ -92,6 +92,7 @@ const profileRoutes = (
 								),
 							component: ConsultantInformation,
 							icon: PersonOutlineIcon,
+							tourTarget: 'profile-public',
 							column: COLUMN_LEFT
 						},
 						{
@@ -210,6 +211,7 @@ const profileRoutes = (
 						{
 							component: AbsenceFormular,
 							icon: AccessAlarmOutlinedIcon,
+							tourTarget: 'profile-absence',
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled

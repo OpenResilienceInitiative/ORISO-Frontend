@@ -22,7 +22,6 @@ export interface SupervisorAddInput {
 	isConsultant: boolean;
 	isSupervisionEnabled: boolean;
 	isSupervisor: boolean;
-	isMobile: boolean;
 	/** The agency's feature answer is in (or final). Defaults to true. */
 	isSettled?: boolean;
 }
@@ -32,7 +31,6 @@ export const getSupervisorAddState = ({
 	isConsultant,
 	isSupervisionEnabled,
 	isSupervisor,
-	isMobile,
 	isSettled = true
 }: SupervisorAddInput): SupervisorAddState => {
 	if (isAsker) {
@@ -42,8 +40,7 @@ export const getSupervisorAddState = ({
 		};
 	}
 
-	// The phone answer is grey either way, so it needs no waiting state.
-	if (isConsultant && !isSettled && !isSupervisor && !isMobile) {
+	if (isConsultant && !isSettled && !isSupervisor) {
 		return {
 			mode: 'pending',
 			labelKey: 'sessionHeader.supervisor.modal.title'
@@ -57,13 +54,6 @@ export const getSupervisorAddState = ({
 		return {
 			mode: 'disabled',
 			labelKey: 'sessionHeader.supervisor.add.disabledUnavailable'
-		};
-	}
-
-	if (isMobile) {
-		return {
-			mode: 'disabled',
-			labelKey: 'sessionHeader.supervisor.add.disabledMobile'
 		};
 	}
 

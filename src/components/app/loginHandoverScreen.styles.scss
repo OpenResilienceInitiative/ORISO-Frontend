@@ -15,6 +15,14 @@
 		animation: loginHandoverScreenIn 240ms ease-out both;
 	}
 
+	&--curtainStatus {
+		inset: 0 auto auto 0;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+
 	// Drops the entrance animation too: an animation outranks this opacity,
 	// so a screen that faded in on this page would never fade out.
 	&--leaving {

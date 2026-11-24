@@ -1,0 +1,20 @@
+.fittedHeaderTitle__text {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.fittedHeaderTitle__measure {
+	position: fixed;
+	visibility: hidden;
+	pointer-events: none;
+	white-space: nowrap;
+	width: max-content;
+	inset: 0 auto auto 0;
+}
+
+.fittedHeaderTitle__measure::before {
+	content: attr(data-title);
+}

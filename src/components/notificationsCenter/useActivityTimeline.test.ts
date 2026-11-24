@@ -93,6 +93,16 @@ describe('useActivityTimeline (#1888: the Timeline’s selection, in one place)'
 			expect(markRead).toHaveBeenCalledWith('a');
 		});
 
+		it('keeps a consent request unread on desktop selection', () => {
+			const { markRead, result } = setup({
+				feed: [
+					card('a', { eventType: 'case.handover.consent.requested' })
+				]
+			});
+			expect(result.current.selectedId).toBe('a');
+			expect(markRead).not.toHaveBeenCalled();
+		});
+
 		it('does not read on a phone or under the unread filter', () => {
 			expect(setup({ isPhone: true }).markRead).not.toHaveBeenCalled();
 			expect(setup({ unreadOnly: true }).markRead).not.toHaveBeenCalled();

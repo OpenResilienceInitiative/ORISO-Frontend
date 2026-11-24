@@ -12,6 +12,8 @@ interface MarkAllReadButtonProps {
 	onClick: () => void;
 	/** Localised "Mark all as read"; used as tooltip and accessible name. */
 	label: string;
+	/** Inert product-tour anchor, rendered as `data-tour-target`. */
+	tourTarget?: string;
 }
 
 /**
@@ -25,7 +27,8 @@ export const MarkAllReadButton: React.FC<MarkAllReadButtonProps> = ({
 	hasUnread,
 	busy = false,
 	onClick,
-	label
+	label,
+	tourTarget
 }) => (
 	<button
 		type="button"
@@ -35,6 +38,7 @@ export const MarkAllReadButton: React.FC<MarkAllReadButtonProps> = ({
 		aria-busy={busy}
 		title={label}
 		aria-label={label}
+		data-tour-target={tourTarget}
 	>
 		<DoneAllIcon className="sessionsListToolbar__chipIconSvg" />
 	</button>

@@ -72,8 +72,9 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { useSideChatIntroDismissed } from '../chatStage/sideChatIntroPreference';
+import { resolveEnquiryTeamChatState } from '../teamDiscussion/enquiryTeamChatState';
 import { Button, BUTTON_TYPES } from '../button/Button';
-import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -235,7 +236,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
-import { UserAvatar } from '../message/UserAvatar';
+import { InlineTypingIndicator } from './InlineTypingIndicator';
 import {
 	isLegacyGuestLoginLabel,
 	resolveAnonymousChatDisplayName,
@@ -262,7 +263,10 @@ import {
 	withAddonPanel
 } from '../../addons/addonPanel';
 import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
-import { canRenderClientComposer } from './clientComposerPolicy';
+import {
+	canRenderClientComposer,
+	shouldHideHeaderBackOnPhone
+} from './clientComposerPolicy';
 import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
@@ -327,6 +331,14 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
+	/**
+	 * FE#2491: switch the team chat of an OPEN enquiry on (POST — creates or
+	 * reopens a CLOSED one) or off (DELETE — CLOSED, read-only for all).
+	 * Absent for accepted cases: after accept it is archived (ADR-016).
+	 */
+	onSwitchTeamDiscussionOn?: () => Promise<void>;
+	onSwitchTeamDiscussionOff?: () => Promise<void>;
+	teamDiscussionToggling?: 'on' | 'off' | null;
 	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -2335,6 +2347,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const locationRef = useRef(location);
 	locationRef.current = location;
 	const sessionIdForChannelMemory = activeSession.item?.id;
+	const sessionIdRef = useRef(sessionIdForChannelMemory);
+	sessionIdRef.current = sessionIdForChannelMemory;
 	const setChannelRoute = useCallback(
 		(channel: SessionChannel | null, mode: 'push' | 'replace') => {
 			const current = locationRef.current;
@@ -2568,19 +2582,34 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!sessionId || !isSupervisionPanelViewer) {
 			return;
 		}
+		const remembered = readLastChannel(safeChannelStorage(), sessionId);
+		// Do not pick supervision while a first-visit enquiry is still checking
+		// whether its existing team room should take precedence.
+		if (
+			activeSession.isEnquiry &&
+			!props.teamDiscussionResolved &&
+			!routeChannel &&
+			!addonPanelRequested &&
+			remembered === undefined &&
+			!isPracticing
+		) {
+			return;
+		}
 		const decision = decideAutoOpen({
 			routeChannel,
 			alreadySettled: autoOpenedForSessionRef.current === sessionId,
-			remembered: readLastChannel(safeChannelStorage(), sessionId),
+			remembered,
 			loadedRootIds: messages
 				? messages.map((message) => message._id)
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
+			// A switched-off (CLOSED) team chat never opens by itself.
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
-				canOpenTeamSideRoom &&
+				hasTeamSideRoom &&
+				props.teamDiscussionStatus !== 'CLOSED' &&
 				!isPracticing,
 			addonPanelRequested
 		});
@@ -2597,6 +2626,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		props.teamDiscussionStatus,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
 		isPracticing,
@@ -2666,6 +2696,56 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[teamMessages, openPanel, teamSeenAt, isMyMessageMatrix]
 	);
+
+	// FE#2491: the team chat is switched on and off like supervision —
+	// "Weitere Funktionen" carries the switch, the header the indication. One
+	// state, read by every entry point. Switchable on an open enquiry, and in
+	// an accepted case only with "Team-Chat nach Annahme" on (the stream
+	// hands the switch over only then); otherwise accepted cases keep the
+	// read-only archive (ADR-016).
+	const teamChatState = resolveEnquiryTeamChatState({
+		eligible:
+			canOpenTeamSideRoom &&
+			!isRejectedSession &&
+			!!props.onSwitchTeamDiscussionOn,
+		resolved: props.teamDiscussionResolved === true,
+		hasRoom: hasTeamSideRoom,
+		status: props.teamDiscussionStatus
+	});
+	const openTeamChat = useCallback(
+		() => selectChannelFromFab(channelId({ kind: 'team' })),
+		[selectChannelFromFab]
+	);
+	const onSwitchTeamDiscussionOn = props.onSwitchTeamDiscussionOn;
+	const switchTeamChatOn = useCallback(async () => {
+		// No room yet: opening the team route creates it (the long-standing
+		// enquiry contract). CLOSED: only this explicit POST reopens it.
+		if (props.teamDiscussionStatus === 'CLOSED') {
+			const requestedSessionId = sessionIdForChannelMemory;
+			try {
+				await onSwitchTeamDiscussionOn?.();
+			} catch {
+				return;
+			}
+			// The user left this case while it reopened: never route the next
+			// case to its team chat (that could create a room there).
+			if (sessionIdRef.current !== requestedSessionId) return;
+		}
+		openTeamChat();
+	}, [
+		onSwitchTeamDiscussionOn,
+		openTeamChat,
+		props.teamDiscussionStatus,
+		sessionIdForChannelMemory
+	]);
+	const onSwitchTeamDiscussionOff = props.onSwitchTeamDiscussionOff;
+	const switchTeamChatOff = useCallback(async () => {
+		try {
+			await onSwitchTeamDiscussionOff?.();
+		} catch {
+			// The stream shows the error; the state stays OPEN.
+		}
+	}, [onSwitchTeamDiscussionOff]);
 
 	// New side-room message from someone else while no panel is open:
 	// desktop re-opens the supervision channel (auto re-open); the phone
@@ -2856,12 +2936,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	]);
 	// Channels not on screen — the desktop FAB (while no panel is open)
 	// offers these; the panel header's menu lists all of them (T15).
-	const otherChannels = useMemo(
+	const mainSwitcherChannels = useMemo(
 		() =>
 			secondaryChannels.filter(
+				(channel) =>
+					channel.kind !== 'team' ||
+					(Boolean(activeSession.isEnquiry) &&
+						type !== SESSION_LIST_TYPES.ENQUIRY &&
+						(hasTeamSideRoom ||
+							!props.teamDiscussionResolved ||
+							props.teamDiscussionError))
+			),
+		[
+			secondaryChannels,
+			activeSession.isEnquiry,
+			type,
+			hasTeamSideRoom,
+			props.teamDiscussionResolved,
+			props.teamDiscussionError
+		]
+	);
+	const otherChannels = useMemo(
+		() =>
+			mainSwitcherChannels.filter(
 				(channel) => channel.id !== shownChannelId
 			),
-		[secondaryChannels, shownChannelId]
+		[mainSwitcherChannels, shownChannelId]
 	);
 
 	// Room participants for the panel headers (the same avatar stack the
@@ -3062,6 +3162,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		[supervisionRoomId, supervisionParticipants.length]
 	);
 
+	// "Nicht mehr einblenden": a counsellor who dismissed a side chat's
+	// intro notice starts that room with its first message.
+	const [supervisionIntroDismissed] =
+		useSideChatIntroDismissed('supervision');
+	const [teamIntroDismissed] = useSideChatIntroDismissed('team');
+
 	// T7: the side room opens with the system notice "Supervision durch
 	// {name} ist aktiv …" as its first item (frontend-rendered, exactly as
 	// on the stage; never counted as unread).
@@ -3084,9 +3190,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			description: translate('supervision.panel.systemNotice', {
 				name: supervisorName
 			}),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'supervision',
+			dismissed: supervisionIntroDismissed
 		});
 	}, [
+		supervisionIntroDismissed,
 		hasSupervisionSideRoom,
 		supervisionMessages,
 		supervisionRoomId,
@@ -3109,11 +3218,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			roomId: teamRoomId || '',
 			title: teamChannelTitle,
 			description: teamText('chatStage.panel.team.systemNotice'),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'team',
+			dismissed: teamIntroDismissed
 		});
 		// teamText is rebuilt each render from `translate` (stable per locale).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		teamIntroDismissed,
 		hasTeamSideRoom,
 		teamMessages,
 		teamRoomId,
@@ -3147,17 +3259,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
-	const showEnquiryTeamAction =
-		type === SESSION_LIST_TYPES.ENQUIRY &&
-		activeSession.isEnquiry &&
-		!shouldBlockAnonymousInquiryChat &&
-		!isAnonymousAskerExperience &&
-		canOpenTeamSideRoom &&
-		!canRenderClientComposer({
-			canWriteMessage,
-			isSupervisor: isSupervisorView,
-			shouldBlockAnonymousInquiryChat
-		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -3327,6 +3428,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
 	// Phone: a side panel fills the screen instead of the main chat.
+	// The same guard that renders the main composer below; it carries the
+	// phone's back arrow (D7), so the header only drops its own then.
+	const mainComposerShown =
+		!shouldShowGroupConsentGate &&
+		!isRejectedSession &&
+		!isFinishedLiveChatOfLastingAccount &&
+		areRobotMessagesComplete &&
+		canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat: blocksConversation
+		});
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
 	const { onMainChatHiddenChange } = props;
 	useEffect(() => {
@@ -3494,14 +3607,51 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							// D7: the composer carries the phone's back arrow. The
-							// group privacy gate renders no composer, so its header
-							// keeps the arrow there.
-							hideBackButton={
-								isPhoneLayout && !shouldShowGroupConsentGate
-							}
+							// D7: the composer carries the phone's back arrow. Where
+							// no main composer renders (enquiry, read-only, closed,
+							// group privacy gate) the header keeps it.
+							hideBackButton={shouldHideHeaderBackOnPhone({
+								isPhoneLayout,
+								mainComposerShown
+							})}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
+							teamChatUnreadCount={teamUnreadCount}
+							onOpenTeamChat={
+								teamChatState === 'unavailable'
+									? // Accepted case, setting off: the
+										// archived history, read-only.
+										!activeSession.isEnquiry &&
+										canOpenTeamSideRoom
+										? openTeamChat
+										: undefined
+									: teamChatState === 'on' ||
+										  teamChatState === 'closed' ||
+										  teamChatState === 'archived'
+										? openTeamChat
+										: undefined
+							}
+							onSwitchTeamChatOn={
+								teamChatState === 'off' ||
+								teamChatState === 'closed'
+									? switchTeamChatOn
+									: undefined
+							}
+							onSwitchTeamChatOff={
+								teamChatState === 'on' &&
+								props.onSwitchTeamDiscussionOff
+									? switchTeamChatOff
+									: undefined
+							}
+							teamChatToggling={props.teamDiscussionToggling}
+							teamChatIndicator={
+								teamChatState === 'on'
+									? {
+											active: openPanel === 'team',
+											onOpen: openTeamChat
+										}
+									: undefined
+							}
 						/>
 					)}
 				</div>
@@ -3951,42 +4101,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
-								<div className="messageItem session__inlineTypingIndicator">
-									<div className="messageItem__messageWrap">
-										<div className="messageItem__avatar">
-											<UserAvatar
-												username={
-													primaryTypingUser.name
-												}
-												displayName={
-													primaryTypingUser.name
-												}
-												userId={
-													primaryTypingUser.userId
-												}
-												choice={
-													primaryTypingUser.choice
-												}
-												ring={false}
-											/>
-										</div>
-										<div className="messageItem__content">
-											<div className="session__inlineTypingLabel">
-												{typingIndicatorLabel}
-											</div>
-											<div
-												className="session__inlineTypingBubble"
-												aria-hidden="true"
-											>
-												<div className="session__inlineTypingDots">
-													<span />
-													<span />
-													<span />
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
+								<InlineTypingIndicator
+									name={primaryTypingUser.name}
+									userId={primaryTypingUser.userId}
+									choice={primaryTypingUser.choice}
+									label={typingIndicatorLabel}
+								/>
 							)}
 						</div>
 					)}
@@ -4001,30 +4121,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign
-							btnLabel={'enquiry.acceptButton.known'}
-							secondaryAction={
-								showEnquiryTeamAction && openPanel === null ? (
-									<Button
-										item={{
-											type: BUTTON_TYPES.SECONDARY,
-											label: 'enquiry.teamDiscussion.open',
-											icon: (
-												<TeamActionGlyph aria-hidden="true" />
-											)
-										}}
-										className="session__teamDiscussionAction"
-										testingAttribute="enquiry-open-team"
-										tourTarget="enquiry-team-button"
-										buttonHandle={() =>
-											selectChannelFromFab(
-												channelId({ kind: 'team' })
-											)
-										}
-									/>
-								) : undefined
-							}
-						/>
+						// FE#2491 (Frank, 23 Nov): no team-chat button beside
+						// "Annehmen" — the team chat is reached through
+						// "Weitere Funktionen" and the header chip only.
+						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -4299,12 +4399,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.some(
-					(channel) =>
-						!showEnquiryTeamAction || channel.kind !== 'team'
-				) && (
+				{otherChannels.length > 0 && (
 					<ChannelSwitcherFab
-						channels={secondaryChannels}
+						channels={mainSwitcherChannels}
 						activeChannelId={shownChannelId}
 						onSelect={selectChannelFromFab}
 						bottomOffset={fabOffset}
@@ -4937,7 +5034,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					/>
 				}
 				banner={
-					!teamMessages || teamMessages.length === 0 ? (
+					props.teamDiscussionStatus === 'CLOSED' ? (
+						<InfoBanner
+							data-cy="team-chat-closed-banner"
+							title={translate('teamDiscussion.closed.title')}
+							text={translate('teamDiscussion.closed.text')}
+						/>
+					) : !teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
 								props.teamDiscussionStatus === 'OPEN' &&
@@ -5038,8 +5141,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' &&
-					!isRejectedSession ? (
+					props.teamDiscussionStatus === 'CLOSED' &&
+					teamChatState === 'closed' ? (
+						<div className="session__teamChatSwitchOn">
+							<Button
+								item={{
+									type: BUTTON_TYPES.SECONDARY,
+									label: 'teamDiscussion.switchOn.again',
+									disabled:
+										props.teamDiscussionToggling === 'on'
+								}}
+								testingAttribute="team-chat-switch-on-again"
+								buttonHandle={switchTeamChatOn}
+							/>
+						</div>
+					) : props.teamDiscussionStatus === 'OPEN' &&
+					  !isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={(isCleared: boolean) =>
 								props.isTypingInRoom?.(isCleared, teamRoomId)
