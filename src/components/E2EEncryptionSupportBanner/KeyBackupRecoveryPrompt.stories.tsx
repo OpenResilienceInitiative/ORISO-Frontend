@@ -49,5 +49,5 @@ export const NewDeviceRecovery: Story = {
 
 export const NewDeviceRecoveryMobile: Story = {
 	...NewDeviceRecovery,
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: { viewport: { value: 'mobile1', isRotated: false } }
 };

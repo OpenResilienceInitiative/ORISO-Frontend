@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 const expected = new Map([
 	['Healthy', null],
 	['Native Phone Viewport', null],
-	['Legacy Phone Viewport', null],
+	['Phone 390 Viewport', null],
 	['Exact Expected Error', null],
 	['Mui Theme', null],
 	['State Writer', null],
