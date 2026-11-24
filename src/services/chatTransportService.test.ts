@@ -1366,6 +1366,31 @@ describe('explicit feedback metadata after successful Matrix delivery', () => {
 			JSON.stringify(apiPostMessageEventNotification.mock.calls)
 		).not.toContain('private');
 	});
+	it('sends passage replies into supervision through the same feedback path (#2505)', async () => {
+		const client = service();
+		client.sendPassageReplies = vi
+			.fn()
+			.mockResolvedValue({ event_id: '$feedback-passages' });
+		await chatTransportService.sendPassageReplies({
+			matrixRoomId: ROOM_ID,
+			replies: [],
+			typedText: 'private counselling',
+			labels: { voice: () => '' },
+			feedbackMailIntent: true,
+			matrixClientServiceOverride: client
+		} as any);
+		await feedbackMailIntentQueue.flush();
+		expect(apiPostMessageEventNotification).toHaveBeenCalledWith({
+			roomId: ROOM_ID,
+			matrixEventId: '$feedback-passages',
+			matrixRoom: true,
+			threadRootId: null,
+			feedbackMailIntent: true
+		});
+		expect(
+			JSON.stringify(apiPostMessageEventNotification.mock.calls)
+		).not.toContain('private');
+	});
 	it('does not infer feedback from a VISIBLE_TO aside or a supervisor metadata flag', async () => {
 		const client = service();
 		await chatTransportService.sendTextMessage({

@@ -771,9 +771,11 @@ $message-avatar-overlap: -19px;
 	// The system-notice icon (`SystemMessageIcon`) as the avatar of a
 	// platform entry (#2237): its own size and colour, centred in the shared
 	// avatar frame instead of the inline offset it has beside a subject.
+	// Same footprint as a person's picture in the 60px frame (48px), so the
+	// info avatar lines up with the asker's (#2494, Frank 24 Nov).
 	&__avatar--system .systemMessage__icon {
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		margin: 0;
 		padding: 0;
 	}
@@ -1900,6 +1902,20 @@ $message-avatar-overlap: -19px;
 	// lift pushed the avatar out of the top of its own container and clipped it.
 	.messageItem__sideColumnGroup--left {
 		translate: none;
+	}
+
+	// Mine (Figma 8606:42438): mirrored. The avatar sits bottom-right like any
+	// own message (8498-32645), so the content needs no left overlap and the
+	// title/subtitle align right above the bubble (#2494 *9).
+	&.messageItem--right {
+		.messageItem__content {
+			margin-left: 0;
+		}
+
+		.messageItem__systemNotificationHeaderText {
+			padding-left: 0;
+			text-align: right;
+		}
 	}
 
 	// The kebab is a pure affordance here — there is no message action menu

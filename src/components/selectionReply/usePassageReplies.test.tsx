@@ -137,4 +137,32 @@ describe('usePassageReplies', () => {
 		expect(result.current.pending).toHaveLength(0);
 		expect(send).not.toHaveBeenCalled();
 	});
+
+	it('releases the takes of a send that fails after another conversation opened (#2505)', async () => {
+		let fail!: (error: Error) => void;
+		const send = vi.fn(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					fail = reject;
+				})
+		);
+		const { result, rerender, releaseVoice } = setup(send);
+		act(() =>
+			result.current.collect(
+				answer('eins', { src: 'blob:inflight', durationSec: 2 })
+			)
+		);
+		let sending!: Promise<void>;
+		act(() => {
+			sending = result.current.sendCollected('');
+		});
+		rerender({ conversationKey: 'room-b' });
+		await act(async () => {
+			fail(new Error('offline'));
+			await sending;
+		});
+
+		expect(releaseVoice).toHaveBeenCalledWith('blob:inflight');
+		expect(result.current.pending).toHaveLength(0);
+	});
 });

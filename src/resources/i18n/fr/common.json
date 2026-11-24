@@ -2274,6 +2274,13 @@
 			"quoteUnknown": "Message précédent",
 			"jumpToQuote": "Aller au passage cité de {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Masquage levé",
+			"by": "par {{name}}",
+			"byMe": "par vous",
+			"text": "Le message de {{name}} est de nouveau lisible.",
+			"textAnonymous": "Le message est de nouveau lisible."
+		},
 		"selectionReply": {
 			"blur": "Flouter",
 			"blurredLabel": "Passage flouté",
@@ -2282,8 +2289,10 @@
 			"removeBlurLabel": "Passage flouté – retirer le flou",
 			"blurBar": "Actions pour le passage flouté",
 			"toolbar": "Actions pour le passage marqué",
-			"reply": "Répondre",
+			"reply": "Répondre ici",
 			"replyVoice": "Répondre par message vocal",
+			"replyInSupervision": "Répondre en supervision",
+			"replyInTeam": "Répondre dans le chat d’équipe",
 			"startThread": "Démarrer un fil",
 			"dialog": "Répondre au passage marqué de {{author}}",
 			"cancel": "Annuler",
@@ -5532,10 +5541,13 @@
 	"voice": {
 		"recording": {
 			"active": "Enregistrement en cours…",
+			"paused": "Enregistrement en pause",
 			"error": {
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"pause": "Mettre l’enregistrement en pause",
+			"resume": "Reprendre l’enregistrement",
 			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
@@ -5745,7 +5757,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Demander conseil"
+		"requestAdvice": "Demander conseil",
+		"group": {
+			"handover": "Transmettre le conseil",
+			"supervision": "Gérer la supervision",
+			"askerAccount": "Personne conseillée & compte",
+			"settingsLegal": "Paramètres & mentions légales"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
@@ -5987,6 +6005,8 @@
 			},
 			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
 			"close": "Fermer la supervision",
+			"changeSupervisor": "Changer de superviseur·e",
+			"bookAppointment": "Prendre rendez-vous avec le ou la superviseur·e",
 			"collapse": "Réduire la supervision",
 			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
 			"unread": "{{count}} messages non lus",
@@ -7562,7 +7582,8 @@
 			"text": "Voici le nouveau lien pour le rendez-vous :",
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
-		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe."
+		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
+		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",

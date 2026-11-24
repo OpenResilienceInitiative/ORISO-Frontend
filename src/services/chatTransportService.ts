@@ -71,6 +71,8 @@ export interface SendPassageRepliesOptions {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
+	/** Supervision side room: same protected-feedback mail path as its composer. */
+	feedbackMailIntent?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -105,6 +107,8 @@ export interface SendPassageBlurOptions {
 export interface RedactMessageOptions {
 	matrixRoomId: string;
 	targetEventId: string;
+	/** Matrix redaction `reason` (#2494 *9: marks a lifted blur). */
+	reason?: string;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -245,6 +249,7 @@ class ChatTransportService {
 		supervisorMessage,
 		senderDisplayName,
 		teamDiscussion,
+		feedbackMailIntent,
 		matrixClientServiceOverride
 	}: SendPassageRepliesOptions): Promise<any> {
 		const matrixClientService =
@@ -253,12 +258,27 @@ class ChatTransportService {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
+		const withFeedbackMail = !!feedbackMailIntent && !teamDiscussion;
+		const matrixSenderUserId = withFeedbackMail
+			? matrixClientService.getClient()?.getUserId() || null
+			: null;
 		const response = await matrixClientService.sendPassageReplies(
 			matrixRoomId,
 			replies,
 			typedText,
 			labels
 		);
+
+		if (withFeedbackMail) {
+			// Same as a typed supervision message: only immutable IDs are
+			// queued, never the content (FE-H01).
+			void feedbackMailIntentQueue.enqueue(matrixSenderUserId, {
+				roomId: matrixRoomId,
+				matrixEventId: response?.event_id || '',
+				threadRootId: null
+			});
+			return { success: true, event_id: response?.event_id };
+		}
 
 		apiPostMessageEventNotification({
 			roomId: matrixRoomId,
@@ -365,6 +385,7 @@ class ChatTransportService {
 	public async redactMessage({
 		matrixRoomId,
 		targetEventId,
+		reason,
 		matrixClientServiceOverride
 	}: RedactMessageOptions): Promise<any> {
 		const matrixClientService =
@@ -373,10 +394,16 @@ class ChatTransportService {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
-		const response = await matrixClientService.redactEvent(
-			matrixRoomId,
-			targetEventId
-		);
+		const response = reason
+			? await matrixClientService.redactEvent(
+					matrixRoomId,
+					targetEventId,
+					{ reason }
+				)
+			: await matrixClientService.redactEvent(
+					matrixRoomId,
+					targetEventId
+				);
 
 		return { success: true, event_id: response.event_id };
 	}

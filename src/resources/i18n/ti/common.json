@@ -2248,6 +2248,13 @@
 			"quoteUnknown": "ቀዳማይ መልእኽቲ",
 			"jumpToQuote": "ናብቲ ካብ {{author}} ዝተጠቕሰ ክፋል ኪድ"
 		},
+		"blurRemoved": {
+			"title": "ምሕባእ ተላዒሉ",
+			"by": "ብ{{name}}",
+			"byMe": "ብኣኹም",
+			"text": "መልእኽቲ {{name}} ደጊሙ ይንበብ።",
+			"textAnonymous": "እቲ መልእኽቲ ደጊሙ ይንበብ።"
+		},
 		"selectionReply": {
 			"blur": "ሕባእ",
 			"blurredLabel": "ዝተሓብአ ክፋል",
@@ -2258,6 +2265,8 @@
 			"toolbar": "ንዝተመልከተ ክፋል ዝኸውን ተግባራት",
 			"reply": "መልሲ",
 			"replyVoice": "ብድምጻዊ መልእኽቲ መልሲ ሃብ",
+			"replyInSupervision": "ኣብ ሱፐርቪዥን መልሲ ሃብ",
+			"replyInTeam": "ኣብ ቻት ጉጅለ መልሲ ሃብ",
 			"startThread": "ዛዕባ ጀምር",
 			"dialog": "ነቲ ካብ {{author}} ዝተመልከተ ክፋል መልሲ",
 			"cancel": "ሰርዝ",
@@ -5506,10 +5515,13 @@
 	"voice": {
 		"recording": {
 			"active": "ይቕዳሕ ኣሎ…",
+			"paused": "ምቕዳሕ ደው ኢሉ ኣሎ",
 			"error": {
 				"headline": "ናይ ድምጺ ቅዳሕ ኣይርከብን",
 				"message": "በጃኹም ንማይክሮፎን ፍቓድ ሃቡ እሞ ደጊምኩም ፈትኑ።"
 			},
+			"pause": "ምቕዳሕ ኣቋርጽ",
+			"resume": "ምቕዳሕ ቀጽል",
 			"discard": "ናይ ድምጺ መልእኽቲ ኣወግድ",
 			"preview": "ናይ ድምጺ መልእኽቲ"
 		}
@@ -5719,7 +5731,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "ምኽሪ ሕተት"
+		"requestAdvice": "ምኽሪ ሕተት",
+		"group": {
+			"handover": "ምኽሪ ኣሕልፍ",
+			"supervision": "ሱፐርቪዥን ኣመሓድር",
+			"askerAccount": "ምኽሪ ደላዪ ከምኡውን ሕሳብ",
+			"settingsLegal": "ቅጥዕታትን ሕጋዊ ሓበሬታን"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "ኣማኻሪ ንደልየልኩም ኣለና።",
@@ -5961,6 +5979,8 @@
 			},
 			"privacyHint": "እዚ ቻነል ንተሓጋዚ ፈጺሙ ኣይረአን።",
 			"close": "ሱፐርቪዥን ዕጸው",
+			"changeSupervisor": "ተቆጻጻሪ ቀይር",
+			"bookAppointment": "ምስ ተቆጻጻሪ ቆጸራ ሓዝ",
 			"collapse": "ሱፐርቪዥን ኣንኣእስ",
 			"dragHandle": "መስኮት ሱፐርቪዥን ኣንቀሳቕስ – መልክዕ ፍላጻ የንቀሳቕስ፣ Shift + ፍላጻ ዓቐን ይቕይር",
 			"unread": "{{count}} ዘይተነብቡ መልእኽትታት",
@@ -7529,7 +7549,8 @@
 			"text": "እዚ ሓድሽ ሊንክ ናይቲ ቆጸራ እዩ፦",
 			"validUntil": "እቲ ሓድሽ ሊንክ ናይቲ ቆጸራ ክሳብ {{date}} ይሰርሕ፦"
 		},
-		"fromCalendar": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}። ኣርእስትን መራኸቢን ምረጹ፣ ድሕሪኡ ናይ ቀጥታ መላግቦ ፍጠሩ።"
+		"fromCalendar": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}። ኣርእስትን መራኸቢን ምረጹ፣ ድሕሪኡ ናይ ቀጥታ መላግቦ ፍጠሩ።",
+		"fromCalendarPopup": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "ይጽዓን ኣሎ፦ {{names}}",

@@ -616,7 +616,7 @@ export const Toolbar: Story = {
 			{ timeout: 3000 }
 		);
 		const buttons = within(bar).getAllByRole('button');
-		await expect(buttons[0]).toHaveTextContent('Antworten');
+		await expect(buttons[0]).toHaveTextContent('Hier antworten');
 		await expect(buttons[buttons.length - 1]).toHaveAccessibleName(
 			'Thread'
 		);
@@ -924,9 +924,7 @@ export const FourAnswersLongMessage: Story = {
 };
 
 const pressAnswer = (bar: HTMLElement) =>
-	within(bar)
-		.getByRole('button', { name: /Antworten/ })
-		.click();
+	within(bar).getByRole('button', { name: 'Hier antworten' }).click();
 
 const pressVoice = (bar: HTMLElement) =>
 	within(bar)

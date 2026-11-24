@@ -50,9 +50,12 @@ import mailConversationHoverIcon from '../../resources/img/icons/chatroom/nearby
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200_32.svg';
 import internalConversationHoverIcon from '../../resources/img/icons/chatroom/internal_conversation_400_24.svg';
 import selfHelpHoverIcon from '../../resources/img/icons/chatroom/self_help_group_400_24.svg';
+import { SupervisionIconButton } from './SupervisionIconButton';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 // Self-help consulting-type icon (not the supervision marker).
 import selfHelpIcon from '../../resources/img/icons/chatroom/self_help_group_200_32.svg';
+import supervisionKindIcon from '../../resources/img/icons/chatroom/supervision_200_32.svg';
+import supervisionKindHoverIcon from '../../resources/img/icons/chatroom/supervision_400_24.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -101,6 +104,7 @@ import { useSessionCaseHandoverStatus } from './useSessionCaseHandoverStatus';
 import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
+	withSupervisionChannelParam,
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
@@ -2010,30 +2014,16 @@ export const SessionListItemComponent = ({
 							{/* ADR-008: the owning consultant sees who supervises the
 						    session (supervisor sits read-only in the room). */}
 							{supervisorNames.length > 0 && (
-								<span
-									className="sessionsListItem__supervisionIndicator"
-									data-testid="supervision-indicator"
-									aria-label={translate(
-										'sessionList.supervision.supervisedBy',
-										{
-											name: supervisorNames.join(', ')
-										}
-									)}
-									title={translate(
-										'sessionList.supervision.supervisedBy',
-										{
-											name: supervisorNames.join(', ')
-										}
-									)}
-								>
-									<SupervisionIcon
-										aria-hidden="true"
-										focusable="false"
-									/>
-									<span className="sessionsListItem__supervisionIndicatorName">
-										{supervisorNames.join(', ')}
-									</span>
-								</span>
+								<SupervisionIconButton
+									supervisorNames={supervisorNames}
+									onOpen={() =>
+										navigate(
+											withSupervisionChannelParam(
+												getSessionPath()
+											)
+										)
+									}
+								/>
 							)}
 							{/* Consulting-type modality icon (Mail / Live Chat / Interna
 						    / Gesprächskreis) — always shown, including alongside the
@@ -2043,9 +2033,11 @@ export const SessionListItemComponent = ({
 									className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--supervision"
 									data-testid="supervision-modality"
 								>
-									<SupervisionIcon
-										aria-hidden="true"
-										focusable="false"
+									{/* FE#2494: the same 32 px, weight-200 kind
+									    icon and grey as Mail (Frank, 23 Nov). */}
+									<ConsultingKindIcon
+										src={supervisionKindIcon}
+										hoverSrc={supervisionKindHoverIcon}
 									/>
 									<span
 										className="sessionsListItem__consultingTypeIcon--supervisionLabel"

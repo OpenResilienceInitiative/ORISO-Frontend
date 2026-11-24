@@ -680,6 +680,9 @@
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
 		},
+		"blurRemoved": {
+			"byMe": "von dir"
+		},
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."

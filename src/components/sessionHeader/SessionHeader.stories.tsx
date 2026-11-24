@@ -1529,6 +1529,19 @@ const openGroupMenu = async (canvasElement: HTMLElement) => {
 	return { menu: within(menu), trigger: trigger! };
 };
 
+/** Legal links sit in the folded "Einstellungen & Rechtliches" group. */
+const openLegalGroup = async (menu: ReturnType<typeof within>) => {
+	const toggle = menu.getByRole('button', {
+		name: /Einstellungen & Rechtliches/
+	});
+	if (toggle.getAttribute('aria-expanded') !== 'true') {
+		await userEvent.click(toggle);
+	}
+	await waitFor(() =>
+		expect(toggle).toHaveAttribute('aria-expanded', 'true')
+	);
+};
+
 const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
@@ -1536,6 +1549,7 @@ const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
@@ -1660,6 +1674,7 @@ const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
