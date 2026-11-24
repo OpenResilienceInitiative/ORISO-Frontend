@@ -250,6 +250,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
+	// Bumped on every opening: remounts the foldable groups so each opening
+	// starts with them closed (the portal stays mounted between openings).
+	const [menuOpening, setMenuOpening] = useState(0);
+	useEffect(() => {
+		if (flyoutOpen) setMenuOpening((count) => count + 1);
+	}, [flyoutOpen]);
 	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement>(null);
 	/*
@@ -1351,6 +1357,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 							{hasHandoverGroup && (
 								<ChatMenuDropdownCollapsibleGroup
+									key={`handover-${menuOpening}`}
 									label={translate(
 										'sessionMenu.group.handover'
 									)}
@@ -1477,6 +1484,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 							{props.showMobileSupervisionAction && (
 								<ChatMenuDropdownCollapsibleGroup
+									key={`supervision-${menuOpening}`}
 									label={translate(
 										'sessionMenu.group.supervision'
 									)}
@@ -1515,6 +1523,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 							{hasAskerAccountGroup && (
 								<ChatMenuDropdownCollapsibleGroup
+									key={`askerAccount-${menuOpening}`}
 									label={translate(
 										'sessionMenu.group.askerAccount'
 									)}
@@ -1565,6 +1574,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 
 							<ChatMenuDropdownCollapsibleGroup
+								key={`settingsLegal-${menuOpening}`}
 								label={translate(
 									'sessionMenu.group.settingsLegal'
 								)}

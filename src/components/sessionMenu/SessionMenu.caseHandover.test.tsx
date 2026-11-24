@@ -232,6 +232,22 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		expect(screen.getByRole('button', { name: HANDOVER })).toBeTruthy();
 	});
 
+	it('starts with the group closed again on the next opening', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		const trigger = screen.getAllByRole('button', { name: 'app.menu' })[0];
+		const handoverToggle = () =>
+			screen.getByRole('button', { name: 'sessionMenu.group.handover' });
+		fireEvent.click(trigger);
+		fireEvent.click(handoverToggle());
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('true');
+		fireEvent.click(trigger);
+		fireEvent.click(trigger);
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('false');
+	});
+
 	it('lets ArrowDown move past the closed group to the next row', () => {
 		renderMenu({
 			user: counsellor,
