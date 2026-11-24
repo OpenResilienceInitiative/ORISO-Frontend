@@ -58,10 +58,10 @@ describe('Personal display in the asker app', () => {
 				.should('be.visible')
 				.click();
 			cy.get('[role=dialog] button[aria-label="Größer"]').click();
-			cy.get('[role=dialog] output').should('have.text', '125 %');
+			cy.get('[role=dialog] output').should('have.text', '150 %');
 			expectScale('');
 			cy.get('[role=dialog] .personalDisplaySize__save').click();
-			expectScale('1.25');
+			expectScale('1.5');
 
 			selectSystemScheme('dark');
 			cy.get('html').should(
@@ -90,18 +90,15 @@ describe('Personal display in the asker app', () => {
 			cy.get('[role=dialog] button[aria-label="Schließen"]').click();
 			cy.contains('button', /^Anzeige$/).click();
 			cy.get('[role=dialog] button[aria-label="Kleiner"]').click();
-			cy.get('[role=dialog] output').should('have.text', '90 %');
+			cy.get('[role=dialog] output').should('have.text', '75 %');
 			cy.get('[role=dialog] .personalDisplaySize__save').click();
-			expectScale('0.9');
+			expectScale('0.75');
 			cy.get('html').should(
 				'not.have.attr',
 				'data-oriso-personal-text-size'
 			);
 
-			cy.get('[role=dialog] button[aria-label="Größer"]')
-				.click()
-				.click()
-				.click();
+			cy.get('[role=dialog] button[aria-label="Größer"]').click().click();
 			cy.get('[role=dialog] output').should('have.text', '150 %');
 			cy.get('[role=dialog] .personalDisplaySize__save').click();
 			cy.contains('label', /^Dunkel$/).click();

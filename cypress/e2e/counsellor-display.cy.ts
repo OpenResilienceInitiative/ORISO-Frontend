@@ -84,9 +84,7 @@ describe('Personal display in the counsellor profile', () => {
 			cy.get(card).should('be.visible');
 			cy.contains(card + ' h5', 'Zugänglichkeit').should('be.visible');
 
-			cy.get(card + ' button[aria-label="Größer"]')
-				.click()
-				.click();
+			cy.get(card + ' button[aria-label="Größer"]').click();
 			cy.get(card + ' output').should('have.text', '150 %');
 			cy.get(card + ' .personalDisplaySize__save').click();
 			selectSystemScheme('dark');

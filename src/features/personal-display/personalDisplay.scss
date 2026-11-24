@@ -188,12 +188,28 @@ html[data-oriso-personal-scheme='dark'] {
 }
 
 .personalDisplaySize {
-	display: inline-grid;
-	grid-template-columns: 3rem minmax(4rem, auto) 3rem;
-	gap: 0.5rem;
+	display: grid;
+	grid-template-columns: 3rem minmax(8rem, 1fr) 3rem;
+	gap: 0 0.75rem;
 	align-items: center;
+	inline-size: 100%;
 	text-align: center;
 	font-variant-numeric: tabular-nums;
+
+	.personalDisplaySize__slider {
+		color: var(--m3-primary, #a5000a);
+
+		.MuiSlider-mark {
+			inline-size: 4px;
+			block-size: 4px;
+			border-radius: 50%;
+		}
+	}
+
+	.personalDisplaySize__value {
+		grid-column: 2;
+		color: var(--m3-on-surface, #1b1b1c);
+	}
 
 	.personalDisplaySize__step {
 		inline-size: 3rem;

@@ -51,9 +51,9 @@ describe('personal display values', () => {
 	});
 
 	it('steps in both directions without exceeding the bounds', () => {
-		expect(getNextTextSize(100, -1)).toBe(90);
-		expect(getNextTextSize(100, 1)).toBe(125);
-		expect(getNextTextSize(90, -1)).toBe(90);
+		expect(getNextTextSize(100, -1)).toBe(75);
+		expect(getNextTextSize(100, 1)).toBe(150);
+		expect(getNextTextSize(50, -1)).toBe(50);
 		expect(getNextTextSize(200, 1)).toBe(200);
 	});
 

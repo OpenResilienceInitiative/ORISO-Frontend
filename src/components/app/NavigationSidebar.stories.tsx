@@ -434,7 +434,7 @@ export const RuntimeAskerMobile: Story = {
 		await userEvent.click(dialog.getByRole('button', { name: 'Größer' }));
 		await expect(
 			dialog.getByRole('status', { name: 'Gewählte Textgröße' })
-		).toHaveTextContent('125 %');
+		).toHaveTextContent('150 %');
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() => expect(display).toHaveFocus());
 	}

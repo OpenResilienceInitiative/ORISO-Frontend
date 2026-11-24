@@ -310,7 +310,7 @@ describe('Personal size in the real chat', () => {
 
 		cy.get(editor).type(draft).should('contain', draft);
 		cy.get('.personalDisplayEntry button:visible').click();
-		for (const size of [125, 150, 175, 200]) {
+		for (const size of [150, 200]) {
 			cy.get(
 				'.personalDisplayDialog button[aria-label="Größer"]'
 			).click();
@@ -469,8 +469,6 @@ describe('Personal size in the real chat', () => {
 			cy.get('.personalDisplayEntry button:visible')
 				.should('have.length', 1)
 				.click();
-			cy.get('[role=dialog] button[aria-label="Größer"]').click();
-			cy.get('[role=dialog] output').should('have.text', '125 %');
 			cy.get('[role=dialog] button[aria-label="Größer"]').click();
 			cy.get('[role=dialog] output').should('have.text', '150 %');
 			cy.get('[role=dialog] .personalDisplaySize__save').click();

@@ -9,7 +9,8 @@ export const CONTRAST_OPTIONS: readonly ContrastLevel[] = [
 export const parseContrastLevel = (value: unknown): ContrastLevel =>
 	value === 'high' || value === 'medium' ? value : 'standard';
 
-export const TEXT_SIZES = [90, 100, 125, 150, 175, 200] as const;
+// Five evenly spaced slider stops with 100 % in the middle (Frank, FE#2451).
+export const TEXT_SIZES = [50, 75, 100, 150, 200] as const;
 export type TextSize = (typeof TEXT_SIZES)[number];
 export type SchemePreference = 'system' | 'light' | 'dark';
 

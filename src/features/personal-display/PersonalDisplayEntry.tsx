@@ -6,7 +6,8 @@ import {
 	FormControlLabel,
 	IconButton,
 	Radio,
-	RadioGroup
+	RadioGroup,
+	Slider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -22,6 +23,7 @@ import {
 	DisplayPreferences,
 	getNextTextSize,
 	SchemePreference,
+	TEXT_SIZES,
 	TextSize
 } from './preferences';
 import { Headline } from '../../components/headline/Headline';
@@ -151,13 +153,30 @@ const PersonalDisplayFields = ({
 				</legend>
 				<div className="personalDisplaySize">
 					{step(-1)}
+					<Slider
+						className="personalDisplaySize__slider"
+						min={0}
+						max={TEXT_SIZES.length - 1}
+						step={1}
+						marks
+						value={TEXT_SIZES.indexOf(size)}
+						onChange={(_event, index) =>
+							setPendingSize(TEXT_SIZES[index as number])
+						}
+						getAriaValueText={(index) => `${TEXT_SIZES[index]} %`}
+						slotProps={{
+							input: {
+								'aria-label': t('personalDisplay.textSize')
+							}
+						}}
+					/>
+					{step(1)}
 					<output
+						className="personalDisplaySize__value"
 						aria-label={t('personalDisplay.currentSize')}
-						style={{ fontSize: `${(1.125 * size) / 100}rem` }}
 					>
 						{size} %
 					</output>
-					{step(1)}
 				</div>
 				<MuiButton
 					variant="contained"
