@@ -1915,7 +1915,8 @@ export const OneToOneAppointmentCreatePopup: Story = {
 		await waitFor(() => expect(row).toBeVisible());
 		await userEvent.click(row);
 		const dialog = await within(document.body).findByRole('dialog');
-		await expect(dialog).toBeVisible();
+		// The dialog fades in: wait until it is shown, not only mounted.
+		await waitFor(() => expect(dialog).toBeVisible(), { timeout: 5000 });
 	}
 };
 
