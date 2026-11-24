@@ -6,7 +6,7 @@
 //
 // Rules and ignores live in tools/oxlint/oxlintrc.json. Existing findings are frozen in the
 // baseline, so only new code has to be clean. Rename or move a file? Run the update script and
-// let the reviewer see the baseline diff. Tests: scripts/oxlint-ratchet.test.mjs.
+// let the reviewer see the baseline diff. Tests: scripts/oxlint-ratchet.node-test.mjs.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';

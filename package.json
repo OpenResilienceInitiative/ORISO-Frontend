@@ -256,7 +256,7 @@
 		"lint:scripts": "eslint src --max-warnings=0 && tsc && npm run test:oxlint-ratchet && npm run lint:oxlint",
 		"lint:oxlint": "node scripts/oxlint-ratchet.mjs",
 		"lint:oxlint:update": "node scripts/oxlint-ratchet.mjs --update",
-		"test:oxlint-ratchet": "node --test scripts/oxlint-ratchet.test.mjs",
+		"test:oxlint-ratchet": "node --test scripts/oxlint-ratchet.node-test.mjs",
 		"lint:style": "stylelint src/**/*.scss",
 		"check:guest-prefix": "node --test scripts/contracts/check-guest-prefix.test.mjs && node scripts/contracts/check-guest-prefix.mjs",
 		"lint:style:fix": "stylelint --fix src/**/*.scss",

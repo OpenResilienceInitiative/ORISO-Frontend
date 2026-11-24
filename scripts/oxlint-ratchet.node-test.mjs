@@ -1,4 +1,5 @@
-// Regression tests for the Oxlint ratchet gate. Run: npm run test:oxlint-ratchet
+// Regression tests for the Oxlint ratchet gate (node:test, outside vitest on purpose).
+// Run: npm run test:oxlint-ratchet
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
