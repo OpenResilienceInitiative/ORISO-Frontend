@@ -326,6 +326,9 @@ const storySessionSupervisors = ['bettina.b', 'kim', 'ali', 'jo'].map(
 	})
 );
 
+/* FE#2494: the own calendar; a story with a supervisor appointment fills it. */
+let storyCalendarEntries: unknown[] = [];
+
 const jsonResponse = (body: unknown) =>
 	new Response(JSON.stringify(body), {
 		status: 200,
@@ -349,6 +352,11 @@ const installHeaderFetchMocks = () => {
 		}
 		if (url.split('?')[0].endsWith('/service/users/consultants')) {
 			return jsonResponse([]);
+		}
+		// FE#2494: the header looks for an appointment with the supervisor
+		// in the own calendar.
+		if (url.split('?')[0].endsWith('/service/users/calendar/entries')) {
+			return jsonResponse(storyCalendarEntries);
 		}
 		return previousFetch(input, init);
 	};
@@ -1675,10 +1683,12 @@ const expectAppointmentMenu =
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		const main = within(bar).getByRole('button', { name: label });
-		// 40px: the compact split button.
-		await expect(Math.round(main.getBoundingClientRect().height)).toBe(40);
-		// Inside the room the main part opens the appointment menu too.
+		// FE#2494: a pennant (30px) whose accessible name carries the date.
+		const main = within(bar).getByRole('button', {
+			name: new RegExp(label)
+		});
+		await expect(Math.round(main.getBoundingClientRect().height)).toBe(30);
+		// Inside the room the whole pennant opens the appointment menu.
 		await userEvent.click(main);
 		const menu = await waitFor(() => {
 			const found = document.querySelector<HTMLElement>(
@@ -1775,9 +1785,19 @@ const installAppointmentFetch = (items: unknown[]) => {
 	};
 };
 
-const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+const HeaderWithAppointments = ({
+	items,
+	calendar = []
+}: {
+	items: unknown[];
+	/** FE#2494: the own calendar, e.g. an appointment with the supervisor. */
+	calendar?: unknown[];
+}) => {
 	// Installed during render: the slot fetches from a child effect.
-	const [restore] = React.useState(() => installAppointmentFetch(items));
+	const [restore] = React.useState(() => {
+		storyCalendarEntries = calendar;
+		return installAppointmentFetch(items);
+	});
 	React.useEffect(() => restore, [restore]);
 	return renderSessionHeader(mockActiveConversation());
 };
@@ -1850,7 +1870,67 @@ export const OneToOneAppointmentUpcoming: Story = {
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+		// FE#2494: one pennant, hanging in the topic's row of the header.
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
+		await expect(bar.closest('.sessionInfo__metaInfo')).not.toBeNull();
+	}
+};
+
+/* FE#2494: the appointment with the supervisor, from the own calendar. */
+const makeSupervisorAppointment = () => {
+	const start = Date.now() + 2 * 24 * HOUR_MS;
+	return {
+		id: 'colleague-88',
+		type: 'APPOINTMENT',
+		start: new Date(start).toISOString(),
+		end: new Date(start + 0.75 * HOUR_MS).toISOString(),
+		ownerId: CONSULTANT_ID,
+		kind: 'PHONE',
+		colleagueId: storySessionSupervisors[0].supervisorConsultantId,
+		colleagueName: 'Bettina B.',
+		colleagueStatus: 'CONFIRMED',
+		chatId: 9901,
+		matrixRoomId: '!internal-9901:oriso.invalid'
+	};
+};
+
+/**
+ * Two appointments: with the advice seeker and with the supervisor. Two
+ * pennants hang beside the topic; an icon says who each is with.
+ */
+export const OneToOneAppointmentWithSupervisor: Story = {
+	name: '1:1 appointment — advice seeker and supervisor: two pennants (FE#2494)',
+	globals: desktop1440Globals,
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			calendar={[makeSupervisorAppointment()]}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const pennants = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.sessionInfo__metaInfo .appointmentPennant'
+			);
+			expect(found).toHaveLength(2);
+			return found;
+		});
+		await expect(pennants[1]).toHaveAccessibleName(/Supervision/);
+		await userEvent.click(pennants[1]);
+		const menu = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="timeline-entry-menu"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(within(menu).getByText('Termin absagen')).toBeVisible();
+		await expect(
+			within(menu).getByText('Im Kalender öffnen')
+		).toBeVisible();
+		await userEvent.keyboard('{Escape}');
 	}
 };
 
