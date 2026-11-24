@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { canRenderClientComposer } from './clientComposerPolicy';
+import {
+	canRenderClientComposer,
+	shouldHideHeaderBackOnPhone
+} from './clientComposerPolicy';
 
 describe('canRenderClientComposer', () => {
 	it('withholds the client-room composer and uploads from supervisors', () => {
@@ -20,5 +23,34 @@ describe('canRenderClientComposer', () => {
 				shouldBlockAnonymousInquiryChat: false
 			})
 		).toBe(true);
+	});
+});
+
+describe('shouldHideHeaderBackOnPhone (D7)', () => {
+	it('drops the header arrow on the phone when the composer carries it', () => {
+		expect(
+			shouldHideHeaderBackOnPhone({
+				isPhoneLayout: true,
+				mainComposerShown: true
+			})
+		).toBe(true);
+	});
+
+	it('keeps the header arrow on the phone without a composer (enquiry, read-only)', () => {
+		expect(
+			shouldHideHeaderBackOnPhone({
+				isPhoneLayout: true,
+				mainComposerShown: false
+			})
+		).toBe(false);
+	});
+
+	it('leaves the desktop header alone', () => {
+		expect(
+			shouldHideHeaderBackOnPhone({
+				isPhoneLayout: false,
+				mainComposerShown: true
+			})
+		).toBe(false);
 	});
 });
