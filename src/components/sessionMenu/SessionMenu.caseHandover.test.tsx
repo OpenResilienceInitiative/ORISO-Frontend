@@ -232,6 +232,22 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		expect(screen.getByRole('button', { name: HANDOVER })).toBeTruthy();
 	});
 
+	it('lets ArrowDown move past the closed group to the next row', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+		const toggle = screen.getByRole('button', {
+			name: 'sessionMenu.group.handover'
+		});
+		toggle.focus();
+		fireEvent.keyDown(toggle, { key: 'ArrowDown' });
+		const focused = document.activeElement as HTMLElement;
+		expect(focused).not.toBe(toggle);
+		expect(focused.closest('[hidden]')).toBeNull();
+	});
+
 	it.each([
 		[
 			'another counsellor',

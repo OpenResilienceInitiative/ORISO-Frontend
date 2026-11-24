@@ -202,6 +202,14 @@ const CALL_MENU_ROW: Record<CallKind, string> = {
 	audio: 'session-menu-start-call'
 };
 
+/** Arrow-key targets: focusable rows, minus those inside a closed group. */
+const focusableMenuRows = (menu: HTMLElement) =>
+	Array.from(
+		menu.querySelectorAll<HTMLElement>(
+			'a[href], button:not(:disabled), [tabindex="0"]'
+		)
+	).filter((row) => !row.closest('[hidden]'));
+
 export const SessionMenu = (props: SessionMenuProps) => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -384,9 +392,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				menu?.querySelector<HTMLElement>(
 					`[data-cy="${CALL_MENU_ROW[offeredCall]}"]`
 				)) ||
-			menu?.querySelector<HTMLElement>(
-				'a[href], button:not(:disabled), [tabindex="0"]'
-			)
+			(menu ? focusableMenuRows(menu)[0] : undefined)
 		)?.focus();
 		const outside = (event: MouseEvent) => {
 			if (
@@ -402,11 +408,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 				menu?.contains(event.target as Node) &&
 				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
 			) {
-				const items = Array.from(
-					menu.querySelectorAll<HTMLElement>(
-						'a[href], button:not(:disabled), [tabindex="0"]'
-					)
-				);
+				const items = focusableMenuRows(menu);
 				const index = items.indexOf(
 					document.activeElement as HTMLElement
 				);
