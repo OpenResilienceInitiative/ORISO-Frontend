@@ -101,6 +101,24 @@ const memberName = (matrixRoom: any, userId: string): string => {
 };
 
 /**
+ * Only a room moderator may lift a blur, so only a moderator's redaction
+ * counts as one: the marker is a free-text `reason` anybody could type, and
+ * an advice seeker deleting their own message must still read "gelöscht",
+ * not a platform notice. Moderator = the room's `redact` level (Matrix
+ * default 50); the assigned counsellor holds 100, advice seekers 0,
+ * supervisors 10 (UserService AssignEnquiryFacade, SessionSupervisorFacade).
+ */
+const isRoomModerator = (matrixRoom: any, userId: string): boolean => {
+	if (!matrixRoom || !userId) return false;
+	const levels = matrixRoom.currentState
+		?.getStateEvents?.('m.room.power_levels', '')
+		?.getContent?.();
+	const redactLevel = typeof levels?.redact === 'number' ? levels.redact : 50;
+	const level = matrixRoom.getMember?.(userId)?.powerLevel;
+	return typeof level === 'number' && level >= redactLevel;
+};
+
+/**
  * #2494 *9: the redaction that lifted a blur becomes the platform notice
  * "Schwärzung aufgehoben von <Name>" at the moment it happened; the
  * redacted blur itself shows nothing (it was never a message).
@@ -111,6 +129,7 @@ const formatBlurRemoval = (event: any, matrixRoom: any) => {
 	);
 	if (!removal) return null;
 	const removerId = event?.getSender?.() || '';
+	if (!isRoomModerator(matrixRoom, removerId)) return null;
 	const target = removal.targetEventId
 		? matrixRoom?.findEventById?.(removal.targetEventId)
 		: undefined;
@@ -134,11 +153,14 @@ const formatBlurRemoval = (event: any, matrixRoom: any) => {
 	};
 };
 
-const isLiftedBlur = (event: any): boolean => {
+const isLiftedBlur = (event: any, matrixRoom: any): boolean => {
 	const redaction =
 		event?.getUnsigned?.()?.redacted_because ??
 		event?.getRedactionEvent?.();
-	return Boolean(parsePassageBlurRemovedReason(redaction?.content?.reason));
+	return (
+		Boolean(parsePassageBlurRemovedReason(redaction?.content?.reason)) &&
+		isRoomModerator(matrixRoom, redaction?.sender)
+	);
 };
 
 export const formatMatrixTimelineEvent = (
@@ -163,7 +185,7 @@ export const formatMatrixTimelineEvent = (
 	// Matrix redact (#827): redacted events keep m.room.message type but
 	// empty content — surface as legacy deleted state for MessageItem.
 	if (event?.isRedacted?.()) {
-		if (isLiftedBlur(event)) {
+		if (isLiftedBlur(event, matrixRoom)) {
 			return null;
 		}
 		return {
