@@ -8119,6 +8119,7 @@
 			"overBlockerConflict": "Diese Zeit liegt in einer Sperrzeit. Speichern Sie erneut, um sie trotzdem für Ratsuchende freizugeben.",
 			"onceInvalid": "Das Ende muss nach dem Beginn und in der Zukunft liegen.",
 			"onceTooLate": "Diese Zeit kann niemand mehr buchen: Die Buchungsfrist ist vorbei. Wählen Sie einen späteren Beginn oder „Buchbar bis“ kürzer.",
+			"onceTooShort": "Die Zeit ist kürzer als ein Termin ({{count}} Min.). Wählen Sie mindestens so viel Zeit.",
 			"onceSave": "Sprechzeit freigeben",
 			"addWindow": "Weiteres Zeitfenster am {{day}}",
 			"addWindowShort": "Zeitfenster",

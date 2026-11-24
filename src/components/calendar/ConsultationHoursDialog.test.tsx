@@ -363,6 +363,32 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		).toBeTruthy();
 	});
 
+	it('does not release a one-off shorter than one appointment', () => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				slot: {
+					start: new Date(2026, 10, 26, 10, 0),
+					end: new Date(2026, 10, 26, 10, 15)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		expect(
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled
+		).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooShort:60')
+		).toBeTruthy();
+	});
+
 	it('keeps a one-off that ends at midnight on the next day', () => {
 		const saved = saveOnce({
 			slot: {

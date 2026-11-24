@@ -197,12 +197,17 @@ export const useConsultationHoursForm = ({
 		: onTheDay(once.day, once.end);
 	const onceInvalid =
 		!(onceEnd > onceStart) || onceEnd.getTime() <= now.getTime();
+	/* At least one appointment must fit, in the saved slot length
+	   UserService cuts the window into. */
+	const savedSlotMs = hours.slotMinutes * 60_000;
+	const onceTooShort =
+		!onceInvalid && onceEnd.getTime() - onceStart.getTime() < savedSlotMs;
 	/* Its last slot must still be bookable: start before the end by one
 	   slot, and the notice before that start still ahead. */
 	const onceTooLate =
 		!onceInvalid &&
-		onceEnd.getTime() - (slotMinutes + once.notice) * 60_000 <=
-			now.getTime();
+		!onceTooShort &&
+		onceEnd.getTime() - savedSlotMs - once.notice * 60_000 <= now.getTime();
 	/* Released over a Sperrzeit: allowed, said so (Frank: short notice
 	   overrides what was blocked). */
 	const refusedHere =
@@ -324,6 +329,13 @@ export const useConsultationHoursForm = ({
 			{onceInvalid && (
 				<p className="calendarDialog__error" role="alert">
 					{t('calendar.consultationHours.onceInvalid')}
+				</p>
+			)}
+			{onceTooShort && (
+				<p className="calendarDialog__error" role="alert">
+					{t('calendar.consultationHours.onceTooShort', {
+						count: hours.slotMinutes
+					})}
 				</p>
 			)}
 			{onceTooLate && (
@@ -581,7 +593,11 @@ export const useConsultationHoursForm = ({
 				? {
 						label: t('calendar.consultationHours.onceSave'),
 						primary: true,
-						disabled: saving || onceInvalid || onceTooLate,
+						disabled:
+							saving ||
+							onceInvalid ||
+							onceTooShort ||
+							onceTooLate,
 						onClick: () =>
 							onSaveOneOff?.({
 								start: onceStart,

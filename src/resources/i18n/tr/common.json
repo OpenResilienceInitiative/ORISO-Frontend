@@ -8129,6 +8129,7 @@
 			"overBlockerConflict": "Bu zaman engellenmiş bir zamana denk geliyor. Yine de açmak için tekrar kaydedin.",
 			"onceInvalid": "Bitiş, başlangıçtan sonra ve gelecekte olmalı.",
 			"onceTooLate": "Bu zamanı artık kimse rezerve edemez: rezervasyon süresi geçti. Daha geç bir başlangıç veya daha kısa bir süre seçin.",
+			"onceTooShort": "Bu süre bir randevudan kısa ({{count}} dk). En az bu kadar süre seçin.",
 			"onceSave": "Görüşme saatini aç",
 			"addWindow": "{{day}} için başka zaman aralığı",
 			"addWindowShort": "Zaman aralığı",

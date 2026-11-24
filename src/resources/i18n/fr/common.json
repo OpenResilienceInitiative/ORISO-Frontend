@@ -8129,6 +8129,7 @@
 			"overBlockerConflict": "Ce créneau se trouve dans une période bloquée. Enregistrez à nouveau pour le libérer quand même.",
 			"onceInvalid": "La fin doit être après le début et dans le futur.",
 			"onceTooLate": "Plus personne ne peut réserver ce créneau : le délai de réservation est passé. Choisissez un début plus tard ou un délai plus court.",
+			"onceTooShort": "Le créneau est plus court qu’un rendez-vous ({{count}} min). Choisissez au moins cette durée.",
 			"onceSave": "Libérer la permanence",
 			"addWindow": "Autre plage horaire le {{day}}",
 			"addWindowShort": "Plage horaire",
