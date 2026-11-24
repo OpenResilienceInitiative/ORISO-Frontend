@@ -74,6 +74,7 @@ import {
 } from './SessionsListToolbar';
 import {
 	countUnreadSupervisedSessions,
+	isOwnCaseUnderSupervision,
 	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
@@ -1789,8 +1790,21 @@ export const SessionsList = ({
 				classifySession(raw, extended, userData?.userId, true) ===
 				'supervision'
 		);
+	// #2494 *5: a counsellor whose own case is supervised gets the chip too
+	// ("Dynamisch"); "Fest" in Ansicht einstellen keeps it without such a case.
+	const hasOwnCaseUnderSupervision =
+		isEligibleForSupervision &&
+		sessionToolbarPairs.some(({ raw, extended }) =>
+			isOwnCaseUnderSupervision(raw, extended, userData?.userId)
+		);
+	const supervisionChipPinned =
+		isEligibleForSupervision &&
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		kindPillMode(listDisplayFilter, 'supervision') === 'fixed';
 	const showSupervisionChip =
 		canSupervise ||
+		hasOwnCaseUnderSupervision ||
+		supervisionChipPinned ||
 		(isEligibleForSupervision &&
 			type === SESSION_LIST_TYPES.MY_SESSION &&
 			hasMoreSessionPages);
@@ -1978,6 +1992,8 @@ export const SessionsList = ({
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
 					modes: kind === 'liveChat',
+					// #2494 *5: Dynamisch / Fest / Aus for the Supervision chip.
+					autoModes: kind === 'supervision',
 					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
 						kind as SessionKindId
 					),

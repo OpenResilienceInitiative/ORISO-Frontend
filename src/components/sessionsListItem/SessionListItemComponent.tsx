@@ -102,6 +102,7 @@ import { useSessionCaseHandoverStatus } from './useSessionCaseHandoverStatus';
 import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
+	withSupervisionChannelParam,
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
@@ -2013,6 +2014,13 @@ export const SessionListItemComponent = ({
 							{supervisorNames.length > 0 && (
 								<SupervisionIconButton
 									supervisorNames={supervisorNames}
+									onOpen={() =>
+										navigate(
+											withSupervisionChannelParam(
+												getSessionPath()
+											)
+										)
+									}
 								/>
 							)}
 							{/* Consulting-type modality icon (Mail / Live Chat / Interna

@@ -630,7 +630,11 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 		await nextTick();
 		const indicator = screen.getByTestId('supervision-indicator');
-		expect(indicator.textContent).toContain('Sabine Supervisor');
+		// #2494 *5: a 32px round icon button; the name is its hover/label.
+		expect(indicator.tagName).toBe('BUTTON');
+		expect(indicator.getAttribute('aria-label')).toBe(
+			'sessionList.supervision.supervisedBy:Sabine Supervisor'
+		);
 		expect(indicator.getAttribute('title')).toBe(
 			'sessionList.supervision.supervisedBy:Sabine Supervisor'
 		);

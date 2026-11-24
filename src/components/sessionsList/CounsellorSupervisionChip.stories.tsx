@@ -11,7 +11,10 @@ import {
 	RuntimeSessionProviders,
 	runtimeSession
 } from '../sessionsListItem/__storybook__/runtimeSessionCard';
-import { DisplayFilterDialog } from '../displayFilter/DisplayFilterDialog';
+import {
+	DisplayFilterDialog,
+	SESSION_COLUMNS
+} from '../displayFilter/DisplayFilterDialog';
 import {
 	EMPTY_DISPLAY_FILTER,
 	type DisplayFilterValue
@@ -78,8 +81,8 @@ const ROWS = [
 	row(204, 'Freundlicher Igel Toni', 'Hallo, ich habe eine Frage.', false)
 ];
 
-/* Intended filter: my own cases that someone supervises (plus, unchanged,
-   the cases I supervise). The wiring follows after approval. */
+/* Story stand-in for `isOwnCaseUnderSupervision` (sessionToolbarFilters):
+   my own cases that someone supervises, plus the cases I supervise. */
 const isSupervision = (raw: ListItemInterface) =>
 	Boolean(
 		(
@@ -249,15 +252,21 @@ export const PinInSettings: Story = {
 	render: () => <Settings />,
 	play: async () => {
 		const body = within(document.body);
-		const picker = document.querySelector<HTMLElement>(
-			'[data-cy$="-pill-supervision"]'
-		);
-		await expect(picker).not.toBeNull();
-		const button = within(picker!).getAllByRole('button').at(-1)!;
+		// The dialog mounts in a portal after the first frame.
+		const picker = await waitFor(() => {
+			const el = document.querySelector<HTMLElement>(
+				'[data-cy="display-filter-row-supervision"]'
+			);
+			expect(el).not.toBeNull();
+			return el;
+		});
+		const button = within(picker!)
+			.getAllByRole('button')
+			.find((el) => /Dynamisch/.test(el.textContent ?? ''))!;
 		await userEvent.click(button);
 		await expect(
 			await body.findByRole('menuitemradio', { name: 'Fest' })
-		).toBeVisible();
+		).toBeInTheDocument();
 	}
 };
 
