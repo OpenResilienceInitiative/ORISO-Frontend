@@ -248,6 +248,16 @@ export interface SupervisionNoticeInput {
 	/** Localized notice body ("Supervision durch … ist aktiv …"). */
 	description: string;
 	askerMatrixUserId?: string;
+	/**
+	 * Which side chat the notice introduces. Set → the notice carries a
+	 * "Nicht mehr einblenden" button (`sideChatIntroPreference`).
+	 */
+	dismissKind?: 'team' | 'supervision';
+	/**
+	 * The counsellor chose "Nicht mehr einblenden": no notice, the room
+	 * starts with its first message and that message keeps its day pill.
+	 */
+	dismissed?: boolean;
 }
 
 /**
@@ -262,6 +272,9 @@ export const buildSupervisionTimeline = (
 	notice: SupervisionNoticeInput
 ): MessageItem[] => {
 	const list = messages || [];
+	if (notice.dismissed) {
+		return list;
+	}
 	const [first, ...rest] = list;
 	const emptyDate: PrettyDate = { str: '', date: null };
 	// Every field is set explicitly (no cast): the notice used to clone
@@ -286,7 +299,8 @@ export const buildSupervisionTimeline = (
 		message: `[SYSTEM_NOTIFICATION]${JSON.stringify({
 			type: SYSTEM_NOTIFICATION_SUPERVISION_NOTICE,
 			title: notice.title,
-			description: notice.description
+			description: notice.description,
+			...(notice.dismissKind ? { dismissKind: notice.dismissKind } : {})
 		})}`,
 		threadRootEventId: null,
 		replyToEventId: null

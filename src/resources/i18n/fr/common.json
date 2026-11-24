@@ -480,6 +480,7 @@
 		"panel": {
 			"channelOptions": "Changer de canal",
 			"channelOptionsEmpty": "Aucun autre canal",
+			"dismissIntro": "Ne plus afficher",
 			"participantCount": "{{count}} personnes",
 			"participantCount_one": "1 personne",
 			"back": "Retour au chat de conseil",
