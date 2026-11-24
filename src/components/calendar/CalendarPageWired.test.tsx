@@ -2368,6 +2368,51 @@ describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494
 		).toEqual([12, 13, 15]);
 	});
 
+	it('books through a conversation without an upcoming appointment', async () => {
+		consultant = false;
+		const laura = { consultantId: 'c1', displayName: 'Laura Berger' };
+		askerSessions(2, [
+			{
+				session: {
+					id: 14,
+					status: 2,
+					matrixRoomId: '!c:oriso',
+					agencyId: 7,
+					consultingType: 1
+				},
+				consultant: laura
+			}
+		]);
+		const later = new Date(Date.now() + 86_400_000);
+		api.apiGetCalendarEntries.mockResolvedValue([
+			{
+				...OWN,
+				sessionId: 12,
+				start: later.toISOString(),
+				end: new Date(later.getTime() + 3_600_000).toISOString()
+			}
+		]);
+		render(<CalendarPageWired />);
+		await showWeek();
+		await waitFor(() =>
+			expect(
+				panelsOf(props.besidePanel).map(
+					(panel) => panel.props.sessionId
+				)
+			).toEqual([14])
+		);
+		const [panel] = panelsOf(props.besidePanel);
+		act(() =>
+			(
+				panel.props as unknown as { onLimitReached: () => void }
+			).onLimitReached()
+		);
+		// Both hold one now: the first stands for them.
+		expect(
+			panelsOf(props.besidePanel).map((each) => each.props.sessionId)
+		).toEqual([12]);
+	});
+
 	it('offers none for a finished conversation', async () => {
 		consultant = false;
 		askerSessions(4);

@@ -279,6 +279,8 @@ export const CalendarPageWired = () => {
 
 	const [state, setState] = useState<CalendarLoadState>('loading');
 	const [own, setOwn] = useState<CalendarEntry[]>([]);
+	/** Conversations whose booking UserService refused: one is upcoming. */
+	const [limitedSessions, setLimitedSessions] = useState<number[]>([]);
 	/** Own entries of the next days, when the grid shows another time. */
 	const [nearby, setNearby] = useState<CalendarEntry[]>([]);
 	const [colleagueEntries, setColleagueEntries] = useState<
@@ -1270,22 +1272,45 @@ export const CalendarPageWired = () => {
 	   media that conversation permits; a panel stays away while its
 	   counsellor has none. */
 	/* One panel per booking context: conversations that share counsellor,
-	   agency, consulting type and chat type get the same media, so the
-	   first stands for them; a conversation whose gates differ keeps its
-	   own panel. */
+	   agency, consulting type and chat type get the same media and slots.
+	   One booking per conversation is upcoming at most (UserService), so the
+	   panel books through one that has none yet; only when all have one, the
+	   first stands for them (and the panel says the limit is reached). */
 	const bookingContext = (c: ConversationRef) =>
 		[c.counsellorId, c.agencyId, c.consultingTypeId, c.chatType].join('|');
+	const nowMs = Date.now();
+	/* Known to hold an upcoming appointment: from the loaded entries, and
+	   from a booking UserService refused for that reason (an appointment
+	   outside the loaded weeks). */
+	const withUpcoming = new Set([
+		...limitedSessions,
+		...mergeEntries(own, nearby)
+			.filter(
+				(e) =>
+					e.type === 'appointment' &&
+					e.sessionId !== undefined &&
+					new Date(e.end).getTime() > nowMs
+			)
+			.map((e) => e.sessionId)
+	]);
 	const freeTimesOf = consultant
 		? []
-		: conversations.filter(
-				(c, index) =>
-					c.withCounsellor &&
-					conversations.findIndex(
-						(other) =>
-							other.withCounsellor &&
-							bookingContext(other) === bookingContext(c)
-					) === index
-			);
+		: [
+				...conversations
+					.filter((c) => c.withCounsellor)
+					.reduce((byContext, c) => {
+						const key = bookingContext(c);
+						const chosen = byContext.get(key);
+						if (
+							!chosen ||
+							(withUpcoming.has(chosen.sessionId) &&
+								!withUpcoming.has(c.sessionId))
+						)
+							byContext.set(key, c);
+						return byContext;
+					}, new Map<string, ConversationRef>())
+					.values()
+			];
 	const freeTimesPanel = freeTimesOf.length > 0 && (
 		<>
 			{freeTimesOf.map((conversation) => (
@@ -1296,6 +1321,13 @@ export const CalendarPageWired = () => {
 					consultingTypeId={conversation.consultingTypeId}
 					chatType={conversation.chatType ?? 'oneOnOne'}
 					counsellorName={conversation.username}
+					onLimitReached={() =>
+						setLimitedSessions((known) =>
+							known.includes(conversation.sessionId)
+								? known
+								: [...known, conversation.sessionId]
+						)
+					}
 					loadSlots={apiGetAppointmentSlots}
 					bookSlot={apiBookAppointmentSlot}
 					onBooked={(appointment) => {
