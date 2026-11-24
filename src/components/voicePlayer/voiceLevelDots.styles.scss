@@ -7,8 +7,11 @@
 	--voice-level-gap: 3px;
 
 	display: flex;
-	flex: none;
+	// Gives way in a narrow row (320 px answer field) like the old tiles did.
+	flex: 0 1 auto;
 	align-items: center;
+	// Clipped from the left, so the newest level (right) stays visible.
+	justify-content: flex-end;
 	gap: var(--voice-level-gap);
 	height: var(--voice-level-max);
 	min-width: 0;
