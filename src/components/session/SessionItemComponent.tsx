@@ -260,6 +260,8 @@ import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { ReactComponent as CalendarPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
+import { AppointmentPennant } from '../sessionsList/timeline/AppointmentPennant';
+import { useSupervisorPennant } from '../sessionsList/timeline/useSupervisorPennant';
 import { SupervisorAppointmentDialogWired } from '../supervisionPanel/SupervisorAppointmentDialog';
 import {
 	parseAddonPanel,
@@ -3172,6 +3174,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData?.userId,
 		supervisionHeaderName
 	]);
+	// FE#2494: the next appointment with the supervisor hangs from the
+	// Supervision panel's hairline, as the main chat's pennants do.
+	const supervisorPennant = useSupervisorPennant(appointmentSupervisor?.id);
 	const [bookingSupervisor, setBookingSupervisor] = useState(false);
 	const supervisionMenuItems: PanelMenuItem[] = appointmentSupervisor
 		? [
@@ -4853,6 +4858,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
+						appointments={
+							supervisorPennant && (
+								<AppointmentPennant
+									entry={supervisorPennant.entry}
+									role="counsellor"
+									menuItems={supervisorPennant.menuItems}
+									onAction={supervisorPennant.onAction}
+								/>
+							)
+						}
 						actions={
 							mayCallInSideRoom ||
 							supervisionMenuItems.length > 0 ? (

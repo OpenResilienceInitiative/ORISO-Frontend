@@ -104,6 +104,8 @@ export const AppointmentPennant = ({
 				aria-expanded={Boolean(anchor)}
 				aria-controls={anchor ? menuId : undefined}
 				aria-label={`${t('sessionList.timeline.appointment.menu', 'Terminmenü')}: ${spoken}`}
+				// Where only the short date fits, hovering shows the whole.
+				title={spoken}
 				onClick={toggle}
 				data-cy="room-appointment-pennant"
 			>
