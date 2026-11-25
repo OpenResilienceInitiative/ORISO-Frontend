@@ -51,7 +51,8 @@ $room-header-back-gap: 8px;
 		box-sizing: content-box;
 		margin-left: 0;
 		padding: $room-header-gap-top 0 $room-header-gap;
-		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-bottom: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
 		// The action group (calls, menu) never shrinks; the title does.
 		> .sessionMenu__wrapper {

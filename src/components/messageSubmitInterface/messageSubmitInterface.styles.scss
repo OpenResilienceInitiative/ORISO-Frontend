@@ -186,7 +186,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid var(--m3-primary-fixed, #ffdad5) !important;
+				border: 1px solid
+					var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5)) !important;
 				overflow: visible;
 				min-height: var(--composer-height, 196px);
 				height: var(--composer-height, 196px);
@@ -321,7 +322,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				// field border (the resting/selected states keep theirs).
 				&--supervision:not(.textarea__wrapper-send-message--selected)
 					.textarea__input {
-					border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+					border-color: var(
+						--oriso-outline-accent,
+						var(--m3-primary-fixed-dim, #ffb4aa)
+					);
 				}
 
 				// The Teamberatung room's composer, same rule with the
@@ -516,7 +520,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 100%;
 			height: 100%;
 			border-radius: 16px var(--composer-corner, 4px) 16px 16px;
-			border: 1px solid var(--m3-primary-fixed, #ffdad5);
+			border: 1px solid
+				var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 			box-sizing: border-box;
 			position: relative;
 

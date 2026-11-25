@@ -99,7 +99,8 @@
 		inline-size: 44px;
 		block-size: 44px;
 		padding: 0;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		border-radius: 50%;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-on-surface, #1b1b1c);

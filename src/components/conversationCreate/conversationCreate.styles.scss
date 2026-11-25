@@ -751,7 +751,8 @@ body.conversationCreate--active .navigation__wrapper {
 .conversationCreate {
 	&__panelHeader {
 		align-items: center;
-		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-bottom: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		display: flex;
 		padding: 4px;
 	}

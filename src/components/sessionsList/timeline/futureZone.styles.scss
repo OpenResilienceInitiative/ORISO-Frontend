@@ -45,6 +45,7 @@
 	&--soon,
 	&--soon:hover {
 		background: var(--m3-primary, #a5000a);
+
 		// `on-primary`, not a light literal: `primary` is light pink in dark
 		// mode (P0 dark mode, 2026-11-25).
 		color: var(--m3-on-primary, #ffe2de);
@@ -53,12 +54,16 @@
 	// The same as a selected chat card (Figma 316-16775).
 	&--selected:not(&--soon),
 	&--selected:not(&--soon):hover {
-		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		border-color: var(
+			--oriso-outline-accent,
+			var(--m3-primary-fixed-dim, #ffb4aa)
+		);
 		background: var(--m3-surface-container-low, #f5f5f5);
 	}
 
 	&--selected#{&}--soon {
-		box-shadow: 0 0 0 2px var(--m3-primary-fixed-dim, #ffb4aa);
+		box-shadow: 0 0 0 2px
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 	}
 }
 

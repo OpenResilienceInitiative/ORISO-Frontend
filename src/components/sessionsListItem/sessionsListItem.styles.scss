@@ -1629,7 +1629,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	.sessionsListItem__postcode {
 		background-color: transparent;
-		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		border-color: var(
+			--oriso-outline-accent,
+			var(--m3-primary-fixed-dim, #ffb4aa)
+		);
 		color: var(--m3-on-primary-fixed, #410001);
 
 		html[data-oriso-personal-scheme='dark'] & {
@@ -1639,7 +1642,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	// The open menu keeps its filled pill (`--menuOpen`).
 	&:not(.sessionsListItem--menuOpen) .sessionsListItem__menuIcon {
-		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+		border-color: var(
+			--oriso-outline-accent,
+			var(--m3-primary-fixed-dim, #ffb4aa)
+		);
 	}
 
 	.sessionsListItem__username {
