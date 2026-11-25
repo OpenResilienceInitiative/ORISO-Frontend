@@ -430,9 +430,10 @@ export const CircleSettingsView = ({
 						) : undefined
 					}
 				>
-					{/* Desktop picks the topic on screen 1; edit mode enters here
-					    directly, so the row must be reachable then too. */}
-					{(compact || isEditMode) && topicRow}
+					{/* Desktop picks the topic on screen 1; edit mode, and a
+					    single format that skips screen 1 (FE#2545), enter
+					    here without one, so the row must be reachable then. */}
+					{(compact || isEditMode || !prefill?.topic) && topicRow}
 					{agencyOptions.length > 1 && (
 						<OrisoSelect
 							id="circleAgency"

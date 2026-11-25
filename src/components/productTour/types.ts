@@ -97,12 +97,6 @@ export interface TourStep {
 	 */
 	hideBack?: boolean;
 	/**
-	 * The highlighted control is shown, not used: clicks on it are blocked
-	 * while the step is on screen. For a control the practice world cannot
-	 * run (FE#2545 D3: the call button of the practice circle).
-	 */
-	lookOnly?: boolean;
-	/**
 	 * Variant condition. The step is dropped from the tour when it fails,
 	 * resolved once at start (`resolveTourSteps`).
 	 */

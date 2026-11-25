@@ -143,6 +143,16 @@ The heartbeat and the loss/DPA notices keep the real state. Proof:
 `PracticeFlow.integration.test.tsx` (no availability PUT or heartbeat POST, no
 `oriso_liveChat*` storage write, real state shown again after the exit).
 
+**Group-call start in practice (FE#2545, D3).** The Gesprächskreis practice
+tour creates, opens and starts a circle in the fake backend, then asks the
+counsellor to use the real call button. `GroupChatHeader`'s call handler asks
+`isPracticeMode()` first and calls `simulatePracticeCallStart` instead: no
+`getUserMedia`, no `callManager`, no request. `PracticeCallStartDialog`
+(mounted by the sandbox, an `M3Dialog`) says what the real button does and
+closes with one button; the tour advances on `practice:circle-call-started`.
+Proof: `practiceCallStart.test.tsx`, `GroupChatHeader/practiceCallGuard.test.tsx`
+and the two Gesprächskreis runs in `PracticeFlow.integration.test.tsx`.
+
 Open decisions (Frank): a counsellor who is live-chat available drops out after
 about 2 minutes of practice (allowlist the heartbeat, or switch live chat off
 at the start); a real incoming call cannot be answered while practising (end

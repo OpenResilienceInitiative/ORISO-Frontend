@@ -6597,7 +6597,7 @@
 				},
 				"practiceSettings": {
 					"title": "Ayarla ve oluştur",
-					"intro": "Tarihi ve ayarları kontrol edip „Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
+					"intro": "Henüz konu seçilmediyse bir konu seçin, tarihi ve ayarları kontrol edip „Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
 				},
 				"practiceOpen": {
 					"title": "Çemberi aç",
@@ -6609,7 +6609,7 @@
 				},
 				"practiceCall": {
 					"title": "Görüntülü arama",
-					"intro": "Gerçek bir çemberde bu düğme görüntülü aramayı başlatır. Alıştırmada arama başlamaz."
+					"intro": "Gerçek bir çemberde görüntülü aramayı burada başlatırsınız. Tıklayın: alıştırmada yalnızca ne olduğunu görürsünüz, kamera ve mikrofon olmadan."
 				},
 				"practiceDone": {
 					"intro": "Tamamlandı: Bir sohbet çemberi oluşturup başlattınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
@@ -7276,6 +7276,11 @@
 		},
 		"error": {
 			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
+		},
+		"callStart": {
+			"title": "Görüntülü arama (alıştırma)",
+			"description": "Çemberinizin görüntülü araması burada başlar. Alıştırmada kamera ve mikrofon olmadan.",
+			"close": "Anladım"
 		}
 	},
 	"counselling": {

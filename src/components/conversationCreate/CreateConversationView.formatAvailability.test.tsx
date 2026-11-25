@@ -296,6 +296,29 @@ describe('CreateConversationView – formats the Träger has switched off', () =
 		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
 		expect(screen.queryByText(INTERNAL_CARD)).toBeNull();
 	});
+
+	// FE#2545: with the circle as the only format the picker, and with it
+	// the topic choice of screen 1, is skipped. The settings must offer the
+	// topic then, or "Erstellen" can never become ready.
+	it('offers the topic in the settings when the circle is the only format', async () => {
+		tenantState.settings = {
+			featureGroupChatV2Enabled: true,
+			featureInternalGroupChatEnabled: false,
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false,
+			activeLanguages: ['de']
+		};
+
+		renderCreateFlow();
+
+		expect(
+			await screen.findByText('groupChat.circle.createLabel')
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', { name: 'groupChat.circle.topicLabel' })
+		).toBeTruthy();
+	});
 });
 
 describe('CreateConversationView – formats the Beratungsstelle has switched off', () => {

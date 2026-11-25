@@ -358,7 +358,7 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 		]);
 	});
 
-	it('advances on the learner action: click, event, event, click, event', () => {
+	it('advances on the learner action: click, event, event, click, event, event', () => {
 		expect(
 			tour.steps
 				.filter((s) => s.advanceOn)
@@ -374,13 +374,20 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 			[
 				'start',
 				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleStarted }
+			],
+			[
+				'call',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCallStarted }
 			]
 		]);
 	});
 
-	it('only explains the call button: practice starts no call (D3)', () => {
-		expect(step('call').advanceOn).toBeUndefined();
-		expect(step('call').lookOnly).toBe(true);
+	it('goes on when the call button was used: the simulated start, no call (D3)', () => {
+		expect(step('call').target).toBe('groupchat-call-button');
+		expect(step('call').advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.circleCallStarted
+		});
 	});
 
 	it('keeps the format card and topic picker optional, like the explanation tour', () => {

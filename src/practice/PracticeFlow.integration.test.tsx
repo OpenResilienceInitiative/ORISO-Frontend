@@ -253,6 +253,8 @@ const renderApp = ({
 	strictMode = false,
 	/** Gesprächskreise on, and the counsellor may create and start one. */
 	groupCircle = false,
+	/** Only the circle format: the create flow skips its format picker. */
+	circleOnly = false,
 	liveChatViaSidebar = false
 } = {}) => {
 	const settings = {
@@ -265,7 +267,13 @@ const renderApp = ({
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
 		featureSupervisionEnabled: true,
-		...(groupCircle && { featureGroupChatV2Enabled: true })
+		...(groupCircle && { featureGroupChatV2Enabled: true }),
+		...(circleOnly && {
+			featureInternalGroupChatEnabled: false,
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		})
 	};
 	const userData = groupCircle
 		? {
@@ -742,6 +750,86 @@ const progressWrites = () =>
 const banner = () =>
 	within(screen.getByRole('status', { name: 'practice.banner.title' }));
 
+/**
+ * The Gesprächskreis flow from the settings on (FE#2545): "Erstellen" makes
+ * the circle in memory, the list opens it, the waiting room starts it, the
+ * call button shows the simulated start (D3), and the tour completes.
+ */
+const createOpenStartAndCall = async (settingsIndex: number) => {
+	// The real "Erstellen" of the settings; the circle is made in memory.
+	const settings = await expectStep(settingsIndex);
+	await waitFor(() => expect(settings!.hasAttribute('disabled')).toBe(false));
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
+		fireEvent.click(settings!);
+	});
+
+	// Back in the list (no share dialog): the new circle; click it.
+	const open = settingsIndex + 1;
+	await expectStep(open);
+	await waitFor(
+		() => expect(route()).toBe('/sessions/consultant/sessionView'),
+		SLOW
+	);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	const rowSelector = joyride!.steps[open].target;
+	await waitFor(() => {
+		const row = document.querySelector<HTMLElement>(rowSelector);
+		expect(row?.isConnected).toBe(true);
+		expect(row?.textContent).toContain(SCRIPT.names.topic);
+	}, SLOW);
+	await act(async () => {
+		fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	});
+	await waitFor(
+		() => expect(route()).toMatch(/sessionView\/!practice-4[^/]*\/-2/),
+		SLOW
+	);
+
+	// The waiting room's real "Video-Call starten"; it starts the circle.
+	const start = await expectStep(open + 1);
+	const startButton = within(start!).getByRole('button', {
+		name: 'videoCall.button.startVideoCall'
+	});
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleStarted, async () => {
+		await act(async () => {
+			fireEvent.click(startButton);
+		});
+	});
+
+	// The call button of the started circle, used: practice shows a
+	// simulated start (D3) and reaches neither the media nor a prompt.
+	const call = await expectStep(open + 2);
+	expect(route()).toMatch(/sessionView\/!practice-4/);
+	const getUserMedia = vi.fn();
+	Object.defineProperty(navigator, 'mediaDevices', {
+		configurable: true,
+		value: { getUserMedia }
+	});
+	const confirm = vi.spyOn(window, 'confirm');
+	const alert = vi.spyOn(window, 'alert');
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCallStarted, async () => {
+		await act(async () => {
+			fireEvent.click(call!.querySelector('.button__item, button')!);
+		});
+	});
+	expect(getUserMedia).not.toHaveBeenCalled();
+	expect(confirm).not.toHaveBeenCalled();
+	expect(alert).not.toHaveBeenCalled();
+	expect(screen.getByText('practice.callStart.description')).toBeTruthy();
+	fireEvent.click(screen.getByTestId('practice-call-start-close'));
+	await waitFor(() =>
+		expect(screen.queryByText('practice.callStart.description')).toBeNull()
+	);
+
+	// Done: completion is written for the circle tour itself, and the
+	// circle never left the page.
+	await finish(open + 3);
+	expect(
+		network.filter(({ url }) => url.includes('/service/users/chat'))
+	).toEqual([]);
+};
+
 describe('practice flows on the real app shell', () => {
 	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
 		const app = renderApp({ strictMode: true });
@@ -900,7 +988,7 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});
 
-	it('Gesprächskreis (FE#2545): the real create flow makes a practice circle, which is opened, started and shows its call button', async () => {
+	it('Gesprächskreis (FE#2545): the real create flow makes a practice circle, which is opened, started and its call start simulated', async () => {
 		const app = renderApp({ groupCircle: true });
 		// The Help list starts topic tours by request; there is no card.
 		await app.request(GROUP_CIRCLE);
@@ -942,65 +1030,39 @@ describe('practice flows on the real app shell', () => {
 			);
 		});
 
-		// 5: the real "Erstellen" of the settings; the circle is made in memory.
-		const settings = await expectStep(create + 3);
-		await waitFor(() =>
-			expect(settings!.hasAttribute('disabled')).toBe(false)
-		);
-		await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
-			fireEvent.click(settings!);
-		});
+		await createOpenStartAndCall(create + 3);
+	}, 120000);
 
-		// 6: back in the list (no share dialog): the new circle; click it.
-		const open = create + 4;
-		await expectStep(open);
-		await waitFor(
-			() => expect(route()).toBe('/sessions/consultant/sessionView'),
-			SLOW
-		);
-		expect(screen.queryByRole('dialog')).toBeNull();
-		const rowSelector = joyride!.steps[open].target;
-		await waitFor(() => {
-			const row = document.querySelector<HTMLElement>(rowSelector);
-			expect(row?.isConnected).toBe(true);
-			expect(row?.textContent).toContain(SCRIPT.names.topic);
-		}, SLOW);
+	it('Gesprächskreis with only the circle format: the picker steps are skipped and the flow still ends at done', async () => {
+		const app = renderApp({ groupCircle: true, circleOnly: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		pressNext(0);
+
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
 		await act(async () => {
-			fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+			fireEvent.click(createButton!);
 			await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		});
-		await waitFor(
-			() => expect(route()).toMatch(/sessionView\/!practice-4[^/]*\/-2/),
-			SLOW
+
+		// No format picker, no topic card: the settings open directly, and
+		// the tour goes on to their "Erstellen". The topic is picked there.
+		const settings = await expectStep(create + 3);
+		expect(
+			document.querySelector(
+				'[data-tour-target="groupchat-format-circle"]'
+			)
+		).toBeNull();
+		expect(settings!.hasAttribute('disabled')).toBe(true);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.circle.topicLabel' })
+		);
+		fireEvent.click(
+			await screen.findByRole('option', { name: SCRIPT.names.topic })
 		);
 
-		// 7: the waiting room's real "Video-Call starten"; it starts the circle.
-		const start = await expectStep(open + 1);
-		const startButton = within(start!).getByRole('button', {
-			name: 'videoCall.button.startVideoCall'
-		});
-		await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleStarted, async () => {
-			await act(async () => {
-				fireEvent.click(startButton);
-			});
-		});
-
-		// 8: the call button of the started circle, shown and not usable:
-		// practice starts no call (D3), and the start asked for none.
-		const call = await expectStep(open + 2);
-		expect(call!.querySelector('button')).toBeTruthy();
-		expect(joyride!.steps[open + 2]).toMatchObject({
-			blockTargetInteraction: true
-		});
-		expect(route()).toMatch(/sessionView\/!practice-4/);
-		pressNext(open + 2);
-
-		// Done: completion is written for the circle tour itself, and the
-		// circle never left the page.
-		await finish(open + 3);
-		expect(
-			network.filter(({ url }) => url.includes('/service/users/chat'))
-		).toEqual([]);
+		await createOpenStartAndCall(create + 3);
 	}, 120000);
 
 	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {

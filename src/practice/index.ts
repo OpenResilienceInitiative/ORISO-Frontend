@@ -16,3 +16,4 @@ export {
 	onPracticeExit
 } from './practiceMode';
 export { PracticeBlockedRequestError } from './networkGuard';
+export { simulatePracticeCallStart } from './practiceCallStart';

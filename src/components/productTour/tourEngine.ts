@@ -75,8 +75,6 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		content: step.contentKey,
 		// An action step requires keyboard access to the highlighted app UI.
 		...(step.advanceOn && { disableFocusTrap: true }),
-		// A look-only step shows a control the run must not trigger.
-		...(step.lookOnly && { blockTargetInteraction: true }),
 		// Read by the tooltip: no Next on a self-advancing step, no Back after
 		// an action that cannot be undone.
 		...((step.advanceOn || step.hideBack) && {

@@ -98,30 +98,6 @@ describe('mapStepsToJoyride advanceOn', () => {
 	});
 });
 
-describe('mapStepsToJoyride lookOnly', () => {
-	it('blocks clicks on the highlighted control of a look-only step (FE#2545 D3)', () => {
-		const joyrideSteps = mapStepsToJoyride([
-			{
-				id: 'call',
-				target: 'groupchat-call-button',
-				titleKey: 't',
-				contentKey: 'c',
-				lookOnly: true
-			}
-		]);
-
-		expect(joyrideSteps[0]).toMatchObject({ blockTargetInteraction: true });
-	});
-
-	it('keeps the highlighted control usable on every other step', () => {
-		const joyrideSteps = mapStepsToJoyride([
-			{ id: 'a', target: 'a-target', titleKey: 't', contentKey: 'c' }
-		]);
-
-		expect(joyrideSteps[0]).not.toHaveProperty('blockTargetInteraction');
-	});
-});
-
 describe('mapStepsToJoyride hideBack', () => {
 	it('carries hideBack into the joyride step data so the tooltip can hide Back', () => {
 		const joyrideSteps = mapStepsToJoyride([

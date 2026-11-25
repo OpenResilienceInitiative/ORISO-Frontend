@@ -6512,7 +6512,7 @@
 				},
 				"practiceSettings": {
 					"title": "Set up and create",
-					"intro": "Check the date and settings and click \"Create\". In the exercise the circle meets by video."
+					"intro": "Pick a topic if none is set yet, check the date and settings and click \"Create\". In the exercise the circle meets by video."
 				},
 				"practiceOpen": {
 					"title": "Open the circle",
@@ -6524,7 +6524,7 @@
 				},
 				"practiceCall": {
 					"title": "Video call",
-					"intro": "In a real circle this button starts the video call. No call starts in the exercise."
+					"intro": "In a real circle you start the video call here. Click it: in the exercise you only see what happens, without camera or microphone."
 				},
 				"practiceDone": {
 					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
@@ -7191,6 +7191,11 @@
 		},
 		"error": {
 			"start": "The practice could not be started. Please try again."
+		},
+		"callStart": {
+			"title": "Video call (practice)",
+			"description": "This is where the video call for your circle starts. In the exercise, without camera or microphone.",
+			"close": "Got it"
 		}
 	},
 	"counselling": {

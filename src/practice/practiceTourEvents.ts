@@ -17,7 +17,9 @@ export const PRACTICE_TOUR_EVENTS = {
 	/** The practice Gesprächskreis was created (FE#2545). */
 	circleCreated: 'practice:circle-created',
 	/** The practice Gesprächskreis was started by its moderator (FE#2545). */
-	circleStarted: 'practice:circle-started'
+	circleStarted: 'practice:circle-started',
+	/** A call button was used in practice: a simulated start, no call (D3). */
+	circleCallStarted: 'practice:circle-call-started'
 } as const;
 
 export type PracticeTourEventName =

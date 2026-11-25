@@ -6587,7 +6587,7 @@
 				},
 				"practiceSettings": {
 					"title": "Einstellen und erstellen",
-					"intro": "Prüfen Sie Termin und Einstellungen und klicken Sie auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+					"intro": "Wählen Sie ein Thema, falls noch keines gesetzt ist, prüfen Sie Termin und Einstellungen und klicken Sie auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
 				},
 				"practiceOpen": {
 					"title": "Gesprächskreis öffnen",
@@ -6599,7 +6599,7 @@
 				},
 				"practiceCall": {
 					"title": "Video-Call",
-					"intro": "Über diesen Button starten Sie im echten Gesprächskreis den Video-Call. In der Übung startet kein Anruf."
+					"intro": "Im echten Gesprächskreis starten Sie hier den Video-Call. Klicken Sie darauf: In der Übung sehen Sie nur, was passiert, ohne Kamera und Mikrofon."
 				},
 				"practiceDone": {
 					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
@@ -7266,6 +7266,11 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		},
+		"callStart": {
+			"title": "Video-Call (Übung)",
+			"description": "Hier startet jetzt der Video-Call für Ihren Gesprächskreis. In der Übung ohne Kamera und Mikrofon.",
+			"close": "Verstanden"
 		}
 	},
 	"counselling": {

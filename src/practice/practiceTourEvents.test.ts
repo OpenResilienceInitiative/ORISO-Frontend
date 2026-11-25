@@ -16,6 +16,7 @@ describe('practice tour events', () => {
 			enquiryAccepted: 'practice:enquiry-accepted',
 			circleCreated: 'practice:circle-created',
 			circleStarted: 'practice:circle-started',
+			circleCallStarted: 'practice:circle-call-started',
 			liveChatAvailable: 'practice:live-chat-available'
 		});
 	});

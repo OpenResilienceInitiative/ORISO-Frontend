@@ -351,12 +351,16 @@ export const practiceGroupCircleTour: TourDefinition = {
 			contentKey: 'tour.groupCircle.step.practiceStart.intro'
 		},
 		{
-			// D3: practice starts no call. The button is shown, not pressed.
+			// D3: the button is used, and practice shows a simulated start
+			// instead of a call: no camera, no microphone, no request.
 			id: 'call',
 			hideBack: true,
-			lookOnly: true,
 			target: 'groupchat-call-button',
 			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.circleCallStarted
+			},
 			titleKey: 'tour.groupCircle.step.practiceCall.title',
 			contentKey: 'tour.groupCircle.step.practiceCall.intro'
 		},
