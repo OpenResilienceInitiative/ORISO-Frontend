@@ -13,6 +13,7 @@ import { NavigationBar } from '../app/NavigationBar';
 import { RouterConfigConsultant } from '../app/RouterConfig';
 import { SessionsZone } from '../app/SessionsZone';
 import { CalendarPageWired } from '../calendar/CalendarPageWired';
+import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { Header } from '../header/Header';
 import { Profile } from '../profile/Profile';
 import { Walkthrough } from '../walkthrough/Walkthrough';
@@ -293,6 +294,12 @@ const PracticeFlowStage = ({
 																		path="/booking/events"
 																		element={
 																			<CalendarPageWired />
+																		}
+																	/>
+																	<Route
+																		path="/notifications"
+																		element={
+																			<NotificationsCenter />
 																		}
 																	/>
 																	<Route
@@ -1137,6 +1144,196 @@ export const Calendar: Story = {
 							/\/calendar\/|appointments|direct-invitations|directlinks/.test(
 								url
 							)
+						)
+				).toEqual([]);
+			}
+		);
+	}
+};
+
+/**
+ * The real pointer path: the control's centre must hit the control itself
+ * (or something inside it), not the tour overlay, a tooltip or a dialog
+ * above it. jsdom cannot tell; Dev showed such covered controls twice.
+ */
+const clickWhereVisible = async (control: HTMLElement) => {
+	// As a counsellor would: scroll the page only when the control is out of
+	// view. Scrolling it into view would also scroll an overflowing chip row
+	// away from the tour's spotlight, which a counsellor never does.
+	const box = control.getBoundingClientRect();
+	if (box.bottom < 0 || box.top > window.innerHeight) {
+		control.scrollIntoView({ block: 'center' });
+	}
+	await waitFor(() => {
+		const { left, top, width, height } = control.getBoundingClientRect();
+		expect(width * height, 'the control has a size').toBeGreaterThan(0);
+		const x = left + width / 2;
+		const y = top + height / 2;
+		const hit = document.elementFromPoint(x, y);
+		expect(
+			hit && control.contains(hit),
+			`the centre (${Math.round(x)}, ${Math.round(y)}) of ${control.outerHTML.slice(0, 80)} hits ${hit?.outerHTML.slice(0, 160)}`
+		).toBe(true);
+	}, SLOW);
+	await userEvent.click(control);
+};
+
+/** An anchor `target` has already waited for. */
+const anchorNow = (name: string) =>
+	document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`)!;
+
+const timelineCards = () =>
+	[
+		...document.querySelectorAll<HTMLElement>('.notificationsCenter__card')
+	].map((card) => ({
+		target: card.getAttribute('data-tour-target'),
+		unread: !!card.querySelector('.notificationsCenter__cardUnread')
+	}));
+
+export const Timeline: Story = {
+	name: 'Zeitstrahl · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Starts the Zeitstrahl und Entwürfe tour from Help with the practice area open (FE#2545). The real Zeitstrahl shows practice entries and one unsent practice draft: the newest entry opens and is read, "Alle als gelesen markieren" reads the rest, "Anfrage angenommen" shows its conversation, the "Entwürfe" chip finds the draft, "Chat öffnen" continues it in the practice conversation and it is sent there. Every click is hit-tested at the control centre first. Read states and the draft stay in memory; only the completed progress is written.'
+			}
+		}
+	},
+	play: async ({ canvas, step }) => {
+		const of = 9;
+		const storageBefore = storageSnapshot();
+		let practiceStart = 0;
+		await step('Start the Zeitstrahl tour from its Help card', async () => {
+			const card = (
+				await canvas.findByRole(
+					'heading',
+					{ name: 'Zeitstrahl und Entwürfe' },
+					SLOW
+				)
+			).closest('li')!;
+			await clickWhereVisible(
+				within(card).getByRole('button', { name: 'Starten' })
+			);
+		});
+		await step('1: Read that this is an exercise', async () => {
+			await expectStep(1, of);
+			await expect(getPracticeSnapshot().status).toBe('active');
+			practiceStart = requestLog.length;
+			await next();
+		});
+		await step(
+			'2: The Zeitstrahl with practice entries and a draft',
+			async () => {
+				await expectStep(2, of);
+				await target('timeline-page');
+				await waitFor(
+					() =>
+						expect(timelineCards()).toEqual([
+							{ target: 'timeline-draft-entry', unread: false },
+							{ target: null, unread: false },
+							{ target: 'timeline-entry', unread: false },
+							{ target: null, unread: true }
+						]),
+					SLOW
+				);
+				// The newest entry is open: the advice seeker's reply.
+				await expect(
+					await within(
+						document.querySelector<HTMLElement>(
+							'.notificationsCenter__detail'
+						)!
+					).findByText(/Vielen Dank für Ihre Antwort/, {}, SLOW)
+				).toBeVisible();
+				await next();
+			}
+		);
+		await step('3: Mark all as read', async () => {
+			await expectStep(3, of);
+			await clickWhereVisible(await target('timeline-mark-all-read'));
+			await waitFor(
+				() =>
+					expect(timelineCards().some(({ unread }) => unread)).toBe(
+						false
+					),
+				SLOW
+			);
+		});
+		await step('4: Open "Anfrage angenommen"', async () => {
+			await expectStep(4, of);
+			await target('timeline-entry');
+			const entry = anchorNow('timeline-entry');
+			await clickWhereVisible(entry);
+			await waitFor(
+				() =>
+					expect(entry.className).toContain(
+						'notificationsCenter__card--active'
+					),
+				SLOW
+			);
+		});
+		await step('5: Filter for drafts', async () => {
+			await expectStep(5, of);
+			await clickWhereVisible(await target('timeline-chip-drafts'));
+			await waitFor(
+				() =>
+					expect(timelineCards()).toEqual([
+						{ target: 'timeline-draft-entry', unread: false }
+					]),
+				SLOW
+			);
+		});
+		await step('6: Open the draft entry', async () => {
+			await expectStep(6, of);
+			await clickWhereVisible(await target('timeline-draft-entry'));
+		});
+		await step('7: "Chat öffnen" continues the draft', async () => {
+			await expectStep(7, of);
+			await target('timeline-open-action');
+			const open = anchorNow('timeline-open-action');
+			await expect(open).toHaveTextContent('Chat öffnen');
+			await clickWhereVisible(open);
+		});
+		await step('8: Send the continued draft', async () => {
+			await expectStep(8, of);
+			await target('session-composer');
+			const composer = anchorNow('session-composer');
+			await waitFor(
+				() =>
+					expect(composer.textContent).toContain(
+						'Gern beantworte ich Ihre Frage zum Ablauf'
+					),
+				SLOW
+			);
+			const editor = composer.querySelector<HTMLElement>(
+				'.ProseMirror[contenteditable="true"]'
+			)!;
+			await clickWhereVisible(editor);
+			// The caret lands where the click did; the text just grows.
+			await userEvent.keyboard(' Bis bald.');
+			const send = await waitFor(() => {
+				const button = within(
+					document.querySelector<HTMLElement>('.chatStage__mainPane')!
+				).getByRole('button', { name: 'Nachricht senden' });
+				expect(button).toBeEnabled();
+				return button;
+			}, SLOW);
+			await clickWhereVisible(send);
+		});
+		await step(
+			`${of}: Finish and return to Help without outbound writes`,
+			async () => {
+				await expectStep(of, of);
+				await expect(
+					getPracticeNetworkGuard()?.blockedRequests
+				).toEqual([]);
+				await next('Fertig');
+				await expectExited(canvas, storageBefore);
+				// Neither the entries nor the draft reached the network.
+				await expect(
+					requestLog
+						.slice(practiceStart)
+						.filter(({ url }) =>
+							/\/service\/users\/drafts|notifications/.test(url)
 						)
 				).toEqual([]);
 			}
