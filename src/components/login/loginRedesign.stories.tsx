@@ -545,13 +545,11 @@ export const SetupIncomplete: StoryObj = {
 const HeldSignIn = ({
 	holdMs,
 	pace = 1,
-	order = 'sweep',
 	reduceMotion = false,
 	children
 }: {
 	holdMs: number;
 	pace?: number;
-	order?: 'sweep' | 'random';
 	reduceMotion?: boolean;
 	children: React.ReactNode;
 }) => {
@@ -561,7 +559,6 @@ const HeldSignIn = ({
 		const realMatchMedia = window.matchMedia;
 		const root = document.documentElement;
 		root.style.setProperty('--login-matrix-pace', String(pace));
-		root.style.setProperty('--login-matrix-order', order);
 		window.fetch = (async (
 			input: RequestInfo | URL,
 			init?: RequestInit
@@ -596,16 +593,14 @@ const HeldSignIn = ({
 			window.fetch = realFetch;
 			window.matchMedia = realMatchMedia;
 			root.style.removeProperty('--login-matrix-pace');
-			root.style.removeProperty('--login-matrix-order');
 		};
-	}, [holdMs, pace, order, reduceMotion]);
+	}, [holdMs, pace, reduceMotion]);
 	return isReady ? <>{children}</> : null;
 };
 
 type ReencodeArgs = {
 	holdMs: number;
 	pace: number;
-	order: 'sweep' | 'random';
 	reduceMotion: boolean;
 };
 
@@ -660,7 +655,6 @@ const reencodeStory = (
 	args: {
 		holdMs: 6000,
 		pace: 1,
-		order: 'sweep',
 		reduceMotion: false,
 		...args
 	},
@@ -673,23 +667,17 @@ const reencodeStory = (
 			name: 'Zeitlupe (1 = normal)',
 			control: { type: 'range', min: 1, max: 8, step: 1 }
 		},
-		order: {
-			name: 'Reihenfolge der Buchstaben',
-			control: { type: 'inline-radio' },
-			options: ['sweep', 'random']
-		},
 		reduceMotion: { name: 'Reduzierte Bewegung' }
 	},
 	parameters: {
 		layout: 'fullscreen',
 		docs: { description: { story } }
 	},
-	render: ({ holdMs, pace, order, reduceMotion }) => (
+	render: ({ holdMs, pace, reduceMotion }) => (
 		<HeldSignIn
-			key={`${holdMs}-${pace}-${order}-${reduceMotion}`}
+			key={`${holdMs}-${pace}-${reduceMotion}`}
 			holdMs={holdMs}
 			pace={pace}
-			order={order}
 			reduceMotion={reduceMotion}
 		>
 			<LoginScreen />
@@ -700,7 +688,7 @@ const reencodeStory = (
 
 export const ReencodeSignIn = reencodeStory(
 	'Anmelden — Text wird umkodiert',
-	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst kodieren Button-Text und Überschrift um, dann Feldbeschriftungen und Hinweise nacheinander, jede Ziffer in einer gleich breiten Zelle ihres Worts. Danach werden die Icons zu kleinen Ziffernrastern und die Feldränder erst zu Strichen, dann zu Ziffern — direkt auf den echten Elementen, ohne Maske. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
+	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst kodieren Button-Text und Überschrift um, jede Ziffer in einer gleich breiten Zelle ihres Worts. Die übrigen Zeilen wechseln an zufälligen Stellen, die Ziffern stehen still auf dem Text. Danach werden die Icons zu kleinen Ziffernrastern und die Feldränder erst zu Strichen, dann zu Ziffern — direkt auf den echten Elementen, ohne Maske. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
 	{ holdMs: 2500 },
 	{
 		play: async ({ canvasElement }) => {
@@ -777,15 +765,9 @@ export const ReencodeEnglish = reencodeStory(
 	{ globals: { locale: 'en' } }
 );
 
-export const ReencodeVideoOrder = reencodeStory(
-	'Anmelden — umkodiert, Reihenfolge wie im Codex-Video',
-	'Zum Vergleich: Buchstaben drehen in zufälliger Reihenfolge, wie in der Codex-Studie. Die Standardfassung läuft ruhiger von links nach rechts mit leichtem Versatz.',
-	{ order: 'random' }
-);
-
 export const ReencodeSlowMotion = reencodeStory(
 	'Anmelden — umkodiert, Zeitlupe',
-	'Viermal langsamer, um die Reihenfolge zu prüfen: Button, Überschrift, Beschriftungen, Hinweise.',
+	'Viermal langsamer: Button und Überschrift zuerst, dann wechseln die übrigen Buchstaben an zufälligen Stellen, zuletzt Icons und Feldränder.',
 	{ holdMs: 15000, pace: 4 }
 );
 

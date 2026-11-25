@@ -1,6 +1,6 @@
 // Re-encodes the form's own visible text in place: the sign-in label and the
-// heading first, then every other line in reading order, then each field's
-// icon and outline. There is no overlay over the panel. Each letter keeps its
+// heading first, then the rest at random places, then each field's icon and
+// outline. Digits stand still on the text; only opacity changes. There is no overlay over the panel. Each letter keeps its
 // box and fades out while a digit, drawn by a pseudo-element that assistive
 // technology ignores, settles over it. CSS runs the whole timeline (opacity and
 // transform only); JS only builds the pieces and says when each one turns.
@@ -16,19 +16,21 @@ const SKIPPED =
 	'input, textarea, select, legend, [aria-hidden="true"], .sr-only, .loginForm__otp:not(.loginForm__otp--active)';
 const BUTTON = 'button[type="submit"], .loginForm__actions button';
 const SVG = 'http://www.w3.org/2000/svg';
+const bit = () => (Math.random() < 0.5 ? '0' : '1');
 // MUI pads empty adornments and notches with zero-width spaces.
-const readable = (value: string) => /[^\s​-‍﻿]/u.test(value);
+const readable = (value: string) => /[^\s\u200B-\u200D\uFEFF]/u.test(value);
 
 /** Milliseconds on one timeline, before `--login-matrix-pace` stretches it. */
 export const LOGIN_MATRIX_TIMING = {
 	button: 420,
 	heading: 120,
 	lead: 380,
-	line: 120,
+	drift: 60,
+	scatter: 720,
 	letters: 380,
 	field: 160,
 	outline: 640,
-	turn: 360,
+	turn: 300,
 	pulse: 1100
 };
 
@@ -48,21 +50,7 @@ function visibleText(form: HTMLElement) {
 	return found;
 }
 
-/** Left to right with a little jitter, or fully shuffled like the study. */
-function turns(length: number, shuffled: boolean) {
-	const slots = Array.from({ length }, (_, index) => index);
-	if (!shuffled)
-		return slots.map((index) =>
-			index ? Math.min(length - 1, index + Math.random() * 1.6) : 0
-		);
-	for (let last = length - 1; last > 0; last--) {
-		const pick = Math.floor(Math.random() * (last + 1));
-		[slots[last], slots[pick]] = [slots[pick], slots[last]];
-	}
-	return slots;
-}
-
-/** Spread each word's digits evenly over the word, like a fixed-width cell. */
+/** One even cell per letter across each word, so the digits stand in a row. */
 function align(glyphs: HTMLElement[]) {
 	const words: HTMLElement[][] = [];
 	for (const glyph of glyphs) {
@@ -76,7 +64,6 @@ function align(glyphs: HTMLElement[]) {
 		const scale = boxes[0].width / (word[0].offsetWidth || 1) || 1;
 		const left = boxes[0].left;
 		const cell = (boxes.at(-1)!.right - left) / word.length;
-		const size = parseFloat(getComputedStyle(word[0]).fontSize) || 16;
 		return word.map(
 			(glyph, index) =>
 				[
@@ -85,19 +72,16 @@ function align(glyphs: HTMLElement[]) {
 						cell * (index + 0.5) -
 						boxes[index].left -
 						boxes[index].width / 2) /
-						scale,
-					Math.min(1, cell / scale / (size * 0.6))
+						scale
 				] as const
 		);
 	});
-	for (const [glyph, shift, squeeze] of plan.flat()) {
+	for (const [glyph, shift] of plan.flat())
 		glyph.style.setProperty('--shift', `${shift.toFixed(2)}px`);
-		glyph.style.setProperty('--squeeze', squeeze.toFixed(3));
-	}
 }
 
 /** The field's own outline turns into small strokes, then into digits. */
-function outline(field: HTMLElement, id: string, digit: (i: number) => string) {
+function outline(field: HTMLElement, id: string) {
 	const set = field.querySelector<HTMLElement>(':scope > fieldset');
 	if (!set) return;
 	const w = set.offsetWidth;
@@ -124,8 +108,8 @@ function outline(field: HTMLElement, id: string, digit: (i: number) => string) {
 	ring.setAttribute('lengthAdjust', 'spacing');
 	for (let i = 0; i < count; i++) {
 		const cell = document.createElementNS(SVG, 'tspan');
-		cell.textContent = digit(i);
-		cell.style.setProperty('--run', (i / count).toFixed(3));
+		cell.textContent = bit();
+		cell.style.setProperty('--run', Math.random().toFixed(3));
 		ring.append(cell);
 	}
 	return svg;
@@ -135,8 +119,6 @@ export function startLoginMatrix(form: HTMLElement) {
 	const T = LOGIN_MATRIX_TIMING;
 	const style = getComputedStyle(form);
 	const pace = parseFloat(style.getPropertyValue('--login-matrix-pace')) || 1;
-	const shuffled =
-		style.getPropertyValue('--login-matrix-order').trim() === 'random';
 	const button = form.querySelector(BUTTON);
 	const glyphs: HTMLElement[] = [];
 	const restore: (() => void)[] = [];
@@ -154,34 +136,30 @@ export function startLoginMatrix(form: HTMLElement) {
 			!field.closest('.loginForm__otp:not(.loginForm__otp--active)')
 	);
 	const started = performance.now();
-	const digit = (index: number, seed: number) =>
-		String((index * 13 + (index >> 1) + seed) % 2);
 	let line = 0;
 
 	const encode = (text: Text) => {
-		const lead = inButton(text)
-			? 0
+		// Button and heading first; then the rest turns at random places,
+		// drifting gently down the form.
+		const [lead, spread] = inButton(text)
+			? [0, T.button]
 			: inHeading(text)
-				? T.heading
-				: T.lead + line++ * T.line;
+				? [T.heading, T.letters]
+				: [T.lead + line++ * T.drift, T.scatter];
 		// Pieces built a frame late still land on the same timeline.
 		const start = lead - (performance.now() - started) / pace;
-		const spread = inButton(text) ? T.button : T.letters;
 		const letters = graphemes(text.data);
-		const order = turns(letters.length, shuffled);
 		const built: HTMLElement[] = [];
-		const parts = letters.map((letter, index) => {
+		const parts = letters.map((letter) => {
 			if (!readable(letter)) return document.createTextNode(letter);
 			const glyph = document.createElement('span');
 			const ink = document.createElement('span');
 			ink.textContent = letter;
 			glyph.className = 'loginMatrixGlyph';
-			glyph.dataset.digit = digit(index, line);
+			glyph.dataset.digit = bit();
 			glyph.style.setProperty(
 				'--at',
-				String(
-					Math.round(start + (spread * order[index]) / letters.length)
-				)
+				String(Math.round(start + spread * Math.random()))
 			);
 			glyph.append(ink);
 			built.push(glyph);
@@ -199,7 +177,7 @@ export function startLoginMatrix(form: HTMLElement) {
 		return built;
 	};
 
-	const lastLine = T.lead + lines * T.line;
+	const lastLine = T.lead + lines * T.drift + T.scatter / 2;
 	const later = () => {
 		const built = rest.flatMap(encode);
 		const edges = fields.map((field, index) => {
@@ -209,9 +187,7 @@ export function startLoginMatrix(form: HTMLElement) {
 				(performance.now() - started) / pace;
 			field.style.setProperty('--at', String(Math.round(at)));
 			field.dataset.matrixField = '';
-			return outline(field, `login-matrix-edge-${index}`, (i) =>
-				digit(i, index)
-			);
+			return outline(field, `login-matrix-edge-${index}`);
 		});
 		align(built);
 		restore.push(() => {

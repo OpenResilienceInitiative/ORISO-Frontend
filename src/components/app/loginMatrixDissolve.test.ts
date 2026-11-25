@@ -50,13 +50,17 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const scene = startLoginMatrix(form);
-		// The submit frame turns only the button, from the very start.
+		// The submit frame turns only the button, at random places within it.
 		expect(button.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
 		expect(form.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
-		expect(Math.min(...[...button.children[0].children].map(at))).toBe(0);
+		const turns = [...button.children[0].children].map(at);
+		expect(Math.min(...turns)).toBeGreaterThanOrEqual(-1);
+		expect(Math.max(...turns)).toBeLessThanOrEqual(
+			LOGIN_MATRIX_TIMING.button
+		);
 		nextFrame!(performance.now());
 
-		// Every readable line follows, in reading order, after the button.
+		// Every readable line follows the button.
 		const lines = ['h2', 'label', 'p'].map((selector) =>
 			Math.min(
 				...[
@@ -68,7 +72,9 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 		expect(lines[0]).toBeGreaterThanOrEqual(
 			LOGIN_MATRIX_TIMING.heading - 1
 		);
-		expect(lines[1]).toBeGreaterThanOrEqual(LOGIN_MATRIX_TIMING.lead - 1);
+		expect(Math.min(lines[1], lines[2])).toBeGreaterThanOrEqual(
+			LOGIN_MATRIX_TIMING.lead - 1
+		);
 		// The field's outline is redrawn as digits on its own edge.
 		const field = form.querySelector<HTMLElement>(
 			'.MuiOutlinedInput-root'
@@ -77,7 +83,6 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 		const edge = field.querySelector('.loginMatrixEdge')!;
 		expect(edge.getAttribute('aria-hidden')).toBe('true');
 		expect(edge.textContent).toMatch(/^[01]+$/);
-		expect(lines).toEqual([...lines].sort((a, b) => a - b));
 		// Hidden copies, zero-width padding and inputs are left alone.
 		expect(form.querySelector('legend .loginMatrixGlyph')).toBeNull();
 		expect(form.querySelector('fieldset .loginMatrixGlyph')).toBeNull();

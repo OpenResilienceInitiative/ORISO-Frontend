@@ -4,7 +4,7 @@
 .loginTransitionPrototype[data-effect='matrix'],
 .loginForm[data-matrix-phase] {
 	--matrix-primary: var(--m3-primary, #a5000a);
-	--login-matrix-turn: calc(360ms * var(--login-matrix-pace, 1));
+	--login-matrix-turn: calc(300ms * var(--login-matrix-pace, 1));
 
 	&:is(
 		[data-phase='loading'],
@@ -19,9 +19,6 @@
 			opacity: 1;
 
 			@media (prefers-reduced-motion: no-preference) {
-				animation: login-matrix-press 420ms
-					cubic-bezier(0.2, 0.7, 0.2, 1) both;
-
 				&::before {
 					content: '';
 					position: absolute;
@@ -46,12 +43,12 @@
 		position: relative;
 
 		> span {
-			animation: login-matrix-letter var(--login-matrix-turn)
-				cubic-bezier(0.4, 0, 0.6, 1) var(--login-matrix-delay) both;
+			animation: login-matrix-letter var(--login-matrix-turn) ease-in-out
+				var(--login-matrix-delay) both;
 		}
 
-		// The digit sits over the word's own box, one even cell per letter,
-		// so nothing reflows.
+		// The digit stands in the word's own box, one even cell per letter:
+		// it never moves, only fades in while the letter fades out.
 		&::after {
 			content: attr(data-digit) / '';
 			position: absolute;
@@ -62,9 +59,9 @@
 			text-align: center;
 			font-variant-numeric: tabular-nums;
 			pointer-events: none;
-			transform: translateX(var(--shift, 0)) scaleX(var(--squeeze, 1));
-			animation: login-matrix-digit var(--login-matrix-turn)
-				cubic-bezier(0.16, 1, 0.3, 1) var(--login-matrix-delay) both;
+			transform: translateX(var(--shift, 0));
+			animation: login-matrix-digit var(--login-matrix-turn) ease-in-out
+				var(--login-matrix-delay) both;
 		}
 	}
 
@@ -134,7 +131,7 @@
 				ease-out
 				calc(
 					var(--login-matrix-delay) + var(--edge-run) *
-						(0.35 + var(--run) * 0.65)
+						(0.3 + var(--run) * 0.7)
 				)
 				both;
 		}
@@ -152,20 +149,6 @@
 		.loginMatrixEdge {
 			display: none;
 		}
-	}
-}
-
-@keyframes login-matrix-press {
-	0% {
-		transform: translateY(0.14rem);
-	}
-
-	55% {
-		transform: translateY(-0.035rem);
-	}
-
-	100% {
-		transform: none;
 	}
 }
 
@@ -190,12 +173,6 @@
 @keyframes login-matrix-digit {
 	from {
 		opacity: 0;
-		translate: 0 -0.35em;
-	}
-
-	to {
-		opacity: 1;
-		translate: 0 0;
 	}
 }
 
