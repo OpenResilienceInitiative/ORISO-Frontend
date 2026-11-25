@@ -205,8 +205,14 @@ function segmentLevel(segment: Segment, time: number) {
 			ease((time - segment.start) / PHASE_SECONDS)
 	);
 }
+/**
+ * The wave looks at most a few phases ahead (the scene spans about 24 s), so
+ * the look-ahead loop below never needs more steps than this. It is a
+ * fail-safe: a bad time must not freeze the tab.
+ */
+const MAX_LOOKAHEAD_PHASES = 64;
 function journeyLevel(journey: Journey, time: number) {
-	if (time < 0) return 0;
+	if (!Number.isFinite(time) || time < 0) return 0;
 	if (time < journey.segment.start) {
 		const segment = journey.history.find(
 			(s) => time >= s.start && time < s.end
@@ -216,7 +222,11 @@ function journeyLevel(journey: Journey, time: number) {
 	if (journey.manual || time <= journey.segment.start + PHASE_SECONDS)
 		return segmentLevel(journey.segment, time);
 	let future = journey.segment;
-	while (time > future.start + PHASE_SECONDS) {
+	for (
+		let step = 0;
+		step < MAX_LOOKAHEAD_PHASES && time > future.start + PHASE_SECONDS;
+		step++
+	) {
 		const phase = ((future.phase + 1) % 4) as Phase,
 			from = future.to;
 		future = {
@@ -381,9 +391,13 @@ function BreathingScene({
 	const markerX = w * 0.32,
 		markerY = yAt(t),
 		scale = w / 24;
+	// Before the first layout, or in a hidden container, the scene measures
+	// 0: draw nothing and wait for the ResizeObserver to report a real size.
+	const measured = w > 0 && h > 0;
 	const points: [number, number][] = [];
-	for (let x = -4; x <= w + 4; x += 3)
-		points.push([x, yAt(t + (x - markerX) / scale)]);
+	if (measured)
+		for (let x = -4; x <= w + 4; x += 3)
+			points.push([x, yAt(t + (x - markerX) / scale)]);
 	const path = (items: [number, number][]) =>
 		items
 			.map(
@@ -414,7 +428,7 @@ function BreathingScene({
 	const parts = copy.quote.split(/(\{serenity\}|\{courage\}|\{wisdom\})/g);
 	return (
 		<div className="bc-scene" ref={sceneRef} data-ending={ending}>
-			{!reduced && (
+			{!reduced && measured && (
 				<svg
 					className="bc-line"
 					ref={svgRef}
