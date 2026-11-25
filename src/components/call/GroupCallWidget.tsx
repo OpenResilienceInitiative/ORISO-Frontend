@@ -76,6 +76,7 @@ import {
 	isKnockingOnCall,
 	readPendingKnock
 } from '../directLinkEntry/directLinkEntryFlow';
+import { answerOrKnock } from '../directLinkEntry/answerOrKnock';
 import { DockedCall } from './states/DockedCall';
 import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
@@ -991,9 +992,20 @@ export const GroupCallWidget: React.FC = () => {
 		}
 	}, [elementCallUrl, callData?.callId]);
 
+	const [, showKnockWait] = useState(0);
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		callManager.answerCall();
+		/* An advice seeker who is not let in yet waits in the lobby instead of
+		   opening a call the media server refuses ("Call access denied"). */
+		void answerOrKnock(callData, callManager, {
+			asker: Boolean(
+				userData &&
+					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			)
+		})
+			.catch(() => undefined)
+			/* A knock is on record now: the ringing card gives way to the lobby. */
+			.finally(() => showKnockWait((n) => n + 1));
 	};
 
 	const handleDecline = () => {
