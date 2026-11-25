@@ -88,17 +88,20 @@ $tour-launcher-footer-clearance: 40px;
 	// Grip dots on the leading edge, on hover and keyboard focus.
 	&__grip {
 		position: absolute;
-		top: 50%;
+		top: calc(50% - 6.5px);
 		left: 6px;
-		width: 6px;
-		height: 14px;
-		translate: 0 -50%;
-		background-image: radial-gradient(
-			circle,
-			currentcolor 1px,
-			transparent 1.5px
-		);
-		background-size: 4px 4px;
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background-color: currentcolor;
+
+		// 2 × 3 dots: the dot itself plus five shadows.
+		box-shadow:
+			5px 0 currentcolor,
+			0 5px currentcolor,
+			5px 5px currentcolor,
+			0 10px currentcolor,
+			5px 10px currentcolor;
 		opacity: 0;
 		cursor: grab;
 	}
@@ -106,7 +109,7 @@ $tour-launcher-footer-clearance: 40px;
 	&__fab:hover &__grip,
 	&__fab:focus-visible &__grip,
 	&--dragging &__grip {
-		opacity: 0.72;
+		opacity: 0.9;
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
