@@ -6689,6 +6689,34 @@
 				"links": {
 					"title": "Liens sans rendez-vous",
 					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				},
+				"practiceIntro": {
+					"title": "S’exercer au calendrier",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous ajoutez des rendez-vous, un lien de rendez-vous et une plage bloquée, puis activez la confirmation automatique."
+				},
+				"practiceAppointment": {
+					"title": "Ajouter un rendez-vous",
+					"intro": "Cliquez sur « Nouveau », choisissez la personne fictive sous « Consultation » et cliquez sur « Créer ». Laissez « Inviter d’autres personnes par lien » désactivé cette fois."
+				},
+				"practiceInvitation": {
+					"title": "Créer un lien de rendez-vous",
+					"intro": "Rouvrez « Nouveau », choisissez la même personne, activez « Inviter d’autres personnes par lien » et cliquez sur « Créer ». Le lien affiché ensuite est un lien d’exercice et ne mène nulle part."
+				},
+				"practiceCancel": {
+					"title": "Annuler un rendez-vous",
+					"intro": "Vos nouveaux rendez-vous figurent sous « À venir ». Cliquez sur l’un d’eux, choisissez « Annuler le rendez-vous » et confirmez."
+				},
+				"practiceBlocker": {
+					"title": "Ajouter une plage bloquée",
+					"intro": "Pendant une plage bloquée, personne ne peut réserver chez vous. Ouvrez « Nouveau », passez à l’onglet « Plage bloquée » et cliquez sur « Bloquer »."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirmer automatiquement",
+					"intro": "Ouvrez ⋮, puis « Heures de consultation », activez « Confirmer les réservations automatiquement » et cliquez sur « Enregistrer les heures de consultation ». Les réservations dans vos heures de consultation sont alors fermes tout de suite."
+				},
+				"practiceDone": {
+					"title": "Terminé",
+					"intro": "Vous avez ajouté des rendez-vous et un lien de rendez-vous, annulé un rendez-vous, ajouté une plage bloquée et confirmé les réservations automatiquement. Dans le vrai calendrier, la personne est informée de chaque rendez-vous dans le chat."
 				}
 			}
 		},

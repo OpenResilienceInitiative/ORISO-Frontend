@@ -52,12 +52,13 @@ describe('practice mode (module-level core)', () => {
 		globalThis.fetch = originalFetch;
 	});
 
-	it('knows the two practice flows of the spec and the Live-Chat and Gesprächskreis tours (FE#2545)', () => {
+	it('knows the two practice flows of the spec and the Live-Chat, Gesprächskreis and Kalender tours (FE#2545)', () => {
 		expect([...PRACTICE_TOUR_IDS]).toEqual([
 			ACCEPT,
 			SUPERVISION,
 			'consultant-live-chat',
-			'consultant-group-circle'
+			'consultant-group-circle',
+			'consultant-calendar'
 		]);
 	});
 

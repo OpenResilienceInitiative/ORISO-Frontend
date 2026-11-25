@@ -173,6 +173,11 @@ const expectTourEvents = (expected: Partial<Record<string, number>>) =>
 		[PRACTICE_TOUR_EVENTS.circleStarted]: 0,
 		[PRACTICE_TOUR_EVENTS.circleCallStarted]: 0,
 		[PRACTICE_TOUR_EVENTS.liveChatAvailable]: 0,
+		[PRACTICE_TOUR_EVENTS.calendarAppointmentCreated]: 0,
+		[PRACTICE_TOUR_EVENTS.calendarInvitationCreated]: 0,
+		[PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled]: 0,
+		[PRACTICE_TOUR_EVENTS.calendarBlockerCreated]: 0,
+		[PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn]: 0,
 		...expected
 	});
 

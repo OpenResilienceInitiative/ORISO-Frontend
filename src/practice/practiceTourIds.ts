@@ -14,6 +14,13 @@ export const PRACTICE_LIVE_CHAT_TOUR_ID = 'consultant-live-chat';
  * list keeps its explanation tour under the same id.
  */
 export const PRACTICE_GROUP_CIRCLE_TOUR_ID = 'consultant-group-circle';
+/**
+ * FE#2545: the Kalender topic tour. Where practice is open the counsellor
+ * enters appointments, a Terminlink, a Sperrzeit and automatic confirmation
+ * in a practice calendar; elsewhere the Help list keeps its explanation tour
+ * under the same id.
+ */
+export const PRACTICE_CALENDAR_TOUR_ID = 'consultant-calendar';
 
 /** The flows with a practice card of their own (Help → Meine Rundgänge). */
 export const PRACTICE_CARD_TOUR_IDS = [
@@ -30,7 +37,8 @@ export const PRACTICE_CARD_TOUR_IDS = [
 export const PRACTICE_TOUR_IDS = [
 	...PRACTICE_CARD_TOUR_IDS,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
-	PRACTICE_GROUP_CIRCLE_TOUR_ID
+	PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	PRACTICE_CALENDAR_TOUR_ID
 ] as const;
 
 export type PracticeTourId = (typeof PRACTICE_TOUR_IDS)[number];

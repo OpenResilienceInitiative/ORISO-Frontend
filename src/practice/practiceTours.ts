@@ -9,11 +9,13 @@ import {
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_CALENDAR_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
+import { CALENDAR_TOUR_VERSION } from '../components/productTour/tours/calendarTour';
 import {
 	consultantGroupCircleTour,
 	GROUP_CIRCLE_SETTINGS_OPENED,
@@ -386,6 +388,112 @@ export const practiceGroupCircleTour: TourDefinition = {
 	]
 };
 
+/** "Meine Termine", where the calendar tour runs. */
+const CALENDAR_ROUTE = '/booking/events';
+
+/**
+ * FE#2545: the Kalender topic tour as a practice flow, on the real calendar
+ * with the practice advice seeker's conversation. The counsellor enters an
+ * appointment, a second one with a Terminlink, cancels one, enters a
+ * Sperrzeit and switches automatic confirmation on in the Sprechstunden.
+ * Every write is answered in memory. The dialogs sit above the tour layer,
+ * so each step points at the button that opens one, says what to do in it
+ * and waits for the saved result. Same id and version as the explanation
+ * tour it replaces where practice is open; no card of its own.
+ */
+export const practiceCalendarTour: TourDefinition = {
+	id: PRACTICE_CALENDAR_TOUR_ID,
+	version: CALENDAR_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: 'tour.calendar.title',
+	summaryKey: 'tour.calendar.summary',
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.calendar.step.practiceIntro.title',
+			contentKey: 'tour.calendar.step.practiceIntro.intro'
+		},
+		{
+			id: 'appointment',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+			},
+			titleKey: 'tour.calendar.step.practiceAppointment.title',
+			contentKey: 'tour.calendar.step.practiceAppointment.intro'
+		},
+		{
+			// "Weitere Personen per Link einladen" takes the Art's medium;
+			// the step needs the default Art, video, to be invitable.
+			id: 'invitation',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			when: { flag: 'featureDirectInviteVideoEnabled' },
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+			},
+			titleKey: 'tour.calendar.step.practiceInvitation.title',
+			contentKey: 'tour.calendar.step.practiceInvitation.intro'
+		},
+		{
+			// The entry's menu and the confirmation are dialogs as well.
+			id: 'cancel',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-upcoming',
+			placement: 'auto',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+			},
+			titleKey: 'tour.calendar.step.practiceCancel.title',
+			contentKey: 'tour.calendar.step.practiceCancel.intro'
+		},
+		{
+			id: 'blocker',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarBlockerCreated
+			},
+			titleKey: 'tour.calendar.step.practiceBlocker.title',
+			contentKey: 'tour.calendar.step.practiceBlocker.intro'
+		},
+		{
+			// ⋮ → Sprechstunden; colleagues' automatic confirmation needs
+			// colleagues, which the practice world does not have.
+			id: 'auto-accept',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-settings',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn
+			},
+			titleKey: 'tour.calendar.step.practiceAutoAccept.title',
+			contentKey: 'tour.calendar.step.practiceAutoAccept.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.calendar.step.practiceDone.title',
+			contentKey: 'tour.calendar.step.practiceDone.intro'
+		}
+	]
+};
+
 /**
  * Every tour the practice world can host: the card flows and the topic tours
  * that run as practice where it is open. The tour host, the banner and the
@@ -394,7 +502,8 @@ export const practiceGroupCircleTour: TourDefinition = {
 export const practiceHostedTours: TourDefinition[] = [
 	...practiceTours,
 	practiceLiveChatTour,
-	practiceGroupCircleTour
+	practiceGroupCircleTour,
+	practiceCalendarTour
 ];
 
 /**

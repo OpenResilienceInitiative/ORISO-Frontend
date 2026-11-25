@@ -113,7 +113,23 @@ export const createPracticeWorld = ({
 			onCircleCreated: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleCreated),
 			onCircleStarted: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted)
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted),
+			onAppointmentCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+				),
+			onInvitationCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+				),
+			onAppointmentCancelled: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+				),
+			onBlockerCreated: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarBlockerCreated),
+			onAutoAcceptOn: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn)
 		}
 	});
 

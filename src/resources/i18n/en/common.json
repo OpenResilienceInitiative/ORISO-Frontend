@@ -6604,6 +6604,34 @@
 				"links": {
 					"title": "Links without an appointment",
 					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				},
+				"practiceIntro": {
+					"title": "Practise the calendar",
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You add appointments, an appointment link and blocked time, and switch automatic confirmation on."
+				},
+				"practiceAppointment": {
+					"title": "Add an appointment",
+					"intro": "Click \"New\", choose the fictional help seeker under \"Conversation\" and click \"Add\". Leave \"Invite more people by link\" off this time."
+				},
+				"practiceInvitation": {
+					"title": "Create an appointment link",
+					"intro": "Open \"New\" again, choose the same person, switch \"Invite more people by link\" on and click \"Add\". The link you see afterwards is a practice link and leads nowhere."
+				},
+				"practiceCancel": {
+					"title": "Cancel an appointment",
+					"intro": "Your new appointments are listed under \"Up next\". Click one, choose \"Cancel appointment\" and confirm."
+				},
+				"practiceBlocker": {
+					"title": "Add blocked time",
+					"intro": "Nobody can book you during blocked time. Open \"New\", switch to the \"Blocked time\" tab and click \"Block\"."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirm automatically",
+					"intro": "Open ⋮, then \"Consultation hours\", switch \"Confirm bookings automatically\" on and click \"Save consultation hours\". Bookings in your consultation hours are then fixed at once."
+				},
+				"practiceDone": {
+					"title": "Done",
+					"intro": "You added appointments and an appointment link, cancelled one, added blocked time and confirmed bookings automatically. In the real calendar the help seeker learns about every appointment in the chat."
 				}
 			}
 		},

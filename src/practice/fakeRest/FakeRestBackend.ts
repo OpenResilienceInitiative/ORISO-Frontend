@@ -15,12 +15,15 @@ import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 import {
 	isPracticeId,
 	isPracticeRoomId,
+	practiceStringId,
 	PRACTICE_AGENCY_ID,
+	PRACTICE_MATRIX_SERVER,
 	PRACTICE_CIRCLE_CHAT_ID,
 	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
-	PRACTICE_TEAM_ROOM_ID
+	PRACTICE_TEAM_ROOM_ID,
+	PRACTICE_TOPIC_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
@@ -35,6 +38,20 @@ import type {
 import type { groupChatSettings } from '../../api/apiGroupChatSettings';
 import { GROUP_CHAT_API } from '../../api/apiPutGroupChat';
 import type { InternalChatColleague } from '../../components/conversationCreate/internal/loadInternalChatColleagues';
+import type {
+	BlockerCreateDTO,
+	CalendarColleaguesDTO,
+	CalendarConsultationHoursDTO,
+	CalendarConsultationOnceDTO,
+	CalendarEntryDTO,
+	CalendarSyncDTO,
+	CalendarWorkingHoursDTO
+} from '../../api/apiCalendar';
+import type {
+	SessionAppointment,
+	SessionAppointmentSlot
+} from '../../api/apiSessionAppointments';
+import type { DirectLinkDTO } from '../../api/apiDirectLinks';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -45,6 +62,14 @@ export interface FakeRestHooks {
 	onCircleCreated?: (chatId: number) => void;
 	/** Its moderator started it (FE#2545). */
 	onCircleStarted?: (chatId: number) => void;
+	/** The practice calendar (FE#2545): an appointment was entered. */
+	onAppointmentCreated?: (appointmentId: string) => void;
+	/** A Terminlink was made for an appointment. */
+	onInvitationCreated?: (appointmentId: string) => void;
+	onAppointmentCancelled?: (appointmentId: string) => void;
+	onBlockerCreated?: (blockerId: string) => void;
+	/** The Sprechstunden were saved with automatic confirmation on. */
+	onAutoAcceptOn?: () => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -128,16 +153,22 @@ const pathOf = (endpoint: string) =>
 const at = (endpoint: string, suffix = '') =>
 	new RegExp(`^${escapeRegExp(pathOf(endpoint))}${suffix}$`);
 
-/** An endpoint that takes a session id, which must be a practice id. */
-const atSession = (endpoint: (sessionId: number) => string) => {
+/**
+ * An endpoint that takes a session id, which must be a practice id, plus an
+ * optional regex suffix.
+ */
+const atSession = (endpoint: (sessionId: number) => string, suffix = '') => {
 	const marker = String(Number.MAX_SAFE_INTEGER);
 	const [before, after] = pathOf(endpoint(Number.MAX_SAFE_INTEGER)).split(
 		marker
 	);
 	return new RegExp(
-		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}$`
+		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}${suffix}$`
 	);
 };
+
+/** A practice string id (`practice-…`) as a path segment. */
+const PRACTICE_STRING_SEGMENT = '(practice-[A-Za-z0-9._-]+)';
 
 const parseRequest = (
 	input: RequestInfo | URL,
@@ -180,6 +211,10 @@ export const createFakeRestBackend = ({
 	let supervisorSeq: number;
 	/** The Gesprächskreis the counsellor created in this run (FE#2545). */
 	let circle: GroupChatItemInterface | null;
+	/** The practice calendar (FE#2545): own appointments and Sperrzeiten. */
+	let calendar: CalendarEntryDTO[];
+	let consultationHours: Required<CalendarConsultationHoursDTO>;
+	let calendarSeq: number;
 	const served: ServedRequest[] = [];
 
 	const reset = () => {
@@ -192,6 +227,16 @@ export const createFakeRestBackend = ({
 		drafts = new Map();
 		supervisorSeq = 0;
 		circle = null;
+		calendar = [];
+		// Bookable Tuesday mornings, confirmed by hand: the flow switches
+		// automatic confirmation on.
+		consultationHours = {
+			windows: [{ weekday: 2, start: '10:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 1,
+			slotMinutes: 60
+		};
+		calendarSeq = 0;
 		served.length = 0;
 	};
 	reset();
@@ -320,7 +365,334 @@ export const createFakeRestBackend = ({
 		return noContent();
 	};
 
+	/* ---------------- The practice calendar (FE#2545) ---------------- */
+
+	const calendarId = (kind: 'appointment' | 'blocker' | 'invitation') =>
+		practiceStringId(kind, ++calendarSeq);
+
+	const isCalendarEntry = (id: string, type: CalendarEntryDTO['type']) =>
+		isPracticeId(id) &&
+		calendar.some((entry) => entry.id === id && entry.type === type);
+
+	const asAppointment = (entry: CalendarEntryDTO): SessionAppointment => ({
+		id: entry.id,
+		sessionId: practiceCase.session.id,
+		startTime: entry.start,
+		endTime: entry.end,
+		status: 'SCHEDULED',
+		kind: entry.kind,
+		counterpart: {
+			username: practiceCase.user.username,
+			displayName: practiceCase.user.displayName
+		}
+	});
+
+	const appointments = () =>
+		calendar.filter((entry) => entry.type === 'APPOINTMENT');
+
+	/** Entries that overlap [from, to); without a range, all of them. */
+	const entriesIn = (url: URL) => {
+		const from = Date.parse(url.searchParams.get('from') || '');
+		const to = Date.parse(url.searchParams.get('to') || '');
+		return calendar.filter(
+			(entry) =>
+				(Number.isNaN(to) || Date.parse(entry.start) < to) &&
+				(Number.isNaN(from) || Date.parse(entry.end) > from)
+		);
+	};
+
+	const createAppointment = (slot: SessionAppointmentSlot | null) => {
+		if (!slot?.startTime || !slot.endTime) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('appointment'),
+			type: 'APPOINTMENT',
+			start: slot.startTime,
+			end: slot.endTime,
+			ownerId: counsellor.userId,
+			kind: slot.kind ?? 'VIDEO',
+			title: practiceCase.user.username,
+			sessionId: practiceCase.session.id,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onAppointmentCreated?.(entry.id);
+		return ok(asAppointment(entry));
+	};
+
+	const moveEntry = (
+		id: string,
+		type: CalendarEntryDTO['type'],
+		start?: string,
+		end?: string
+	) => {
+		if (!isCalendarEntry(id, type) || !start || !end) return null;
+		calendar = calendar.map((entry) =>
+			entry.id === id ? { ...entry, start, end } : entry
+		);
+		return calendar.find((entry) => entry.id === id)!;
+	};
+
+	/**
+	 * "Weitere Personen per Link einladen": the link exists in memory only
+	 * and points at a reserved host, so a copied practice link leads nowhere.
+	 */
+	const createInvitation = (body: Record<string, unknown> | null) => {
+		const appointment = calendar.find(
+			(entry) =>
+				entry.type === 'APPOINTMENT' && entry.id === body?.appointmentId
+		);
+		if (!appointment) return noContent();
+		const id = calendarId('invitation');
+		const medium = typeof body?.medium === 'string' ? body.medium : 'VIDEO';
+		const validity =
+			typeof body?.validityAfterEndMinutes === 'number'
+				? body.validityAfterEndMinutes
+				: 1440;
+		hooks.onInvitationCreated?.(appointment.id);
+		return ok({
+			id: calendarSeq,
+			token: id,
+			url: `https://${PRACTICE_MATRIX_SERVER}/${id}`,
+			name: null,
+			topicId: PRACTICE_TOPIC_ID,
+			topicName: script.names.topic,
+			agencyId: PRACTICE_AGENCY_ID,
+			medium,
+			temporary: true,
+			active: true,
+			admission: body?.knock === false ? 'DIRECT' : 'KNOCK',
+			createDate: new Date(now()).toISOString(),
+			appointment: {
+				id: appointment.id,
+				startTime: appointment.start,
+				endTime: appointment.end,
+				status: 'SCHEDULED'
+			},
+			validityAfterEndMinutes: validity,
+			expiresAt: new Date(
+				Date.parse(appointment.end) + validity * 60_000
+			).toISOString(),
+			expired: false,
+			accessMode:
+				typeof body?.accessMode === 'string'
+					? (body.accessMode as DirectLinkDTO['accessMode'])
+					: 'BOTH',
+			knock: body?.knock !== false,
+			sessionId: practiceCase.session.id,
+			joinsExistingSession: true
+		} satisfies DirectLinkDTO);
+	};
+
+	const createBlocker = (body: BlockerCreateDTO | null) => {
+		if (!body?.start || !body.end) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('blocker'),
+			type: 'BLOCKER',
+			start: body.start,
+			end: body.end,
+			ownerId: counsellor.userId,
+			allDay: body.allDay === true,
+			title: body.note || null,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onBlockerCreated?.(entry.id);
+		return ok([entry]);
+	};
+
+	const calendarPath = (suffix: string) => at(endpoints.calendarBase, suffix);
+
 	const routes: Route[] = [
+		// The practice calendar (FE#2545). Its reads would show the real
+		// calendar, links and colleagues; its writes stay in memory.
+		{
+			method: 'GET',
+			path: calendarPath('/entries'),
+			viewWide: true,
+			handle: ({ url }) => ok(entriesIn(url))
+		},
+		{
+			// No practice colleagues: their calendars and auto-accept stay out.
+			method: 'GET',
+			path: calendarPath('/colleagues'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					visibilityScope: 'AGENCY',
+					showAskerUsernames: false,
+					colleagues: []
+				} satisfies CalendarColleaguesDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/colleagues/[^/]+/entries'),
+			viewWide: true,
+			handle: () => ok([])
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/auto-accept'),
+			viewWide: true,
+			handle: () => ok({ colleagueIds: [] })
+		},
+		{
+			// No feed and no import: the practice calendar is not synced.
+			method: 'GET',
+			path: calendarPath('/sync'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					feedUrl: '',
+					importConfigured: false
+				} satisfies CalendarSyncDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			handle: () => ok(consultationHours)
+		},
+		{
+			method: 'PUT',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			handle: async ({ body }) => {
+				const next = (await body()) as CalendarConsultationHoursDTO;
+				if (!next || !Array.isArray(next.windows)) return noContent();
+				const wasOn = consultationHours.autoAccept;
+				consultationHours = {
+					windows: next.windows,
+					autoAccept: next.autoAccept ?? consultationHours.autoAccept,
+					noticeDays: next.noticeDays ?? consultationHours.noticeDays,
+					slotMinutes:
+						next.slotMinutes ?? consultationHours.slotMinutes
+				};
+				if (consultationHours.autoAccept && !wasOn) {
+					hooks.onAutoAcceptOn?.();
+				}
+				return ok(consultationHours);
+			}
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours/once'),
+			viewWide: true,
+			handle: () => ok([] satisfies CalendarConsultationOnceDTO[])
+		},
+		{
+			// Monday to Friday, nine to five.
+			method: 'GET',
+			path: calendarPath('/working-hours'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					windows: [1, 2, 3, 4, 5].map((weekday) => ({
+						weekday,
+						start: '09:00',
+						end: '17:00'
+					})),
+					holidayRegion: null,
+					exceptions: []
+				} satisfies CalendarWorkingHoursDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/proposals'),
+			viewWide: true,
+			handle: () => ok({ sent: [], received: [] })
+		},
+		{
+			method: 'POST',
+			path: calendarPath('/blockers'),
+			viewWide: true,
+			handle: async ({ body }) => createBlocker(await body())
+		},
+		{
+			method: 'PUT',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: async ({ body }, [, id]) => {
+				const slot = await body();
+				const moved = moveEntry(id, 'BLOCKER', slot?.start, slot?.end);
+				return moved ? ok([moved]) : null;
+			}
+		},
+		{
+			method: 'DELETE',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: (_request, [, id]) => {
+				if (!isCalendarEntry(id, 'BLOCKER')) return null;
+				calendar = calendar.filter((entry) => entry.id !== id);
+				return noContent();
+			}
+		},
+		{
+			method: 'GET',
+			path: atSession(endpoints.sessionAppointments),
+			handle: (_request, [, id]) =>
+				isCase(id) ? ok(appointments().map(asAppointment)) : null
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionAppointments),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? createAppointment(await body()) : null
+		},
+		{
+			method: 'PUT',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}`
+			),
+			handle: async ({ body }, [, id, appointmentId]) => {
+				if (!isCase(id)) return null;
+				const slot = (await body()) as SessionAppointmentSlot | null;
+				const moved = moveEntry(
+					appointmentId,
+					'APPOINTMENT',
+					slot?.startTime,
+					slot?.endTime
+				);
+				return moved ? ok(asAppointment(moved)) : null;
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}/cancel`
+			),
+			handle: (_request, [, id, appointmentId]) => {
+				if (
+					!isCase(id) ||
+					!isCalendarEntry(appointmentId, 'APPOINTMENT')
+				)
+					return null;
+				const entry = calendar.find((e) => e.id === appointmentId)!;
+				calendar = calendar.filter((e) => e.id !== appointmentId);
+				hooks.onAppointmentCancelled?.(appointmentId);
+				return ok({ ...asAppointment(entry), status: 'CANCELLED' });
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionDirectInvitations),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? createInvitation(await body()) : null
+		},
+		{
+			// "Links ohne Termin": the practice world has none.
+			method: 'GET',
+			path: at(endpoints.directLinks),
+			viewWide: true,
+			handle: () => ok([] satisfies DirectLinkDTO[])
+		},
+		{
+			// The session list's "next appointments": the practice ones only.
+			method: 'GET',
+			path: at(endpoints.upcomingAppointments),
+			viewWide: true,
+			handle: () => ok(appointments().map(asAppointment))
+		},
 		{
 			method: 'GET',
 			path: at(endpoints.consultantEnquiriesBase, 'registered'),
