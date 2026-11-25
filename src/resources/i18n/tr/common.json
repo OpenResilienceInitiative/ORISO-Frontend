@@ -7125,6 +7125,7 @@
 			"waitingFor": "{{count}} dk'dır bekliyor",
 			"justArrived": "az önce geldi",
 			"admit": "İçeri al",
+			"startAndAdmit": "Aramayı başlat ve içeri al",
 			"decline": "Reddet",
 			"admitAll": "Herkesi içeri al",
 			"position": "{{current}} / {{total}}",

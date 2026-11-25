@@ -7115,6 +7115,7 @@
 			"waitingFor": "wartet seit {{count}} Min.",
 			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
+			"startAndAdmit": "Anruf starten und einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",
 			"position": "{{current}} von {{total}}",
