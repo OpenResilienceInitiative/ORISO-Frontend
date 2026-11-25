@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
 	clearCaseHandoverActorOperations,
+	clearCaseHandoverSessionOperations,
+	getCaseHandoverOperation,
 	getOrCreateCaseHandoverOperation,
 	recordCaseHandoverOperationStatus,
 	resetCaseHandoverOperationStoreForTests
@@ -169,5 +171,29 @@ describe('caseHandoverOperationStore', () => {
 				explanation: 'Cover now'
 			}).operationId
 		).not.toBe(first.operationId);
+	});
+
+	it('clears only the operations of the sessions the predicate names', () => {
+		const intent = (sessionId: number) => ({
+			actorId: 'consultant-1',
+			sessionId,
+			kind: 'PUSH' as const,
+			expectedOwnershipRevision: 1,
+			reasonCode: 'CAPACITY',
+			explanation: ''
+		});
+		getOrCreateCaseHandoverOperation(intent(-1));
+		getOrCreateCaseHandoverOperation(intent(41));
+
+		clearCaseHandoverSessionOperations((sessionId) => sessionId < 0);
+
+		const lookup = (sessionId: number) =>
+			getCaseHandoverOperation({
+				actorId: 'consultant-1',
+				sessionId,
+				kind: 'PUSH'
+			});
+		expect(lookup(-1)).toBeUndefined();
+		expect(lookup(41)).toBeDefined();
 	});
 });

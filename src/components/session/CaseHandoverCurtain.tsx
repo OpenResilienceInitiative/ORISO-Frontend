@@ -121,7 +121,11 @@ export const CaseHandoverCurtainView = ({
 		step === 'reason' && (reasonsUnavailable || reasonsLoadFailed);
 
 	return (
-		<div className="caseHandoverCurtain" data-cy="case-handover-curtain">
+		<div
+			className="caseHandoverCurtain"
+			data-cy="case-handover-curtain"
+			data-tour-target="case-handover-curtain"
+		>
 			<div className="caseHandoverCurtain__card">
 				<ScrollableSection bodyKey={step}>
 					<ScrollableSectionHeader>

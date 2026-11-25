@@ -140,7 +140,7 @@ vi.mock('react-joyride', async () => {
 });
 
 const ACCEPT = 'consultant-practice-accept';
-const SUPERVISION = 'consultant-practice-supervision';
+const HANDOVER = 'consultant-case-handover';
 const LIVE_CHAT = 'consultant-live-chat';
 const GROUP_CIRCLE = 'consultant-group-circle';
 const CALENDAR = 'consultant-calendar';
@@ -265,7 +265,8 @@ const renderApp = ({
 	circleOnly = false,
 	/** A second Beratungsstelle: the circle settings preselect none. */
 	twoAgencies = false,
-	liveChatViaSidebar = false
+	liveChatViaSidebar = false,
+	supervision = true
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -276,7 +277,7 @@ const renderApp = ({
 	};
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
-		featureSupervisionEnabled: true,
+		featureSupervisionEnabled: supervision,
 		...(groupCircle && { featureGroupChatV2Enabled: true }),
 		...(circleOnly && {
 			featureInternalGroupChatEnabled: false,
@@ -940,10 +941,167 @@ const expectCalendarStayedInPractice = (from: number) =>
 			)
 	).toEqual([]);
 
+/**
+ * Opens the header "+" menu of the open case and picks an entry, until its
+ * dialog shows. The composer takes the focus once the case has opened, and
+ * focus outside the menu closes it, also between finding and clicking an
+ * entry: open it again until the dialog is there.
+ */
+const pickPlusMenuEntry = async (entry: 'supervision' | 'handover') => {
+	// The handover shows a loading state first, then the offer dialog.
+	const dialogTestIds =
+		entry === 'supervision'
+			? ['manage-people-dialog']
+			: ['supervisor-dialog', 'case-handover-state-dialog'];
+	const opened = () => dialogTestIds.some((id) => screen.queryByTestId(id));
+	const settle = () =>
+		act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
+	for (let attempt = 0; attempt < 60; attempt++) {
+		if (opened()) return;
+		const item = document.querySelector<HTMLElement>(
+			`[data-cy="session-header-plus-${entry}"]`
+		);
+		if (!item) {
+			fireEvent.click(
+				document.querySelector<HTMLElement>(
+					'[data-tour-target="session-supervisor-add"]'
+				)!
+			);
+		} else if (item.getAttribute('aria-disabled') !== 'true') {
+			// "Supervisor verwalten" waits for the conversation features.
+			fireEvent.click(item);
+		}
+		await settle();
+	}
+	expect(opened()).toBe(true);
+};
+
+/** Picks an option of a real (MUI) select inside the given dialog. */
+const choose = async (
+	select: HTMLElement,
+	option: string | RegExp | ((name: string) => boolean)
+) => {
+	fireEvent.mouseDown(within(select).getByRole('combobox'));
+	fireEvent.click(
+		await screen.findByRole(
+			'option',
+			{
+				name:
+					typeof option === 'function'
+						? (name: string) => option(name)
+						: option
+			},
+			SLOW
+		)
+	);
+};
+
+/** The supervisor part (the former F2): "+" → "Supervisor verwalten", Robin, a reason, confirm. */
+const addTheSupervisor = async () => {
+	await pickPlusMenuEntry('supervision');
+	fireEvent.click(
+		await screen.findByRole(
+			'button',
+			{ name: 'managePeople.add.labelFor' },
+			SLOW
+		)
+	);
+	fireEvent.change(
+		await screen.findByPlaceholderText(
+			'managePeople.supervision.reasonPlaceholder'
+		),
+		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
+	);
+	await act(async () => {
+		fireEvent.click(
+			screen.getByRole('button', { name: 'managePeople.add.confirm' })
+		);
+	});
+};
+
+/** "+" → "Beratung übergeben": Alex, the first reason, "Übergabe anbieten". */
+const offerTheCaseToAlex = async () => {
+	await pickPlusMenuEntry('handover');
+	const dialog = await screen.findByTestId('supervisor-dialog', {}, SLOW);
+	await choose(
+		within(dialog).getByTestId('supervisor-dialog-person'),
+		(name: string) => name.startsWith(SCRIPT.cast.colleague.displayName)
+	);
+	fireEvent.mouseDown(
+		within(
+			within(dialog).getByTestId('supervisor-dialog-reason')
+		).getByRole('combobox')
+	);
+	const reasons = (await screen.findAllByRole('option', {}, SLOW)).filter(
+		(option) => option.getAttribute('data-value')
+	);
+	fireEvent.click(reasons[0]);
+	await act(async () => {
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'supervisorDialog.confirm.handover'
+			})
+		);
+	});
+};
+
+/** Types the colleague's name into the real search of the sessions list. */
+const searchForAlex = async (search: HTMLElement) => {
+	const input = await waitFor(() => {
+		const field = search.querySelector<HTMLInputElement>('input');
+		if (!field) {
+			fireEvent.click(
+				within(search).getByRole('button', {
+					name: 'sessionList.toolbar.search.toggle'
+				})
+			);
+		}
+		expect(field).toBeTruthy();
+		return field!;
+	}, SLOW);
+	fireEvent.focus(input);
+	fireEvent.change(input, { target: { value: 'Alex' } });
+};
+
+/** The curtain wizard: "Schritt für Schritt zeigen", a reason, "Weiter", a text, "Zugriff anfragen". */
+const requestAccessThroughTheCurtain = async (curtain: HTMLElement) => {
+	fireEvent.click(
+		within(curtain).getByRole('button', {
+			name: 'caseHandover.curtain.intro.cta'
+		})
+	);
+	const [firstReason] = await within(curtain).findAllByRole(
+		'radio',
+		{},
+		SLOW
+	);
+	fireEvent.click(firstReason);
+	const next = () =>
+		document.querySelector<HTMLButtonElement>(
+			'[data-cy="case-handover-curtain-next"]'
+		)!;
+	await waitFor(() => expect(next().disabled).toBe(false), SLOW);
+	fireEvent.click(next());
+	const explanation = await waitFor(() => {
+		const field = document.querySelector<HTMLTextAreaElement>(
+			'[data-cy="case-handover-curtain-explanation"]'
+		);
+		expect(field).toBeTruthy();
+		return field!;
+	}, SLOW);
+	fireEvent.change(explanation, {
+		target: { value: 'Ich vertrete Alex in dieser Woche.' }
+	});
+	await waitFor(() => expect(next().disabled).toBe(false), SLOW);
+	await act(async () => {
+		fireEvent.click(next());
+	});
+};
+
 describe('practice flows on the real app shell', () => {
 	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
 		const app = renderApp({ strictMode: true });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 		expect(getPracticeNetworkGuard()?.isInstalled).toBe(true);
@@ -1368,50 +1526,34 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});
 
-	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
+	it("Fälle übergeben (FE#2545): adds a supervisor, offers the case to Alex, finds Alex's case and requests access, all through the real controls", async () => {
 		const app = renderApp();
-		await app.start(SUPERVISION);
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(HANDOVER);
 
-		// 1: the add-supervisor button of the accepted case; click, pick, confirm.
-		const add = await expectStep(0);
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
-		expect(route()).toMatch(/sessionView\//);
-		expect(textOf('.chatStage__mainPane')).toContain(
-			SCRIPT.texts.acceptedCaseCounsellorMessage
+		expect(joyride!.steps).toHaveLength(10);
+		pressNext(0);
+
+		// 2: "+" → "Supervisor verwalten" in the accepted practice case.
+		await expectStep(1);
+		expect(route()).toMatch(/sessionView\/!practice-/);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.acceptedCaseCounsellorMessage
+				),
+			SLOW
 		);
 		await afterWorldEvent(
 			PRACTICE_TOUR_EVENTS.supervisorAdded,
-			async () => {
-				fireEvent.click(add!);
-				fireEvent.click(
-					await screen.findByRole(
-						'button',
-						{ name: 'managePeople.add.labelFor' },
-						SLOW
-					)
-				);
-				fireEvent.change(
-					await screen.findByPlaceholderText(
-						'managePeople.supervision.reasonPlaceholder'
-					),
-					{
-						target: {
-							value: 'Ich möchte mich zum Vorgehen absichern.'
-						}
-					}
-				);
-				await act(async () => {
-					fireEvent.click(
-						screen.getByRole('button', {
-							name: 'managePeople.add.confirm'
-						})
-					);
-				});
-			}
+			addTheSupervisor
 		);
 
-		// 2: the side thread with the supervisor's reply; Next.
-		const panel = await expectStep(1);
+		// 3: Robin's reply in the side thread, not in the main chat; Next.
+		const panel = await expectStep(2);
 		await waitFor(
 			() =>
 				expect(panel!.textContent).toContain(
@@ -1422,38 +1564,143 @@ describe('practice flows on the real app shell', () => {
 		expect(textOf('.chatStage__mainPane')).not.toContain(
 			SCRIPT.texts.supervisorReply
 		);
-		pressNext(1);
-
-		// 3: the standing assignment, explained; Next.
-		await expectStep(2);
 		pressNext(2);
 
-		// 4: done.
-		await finish(3);
+		// 4: "+" → "Beratung übergeben": Alex, a reason, "Übergabe anbieten".
+		await expectStep(3);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.caseHandoverOffered,
+			offerTheCaseToAlex
+		);
+
+		// 5: the offer waits for Alex; the dialog shows its state and
+		// "Angebot zurückziehen". Close it; Next.
+		await expectStep(4);
+		const state = await screen.findByTestId(
+			'case-handover-state-dialog',
+			{},
+			SLOW
+		);
+		expect(
+			within(state).getByRole('button', {
+				name: 'caseHandover.offer.withdraw'
+			})
+		).toBeTruthy();
+		// The primary "Schließen" in the footer (the header × has the same name).
+		fireEvent.click(
+			within(state)
+				.getAllByRole('button', { name: 'supervisorDialog.close' })
+				.at(-1)!
+		);
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('case-handover-state-dialog')
+			).toBeNull()
+		);
+		pressNext(4);
+
+		// 6: the real search of the sessions list; "Alex" lists Alex's case.
+		const search = await expectStep(5);
+		expect(route()).toMatch(/^\/sessions\/consultant\/sessionView/);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.colleagueCaseFound, () =>
+			searchForAlex(search!)
+		);
+
+		// 7: "Zugriff anfragen" on Alex's case; the click moves on.
+		const requestAccess = await expectStep(6);
+		expect(requestAccess!.textContent).toContain(
+			'caseHandover.list.requestAccess'
+		);
+		await act(async () => {
+			fireEvent.click(
+				requestAccess!.matches('button')
+					? requestAccess!
+					: requestAccess!.querySelector('button')!
+			);
+		});
+
+		// 8: the case opens behind its curtain; the wizard sends the request.
+		const curtain = await expectStep(7);
+		await waitFor(
+			() => expect(route()).toMatch(/sessionView\/session\/-3$/),
+			SLOW
+		);
+		expect(textOf('.chatStage__mainPane')).not.toContain(
+			SCRIPT.texts.acceptedCaseCounsellorMessage
+		);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.caseHandoverRequested, () =>
+			requestAccessThroughTheCurtain(curtain!)
+		);
+		await waitFor(
+			() =>
+				expect(curtain!.textContent).toContain(
+					'caseHandover.pending.title'
+				),
+			SLOW
+		);
+
+		// 9: the status lives in the activity timeline; Next.
+		await expectStep(8);
+		pressNext(8);
+
+		// 10: done. Only the completion is written; nothing else left.
+		await finish(9);
+		expect(progressWrites()).toEqual(expect.arrayContaining(['completed']));
+		expect(
+			network.filter(({ url }) => url.includes('case-handover'))
+		).toEqual([]);
 	}, 120000);
-	it('cannot launch F2 through a stale request below its picker breakpoint', async () => {
+
+	it('Fälle übergeben without supervision: the supervisor steps drop out, the handover stays', async () => {
+		const app = renderApp({ supervision: false });
+		await app.request(HANDOVER);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(joyride!.steps).toHaveLength(8);
+		pressNext(0);
+		const plus = await expectStep(1);
+		expect(plus!.getAttribute('data-tour-target')).toBe(
+			'session-supervisor-add'
+		);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.caseHandoverOffered,
+			offerTheCaseToAlex
+		);
+		await expectStep(2);
+	}, 120000);
+
+	it('Fälle übergeben without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(HANDOVER);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(6);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('cannot launch the "Fälle übergeben" practice through a stale request below its picker breakpoint', async () => {
 		const app = renderApp({ width: 1199 });
-		app.request(SUPERVISION);
+		app.request(HANDOVER);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
-		expect(progressWrites()).toEqual([]);
+		expect(progressWrites()).not.toContain('completed');
 		app.resize(1200);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 	});
 
-	it('can launch F2 at the real picker breakpoint', async () => {
+	it('can launch the "Fälle übergeben" practice at the real picker breakpoint', async () => {
 		const app = renderApp({ width: 1200 });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 	}, 120000);
 
-	it('does not restart F2 automatically after resizing below and back above its picker breakpoint', async () => {
+	it('does not restart the "Fälle übergeben" practice automatically after resizing below and back above its picker breakpoint', async () => {
 		const app = renderApp({ width: 1200 });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 
 		app.resize(1199);
@@ -1461,14 +1708,13 @@ describe('practice flows on the real app shell', () => {
 			() => expect(getPracticeSnapshot().status).toBe('inactive'),
 			SLOW
 		);
-		expect(route()).toBe(HELP_ROUTE);
 		app.resize(1200);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 		expect(progressWrites()).not.toContain('completed');
 
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 	}, 120000);
@@ -1478,8 +1724,10 @@ describe('practice flows on the real app shell', () => {
 		setMatrixClientServiceRef(service);
 		const app = renderApp();
 		try {
-			await app.start(SUPERVISION);
+			await app.request(HANDOVER);
 			await expectStep(0);
+			pressNext(0);
+			await expectStep(1);
 			const scope = () =>
 				document.querySelector<HTMLElement>('.chatStage__mainPane');
 			await waitFor(() => expect(liveEditor(scope)).toBeTruthy(), SLOW);
@@ -1515,15 +1763,17 @@ describe('practice flows on the real app shell', () => {
 		}
 	}, 120000);
 
-	it('banner End remains keyboard-accessible while the F2 picker is open', async () => {
+	it('banner End remains keyboard-accessible while the supervisor picker of "Fälle übergeben" is open', async () => {
 		// The real focus trap stays active; jsdom supplies no visible geometry.
 		vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
 			() => [{ width: 100, height: 40 }] as unknown as DOMRectList
 		);
 		const app = renderApp();
-		await app.start(SUPERVISION);
-		const add = await expectStep(0);
-		fireEvent.click(add!);
+		await app.request(HANDOVER);
+		await expectStep(0);
+		pressNext(0);
+		await expectStep(1);
+		await pickPlusMenuEntry('supervision');
 		await screen.findByRole(
 			'button',
 			{ name: 'managePeople.add.labelFor' },

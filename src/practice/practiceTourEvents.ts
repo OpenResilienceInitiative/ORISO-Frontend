@@ -30,7 +30,13 @@ export const PRACTICE_TOUR_EVENTS = {
 	/** A Sperrzeit was entered. */
 	calendarBlockerCreated: 'practice:calendar-blocker-created',
 	/** The Sprechstunden were saved with automatic confirmation on. */
-	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on'
+	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+	/** "Fälle übergeben" (FE#2545): the own case was offered to Alex. */
+	caseHandoverOffered: 'practice:case-handover-offered',
+	/** A search by name listed the colleague's case. */
+	colleagueCaseFound: 'practice:colleague-case-found',
+	/** Access to the colleague's case was requested. */
+	caseHandoverRequested: 'practice:case-handover-requested'
 } as const;
 
 export type PracticeTourEventName =

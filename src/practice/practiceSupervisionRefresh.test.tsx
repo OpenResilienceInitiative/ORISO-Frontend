@@ -22,7 +22,7 @@ describe('practice supervisor refresh signal', () => {
 	});
 
 	it('changes on every announcement while practising', () => {
-		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		enterPracticeMode({ tourId: 'consultant-case-handover' });
 		const { result } = renderHook(() => usePracticeSupervisorsRevision());
 		const before = result.current;
 
@@ -35,7 +35,7 @@ describe('practice supervisor refresh signal', () => {
 	});
 
 	it('falls back to 0 when practice ends', () => {
-		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		enterPracticeMode({ tourId: 'consultant-case-handover' });
 		const { result } = renderHook(() => usePracticeSupervisorsRevision());
 		act(() => notifyPracticeSupervisorsChanged());
 		expect(result.current).toBeGreaterThan(0);

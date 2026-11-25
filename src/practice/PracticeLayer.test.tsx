@@ -22,23 +22,19 @@ const Probe = () => {
 };
 
 describe('PracticeLayer', () => {
-	it('registers the host hooks of both practice tours at app start, and removes them again', () => {
+	it('registers the host hooks of the practice tours at app start, and removes them again', () => {
 		const { unmount } = render(
 			<PracticeLayer>
 				<Probe />
 			</PracticeLayer>
 		);
 		expect(getTourHostHooks('consultant-practice-accept')).toBeDefined();
-		expect(
-			getTourHostHooks('consultant-practice-supervision')
-		).toBeDefined();
+		expect(getTourHostHooks('consultant-case-handover')).toBeDefined();
 
 		unmount();
 
 		expect(getTourHostHooks('consultant-practice-accept')).toBeUndefined();
-		expect(
-			getTourHostHooks('consultant-practice-supervision')
-		).toBeUndefined();
+		expect(getTourHostHooks('consultant-case-handover')).toBeUndefined();
 	});
 
 	it('adds nothing to the page while practice is off: no markup, no fetch patch, no request, no storage', async () => {

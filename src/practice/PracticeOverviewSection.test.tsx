@@ -170,63 +170,27 @@ describe('PracticeOverviewSection', () => {
 		expect(container.innerHTML).toBe('');
 	});
 
-	describe('Supervision card', () => {
-		it('is offered while the tenant never switched the feature off', async () => {
-			renderSection({ tenant: {} });
+	describe('the former Supervision card (FE#2545)', () => {
+		it.each([
+			['the tenant never switched supervision off', {}],
+			['there is no tenant data', null],
+			['supervision is on', { featureSupervisionEnabled: true }]
+		])(
+			'is not offered when %s: it is part of "Fälle übergeben" now',
+			async (_name, tenant) => {
+				renderSection({ tenant });
 
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
-
-		it('is offered without any tenant data (unset means on)', async () => {
-			renderSection({ tenant: null });
-
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
-
-		it('is hidden, not greyed, when the tenant switched Supervision off', async () => {
-			renderSection({ tenant: { featureSupervisionEnabled: false } });
-
-			expect(
 				await screen.findByRole('heading', {
 					name: 'Übung: Anfrage annehmen'
-				})
-			).toBeTruthy();
-			expect(
-				screen.queryByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeNull();
-			expect(screen.queryByText(/Supervisor:in hinzuzufügen/)).toBeNull();
-		});
-
-		it('follows the tenant switch while the page is open', async () => {
-			const { rerenderWith } = renderSection({ tenant: {} });
-			await screen.findByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			});
-
-			rerenderWith({ tenant: { featureSupervisionEnabled: false } });
-			expect(
-				screen.queryByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeNull();
-
-			rerenderWith({ tenant: { featureSupervisionEnabled: true } });
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
+				});
+				expect(screen.getAllByRole('listitem')).toHaveLength(1);
+				expect(
+					screen.queryByRole('heading', {
+						name: /Supervision/
+					})
+				).toBeNull();
+			}
+		);
 	});
 
 	describe('on a phone', () => {
@@ -251,49 +215,28 @@ describe('PracticeOverviewSection', () => {
 		});
 	});
 
-	it.each([1199, 1200])(
-		'matches the supervision picker boundary at %ipx',
+	it.each([1024, 1199, 1200])(
+		'offers F1 from the fromL layout on, at %ipx',
 		async (width) => {
 			const { store } = renderSection({ width });
-			const supervision = (
+			const accept = (
 				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
+					name: 'Übung: Anfrage annehmen'
 				})
 			).closest('li')!;
-			const start = within(supervision).getByRole('button', {
+			const start = within(accept).getByRole('button', {
 				name: 'Übung starten'
 			}) as HTMLButtonElement;
-			expect(start.disabled).toBe(width < 1200);
+			expect(start.disabled).toBe(false);
+			expect(
+				screen.queryByText(
+					'Bitte vergrößern Sie das Browserfenster für diese Übung.'
+				)
+			).toBeNull();
 			fireEvent.click(start);
 			expect(store.get(tourLaunchRequestAtom)?.tourId).toBe(
-				width < 1200 ? undefined : 'consultant-practice-supervision'
+				'consultant-practice-accept'
 			);
 		}
 	);
-
-	it('offers F1 at 1024px and explains why F2 needs a wider window', async () => {
-		renderSection({ width: 1024 });
-		const accept = (
-			await screen.findByRole('heading', {
-				name: 'Übung: Anfrage annehmen'
-			})
-		).closest('li')!;
-		const supervision = (
-			await screen.findByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			})
-		).closest('li')!;
-		expect(
-			(
-				within(accept).getByRole('button', {
-					name: 'Übung starten'
-				}) as HTMLButtonElement
-			).disabled
-		).toBe(false);
-		expect(
-			within(supervision).getByText(
-				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
-			)
-		).toBeTruthy();
-	});
 });

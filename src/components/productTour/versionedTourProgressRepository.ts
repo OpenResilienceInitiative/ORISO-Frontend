@@ -5,6 +5,7 @@ import {
 } from '../../api/apiTutorialProgress';
 import type { TourProgress } from './types';
 import { isPracticeTourId } from '../../practice/practiceTourIds';
+import { withFoldedPracticeProgress } from '../../practice/practiceFoldedProgress';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { parseJwt } from '../../utils/parseJWT';
 
@@ -64,6 +65,10 @@ export const versionedTourProgressRepository: VersionedTourProgressRepository =
 			}
 		},
 		async getProgress(): Promise<ITutorialProgressItem[]> {
-			return apiGetTutorialProgress('frontend');
+			// A completed former practice card counts for the tour that
+			// absorbed it (FE#2545).
+			return withFoldedPracticeProgress(
+				(await apiGetTutorialProgress('frontend')) ?? []
+			);
 		}
 	};

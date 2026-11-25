@@ -243,6 +243,12 @@ const anchorContract: Array<{
 			/data-tour-target="calendar-upcoming"[\s\S]*data-tour-target="calendar-upcoming"/
 	},
 	{
+		// The request wizard of a colleague's case (FE#2545, the practice
+		// "Fälle übergeben" request step).
+		anchor: 'case-handover-curtain',
+		sourceFile: 'session/CaseHandoverCurtain.tsx'
+	},
+	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/

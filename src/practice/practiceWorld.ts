@@ -129,7 +129,13 @@ export const createPracticeWorld = ({
 			onBlockerCreated: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarBlockerCreated),
 			onAutoAcceptOn: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn)
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn),
+			onCaseHandoverOffered: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.caseHandoverOffered),
+			onColleagueCaseFound: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.colleagueCaseFound),
+			onCaseHandoverRequested: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.caseHandoverRequested)
 		}
 	});
 

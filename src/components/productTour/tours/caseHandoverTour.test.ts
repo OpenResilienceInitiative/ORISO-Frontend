@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { frontendTopicTours } from '../tourDefinitions';
-import { consultantCaseHandoverTour } from './caseHandoverTour';
+import {
+	CASE_HANDOVER_TOUR_VERSION,
+	consultantCaseHandoverTour
+} from './caseHandoverTour';
 import { itKeepsTheTourContract } from './tourDefinitionContract.testkit';
 
 describe('consultant-case-handover', () => {
-	itKeepsTheTourContract(consultantCaseHandoverTour, 'consultant');
+	itKeepsTheTourContract(
+		consultantCaseHandoverTour,
+		'consultant',
+		CASE_HANDOVER_TOUR_VERSION
+	);
+
+	it('is version 2: the practice rendering (FE#2545) shares id and version', () => {
+		expect(CASE_HANDOVER_TOUR_VERSION).toBe(2);
+	});
 
 	const steps = consultantCaseHandoverTour.steps;
 

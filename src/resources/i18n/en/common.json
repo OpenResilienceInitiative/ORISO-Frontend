@@ -3553,7 +3553,8 @@
 		"cast": {
 			"asker": "Sam Muster (practice)",
 			"colleague": "Alex (practice)",
-			"supervisor": "Robin (practice)"
+			"supervisor": "Robin (practice)",
+			"colleagueClient": "Kim (practice)"
 		},
 		"asker": {
 			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
@@ -6414,28 +6415,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Practice: Add a supervisor",
-			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
-			"step": {
-				"addSupervisor": {
-					"title": "Add a supervisor",
-					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
-				},
-				"supervisorReply": {
-					"title": "The supervisor’s reply",
-					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
-				},
-				"standingAssignment": {
-					"title": "Fixed assignment",
-					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
-				},
-				"done": {
-					"title": "Well done!",
-					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Help",
 			"title": "Tours",
@@ -6470,6 +6449,42 @@
 				"done": {
 					"title": "In short",
 					"intro": "Offer your own cases in the consultation via \"+\" → \"Hand over consultation\". Request colleagues' cases through the people search. Follow the status in the timeline."
+				},
+				"practiceIntro": {
+					"title": "Practise handing over cases",
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You offer your consultation to Alex and request access to one of Alex’s cases."
+				},
+				"practiceSupervisor": {
+					"title": "Add a supervisor",
+					"intro": "Click “+” and then “Manage Supervisors”. Choose Robin, give a short reason and confirm."
+				},
+				"practiceSupervisorReply": {
+					"title": "The supervisor’s reply",
+					"intro": "Robin has replied in the side chat. Only the two of you can see these messages, the advice seeker cannot."
+				},
+				"practiceOffer": {
+					"intro": "Click “+” and then “Hand over consultation”. Choose Alex and a reason, then click “Send handover offer”."
+				},
+				"practiceOfferPending": {
+					"title": "Offer sent",
+					"intro": "Alex decides now, until then you stay responsible, and “Withdraw offer” takes it back. Close the window with “Close” and go on."
+				},
+				"practiceSearch": {
+					"intro": "Type “Alex” here. The list then shows the case of Alex that you may request access to."
+				},
+				"practiceRequestAccess": {
+					"intro": "Click “Request access” on Alex’s case. The case opens, but its content stays hidden."
+				},
+				"practiceRequest": {
+					"title": "Give a reason",
+					"intro": "Click “Show me step by step”, choose a reason and click “Next”. Describe the reason briefly and click “Request access”."
+				},
+				"practiceStatus": {
+					"intro": "The case now shows “Awaiting approval” until Alex decides. You see Alex’s answers to your offer and your request in the timeline."
+				},
+				"practiceDone": {
+					"title": "Well done!",
+					"intro": "You offered your consultation and requested access to a case. Use the button below to end the practice."
 				}
 			}
 		},
@@ -7207,8 +7222,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Accept an enquiry and write a first reply.",
-				"supervision": "Choose a supervisor and add them to a counselling session."
+				"accept": "Accept an enquiry and write a first reply."
 			},
 			"title": "Practice area",
 			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",

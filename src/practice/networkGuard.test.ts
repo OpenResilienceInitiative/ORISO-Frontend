@@ -338,12 +338,12 @@ describe('NetworkGuard (default-deny for every non-GET request)', () => {
 				});
 			await put(TOUR_ID);
 
-			guard.setAllowedTourIds(['consultant-practice-supervision']);
+			guard.setAllowedTourIds(['consultant-case-handover']);
 
 			await expect(put(TOUR_ID)).rejects.toBeInstanceOf(
 				PracticeBlockedRequestError
 			);
-			await put('consultant-practice-supervision');
+			await put('consultant-case-handover');
 			expect(globalThis.fetch).toBe(wrapped);
 		});
 	});

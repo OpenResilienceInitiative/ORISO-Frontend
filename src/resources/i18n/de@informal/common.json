@@ -2769,23 +2769,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"addSupervisor": {
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."
-				},
-				"supervisorReply": {
-					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."
-				},
-				"standingAssignment": {
-					"intro": "Hat deine Administration dir eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür musst du nichts tun."
-				},
-				"done": {
-					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
-				}
-			}
-		},
 		"caseHandover": {
 			"step": {
 				"intro": {
@@ -2805,6 +2788,36 @@
 				},
 				"done": {
 					"intro": "Eigene Fälle bietest du in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragst du über die Personensuche an. Den Stand findest du im Zeitstrahl."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du bietest deine Beratung Alex an und fragst Zugriff auf einen Fall von Alex an."
+				},
+				"practiceSupervisor": {
+					"intro": "Klicke auf „+“ und dann auf „Supervisor verwalten“. Wähle Robin aus, nenne kurz den Grund und bestätige."
+				},
+				"practiceSupervisorReply": {
+					"intro": "Robin hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei, die ratsuchende Person sieht sie nicht."
+				},
+				"practiceOffer": {
+					"intro": "Klicke auf „+“ und dann auf „Beratung übergeben“. Wähle Alex und einen Grund aus und klicke auf „Übergabe anbieten“."
+				},
+				"practiceOfferPending": {
+					"intro": "Jetzt entscheidet Alex, bis dahin bleibst du zuständig, und mit „Angebot zurückziehen“ nimmst du es zurück. Schließe das Fenster mit „Schließen“ und gehe weiter."
+				},
+				"practiceSearch": {
+					"intro": "Gib hier „Alex“ ein. Die Liste zeigt dann den Fall von Alex, auf den du Zugriff anfragen darfst."
+				},
+				"practiceRequestAccess": {
+					"intro": "Klicke beim Fall von Alex auf „Zugriff anfragen“. Der Fall öffnet sich, sein Inhalt bleibt aber verborgen."
+				},
+				"practiceRequest": {
+					"intro": "Klicke auf „Schritt für Schritt zeigen“, wähle einen Grund und klicke auf „Weiter“. Beschreibe den Grund kurz und klicke auf „Zugriff anfragen“."
+				},
+				"practiceStatus": {
+					"intro": "Am Fall steht jetzt „Warten auf Freigabe“, bis Alex entscheidet. Wie Alex auf dein Angebot und deine Anfrage antwortet, siehst du im Zeitstrahl."
+				},
+				"practiceDone": {
+					"intro": "Du hast deine Beratung angeboten und Zugriff auf einen Fall angefragt. Mit der Schaltfläche unten beendest du die Übung."
 				}
 			}
 		},
@@ -3173,8 +3186,7 @@
 	"practice": {
 		"cards": {
 			"summary": {
-				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
-				"supervision": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen."
+				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben."
 			},
 			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
 			"empty": "Aktuell sind keine Übungen für dich verfügbar.",

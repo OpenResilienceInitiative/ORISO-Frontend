@@ -1159,15 +1159,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
-						/* Practice conversations keep the direct "+": the
-						   supervision tour teaches exactly that click, and a
-						   handover could not leave the practice sandbox. */
-						const isPracticeConversation =
-							isPracticeId(activeSession.item.id) ||
-							isPracticeRoomId(activeSession.item.matrixRoomId);
+						/* Practice conversations get the same "+" menu (FE#2545):
+						   "Fälle übergeben" teaches both entries, and the fake
+						   backend answers the handover in memory. */
 						const canHandOverHere =
 							!untilL &&
-							!isPracticeConversation &&
 							offersCaseHandoverIn(
 								activeSession,
 								userData?.agencies

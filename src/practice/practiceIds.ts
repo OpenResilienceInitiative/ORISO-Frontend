@@ -95,3 +95,7 @@ export const PRACTICE_SUPERVISION_ROOM_ID = practiceMatrixId('!', '3');
    its own, never the case's, and its own room. */
 export const PRACTICE_CIRCLE_CHAT_ID = practiceNumericId(2);
 export const PRACTICE_CIRCLE_ROOM_ID = practiceMatrixId('!', '4');
+/* "Fälle übergeben" (FE#2545): a colleague's case the counsellor may ask to
+   take over, with its own session id and room. */
+export const PRACTICE_COLLEAGUE_SESSION_ID = practiceNumericId(3);
+export const PRACTICE_COLLEAGUE_ROOM_ID = practiceMatrixId('!', '5');

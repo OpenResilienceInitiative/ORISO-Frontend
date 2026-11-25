@@ -408,6 +408,8 @@ export interface FlowRun {
 	typed: string[];
 	/** Flow F1 only: whether the Träger's Team-Besprechung steps were present. */
 	withTeam?: boolean;
+	/** "Fälle übergeben" only: whether the supervisor steps were present. */
+	withSupervision?: boolean;
 }
 
 const ACCEPT_STEP = 'tour.practiceAccept.step';
@@ -500,59 +502,172 @@ export const driveAcceptFlow = async (
 	return { typed, withTeam };
 };
 
-/** Flow F2 from the first tooltip to the last (spec 3.4): four steps. */
-export const driveSupervisionFlow = async (
+/** The topic tour tile of the Help list (no practice card: FE#2545). */
+export const tourTile = (page: Page, titleKey: string): Locator =>
+	page.locator('li.tourOverview__card', {
+		has: page.getByRole('heading', { name: exactText(titleKey) })
+	});
+
+export const tourTileButton = (tile: Locator): Locator =>
+	tile.getByRole('button', {
+		name: exactText(
+			'walkthrough.overview.action.start',
+			'walkthrough.overview.action.continue',
+			'walkthrough.overview.action.restart'
+		)
+	});
+
+/** Opens the header "+" of the open case and picks one of its entries. */
+const pickPlusMenuEntry = async (page: Page, entryCy: string) => {
+	await clickTarget(page, 'session-supervisor-add');
+	await page.locator(`[data-cy="${entryCy}"]`).click();
+};
+
+/** Picks an option of a real select inside a dialog. */
+const choose = async (select: Locator, option: RegExp | number) => {
+	await select.getByRole('combobox').click();
+	const options = select.page().getByRole('option');
+	await (
+		typeof option === 'number'
+			? options.nth(option)
+			: options.filter({ hasText: option }).first()
+	).click();
+};
+
+/**
+ * "Fälle übergeben" practised (FE#2545), with the former card "Supervisor
+ * hinzufügen" folded in: ten steps, eight where the Träger switched
+ * supervision off.
+ */
+export const driveCaseHandoverFlow = async (
 	page: Page,
 	run: string
 ): Promise<FlowRun> => {
 	const typed: string[] = [];
-	const step = 'tour.practiceSupervision.step';
+	const step = 'tour.caseHandover.step';
 
-	const total = await expectStep(page, `${step}.addSupervisor.title`, 1);
-	expect(total).toBe(4);
-	await expect(mainPane(page)).toContainText(
-		partOfText('practiceScript.counsellor.acceptedCaseMessage'),
+	const total = await expectStep(page, `${step}.practiceIntro.title`, 1);
+	expect([8, 10]).toContain(total);
+	const withSupervision = total === 10;
+	await pressNext(page);
+	let at = 2;
+
+	if (withSupervision) {
+		await expectStep(page, `${step}.practiceSupervisor.title`, at, total);
+		await expect(mainPane(page)).toContainText(
+			partOfText('practiceScript.counsellor.acceptedCaseMessage'),
+			{ timeout: STEP_TIMEOUT }
+		);
+		await pickPlusMenuEntry(page, 'session-header-plus-supervision');
+		const picker = page.getByTestId('manage-people-dialog');
+		await picker
+			.getByRole('button', {
+				name: partOfText('practiceScript.cast.supervisor')
+			})
+			.first()
+			.click();
+		const reason = typedText(run, 'reason');
+		typed.push(reason);
+		await picker
+			.getByPlaceholder(
+				partOfText('managePeople.supervision.reasonPlaceholder')
+			)
+			.fill(reason);
+		await picker
+			.getByRole('button', {
+				name: partOfText('practiceScript.cast.supervisor')
+			})
+			.last()
+			.click();
+
+		at += 1;
+		await expectStep(
+			page,
+			`${step}.practiceSupervisorReply.title`,
+			at,
+			total
+		);
+		await expect(target(page, 'supervision-panel')).toContainText(
+			partOfText('practiceScript.supervisor.reply'),
+			{ timeout: STEP_TIMEOUT }
+		);
+		await pressNext(page);
+		at += 1;
+	}
+
+	// "+" → "Beratung übergeben": Alex, the first reason, "Übergabe anbieten".
+	await expectStep(page, `${step}.offer.title`, at, total);
+	await pickPlusMenuEntry(page, 'session-header-plus-handover');
+	const offer = page.getByTestId('supervisor-dialog');
+	await choose(
+		offer.getByTestId('supervisor-dialog-person'),
+		partOfText('practiceScript.cast.colleague')
+	);
+	await choose(offer.getByTestId('supervisor-dialog-reason'), 1);
+	await offer
+		.getByRole('button', {
+			name: exactText('supervisorDialog.confirm.handover')
+		})
+		.click();
+
+	at += 1;
+	await expectStep(page, `${step}.practiceOfferPending.title`, at, total);
+	const state = page.getByTestId('case-handover-state-dialog');
+	await expect(
+		state.getByRole('button', {
+			name: exactText('caseHandover.offer.withdraw')
+		})
+	).toBeVisible();
+	await state
+		.getByRole('button', { name: exactText('supervisorDialog.close') })
+		.last()
+		.click();
+	await pressNext(page);
+
+	// The real search: the colleague's name lists her takeable case.
+	at += 1;
+	await expectStep(page, `${step}.search.title`, at, total);
+	const search = target(page, 'sessions-search');
+	if ((await search.locator('input').count()) === 0) {
+		await search
+			.getByRole('button', {
+				name: exactText('sessionList.toolbar.search.toggle')
+			})
+			.click();
+	}
+	await search
+		.locator('input')
+		.first()
+		.pressSequentially('Alex', { delay: 20 });
+
+	at += 1;
+	await expectStep(page, `${step}.requestAccess.title`, at, total);
+	await clickTarget(page, 'case-handover-request-access');
+
+	// The curtain: a reason, a short text, "Zugriff anfragen".
+	at += 1;
+	await expectStep(page, `${step}.practiceRequest.title`, at, total);
+	const curtain = target(page, 'case-handover-curtain');
+	await curtain.locator('[data-cy="case-handover-curtain-start"]').click();
+	await curtain.getByRole('radio').first().check();
+	await page.locator('[data-cy="case-handover-curtain-next"]').click();
+	const explanation = typedText(run, 'explanation');
+	typed.push(explanation);
+	await page
+		.locator('[data-cy="case-handover-curtain-explanation"]')
+		.fill(explanation);
+	await page.locator('[data-cy="case-handover-curtain-next"]').click();
+	await expect(curtain).toContainText(
+		partOfText('caseHandover.pending.title'),
 		{ timeout: STEP_TIMEOUT }
 	);
-	// The real "+": pick the supervisor, give the reason, confirm.
-	await clickTarget(page, 'session-supervisor-add');
-	await page.getByRole('combobox').click();
-	await page
-		.getByRole('option', {
-			name: partOfText('practiceScript.cast.supervisor')
-		})
-		.click();
-	const reason = typedText(run, 'reason');
-	typed.push(reason);
-	await page
-		.getByPlaceholder(
-			partOfText('sessionHeader.supervisor.modal.reasonPlaceholder')
-		)
-		.fill(reason);
-	await page
-		.getByRole('button', {
-			name: exactText('sessionHeader.supervisor.modal.addButton')
-		})
-		.click();
 
-	await expectStep(page, `${step}.supervisorReply.title`, 2, total);
-	const panel = target(page, 'supervision-panel');
-	await expect(panel).toContainText(
-		partOfText('practiceScript.supervisor.reply'),
-		{
-			timeout: STEP_TIMEOUT
-		}
-	);
-	await expect(mainPane(page)).not.toContainText(
-		partOfText('practiceScript.supervisor.reply')
-	);
+	at += 1;
+	await expectStep(page, `${step}.status.title`, at, total);
 	await pressNext(page);
 
-	await expectStep(page, `${step}.standingAssignment.title`, 3, total);
-	await pressNext(page);
-
-	await expectStep(page, `${step}.done.title`, 4, total);
-	return { typed };
+	await expectStep(page, `${step}.practiceDone.title`, at + 1, total);
+	return { typed, withSupervision };
 };
 
 /**

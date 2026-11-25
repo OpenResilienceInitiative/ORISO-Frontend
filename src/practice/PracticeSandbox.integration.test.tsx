@@ -178,6 +178,9 @@ const expectTourEvents = (expected: Partial<Record<string, number>>) =>
 		[PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled]: 0,
 		[PRACTICE_TOUR_EVENTS.calendarBlockerCreated]: 0,
 		[PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn]: 0,
+		[PRACTICE_TOUR_EVENTS.caseHandoverOffered]: 0,
+		[PRACTICE_TOUR_EVENTS.colleagueCaseFound]: 0,
+		[PRACTICE_TOUR_EVENTS.caseHandoverRequested]: 0,
 		...expected
 	});
 
@@ -511,12 +514,28 @@ const acceptAndReply = async (
 /** F2 up to the confirmed add: open the accepted case, pick Robin, confirm. */
 const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 	await openThePracticeCase(view.container);
-	const add = await screen.findByRole(
-		'button',
-		{ name: 'sessionHeader.supervisor.modal.title' },
+	// The practice case has the real "+" menu (FE#2545): supervision and
+	// the handover, like every own case on a wide screen.
+	// The composer takes the focus once the case has opened, and focus
+	// outside the menu closes it: open it again until it stays open.
+	const entry = await waitFor(
+		() => {
+			const item = screen.queryByRole('menuitem', {
+				name: /sessionHeader\.supervisor\.modal\.title/
+			});
+			if (!item) {
+				fireEvent.click(
+					screen.getByRole('button', {
+						name: 'sessionHeader.supervisor.plusMenu.menuLabel'
+					})
+				);
+			}
+			expect(item).toBeTruthy();
+			return item!;
+		},
 		{ timeout: 15000 }
 	);
-	fireEvent.click(add);
+	fireEvent.click(entry);
 
 	// The picker offers Robin, and not the colleague who is no supervisor.
 	const dialog = await screen.findByTestId(
@@ -710,7 +729,7 @@ describe('practice sandbox on the real session containers', () => {
 	}, 60000);
 
 	it('supervision in practice mode: the reply shows in the side thread without reopening the case, the side room offers no call and nothing needs blocking', async () => {
-		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		enterPracticeMode({ tourId: 'consultant-case-handover' });
 		try {
 			const view = renderPractice('acceptedCase', { underGuard: true });
 

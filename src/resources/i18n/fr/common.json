@@ -3570,7 +3570,8 @@
 		"cast": {
 			"asker": "Sam Muster (exercice)",
 			"colleague": "Alex (exercice)",
-			"supervisor": "Robin (exercice)"
+			"supervisor": "Robin (exercice)",
+			"colleagueClient": "Kim (exercice)"
 		},
 		"asker": {
 			"firstMessage": "Bonjour, j’ai une question générale sur votre offre. Comment se déroule un accompagnement chez vous, et sous quel délai puis-je espérer une réponse ? Merci d’avance.",
@@ -6499,28 +6500,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Exercice : ajouter un·e superviseur·e",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
-			"step": {
-				"addSupervisor": {
-					"title": "Ajouter un·e superviseur·e",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + », choisissez le ou la superviseur·e, indiquez brièvement le motif et confirmez."
-				},
-				"supervisorReply": {
-					"title": "Réponse du ou de la superviseur·e",
-					"intro": "Votre superviseur·e a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
-				},
-				"standingAssignment": {
-					"title": "Attribution fixe",
-					"intro": "Si votre administration vous a attribué un·e superviseur·e fixe, il ou elle est ajouté·e automatiquement quand vous acceptez une demande. Vous n’avez rien à faire."
-				},
-				"done": {
-					"title": "Bravo !",
-					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Aide",
 			"title": "Visites guidées",
@@ -6555,6 +6534,42 @@
 				"done": {
 					"title": "En bref",
 					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				},
+				"practiceIntro": {
+					"title": "S’exercer au transfert de dossiers",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous proposez votre consultation à Alex et demandez l’accès à un dossier d’Alex."
+				},
+				"practiceSupervisor": {
+					"title": "Ajouter un·e superviseur·e",
+					"intro": "Cliquez sur « + », puis sur « Gérer les superviseurs ». Choisissez Robin, indiquez brièvement la raison et confirmez."
+				},
+				"practiceSupervisorReply": {
+					"title": "Réponse du ou de la superviseur·e",
+					"intro": "Robin a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
+				},
+				"practiceOffer": {
+					"intro": "Cliquez sur « + », puis sur « Transférer la consultation ». Choisissez Alex et une raison, puis cliquez sur « Envoyer la proposition »."
+				},
+				"practiceOfferPending": {
+					"title": "Proposition envoyée",
+					"intro": "Alex décide maintenant, d’ici là vous restez responsable, et « Retirer l’offre » annule la proposition. Fermez la fenêtre avec « Fermer » et continuez."
+				},
+				"practiceSearch": {
+					"intro": "Saisissez « Alex » ici. La liste affiche alors le dossier d’Alex auquel vous pouvez demander l’accès."
+				},
+				"practiceRequestAccess": {
+					"intro": "Cliquez sur « Demander l'accès » pour le dossier d’Alex. Le dossier s’ouvre, mais son contenu reste masqué."
+				},
+				"practiceRequest": {
+					"title": "Indiquer une raison",
+					"intro": "Cliquez sur « Montrer étape par étape », choisissez une raison et cliquez sur « Continuer ». Décrivez brièvement la raison et cliquez sur « Demander l'accès »."
+				},
+				"practiceStatus": {
+					"intro": "Le dossier affiche maintenant « En attente d'autorisation » jusqu’à la décision d’Alex. Les réponses d’Alex à votre proposition et à votre demande apparaissent dans la chronologie."
+				},
+				"practiceDone": {
+					"title": "Bravo !",
+					"intro": "Vous avez proposé votre consultation et demandé l’accès à un dossier. Le bouton ci-dessous termine l’exercice."
 				}
 			}
 		},
@@ -7292,8 +7307,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Accepter une demande et rédiger une première réponse.",
-				"supervision": "Choisir une personne de supervision et l’ajouter à un entretien."
+				"accept": "Accepter une demande et rédiger une première réponse."
 			},
 			"title": "Espace d'exercice",
 			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",

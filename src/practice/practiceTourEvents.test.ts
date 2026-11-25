@@ -23,7 +23,10 @@ describe('practice tour events', () => {
 			calendarAppointmentCancelled:
 				'practice:calendar-appointment-cancelled',
 			calendarBlockerCreated: 'practice:calendar-blocker-created',
-			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on'
+			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+			caseHandoverOffered: 'practice:case-handover-offered',
+			colleagueCaseFound: 'practice:colleague-case-found',
+			caseHandoverRequested: 'practice:case-handover-requested'
 		});
 	});
 

@@ -40,7 +40,7 @@ describe('usePracticeActive', () => {
 	});
 
 	it('is already true for a component mounted after enter', () => {
-		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		enterPracticeMode({ tourId: 'consultant-case-handover' });
 
 		const { result } = renderHook(() => usePracticeActive());
 

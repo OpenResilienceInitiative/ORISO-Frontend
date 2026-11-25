@@ -25,9 +25,13 @@ import {
 } from './practiceMode';
 import { registerPracticeRestartHandler } from './practiceRestart';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
+import {
+	getCaseHandoverOperation,
+	getOrCreateCaseHandoverOperation
+} from '../components/caseHandover/caseHandoverOperationStore';
 
 const ACCEPT = 'consultant-practice-accept';
-const SUPERVISION = 'consultant-practice-supervision';
+const HANDOVER = 'consultant-case-handover';
 
 const progressBody = (tourId: string) =>
 	JSON.stringify({
@@ -52,14 +56,57 @@ describe('practice mode (module-level core)', () => {
 		globalThis.fetch = originalFetch;
 	});
 
-	it('knows the two practice flows of the spec and the Live-Chat, Gesprächskreis and Kalender tours (FE#2545)', () => {
+	it('knows the practice card flow and the Live-Chat, Gesprächskreis, Kalender and "Fälle übergeben" tours (FE#2545)', () => {
+		// The former card "Supervisor hinzufügen" is part of "Fälle übergeben"
+		// now: no progress write for it can be allowed any more.
 		expect([...PRACTICE_TOUR_IDS]).toEqual([
 			ACCEPT,
-			SUPERVISION,
 			'consultant-live-chat',
 			'consultant-group-circle',
-			'consultant-calendar'
+			'consultant-calendar',
+			HANDOVER
 		]);
+		expect([...PRACTICE_TOUR_IDS]).not.toContain(
+			'consultant-practice-supervision'
+		);
+	});
+
+	it('forgets the offers and requests of practice cases on a new run, a restart and the exit, and keeps real ones (FE#2545)', () => {
+		const offer = (sessionId: number) => ({
+			actorId: 'counsellor',
+			sessionId,
+			kind: 'PUSH' as const,
+			expectedOwnershipRevision: 1,
+			reasonCode: 'CAPACITY',
+			explanation: ''
+		});
+		const practiceOffer = () =>
+			getCaseHandoverOperation({
+				actorId: 'counsellor',
+				sessionId: -1,
+				kind: 'PUSH'
+			});
+		getOrCreateCaseHandoverOperation(offer(4711));
+
+		enterPracticeMode({ tourId: HANDOVER });
+		getOrCreateCaseHandoverOperation(offer(-1));
+		restartPracticeMode();
+		expect(practiceOffer()).toBeUndefined();
+
+		getOrCreateCaseHandoverOperation(offer(-1));
+		enterPracticeMode({ tourId: HANDOVER });
+		expect(practiceOffer()).toBeUndefined();
+
+		getOrCreateCaseHandoverOperation(offer(-1));
+		exitPracticeMode();
+		expect(practiceOffer()).toBeUndefined();
+		expect(
+			getCaseHandoverOperation({
+				actorId: 'counsellor',
+				sessionId: 4711,
+				kind: 'PUSH'
+			})
+		).toBeDefined();
 	});
 
 	it('is inactive until entered, and exit returns to inactive', () => {
@@ -146,7 +193,7 @@ describe('practice mode (module-level core)', () => {
 			await expect(
 				globalThis.fetch(endpoints.tutorialProgress, {
 					method: 'PUT',
-					body: progressBody(SUPERVISION)
+					body: progressBody(HANDOVER)
 				})
 			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 			await expect(
@@ -181,10 +228,10 @@ describe('practice mode (module-level core)', () => {
 			const wrapped = globalThis.fetch;
 			const firstRun = getPracticeSnapshot().session.runId;
 
-			enterPracticeMode({ tourId: SUPERVISION });
+			enterPracticeMode({ tourId: HANDOVER });
 
 			expect(globalThis.fetch).toBe(wrapped);
-			expect(getPracticeSnapshot().session.tourId).toBe(SUPERVISION);
+			expect(getPracticeSnapshot().session.tourId).toBe(HANDOVER);
 			expect(getPracticeSnapshot().session.runId).toBeGreaterThan(
 				firstRun
 			);
@@ -196,7 +243,7 @@ describe('practice mode (module-level core)', () => {
 			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 			await globalThis.fetch(endpoints.tutorialProgress, {
 				method: 'PUT',
-				body: progressBody(SUPERVISION)
+				body: progressBody(HANDOVER)
 			});
 		});
 

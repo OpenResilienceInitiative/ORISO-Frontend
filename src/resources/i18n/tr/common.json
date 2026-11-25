@@ -3570,7 +3570,8 @@
 		"cast": {
 			"asker": "Sam Muster (alıştırma)",
 			"colleague": "Alex (alıştırma)",
-			"supervisor": "Robin (alıştırma)"
+			"supervisor": "Robin (alıştırma)",
+			"colleagueClient": "Kim (alıştırma)"
 		},
 		"asker": {
 			"firstMessage": "Merhaba, sunduğunuz hizmet hakkında genel bir sorum var. Danışmanlık sizde nasıl işliyor ve yanıtı ne kadar çabuk alabilirim? Teşekkür ederim.",
@@ -6499,28 +6500,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Alıştırma: Süpervizör ekleme",
-			"summary": "Korumalı alıştırma alanında bir danışmanlığa süpervizör eklemeyi deneyin. Tüm kişiler ve içerikler kurgusaldır.",
-			"step": {
-				"addSupervisor": {
-					"title": "Süpervizör ekleyin",
-					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin, nedenini kısaca yazın ve onaylayın."
-				},
-				"supervisorReply": {
-					"title": "Süpervizörün yanıtı",
-					"intro": "Süpervizörünüz yan sohbette yanıt verdi. Bu mesajları yalnızca ikiniz görürsünüz, danışan göremez."
-				},
-				"standingAssignment": {
-					"title": "Sabit atama",
-					"intro": "Yöneticiniz size sabit bir süpervizör atadıysa, bir talebi kabul ettiğinizde süpervizör otomatik olarak eklenir. Sizin bir şey yapmanız gerekmez."
-				},
-				"done": {
-					"title": "Tebrikler!",
-					"intro": "Bir süpervizör eklediniz ve yanıtını okudunuz. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Yardım",
 			"title": "Turlar",
@@ -6555,6 +6534,42 @@
 				"done": {
 					"title": "Kısaca",
 					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
+				},
+				"practiceIntro": {
+					"title": "Vaka devrini çalışmak",
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Danışmanlığınızı Alex’e teklif edecek ve Alex’in bir vakasına erişim talep edeceksiniz."
+				},
+				"practiceSupervisor": {
+					"title": "Süpervizör eklemek",
+					"intro": "„+“ simgesine, ardından „Süpervizörleri Yönet“e tıklayın. Robin’i seçin, nedeni kısaca yazın ve onaylayın."
+				},
+				"practiceSupervisorReply": {
+					"title": "Süpervizörün yanıtı",
+					"intro": "Robin yan sohbette yanıt verdi. Bu mesajları yalnızca ikiniz görürsünüz, danışan göremez."
+				},
+				"practiceOffer": {
+					"intro": "„+“ simgesine, ardından „Danışmanlığı devret“e tıklayın. Alex’i ve bir neden seçin, sonra „Devir teklifini gönder“e tıklayın."
+				},
+				"practiceOfferPending": {
+					"title": "Teklif gönderildi",
+					"intro": "Şimdi Alex karar veriyor, o zamana kadar sorumlu sizsiniz ve „Teklifi geri çek“ ile teklifi geri alırsınız. Pencereyi „Kapat“ ile kapatın ve devam edin."
+				},
+				"practiceSearch": {
+					"intro": "Buraya „Alex“ yazın. Liste ardından erişim talep edebileceğiniz Alex vakasını gösterir."
+				},
+				"practiceRequestAccess": {
+					"intro": "Alex’in vakasında „Erişim talep et“e tıklayın. Vaka açılır ama içeriği gizli kalır."
+				},
+				"practiceRequest": {
+					"title": "Neden belirtmek",
+					"intro": "„Adım adım göster“e tıklayın, bir neden seçin ve „İleri“ye tıklayın. Nedeni kısaca açıklayın ve „Erişim talep et“e tıklayın."
+				},
+				"practiceStatus": {
+					"intro": "Alex karar verene kadar vakada artık „Onay bekleniyor“ yazar. Alex’in teklifinize ve talebinize verdiği yanıtları zaman akışında görürsünüz."
+				},
+				"practiceDone": {
+					"title": "Tamamlandı!",
+					"intro": "Danışmanlığınızı teklif ettiniz ve bir vakaya erişim talep ettiniz. Aşağıdaki düğmeyle alıştırmayı bitirirsiniz."
 				}
 			}
 		},
@@ -7292,8 +7307,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
-				"supervision": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin."
+				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın."
 			},
 			"title": "Alıştırma alanı",
 			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",

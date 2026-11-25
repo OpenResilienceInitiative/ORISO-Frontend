@@ -5,7 +5,7 @@ import {
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
-import { practiceAcceptTour, practiceSupervisionTour } from '../practiceTours';
+import { practiceAcceptTour } from '../practiceTours';
 import {
 	createScriptEngine,
 	PRACTICE_SCRIPT_VERSION,
@@ -69,6 +69,7 @@ describe('ScriptEngine', () => {
 		expect(script.cast.asker.displayName).toBe('Sam Muster (Übung)');
 		expect(script.cast.colleague.displayName).toBe('Alex (Übung)');
 		expect(script.cast.supervisor.displayName).toBe('Robin (Übung)');
+		expect(script.cast.colleagueClient.displayName).toBe('Kim (Übung)');
 	});
 
 	it('keeps the cast identities and splits the localised display name into first and last name', () => {
@@ -178,14 +179,13 @@ describe('ScriptEngine', () => {
 		).toThrow(/script version/i);
 	});
 
-	it('ties the script version to the version of both practice tours', () => {
+	it('ties the script version to the version of the practice card tour', () => {
 		expect(PRACTICE_SCRIPT_VERSION).toBe(1);
 		expect(createTestScript('de').scriptVersion).toBe(
 			PRACTICE_SCRIPT_VERSION
 		);
 		// A script change bumps the tour version: move both together.
 		expect(practiceAcceptTour.version).toBe(PRACTICE_SCRIPT_VERSION);
-		expect(practiceSupervisionTour.version).toBe(PRACTICE_SCRIPT_VERSION);
 	});
 
 	describe.each(PRACTICE_SCRIPT_LOCALES)('locale %s', (locale) => {
@@ -206,13 +206,19 @@ describe('ScriptEngine', () => {
 		});
 
 		it('keeps the invented names and marks each cast member as practice', () => {
-			const { asker, colleague, supervisor } = script.cast;
+			const { asker, colleague, supervisor, colleagueClient } =
+				script.cast;
 
 			expect(asker.displayName).toMatch(/^Sam Muster \(.+\)$/);
 			expect(colleague.displayName).toMatch(/^Alex \(.+\)$/);
 			expect(supervisor.displayName).toMatch(/^Robin \(.+\)$/);
+			expect(colleagueClient.displayName).toMatch(/^Kim \(.+\)$/);
 			expect(
-				new Set([asker, colleague, supervisor].map(suffixOf)).size
+				new Set(
+					[asker, colleague, supervisor, colleagueClient].map(
+						suffixOf
+					)
+				).size
 			).toBe(1);
 		});
 

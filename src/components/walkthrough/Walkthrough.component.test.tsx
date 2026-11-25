@@ -665,19 +665,45 @@ describe('Walkthrough', () => {
 			expect(queryByTestId('product-tour-adapter')).toBeNull();
 		});
 
-		it('ignores a Supervision request when the Träger switched Supervision off', () => {
+		it('hosts "Fälle übergeben" without the supervisor steps when the Träger switched Supervision off (FE#2545)', () => {
 			practiceOn();
-			const { queryByTestId } = renderWalkthrough(
+			renderWalkthrough(
 				consultant,
 				{
-					tourId: 'consultant-practice-supervision',
+					tourId: 'consultant-case-handover',
 					mode: 'start',
 					requestedAt: 41
 				},
 				{ featureSupervisionEnabled: false }
 			);
 
-			expect(queryByTestId('product-tour-adapter')).toBeNull();
+			expect(adapterProps.tour.dismissible).toBe(false);
+			const ids = adapterProps.tour.steps.map(
+				(s: { id: string }) => s.id
+			);
+			expect(ids).toContain('request');
+			expect(ids).not.toContain('add-supervisor');
+			expect(ids).not.toContain('supervisor-reply');
+		});
+
+		it('runs the explanation tour "Fälle übergeben" when the practice area is off', () => {
+			renderWalkthrough(consultant, {
+				tourId: 'consultant-case-handover',
+				mode: 'start',
+				requestedAt: 44
+			});
+
+			expect(adapterProps.tour.dismissible).not.toBe(false);
+			expect(
+				adapterProps.tour.steps.map((s: { id: string }) => s.id)
+			).toEqual([
+				'intro',
+				'offer',
+				'search',
+				'request-access',
+				'status',
+				'done'
+			]);
 		});
 
 		it('never auto-runs a practice tour, whatever the flags say', async () => {
@@ -816,12 +842,12 @@ describe('Walkthrough', () => {
 				}
 			});
 
-			it('hands the Supervision tour its own session', async () => {
+			it('hands "Fälle übergeben" its own session', async () => {
 				practiceOn();
 				const unregister = registerPracticeTourHostHooks();
 				try {
 					renderWalkthrough(consultant, {
-						tourId: 'consultant-practice-supervision',
+						tourId: 'consultant-case-handover',
 						mode: 'start',
 						requestedAt: 43
 					});
@@ -829,7 +855,7 @@ describe('Walkthrough', () => {
 					await adapterProps.onBeforeStart();
 
 					expect(getPracticeSnapshot().session?.tourId).toBe(
-						'consultant-practice-supervision'
+						'consultant-case-handover'
 					);
 				} finally {
 					unregister();

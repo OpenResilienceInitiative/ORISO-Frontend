@@ -20,10 +20,13 @@ import {
 	PRACTICE_MATRIX_SERVER,
 	PRACTICE_CIRCLE_CHAT_ID,
 	PRACTICE_CIRCLE_ROOM_ID,
+	PRACTICE_COLLEAGUE_ROOM_ID,
+	PRACTICE_COLLEAGUE_SESSION_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID,
-	PRACTICE_TOPIC_ID
+	PRACTICE_TOPIC_ID,
+	practiceNumericId
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
@@ -52,6 +55,12 @@ import type {
 	SessionAppointmentSlot
 } from '../../api/apiSessionAppointments';
 import type { DirectLinkDTO } from '../../api/apiDirectLinks';
+import type {
+	CaseHandoverReason,
+	CaseHandoverRecipient,
+	CaseHandoverStatus
+} from '../../api/apiCaseHandover';
+import { CASE_HANDOVER_REASON_CODES } from '../../components/caseHandover/caseHandoverReasons';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -70,6 +79,12 @@ export interface FakeRestHooks {
 	onBlockerCreated?: (blockerId: string) => void;
 	/** The Sprechstunden were saved with automatic confirmation on. */
 	onAutoAcceptOn?: () => void;
+	/** "Fälle übergeben" (FE#2545): the own case was offered to a colleague. */
+	onCaseHandoverOffered?: (requestId: number) => void;
+	/** A search by name found the colleague's case that can be requested. */
+	onColleagueCaseFound?: () => void;
+	/** Access to the colleague's case was requested. */
+	onCaseHandoverRequested?: (requestId: number) => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -215,6 +230,13 @@ export const createFakeRestBackend = ({
 	let calendar: CalendarEntryDTO[];
 	let consultationHours: Required<CalendarConsultationHoursDTO>;
 	let calendarSeq: number;
+	/**
+	 * "Fälle übergeben" (FE#2545): the offer of the own case and the request
+	 * for the colleague's case, in memory only.
+	 */
+	let offer: CaseHandoverStatus | null;
+	let accessRequest: CaseHandoverStatus | null;
+	let handoverSeq: number;
 	const served: ServedRequest[] = [];
 
 	const reset = () => {
@@ -237,6 +259,9 @@ export const createFakeRestBackend = ({
 			slotMinutes: 60
 		};
 		calendarSeq = 0;
+		offer = null;
+		accessRequest = null;
+		handoverSeq = 0;
 		served.length = 0;
 	};
 	reset();
@@ -364,6 +389,187 @@ export const createFakeRestBackend = ({
 		}
 		return noContent();
 	};
+
+	/* ------------- "Fälle übergeben" (FE#2545) ------------- */
+
+	/**
+	 * A colleague's accepted case in the practice agency: the counsellor may
+	 * request access to it. It never joins her own list; only the search
+	 * (the candidate endpoint) and a direct open find it.
+	 */
+	const colleagueItem = () => {
+		const { colleague, colleagueClient } = script.cast;
+		const topic = createPracticeTopic(script.names.topic);
+		const ts = now() - 2 * 60 * 60_000;
+		return {
+			session: {
+				...practiceCase.session,
+				id: PRACTICE_COLLEAGUE_SESSION_ID,
+				status: STATUS_ACTIVE,
+				conversationType: 'AGENCY_COUNSELLING',
+				registrationType: 'REGISTERED',
+				matrixRoomId: PRACTICE_COLLEAGUE_ROOM_ID,
+				askerMatrixUserId: colleagueClient.matrixUserId,
+				consultantMatrixUserId: colleague.matrixUserId,
+				messageDate: Math.floor(ts / 1000),
+				createDate: new Date(ts).toISOString(),
+				topic: {
+					id: topic.id,
+					name: topic.name,
+					description: topic.description
+				}
+			},
+			user: {
+				id: colleagueClient.id,
+				username: colleagueClient.username,
+				displayName: colleagueClient.displayName
+			},
+			consultant: {
+				id: colleague.id,
+				firstName: colleague.firstName,
+				lastName: colleague.lastName,
+				username: colleague.username,
+				displayName: colleague.displayName
+			},
+			latestMessage: new Date(ts),
+			caseHandoverStatus: {
+				status: accessRequest?.status ?? 'NOT_REQUESTED',
+				canViewContent: false,
+				hasRequest: Boolean(accessRequest)
+			}
+		};
+	};
+
+	const isColleagueCase = (id: string) =>
+		Number(id) === PRACTICE_COLLEAGUE_SESSION_ID && isPracticeId(id);
+
+	/** What a search finds: the colleague or her client by name, or the id. */
+	const findsColleagueCase = (query: string) => {
+		const needle = query.trim().toLowerCase();
+		if (!needle) return true;
+		if (needle === String(PRACTICE_COLLEAGUE_SESSION_ID)) return true;
+		const { colleague, colleagueClient } = script.cast;
+		return [
+			colleague.displayName,
+			colleague.username,
+			colleague.firstName,
+			colleagueClient.displayName,
+			colleagueClient.username
+		].some((name) => name.toLowerCase().includes(needle));
+	};
+
+	const candidates = (url: URL) => {
+		const query = (url.searchParams.get('query') || '').trim();
+		const found =
+			url.searchParams.get('archived') !== 'true' &&
+			findsColleagueCase(query);
+		// A name the counsellor searched for, not the roster or a direct open.
+		if (found && query && !isPracticeId(query)) {
+			hooks.onColleagueCaseFound?.();
+		}
+		const sessions = found ? [colleagueItem()] : [];
+		return ok({
+			sessions,
+			offset: 0,
+			count: sessions.length,
+			total: sessions.length
+		});
+	};
+
+	/** The four neutral reasons; their labels come from the catalogue. */
+	const handoverReasons = (): CaseHandoverReason[] =>
+		CASE_HANDOVER_REASON_CODES.map((code) => ({
+			code,
+			label: code,
+			clientConsent: 'NONE',
+			clientConsentRequired: false,
+			accessAllowed: true
+		}));
+
+	const handoverStatus = (
+		sessionId: number,
+		fields: Partial<CaseHandoverStatus>
+	): CaseHandoverStatus => ({
+		sessionId,
+		status: 'NOT_REQUESTED',
+		canViewContent: false,
+		clientConsentRequired: false,
+		ownershipRevision: 1,
+		...fields
+	});
+
+	/** The case's status, for its owner or for the requesting colleague. */
+	const statusOf = (id: string): CaseHandoverStatus | null => {
+		if (isCase(id)) {
+			return handoverStatus(practiceCase.session.id, {
+				canViewContent: true,
+				openOffer: offer
+			});
+		}
+		if (isColleagueCase(id)) {
+			return (
+				accessRequest ??
+				handoverStatus(PRACTICE_COLLEAGUE_SESSION_ID, {})
+			);
+		}
+		return null;
+	};
+
+	/** "Übergabe anbieten": Alex is asked; the case stays with the counsellor. */
+	const offerCase = (body: Record<string, unknown> | null) => {
+		if (
+			practiceCase.session.status !== STATUS_ACTIVE ||
+			body?.targetConsultantId !== script.cast.colleague.id ||
+			typeof body?.reasonCode !== 'string'
+		) {
+			// Only the practice colleague exists here; nothing else is offered.
+			return noContent();
+		}
+		offer = handoverStatus(practiceCase.session.id, {
+			requestId: practiceNumericId(++handoverSeq),
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			canViewContent: true,
+			direction: 'PUSH',
+			initiatorConsultantId: counsellor.userId,
+			recipientConsultantId: script.cast.colleague.id,
+			reasonCode: body.reasonCode,
+			accessType: 'TAKEOVER',
+			createdAt: new Date(now()).toISOString()
+		});
+		hooks.onCaseHandoverOffered?.(offer.requestId!);
+		return ok(offer);
+	};
+
+	/** "Zugriff anfragen" on the colleague's case: Alex has to answer. */
+	const requestAccess = (body: Record<string, unknown> | null) => {
+		if (
+			typeof body?.reasonCode !== 'string' ||
+			typeof body?.explanation !== 'string' ||
+			!body.explanation.trim()
+		) {
+			return noContent();
+		}
+		if (!accessRequest) {
+			accessRequest = handoverStatus(PRACTICE_COLLEAGUE_SESSION_ID, {
+				requestId: practiceNumericId(++handoverSeq),
+				status: 'PENDING',
+				direction: 'PULL',
+				initiatorConsultantId: counsellor.userId,
+				recipientConsultantId: script.cast.colleague.id,
+				reasonCode: body.reasonCode,
+				accessType: 'TAKEOVER',
+				createdAt: new Date(now()).toISOString()
+			});
+			hooks.onCaseHandoverRequested?.(accessRequest.requestId!);
+		}
+		return ok(accessRequest);
+	};
+
+	const caseHandoverPath = (suffix = '') =>
+		at(
+			endpoints.sessionBase,
+			`/${PRACTICE_ID_SEGMENT}/case-handover${suffix}`
+		);
 
 	/* ---------------- The practice calendar (FE#2545) ---------------- */
 
@@ -503,6 +709,83 @@ export const createFakeRestBackend = ({
 	const calendarPath = (suffix: string) => at(endpoints.calendarBase, suffix);
 
 	const routes: Route[] = [
+		// "Fälle übergeben" (FE#2545). The search would list real colleagues'
+		// cases, so it is answered here too; every write stays in memory.
+		{
+			method: 'GET',
+			path: at(endpoints.caseHandoverCandidates),
+			viewWide: true,
+			handle: ({ url }) => candidates(url)
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.caseHandoverReasons),
+			viewWide: true,
+			handle: () => ok(handoverReasons())
+		},
+		{
+			method: 'GET',
+			path: caseHandoverPath(),
+			handle: (_request, [, id]) => {
+				const status = statusOf(id);
+				return status ? ok(status) : null;
+			}
+		},
+		{
+			method: 'POST',
+			path: caseHandoverPath(),
+			handle: async ({ body }, [, id]) =>
+				isColleagueCase(id) ? requestAccess(await body()) : null
+		},
+		{
+			// The colleagues the own case may be offered to: Alex only.
+			method: 'GET',
+			path: caseHandoverPath('/recipients'),
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? ok([
+							{
+								consultantId: script.cast.colleague.id,
+								displayName: script.cast.colleague.displayName
+							}
+						] satisfies CaseHandoverRecipient[])
+					: null
+		},
+		{
+			method: 'POST',
+			path: caseHandoverPath('/offers'),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? offerCase(await body()) : null
+		},
+		{
+			method: 'GET',
+			path: caseHandoverPath(`/${PRACTICE_ID_SEGMENT}`),
+			handle: (_request, [, id, requestId]) => {
+				const known = [offer, accessRequest].find(
+					(status) =>
+						status &&
+						String(status.sessionId) === id &&
+						String(status.requestId) === requestId
+				);
+				return known ? ok(known) : null;
+			}
+		},
+		{
+			// "Zurückziehen" while Alex has not answered yet.
+			method: 'POST',
+			path: caseHandoverPath(`/${PRACTICE_ID_SEGMENT}/withdraw`),
+			handle: (_request, [, id, requestId]) => {
+				if (!isCase(id) || String(offer?.requestId) !== requestId) {
+					return null;
+				}
+				const withdrawn: CaseHandoverStatus = {
+					...offer!,
+					status: 'WITHDRAWN'
+				};
+				offer = null;
+				return ok(withdrawn);
+			}
+		},
 		// The practice calendar (FE#2545). Its reads would show the real
 		// calendar, links and colleagues; its writes stay in memory.
 		{
@@ -720,7 +1003,12 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: at(endpoints.sessionRooms, `/${PRACTICE_ID_SEGMENT}`),
-			handle: (_request, [, id]) => (isCase(id) ? ok(roomList()) : null)
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? ok(roomList())
+					: isColleagueCase(id)
+						? ok({ sessions: [colleagueItem()] })
+						: null
 		},
 		{
 			method: 'GET',
@@ -734,6 +1022,9 @@ export const createFakeRestBackend = ({
 				}
 				if (circle && roomIds.includes(circle.matrixRoomId)) {
 					return ok({ sessions: [circleItem()] });
+				}
+				if (roomIds.includes(PRACTICE_COLLEAGUE_ROOM_ID)) {
+					return ok({ sessions: [colleagueItem()] });
 				}
 				return roomIds.includes(practiceCase.session.matrixRoomId)
 					? ok(roomList())

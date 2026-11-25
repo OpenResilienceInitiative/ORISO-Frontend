@@ -6,6 +6,8 @@ import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture
 import {
 	PRACTICE_AGENCY_ID,
 	PRACTICE_CIRCLE_CHAT_ID,
+	PRACTICE_COLLEAGUE_ROOM_ID,
+	PRACTICE_COLLEAGUE_SESSION_ID,
 	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_ENQUIRY_SESSION_ID,
 	PRACTICE_TOPIC_ID,
@@ -14,6 +16,7 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
 import { createTestScript } from '../script/scriptTestSupport';
+import { CASE_HANDOVER_REASON_CODES } from '../../components/caseHandover/caseHandoverReasons';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
 const script = createTestScript('de');
@@ -778,5 +781,243 @@ describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
 				await backend.handle(new Request(`${calendar}/entries?${week}`))
 			)
 		).toEqual([]);
+	});
+});
+
+describe('FakeRestBackend: "Fälle übergeben" (FE#2545)', () => {
+	const sessionBase = endpoints.sessionBase;
+	const own = `${sessionBase}/${ID}/case-handover`;
+	const colleagueCase = `${sessionBase}/${PRACTICE_COLLEAGUE_SESSION_ID}/case-handover`;
+	const search = (query: string) =>
+		`${endpoints.caseHandoverCandidates}?query=${encodeURIComponent(query)}&offset=0&count=15`;
+	const reason = CASE_HANDOVER_REASON_CODES[0];
+	const toAlex = () => ({
+		targetConsultantId: script.cast.colleague.id,
+		reasonCode: reason
+	});
+	const accepted = (hooks = {}) =>
+		backendFor({ start: 'acceptedCase', hooks });
+
+	it('answers the case-handover search and the reasons in memory: real colleagues never show while practising', async () => {
+		const onColleagueCaseFound = vi.fn();
+		const backend = accepted({ onColleagueCaseFound });
+
+		const roster = await json(
+			await backend.handle(new Request(search('')))
+		);
+		expect(roster.sessions).toHaveLength(1);
+		expect(onColleagueCaseFound).not.toHaveBeenCalled();
+
+		const found = await json(
+			await backend.handle(new Request(search('Alex')))
+		);
+		expect(found.sessions).toEqual([
+			expect.objectContaining({
+				session: expect.objectContaining({
+					id: PRACTICE_COLLEAGUE_SESSION_ID,
+					matrixRoomId: PRACTICE_COLLEAGUE_ROOM_ID
+				}),
+				consultant: expect.objectContaining({
+					id: script.cast.colleague.id
+				}),
+				caseHandoverStatus: {
+					status: 'NOT_REQUESTED',
+					canViewContent: false,
+					hasRequest: false
+				}
+			})
+		]);
+		expect(onColleagueCaseFound).toHaveBeenCalledOnce();
+
+		expect(
+			(await json(await backend.handle(new Request(search('Zorro')))))
+				.sessions
+		).toEqual([]);
+		expect(
+			(
+				await json(
+					await backend.handle(
+						new Request(`${search('Alex')}&archived=true`)
+					)
+				)
+			).sessions
+		).toEqual([]);
+
+		const reasons = await json(
+			await backend.handle(new Request(endpoints.caseHandoverReasons))
+		);
+		expect(reasons.map((r: { code: string }) => r.code)).toEqual([
+			...CASE_HANDOVER_REASON_CODES
+		]);
+		expect(
+			reasons.every(
+				(r: { clientConsentRequired: boolean }) =>
+					!r.clientConsentRequired
+			)
+		).toBe(true);
+	});
+
+	it('offers the own case to Alex only, and withdraws the offer in memory', async () => {
+		const onCaseHandoverOffered = vi.fn();
+		const backend = accepted({ onCaseHandoverOffered });
+
+		expect(
+			await json(await backend.handle(new Request(`${own}/recipients`)))
+		).toEqual([
+			{
+				consultantId: script.cast.colleague.id,
+				displayName: script.cast.colleague.displayName
+			}
+		]);
+		expect(
+			(
+				await backend.handle(
+					send(`${own}/offers`, 'POST', {
+						targetConsultantId: 'a-real-colleague',
+						reasonCode: reason
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(onCaseHandoverOffered).not.toHaveBeenCalled();
+
+		const offer = await json(
+			await backend.handle(send(`${own}/offers`, 'POST', toAlex()))
+		);
+		expect(offer).toMatchObject({
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			direction: 'PUSH',
+			canViewContent: true
+		});
+		expect(offer.requestId).toBeLessThan(0);
+		expect(onCaseHandoverOffered).toHaveBeenCalledWith(offer.requestId);
+		expect(
+			(await json(await backend.handle(new Request(own)))).openOffer
+		).toEqual(offer);
+		expect(
+			await json(
+				await backend.handle(new Request(`${own}/${offer.requestId}`))
+			)
+		).toEqual(offer);
+
+		expect(
+			await json(
+				await backend.handle(
+					send(`${own}/${offer.requestId}/withdraw`, 'POST')
+				)
+			)
+		).toMatchObject({ status: 'WITHDRAWN' });
+		expect(
+			(await json(await backend.handle(new Request(own)))).openOffer
+		).toBeNull();
+	});
+
+	it('requests access to the colleague case once, with a reason and a text', async () => {
+		const onCaseHandoverRequested = vi.fn();
+		const backend = accepted({ onCaseHandoverRequested });
+
+		expect(
+			await json(await backend.handle(new Request(colleagueCase)))
+		).toMatchObject({ status: 'NOT_REQUESTED', canViewContent: false });
+		expect(
+			(
+				await backend.handle(
+					send(colleagueCase, 'POST', {
+						reasonCode: reason,
+						explanation: '  '
+					})
+				)
+			)?.status
+		).toBe(204);
+
+		const body = { reasonCode: reason, explanation: 'Ich vertrete Alex.' };
+		const request = await json(
+			await backend.handle(send(colleagueCase, 'POST', body))
+		);
+		expect(request).toMatchObject({
+			status: 'PENDING',
+			direction: 'PULL',
+			canViewContent: false
+		});
+		await backend.handle(send(colleagueCase, 'POST', body));
+		expect(onCaseHandoverRequested).toHaveBeenCalledOnce();
+		expect(
+			await json(await backend.handle(new Request(colleagueCase)))
+		).toEqual(request);
+		expect(
+			(await json(await backend.handle(new Request(search('Alex')))))
+				.sessions[0].caseHandoverStatus
+		).toEqual({
+			status: 'PENDING',
+			canViewContent: false,
+			hasRequest: true
+		});
+
+		// The own case cannot be "requested", the colleague case not offered.
+		expect(await backend.handle(send(own, 'POST', body))).toBeNull();
+		expect(
+			await backend.handle(
+				send(`${colleagueCase}/offers`, 'POST', toAlex())
+			)
+		).toBeNull();
+	});
+
+	it('opens the colleague case by its id and its room, without joining the own list', async () => {
+		const backend = accepted();
+		const mine = await json(await backend.handle(new Request(mySessions)));
+		expect(
+			mine.sessions.map((s: { session: { id: number } }) => s.session.id)
+		).not.toContain(PRACTICE_COLLEAGUE_SESSION_ID);
+		const byRoom = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.sessionRooms}?roomIds[]=${encodeURIComponent(PRACTICE_COLLEAGUE_ROOM_ID)}`
+				)
+			)
+		);
+		const byId = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.sessionRooms}/${PRACTICE_COLLEAGUE_SESSION_ID}`
+				)
+			)
+		);
+		[byRoom, byId].forEach((list) =>
+			expect(list.sessions[0].session.id).toBe(
+				PRACTICE_COLLEAGUE_SESSION_ID
+			)
+		);
+	});
+
+	it('forgets the offer and the request on reset', async () => {
+		const backend = accepted();
+		await backend.handle(send(`${own}/offers`, 'POST', toAlex()));
+		await backend.handle(
+			send(colleagueCase, 'POST', {
+				reasonCode: reason,
+				explanation: 'Ich vertrete Alex.'
+			})
+		);
+		backend.reset();
+		expect(
+			(await json(await backend.handle(new Request(own)))).openOffer
+		).toBeFalsy();
+		expect(
+			await json(await backend.handle(new Request(colleagueCase)))
+		).toMatchObject({ status: 'NOT_REQUESTED' });
+	});
+
+	it('passes real case-handover requests on', async () => {
+		const backend = accepted();
+		expect(
+			await backend.handle(
+				new Request(`${sessionBase}/4711/case-handover`)
+			)
+		).toBeNull();
+		expect(
+			await backend.handle(
+				send(`${sessionBase}/4711/case-handover/offers`, 'POST', {})
+			)
+		).toBeNull();
 	});
 });
