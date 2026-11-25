@@ -230,3 +230,25 @@
 		}
 	}
 }
+
+/*
+ * Spotlight cutout (react-joyride). Light: invisible, the scrim alone leads
+ * the eye to the bright cutout. Dark: a 50 % black scrim over a near-black UI
+ * hardly differs from the cutout, so the scrim deepens and the cutout gets a
+ * primary ring with a soft glow.
+ */
+.productTour__spotlightRing {
+	stroke: none;
+}
+
+html[data-oriso-personal-scheme='dark'] {
+	.react-joyride__spotlight > path:not(.productTour__spotlightRing) {
+		fill: rgba(0, 0, 0, 0.72);
+	}
+
+	.productTour__spotlightRing {
+		stroke: var(--m3-primary, #ffb4aa);
+		stroke-width: 3px;
+		filter: drop-shadow(0 0 6px var(--m3-primary, #ffb4aa));
+	}
+}

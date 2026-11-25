@@ -585,6 +585,9 @@ export const ProductTourAdapter = ({
 				close: translate('walkthrough.step.done'),
 				skip: translate('walkthrough.step.done')
 			}}
+			// Dark only (productTour.styles.scss): the black scrim barely
+			// darkens a dark UI, so the cutout gets a primary ring there.
+			styles={{ spotlight: { className: 'productTour__spotlightRing' } }}
 			options={{
 				skipBeacon: true,
 				closeButtonAction: 'skip',
