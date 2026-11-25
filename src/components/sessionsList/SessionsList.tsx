@@ -48,6 +48,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { usePracticeLiveChatAvailability } from '../../practice/practiceLiveChatAvailability';
 import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
@@ -451,8 +452,12 @@ export const SessionsList = ({
 	 * refetch so anonymous enquiries appear/disappear without a reload.
 	 * The flag is also read inside apiGetConsultantSessionList itself.
 	 */
-	const [liveChatAvailable] = useLiveChatAvailable(
+	const realLiveChatAvailability = useLiveChatAvailable(
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+	// FE#2545: in practice, the practice-only availability.
+	const [liveChatAvailable] = usePracticeLiveChatAvailability(
+		realLiveChatAvailability
 	);
 	// #1377 slices 4/5: the user's display filter for this list.
 	const displayFilterSection =

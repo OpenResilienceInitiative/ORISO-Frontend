@@ -6613,6 +6613,10 @@
 				"reply": {
 					"title": "Reply",
 					"intro": "The chat is running. Write the person a short reply and send it. It stays in practice and is not saved anywhere."
+				},
+				"practiceAvailability": {
+					"title": "Become available",
+					"intro": "Only available counsellors are offered live chats. Switch “I'm available” on here or in the menu bar – in practice, your real status stays unchanged."
 				}
 			}
 		},

@@ -2906,6 +2906,9 @@
 				},
 				"reply": {
 					"intro": "Der Chat läuft. Schreib der Person eine kurze Antwort und schick sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"practiceAvailability": {
+					"intro": "Nur wer verfügbar ist, bekommt Live-Chats angeboten. Schalte „Bin verfügbar“ hier oder in der Menüleiste ein – in der Übung bleibt dein echter Status unverändert."
 				}
 			}
 		},

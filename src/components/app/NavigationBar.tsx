@@ -62,6 +62,8 @@ import {
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
 import { resolveLiveChatRailTarget } from './liveChatRailTarget';
+import { usePracticeLiveChatAvailability } from '../../practice/practiceLiveChatAvailability';
+import { usePracticeActive } from '../../practice/usePracticeActive';
 import {
 	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
 	useLiveChatAvailabilityLossNotice
@@ -138,6 +140,13 @@ export const NavigationBar = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	const realLiveChatAvailability = useLiveChatAvailable(isConsultant);
+	const [realLiveChatAvailable, , { lostReason: realLiveChatLostReason }] =
+		realLiveChatAvailability;
+	// FE#2545: while practising, the rail toggle shows and flips a
+	// practice-only state. The heartbeat and the notices below keep the real
+	// state, so a counsellor who is really available stays so.
+	const practising = usePracticeActive();
 	const [
 		liveChatAvailable,
 		setLiveChatAvailable,
@@ -147,7 +156,7 @@ export const NavigationBar = ({
 			error: liveChatError,
 			lostReason: liveChatLostReason
 		}
-	] = useLiveChatAvailable(isConsultant);
+	] = usePracticeLiveChatAvailability(realLiveChatAvailability);
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
 	// #576: optional global notification-status button in the rail — flips the
 	// account-wide mute (the one switch that overrides everything). Placement
@@ -157,11 +166,11 @@ export const NavigationBar = ({
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
 	const directLinksAllowed = useDirectLinksAllowed(isConsultant);
-	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
+	useLiveChatAvailabilityHeartbeat(isConsultant, realLiveChatAvailable);
 	// #1485: the one heartbeat owner is also the one that says why it stopped.
-	useLiveChatAvailabilityLossNotice(liveChatLostReason);
+	useLiveChatAvailabilityLossNotice(realLiveChatLostReason);
 	// #1704: live, but the provider's agreement turns advice seekers away.
-	useLiveChatDpaRestrictionNotice(isConsultant && liveChatAvailable);
+	useLiveChatDpaRestrictionNotice(isConsultant && realLiveChatAvailable);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -189,7 +198,12 @@ export const NavigationBar = ({
 			await setLiveChatAvailable(nextActive);
 			// Frank 2026-09-16 (Variante 1): with a live chat already open the
 			// button leads back into that conversation, not the empty queue.
-			const target = resolveLiveChatRailTarget({ nextActive, sessions });
+			// In practice the app-level sessions are the real ones: never
+			// lead into a real live chat, always to the (practice) queue.
+			const target = resolveLiveChatRailTarget({
+				nextActive,
+				sessions: practising ? [] : sessions
+			});
 			if (target) {
 				setMoreOpen(false);
 				navigate(target);
@@ -197,7 +211,13 @@ export const NavigationBar = ({
 		} catch {
 			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate, sessions, setLiveChatAvailable]);
+	}, [
+		liveChatAvailable,
+		navigate,
+		practising,
+		sessions,
+		setLiveChatAvailable
+	]);
 
 	const figmaConsultantNav = true;
 	/**
@@ -802,6 +822,9 @@ export const NavigationBar = ({
 									liveChatAvailable &&
 										'navigation__icon-slot--active'
 								)}
+								// The practice live-chat tour's anchor: the
+								// control the counsellor uses (FE#2545).
+								data-tour-target="livechat-availability-control"
 							>
 								<div className="navigation__icon-slot__inner">
 									{liveChatAvailable ? (

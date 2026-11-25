@@ -2,7 +2,9 @@ import { isTourAvailable } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
-	PRACTICE_ENQUIRIES_ROUTE
+	PRACTICE_ENQUIRIES_ROUTE,
+	PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
@@ -156,10 +158,11 @@ export const practiceTours: TourDefinition[] = [
 
 /**
  * FE#2545: the Live-Chat topic tour as a practice flow. A practice live chat
- * from an anonymous practice asker waits in the queue; the counsellor opens
- * it, starts the chat with the real button and writes the first reply, which
- * the script answers. Same id and version as the explanation tour it replaces
- * where practice is open, so Help shows one status; no card of its own.
+ * from an anonymous practice asker waits in the queue. The counsellor
+ * switches "Bin verfügbar" on (in practice only), opens the chat, starts it
+ * with the real button and writes the first reply, which the script answers.
+ * Same id and version as the explanation tour it replaces where practice is
+ * open, so Help shows one status; no card of its own.
  */
 export const practiceLiveChatTour: TourDefinition = {
 	id: PRACTICE_LIVE_CHAT_TOUR_ID,
@@ -180,20 +183,37 @@ export const practiceLiveChatTour: TourDefinition = {
 			contentKey: 'tour.liveChat.step.practiceIntro.intro'
 		},
 		{
+			// Live chats only reach a counsellor who is available. The real
+			// control (settings switch, or the rail toggle where the
+			// counsellor moved it) flips a practice-only state: no request,
+			// no storage, no heartbeat (`practiceLiveChatAvailability`).
+			id: 'availability',
+			route: PRACTICE_LIVE_CHAT_SETTINGS_ROUTE,
+			target: 'livechat-availability-control',
+			placement: 'auto',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.liveChatAvailable
+			},
+			titleKey: 'tour.liveChat.step.practiceAvailability.title',
+			contentKey: 'tour.liveChat.step.practiceAvailability.intro'
+		},
+		{
+			// Switching on lands on the shared queue with the live-chat
+			// filter already on, as in real life: the step explains it
+			// (Next). A click would switch the filter off again.
 			id: 'queue',
-			route: PRACTICE_ENQUIRIES_ROUTE,
+			route: PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
 			target: 'livechat-queue',
 			placement: 'bottom',
 			// The chip shows only where the Träger lists live chats apart.
 			optional: true,
-			// The filter shows the shared queue: only the waiting live chat.
-			advanceOn: { type: 'click' },
 			titleKey: 'tour.liveChat.step.queue.title',
 			contentKey: 'tour.liveChat.step.queue.intro'
 		},
 		{
 			id: 'open-request',
-			route: PRACTICE_ENQUIRIES_ROUTE,
+			route: PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
 			target: 'enquiry-list-item',
 			placement: 'right',
 			advanceOn: { type: 'click' },

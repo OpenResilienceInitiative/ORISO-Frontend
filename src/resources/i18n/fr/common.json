@@ -6698,6 +6698,10 @@
 				"reply": {
 					"title": "Répondre",
 					"intro": "Le chat est en cours. Écrivez une courte réponse à la personne et envoyez-la. Elle reste dans l'exercice et n'est enregistrée nulle part."
+				},
+				"practiceAvailability": {
+					"title": "Se rendre disponible",
+					"intro": "Seules les personnes disponibles reçoivent des chats en direct. Activez « Je suis disponible » ici ou dans la barre de menu ; pendant l'exercice, votre statut réel ne change pas."
 				}
 			}
 		},

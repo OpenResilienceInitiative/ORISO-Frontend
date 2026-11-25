@@ -6688,6 +6688,10 @@
 				"reply": {
 					"title": "Antworten",
 					"intro": "Der Chat läuft. Schreiben Sie der Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"practiceAvailability": {
+					"title": "Verfügbar schalten",
+					"intro": "Nur wer verfügbar ist, bekommt Live-Chats angeboten. Schalten Sie „Bin verfügbar“ hier oder in der Menüleiste ein – in der Übung bleibt Ihr echter Status unverändert."
 				}
 			}
 		},
