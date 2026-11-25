@@ -1,5 +1,5 @@
 // @vitest-environment oriso-jsdom
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { forwardComposerWheel } from './composerWheel';
 
 /**
@@ -15,15 +15,16 @@ const metrics = (
 	Object.defineProperty(element, 'scrollTop', {
 		configurable: true,
 		get: () => scrollTop,
+		// Like the browser, clamp to the scrollable range.
 		set: (value: number) => {
-			scrollTop = value;
+			scrollTop = Math.min(Math.max(value, 0), height - client);
 		}
 	});
 	Object.defineProperty(element, 'scrollHeight', { value: height });
 	Object.defineProperty(element, 'clientHeight', { value: client });
 };
 
-const setup = () => {
+const setup = (loadEarlier?: () => void) => {
 	const pane = document.createElement('div');
 	const timeline = document.createElement('div');
 	const message = document.createElement('p');
@@ -37,7 +38,7 @@ const setup = () => {
 	document.body.append(pane);
 	metrics(timeline, { top: 600, height: 2000, client: 400 });
 	pane.addEventListener('wheel', (event) =>
-		forwardComposerWheel(event, pane, timeline)
+		forwardComposerWheel(event, pane, timeline, loadEarlier)
 	);
 	const wheel = (target: Element, init: WheelEventInit) => {
 		const event = new WheelEvent('wheel', {
@@ -96,5 +97,22 @@ describe('forwardComposerWheel', () => {
 		const { draft, timeline, wheel } = setup();
 		wheel(draft, { deltaY: -40, ctrlKey: true });
 		expect(timeline.scrollTop).toBe(600);
+	});
+
+	it('loads older messages on an upward wheel with the timeline at its start', () => {
+		const loadEarlier = vi.fn();
+		const { draft, timeline, wheel } = setup(loadEarlier);
+		metrics(timeline, { top: 0, height: 2000, client: 400 });
+		const event = wheel(draft, { deltaY: -40 });
+		expect(timeline.scrollTop).toBe(0);
+		expect(event.defaultPrevented).toBe(true);
+		expect(loadEarlier).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not load older messages on a downward wheel', () => {
+		const loadEarlier = vi.fn();
+		const { draft, wheel } = setup(loadEarlier);
+		wheel(draft, { deltaY: 40 });
+		expect(loadEarlier).not.toHaveBeenCalled();
 	});
 });

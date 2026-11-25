@@ -55,11 +55,17 @@ export const scrollsItself = (
 /**
  * Wheel listener for the pane that holds the timeline and the composer dock.
  * Anything not over the dock is left to the browser.
+ *
+ * `loadEarlier` is the timeline's own start-of-history loader. The timeline
+ * calls it from its `onWheel`, which a wheel over the dock never reaches, so
+ * an upward wheel here calls it too. The loader keeps its own threshold and
+ * in-flight checks.
  */
 export const forwardComposerWheel = (
 	event: WheelEvent,
 	pane: Element,
-	timeline: HTMLElement | null
+	timeline: HTMLElement | null,
+	loadEarlier?: () => void
 ): void => {
 	const target = event.target instanceof Element ? event.target : null;
 	if (!timeline || !target?.closest(DOCK_SELECTOR)) {
@@ -79,4 +85,7 @@ export const forwardComposerWheel = (
 	}
 	timeline.scrollTop += delta;
 	event.preventDefault();
+	if (delta < 0) {
+		loadEarlier?.();
+	}
 };
