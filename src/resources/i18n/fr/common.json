@@ -4322,7 +4322,8 @@
 		"readOnly": {
 			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
 			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
-			"extend": "Prolonger l'accès"
+			"extend": "Prolonger l'accès",
+			"teamNotice": "Consultation en équipe : vous suivez ce dossier en lecture. Seul·e {{name}} y écrit des messages."
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
@@ -4779,7 +4780,8 @@
 				"agencyFallback": "Service de consultation {{id}}",
 				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
 				"removeFilters": "Supprimer les filtres",
-				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche",
+				"teamPeopleHint": "Consultation en équipe : choisissez un·e collègue de votre centre de conseil et appuyez sur Entrée pour voir ses dossiers et les suivre."
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"

@@ -4322,7 +4322,8 @@
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
 			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"extend": "Erişimi uzat"
+			"extend": "Erişimi uzat",
+			"teamNotice": "Ekip danışmanlığı: Bu vakayı okuyorsunuz. Bu vakada yalnızca {{name}} mesaj yazar."
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
@@ -4779,7 +4780,8 @@
 				"agencyFallback": "Danışma merkezi {{id}}",
 				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
 				"removeFilters": "Filtreleri kaldır",
-				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru",
+				"teamPeopleHint": "Ekip danışmanlığı: Danışma merkezinizden bir meslektaş seçin ve vakalarını görmek ve takip etmek için Enter'a basın."
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

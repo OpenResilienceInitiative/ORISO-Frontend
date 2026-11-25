@@ -485,6 +485,55 @@ export const HandoverEligibleColleagues1440: Story = {
 		expectEligibleColleaguesOnly(canvasElement, hintDe)
 };
 
+const teamHintDe = de.sessionList.toolbar.search.teamPeopleHint;
+const teamHintEn = en.sessionList.toolbar.search.teamPeopleHint;
+
+/**
+ * FE#2494 (Frank, 24 Nov): in a Teamberatung centre the same search lists the
+ * colleagues of the counsellor's own Beratungsstelle; picking one and pressing
+ * Enter shows that colleague's cases, which open read-only.
+ */
+export const TeamCounsellingColleagues: Story = {
+	name: 'Teamberatung — colleagues of my Beratungsstelle (DE)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={teamHintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, teamHintDe)
+};
+
+export const TeamCounsellingColleaguesEnglish: Story = {
+	name: 'Teamberatung — colleagues of my Beratungsstelle (EN)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			labels={labelsEn}
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={teamHintEn}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, teamHintEn)
+};
+
+export const TeamCounsellingColleagues390: Story = {
+	name: 'Teamberatung — colleagues, phone 390 (DE)',
+	globals: phone390Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={teamHintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, teamHintDe)
+};
+
 const expectNobodyEligibleHint = async (
 	canvasElement: HTMLElement,
 	empty: string,

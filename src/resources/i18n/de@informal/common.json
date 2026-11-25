@@ -1679,7 +1679,8 @@
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
 				},
-				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus.",
+				"teamPeopleHint": "Teamberatung: Wähle eine Kolleg:in deiner Beratungsstelle und drück Enter. Dann siehst du ihre Fälle und kannst sie mitlesen."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2594,7 +2595,8 @@
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"teamNotice": "Teamberatung: Du liest mit. Nur {{name}} schreibt in diesem Fall Nachrichten."
 		},
 		"consent": {
 			"senderRole": "Kurze Orientierung",

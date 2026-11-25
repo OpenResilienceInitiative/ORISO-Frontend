@@ -156,7 +156,11 @@ const grant = (
 	...(accessType === 'CO_ACCESS' && { expiresAt: EXPIRES_AT })
 });
 
-const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
+const renderSession = (
+	caseHandoverStatus: CaseHandoverStatus | null,
+	session: any = activeSession,
+	userData: any = counsellorUserData
+) =>
 	render(
 		<MemoryRouter>
 			<NotificationsContext.Provider
@@ -165,7 +169,7 @@ const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
 				<UserDataContext.Provider
 					value={
 						{
-							userData: counsellorUserData,
+							userData,
 							setUserData: vi.fn()
 						} as any
 					}
@@ -176,7 +180,7 @@ const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
 						<ActiveSessionContext.Provider
 							value={
 								{
-									activeSession,
+									activeSession: session,
 									reloadActiveSession: vi.fn()
 								} as any
 							}
@@ -242,6 +246,50 @@ describe('SessionItemComponent — case handover co-access is read-only', () => 
 
 	it('keeps the composer for a TAKEOVER recipient', async () => {
 		renderSession(grant('TAKEOVER'));
+
+		expect(await screen.findByTestId('composer')).toBeTruthy();
+		expect(
+			screen.queryByTestId('case-handover-read-only-notice')
+		).toBeNull();
+	});
+});
+
+describe('SessionItemComponent — Teamberatung is read-only for colleagues (FE#2494 *4)', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	const teamCase = {
+		...activeSession,
+		item: { ...activeSession.item, isTeamSession: true }
+	};
+	const teamReader: CaseHandoverStatus = {
+		sessionId: SESSION_ID,
+		status: 'GRANTED',
+		canViewContent: true,
+		clientConsentRequired: false,
+		auditOutcome: 'TEAM_READER'
+	} as CaseHandoverStatus;
+
+	it('lets a colleague read without a message field and shows the Teamberatung notice', async () => {
+		renderSession(teamReader, teamCase);
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toContain(
+			'caseHandover.readOnly.teamNotice'
+		);
+		expect(screen.queryByTestId('composer')).toBeNull();
+		expect(screen.queryByTestId('case-handover-extend')).toBeNull();
+	});
+
+	it('keeps the message field for the assigned counsellor', async () => {
+		renderSession(null, teamCase, {
+			...counsellorUserData,
+			userId: 'counsellor-1'
+		});
 
 		expect(await screen.findByTestId('composer')).toBeTruthy();
 		expect(

@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { STATUS_ENQUIRY, STATUS_ACTIVE } from '../../globalState/interfaces';
 import {
 	isCaseHandoverAccessControlled,
+	isTeamCounsellingReader,
+	offersCaseHandoverIn,
+	peopleSearchHintKeys,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -50,6 +53,103 @@ const consultantUser = {
 };
 
 describe('caseHandoverHelpers', () => {
+	it('offers no case handover in a team case of a centre in Teamberatung', () => {
+		const centres = [
+			{ id: 1, teamAgency: true },
+			{ id: 2, teamAgency: false }
+		];
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 1 } },
+				centres
+			)
+		).toBe(false);
+		// The centre has switched to case handover: the owner may hand over again.
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 2 } },
+				centres
+			)
+		).toBe(true);
+		// Unknown centre: offered, the server decides.
+		expect(offersCaseHandoverIn({ item: { isTeamSession: true } })).toBe(
+			true
+		);
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: false, agencyId: 1 } },
+				centres
+			)
+		).toBe(true);
+		expect(offersCaseHandoverIn({ item: {} })).toBe(true);
+	});
+
+	it('picks the people search hint from the counsellor centres', () => {
+		const handover = 'sessionList.toolbar.search.handoverPeopleHint';
+		const team = 'sessionList.toolbar.search.teamPeopleHint';
+		expect(peopleSearchHintKeys([{ id: 1, teamAgency: true }])).toEqual([
+			team
+		]);
+		expect(peopleSearchHintKeys([{ id: 2, teamAgency: false }])).toEqual([
+			handover
+		]);
+		expect(
+			peopleSearchHintKeys([{ id: 1, teamAgency: true }, { id: 2 }])
+		).toEqual([handover, team]);
+		expect(peopleSearchHintKeys(undefined)).toEqual([handover]);
+	});
+
+	it('makes a colleague a reader in an accepted team case, never the owner', () => {
+		const teamCase = {
+			...baseSession,
+			item: { ...baseSession.item, isTeamSession: true }
+		};
+		expect(
+			isTeamCounsellingReader({
+				activeSession: teamCase,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(true);
+		expect(
+			isTeamCounsellingReader({
+				activeSession: {
+					...teamCase,
+					consultant: { id: consultantUser.userId }
+				},
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+		expect(
+			isTeamCounsellingReader({
+				activeSession: baseSession,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+	});
+
+	it('ends team reading once the centre has switched to another model', () => {
+		const teamCase = {
+			...baseSession,
+			item: { ...baseSession.item, isTeamSession: true, agencyId: 5 }
+		};
+		const reader = (teamAgency?: boolean) =>
+			isTeamCounsellingReader({
+				activeSession: teamCase,
+				userData: {
+					...consultantUser,
+					agencies: [{ id: 5, teamAgency }]
+				},
+				type: MY_SESSION_TYPE
+			});
+		expect(reader(true)).toBe(true);
+		expect(reader(false)).toBe(false);
+		// Unknown mode: stay read-only, the server decides what is visible.
+		expect(reader(undefined)).toBe(true);
+	});
+
 	it('marks another counsellor owned my-session as handover candidate', () => {
 		expect(
 			isCaseHandoverCandidate({
