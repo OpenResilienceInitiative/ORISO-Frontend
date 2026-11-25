@@ -13,29 +13,9 @@ export const ROBOT_RATE = 0.9;
 /** How long to wait for the voice list before falling back to the murmur. */
 export const VOICES_TIMEOUT_MS = 1500;
 
-/** The app language as a BCP 47 base: `de@informal` → `de`. */
-export const voiceLanguageOf = (locale: string): string =>
-	(locale || '').split(/[@_-]/)[0].toLowerCase();
-
-const languageOfVoice = (voice: Pick<SpeechSynthesisVoice, 'lang'>) =>
-	(voice.lang || '').split(/[-_]/)[0].toLowerCase();
-
-/**
- * A local voice for the page language, or null. Never a network voice, even
- * when it is the only one, the default, or the best match.
- */
-export const pickLocalVoice = (
-	voices: readonly SpeechSynthesisVoice[],
-	locale: string
-): SpeechSynthesisVoice | null => {
-	const language = voiceLanguageOf(locale);
-	if (!language) return null;
-	const local = voices.filter(
-		(voice) =>
-			voice.localService === true && languageOfVoice(voice) === language
-	);
-	return local.find((voice) => voice.default) ?? local[0] ?? null;
-};
+// The voice choice is shared (also used outside practice): only local,
+// non-novelty voices of the app language.
+export { pickLocalVoice, voiceLanguageOf } from '../utils/localSpeechVoice';
 
 export const speechSynthesisOf = (): SpeechSynthesis | null =>
 	typeof window !== 'undefined' &&
