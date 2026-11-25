@@ -93,9 +93,11 @@ $dark-grey: #e7e3e1;
 
 $focus-blue: #199fff;
 
-$text-high-emphasis: rgba(0, 0, 0, 0.9);
-$text-low-emphasis: rgba(0, 0, 0, 0.6);
-$text-disabled: rgba(0, 0, 0, 0.4);
+// Light keeps these black alphas; the dark scheme sets the `--oriso-text-*`
+// aliases in `mui-variables-mapping.scss` (P0 dark mode, 2026-11-25).
+$text-high-emphasis: var(--oriso-text-high, rgba(0, 0, 0, 0.9));
+$text-low-emphasis: var(--oriso-text-low, rgba(0, 0, 0, 0.6));
+$text-disabled: var(--oriso-text-disabled, rgba(0, 0, 0, 0.4));
 $text-invert: rgba(255, 255, 255, 1);
 
 $border-default: rgba(0, 0, 0, 0.2);
