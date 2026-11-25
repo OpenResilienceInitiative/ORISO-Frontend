@@ -622,6 +622,27 @@ export const CancelAnExercise: Story = {
 const anchor = (name: string) =>
 	document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`)!;
 
+/**
+ * Clicks like a person: the control must be the topmost element at its own
+ * centre (no popover, overlay or centred tour layer above it). jsdom cannot
+ * check layering, and `userEvent.click` dispatches to the element whatever
+ * covers it, so this is the regression check for covered tour targets.
+ */
+const clickAsUser = async (control: HTMLElement) => {
+	await waitFor(() => {
+		const box = control.getBoundingClientRect();
+		const hit = document.elementFromPoint(
+			box.left + box.width / 2,
+			box.top + box.height / 2
+		);
+		expect(
+			hit !== null && (hit === control || control.contains(hit)),
+			`covered by ${hit?.outerHTML.slice(0, 120)}`
+		).toBe(true);
+	}, SLOW);
+	await userEvent.click(control);
+};
+
 /** Opens the header "+" of the open case and picks an entry of its menu. */
 const pickPlusMenuEntry = async (
 	entry: 'Supervisor verwalten' | 'Beratung übergeben'
@@ -768,35 +789,48 @@ export const HandOverCases: Story = {
 				await next();
 			}
 		);
-		await step('6: Search "Alex" in the sessions list', async () => {
-			await expectStep(6, of);
-			await target('sessions-search');
-			const search = anchor('sessions-search');
-			if (!search.querySelector('input')) {
-				await userEvent.click(
-					within(search).getByRole('button', {
-						name: 'Suchergebnisse öffnen oder schließen'
-					})
+		await step(
+			'6: Search "Alex" in the sessions list and confirm with ✓',
+			async () => {
+				await expectStep(6, of);
+				await target('sessions-search');
+				const search = anchor('sessions-search');
+				if (!search.querySelector('input')) {
+					await userEvent.click(
+						within(search).getByRole('button', {
+							name: 'Suchergebnisse öffnen oder schließen'
+						})
+					);
+				}
+				await userEvent.type(
+					await waitFor(() => {
+						const input = search.querySelector('input');
+						expect(input).not.toBeNull();
+						return input!;
+					}, SLOW),
+					'Alex'
+				);
+				// The menu lies over the list until it is confirmed: the tour
+				// waits, and the ✓ of the real search closes it.
+				await clickAsUser(
+					await screen.findByRole(
+						'button',
+						{ name: 'Auswahl bestätigen' },
+						SLOW
+					)
 				);
 			}
-			await userEvent.type(
-				await waitFor(() => {
-					const input = search.querySelector('input');
-					expect(input).not.toBeNull();
-					return input!;
-				}, SLOW),
-				'Alex'
-			);
-		});
+		);
 		await step('7: "Zugriff anfragen" on Alex\'s case', async () => {
 			await expectStep(7, of);
 			await target('case-handover-request-access');
 			const action = anchor('case-handover-request-access');
-			await userEvent.click(
-				action.matches('button')
-					? action
-					: within(action).getAllByRole('button')[0]
-			);
+			const button = action.matches('button')
+				? action
+				: within(action).getAllByRole('button')[0];
+			// The tour quotes the button by its full name.
+			await expect(button).toHaveAccessibleName(/Zugriff anfragen/);
+			await clickAsUser(button);
 		});
 		await step(
 			'8: The curtain: a reason, a short text, "Zugriff anfragen"',
@@ -804,19 +838,19 @@ export const HandOverCases: Story = {
 				await expectStep(8, of);
 				await target('case-handover-curtain');
 				const curtain = anchor('case-handover-curtain');
-				await userEvent.click(
+				await clickAsUser(
 					within(curtain).getByRole('button', {
 						name: 'Schritt für Schritt zeigen'
 					})
 				);
-				await userEvent.click(
+				await clickAsUser(
 					(await within(curtain).findAllByRole('radio', {}, SLOW))[0]
 				);
 				const forward = () =>
 					document.querySelector<HTMLButtonElement>(
 						'[data-cy="case-handover-curtain-next"]'
 					)!;
-				await userEvent.click(forward());
+				await clickAsUser(forward());
 				await userEvent.type(
 					await waitFor(() => {
 						const field = document.querySelector<HTMLElement>(
@@ -827,7 +861,7 @@ export const HandOverCases: Story = {
 					}, SLOW),
 					'Ich vertrete Alex in dieser Woche.'
 				);
-				await userEvent.click(forward());
+				await clickAsUser(forward());
 				await waitFor(
 					() =>
 						expect(curtain.textContent).toContain(

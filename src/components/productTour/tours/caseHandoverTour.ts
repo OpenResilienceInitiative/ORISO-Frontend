@@ -8,6 +8,16 @@ import type { TourDefinition } from '../types';
 export const CASE_HANDOVER_TOUR_VERSION = 2;
 
 /**
+ * Tour event: the sessions search menu closed (✓, Enter, Escape or a press
+ * outside) while a name was typed or a person picked, so the list shows the
+ * found cases instead of the menu. Without a running tour nobody listens.
+ */
+export const SESSIONS_SEARCH_CLOSED = 'sessions:search-closed';
+
+/** Tour event: the sessions search menu opened and covers the list again. */
+export const SESSIONS_SEARCH_OPENED = 'sessions:search-opened';
+
+/**
  * FE#2341: case handover for counsellors, watch-only. Two directions: the
  * owner offers a case ("+" in the session header → "Beratung übergeben"),
  * a colleague asks for one (search a person → "Zugriff anfragen"). The

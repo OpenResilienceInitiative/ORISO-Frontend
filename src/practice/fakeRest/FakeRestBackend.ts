@@ -83,6 +83,8 @@ export interface FakeRestHooks {
 	onCaseHandoverOffered?: (requestId: number) => void;
 	/** A search by name found the colleague's case that can be requested. */
 	onColleagueCaseFound?: () => void;
+	/** A search by name found no practice case. */
+	onColleagueCaseMissed?: () => void;
 	/** Access to the colleague's case was requested. */
 	onCaseHandoverRequested?: (requestId: number) => void;
 }
@@ -464,8 +466,9 @@ export const createFakeRestBackend = ({
 			url.searchParams.get('archived') !== 'true' &&
 			findsColleagueCase(query);
 		// A name the counsellor searched for, not the roster or a direct open.
-		if (found && query && !isPracticeId(query)) {
-			hooks.onColleagueCaseFound?.();
+		if (query && !isPracticeId(query)) {
+			if (found) hooks.onColleagueCaseFound?.();
+			else hooks.onColleagueCaseMissed?.();
 		}
 		const sessions = found ? [colleagueItem()] : [];
 		return ok({

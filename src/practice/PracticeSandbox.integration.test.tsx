@@ -179,7 +179,7 @@ const expectTourEvents = (expected: Partial<Record<string, number>>) =>
 		[PRACTICE_TOUR_EVENTS.calendarBlockerCreated]: 0,
 		[PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn]: 0,
 		[PRACTICE_TOUR_EVENTS.caseHandoverOffered]: 0,
-		[PRACTICE_TOUR_EVENTS.colleagueCaseFound]: 0,
+		[PRACTICE_TOUR_EVENTS.colleagueCaseListed]: 0,
 		[PRACTICE_TOUR_EVENTS.caseHandoverRequested]: 0,
 		...expected
 	});

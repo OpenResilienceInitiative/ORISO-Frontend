@@ -6470,7 +6470,7 @@
 					"intro": "Alex decides now, until then you stay responsible, and “Withdraw offer” takes it back. Close the window with “Close” and go on."
 				},
 				"practiceSearch": {
-					"intro": "Type “Alex” here. The list then shows the case of Alex that you may request access to."
+					"intro": "Type “Alex” here and confirm with the tick ✓ or the Enter key. The list then shows the case of Alex that you may request access to."
 				},
 				"practiceRequestAccess": {
 					"intro": "Click “Request access” on Alex’s case. The case opens, but its content stays hidden."

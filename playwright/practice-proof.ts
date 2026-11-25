@@ -639,6 +639,12 @@ export const driveCaseHandoverFlow = async (
 		.locator('input')
 		.first()
 		.pressSequentially('Alex', { delay: 20 });
+	// The menu lies over the list until it is confirmed; the tour waits.
+	await expectStep(page, `${step}.search.title`, at, total);
+	await page.locator('[data-cy="sessions-list-search-confirm"]').click();
+	await expect(
+		page.getByTestId('session-search-results-scroll')
+	).toBeHidden();
 
 	at += 1;
 	await expectStep(page, `${step}.requestAccess.title`, at, total);

@@ -6555,7 +6555,7 @@
 					"intro": "Şimdi Alex karar veriyor, o zamana kadar sorumlu sizsiniz ve „Teklifi geri çek“ ile teklifi geri alırsınız. Pencereyi „Kapat“ ile kapatın ve devam edin."
 				},
 				"practiceSearch": {
-					"intro": "Buraya „Alex“ yazın. Liste ardından erişim talep edebileceğiniz Alex vakasını gösterir."
+					"intro": "Buraya „Alex“ yazın ve ✓ işaretiyle ya da Enter tuşuyla onaylayın. Liste ardından erişim talep edebileceğiniz Alex vakasını gösterir."
 				},
 				"practiceRequestAccess": {
 					"intro": "Alex’in vakasında „Erişim talep et“e tıklayın. Vaka açılır ama içeriği gizli kalır."

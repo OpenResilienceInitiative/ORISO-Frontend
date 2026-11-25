@@ -526,8 +526,9 @@ export const practiceCaseHandoverTour: TourDefinition = {
 			contentKey: 'tour.caseHandover.step.practiceOfferPending.intro'
 		},
 		{
-			// The counsellor types a name; the step moves on once the
-			// colleague's case is listed.
+			// The counsellor types a name and confirms; the search menu lies
+			// over the list until then, so the step moves on only when it
+			// closed on a list with the colleague's case.
 			id: 'search',
 			route: SESSIONS_ROUTE,
 			target: 'sessions-search',
@@ -535,7 +536,7 @@ export const practiceCaseHandoverTour: TourDefinition = {
 			interactive: true,
 			advanceOn: {
 				type: 'event',
-				name: PRACTICE_TOUR_EVENTS.colleagueCaseFound
+				name: PRACTICE_TOUR_EVENTS.colleagueCaseListed
 			},
 			titleKey: 'tour.caseHandover.step.search.title',
 			contentKey: 'tour.caseHandover.step.practiceSearch.intro'
@@ -555,7 +556,11 @@ export const practiceCaseHandoverTour: TourDefinition = {
 			id: 'request',
 			hideBack: true,
 			target: 'case-handover-curtain',
-			placement: 'auto',
+			// The curtain fills the session pane: as tall as the window, so
+			// 'auto' fell back to a centred tooltip, which has no spotlight
+			// and covers the wizard (Dev, FE#2545). The list column on the
+			// left has room for the tooltip.
+			placement: 'left',
 			interactive: true,
 			advanceOn: {
 				type: 'event',

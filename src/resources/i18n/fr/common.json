@@ -6555,7 +6555,7 @@
 					"intro": "Alex décide maintenant, d’ici là vous restez responsable, et « Retirer l’offre » annule la proposition. Fermez la fenêtre avec « Fermer » et continuez."
 				},
 				"practiceSearch": {
-					"intro": "Saisissez « Alex » ici. La liste affiche alors le dossier d’Alex auquel vous pouvez demander l’accès."
+					"intro": "Saisissez « Alex » ici et validez avec la coche ✓ ou la touche Entrée. La liste affiche alors le dossier d’Alex auquel vous pouvez demander l’accès."
 				},
 				"practiceRequestAccess": {
 					"intro": "Cliquez sur « Demander l'accès » pour le dossier d’Alex. Le dossier s’ouvre, mais son contenu reste masqué."

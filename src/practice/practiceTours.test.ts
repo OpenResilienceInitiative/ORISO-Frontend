@@ -9,7 +9,10 @@ import ruTranslations from '../resources/i18n/ru/common.json';
 import tiTranslations from '../resources/i18n/ti/common.json';
 import trTranslations from '../resources/i18n/tr/common.json';
 import { frontendTours } from '../components/productTour/tourDefinitions';
-import { resolveTourSteps } from '../components/productTour/tourEngine';
+import {
+	effectivePlacement,
+	resolveTourSteps
+} from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
@@ -290,7 +293,7 @@ describe('practiceCaseHandoverTour (FE#2545, Fälle übergeben, with the former 
 				'search',
 				{
 					type: 'event',
-					name: PRACTICE_TOUR_EVENTS.colleagueCaseFound
+					name: PRACTICE_TOUR_EVENTS.colleagueCaseListed
 				}
 			],
 			['request-access', { type: 'click' }],
@@ -311,6 +314,24 @@ describe('practiceCaseHandoverTour (FE#2545, Fälle übergeben, with the former 
 		expect(step('offer').route).toBe(practiceAcceptedSessionRoute());
 		expect(step('search').route).toBe('/sessions/consultant/sessionView');
 	});
+
+	it.each([
+		[1200, 800],
+		[1440, 900],
+		[1920, 1080]
+	])(
+		'keeps the curtain spotlighted at %ix%i: a tall pane gets the tooltip beside it, not centred over it',
+		(width, height) => {
+			// The session pane: right of the list column, full height.
+			const curtain = { width: width * 0.62, height: height - 64 };
+			expect(
+				effectivePlacement(step('request').placement, curtain, {
+					width,
+					height
+				})
+			).toBe('left');
+		}
+	);
 
 	it('keeps the search field and the curtain wizard usable under the spotlight', () => {
 		expect(step('search').interactive).toBe(true);
@@ -382,6 +403,11 @@ describe('practiceCaseHandoverTour (FE#2545, Fälle übergeben, with the former 
 	])('%s quotes the real labels in German', (id, labelKeys) => {
 		const text = de(step(id).contentKey);
 		labelKeys.forEach((key) => expect(text).toContain(`„${de(key)}“`));
+	});
+
+	// The search menu lies over the list until it is confirmed (Dev, FE#2545).
+	it('asks to confirm the search, so the menu stops covering the case', () => {
+		expect(de(step('search').contentKey)).toMatch(/✓.*Eingabetaste/);
 	});
 
 	// The add dialog refuses to confirm without a reason (reasonError).

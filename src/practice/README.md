@@ -186,8 +186,8 @@ adds Robin through "+" → "Supervisor verwalten" (only where the Träger has
 supervision and its one-on-one chats; otherwise those two steps drop out),
 offers the case to Alex through "+" → "Beratung übergeben" (a colleague, a
 reason, "Übergabe anbieten"; the state dialog shows "Angebot zurückziehen"),
-types "Alex" into the real search of the sessions list, clicks "Zugriff
-anfragen" on Alex's case and sends the request through the case curtain
+types "Alex" into the real search of the sessions list and confirms it with
+✓ or Enter, clicks "Zugriff anfragen" on Alex's case and sends the request through the case curtain
 (reason, text, "Zugriff anfragen"). Practice conversations get the same "+"
 menu as real ones now (`SessionHeaderComponent`, `canHandOverHere`). The fake
 backend answers the handover search (`/service/users/case-handover/candidates`),
@@ -213,6 +213,23 @@ opens by id and by room. No allowlist entry was added.
   pending offer again. Practice ids are fixed, so a practice offer showed as
   pending in the next run. `practiceMode` forgets every practice operation on
   enter, restart and exit (`clearCaseHandoverSessionOperations`).
+
+- **Covered controls (Dev click-through).** (1) The search menu lies over
+  the list while it is open, so "Zugriff anfragen" was under it. The search
+  step now waits for `practice:colleague-case-listed`: the practice world
+  hears the toolbar's tour events `sessions:search-opened` /
+  `sessions:search-closed` (`SessionsListToolbar`, emitted for every
+  close with a name or person; nobody listens outside a tour) and emits it
+  once the menu is closed and the last name search found the colleague's
+  case, in either order. (2) The curtain is as tall as the window, so
+  `placement: 'auto'` fell back to a centred tooltip: Joyride then draws no
+  spotlight and its overlay covered the wizard. The request step is placed
+  `left`. The story `Hand over cases` clicks steps 6 to 8 only where
+  `document.elementFromPoint` hits the control itself.
+- **Known limit.** The compact "Zugriff anfragen" button of a session card
+  is truncated to "Zugriff an…" (Chromium, 1440 px: label 111 px in an 80
+  px box), in practice and in real use; its accessible name is complete,
+  and the tour quotes the full label.
 
 Proof: the "Fälle übergeben" tests in `FakeRestBackend.test.ts`,
 `practiceFoldedProgress.test.ts`, `practiceMode.test.ts`, the three runs in

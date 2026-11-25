@@ -1061,6 +1061,15 @@ const searchForAlex = async (search: HTMLElement) => {
 	}, SLOW);
 	fireEvent.focus(input);
 	fireEvent.change(input, { target: { value: 'Alex' } });
+	// The search runs after its debounce; the menu still lies over the list,
+	// so the tour must not move on yet (Dev, FE#2545).
+	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 600)));
+	expect(joyride?.stepIndex).toBe(stepIndexOf('sessions-search'));
+	expect(
+		document.querySelector('[data-testid="session-search-results-scroll"]')
+	).toBeTruthy();
+	// "✓" / Enter closes the menu: only now is "Zugriff anfragen" reachable.
+	fireEvent.keyDown(input, { key: 'Enter' });
 };
 
 /** The curtain wizard: "Schritt für Schritt zeigen", a reason, "Weiter", a text, "Zugriff anfragen". */
@@ -1602,7 +1611,7 @@ describe('practice flows on the real app shell', () => {
 		// 6: the real search of the sessions list; "Alex" lists Alex's case.
 		const search = await expectStep(5);
 		expect(route()).toMatch(/^\/sessions\/consultant\/sessionView/);
-		await afterWorldEvent(PRACTICE_TOUR_EVENTS.colleagueCaseFound, () =>
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.colleagueCaseListed, () =>
 			searchForAlex(search!)
 		);
 

@@ -3,6 +3,7 @@ import {
 	createContext,
 	useCallback,
 	useContext,
+	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useState
@@ -314,6 +315,7 @@ export const PracticeSandbox = ({
 		acquire(world, baseFetch);
 		return release;
 	}, [world, baseFetch]);
+	useEffect(() => world.connect(), [world]);
 
 	const restart = useCallback(
 		() =>

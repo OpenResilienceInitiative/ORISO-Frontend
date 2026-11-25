@@ -1,5 +1,5 @@
 // @vitest-environment oriso-jsdom
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import {
@@ -10,7 +10,14 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from './practiceIds';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import { subscribeToTourEvent } from '../components/productTour/tourEvents';
+import {
+	emitTourEvent,
+	subscribeToTourEvent
+} from '../components/productTour/tourEvents';
+import {
+	SESSIONS_SEARCH_CLOSED,
+	SESSIONS_SEARCH_OPENED
+} from '../components/productTour/tours/caseHandoverTour';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { endpoints } from '../resources/scripts/endpoints';
 import {
@@ -470,4 +477,54 @@ describe('practice world ids', () => {
 			expect(ids.filter((id) => !isPracticeId(id))).toEqual([]);
 		}
 	);
+});
+
+describe('practice world: the colleague case in the sessions search (FE#2545)', () => {
+	const search = (world: PracticeWorld, query: string) =>
+		world.rest.handle(
+			new Request(
+				`${endpoints.caseHandoverCandidates}?query=${encodeURIComponent(query)}&offset=0&count=15`
+			)
+		);
+
+	it('tells the tour once the search menu closed on a list that shows the colleague case', async () => {
+		const world = worldIn('de', 'acceptedCase');
+		const listed = vi.fn();
+		const off = subscribeToTourEvent(
+			PRACTICE_TOUR_EVENTS.colleagueCaseListed,
+			listed
+		);
+		const disconnect = world.connect();
+		try {
+			// Typing alone is not enough: the menu still covers the list.
+			emitTourEvent(SESSIONS_SEARCH_OPENED);
+			await search(world, 'Alex');
+			expect(listed).not.toHaveBeenCalled();
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+			expect(listed).toHaveBeenCalledTimes(1);
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+			expect(listed).toHaveBeenCalledTimes(1);
+
+			// A name that finds nothing does not count.
+			emitTourEvent(SESSIONS_SEARCH_OPENED);
+			await search(world, 'Zorro');
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+			expect(listed).toHaveBeenCalledTimes(1);
+
+			// The menu closed before the debounced search answered.
+			emitTourEvent(SESSIONS_SEARCH_OPENED);
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+			await search(world, 'Kim');
+			expect(listed).toHaveBeenCalledTimes(2);
+
+			disconnect();
+			emitTourEvent(SESSIONS_SEARCH_OPENED);
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+			await search(world, 'Alex');
+			expect(listed).toHaveBeenCalledTimes(2);
+		} finally {
+			disconnect();
+			off();
+		}
+	});
 });

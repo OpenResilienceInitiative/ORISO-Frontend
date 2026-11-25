@@ -33,8 +33,11 @@ export const PRACTICE_TOUR_EVENTS = {
 	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
 	/** "Fälle übergeben" (FE#2545): the own case was offered to Alex. */
 	caseHandoverOffered: 'practice:case-handover-offered',
-	/** A search by name listed the colleague's case. */
-	colleagueCaseFound: 'practice:colleague-case-found',
+	/**
+	 * The sessions search closed on a list with the colleague's case: found
+	 * by name, and the search menu no longer covers it.
+	 */
+	colleagueCaseListed: 'practice:colleague-case-listed',
 	/** Access to the colleague's case was requested. */
 	caseHandoverRequested: 'practice:case-handover-requested'
 } as const;

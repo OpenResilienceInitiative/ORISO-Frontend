@@ -1,6 +1,11 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
+import { emitTourEvent } from '../productTour/tourEvents';
+import {
+	SESSIONS_SEARCH_CLOSED,
+	SESSIONS_SEARCH_OPENED
+} from '../productTour/tours/caseHandoverTour';
 import { SESSION_LIST_TAB_ARCHIVE } from '../session/sessionHelpers';
 import {
 	ArchiveFilterIcon,
@@ -553,6 +558,24 @@ export const SessionsListToolbar = ({
 	React.useEffect(() => {
 		onSearchOpenChange?.(showSearchDropdown);
 	}, [onSearchOpenChange, showSearchDropdown]);
+	// FE#2545: a tour waiting for the found cases moves on once the menu no
+	// longer covers the list. Read through a ref: only the close counts.
+	const searchedRef = React.useRef(false);
+	searchedRef.current = hasTypedQuery || hasSelectedPeople;
+	const wasSearchOpenRef = React.useRef(false);
+	React.useEffect(() => {
+		if (!wasSearchOpenRef.current && isSearchViewOpen) {
+			emitTourEvent(SESSIONS_SEARCH_OPENED);
+		}
+		if (
+			wasSearchOpenRef.current &&
+			!isSearchViewOpen &&
+			searchedRef.current
+		) {
+			emitTourEvent(SESSIONS_SEARCH_CLOSED);
+		}
+		wasSearchOpenRef.current = isSearchViewOpen;
+	}, [isSearchViewOpen]);
 	// The panel stays mounted for its closing motion.
 	const [searchPanelMounted, setSearchPanelMounted] = React.useState(false);
 	React.useEffect(() => {

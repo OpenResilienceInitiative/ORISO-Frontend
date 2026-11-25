@@ -6545,7 +6545,7 @@
 					"intro": "Jetzt entscheidet Alex, bis dahin bleiben Sie zuständig, und mit „Angebot zurückziehen“ nehmen Sie es zurück. Schließen Sie das Fenster mit „Schließen“ und gehen Sie weiter."
 				},
 				"practiceSearch": {
-					"intro": "Geben Sie hier „Alex“ ein. Die Liste zeigt dann den Fall von Alex, auf den Sie Zugriff anfragen dürfen."
+					"intro": "Geben Sie hier „Alex“ ein und bestätigen Sie mit dem Haken ✓ oder der Eingabetaste. Die Liste zeigt dann den Fall von Alex, auf den Sie Zugriff anfragen dürfen."
 				},
 				"practiceRequestAccess": {
 					"intro": "Klicken Sie beim Fall von Alex auf „Zugriff anfragen“. Der Fall öffnet sich, sein Inhalt bleibt aber verborgen."

@@ -14,6 +14,11 @@ import {
 } from './fixtures/practiceScenario';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
 import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import { subscribeToTourEvent } from '../components/productTour/tourEvents';
+import {
+	SESSIONS_SEARCH_CLOSED,
+	SESSIONS_SEARCH_OPENED
+} from '../components/productTour/tours/caseHandoverTour';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import { PRACTICE_MAIN_ROOM_ID, PRACTICE_TEAM_ROOM_ID } from './practiceIds';
 
@@ -23,6 +28,11 @@ export interface PracticeWorld {
 	readonly script: ScriptEngine;
 	readonly rest: FakeRestBackend;
 	readonly matrix: FakeMatrixService;
+	/**
+	 * Listens to the real page while the world is mounted; returns the
+	 * function that stops listening.
+	 */
+	connect(): () => void;
 }
 
 /**
@@ -51,6 +61,18 @@ export const createPracticeWorld = ({
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
 	let supervisorAnswered = false;
+	// The last search by name listed the colleague's case; whether the
+	// search menu lies over the list; whether the tour was told.
+	let colleagueCaseFound = false;
+	let searchMenuOpen = false;
+	let colleagueCaseListed = false;
+	// Either order: the menu may close before the debounced search answers.
+	const tellIfListed = () => {
+		if (colleagueCaseFound && !searchMenuOpen && !colleagueCaseListed) {
+			colleagueCaseListed = true;
+			emitPracticeEvent(PRACTICE_TOUR_EVENTS.colleagueCaseListed);
+		}
+	};
 
 	const play = (reaction: ScriptReaction | null) => {
 		if (reaction) {
@@ -132,12 +154,34 @@ export const createPracticeWorld = ({
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn),
 			onCaseHandoverOffered: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.caseHandoverOffered),
-			onColleagueCaseFound: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.colleagueCaseFound),
+			onColleagueCaseFound: () => {
+				colleagueCaseFound = true;
+				tellIfListed();
+			},
+			onColleagueCaseMissed: () => {
+				colleagueCaseFound = false;
+				colleagueCaseListed = false;
+			},
 			onCaseHandoverRequested: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.caseHandoverRequested)
 		}
 	});
 
-	return { start, script, rest, matrix };
+	// "Zugriff anfragen" can only be clicked once the search menu stops
+	// covering the list (FE#2545): the tour moves on at that close.
+	const connect = () => {
+		const offs = [
+			subscribeToTourEvent(SESSIONS_SEARCH_OPENED, () => {
+				searchMenuOpen = true;
+				colleagueCaseListed = false;
+			}),
+			subscribeToTourEvent(SESSIONS_SEARCH_CLOSED, () => {
+				searchMenuOpen = false;
+				tellIfListed();
+			})
+		];
+		return () => offs.forEach((off) => off());
+	};
+
+	return { start, script, rest, matrix, connect };
 };
