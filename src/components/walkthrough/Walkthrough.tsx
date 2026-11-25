@@ -65,28 +65,38 @@ export const Walkthrough = () => {
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
-	const practiceTour =
+	const practiceCandidate =
 		launchRequest && practiceOpenFor(launchRequest.tourId)
 			? practiceHostedTours.find(
 					(tour) => tour.id === launchRequest.tourId
 				)
 			: undefined;
-	// The request that started a practice run. If the practice area closes
-	// for it (e.g. the window narrows below L), the run ends like a card
-	// flow: no silent switch to the explanation tour, and no automatic
-	// restart when the window widens again. A topic tour launched on a
-	// small screen keeps its explanation tour.
-	const [practiceRunRequest, setPracticeRunRequest] =
-		useState<typeof launchRequest>(null);
+	// The rendering (practice or explanation) is chosen once per launch
+	// request and then kept: widening the window during an explanation does
+	// not swap in a practice run, and narrowing it during practice ends the
+	// run (below) instead of swapping in the explanation, like the card
+	// flows. Widening again does not restart it from the stale request.
+	const [renderingChoice, setRenderingChoice] = useState<{
+		request: NonNullable<typeof launchRequest>;
+		practice: boolean;
+	} | null>(null);
+	const choiceIsCurrent =
+		!!launchRequest && renderingChoice?.request === launchRequest;
 	useEffect(() => {
-		if (practiceTour && launchRequest) {
-			setPracticeRunRequest(launchRequest);
+		if (launchRequest && !choiceIsCurrent) {
+			setRenderingChoice({
+				request: launchRequest,
+				practice: !!practiceCandidate
+			});
 		}
-	}, [practiceTour, launchRequest]);
+	}, [launchRequest, choiceIsCurrent, practiceCandidate]);
+	const choosesPractice =
+		choiceIsCurrent && renderingChoice
+			? renderingChoice.practice
+			: !!practiceCandidate;
+	const practiceTour = choosesPractice ? practiceCandidate : undefined;
 	const lostPracticeRun =
-		!!launchRequest &&
-		!practiceTour &&
-		practiceRunRequest === launchRequest;
+		!!launchRequest && choosesPractice && !practiceCandidate;
 	const requestedTour =
 		launchRequest && !lostPracticeRun
 			? (practiceTour ??
