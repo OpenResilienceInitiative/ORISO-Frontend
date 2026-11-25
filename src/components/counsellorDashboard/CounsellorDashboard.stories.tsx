@@ -22,7 +22,8 @@ const meta = {
 				style={{
 					height: '100vh',
 					minHeight: 560,
-					display: 'flex',
+					// A grid cell stretches the pane like the app's session column.
+					display: 'grid',
 					background: 'var(--m3-surface-container-high, #eae7e8)'
 				}}
 			>
