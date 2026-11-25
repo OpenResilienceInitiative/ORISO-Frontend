@@ -5,15 +5,24 @@ import {
 	murmurLine,
 	type PracticeMurmur
 } from './practiceCallMurmur';
+import {
+	loadVoices,
+	pickLocalVoice,
+	speakLocally,
+	speechPulse,
+	speechSynthesisOf
+} from './practiceCallVoice';
 
 /*
  * FE#2545 D3 (revised): the practice video call. While practising, the
  * waiting room's "Video-Call starten" and the circle's call button open this
  * stage instead of a call: the counsellor's own camera and microphone as a
- * local preview, and Mia, a made-up participant whose murmur is generated
- * in the page. Nothing reaches the call manager, Element Call, LiveKit or
- * Matrix. The stage belongs to one practice run: leaving it, a restart or
- * the end of practice stops every track and closes the audio.
+ * local preview, and Carimat, the platform's robot, who greets her with the
+ * browser's own speech synthesis, ONLY with a voice local to this device
+ * (`practiceCallVoice.ts`), or else with a murmur generated in the page.
+ * Nothing reaches the call manager, Element Call, LiveKit or Matrix. The
+ * stage belongs to one practice run: leaving it, a restart or the end of
+ * practice stops every track, cancels the speech and closes the audio.
  */
 
 export type PracticeCallStatus = 'closed' | 'open' | 'minimised';
@@ -27,9 +36,16 @@ export interface PracticeCallState {
 	media: PracticeCallMedia;
 	/** When the stage opened, ms since the epoch. */
 	startedAt: number;
-	/** The line Mia is saying now, or null while she is quiet. */
+	/** The line Carimat is saying now (the caption), or null. */
 	captionIndex: number | null;
+	/** Carimat is audibly speaking: drives the ring and the dock. */
+	speaking: boolean;
+	/** How Carimat speaks: a local voice, or the generated murmur. */
+	voice: PracticeCallVoiceMode;
 }
+
+/** `pending` until the voice list answered. */
+export type PracticeCallVoiceMode = 'pending' | 'speech' | 'murmur';
 
 const CLOSED: PracticeCallState = {
 	status: 'closed',
@@ -37,13 +53,17 @@ const CLOSED: PracticeCallState = {
 	cameraOff: false,
 	media: 'idle',
 	startedAt: 0,
-	captionIndex: null
+	captionIndex: null,
+	speaking: false,
+	voice: 'pending'
 };
 
-/** Mia waits a moment before she greets, and between her lines. */
+/** Carimat waits a moment before she greets, and between her lines. */
 const FIRST_LINE_DELAY_MS = 700;
 const LINE_PAUSE_MS = 1400;
 const ROUND_PAUSE_MS = 7000;
+/** A voice that has not started by then counts as failed. */
+const SPEECH_START_TIMEOUT_MS = 2500;
 
 let state: PracticeCallState = CLOSED;
 let runId: number | null = null;
@@ -55,6 +75,10 @@ let generation = 0;
 let timers: number[] = [];
 let offPractice: (() => void) | null = null;
 let lines: string[] = [];
+let locale = 'de';
+let synth: SpeechSynthesis | null = null;
+let voice: SpeechSynthesisVoice | null = null;
+let lastBoundary = 0;
 const listeners = new Set<() => void>();
 
 const notify = () => listeners.forEach((listener) => listener());
@@ -78,12 +102,33 @@ export const getPracticeCallState = (): PracticeCallState => state;
 /** The local preview, for the own tile; null without permission. */
 export const getPracticeCallStream = (): MediaStream | null => stream;
 
-/** Mia's current output level, 0..1: what the speaking ring shows. */
-export const getPracticeCallLevel = (): number => murmur?.level() ?? 0;
+/**
+ * Carimat's current level, 0..1, for the speaking ring: the murmur's
+ * analyser, or a pulse while the speech voice speaks (it has no analyser).
+ * A context the browser keeps suspended (autoplay policy without a real
+ * gesture) has a silent analyser: the pulse stands in, the caption stays.
+ */
+export const getPracticeCallLevel = (): number => {
+	const pulse = () =>
+		state.speaking ? speechPulse(Date.now(), lastBoundary) : 0;
+	if (state.voice === 'speech') return pulse();
+	if (murmur && audio?.state === 'running') return murmur.level();
+	return pulse();
+};
 
-/** Mia's lines in the page language; the layer sets them. */
-export const setPracticeCallLines = (next: string[]): void => {
+/** Carimat's lines and the page language; the layer sets them. */
+export const setPracticeCallLines = (
+	next: string[],
+	language: string = locale
+): void => {
 	lines = next;
+	locale = language;
+};
+
+/** Cancels whatever the speech synthesis is saying. */
+const hush = () => {
+	synth?.cancel();
+	murmur?.silence();
 };
 
 const later = (ms: number, run: () => void) => {
@@ -94,21 +139,77 @@ const later = (ms: number, run: () => void) => {
 	timers.push(id);
 };
 
+/** After a line: quiet, then the next one (a longer pause after the last). */
+const afterLine = (index: number, asked: number) => {
+	if (asked !== generation) return;
+	set({ captionIndex: null, speaking: false });
+	const next = (index + 1) % lines.length;
+	later(next === 0 ? ROUND_PAUSE_MS : LINE_PAUSE_MS, () => speakLine(next));
+};
+
 const speakLine = (index: number) => {
 	if (state.status === 'closed') return;
 	if (lines.length === 0) {
 		later(LINE_PAUSE_MS, () => speakLine(0));
 		return;
 	}
-	const text = lines[index % lines.length];
-	const seconds = murmur?.speak(text) ?? murmurLine(text).duration;
-	set({ captionIndex: index % lines.length });
-	later(Math.round(seconds * 1000) + 150, () => {
-		set({ captionIndex: null });
-		const next = (index + 1) % lines.length;
-		later(next === 0 ? ROUND_PAUSE_MS : LINE_PAUSE_MS, () =>
-			speakLine(next)
-		);
+	const at = index % lines.length;
+	const text = lines[at];
+	const asked = generation;
+	set({ captionIndex: at });
+	if (!state.muted && state.voice === 'speech' && synth) {
+		let started = false;
+		let settled = false;
+		// The voice failed or never started (e.g. a headless browser): the
+		// murmur takes over for this line and the rest of the call.
+		const fallBack = () => {
+			if (settled || asked !== generation) return;
+			settled = true;
+			synth?.cancel();
+			set({ voice: 'murmur', speaking: false });
+			speakLine(at);
+		};
+		const spoken = speakLocally(synth, voice, text, {
+			onStart: () => {
+				started = true;
+				if (asked === generation) set({ speaking: true });
+			},
+			onBoundary: () => {
+				lastBoundary = Date.now();
+			},
+			onEnd: () => {
+				if (settled) return;
+				settled = true;
+				afterLine(at, asked);
+			},
+			onError: fallBack
+		});
+		if (spoken) {
+			later(SPEECH_START_TIMEOUT_MS, () => {
+				if (!started) fallBack();
+			});
+			return;
+		}
+	}
+	// The murmur, or a silent caption while muted: timed by the syllables.
+	const seconds =
+		(!state.muted && murmur?.speak(text)) || murmurLine(text).duration;
+	set({ speaking: !state.muted });
+	later(Math.round(seconds * 1000) + 150, () => afterLine(at, asked));
+};
+
+/** Picks the voice once the list is there; the first line waits for it. */
+const chooseVoice = (asked: number): Promise<void> => {
+	const available = speechSynthesisOf();
+	if (!available) {
+		set({ voice: 'murmur' });
+		return Promise.resolve();
+	}
+	synth = available;
+	return loadVoices(available).then((voices) => {
+		if (asked !== generation) return;
+		voice = pickLocalVoice(voices, locale);
+		set({ voice: voice ? 'speech' : 'murmur' });
 	});
 };
 
@@ -122,6 +223,9 @@ const AudioContextClass = (): typeof AudioContext | undefined =>
 /** Every track stopped, the audio closed, all timers gone. */
 const teardown = () => {
 	generation += 1;
+	synth?.cancel();
+	synth = null;
+	voice = null;
 	timers.forEach((id) => window.clearTimeout(id));
 	timers = [];
 	stream?.getTracks().forEach((track) => track.stop());
@@ -164,7 +268,13 @@ export const openPracticeCallStage = (): void => {
 		}
 	}
 	set({ ...CLOSED, status: 'open', startedAt: Date.now() });
-	later(FIRST_LINE_DELAY_MS, () => speakLine(0));
+	const asked = generation;
+	const firstLine = new Promise<void>((resolve) =>
+		later(FIRST_LINE_DELAY_MS, resolve)
+	);
+	void Promise.all([chooseVoice(asked), firstLine]).then(() => {
+		if (asked === generation) speakLine(0);
+	});
 	// A macrotask later, like a click advance: the stage is on screen first.
 	window.setTimeout(() => {
 		if (currentRunId() === run) {
@@ -211,7 +321,10 @@ export const togglePracticeCallMute = (): void => {
 	if (state.status === 'closed') return;
 	const muted = !state.muted;
 	stream?.getAudioTracks().forEach((track) => (track.enabled = !muted));
-	set({ muted });
+	// Muted, the practice call is silent: Carimat's line stops at once and
+	// the next ones show as captions only.
+	if (muted) hush();
+	set({ muted, speaking: muted ? false : state.speaking });
 };
 
 export const togglePracticeCallCamera = (): void => {
@@ -229,9 +342,9 @@ export const expandPracticeCall = (): void => {
 	if (state.status === 'minimised') set({ status: 'open' });
 };
 
-/** Leave: every track stopped, the audio closed, back to the circle. */
+/** Leave: every track stopped, speech cancelled, audio closed. */
 export const leavePracticeCall = (): void => {
-	if (state.status === 'closed' && !audio && !stream) return;
+	if (state.status === 'closed' && !audio && !stream && !synth) return;
 	teardown();
 	set(CLOSED);
 };

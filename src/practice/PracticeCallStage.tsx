@@ -7,6 +7,10 @@ import { CallSurfaceLayer } from '../components/call/states/CallSurfaceLayer';
 import { DockedCall } from '../components/call/states/DockedCall';
 import { formatCallDuration } from '../components/call/states/MinimizedCallDock';
 import { UserAvatar } from '../components/message/UserAvatar';
+import {
+	CarimatRobotIcon,
+	useAssistantIdentity
+} from '../components/carimat/AssistantIdentity';
 import { ICON_INFO, SystemMessage } from '../components/message/SystemMessage';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { ReactComponent as MicOffIcon } from '../resources/img/icons/audio-off.svg';
@@ -34,12 +38,7 @@ import '../components/call/states/callStates.scss';
 import '../components/message/message.styles.scss';
 import './practiceCallStage.styles.scss';
 
-const MIA_ID = 'practice-mia';
-const LINE_KEYS = [
-	'practice.callStage.line1',
-	'practice.callStage.line2',
-	'practice.callStage.line3'
-];
+const LINE_KEYS = ['practice.callStage.line1', 'practice.callStage.line2'];
 
 export interface PracticeCallPerson {
 	username: string;
@@ -56,9 +55,9 @@ export interface PracticeCallStageViewProps
 	self: PracticeCallPerson;
 	/** The local preview while permission is granted. */
 	stream?: MediaStream | null;
-	/** Mia's lines in the page language; `captionIndex` picks one. */
+	/** Carimat's lines in the page language; `captionIndex` picks one. */
 	lines: string[];
-	/** Mia's output level, 0..1, read every frame for the ring. */
+	/** Carimat's level, 0..1, read every frame for the ring. */
 	getLevel?: () => number;
 	onToggleMute: () => void;
 	onToggleCamera: () => void;
@@ -70,7 +69,7 @@ export interface PracticeCallStageViewProps
 }
 
 /**
- * The ring around Mia's tile follows the generated level, frame by frame,
+ * The ring around Carimat's tile follows its level, frame by frame,
  * through a CSS variable: no React render per frame.
  */
 const useSpeakingLevel = (
@@ -152,6 +151,8 @@ export const PracticeCallStageView = ({
 	media,
 	startedAt,
 	captionIndex,
+	speaking,
+	voice,
 	self,
 	stream,
 	lines,
@@ -164,32 +165,23 @@ export const PracticeCallStageView = ({
 	onShown
 }: PracticeCallStageViewProps) => {
 	const { t: translate } = useTranslation();
-	const miaTile = useRef<HTMLElement>(null);
-	const speaking = captionIndex !== null;
+	const robotTile = useRef<HTMLElement>(null);
 	const caption = captionIndex === null ? null : lines[captionIndex];
-	const miaName = translate('practice.callStage.miaName');
+	const assistant = useAssistantIdentity();
+	const robotName = translate('practice.callStage.robotName', {
+		name: assistant.name
+	});
 	const youName = translate('practice.callStage.you');
-	useSpeakingLevel(miaTile, getLevel, speaking && status === 'open');
+	useSpeakingLevel(robotTile, getLevel, speaking && status === 'open');
 	useEffect(() => {
 		if (status === 'open') onShown?.();
 	}, [status, onShown]);
 
-	const mia = useMemo(
-		() => ({
-			userId: MIA_ID,
-			username: miaName,
-			displayName: miaName,
-			// Her initials come from the name without "(Übung)".
-			avatarDisplayName: miaName.replace(/\s*\([^)]*\)\s*$/, ''),
-			choice: { kind: 'initials' as const }
-		}),
-		[miaName]
-	);
-
 	if (status === 'minimised') {
 		return (
 			<DockedCall
-				party={{ name: miaName, avatar: mia }}
+				party={{ name: robotName }}
+				avatarIcon={<CarimatRobotIcon />}
 				isGroup
 				startedAt={startedAt}
 				isMuted={muted}
@@ -215,6 +207,7 @@ export const PracticeCallStageView = ({
 				aria-label={translate('practice.callStage.label')}
 				data-tour-target={PRACTICE_CALL_TARGETS.stage}
 				data-testid="practice-call-stage"
+				data-voice={voice}
 			>
 				<header className="practice-call-stage__header">
 					<span className="practice-call-stage__title">
@@ -278,16 +271,20 @@ export const PracticeCallStageView = ({
 						</figcaption>
 					</figure>
 					<figure
-						ref={miaTile}
+						ref={robotTile}
 						className="practice-call-tile practice-call-tile--speaker"
 						data-speaking={speaking ? 'true' : undefined}
-						data-testid="practice-call-mia-tile"
+						data-testid="practice-call-robot-tile"
 					>
-						<span className="practice-call-tile__avatar practice-call-tile__ring">
-							<UserAvatar {...mia} size={96} />
+						{/* The Carimat robot, as it signs the chat's system messages. */}
+						<span
+							className="practice-call-tile__robot practice-call-tile__ring"
+							aria-hidden="true"
+						>
+							<CarimatRobotIcon />
 						</span>
 						<figcaption className="practice-call-tile__name">
-							{miaName}
+							{robotName}
 						</figcaption>
 					</figure>
 				</div>
@@ -299,13 +296,15 @@ export const PracticeCallStageView = ({
 				>
 					{caption && (
 						<>
-							<strong>{miaName}:</strong> {caption}
+							<strong>{robotName}:</strong> {caption}
 						</>
 					)}
 				</p>
 				<span className="call-visually-hidden" aria-live="polite">
 					{speaking
-						? translate('calls.states.speaking', { name: miaName })
+						? translate('calls.states.speaking', {
+								name: robotName
+							})
 						: ''}
 				</span>
 
@@ -388,13 +387,15 @@ export const PracticeCallLayer = () => {
 				lastName: userData.lastName
 			}
 		: NO_USER;
+	const assistantName = useAssistantIdentity().name;
 	const lines = useMemo(
-		() => LINE_KEYS.map((key) => translate(key)),
+		() => LINE_KEYS.map((key) => translate(key, { name: assistantName })),
 		// The language decides the lines.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[translate, i18n?.language]
+		[translate, i18n?.language, assistantName]
 	);
-	useEffect(() => setPracticeCallLines(lines), [lines]);
+	const language = i18n?.language ?? 'de';
+	useEffect(() => setPracticeCallLines(lines, language), [lines, language]);
 	useEffect(() => () => leavePracticeCall(), []);
 
 	if (state.status === 'closed') return null;

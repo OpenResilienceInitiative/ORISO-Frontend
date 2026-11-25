@@ -6524,7 +6524,7 @@
 				},
 				"practiceStage": {
 					"title": "Your video call",
-					"intro": "On the left you see yourself, on the right Mia, a made-up participant, is speaking. The ring shows who is speaking. Nobody else sees or hears you."
+					"intro": "On the left you see yourself, on the right Carimat, the practice robot, is speaking. The ring shows who is speaking. Nobody else sees or hears you."
 				},
 				"practiceMute": {
 					"title": "Mute",
@@ -7222,10 +7222,9 @@
 			"notice": "Practice: nobody else sees or hears you. Camera and microphone stay on this device.",
 			"noMedia": "Camera or microphone is not available. The exercise continues anyway.",
 			"you": "You",
-			"miaName": "Mia (practice)",
-			"line1": "Hello, I'm Mia. Nice that you opened the circle.",
-			"line2": "I can hear you well. Feel free to try the buttons below.",
-			"line3": "When you're done, just leave the call. See you soon!"
+			"robotName": "{{name}} (practice)",
+			"line1": "Hello, I am {{name}}, the practice robot.",
+			"line2": "Nobody else can hear you. Try the buttons below."
 		}
 	},
 	"counselling": {

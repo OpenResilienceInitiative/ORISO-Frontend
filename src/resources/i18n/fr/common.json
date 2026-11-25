@@ -6609,7 +6609,7 @@
 				},
 				"practiceStage": {
 					"title": "Votre appel vidéo",
-					"intro": "À gauche, vous vous voyez ; à droite, Mia, une participante fictive, parle. L'anneau montre qui parle. Personne d'autre ne vous voit ni ne vous entend."
+					"intro": "À gauche, vous vous voyez ; à droite, Carimat, le robot d'exercice, parle. L'anneau montre qui parle. Personne d'autre ne vous voit ni ne vous entend."
 				},
 				"practiceMute": {
 					"title": "Couper le micro",
@@ -7307,10 +7307,9 @@
 			"notice": "Exercice : personne d'autre ne vous voit ni ne vous entend. La caméra et le micro restent sur cet appareil.",
 			"noMedia": "La caméra ou le micro n'est pas disponible. L'exercice continue quand même.",
 			"you": "Vous",
-			"miaName": "Mia (exercice)",
-			"line1": "Bonjour, je suis Mia. Merci d'avoir ouvert le cercle.",
-			"line2": "Je vous entends bien. Essayez donc les boutons en bas.",
-			"line3": "Quand vous avez fini, quittez simplement l'appel. À bientôt !"
+			"robotName": "{{name}} (exercice)",
+			"line1": "Bonjour, je suis {{name}}, le robot d'exercice.",
+			"line2": "Personne d'autre ne vous entend. Essayez les boutons en bas."
 		}
 	},
 	"counselling": {

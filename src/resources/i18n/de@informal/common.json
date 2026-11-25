@@ -2844,7 +2844,7 @@
 					"intro": "Teilnehmende warten hier, bis du beginnst. Klick auf „Video-Call starten“: Der Kreis startet und der Übungs-Call öffnet sich."
 				},
 				"practiceStage": {
-					"intro": "Links siehst du dich selbst, rechts spricht Mia, eine erfundene Teilnehmerin. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört dich.",
+					"intro": "Links siehst du dich selbst, rechts spricht Carimat, der Übungsroboter. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört dich.",
 					"title": "Dein Video-Call"
 				},
 				"practiceMute": {
@@ -3182,9 +3182,7 @@
 		"callStage": {
 			"notice": "Übung: Niemand sonst sieht oder hört dich. Kamera und Mikrofon bleiben auf diesem Gerät.",
 			"you": "Du",
-			"line1": "Hallo, ich bin Mia. Schön, dass du den Kreis eröffnet hast.",
-			"line2": "Ich höre dich gut. Probier ruhig die Knöpfe unten aus.",
-			"line3": "Wenn du fertig bist, verlass einfach den Call. Bis bald!"
+			"line2": "Niemand sonst hört dich. Probier die Knöpfe unten aus."
 		}
 	},
 	"counselling": {

@@ -7,7 +7,7 @@ import {
 } from './practiceCallMurmur';
 import { FakeAudioContext } from './practiceCallMedia.testkit';
 
-describe("Mia's murmur (FE#2545 D3)", () => {
+describe("Carimat's fallback murmur (FE#2545 D3)", () => {
 	it('counts syllables from vowel groups, and by letters where no vowels are written', () => {
 		expect(syllablesInWord('Hallo,')).toBe(2);
 		expect(syllablesInWord('Gesprächskreis')).toBe(3);

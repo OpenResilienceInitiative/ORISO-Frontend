@@ -8,6 +8,7 @@ import {
 	assertRunLeftNothing,
 	banner,
 	CALL_PATH,
+	TTS_HOST,
 	diffStorage,
 	driveAcceptFlow,
 	driveCircleFlow,
@@ -350,10 +351,33 @@ test.describe('practice network guard (T2)', () => {
 				sockets.filter((url) => CALL_PATH.test(url)),
 				'LiveKit or Element Call sockets'
 			).toEqual([]);
+			// Carimat's voice stays on the device: no speech service is asked,
+			// and every utterance used a local voice.
+			expect(
+				[
+					...traffic.requests.map((request) => request.url),
+					...sockets
+				].filter((url) => TTS_HOST.test(url)),
+				'requests to a speech or TTS host'
+			).toEqual([]);
 			await expect(page.locator('.element-call-iframe')).toHaveCount(0);
 			const probe = await readCallProbe(page);
 			expect(probe.getUserMedia, 'getUserMedia calls').toBe(1);
 			expect(probe.notifications, 'notifications').toBe(0);
+			expect(
+				probe.spoken.filter((voice) => voice.localService !== true),
+				'utterances with a voice that is not local'
+			).toEqual([]);
+			if (probe.spoken.length > 0) {
+				expect(
+					probe.cancels,
+					'speech cancelled on leave'
+				).toBeGreaterThan(0);
+			}
+			test.info().annotations.push({
+				type: 'carimat-voices',
+				description: JSON.stringify(probe.spoken.slice(0, 3))
+			});
 			await expectNoLiveMedia(page);
 		});
 	});

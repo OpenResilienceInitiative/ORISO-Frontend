@@ -1,5 +1,6 @@
 /*
- * FE#2545 D3: Mia's "voice" in the practice call. Not speech and not an
+ * FE#2545 D3: Carimat's fallback voice in the practice call, used when the
+ * device has no local speech voice for the page language. Not speech and not an
  * asset: a voiced buzz (sawtooth through two vowel-like band-pass filters)
  * plus a little breath noise, switched on and off by a syllable-shaped
  * envelope. Everything is generated in the page; nothing is fetched.
@@ -104,6 +105,8 @@ export interface PracticeMurmur {
 	speak: (text: string) => number;
 	/** The current output level, 0..1 (drives the speaking ring). */
 	level: () => number;
+	/** Cuts the line that is playing (mute). */
+	silence: () => void;
 	/** Silences and disconnects every node. */
 	stop: () => void;
 }
@@ -200,6 +203,11 @@ export const createPracticeMurmur = (context: AudioContext): PracticeMurmur => {
 			if (stopped) return 0;
 			analyser.getFloatTimeDomainData(samples);
 			return levelFromSamples(samples);
+		},
+		silence: () => {
+			if (stopped) return;
+			voice.gain.cancelScheduledValues(context.currentTime);
+			voice.gain.setValueAtTime(0, context.currentTime);
 		},
 		stop: () => {
 			if (stopped) return;

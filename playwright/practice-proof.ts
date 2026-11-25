@@ -68,6 +68,19 @@ export const exactText = (...keys: string[]): RegExp =>
 export const partOfText = (key: string): RegExp =>
 	new RegExp(lookup(key).map(escapeRegExp).join('|'));
 
+/** Like `partOfText`, with every `{{placeholder}}` matching any name. */
+export const partOfTemplate = (key: string): RegExp =>
+	new RegExp(
+		lookup(key)
+			.map((text) =>
+				text
+					.split(/\{\{\s*\w+\s*\}\}/)
+					.map(escapeRegExp)
+					.join('.+?')
+			)
+			.join('|')
+	);
+
 // -------------------------------------------------------------- traffic
 
 export interface RecordedRequest extends RecordedNetworkRequest {
@@ -638,8 +651,10 @@ const titleIs = async (page: Page, titleKey: string): Promise<boolean> =>
 
 /**
  * Instruments the page before the app loads: every getUserMedia call and the
- * tracks it handed out, every AudioContext, every Notification. Only names
- * and states are read back; no media leaves the page.
+ * tracks it handed out, every AudioContext, every Notification, and the
+ * voice of every `speechSynthesis.speak` (name, lang, localService) and
+ * every `cancel`. Only names and states are read back; no media leaves the
+ * page.
  */
 export const instrumentCallPath = (page: Page) =>
 	page.addInitScript(() => {
@@ -647,7 +662,13 @@ export const instrumentCallPath = (page: Page) =>
 			getUserMedia: 0,
 			tracks: [] as MediaStreamTrack[],
 			audio: [] as AudioContext[],
-			notifications: 0
+			notifications: 0,
+			spoken: [] as Array<{
+				name: string | null;
+				lang: string | null;
+				localService: boolean | null;
+			}>,
+			cancels: 0
 		};
 		(
 			window as unknown as { __practiceCallProbe: typeof probe }
@@ -671,6 +692,23 @@ export const instrumentCallPath = (page: Page) =>
 				}
 			};
 		}
+		const synth = window.speechSynthesis;
+		if (synth) {
+			const speak = synth.speak.bind(synth);
+			const cancel = synth.cancel.bind(synth);
+			synth.speak = (utterance) => {
+				probe.spoken.push({
+					name: utterance.voice?.name ?? null,
+					lang: utterance.voice?.lang ?? null,
+					localService: utterance.voice?.localService ?? null
+				});
+				speak(utterance);
+			};
+			synth.cancel = () => {
+				probe.cancels += 1;
+				cancel();
+			};
+		}
 		const NativeNotification = window.Notification;
 		if (NativeNotification) {
 			const Counted = function (
@@ -691,6 +729,13 @@ export interface CallProbe {
 	tracks: Array<{ kind: string; readyState: string }>;
 	audio: string[];
 	notifications: number;
+	/** The voice of every utterance Carimat spoke. */
+	spoken: Array<{
+		name: string | null;
+		lang: string | null;
+		localService: boolean | null;
+	}>;
+	cancels: number;
 }
 
 export const readCallProbe = (page: Page): Promise<CallProbe> =>
@@ -702,6 +747,8 @@ export const readCallProbe = (page: Page): Promise<CallProbe> =>
 					tracks: MediaStreamTrack[];
 					audio: AudioContext[];
 					notifications: number;
+					spoken: CallProbe['spoken'];
+					cancels: number;
 				};
 			}
 		).__practiceCallProbe;
@@ -712,7 +759,9 @@ export const readCallProbe = (page: Page): Promise<CallProbe> =>
 				readyState: track.readyState
 			})),
 			audio: probe.audio.map((context) => context.state),
-			notifications: probe.notifications
+			notifications: probe.notifications,
+			spoken: probe.spoken,
+			cancels: probe.cancels
 		};
 	});
 
@@ -741,6 +790,10 @@ export const recordSockets = (page: Page): string[] => {
 /** A socket or request of the real call path (LiveKit, Element Call, Matrix RTC). */
 export const CALL_PATH =
 	/livekit|element-call|\/service\/matrix\/calls|\/rtc\b|org\.matrix\.msc3401|sfu/i;
+
+/** A speech or text-to-speech service: Carimat's voice must stay on the device. */
+export const TTS_HOST =
+	/texttospeech|speech\.googleapis|translate_tts|\/tts\b|polly\.|cognitiveservices|speech\.microsoft|speech-to-text|elevenlabs/i;
 
 const CIRCLE_STEP = 'tour.groupCircle.step';
 
@@ -829,11 +882,11 @@ export const driveCircleFlow = async (page: Page): Promise<FlowRun> => {
 	await expect(page.getByTestId('practice-call-own-video')).toBeVisible({
 		timeout: STEP_TIMEOUT
 	});
-	await expect(page.getByTestId('practice-call-mia-tile')).toContainText(
-		partOfText('practice.callStage.miaName')
+	await expect(page.getByTestId('practice-call-robot-tile')).toContainText(
+		partOfTemplate('practice.callStage.robotName')
 	);
 	await expect(page.getByTestId('practice-call-caption')).toContainText(
-		partOfText('practice.callStage.line1'),
+		partOfTemplate('practice.callStage.line1'),
 		{ timeout: STEP_TIMEOUT }
 	);
 	await expect(page.locator('.element-call-iframe')).toHaveCount(0);

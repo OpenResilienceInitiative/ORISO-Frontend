@@ -44,6 +44,8 @@ export interface MinimizedCallDockProps {
 	onExpand: () => void;
 	/** Take keyboard focus when it appears, e.g. after minimizing the call. */
 	autoFocus?: boolean;
+	/** Without an avatar: an icon in place of the neutral glyph (e.g. Carimat). */
+	avatarIcon?: React.ReactNode;
 	/** Product-tour anchors (`data-tour-target`) of the dock and its way back. */
 	tourTarget?: string;
 	expandTourTarget?: string;
@@ -80,7 +82,8 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	onExpand,
 	autoFocus = false,
 	tourTarget,
-	expandTourTarget
+	expandTourTarget,
+	avatarIcon
 }) => {
 	const { t } = useTranslation();
 	useRegisterFloatingSurface('call-dock');
@@ -150,7 +153,8 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 							<UserAvatar {...party.avatar} size={40} />
 						) : (
 							<span className="minimized-call-dock__glyph">
-								{isGroup ? <GroupsIcon /> : <PersonIcon />}
+								{avatarIcon ??
+									(isGroup ? <GroupsIcon /> : <PersonIcon />)}
 							</span>
 						)}
 					</span>

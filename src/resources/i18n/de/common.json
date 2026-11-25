@@ -6599,7 +6599,7 @@
 				},
 				"practiceStage": {
 					"title": "Ihr Video-Call",
-					"intro": "Links sehen Sie sich selbst, rechts spricht Mia, eine erfundene Teilnehmerin. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört Sie."
+					"intro": "Links sehen Sie sich selbst, rechts spricht Carimat, der Übungsroboter. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört Sie."
 				},
 				"practiceMute": {
 					"title": "Stummschalten",
@@ -7297,10 +7297,9 @@
 			"notice": "Übung: Niemand sonst sieht oder hört Sie. Kamera und Mikrofon bleiben auf diesem Gerät.",
 			"noMedia": "Kamera oder Mikrofon sind nicht verfügbar. Die Übung geht trotzdem weiter.",
 			"you": "Sie",
-			"miaName": "Mia (Übung)",
-			"line1": "Hallo, ich bin Mia. Schön, dass Sie den Kreis eröffnet haben.",
-			"line2": "Ich höre Sie gut. Probieren Sie ruhig die Knöpfe unten aus.",
-			"line3": "Wenn Sie fertig sind, verlassen Sie einfach den Call. Bis bald!"
+			"robotName": "{{name}} (Übung)",
+			"line1": "Hallo, ich bin {{name}}, der Übungsroboter.",
+			"line2": "Niemand sonst hört Sie. Probieren Sie die Knöpfe unten aus."
 		}
 	},
 	"counselling": {

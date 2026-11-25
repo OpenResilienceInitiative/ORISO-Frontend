@@ -6609,7 +6609,7 @@
 				},
 				"practiceStage": {
 					"title": "Görüntülü aramanız",
-					"intro": "Solda kendinizi, sağda konuşan Mia’yı görürsünüz; o uydurma bir katılımcıdır. Halka kimin konuştuğunu gösterir. Sizi başka kimse görmez veya duymaz."
+					"intro": "Solda kendinizi görürsünüz, sağda alıştırma robotu Carimat konuşur. Halka kimin konuştuğunu gösterir. Sizi başka kimse görmez veya duymaz."
 				},
 				"practiceMute": {
 					"title": "Sesi kapat",
@@ -7307,10 +7307,9 @@
 			"notice": "Alıştırma: Sizi başka kimse görmez veya duymaz. Kamera ve mikrofon bu cihazda kalır.",
 			"noMedia": "Kamera veya mikrofon kullanılamıyor. Alıştırma yine de devam ediyor.",
 			"you": "Siz",
-			"miaName": "Mia (alıştırma)",
-			"line1": "Merhaba, ben Mia. Çemberi açmanız çok güzel.",
-			"line2": "Sizi iyi duyuyorum. Aşağıdaki düğmeleri deneyebilirsiniz.",
-			"line3": "İşiniz bitince aramadan ayrılmanız yeterli. Görüşmek üzere!"
+			"robotName": "{{name}} (alıştırma)",
+			"line1": "Merhaba, ben {{name}}, alıştırma robotu.",
+			"line2": "Sizi başka kimse duymuyor. Aşağıdaki düğmeleri deneyin."
 		}
 	},
 	"counselling": {

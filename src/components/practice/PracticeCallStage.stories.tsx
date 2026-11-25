@@ -1,81 +1,118 @@
 import * as React from 'react';
+import { useLayoutEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fn, screen, userEvent, waitFor } from 'storybook/test';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { PracticeCallLayer } from '../../practice/PracticeCallStage';
 import {
-	PracticeCallStageView,
-	type PracticeCallStageViewProps
-} from '../../practice/PracticeCallStage';
+	getPracticeCallState,
+	openPracticeCallStage
+} from '../../practice/practiceCallStore';
 import { PRACTICE_CALL_TARGETS } from '../../practice/practiceCallTargets';
+import { pickLocalVoice } from '../../practice/practiceCallVoice';
+import { PRACTICE_GROUP_CIRCLE_TOUR_ID } from '../../practice/practiceTourIds';
+import { InPracticeMode } from './practiceStoryHelpers';
 
 /*
- * The practice call of the Gesprächskreis tour (FE#2545 D3, revised), as a
- * view with its state as arguments. In the app `PracticeCallLayer` feeds it
- * from the practice call store: the own preview from getUserMedia and Mia's
- * level from the generated murmur. Here a canvas stands in for the camera
- * and a sine for the level, so no permission prompt and no sound.
+ * The practice call of the Gesprächskreis tour (FE#2545 D3, revised), live:
+ * the real store, the real layer, the browser's own speech synthesis (local
+ * voices only) and WebAudio. Two things are stood in for, so a story never
+ * prompts and never needs a device: the camera is a canvas stream, or a
+ * refusal; the murmur story hides the voice list.
  */
 
-const LINES = [
-	'Hallo, ich bin Mia. Schön, dass Sie den Kreis eröffnet haben.',
-	'Ich höre Sie gut. Probieren Sie ruhig die Knöpfe unten aus.',
-	'Wenn Sie fertig sind, verlassen Sie einfach den Call. Bis bald!'
-];
+type Camera = 'granted' | 'denied';
 
 /** A moving gradient as the "camera": no device, no prompt. */
-const useCanvasStream = (enabled: boolean): MediaStream | null => {
-	const [stream, setStream] = React.useState<MediaStream | null>(null);
-	React.useEffect(() => {
-		if (!enabled) return undefined;
-		const canvas = document.createElement('canvas');
-		canvas.width = 320;
-		canvas.height = 180;
-		const context = canvas.getContext('2d');
-		if (!context || typeof canvas.captureStream !== 'function') {
-			return undefined;
-		}
-		let frame = 0;
-		const draw = () => {
-			const t = Date.now() / 1000;
-			const gradient = context.createLinearGradient(0, 0, 320, 180);
-			gradient.addColorStop(0, `hsl(${(t * 20) % 360} 40% 45%)`);
-			gradient.addColorStop(1, `hsl(${(t * 20 + 120) % 360} 40% 30%)`);
-			context.fillStyle = gradient;
-			context.fillRect(0, 0, 320, 180);
-			frame = requestAnimationFrame(draw);
+const canvasStream = (): MediaStream => {
+	const canvas = document.createElement('canvas');
+	canvas.width = 320;
+	canvas.height = 180;
+	const context = canvas.getContext('2d')!;
+	const draw = () => {
+		const t = Date.now() / 1000;
+		const gradient = context.createLinearGradient(0, 0, 320, 180);
+		gradient.addColorStop(0, `hsl(${(t * 20) % 360} 40% 45%)`);
+		gradient.addColorStop(1, `hsl(${(t * 20 + 120) % 360} 40% 30%)`);
+		context.fillStyle = gradient;
+		context.fillRect(0, 0, 320, 180);
+	};
+	draw();
+	const timer = window.setInterval(draw, 66);
+	const stream = canvas.captureStream(15);
+	// A real stop() ends the canvas track; the timer goes with it.
+	const stop = MediaStreamTrack.prototype.stop;
+	stream.getTracks().forEach((track) => {
+		track.stop = function () {
+			window.clearInterval(timer);
+			stop.call(this);
 		};
-		draw();
-		const captured = canvas.captureStream(15);
-		setStream(captured);
-		return () => {
-			cancelAnimationFrame(frame);
-			captured.getTracks().forEach((track) => track.stop());
-		};
-	}, [enabled]);
+	});
+	// getAudioTracks() is empty: the canvas has no microphone.
 	return stream;
 };
 
-/** A speech-like level without audio: what the ring follows. */
-const sineLevel = () => Math.max(0, Math.sin(Date.now() / 90) * 0.5 + 0.35);
+/**
+ * Stands in for the camera (and, for the murmur, hides the voice list)
+ * while the story is mounted, and puts the real ones back afterwards.
+ */
+const useStandIns = (camera: Camera, hideVoices: boolean) => {
+	useLayoutEffect(() => {
+		const devices = navigator.mediaDevices;
+		const realGetUserMedia = devices?.getUserMedia;
+		if (devices) {
+			devices.getUserMedia = async () => {
+				if (camera === 'denied') {
+					throw new DOMException(
+						'Permission denied',
+						'NotAllowedError'
+					);
+				}
+				return canvasStream();
+			};
+		}
+		const synth = window.speechSynthesis;
+		if (hideVoices && synth) {
+			Object.defineProperty(synth, 'getVoices', {
+				configurable: true,
+				value: () => []
+			});
+		}
+		return () => {
+			if (devices && realGetUserMedia) {
+				devices.getUserMedia = realGetUserMedia;
+			}
+			if (hideVoices && synth) {
+				delete (synth as unknown as { getVoices?: unknown }).getVoices;
+			}
+		};
+	}, [camera, hideVoices]);
+};
 
-type StoryArgs = Omit<PracticeCallStageViewProps, 'stream' | 'getLevel'>;
+interface LiveCallProps {
+	camera: Camera;
+	/** Hide the voice list: Carimat murmurs (no local voice for the language). */
+	murmur: boolean;
+}
 
-const Stage = (args: StoryArgs) => {
-	const stream = useCanvasStream(args.media === 'granted' && !args.cameraOff);
+const LiveCall = ({ camera, murmur }: LiveCallProps) => {
+	useStandIns(camera, murmur);
 	return (
-		<div style={{ minHeight: '100vh' }}>
-			<PracticeCallStageView
-				{...args}
-				stream={stream}
-				getLevel={sineLevel}
-			/>
-		</div>
+		<InPracticeMode tourId={PRACTICE_GROUP_CIRCLE_TOUR_ID}>
+			<main style={{ minHeight: '100vh', padding: 24 }}>
+				{/* The click is the gesture the AudioContext needs. */}
+				<button type="button" onClick={openPracticeCallStage}>
+					Video-Call starten (Übung)
+				</button>
+				<PracticeCallLayer />
+			</main>
+		</InPracticeMode>
 	);
 };
 
 const meta = {
 	title: 'Organisms/PracticeCallStage',
-	component: Stage,
+	component: LiveCall,
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
@@ -83,116 +120,125 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The practice video call of the Gesprächskreis tour (FE#2545 D3, revised), in the look of the Element Call group stage (Call/Views → GroupStage). The own tile shows the local camera preview, or the initials when permission is refused or no device exists. Mia (Übung) is made up: her murmur is generated in the page with WebAudio, captions show what she says, and the ring follows the generated level. Mute, camera, minimise and leave carry tour anchors; minimised, the real `DockedCall` stands in. No call is placed and nothing leaves the page.'
+					"The practice video call of the Gesprächskreis tour (FE#2545 D3, revised), live, in the look of the Element Call group stage (Call/Views → GroupStage). The own tile shows the local camera preview (a canvas here), or the initials when permission is refused. Carimat, the robot that signs the chat's system messages, greets with the browser's speech synthesis, only with a voice of the page language that runs on this device (`localService`); network voices such as Chrome's \"Google …\" are never used. Without a local voice it murmurs (WebAudio). Captions show what it says; the ring follows the speech. Mute silences it; leaving, restart and the end of practice cancel the speech, stop every track and close the audio. Minimised, the real `DockedCall` stands in. Press the button to start."
 			}
 		}
 	},
-	args: {
-		status: 'open',
-		muted: false,
-		cameraOff: false,
-		media: 'granted',
-		startedAt: Date.now() - 42_000,
-		captionIndex: 0,
-		self: {
-			username: 'Frau Keller',
-			userId: 'story-counsellor',
-			firstName: 'Anna',
-			lastName: 'Keller'
-		},
-		lines: LINES,
-		onToggleMute: fn(),
-		onToggleCamera: fn(),
-		onMinimise: fn(),
-		onExpand: fn(),
-		onLeave: fn(),
-		onShown: fn()
-	}
-} satisfies Meta<typeof Stage>;
+	args: { camera: 'granted', murmur: false }
+} satisfies Meta<typeof LiveCall>;
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
 const anchor = (name: string) =>
 	document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`);
+const robotTile = () => screen.getByTestId('practice-call-robot-tile');
+const SLOW = { timeout: 8000 };
 
-/** Mia speaks: caption, speaking state, the ring follows the level. */
-export const Speaking: Story = {
-	play: async ({ args }) => {
-		await waitFor(() =>
-			expect(anchor(PRACTICE_CALL_TARGETS.stage)).not.toBeNull()
-		);
-		expect(
-			screen.getByTestId('practice-call-caption').textContent
-		).toContain(LINES[0]);
-		const mia = screen.getByTestId('practice-call-mia-tile');
-		expect(mia.dataset.speaking).toBe('true');
-		await waitFor(() =>
+/** Starts the call with a real click and waits for Carimat's first line. */
+const startCall = async () => {
+	await userEvent.click(
+		screen.getByRole('button', { name: 'Video-Call starten (Übung)' })
+	);
+	await waitFor(
+		() => expect(anchor(PRACTICE_CALL_TARGETS.stage)).not.toBeNull(),
+		SLOW
+	);
+	await waitFor(
+		() =>
 			expect(
-				Number(mia.style.getPropertyValue('--practice-call-level'))
-			).toBeGreaterThan(0)
+				screen.getByTestId('practice-call-caption').textContent
+			).not.toBe(''),
+		SLOW
+	);
+};
+
+/** Which voices this browser offers, and which one the call would take. */
+const reportVoices = () => {
+	const synth = window.speechSynthesis;
+	const voices = synth?.getVoices() ?? [];
+	console.info(
+		'practice-call-voices',
+		JSON.stringify({
+			userAgent: navigator.userAgent,
+			voices: voices.map((v) => [v.name, v.lang, v.localService]),
+			de: pickLocalVoice(voices, 'de')?.name ?? null,
+			en: pickLocalVoice(voices, 'en')?.name ?? null
+		})
+	);
+};
+
+/** Carimat speaks: caption, ring, and a local voice or the murmur. */
+export const Speaking: Story = {
+	play: async () => {
+		await startCall();
+		// After the start: Chrome fills the list late.
+		reportVoices();
+		await waitFor(
+			() => expect(robotTile().dataset.speaking).toBe('true'),
+			SLOW
 		);
-		expect(args.onShown).toHaveBeenCalled();
-		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.leave)!);
-		expect(args.onLeave).toHaveBeenCalledTimes(1);
+		await waitFor(
+			() =>
+				expect(
+					Number(
+						robotTile().style.getPropertyValue(
+							'--practice-call-level'
+						)
+					)
+				).toBeGreaterThan(0),
+			SLOW
+		);
+		// A local voice, or the murmur (no local voice, or one that never
+		// starts, as in a headless browser).
+		const voice = anchor(PRACTICE_CALL_TARGETS.stage)!.dataset.voice;
+		expect(['speech', 'murmur']).toContain(voice);
+		console.info('practice-call-voice-mode', voice);
 	}
 };
 
-/** Muted: the control is pressed, the own tile shows the muted glyph. */
+/** Muted: the control is pressed and Carimat falls silent. */
 export const Muted: Story = {
-	args: { muted: true, captionIndex: null },
-	play: async ({ args }) => {
-		const mute = await waitFor(() => {
-			const control = anchor(PRACTICE_CALL_TARGETS.mute);
-			expect(control).not.toBeNull();
-			return control!;
-		});
-		expect(mute.getAttribute('aria-pressed')).toBe('true');
+	play: async () => {
+		await startCall();
+		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.mute)!);
 		expect(
-			screen
-				.getByTestId('practice-call-mia-tile')
-				.hasAttribute('data-speaking')
-		).toBe(false);
-		await userEvent.click(mute);
-		expect(args.onToggleMute).toHaveBeenCalledTimes(1);
+			anchor(PRACTICE_CALL_TARGETS.mute)!.getAttribute('aria-pressed')
+		).toBe('true');
+		expect(getPracticeCallState().muted).toBe(true);
+		await waitFor(() =>
+			expect(window.speechSynthesis?.speaking ?? false).toBe(false)
+		);
+		expect(robotTile().hasAttribute('data-speaking')).toBe(false);
 	}
 };
 
 /** Camera off: the initials replace the preview. */
 export const CameraOff: Story = {
-	args: { cameraOff: true, captionIndex: 1 },
-	play: async ({ args }) => {
-		await waitFor(() =>
-			expect(anchor(PRACTICE_CALL_TARGETS.camera)).not.toBeNull()
+	play: async () => {
+		await startCall();
+		await waitFor(
+			() =>
+				expect(
+					screen.getByTestId('practice-call-own-video')
+				).toBeTruthy(),
+			SLOW
 		);
+		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.camera)!);
 		expect(screen.queryByTestId('practice-call-own-video')).toBeNull();
 		expect(
 			screen
 				.getByTestId('practice-call-own-tile')
 				.querySelector('[data-testid="user-avatar"]')
 		).not.toBeNull();
-		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.camera)!);
-		expect(args.onToggleCamera).toHaveBeenCalledTimes(1);
 	}
 };
 
-/** Refused or no device: initials, a system notice, the controls still work. */
-export const PermissionDenied: Story = {
-	args: { media: 'denied' },
-	play: async ({ args }) => {
-		await waitFor(() =>
-			expect(screen.getByTestId('practice-call-no-media')).toBeTruthy()
-		);
-		expect(screen.queryByTestId('practice-call-own-video')).toBeNull();
+/** Minimised: the app's real dock, with Carimat, and its way back. */
+export const Minimised: Story = {
+	play: async () => {
+		await startCall();
 		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.minimise)!);
-		expect(args.onMinimise).toHaveBeenCalledTimes(1);
-	}
-};
-
-/** Minimised: the app's real dock, with Mia, and its way back. */
-export const MinimisedDock: Story = {
-	args: { status: 'minimised' },
-	play: async ({ args }) => {
 		const dock = await waitFor(() => {
 			const element = anchor(PRACTICE_CALL_TARGETS.dock);
 			expect(element).not.toBeNull();
@@ -200,8 +246,54 @@ export const MinimisedDock: Story = {
 		});
 		expect(dock.classList.contains('minimized-call-dock')).toBe(true);
 		expect(anchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
-		expect(dock.dataset.speaking).toBe('true');
-		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.expand)!);
-		expect(args.onExpand).toHaveBeenCalledTimes(1);
+		expect(anchor(PRACTICE_CALL_TARGETS.expand)).not.toBeNull();
+	}
+};
+
+/** Refused: initials, a system notice, Carimat still speaks. */
+export const PermissionDenied: Story = {
+	args: { camera: 'denied' },
+	play: async () => {
+		await startCall();
+		await waitFor(
+			() =>
+				expect(
+					screen.getByTestId('practice-call-no-media')
+				).toBeTruthy(),
+			SLOW
+		);
+		expect(screen.queryByTestId('practice-call-own-video')).toBeNull();
+	}
+};
+
+/** No local voice for the language: the generated murmur, its analyser drives the ring. */
+export const MurmurFallback: Story = {
+	args: { murmur: true },
+	play: async () => {
+		await startCall();
+		expect(anchor(PRACTICE_CALL_TARGETS.stage)!.dataset.voice).toBe(
+			'murmur'
+		);
+		await waitFor(
+			() => expect(robotTile().dataset.speaking).toBe('true'),
+			SLOW
+		);
+		await waitFor(
+			() =>
+				expect(
+					Number(
+						robotTile().style.getPropertyValue(
+							'--practice-call-level'
+						)
+					)
+				).toBeGreaterThan(0),
+			SLOW
+		);
+		// Leaving cancels everything: no speech, the stage gone.
+		await userEvent.click(anchor(PRACTICE_CALL_TARGETS.leave)!);
+		expect(anchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+		await waitFor(() =>
+			expect(window.speechSynthesis?.speaking ?? false).toBe(false)
+		);
 	}
 };

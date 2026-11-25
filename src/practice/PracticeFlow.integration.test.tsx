@@ -81,7 +81,11 @@ import {
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 import { isPracticeId } from './practiceIds';
 import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
-import { installFakeMedia } from './practiceCallMedia.testkit';
+import {
+	CHROME_LIKE_VOICES,
+	installFakeMedia,
+	installFakeSpeech
+} from './practiceCallMedia.testkit';
 import { callManager } from '../services/CallManager';
 import {
 	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
@@ -771,7 +775,8 @@ const banner = () =>
  * the circle in memory, the list opens it, the waiting room's start opens the
  * practice call (D3, revised), the counsellor mutes, turns the camera off,
  * minimises into the dock, expands and leaves, and the tour completes.
- * `cameraAllowed: false` refuses camera and microphone like a browser;
+ * `cameraAllowed: false` refuses camera and microphone like a browser and
+ * offers only network speech voices, so Carimat murmurs instead of speaking;
  * `endInCall` presses the banner's End while the call is on screen.
  */
 const createOpenStartAndCall = async (
@@ -846,6 +851,17 @@ const createOpenStartAndCall = async (
 
 	// The real call path is watched: the manager, the socket, the media.
 	const media = installFakeMedia({ granted: cameraAllowed });
+	// Chrome lists network voices too; only a local one may ever speak.
+	const speech = installFakeSpeech({
+		voices: cameraAllowed
+			? CHROME_LIKE_VOICES
+			: CHROME_LIKE_VOICES.filter((voice) => !voice.localService)
+	});
+	const expectOnlyLocalSpeech = () => {
+		expect(
+			speech.spoken.filter((u) => u.voice?.localService !== true)
+		).toEqual([]);
+	};
 	const startCall = vi.spyOn(callManager, 'startCall');
 	const sockets = vi.fn();
 	vi.stubGlobal(
@@ -880,7 +896,7 @@ const createOpenStartAndCall = async (
 	// The audio started inside that click.
 	expect(media.contexts).toHaveLength(1);
 
-	// The stage: the own tile and Mia; Next.
+	// The stage: the own tile and Carimat; Next.
 	const stage = await expectStep(open + 2);
 	expect(stage!.dataset.tourTarget).toBe(PRACTICE_CALL_TARGETS.stage);
 	expect(route()).toMatch(/sessionView\/!practice-4/);
@@ -902,8 +918,17 @@ const createOpenStartAndCall = async (
 		).toBeNull();
 	}
 	expect(
-		within(stage!).getByTestId('practice-call-mia-tile').textContent
-	).toContain('practice.callStage.miaName');
+		within(stage!).getByTestId('practice-call-robot-tile').textContent
+	).toContain('practice.callStage.robotName');
+	// Carimat speaks with the local voice, or murmurs without one.
+	if (cameraAllowed) {
+		await waitFor(() => expect(speech.speak).toHaveBeenCalled(), SLOW);
+		expect(stage!.dataset.voice).toBe('speech');
+	} else {
+		await waitFor(() => expect(stage!.dataset.voice).toBe('murmur'), SLOW);
+		expect(speech.speak).not.toHaveBeenCalled();
+	}
+	expectOnlyLocalSpeech();
 	if (endInCall) {
 		fireEvent.click(
 			banner().getByRole('button', { name: 'practice.banner.end' })
@@ -915,6 +940,7 @@ const createOpenStartAndCall = async (
 		expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
 		expect(media.allTracksEnded()).toBe(true);
 		expect(media.allAudioClosed()).toBe(true);
+		if (cameraAllowed) expect(speech.cancel).toHaveBeenCalled();
 		expect(startCall).not.toHaveBeenCalled();
 		expect(sockets).not.toHaveBeenCalled();
 		expect(progressWrites()).not.toContain('completed');
@@ -937,7 +963,7 @@ const createOpenStartAndCall = async (
 	const minimise = await expectStep(open + 5);
 	await clickAndWait(minimise!);
 
-	// The real dock with Mia; its way back.
+	// The real dock with Carimat; its way back.
 	const expand = await expectStep(open + 6);
 	expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
 	expect(
@@ -957,6 +983,8 @@ const createOpenStartAndCall = async (
 	expect(media.tracks).toHaveLength(cameraAllowed ? 2 : 0);
 	expect(media.allTracksEnded()).toBe(true);
 	expect(media.allAudioClosed()).toBe(true);
+	if (cameraAllowed) expect(speech.cancel).toHaveBeenCalled();
+	expectOnlyLocalSpeech();
 
 	// Nothing of the real call path was touched.
 	expect(media.getUserMedia).toHaveBeenCalledTimes(1);

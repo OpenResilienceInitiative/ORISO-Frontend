@@ -145,7 +145,24 @@ body.productTour--running .practice-call-stage {
 		border-radius: 50%;
 	}
 
-	/* The speaking ring grows with Mia's generated level. */
+	/* Carimat: the system-message robot on a white disc, avatar-sized. */
+	&__robot {
+		width: 96px;
+		height: 96px;
+		display: inline-grid;
+		place-items: center;
+		border-radius: 50%;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-primary, #a5000a);
+
+		svg,
+		img {
+			width: 48px;
+			height: 54px;
+		}
+	}
+
+	/* The speaking ring grows with Carimat's level. */
 	&__ring {
 		box-shadow: 0 0 0 calc(3px + var(--practice-call-level) * 14px)
 			color-mix(in srgb, var(--practice-call-ring) 70%, transparent);

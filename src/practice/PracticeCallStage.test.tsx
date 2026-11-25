@@ -25,12 +25,22 @@ import {
 } from './practiceMode';
 import { PracticeCallLayer } from './PracticeCallStage';
 import {
+	getPracticeCallLevel,
 	getPracticeCallState,
 	leavePracticeCall,
 	openPracticeCallStage
 } from './practiceCallStore';
 import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
-import { installFakeMedia, type FakeMedia } from './practiceCallMedia.testkit';
+import {
+	CHROME_LIKE_VOICES,
+	FakeAudioContext,
+	fakeVoice,
+	installFakeMedia,
+	installFakeSpeech,
+	removeSpeech,
+	type FakeMedia,
+	type FakeUtterance
+} from './practiceCallMedia.testkit';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 
 vi.mock('react-i18next', () => ({
@@ -60,6 +70,8 @@ const startCall = vi.spyOn(callManager, 'startCall');
 
 beforeEach(() => {
 	media = installFakeMedia();
+	// jsdom has no speech synthesis: the murmur speaks unless a test adds it.
+	removeSpeech();
 	startCall.mockClear();
 	opened = 0;
 	stopListening = subscribeToTourEvent(
@@ -95,7 +107,7 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 		expect(opened).toBe(0);
 	});
 
-	it('starts the audio inside the click, asks for camera and microphone once, and shows the own preview and Mia', async () => {
+	it('starts the audio inside the click, asks for camera and microphone once, and shows the own preview and Carimat', async () => {
 		enterPracticeMode({ tourId: TOUR });
 		render(<PracticeCallLayer />);
 
@@ -116,8 +128,8 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 		});
 		expect(screen.getByText('practice.callStage.notice')).toBeTruthy();
 		expect(
-			screen.getByTestId('practice-call-mia-tile').textContent
-		).toContain('practice.callStage.miaName');
+			screen.getByTestId('practice-call-robot-tile').textContent
+		).toContain('practice.callStage.robotName');
 		// A second open (e.g. the header call button) keeps the one stage.
 		act(() => openPracticeCallStage());
 		await macrotask();
@@ -126,7 +138,7 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 		expectNoRealCall();
 	});
 
-	it('lets Mia speak: captions, the speaking state and a murmur scheduled on the audio', async () => {
+	it('without a speech voice Carimat murmurs: captions, the speaking state and a murmur scheduled on the audio', async () => {
 		enterPracticeMode({ tourId: TOUR });
 		render(<PracticeCallLayer />);
 		await openStage();
@@ -139,7 +151,7 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 			{ timeout: 3000 }
 		);
 		expect(
-			screen.getByTestId('practice-call-mia-tile').dataset.speaking
+			screen.getByTestId('practice-call-robot-tile').dataset.speaking
 		).toBe('true');
 		// The murmur's oscillator and noise were started on the context.
 		const [context] = media.contexts;
@@ -173,7 +185,7 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 		).not.toBeNull();
 	});
 
-	it('minimises into the real dock with Mia, and expands back to the stage', async () => {
+	it('minimises into the real dock with Carimat, and expands back to the stage', async () => {
 		enterPracticeMode({ tourId: TOUR });
 		render(<PracticeCallLayer />);
 		await openStage();
@@ -182,7 +194,7 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 		expect(stage()).toBeNull();
 		const dock = anchor(PRACTICE_CALL_TARGETS.dock)!;
 		expect(dock.classList.contains('minimized-call-dock')).toBe(true);
-		expect(dock.textContent).toContain('practice.callStage.miaName');
+		expect(dock.textContent).toContain('practice.callStage.robotName');
 		// The dock's mute is the same practice state.
 		fireEvent.click(
 			dock.querySelector<HTMLElement>('[aria-label="calls.mute"]')!
@@ -329,5 +341,170 @@ describe('the practice call stage (FE#2545 D3, revised)', () => {
 				).toContain('practice.callStage.line1'),
 			{ timeout: 3000 }
 		);
+	});
+
+	it('still pulses the ring when the browser keeps the audio suspended', async () => {
+		enterPracticeMode({ tourId: TOUR });
+		render(<PracticeCallLayer />);
+		await openStage();
+		const context = FakeAudioContext.instances.at(-1)!;
+		context.state = 'suspended';
+		await waitFor(
+			() => expect(getPracticeCallState().speaking).toBe(true),
+			{ timeout: 3000 }
+		);
+		expect(getPracticeCallState().voice).toBe('murmur');
+		expect(getPracticeCallLevel()).toBeGreaterThan(0);
+	});
+
+	describe('with speech synthesis', () => {
+		const until = (check: () => void) => waitFor(check, { timeout: 3000 });
+
+		it('falls back to the murmur when the local voice never starts', async () => {
+			const speech = installFakeSpeech({ stalls: true });
+			enterPracticeMode({ tourId: TOUR });
+			render(<PracticeCallLayer />);
+			await openStage();
+
+			await until(() => expect(speech.speak).toHaveBeenCalled());
+			await waitFor(() => expect(stage()!.dataset.voice).toBe('murmur'), {
+				timeout: 5000
+			});
+			expect(speech.cancel).toHaveBeenCalled();
+			expect(
+				screen.getByTestId('practice-call-caption').textContent
+			).toContain('practice.callStage.line1');
+		}, 10000);
+
+		it('speaks the caption with a local voice of the page language, robotically', async () => {
+			const speech = installFakeSpeech();
+			enterPracticeMode({ tourId: TOUR });
+			render(<PracticeCallLayer />);
+			await openStage();
+
+			await until(() => expect(speech.speak).toHaveBeenCalled());
+			const utterance = speech.spoken[0] as FakeUtterance;
+			expect(utterance.voice?.name).toBe('Anna');
+			expect(utterance.voice?.localService).toBe(true);
+			expect(utterance.text).toBe('practice.callStage.line1');
+			expect([utterance.pitch, utterance.rate]).toEqual([0.6, 0.9]);
+			expect(stage()!.dataset.voice).toBe('speech');
+			expect(
+				screen.getByTestId('practice-call-caption').textContent
+			).toContain('practice.callStage.line1');
+			// The ring follows the utterance's start.
+			await until(() =>
+				expect(
+					screen.getByTestId('practice-call-robot-tile').dataset
+						.speaking
+				).toBe('true')
+			);
+			// The murmur stays silent while the voice speaks.
+			expect(
+				speech.spoken.every((u) => u.voice?.localService === true)
+			).toBe(true);
+		});
+
+		it('never hands text to a network voice: only network voices means the murmur', async () => {
+			const speech = installFakeSpeech({
+				voices: [
+					fakeVoice('Google Deutsch', 'de-DE', false, true),
+					fakeVoice('Microsoft Katja Online', 'de-DE', false)
+				]
+			});
+			enterPracticeMode({ tourId: TOUR });
+			render(<PracticeCallLayer />);
+			await openStage();
+
+			await until(() =>
+				expect(
+					screen.getByTestId('practice-call-caption').textContent
+				).toContain('practice.callStage.line1')
+			);
+			expect(stage()!.dataset.voice).toBe('murmur');
+			expect(speech.speak).not.toHaveBeenCalled();
+		});
+
+		it('waits for a late voice list (voiceschanged)', async () => {
+			const speech = installFakeSpeech({ late: true });
+			enterPracticeMode({ tourId: TOUR });
+			render(<PracticeCallLayer />);
+			await openStage();
+			act(() => speech.announceVoices(CHROME_LIKE_VOICES));
+
+			await until(() => expect(speech.speak).toHaveBeenCalled());
+			expect(
+				(speech.spoken[0] as FakeUtterance).voice?.localService
+			).toBe(true);
+		});
+
+		const speaking = async () => {
+			const speech = installFakeSpeech({ speakMs: 10_000 });
+			enterPracticeMode({ tourId: TOUR });
+			const view = render(<PracticeCallLayer />);
+			await openStage();
+			await until(() => expect(speech.speak).toHaveBeenCalled());
+			speech.cancel.mockClear();
+			return { speech, view };
+		};
+
+		it.each([
+			[
+				'leave',
+				() => fireEvent.click(anchor(PRACTICE_CALL_TARGETS.leave)!)
+			],
+			[
+				'the dock hang-up',
+				() => {
+					fireEvent.click(anchor(PRACTICE_CALL_TARGETS.minimise)!);
+					fireEvent.click(
+						anchor(
+							PRACTICE_CALL_TARGETS.dock
+						)!.querySelector<HTMLElement>(
+							'[aria-label="calls.endCall"]'
+						)!
+					);
+				}
+			],
+			['a restart', () => act(() => restartPracticeMode())],
+			['the end of practice', () => act(() => exitPracticeMode())]
+		])('%s cancels the speech', async (_name, exit) => {
+			const { speech } = await speaking();
+			exit();
+			await until(() => expect(stage()).toBeNull());
+			expect(speech.cancel).toHaveBeenCalled();
+			expect(media.allAudioClosed()).toBe(true);
+			// Nothing speaks again afterwards.
+			const said = speech.speak.mock.calls.length;
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 2500))
+			);
+			expect(speech.speak.mock.calls.length).toBe(said);
+		});
+
+		it('unmounting the layer cancels the speech', async () => {
+			const { speech, view } = await speaking();
+			view.unmount();
+			expect(speech.cancel).toHaveBeenCalled();
+		});
+
+		it('mute silences Carimat at once and keeps the captions silent', async () => {
+			const { speech } = await speaking();
+			fireEvent.click(anchor(PRACTICE_CALL_TARGETS.mute)!);
+			expect(speech.cancel).toHaveBeenCalled();
+			expect(
+				screen
+					.getByTestId('practice-call-robot-tile')
+					.hasAttribute('data-speaking')
+			).toBe(false);
+			const said = speech.speak.mock.calls.length;
+			// The next line comes as a caption only.
+			await until(() =>
+				expect(
+					screen.getByTestId('practice-call-caption').textContent
+				).toContain('practice.callStage.line2')
+			);
+			expect(speech.speak.mock.calls.length).toBe(said);
+		});
 	});
 });

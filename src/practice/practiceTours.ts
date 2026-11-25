@@ -266,8 +266,8 @@ const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
  * creates a circle with the real create flow (topics, co-moderators and the
  * create itself are answered in memory), opens it from the list and starts
  * it with the real "Video-Call starten". That opens the practice call (D3,
- * revised): her own camera as a local preview and Mia, a made-up
- * participant; no call is placed. She mutes, turns the camera off, puts the
+ * revised): her own camera as a local preview and Carimat, the platform's
+ * robot, speaking with a local voice; no call is placed. She mutes, turns the camera off, puts the
  * call into the real dock, brings it back and leaves. Same id and version as
  * the explanation tour it replaces where practice is open; no card of its
  * own.
