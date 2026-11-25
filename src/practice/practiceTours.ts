@@ -7,10 +7,16 @@ import {
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
+import {
+	consultantGroupCircleTour,
+	GROUP_CIRCLE_SETTINGS_OPENED,
+	GROUP_CIRCLE_TOUR_VERSION
+} from '../components/productTour/tours/groupCircleTour';
 
 /*
  * The two practice flows, a registry of their own: `frontendTours` feeds the
@@ -231,6 +237,119 @@ export const practiceLiveChatTour: TourDefinition = {
 	]
 };
 
+/** The counsellor's own conversations, where "Erstellen" and circles live. */
+const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
+
+/**
+ * FE#2545: the Gesprächskreis topic tour as a practice flow. The counsellor
+ * creates a circle with the real create flow (topics, co-moderators and the
+ * create itself are answered in memory), opens it from the list and starts
+ * it with the real "Video-Call starten". The call is simulated (D3): the last
+ * step shows the call button and blocks it. Same id and version as the
+ * explanation tour it replaces where practice is open; no card of its own.
+ */
+export const practiceGroupCircleTour: TourDefinition = {
+	id: PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	version: GROUP_CIRCLE_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: consultantGroupCircleTour.titleKey,
+	summaryKey: consultantGroupCircleTour.summaryKey,
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	...(consultantGroupCircleTour.when && {
+		when: consultantGroupCircleTour.when
+	}),
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.intro.title',
+			contentKey: 'tour.groupCircle.step.practiceIntro.intro'
+		},
+		{
+			id: 'create',
+			route: MY_SESSIONS_ROUTE,
+			target: 'groupchat-create-button',
+			placement: 'bottom',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.create.title',
+			contentKey: 'tour.groupCircle.step.practiceCreate.intro'
+		},
+		{
+			// Skipped where only one format is offered: no picker then.
+			id: 'format',
+			target: 'groupchat-format-circle',
+			placement: 'auto',
+			optional: true,
+			titleKey: 'tour.groupCircle.step.format.title',
+			contentKey: 'tour.groupCircle.step.format.intro'
+		},
+		{
+			// Pick a topic, then the topic button opens the settings, which
+			// have no route of their own: the screen announces itself.
+			id: 'topic',
+			target: 'groupchat-topic-picker',
+			placement: 'auto',
+			optional: true,
+			advanceOn: { type: 'event', name: GROUP_CIRCLE_SETTINGS_OPENED },
+			titleKey: 'tour.groupCircle.step.topic.title',
+			contentKey: 'tour.groupCircle.step.practiceTopic.intro'
+		},
+		{
+			id: 'settings',
+			target: 'groupchat-circle-create',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.circleCreated
+			},
+			titleKey: 'tour.groupCircle.step.practiceSettings.title',
+			contentKey: 'tour.groupCircle.step.practiceSettings.intro'
+		},
+		{
+			// Created: the app is back in the list, not in the circle.
+			id: 'open-circle',
+			hideBack: true,
+			route: MY_SESSIONS_ROUTE,
+			target: 'groupchat-list-item',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceOpen.title',
+			contentKey: 'tour.groupCircle.step.practiceOpen.intro'
+		},
+		{
+			id: 'start',
+			target: 'groupchat-start-button',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.circleStarted
+			},
+			titleKey: 'tour.groupCircle.step.practiceStart.title',
+			contentKey: 'tour.groupCircle.step.practiceStart.intro'
+		},
+		{
+			// D3: practice starts no call. The button is shown, not pressed.
+			id: 'call',
+			hideBack: true,
+			lookOnly: true,
+			target: 'groupchat-call-button',
+			placement: 'bottom',
+			titleKey: 'tour.groupCircle.step.practiceCall.title',
+			contentKey: 'tour.groupCircle.step.practiceCall.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.done.title',
+			contentKey: 'tour.groupCircle.step.practiceDone.intro'
+		}
+	]
+};
+
 /**
  * Every tour the practice world can host: the card flows and the topic tours
  * that run as practice where it is open. The tour host, the banner and the
@@ -238,7 +357,8 @@ export const practiceLiveChatTour: TourDefinition = {
  */
 export const practiceHostedTours: TourDefinition[] = [
 	...practiceTours,
-	practiceLiveChatTour
+	practiceLiveChatTour,
+	practiceGroupCircleTour
 ];
 
 /**

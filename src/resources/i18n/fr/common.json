@@ -6585,6 +6585,34 @@
 				"done": {
 					"title": "Prêt",
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Vous créez un cercle de parole d'exercice et le démarrez."
+				},
+				"practiceCreate": {
+					"intro": "Cliquez sur « Créer » dans votre liste de consultations pour lancer une nouvelle conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
+				},
+				"practiceSettings": {
+					"title": "Régler et créer",
+					"intro": "Vérifiez la date et les réglages, puis cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+				},
+				"practiceOpen": {
+					"title": "Ouvrir le cercle",
+					"intro": "Votre cercle d'exercice figure maintenant dans votre liste de consultations. Cliquez dessus pour l'ouvrir."
+				},
+				"practiceStart": {
+					"title": "Démarrer le cercle",
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo »."
+				},
+				"practiceCall": {
+					"title": "Appel vidéo",
+					"intro": "Dans un vrai cercle, ce bouton démarre l'appel vidéo. Aucun appel ne démarre dans l'exercice."
+				},
+				"practiceDone": {
+					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
 				}
 			}
 		},

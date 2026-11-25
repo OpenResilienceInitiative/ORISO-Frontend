@@ -6585,6 +6585,34 @@
 				"done": {
 					"title": "Hazır",
 					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				},
+				"practiceIntro": {
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Bir alıştırma sohbet çemberi oluşturup başlatacaksınız."
+				},
+				"practiceCreate": {
+					"intro": "Yeni bir sohbet başlatmak için danışmanlık listenizde „Oluştur“a tıklayın."
+				},
+				"practiceTopic": {
+					"intro": "„Konu / uzmanlık alanı“ altında alıştırma konusunu seçin, ardından konu düğmesine tıklayın. Ardından ayarlar açılır."
+				},
+				"practiceSettings": {
+					"title": "Ayarla ve oluştur",
+					"intro": "Tarihi ve ayarları kontrol edip „Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
+				},
+				"practiceOpen": {
+					"title": "Çemberi aç",
+					"intro": "Alıştırma çemberiniz artık danışmanlık listenizde. Açmak için üzerine tıklayın."
+				},
+				"practiceStart": {
+					"title": "Çemberi başlat",
+					"intro": "Katılımcılar siz başlayana kadar burada bekler. „Görüntülü aramayı başlat“a tıklayın."
+				},
+				"practiceCall": {
+					"title": "Görüntülü arama",
+					"intro": "Gerçek bir çemberde bu düğme görüntülü aramayı başlatır. Alıştırmada arama başlamaz."
+				},
+				"practiceDone": {
+					"intro": "Tamamlandı: Bir sohbet çemberi oluşturup başlattınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
 				}
 			}
 		},

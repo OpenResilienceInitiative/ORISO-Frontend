@@ -135,6 +135,9 @@ vi.mock('react-joyride', async () => {
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
 const LIVE_CHAT = 'consultant-live-chat';
+const GROUP_CIRCLE = 'consultant-group-circle';
+/** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
+const REAL_AGENCY_URL = '/service/agencies/4711';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
@@ -158,6 +161,14 @@ const networkFetch = vi.fn(
 				? JSON.parse(body).status
 				: undefined;
 		network.push({ method, url, status });
+		// A real read the create entry needs: the Beratungsstelle's own
+		// settings, without policies, so the Träger's flags decide.
+		if (method === 'GET' && new URL(url).pathname === REAL_AGENCY_URL) {
+			return new Response(JSON.stringify([{ id: 4711 }]), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
 				? new Response('[]', {
@@ -217,7 +228,9 @@ const renderApp = ({
 	teamDiscussion = true,
 	practiceArea = true,
 	width = 1440,
-	strictMode = false
+	strictMode = false,
+	/** Gesprächskreise on, and the counsellor may create and start one. */
+	groupCircle = false
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -228,15 +241,25 @@ const renderApp = ({
 	};
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
-		featureSupervisionEnabled: true
+		featureSupervisionEnabled: true,
+		...(groupCircle && { featureGroupChatV2Enabled: true })
 	};
+	const userData = groupCircle
+		? {
+				...counsellor,
+				grantedAuthorities: [
+					...counsellor.grantedAuthorities,
+					'AUTHORIZATION_CREATE_NEW_CHAT'
+				]
+			}
+		: counsellor;
 	setTenantSettings(flags as any);
 	const store = createStore();
 	const routerConfig = RouterConfigConsultant(settings);
 	const providers: [React.Context<any>, any][] = [
 		[AppConfigContext, settings],
 		[ResponsiveContext, { width }],
-		[UserDataContext, { userData: counsellor, setUserData: vi.fn() }],
+		[UserDataContext, { userData, setUserData: vi.fn() }],
 		[TenantContext, { tenant: { id: 1, settings: flags }, setTenant() {} }],
 		[
 			ConsultantListContext,
@@ -247,7 +270,15 @@ const renderApp = ({
 		[
 			ConsultingTypesContext,
 			{
-				consultingTypes: [{ id: 0, isVideoCallAllowed: false }],
+				consultingTypes: [
+					{
+						id: 0,
+						isVideoCallAllowed: false,
+						// Every real consulting type carries it; the circle's
+						// waiting room reads it.
+						groupChat: { isGroupChat: false }
+					}
+				],
 				setConsultingTypes: vi.fn()
 			}
 		],
@@ -747,6 +778,118 @@ describe('practice flows on the real app shell', () => {
 		const app = renderApp({ practiceArea: false });
 		await app.request(LIVE_CHAT);
 		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('Gesprächskreis (FE#2545): the real create flow makes a practice circle, which is opened, started and shows its call button', async () => {
+		const app = renderApp({ groupCircle: true });
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(GROUP_CIRCLE);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		pressNext(0);
+
+		// 2: the real "Erstellen" of the counsellor's own list; click it.
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
+		expect(route()).toBe('/sessions/consultant/sessionView');
+		await act(async () => {
+			fireEvent.click(createButton!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// 3: the circle card among the formats; Next.
+		const format = await expectStep(create + 1);
+		expect(format!.dataset.tourTarget).toBe('groupchat-format-circle');
+		pressNext(create + 1);
+
+		// 4: the topic: open the list, pick the practice topic, continue.
+		const picker = await expectStep(create + 2);
+		fireEvent.click(
+			within(picker!).getByRole('button', {
+				name: 'groupChat.circle.topicLabel'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', { name: SCRIPT.names.topic })
+		);
+		await act(async () => {
+			fireEvent.click(
+				within(picker!).getByRole('button', {
+					name: SCRIPT.names.topic
+				})
+			);
+		});
+
+		// 5: the real "Erstellen" of the settings; the circle is made in memory.
+		const settings = await expectStep(create + 3);
+		await waitFor(() =>
+			expect(settings!.hasAttribute('disabled')).toBe(false)
+		);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
+			fireEvent.click(settings!);
+		});
+
+		// 6: back in the list (no share dialog): the new circle; click it.
+		const open = create + 4;
+		await expectStep(open);
+		await waitFor(
+			() => expect(route()).toBe('/sessions/consultant/sessionView'),
+			SLOW
+		);
+		expect(screen.queryByRole('dialog')).toBeNull();
+		const rowSelector = joyride!.steps[open].target;
+		await waitFor(() => {
+			const row = document.querySelector<HTMLElement>(rowSelector);
+			expect(row?.isConnected).toBe(true);
+			expect(row?.textContent).toContain(SCRIPT.names.topic);
+		}, SLOW);
+		await act(async () => {
+			fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+		await waitFor(
+			() => expect(route()).toMatch(/sessionView\/!practice-4[^/]*\/-2/),
+			SLOW
+		);
+
+		// 7: the waiting room's real "Video-Call starten"; it starts the circle.
+		const start = await expectStep(open + 1);
+		const startButton = within(start!).getByRole('button', {
+			name: 'videoCall.button.startVideoCall'
+		});
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleStarted, async () => {
+			await act(async () => {
+				fireEvent.click(startButton);
+			});
+		});
+
+		// 8: the call button of the started circle, shown and not usable:
+		// practice starts no call (D3), and the start asked for none.
+		const call = await expectStep(open + 2);
+		expect(call!.querySelector('button')).toBeTruthy();
+		expect(joyride!.steps[open + 2]).toMatchObject({
+			blockTargetInteraction: true
+		});
+		expect(route()).toMatch(/sessionView\/!practice-4/);
+		pressNext(open + 2);
+
+		// Done: completion is written for the circle tour itself, and the
+		// circle never left the page.
+		await finish(open + 3);
+		expect(
+			network.filter(({ url }) => url.includes('/service/users/chat'))
+		).toEqual([]);
+	}, 120000);
+
+	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false, groupCircle: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(6);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});

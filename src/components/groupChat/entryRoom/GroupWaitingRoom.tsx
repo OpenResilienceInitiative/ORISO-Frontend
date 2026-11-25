@@ -85,6 +85,8 @@ export interface GroupWaitingRoomProps {
 	audience?: 'participant' | 'moderator';
 	/** The bar's main label when it is not "Beitreten". */
 	primaryLabel?: string;
+	/** Product-tour anchor on the bar's main action; inert. */
+	primaryTourTarget?: string;
 	/**
 	 * Ask the group's consent on "Beitreten". Off for staff: they agreed to
 	 * the documents with their contract, not here.
@@ -145,6 +147,7 @@ export const GroupWaitingRoom = ({
 	joinNotice,
 	audience = 'participant',
 	primaryLabel,
+	primaryTourTarget,
 	askConsent = true,
 	onDeviceCheck,
 	openBeforeStart = false,
@@ -320,7 +323,8 @@ export const GroupWaitingRoom = ({
 			joinBlocked ||
 			Boolean(admissionWaiting),
 		status: admissionWaiting ?? opensAt,
-		testId: 'group-entry-join'
+		testId: 'group-entry-join',
+		tourTarget: primaryTourTarget
 	};
 	const rhythm =
 		showRhythm && plannedStart ? (

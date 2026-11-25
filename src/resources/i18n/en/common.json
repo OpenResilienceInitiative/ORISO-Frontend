@@ -6500,6 +6500,34 @@
 				"done": {
 					"title": "Ready",
 					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				},
+				"practiceIntro": {
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You create a practice conversation circle and start it."
+				},
+				"practiceCreate": {
+					"intro": "Click \"Create\" in your consultation list to start a new conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choose the practice topic under \"Topic / subject area\", then click the topic button. The settings open next."
+				},
+				"practiceSettings": {
+					"title": "Set up and create",
+					"intro": "Check the date and settings and click \"Create\". In the exercise the circle meets by video."
+				},
+				"practiceOpen": {
+					"title": "Open the circle",
+					"intro": "Your practice circle is now in your consultation list. Click it to open it."
+				},
+				"practiceStart": {
+					"title": "Start the circle",
+					"intro": "Participants wait here until you begin. Click \"Start video call\"."
+				},
+				"practiceCall": {
+					"title": "Video call",
+					"intro": "In a real circle this button starts the video call. No call starts in the exercise."
+				},
+				"practiceDone": {
+					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
 				}
 			}
 		},

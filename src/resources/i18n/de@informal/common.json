@@ -2824,6 +2824,30 @@
 				},
 				"done": {
 					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du legst einen Übungs-Gesprächskreis an und startest ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klick in deiner Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wähl unter „Thema / Fachbereich“ das Übungsthema und klick dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"intro": "Prüf Termin und Einstellungen und klick auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"intro": "Dein Übungskreis steht jetzt in deiner Beratungsliste. Klick darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"intro": "Teilnehmende warten hier, bis du beginnst. Klick auf „Video-Call starten“."
+				},
+				"practiceCall": {
+					"intro": "Über diesen Button startest du im echten Gesprächskreis den Video-Call. In der Übung startet kein Anruf."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Du hast einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilst du vorher den Einladungs-Link, damit Teilnehmende kommen."
 				}
 			}
 		},
