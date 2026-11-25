@@ -7434,6 +7434,7 @@
 			"title": "Deleted together with the guest account"
 		},
 		"deletedGuest": "Guest (deleted)",
+		"signedOutNotice": "Your guest account was deleted after the conversation, so you have been signed out. For another conversation, please open the link from your counselling service again.",
 		"chip": {
 			"guest": "Guest account"
 		},

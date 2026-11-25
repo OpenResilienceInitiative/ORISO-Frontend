@@ -7519,6 +7519,7 @@
 			"title": "Misafir hesabıyla birlikte silinir"
 		},
 		"deletedGuest": "Misafir (silindi)",
+		"signedOutNotice": "Misafir hesabınız görüşmeden sonra silindi, bu nedenle oturumunuz kapatıldı. Yeni bir görüşme için lütfen danışmanlık hizmetinizin bağlantısını yeniden açın.",
 		"chip": {
 			"guest": "Misafir hesabı"
 		},
