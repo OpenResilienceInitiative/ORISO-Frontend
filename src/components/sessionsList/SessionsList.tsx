@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -1123,7 +1124,15 @@ export const SessionsList = ({
 	);
 
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
-	const sessionsRef = useUpdatingRef(sessions);
+	// Live message events read the list through this ref. Keep it current
+	// with the committed list (layout effect, not a passive one): a message
+	// that arrives between the commit and the passive effects would otherwise
+	// look like it came from an unknown room and refetch the whole list
+	// instead of refreshing its room (#2480).
+	const sessionsRef = useRef(sessions);
+	useLayoutEffect(() => {
+		sessionsRef.current = sessions;
+	}, [sessions]);
 
 	// #2480: messages replayed by the Matrix sync arrive in bursts; refresh
 	// their rooms together instead of one request per message.
