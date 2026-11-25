@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { getAvailableTours } from '../tourCatalogue';
 import { frontendTopicTours } from '../tourDefinitions';
-import { consultantLiveChatTour } from './liveChatTour';
+import { consultantLiveChatTour, LIVE_CHAT_TOUR_VERSION } from './liveChatTour';
 import { itKeepsTheTourContract } from './tourDefinitionContract.testkit';
 
 describe('consultant-live-chat', () => {
-	itKeepsTheTourContract(consultantLiveChatTour, 'consultant');
+	itKeepsTheTourContract(
+		consultantLiveChatTour,
+		'consultant',
+		LIVE_CHAT_TOUR_VERSION
+	);
 
 	it('walks settings → rail toggle → queue → accept, centred at both ends', () => {
 		expect(consultantLiveChatTour.steps.map((step) => step.id)).toEqual([

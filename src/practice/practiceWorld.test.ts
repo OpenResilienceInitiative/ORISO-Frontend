@@ -428,7 +428,7 @@ describe('practice world tour events', () => {
 		const world = worldIn('en', 'acceptedCase');
 		await world.rest.handle(new Request(endpoints.consultantSessions));
 
-		expect(Object.values(counts)).toEqual([0, 0, 0, 0]);
+		expect(Object.values(counts).every((count) => count === 0)).toBe(true);
 	});
 });
 

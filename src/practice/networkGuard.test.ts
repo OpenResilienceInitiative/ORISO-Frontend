@@ -19,11 +19,13 @@ const TUTORIAL_PROGRESS_URL = `${USER_SERVICE}/service/users/tutorials/progress`
 const TOKEN_URL =
 	'https://auth.test.local/auth/realms/online-beratung/protocol/openid-connect/token';
 const TOUR_ID = 'consultant-practice-accept';
+const HEARTBEAT_URL = `${USER_SERVICE}/service/conversations/consultants/availability/heartbeat`;
 
 const baseOptions = () => ({
 	allowedTourIds: [TOUR_ID],
 	tutorialProgressUrl: TUTORIAL_PROGRESS_URL,
-	tokenRefreshUrl: TOKEN_URL
+	tokenRefreshUrl: TOKEN_URL,
+	liveChatHeartbeatUrl: HEARTBEAT_URL
 });
 
 const progressBody = (overrides: Record<string, unknown> = {}) =>
@@ -428,6 +430,66 @@ describe('NetworkGuard (default-deny for every non-GET request)', () => {
 					body: refreshBody
 				})
 			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		});
+	});
+
+	describe('allowlist (c): the real live-chat availability heartbeat (FE#2545)', () => {
+		// As the app sends it: fetchData wraps every call in a Request.
+		const beat = (url = HEARTBEAT_URL, init: RequestInit = {}) =>
+			globalThis.fetch(new Request(url, { method: 'POST', ...init }));
+
+		it('lets the bodyless heartbeat POST through, so real availability keeps its lease', async () => {
+			guard.install();
+
+			await beat();
+
+			expect(realFetch).toHaveBeenCalledTimes(1);
+			expect(guard.counter()).toEqual({ blocked: 0, allowed: 1 });
+		});
+
+		it.each([
+			[
+				'a body',
+				() => beat(HEARTBEAT_URL, { body: '{"available":true}' })
+			],
+			['a query string', () => beat(`${HEARTBEAT_URL}?x=1`)],
+			[
+				'a PUT on the availability itself (switching on or off)',
+				() =>
+					globalThis.fetch(
+						new Request(HEARTBEAT_URL.replace('/heartbeat', ''), {
+							method: 'PUT',
+							body: '{"available":true}'
+						})
+					)
+			],
+			[
+				'a PUT on the heartbeat URL',
+				() =>
+					globalThis.fetch(
+						new Request(HEARTBEAT_URL, { method: 'PUT' })
+					)
+			]
+		])('blocks the heartbeat URL with %s', async (_label, send) => {
+			guard.install();
+			await expect(send()).rejects.toBeInstanceOf(
+				PracticeBlockedRequestError
+			);
+			expect(realFetch).not.toHaveBeenCalled();
+		});
+
+		it('blocks the heartbeat when no heartbeat URL is configured', async () => {
+			const { liveChatHeartbeatUrl: _omit, ...withoutHeartbeat } =
+				baseOptions();
+			const strict = createNetworkGuard(withoutHeartbeat);
+			strict.install();
+			try {
+				await expect(beat()).rejects.toBeInstanceOf(
+					PracticeBlockedRequestError
+				);
+			} finally {
+				strict.uninstall();
+			}
 		});
 	});
 

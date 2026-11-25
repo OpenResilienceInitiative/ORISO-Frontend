@@ -1,6 +1,7 @@
 import {
 	BlockReason,
 	classifyRequest,
+	findAllowlistCandidate,
 	redactUrl,
 	RequestPolicyConfig
 } from './requestPolicy';
@@ -20,6 +21,25 @@ export interface RecordedNetworkRequest {
 	postData?: string | null;
 }
 
+/**
+ * The body the runtime guard saw for a recorded request. Playwright reports
+ * "no body" as null, which otherwise reads as "not captured". Only the
+ * heartbeat, whose allowlist entry requires an empty body, is read as empty;
+ * every other missing body stays uncaptured and is rejected.
+ */
+export const recordedBodyText = (
+	request: RecordedNetworkRequest,
+	config: RequestPolicyConfig
+): string | undefined => {
+	if (typeof request.postData === 'string') {
+		return request.postData;
+	}
+	return findAllowlistCandidate(request.method, request.url, config) ===
+		'livechat-heartbeat'
+		? ''
+		: undefined;
+};
+
 export interface PracticeWriteViolation {
 	method: string;
 	/** Origin + path only. */
@@ -37,7 +57,7 @@ export const findPracticeWrites = (
 			{
 				method: request.method,
 				url: request.url,
-				bodyText: request.postData ?? undefined
+				bodyText: recordedBodyText(request, config)
 			},
 			config
 		);

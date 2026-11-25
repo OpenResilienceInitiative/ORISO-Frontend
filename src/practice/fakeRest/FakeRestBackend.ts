@@ -189,8 +189,13 @@ export const createFakeRestBackend = ({
 		latestMessage: new Date(practiceCase.latestMessage)
 	});
 
-	const sessionList = (status: number) =>
-		practiceCase.session.status === status
+	const isLiveChat = () =>
+		practiceCase.session.registrationType === 'ANONYMOUS';
+
+	const sessionList = (status: number, anonymous = false) =>
+		practiceCase.session.status === status &&
+		// Waiting live chats come from their own queue endpoint.
+		(status !== STATUS_ENQUIRY || isLiveChat() === anonymous)
 			? ok({
 					sessions: [listItem()],
 					offset: 0,
@@ -207,6 +212,29 @@ export const createFakeRestBackend = ({
 	const isCase = (id: string) =>
 		Number(id) === practiceCase.session.id && isPracticeId(id);
 
+	/** Registered (F1) or live chat (FE#2545): the same accept, in memory. */
+	const accept = (id: string) => {
+		if (!isCase(id)) return null;
+		if (practiceCase.session.status === STATUS_ENQUIRY) {
+			practiceCase = {
+				...practiceCase,
+				session: {
+					...practiceCase.session,
+					status: STATUS_ACTIVE,
+					consultantMatrixUserId: PRACTICE_COUNSELLOR_MATRIX_USER_ID
+				},
+				consultant: counsellorAsSessionConsultant(counsellor),
+				// The team discussion closes at accept (ADR-016).
+				teamDiscussion: practiceCase.teamDiscussion && {
+					...practiceCase.teamDiscussion,
+					status: 'ARCHIVED'
+				}
+			};
+			hooks.onEnquiryAccepted?.(practiceCase.session.id);
+		}
+		return noContent();
+	};
+
 	const routes: Route[] = [
 		{
 			method: 'GET',
@@ -218,7 +246,7 @@ export const createFakeRestBackend = ({
 			method: 'GET',
 			path: at(endpoints.consultantEnquiriesBase, 'anonymous'),
 			viewWide: true,
-			handle: () => noContent()
+			handle: () => sessionList(STATUS_ENQUIRY, true)
 		},
 		{
 			method: 'GET',
@@ -255,28 +283,29 @@ export const createFakeRestBackend = ({
 		{
 			method: 'PUT',
 			path: at(endpoints.sessionBase, `/new/${PRACTICE_ID_SEGMENT}`),
-			handle: (_request, [, id]) => {
-				if (!isCase(id)) return null;
-				if (practiceCase.session.status === STATUS_ENQUIRY) {
-					practiceCase = {
-						...practiceCase,
-						session: {
-							...practiceCase.session,
-							status: STATUS_ACTIVE,
-							consultantMatrixUserId:
-								PRACTICE_COUNSELLOR_MATRIX_USER_ID
-						},
-						consultant: counsellorAsSessionConsultant(counsellor),
-						// The team discussion closes at accept (ADR-016).
-						teamDiscussion: practiceCase.teamDiscussion && {
-							...practiceCase.teamDiscussion,
-							status: 'ARCHIVED'
-						}
-					};
-					hooks.onEnquiryAccepted?.(practiceCase.session.id);
-				}
-				return noContent();
-			}
+			handle: (_request, [, id]) => accept(id)
+		},
+		{
+			// Live chats take their own assignment path (#774).
+			method: 'PUT',
+			path: atSession(endpoints.acceptAnonymousEnquiry),
+			handle: (_request, [, id]) => accept(id)
+		},
+		{
+			// The queue position poll of a waiting live chat.
+			method: 'GET',
+			path: atSession(endpoints.anonymousEnquiryDetails),
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? ok({
+							numAvailableConsultants: 1,
+							peopleAhead: 0,
+							status:
+								practiceCase.session.status === STATUS_ENQUIRY
+									? 'NEW'
+									: 'IN_PROGRESS'
+						})
+					: null
 		},
 		{
 			method: 'GET',
