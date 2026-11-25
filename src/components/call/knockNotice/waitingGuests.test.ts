@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import type { NotificationFeedItem } from '../../../globalState/provider/NotificationsProvider';
-import {
-	MAX_WAITING_CONVERSATIONS,
-	waitingConversations,
-	WAITING_GUEST_WINDOW_MS
-} from './waitingGuests';
+import { waitingConversations, WAITING_GUEST_WINDOW_MS } from './waitingGuests';
 
 const NOW = Date.parse('2026-11-25T13:00:00Z');
 
@@ -72,26 +68,14 @@ describe('waitingConversations', () => {
 		expect(waitingConversations([audio], NOW)[0].isVideo).toBe(false);
 	});
 
-	it('asks about a handful of conversations at most, the newest ones', () => {
-		const many = Array.from(
-			{ length: MAX_WAITING_CONVERSATIONS + 3 },
-			(_, index) => entry(index + 1, 100 - index)
+	it("keeps every conversation: who waits is the server's answer", () => {
+		// Six conversations knocked today. Five may be long answered, which
+		// the entries cannot tell — so none is cut off, old or new.
+		const six = Array.from({ length: 6 }, (_, index) =>
+			entry(index + 1, 110 - index * 10)
 		);
-		const list = waitingConversations(many, NOW);
-		expect(list).toHaveLength(MAX_WAITING_CONVERSATIONS);
-		expect(list[list.length - 1].sessionId).toBe(many.length);
-	});
-
-	it('never drops the person who knocks now for older, answered knocks', () => {
-		// Six conversations knocked today; the first five are long answered,
-		// which the entries cannot tell. The sixth person knocks right now.
-		const answered = Array.from(
-			{ length: MAX_WAITING_CONVERSATIONS },
-			(_, index) => entry(index + 1, 110 - index * 10)
-		);
-		const list = waitingConversations([...answered, entry(600, 0)], NOW);
-		expect(list.map(({ sessionId }) => sessionId)).toEqual([
-			2, 3, 4, 5, 600
-		]);
+		expect(
+			waitingConversations(six, NOW).map(({ sessionId }) => sessionId)
+		).toEqual([1, 2, 3, 4, 5, 6]);
 	});
 });

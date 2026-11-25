@@ -10,14 +10,6 @@ export const CALL_KNOCK_REQUESTED = 'call.knock.requested';
  */
 export const WAITING_GUEST_WINDOW_MS = 2 * 60 * 60 * 1000;
 
-/**
- * Conversations asked about at once; a counsellor rarely has more waiting.
- * Over the cap the NEWEST entries stay: an entry does not say whether its
- * knock is still open, so older ones are mostly answered already, and a
- * person who knocks now must never be crowded out by them.
- */
-export const MAX_WAITING_CONVERSATIONS = 5;
-
 /** A conversation in which somebody knocked, as its knock entry names it. */
 export interface WaitingConversation {
 	sessionId: number;
@@ -36,9 +28,10 @@ const sessionIdOf = (item: NotificationFeedItem): number | null => {
 };
 
 /**
- * The conversations with a recent knock entry, the one waiting longest
- * first. Read or unread: reading the entry does not let anybody in. Whether
- * somebody still waits is the server's answer, never this list's.
+ * The conversations with a recent knock entry, oldest entry first: where a
+ * knock's conversation opens and which room its call starts in. Read or
+ * unread: reading the entry does not let anybody in. Who waits is the
+ * server's answer, never this list's, so nothing is cut off here.
  */
 export const waitingConversations = (
 	feed: ReadonlyArray<NotificationFeedItem>,
@@ -64,11 +57,7 @@ export const waitingConversations = (
 			at
 		});
 	});
-	return (
-		[...byId.values()]
-			.sort((left, right) => left.at - right.at)
-			// The newest ones, see MAX_WAITING_CONVERSATIONS; still oldest first.
-			.slice(-MAX_WAITING_CONVERSATIONS)
-			.map(({ at: _at, ...conversation }) => conversation)
-	);
+	return [...byId.values()]
+		.sort((left, right) => left.at - right.at)
+		.map(({ at: _at, ...conversation }) => conversation);
 };

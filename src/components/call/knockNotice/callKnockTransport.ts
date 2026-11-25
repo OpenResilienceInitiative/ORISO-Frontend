@@ -2,6 +2,7 @@ import {
 	apiAdmitAllCallKnocks,
 	apiAdmitCallKnock,
 	apiDeclineCallKnock,
+	apiGetAllPendingCallKnocks,
 	apiGetPendingCallKnocks
 } from '../../../api/apiCallKnocks';
 import { FETCH_ERRORS } from '../../../api/fetchData';
@@ -18,6 +19,11 @@ export interface CallKnockTransport {
 		scope: CallKnockScope,
 		onChange: (knocks: CallKnock[]) => void
 	) => () => void;
+	/**
+	 * The same for everybody waiting for this counsellor, in whichever
+	 * conversation: what the notice outside a call asks (FE#2542).
+	 */
+	watchAllPending: (onChange: (knocks: CallKnock[]) => void) => () => void;
 	admit: (knockId: number) => Promise<void>;
 	decline: (knockId: number) => Promise<void>;
 	/** Admits everybody waiting for this call only. */
@@ -26,6 +32,7 @@ export interface CallKnockTransport {
 
 export interface CallKnockApi {
 	listPending: (scope: CallKnockScope) => Promise<CallKnock[]>;
+	listAllPending: () => Promise<CallKnock[]>;
 	admit: (knockId: number) => Promise<unknown>;
 	decline: (knockId: number) => Promise<unknown>;
 	admitAll: (scope: CallKnockScope) => Promise<unknown>;
@@ -33,6 +40,7 @@ export interface CallKnockApi {
 
 const userServiceApi: CallKnockApi = {
 	listPending: apiGetPendingCallKnocks,
+	listAllPending: apiGetAllPendingCallKnocks,
 	admit: apiAdmitCallKnock,
 	decline: apiDeclineCallKnock,
 	admitAll: apiAdmitAllCallKnocks
@@ -79,8 +87,11 @@ export const createHttpCallKnockTransport = ({
 }: {
 	api?: CallKnockApi;
 	intervalMs?: number;
-} = {}): CallKnockTransport => ({
-	watchPending: (scope, onChange) => {
+} = {}): CallKnockTransport => {
+	const watch = (
+		load: () => Promise<CallKnock[]>,
+		onChange: (knocks: CallKnock[]) => void
+	) => {
 		let stopped = false;
 		let loading = false;
 		let last: string | undefined;
@@ -96,7 +107,7 @@ export const createHttpCallKnockTransport = ({
 			if (stopped || loading) return;
 			if (timer) clearTimeout(timer);
 			loading = true;
-			api.listPending(scope)
+			load()
 				.then((knocks) => {
 					if (stopped) return;
 					const pending = knocks.filter(
@@ -123,11 +134,17 @@ export const createHttpCallKnockTransport = ({
 		document.addEventListener('visibilitychange', onVisible);
 		tick();
 		return stop;
-	},
-	admit: (knockId) => settle(api.admit(knockId)),
-	decline: (knockId) => settle(api.decline(knockId)),
-	admitAll: (scope) => settle(api.admitAll(scope))
-});
+	};
+	return {
+		watchPending: (scope, onChange) =>
+			watch(() => api.listPending(scope), onChange),
+		watchAllPending: (onChange) =>
+			watch(() => api.listAllPending(), onChange),
+		admit: (knockId) => settle(api.admit(knockId)),
+		decline: (knockId) => settle(api.decline(knockId)),
+		admitAll: (scope) => settle(api.admitAll(scope))
+	};
+};
 
 /** The one the app mounts. */
 export const httpCallKnockTransport = createHttpCallKnockTransport();

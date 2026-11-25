@@ -14,23 +14,30 @@ import { directLinkCallName } from '../callRoomName';
 import { startRoomCall } from '../startRoomCall';
 import type { StartRoomCallOptions } from '../startRoomCall';
 import { CallKnockNotice } from './CallKnockNotice';
+import { httpCallKnockTransport } from './callKnockTransport';
 import type { CallKnockTransport } from './callKnockTransport';
 import { useCallKnocks } from './useCallKnocks';
+import type { CallKnockBusy } from './useCallKnocks';
 import { waitingConversations } from './waitingGuests';
 import type { WaitingConversation } from './waitingGuests';
 
-/** Starts the conversation's call, exactly as its call button does. */
+/**
+ * Starts the conversation's call, exactly as its call button does, and says
+ * whether it did: no camera or microphone, no room — then it did not.
+ */
 export type StartWaitingGuestCall = (
 	options: StartRoomCallOptions
-) => Promise<void> | void;
+) => Promise<boolean>;
+
+/** Opens the conversation and starts its call; `false` when no call started. */
+export type EnterWaitingGuestCall = (
+	conversation: WaitingConversation
+) => Promise<boolean>;
 
 interface ConversationKnocksProps {
 	conversation: WaitingConversation;
-	/** Only the conversation waiting longest shows its notice. */
-	shown: boolean;
-	onWaiting: (sessionId: number, waiting: boolean) => void;
-	onEnterCall: (conversation: WaitingConversation) => void;
-	transport?: CallKnockTransport;
+	onEnterCall: EnterWaitingGuestCall;
+	transport: CallKnockTransport;
 	playSound?: () => void;
 }
 
@@ -38,12 +45,12 @@ interface ConversationKnocksProps {
  * The people knocking in one conversation. Letting somebody in starts the
  * call first — inside the click, because the browser hands out camera and
  * microphone only during it — and admits them while it connects. The person
- * let in joins the call as soon as it rings.
+ * let in joins the call as soon as it rings. When the call does not start
+ * (no camera or microphone, no room) nobody is admitted: the person keeps
+ * waiting and stays in the notice.
  */
 const ConversationKnocks = ({
 	conversation,
-	shown,
-	onWaiting,
 	onEnterCall,
 	transport,
 	playSound
@@ -52,32 +59,31 @@ const ConversationKnocks = ({
 	const { people, busy, admit, decline, admitAll } = useCallKnocks({
 		enabled: true,
 		scope: { sessionId: conversation.sessionId },
-		...(transport ? { transport } : {}),
+		transport,
 		...(playSound ? { playSound } : {})
 	});
-	const waiting = people.length > 0;
-	const { sessionId } = conversation;
-	useEffect(() => {
-		onWaiting(sessionId, waiting);
-		return () => onWaiting(sessionId, false);
-	}, [onWaiting, sessionId, waiting]);
+	const [starting, setStarting] = useState<CallKnockBusy>(null);
+	const startThen = (
+		key: NonNullable<CallKnockBusy>,
+		letIn: () => Promise<unknown>
+	) => {
+		if (starting !== null) return;
+		setStarting(key);
+		onEnterCall(conversation)
+			.then((started) => (started ? letIn() : undefined))
+			.catch(() => undefined)
+			.finally(() => setStarting(null));
+	};
 
-	if (!shown) return null;
 	return (
 		<CallKnockNotice
 			people={people}
 			placement="page"
-			busy={busy}
+			busy={busy ?? starting}
 			admitLabel={t('calls.knock.startAndAdmit')}
-			onAdmit={(knockId) => {
-				onEnterCall(conversation);
-				void admit(knockId);
-			}}
+			onAdmit={(knockId) => startThen(knockId, () => admit(knockId))}
 			onDecline={(knockId) => void decline(knockId)}
-			onAdmitAll={() => {
-				onEnterCall(conversation);
-				void admitAll();
-			}}
+			onAdmitAll={() => startThen('all', () => admitAll())}
 		/>
 	);
 };
@@ -96,49 +102,54 @@ const useNoCallInProgress = () => {
 };
 
 export interface WaitingGuestNoticeProps {
-	/** Conversations with a recent knock entry, waiting longest first. */
+	/** Conversations with a knock entry: where each opens and calls. */
 	conversations: WaitingConversation[];
 	/** Starts the call of the conversation and opens it. */
-	onEnterCall: (conversation: WaitingConversation) => void;
+	onEnterCall: EnterWaitingGuestCall;
 	transport?: CallKnockTransport;
 	playSound?: () => void;
 }
 
 /**
- * The notice itself, without the app around it: asks the server who still
- * waits in each conversation and shows the one waiting longest.
+ * The notice itself, without the app around it: asks the server once for
+ * everybody who waits for this counsellor, and shows the conversation of the
+ * person waiting longest. One conversation at a time: a call takes one.
  */
 export const WaitingGuestNotice = ({
 	conversations,
 	onEnterCall,
-	transport,
+	transport = httpCallKnockTransport,
 	playSound
 }: WaitingGuestNoticeProps) => {
-	const [waiting, setWaiting] = useState<ReadonlySet<number>>(new Set());
-	const onWaiting = useCallback((sessionId: number, isWaiting: boolean) => {
-		setWaiting((current) => {
-			if (current.has(sessionId) === isWaiting) return current;
-			const next = new Set(current);
-			if (isWaiting) next.add(sessionId);
-			else next.delete(sessionId);
-			return next;
-		});
-	}, []);
-	const shown = conversations.find((c) => waiting.has(c.sessionId));
+	/* Conversations somebody waits in, the longest wait first. */
+	const [waitingIn, setWaitingIn] = useState<number[]>([]);
+	useEffect(
+		() =>
+			transport.watchAllPending((knocks) =>
+				setWaitingIn([
+					...new Set(
+						knocks
+							.map((knock) => knock.sessionId)
+							.filter(
+								(id): id is number => typeof id === 'number'
+							)
+					)
+				])
+			),
+		[transport]
+	);
+	const shown = waitingIn
+		.map((id) => conversations.find((c) => c.sessionId === id))
+		.find(Boolean);
+	if (!shown) return null;
 	return (
-		<>
-			{conversations.map((conversation) => (
-				<ConversationKnocks
-					key={conversation.sessionId}
-					conversation={conversation}
-					shown={conversation.sessionId === shown?.sessionId}
-					onWaiting={onWaiting}
-					onEnterCall={onEnterCall}
-					transport={transport}
-					playSound={playSound}
-				/>
-			))}
-		</>
+		<ConversationKnocks
+			key={shown.sessionId}
+			conversation={shown}
+			onEnterCall={onEnterCall}
+			transport={transport}
+			playSound={playSound}
+		/>
 	);
 };
 
@@ -161,10 +172,10 @@ export interface WaitingGuestNoticeHostProps {
  * starts the call of that conversation and lets the person in. In a call
  * the call's own notice takes over, and this one steps back.
  *
- * Which conversations to ask about comes from the knock entries already in
- * the notification feed; whether somebody still waits is asked from the
- * server per conversation, so a knock that was answered or withdrawn never
- * shows.
+ * Who waits is the server's answer (one list for all conversations), so a
+ * knock that was answered or withdrawn never shows. Where a conversation
+ * opens and which room its call starts in comes from the knock entry
+ * already in the notification feed.
  */
 export const WaitingGuestNoticeHost = ({
 	transport,
@@ -194,9 +205,11 @@ export const WaitingGuestNoticeHost = ({
 		() => JSON.parse(key),
 		[key]
 	);
-	const onEnterCall = useCallback(
-		(conversation: WaitingConversation) => {
-			void start({
+	const onEnterCall = useCallback<EnterWaitingGuestCall>(
+		async (conversation) => {
+			// Started inside the click: the browser hands out camera and
+			// microphone only then.
+			const started = start({
 				roomId: conversation.roomId,
 				isVideo: conversation.isVideo,
 				isGroup: false,
@@ -209,6 +222,7 @@ export const WaitingGuestNoticeHost = ({
 				)
 			});
 			if (conversation.path) navigate(conversation.path);
+			return started;
 		},
 		[navigate, sessions, start]
 	);

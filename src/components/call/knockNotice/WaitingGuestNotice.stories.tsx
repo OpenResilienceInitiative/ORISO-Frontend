@@ -39,7 +39,7 @@ const WAITING_LONGER = [knock(150)];
 
 interface StoryProps {
 	knocks: CallKnock[];
-	onEnterCall: (conversation: WaitingConversation) => void;
+	onEnterCall: (conversation: WaitingConversation) => Promise<boolean>;
 	playSound: () => void;
 	onTransport?: (transport: FakeCallKnockTransport) => void;
 }
@@ -94,7 +94,7 @@ const meta = {
 	tags: ['autodocs'],
 	args: {
 		knocks: JUST_ARRIVED,
-		onEnterCall: fn(),
+		onEnterCall: fn(async () => true),
 		playSound: fn()
 	},
 	parameters: {
