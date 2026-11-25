@@ -61,7 +61,7 @@ export const downloadInvitationIcs = ({
 };
 
 /** The round icon above the room's words, as `CallNotice` draws it. */
-const RoomIcon = ({ children }: { children: React.ReactNode }) => (
+export const RoomIcon = ({ children }: { children: React.ReactNode }) => (
 	<Box
 		aria-hidden
 		sx={{
@@ -81,13 +81,13 @@ const RoomIcon = ({ children }: { children: React.ReactNode }) => (
 	</Box>
 );
 
-const RoomText = ({ children }: { children: React.ReactNode }) => (
+export const RoomText = ({ children }: { children: React.ReactNode }) => (
 	<Typography sx={{ ...registrationScreenIntroSx, mt: 1.5 }}>
 		{children}
 	</Typography>
 );
 
-const roomColumnSx = {
+export const roomColumnSx = {
 	flex: 1,
 	display: 'flex',
 	flexDirection: 'column',
