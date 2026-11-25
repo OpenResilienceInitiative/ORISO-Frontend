@@ -80,6 +80,12 @@ interface RecordedRequest {
 const requestLog: RecordedRequest[] = [];
 /** Write-like calls on the real Matrix client, which practice must not use. */
 const realMatrixWrites: string[] = [];
+/**
+ * Set by a story that walks the watch-only Einführung on the real page: its
+ * reads then answer like an empty account (204) instead of failing, so the
+ * real lists show their empty state. Writes still fail.
+ */
+let realReadsAnswerEmpty = false;
 
 const realMatrixStandIn = new Proxy(
 	{},
@@ -144,6 +150,9 @@ const RecordedNetwork = ({ children }: { children: React.ReactNode }) => {
 							headers: { 'content-type': 'application/json' }
 						})
 					: new Response(null, { status: 204 });
+			}
+			if (realReadsAnswerEmpty && request.method === 'GET') {
+				return new Response(null, { status: 204 });
 			}
 			throw new TypeError('Failed to fetch');
 		}) as typeof window.fetch;
@@ -694,10 +703,16 @@ export const IntroductionEnded: Story = {
 export const IntroductionOnPhone: Story = {
 	name: 'Einführung on a phone: the watch-only fallback · phone 390',
 	globals: { viewport: { value: 'phone390', isRotated: false } },
+	beforeEach: () => {
+		realReadsAnswerEmpty = true;
+		return () => {
+			realReadsAnswerEmpty = false;
+		};
+	},
 	parameters: {
 		docs: {
 			description: {
-				story: 'FE#2545: where the practice cannot run (here a phone; also a window below 900 px or the practice area off) the Einführung card still starts, and the watch-only Einführung runs on the real page: no practice mode, no banner.'
+				story: 'FE#2545: where the practice cannot run (here a phone; also a window below 900 px or the practice area off) the Einführung card still starts, and the watch-only Einführung runs on the real page: no practice mode, no banner. Its last step points to the practice on a computer (Help → Rundgänge).'
 			}
 		}
 	},
@@ -713,6 +728,17 @@ export const IntroductionOnPhone: Story = {
 		await expect(
 			screen.queryByRole('status', { name: 'Übungsmodus' })
 		).toBeNull();
+		// FE#2545 (PO): the last step points to the practice on a computer,
+		// because the practice area is open here.
+		for (const at of [2, 3, 4, 5]) {
+			await nextWhereVisible();
+			await expectStep(at, 5);
+		}
+		const pointer = within(await tooltip()).getByText(
+			/Am Computer können Sie das unter Hilfe → Rundgänge auch üben\./
+		);
+		// The tooltip fades in; wait for it to show, not just to exist.
+		await waitFor(() => expect(pointer).toBeVisible(), SLOW);
 	}
 };
 
