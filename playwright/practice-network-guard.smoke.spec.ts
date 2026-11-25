@@ -5,18 +5,16 @@ import {
 	assertRunLeftNothing,
 	banner,
 	diffStorage,
-	driveAcceptFlow,
+	driveIntroFlow,
 	driveSupervisionFlow,
 	endFromBanner,
 	exactText,
 	expectRealEnquiriesFree,
 	finishButton,
 	openThePracticeEnquiry,
-	practiceCard,
 	progressWriteStatuses,
 	recordTraffic,
 	snapshotStorage,
-	startButton,
 	topicStartButton,
 	topicTourCard,
 	type FlowRun
@@ -45,7 +43,7 @@ import {
  * forced on. Everything else, the Help page, the tour, the fake backend and
  * the guard, is the real app.
  *
- * Per flow, from the click on the practice card to the end of the practice:
+ * Per flow, from the click on the tour card to the end of the practice:
  *  - the browser sent no write except the tutorial-progress PUT of the running
  *    tour (and the token refresh), and sent a PUT with status "completed";
  *  - no request URL or body names a practice id (`-1`, `practice-...`,
@@ -55,19 +53,26 @@ import {
  *    live-chat heartbeat (a bodyless POST, FE#2545); a PUT to the
  *    availability stays a forbidden write;
  *  - after the practice, the real Anfragen list holds no practice id or name.
- * Flow F1 runs with the Team-Besprechung steps when the tenant has them
- * switched on, and without otherwise: the variant is reported as an annotation.
- * The Supervision topic tour (FE#2545) starts from its topic card in
- * Rundgänge, not a practice card; it is skipped, with a message, when the
- * tenant has no supervision. It books the appointment only where the
- * supervision chat allows a call (12 steps, else 11).
+ * There are no practice cards any more (FE#2545): every practice starts from
+ * its tour card in Rundgänge. The Einführung runs as practice (9 steps: the
+ * lists, the practice enquiry accepted and answered, "Meine Beratungen",
+ * "Archiv"); it absorbed the card "Übung: Anfrage annehmen". In a window
+ * below 900 px its watch-only rendering runs instead (no practice). The
+ * Supervision topic tour is skipped, with a message, when the tenant has no
+ * supervision. It books the appointment only where the supervision chat
+ * allows a call (12 steps, else 11).
  */
 const storageState = process.env.ORISO_TOUR_STORAGE_STATE;
 
-const [ACCEPT_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
-if (SUPERVISION_TOUR_ID !== 'consultant-practice-supervision') {
+const [INTRO_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
+if (
+	INTRO_TOUR_ID !== 'consultant-walkthrough' ||
+	SUPERVISION_TOUR_ID !== 'consultant-practice-supervision'
+) {
 	throw new Error('PRACTICE_TOUR_IDS changed order: fix the spec');
 }
+
+const INTRO_TITLE = 'walkthrough.introduction.title';
 
 const policyConfig = (tourId: string): RequestPolicyConfig => {
 	const base =
@@ -107,7 +112,7 @@ const forceSettings = (page: Page) =>
 		await route.fulfill({ response, json: body });
 	});
 
-/** Profile -> Help -> "Meine Rundgänge": the tour cards and the practice cards. */
+/** Profile -> Help -> "Meine Rundgänge": the tour cards (no practice cards since FE#2545). */
 const openMyTours = async (page: Page) => {
 	await page.goto('/profile/allgemeines', { waitUntil: 'domcontentloaded' });
 	await page
@@ -123,9 +128,14 @@ const openMyTours = async (page: Page) => {
 	await expect(
 		page.getByText(exactText('walkthrough.overview.title')).first()
 	).toBeVisible({ timeout: 30_000 });
+	// The Einführung card is always offered to a counsellor: once it shows,
+	// the cards have loaded.
+	await expect(topicTourCard(page, INTRO_TITLE)).toBeVisible({
+		timeout: 30_000
+	});
 	await expect(
-		page.getByRole('heading', { name: exactText('practice.cards.title') })
-	).toBeVisible({ timeout: 30_000 });
+		page.getByRole('heading', { name: /^(Übung|Practice): / })
+	).toHaveCount(0);
 };
 
 interface Flow {
@@ -135,15 +145,13 @@ interface Flow {
 	drive: (page: Page, run: string) => Promise<FlowRun>;
 	/** Offered only where the Träger switched the feature on. */
 	optional?: boolean;
-	/** A topic tour of Rundgänge with a practice rendering (no card). */
-	topic?: boolean;
 }
 
-const ACCEPT_FLOW: Flow = {
-	name: 'F1 accept an enquiry',
-	tourId: ACCEPT_TOUR_ID,
-	titleKey: 'tour.practiceAccept.title',
-	drive: driveAcceptFlow
+const INTRO_FLOW: Flow = {
+	name: 'Einführung with a practice enquiry',
+	tourId: INTRO_TOUR_ID,
+	titleKey: INTRO_TITLE,
+	drive: driveIntroFlow
 };
 
 const SUPERVISION_FLOW: Flow = {
@@ -151,15 +159,12 @@ const SUPERVISION_FLOW: Flow = {
 	tourId: SUPERVISION_TOUR_ID,
 	titleKey: 'tour.supervision.title',
 	drive: driveSupervisionFlow,
-	optional: true,
-	topic: true
+	optional: true
 };
 
-/** The page is where practice started: the Help page with its practice cards. */
+/** The page is where practice started: the Help page with its tour cards. */
 const expectBackOnHelp = (page: Page) =>
-	expect(
-		page.getByRole('heading', { name: exactText('practice.cards.title') })
-	).toBeVisible({ timeout: 30_000 });
+	expect(topicTourCard(page, INTRO_TITLE)).toBeVisible({ timeout: 30_000 });
 
 /** The guard comes off a moment after the banner goes; real traffic follows. */
 const settle = (page: Page) => page.waitForTimeout(2000);
@@ -170,7 +175,7 @@ interface Walked extends FlowRun {
 }
 
 /**
- * One practice run: start from the card, let `walk` act, then check the
+ * One practice run: start from the tour card, let `walk` act, then check the
  * traffic of the run, the storage and the real list.
  */
 const provePracticeRun = async (
@@ -183,13 +188,7 @@ const provePracticeRun = async (
 	await forceSettings(page);
 	await openMyTours(page);
 
-	// The accept card is always offered: once it shows, the cards have loaded.
-	await expect(practiceCard(page, ACCEPT_FLOW.titleKey)).toBeVisible({
-		timeout: 30_000
-	});
-	const card = flow.topic
-		? topicTourCard(page, flow.titleKey)
-		: practiceCard(page, flow.titleKey);
+	const card = topicTourCard(page, flow.titleKey);
 	if (flow.optional) {
 		test.skip(
 			(await card.count()) === 0,
@@ -203,21 +202,13 @@ const provePracticeRun = async (
 	// The run window starts at the click on the card: what the app sent before
 	// is ordinary real-mode traffic.
 	const from = traffic.mark();
-	await (flow.topic ? topicStartButton(card) : startButton(card)).click();
+	await topicStartButton(card).click();
 	await expect(banner(page)).toBeVisible({ timeout: 30_000 });
 	const walked = await walk(run);
 	// The banner goes when the practice starts to close, while the guard is
 	// still on: this is the last moment that belongs to the run.
 	await expect(banner(page)).toBeHidden({ timeout: 30_000 });
 	const to = traffic.mark();
-	if (walked.withTeam !== undefined) {
-		test.info().annotations.push({
-			type: 'variant',
-			description: walked.withTeam
-				? 'with the Team-Besprechung steps (8 steps)'
-				: 'without the Team-Besprechung steps (6 steps)'
-		});
-	}
 
 	const ran = traffic.between(from, to);
 	assertRunLeftNothing(ran, config, walked.typed);
@@ -252,7 +243,7 @@ test.describe('practice network guard (T2)', () => {
 	// One account, one practice at a time.
 	test.describe.configure({ mode: 'default' });
 
-	for (const flow of [ACCEPT_FLOW, SUPERVISION_FLOW]) {
+	for (const flow of [INTRO_FLOW, SUPERVISION_FLOW]) {
 		test(`${flow.name}: walked to the end, nothing leaves the page and nothing stays behind`, async ({
 			page
 		}) => {
@@ -267,16 +258,50 @@ test.describe('practice network guard (T2)', () => {
 		});
 	}
 
-	test(`${ACCEPT_FLOW.name}: ended from the banner half way, nothing leaves the page and nothing stays behind`, async ({
+	test(`${INTRO_FLOW.name}: ended from the banner half way, nothing leaves the page and nothing stays behind`, async ({
 		page
 	}) => {
 		test.setTimeout(300_000);
 
-		await provePracticeRun(page, ACCEPT_FLOW, async () => {
+		await provePracticeRun(page, INTRO_FLOW, async () => {
 			// Up to the open practice enquiry, then "End practice" in the banner.
 			await openThePracticeEnquiry(page);
 			await endFromBanner(page);
 			return { typed: [], finished: false };
 		});
+	});
+
+	test('Einführung in a window below 900 px: the watch-only Einführung runs, no practice mode', async ({
+		page
+	}) => {
+		test.setTimeout(120_000);
+		await page.setViewportSize({ width: 899, height: 900 });
+		const traffic = recordTraffic(page);
+		await forceSettings(page);
+		await openMyTours(page);
+
+		const from = traffic.mark();
+		const card = topicTourCard(page, INTRO_TITLE);
+		await expect(topicStartButton(card)).toBeEnabled();
+		await topicStartButton(card).click();
+		const tooltip = page.locator('.productTourTooltip');
+		await expect(tooltip.locator('.productTourTooltip__title')).toHaveText(
+			exactText('walkthrough.step.0.title'),
+			{ timeout: 30_000 }
+		);
+		await expect(
+			tooltip.locator('.productTourTooltip__progress')
+		).toHaveText(/^\D*1\D+5\s*$/);
+		await expect(banner(page)).toBeHidden();
+		// No practice ran: no write since the start except the tour's own
+		// progress (a restart of a completed Einführung re-opens it).
+		const ran = traffic.between(from, traffic.mark());
+		expect(
+			ran.requests.filter(
+				({ method, url }) =>
+					!['GET', 'HEAD', 'OPTIONS'].includes(method) &&
+					!url.includes('/tutorials/progress')
+			)
+		).toEqual([]);
 	});
 });
