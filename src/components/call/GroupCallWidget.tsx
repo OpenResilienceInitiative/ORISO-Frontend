@@ -35,6 +35,7 @@ import {
 } from '../../globalState/provider/NotificationsProvider';
 import {
 	CallRoomMembershipTimeoutError,
+	type ElementCallAppearance,
 	type OrisoWindowCommand,
 	useElementCallWidget
 } from './widget/useElementCallWidget';
@@ -77,6 +78,7 @@ import {
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DockedCall } from './states/DockedCall';
 import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
+import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -157,6 +159,8 @@ const conversationOf = (
 
 export const GroupCallWidget: React.FC = () => {
 	const { t, i18n } = useTranslation();
+	const { preferences: displayPreferences, scheme: displayScheme } =
+		usePersonalDisplay();
 	const { matrixClientService } = useMatrixClient();
 	// Outside the app's providers (Storybook) there is no topic catalogue.
 	const topics = useContext(TopicsContext)?.topics;
@@ -400,11 +404,21 @@ export const GroupCallWidget: React.FC = () => {
 	const hostContextPending =
 		!!conversationRoomId && conversationSettledFor !== conversationRoomId;
 
+	const appearance: ElementCallAppearance | undefined = displayScheme
+		? {
+				theme:
+					displayPreferences.contrast === 'standard'
+						? displayScheme
+						: `${displayScheme}-${displayPreferences.contrast}-contrast`,
+				fontScale: displayPreferences.textSize / 100
+			}
+		: undefined;
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
+			appearance,
 			// FE#2209: nobody meets Element Call's own lobby; a guest's device
 			// choice arrives as the call's start parameters (`callStart`).
 			skipLobby: conversationParams?.skipLobby ?? true,

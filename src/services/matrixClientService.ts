@@ -871,14 +871,22 @@ export class MatrixClientService {
 	}
 
 	// Redact an event (reactions un-react, and message delete #827)
-	public async redactEvent(roomId: string, eventId: string): Promise<any> {
+	public async redactEvent(
+		roomId: string,
+		eventId: string,
+		opts?: { reason?: string }
+	): Promise<any> {
 		await this.ensureFreshToken();
 
 		if (!this.client) {
 			throw new Error('Matrix client not initialized');
 		}
 
-		return this.client.redactEvent(roomId, eventId);
+		return opts?.reason
+			? this.client.redactEvent(roomId, eventId, undefined, {
+					reason: opts.reason
+				})
+			: this.client.redactEvent(roomId, eventId);
 	}
 
 	public async sendFileMessage(

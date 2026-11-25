@@ -201,6 +201,95 @@ describe('ManagePeopleDialog', () => {
 		expect(managed.addPerson).not.toHaveBeenCalled();
 	});
 
+	const startReplace = async (reason = 'Urlaub') => {
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.replace.labelFor:Selma Bouvier'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'managePeople.replace.pickLabelFor:Patty Bouvier'
+			})
+		);
+		fireEvent.change(await screen.findByRole('textbox'), {
+			target: { value: reason }
+		});
+	};
+	const confirmReplace = () =>
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'managePeople.replace.confirm:Patty Bouvier'
+			})
+		);
+
+	// FE#2494 *6: the counsellor decides per swap whether the advice seeker hears of it.
+	it('notifies the advice seeker by default when the source supports it', async () => {
+		const managed = source({
+			requiresReason: true,
+			replaceCanNotifyClient: true
+		});
+		show(managed);
+		await startReplace();
+		const notify = screen.getByRole('checkbox', {
+			name: 'managePeople.replace.notifyClient'
+		}) as HTMLInputElement;
+		expect(notify.checked).toBe(true);
+		confirmReplace();
+		await waitFor(() =>
+			expect(managed.replacePerson).toHaveBeenCalledWith(
+				standing,
+				{ id: 'patty', name: 'Patty Bouvier' },
+				{ reason: 'Urlaub', notifyClient: true }
+			)
+		);
+	});
+
+	it('passes the choice not to notify the advice seeker', async () => {
+		const managed = source({
+			requiresReason: true,
+			replaceCanNotifyClient: true
+		});
+		show(managed);
+		await startReplace();
+		fireEvent.click(
+			screen.getByRole('checkbox', {
+				name: 'managePeople.replace.notifyClient'
+			})
+		);
+		confirmReplace();
+		await waitFor(() =>
+			expect(managed.replacePerson).toHaveBeenCalledWith(
+				standing,
+				{ id: 'patty', name: 'Patty Bouvier' },
+				{ reason: 'Urlaub', notifyClient: false }
+			)
+		);
+	});
+
+	it('shows no notify choice when the source cannot notify', async () => {
+		show(source({ requiresReason: true }));
+		await startReplace();
+		expect(
+			screen.queryByRole('checkbox', {
+				name: 'managePeople.replace.notifyClient'
+			})
+		).toBeNull();
+	});
+
+	it('confirms the swap instead of hanging on the loading state', async () => {
+		const managed = source({
+			requiresReason: true,
+			replaceCanNotifyClient: true
+		});
+		show(managed);
+		await startReplace();
+		confirmReplace();
+		expect(
+			await screen.findByText('managePeople.replace.done')
+		).toBeTruthy();
+	});
+
 	it('retries a half-done replacement as an add, without a second removal', async () => {
 		const loadMembers = vi
 			.fn<() => Promise<ManagedPerson[]>>()

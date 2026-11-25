@@ -265,6 +265,64 @@ export const SprechzeitEinmaligPhone: StoryObj<typeof NewEntryDialog> = {
 	play: expectOnce
 };
 
+/** Dev test, 24 Nov 2026: a date typed into "Datum" counts at once. */
+export const SprechzeitEinmaligDatumTippen: StoryObj<typeof NewEntryDialog> = {
+	name: '*2b Sprechzeit einmalig — Datum tippen',
+	render: () => <NewEntryDialog {...onceArgs} entries={[]} />,
+	play: async () => {
+		const body = within(document.body);
+		const date = (await body.findByLabelText('Datum')) as HTMLInputElement;
+		fireEvent.change(date, { target: { value: '1.12.2026' } });
+		await expect(date.value).toBe('1.12.2026');
+		fireEvent.focusOut(date);
+		await waitFor(() => expect(date.value).toBe('01.12.2026'));
+		await expect(body.getByTestId('consultation-once-save')).toBeEnabled();
+	}
+};
+
+/** Dev test, 24 Nov 2026: over 12 hours is said under the times, in view. */
+export const SprechzeitEinmaligZuLang: StoryObj<typeof NewEntryDialog> = {
+	name: '*2b Sprechzeit einmalig — länger als 12 Stunden',
+	render: () => (
+		<NewEntryDialog
+			{...onceArgs}
+			entries={[]}
+			slot={{
+				start: new Date(2026, 10, 24, 6, 0),
+				end: new Date(2026, 10, 24, 19, 0)
+			}}
+		/>
+	),
+	play: async () => {
+		const body = within(document.body);
+		const error = await body.findByText(
+			'Eine einmalige Sprechzeit dauert höchstens 12 Stunden.'
+		);
+		await expect(body.getByTestId('consultation-once-save')).toBeDisabled();
+		await expect(
+			error.compareDocumentPosition(
+				body.getByRole('combobox', { name: 'Buchbar bis' })
+			) & Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		/* In the visible part of every scrolling box around it. */
+		await waitFor(() => {
+			const rect = error.getBoundingClientRect();
+			for (
+				let box = error.parentElement;
+				box && box !== document.body;
+				box = box.parentElement
+			) {
+				const { overflowY } = getComputedStyle(box);
+				if (overflowY !== 'auto' && overflowY !== 'scroll') continue;
+				const view = box.getBoundingClientRect();
+				expect(rect.top).toBeGreaterThanOrEqual(view.top - 1);
+				expect(rect.bottom).toBeLessThanOrEqual(view.bottom + 1);
+			}
+			expect(rect.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
+		});
+	}
+};
+
 /** Two released one-offs: listed under the form, each to withdraw. */
 const RELEASED: OneOffConsultation[] = [
 	{

@@ -136,7 +136,7 @@ export const KeyboardResize: Story = {
 
 /**
  * T50 (Frank, 06.09.): while a composer is focused ("selected") its field
- * wears the 2 px `primary-container` border (#597) — and the pill on its
+ * wears the 2 px `primary` border (#597, Frontend#1134) — and the pill on its
  * edge takes THAT colour instead of staying the pale `primary-fixed-dim`
  * on an active field.
  *
@@ -174,7 +174,7 @@ export const OnAFocusedComposer: Story = {
 			const n = Number.parseInt(hex.trim().replace('#', ''), 16);
 			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 		};
-		const active = toRgb(root.getPropertyValue('--m3-primary-container'));
+		const active = toRgb(root.getPropertyValue('--m3-primary'));
 		const pale = toRgb(root.getPropertyValue('--m3-primary-fixed-dim'));
 		await expect(active).not.toBe(pale);
 		// The field really is in its selected state (#597: 2 px border) …

@@ -50,6 +50,8 @@ import { shouldShowDeviceCheck } from '../call/prejoin/callPrejoin';
 import type { CallJoinHooks } from '../directLinkEntry/callMessageKnock';
 import { CallTimelineMessage } from './CallTimelineMessage';
 import { AppointmentNoticeCard } from './AppointmentNoticeMessage';
+import { ChatSystemMessageCard } from './ChatSystemMessageCard';
+import { BLUR_REMOVED_MESSAGE_TYPE } from '../../utils/matrixTimelineEventFormatter';
 import { recognizeLegacyAppointmentNotice } from './appointmentNotice';
 import { apiCallStateRead } from '../../api/apiCallState';
 import { callManager } from '../../services/CallManager';
@@ -90,6 +92,7 @@ import {
 	consultantRenamedNoticeText,
 	SYSTEM_NOTIFICATION_CONSULTANT_RENAMED
 } from './consultantRenamedNotice';
+import { supervisorReplacedNoticeText } from './supervisorReplacedNotice';
 import { directInvitationRenewedNoticeText } from './directInvitationRenewedNotice';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
@@ -282,7 +285,13 @@ export interface MessageItem {
 	};
 	attachments?: ChatAttachment[];
 	file?: ChatFile;
-	t: null | 'e2e' | 'rm' | 'room-removed-read-only' | 'room-set-read-only';
+	t:
+		| null
+		| 'e2e'
+		| 'rm'
+		| 'room-removed-read-only'
+		| 'room-set-read-only'
+		| 'blur-removed';
 	rid: string;
 	isVideoActive?: boolean;
 	callLifecycle?: CallLifecycleMessage;
@@ -299,6 +308,16 @@ export interface MessageItem {
 	 * each with its own comment (text or voice note).
 	 */
 	passageReplies?: PassageReply[] | null;
+	/**
+	 * #2494 *9: this row is the notice that a blur was lifted (`t` is
+	 * `blur-removed`); whose message is readable again.
+	 */
+	blurRemoved?: {
+		targetEventId?: string | null;
+		/** Matrix ID of that message's sender: the session alias applies. */
+		targetSenderId?: string | null;
+		targetSenderName?: string;
+	};
 	/**
 	 * Passages a moderator blurred: shown as blurred random characters for
 	 * everyone. Positions only, never the hidden text.
@@ -424,6 +443,7 @@ export const MessageItemComponent = ({
 	onJumpToReplyQuote,
 	onJumpToPassage,
 	passageReplies,
+	blurRemoved,
 	passageBlurs,
 	canRemovePassageBlur,
 	onReplyDirect,
@@ -1347,6 +1367,15 @@ export const MessageItemComponent = ({
 					translate
 				)
 			: null;
+	/* #2494 *6: the swap notice carries names and the reason only; it is
+	   worded here, in the reader's language, and drawn by the generic chrome. */
+	const supervisorReplacedText =
+		parsedMessage.systemNotificationSupervisorReplaced
+			? supervisorReplacedNoticeText(
+					parsedMessage.systemNotificationSupervisorReplaced,
+					translate
+				)
+			: null;
 	/* A rename event the parser rejected (blank or unchanged names) draws
 	   nothing — the generic chrome would otherwise show its raw JSON. */
 	const isRejectedConsultantRenamedEvent =
@@ -1395,11 +1424,13 @@ export const MessageItemComponent = ({
 	const systemNotificationTitle =
 		renewedText?.title ||
 		consultantRenamedText?.title ||
+		supervisorReplacedText?.title ||
 		parsedMessage.systemNotificationTitle ||
 		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
 		renewedText?.description ||
 		consultantRenamedText?.description ||
+		supervisorReplacedText?.description ||
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
 	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
@@ -1974,18 +2005,16 @@ export const MessageItemComponent = ({
 	 */
 	// Session aliases belong only to the exact asker of this session. The
 	// Matrix event can still contain the login or a previous session's name.
+	const isSessionAsker = (senderId?: string | null) =>
+		Boolean(activeSession?.item?.askerMatrixUserId) &&
+		senderId === activeSession?.item?.askerMatrixUserId;
+	const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
+	const sessionAskerDeleted =
+		activeSession?.user?.deleted === true ||
+		isDeletedGuest(activeSession?.user?.temporaryAccount);
 	const sessionAskerName = (() => {
-		if (
-			!activeSession?.item?.askerMatrixUserId ||
-			userId !== activeSession.item.askerMatrixUserId
-		)
-			return null;
-		const deletedGuestLabel = translate('temporaryAccount.deletedGuest');
-		if (
-			activeSession.user?.deleted === true ||
-			isDeletedGuest(activeSession.user?.temporaryAccount)
-		)
-			return deletedGuestLabel;
+		if (!isSessionAsker(userId)) return null;
+		if (sessionAskerDeleted) return deletedGuestLabel;
 		// Preserve an already anonymized legacy event; it is never identity proof.
 		// The stored session owner above is the only basis for applying this alias.
 		if (username === deletedGuestLabel && displayName === deletedGuestLabel)
@@ -2143,7 +2172,7 @@ export const MessageItemComponent = ({
 		</>
 	) : null;
 
-	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
+	// Reactions (Figma 336-12244 / 336-12225): chips inside the bubble,
 	// sharing one rail with the timestamp. Adding happens via the action menu.
 	const reactionChips =
 		reactions && reactions.length > 0 ? (
@@ -2189,6 +2218,7 @@ export const MessageItemComponent = ({
 									? onUnreact?.(reaction.ownEventId)
 									: onReact?.(reaction.key)
 							}
+							aria-pressed={Boolean(reaction.ownEventId)}
 							aria-label={pillLabel}
 						>
 							{pillContent}
@@ -2970,7 +3000,9 @@ export const MessageItemComponent = ({
 
 	if (
 		hideSystemMessages &&
-		(isSystemNotification || Boolean(alias?.messageType))
+		(isSystemNotification ||
+			Boolean(alias?.messageType) ||
+			t === BLUR_REMOVED_MESSAGE_TYPE)
 	) {
 		return null;
 	}
@@ -3042,6 +3074,49 @@ export const MessageItemComponent = ({
 									)
 					}
 				/>
+			</div>
+		);
+	}
+
+	/* #2494 *9: a lifted blur is a platform notice, the chat's info card —
+	   on my side when I lifted it, else on the left. */
+	if (t === BLUR_REMOVED_MESSAGE_TYPE) {
+		/* The same alias rules as a bubble (#1486): the session's asker shows
+		   under the session alias or as deleted guest, never the Matrix
+		   login or a previous session's name. */
+		const targetName = isSessionAsker(blurRemoved?.targetSenderId)
+			? sessionAskerDeleted
+				? deletedGuestLabel
+				: (resolveAssignedAskerDisplayName(activeSession?.user) ??
+					undefined)
+			: blurRemoved?.targetSenderName;
+		return (
+			<div className="messageItem" data-message-id={_id}>
+				{getMessageDate()}
+				<ChatSystemMessageCard
+					isMyMessage={isOwnEvent}
+					title={translate('message.blurRemoved.title')}
+					subtitle={
+						isOwnEvent
+							? translate('message.blurRemoved.byMe')
+							: translate('message.blurRemoved.by', {
+									name:
+										formattedName || displayName || username
+								})
+					}
+					timestamp={
+						messageTime ? formatToHHMM(messageTime) : undefined
+					}
+					dataCy="blur-removed-notice"
+				>
+					<p>
+						{targetName
+							? translate('message.blurRemoved.text', {
+									name: targetName
+								})
+							: translate('message.blurRemoved.textAnonymous')}
+					</p>
+				</ChatSystemMessageCard>
 			</div>
 		);
 	}
@@ -3641,6 +3716,9 @@ export const MessageItemComponent = ({
 											// the picker never covers "Reply
 											// directly" & co.
 											anchorEl={actionMenuRef.current}
+											returnFocusEl={
+												quickEmojiMoreRef.current
+											}
 											placement="right-start"
 											onPick={applyQuickReaction}
 											onClose={() =>

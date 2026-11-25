@@ -360,6 +360,15 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'supervisorAssigned',
 		resolveActionTarget: conversationTarget
 	}),
+	// FE#2494 *6: the counsellor swapped the supervisor; sent to the advice
+	// seeker only when the counsellor left "notify" ticked in the swap dialog.
+	descriptor('supervisor.replaced', {
+		family: 'system',
+		category: 'system',
+		icon: 'supervisor',
+		i18nKey: 'supervisorReplaced',
+		resolveActionTarget: conversationTarget
+	}),
 	descriptor('counselor.renamed', {
 		family: 'system',
 		category: 'system',

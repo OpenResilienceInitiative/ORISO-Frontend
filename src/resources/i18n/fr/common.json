@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Affichage",
+		"accessibility": "Accessibilité",
+		"textSize": "Taille du texte",
+		"currentSize": "Taille du texte sélectionnée",
+		"smaller": "Réduire",
+		"larger": "Agrandir",
+		"contrastLabel": "Contraste",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Moyen",
+			"high": "Élevé"
+		},
+		"schemeLabel": "Thème de couleurs",
+		"scheme": {
+			"system": "Système",
+			"light": "Clair",
+			"dark": "Sombre"
+		}
+	},
 	"addons": {
 		"loadError": "Ce module complémentaire n'a pas pu être chargé.",
 		"notAvailable": "Ce module complémentaire n'est pas disponible.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-			"mobileHeadline": "Il y a de la place ici pour vos demandes.",
+
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
 		"stop": "Arrêter",
@@ -707,6 +727,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Chiffrement de bout en bout",
 		"attachment": {
 			"decryption_error": "Erreur lors du décryptage",
 			"encrypted": "Décrypter le fichier pour le télécharger",
@@ -2253,6 +2274,13 @@
 			"quoteUnknown": "Message précédent",
 			"jumpToQuote": "Aller au passage cité de {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Masquage levé",
+			"by": "par {{name}}",
+			"byMe": "par vous",
+			"text": "Le message de {{name}} est de nouveau lisible.",
+			"textAnonymous": "Le message est de nouveau lisible."
+		},
 		"selectionReply": {
 			"blur": "Flouter",
 			"blurredLabel": "Passage flouté",
@@ -2261,8 +2289,10 @@
 			"removeBlurLabel": "Passage flouté – retirer le flou",
 			"blurBar": "Actions pour le passage flouté",
 			"toolbar": "Actions pour le passage marqué",
-			"reply": "Répondre",
+			"reply": "Répondre ici",
 			"replyVoice": "Répondre par message vocal",
+			"replyInSupervision": "Répondre en supervision",
+			"replyInTeam": "Répondre dans le chat d’équipe",
 			"startThread": "Démarrer un fil",
 			"dialog": "Répondre au passage marqué de {{author}}",
 			"cancel": "Annuler",
@@ -2314,9 +2344,12 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision modifiée",
-		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}."
+		"supervisionChangedDescription": "{{name}} supervise désormais ce chat à la place de {{from}}.",
+		"supervisionChangedReason": "Motif : {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "Plus",
 		"appointments": "Vidéo - Dates",
 		"asker": {
 			"sessions": {
@@ -2530,6 +2563,10 @@
 			"supervisorAssigned": {
 				"title": "Superviseur·e attribué·e",
 				"text": "Un·e superviseur·e a été attribué·e à ce dossier."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision modifiée",
+				"text": "Une autre personne supervise désormais le conseil dans ce chat."
 			},
 			"topicDuplicateStarted": {
 				"title": "Un autre accompagnement sur le même thème",
@@ -4313,7 +4350,8 @@
 		"readOnly": {
 			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
 			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
-			"extend": "Prolonger l'accès"
+			"extend": "Prolonger l'accès",
+			"teamNotice": "Consultation en équipe : vous suivez ce dossier en lecture. Seul·e {{name}} y écrit des messages."
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
@@ -4770,7 +4808,8 @@
 				"agencyFallback": "Service de consultation {{id}}",
 				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
 				"removeFilters": "Supprimer les filtres",
-				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche"
+				"removeFiltersKeepSearch": "Supprimer les filtres, garder la recherche",
+				"teamPeopleHint": "Consultation en équipe : choisissez un·e collègue de votre centre de conseil et appuyez sur Entrée pour voir ses dossiers et les suivre."
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"
@@ -4883,7 +4922,8 @@
 					"failedTitle": "Demande sans réponse",
 					"taken": "Ce créneau n’est plus libre. Refusez la demande ou proposez un autre horaire dans le chat.",
 					"failed": "Cela n’a pas fonctionné. Veuillez réessayer."
-				}
+				},
+				"menu": "Menu du rendez-vous"
 			}
 		},
 		"deletedAsker": {
@@ -5509,10 +5549,13 @@
 	"voice": {
 		"recording": {
 			"active": "Enregistrement en cours…",
+			"paused": "Enregistrement en pause",
 			"error": {
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"pause": "Mettre l’enregistrement en pause",
+			"resume": "Reprendre l’enregistrement",
 			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
@@ -5722,7 +5765,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Demander conseil"
+		"requestAdvice": "Demander conseil",
+		"group": {
+			"handover": "Transmettre le conseil",
+			"supervision": "Gérer la supervision",
+			"askerAccount": "Personne conseillée & compte",
+			"settingsLegal": "Paramètres & mentions légales"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
@@ -5964,6 +6013,8 @@
 			},
 			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
 			"close": "Fermer la supervision",
+			"changeSupervisor": "Changer de superviseur·e",
+			"bookAppointment": "Prendre rendez-vous avec le ou la superviseur·e",
 			"collapse": "Réduire la supervision",
 			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
 			"unread": "{{count}} messages non lus",
@@ -5990,6 +6041,33 @@
 				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
 				"mainPane": "Chat de conseil",
 				"secondaryPane": "Salle annexe"
+			}
+		},
+		"appointment": {
+			"title": "Prendre rendez-vous avec la supervision",
+			"with": "Avec",
+			"description": "Choisissez le jour, l'heure et le type. Le rendez-vous apparaît ensuite dans les deux agendas.",
+			"unreachable": "{{name}} n'est pas accessible depuis votre agenda. Un rendez-vous n'est pas possible ici ; écrivez à {{name}} dans le chat de supervision.",
+			"failed": "Le rendez-vous n'a pas pu être enregistré. Veuillez réessayer.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Le rendez-vous n'a pas pu être modifié. Veuillez réessayer.",
+			"menu": {
+				"accept": {
+					"title": "Accepter le rendez-vous",
+					"description": "Le rendez-vous est alors confirmé."
+				},
+				"decline": {
+					"title": "Refuser le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"cancel": {
+					"title": "Annuler le rendez-vous",
+					"description": "Il disparaît des deux agendas."
+				},
+				"calendar": {
+					"title": "Ouvrir dans l'agenda",
+					"description": "Vous pouvez aussi y déplacer le rendez-vous."
+				}
 			}
 		}
 	},
@@ -7545,7 +7623,8 @@
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
 		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
-		"fromCalendarOpenLink": "Depuis le calendrier : lien d'invitation ouvert sans date."
+		"fromCalendarOpenLink": "Depuis le calendrier : lien d'invitation ouvert sans date.",
+		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Chargement : {{names}}",
@@ -8289,6 +8368,8 @@
 			"confirm": "Vraiment retirer ?"
 		},
 		"replace": {
+			"notifyClient": "Informer la personne conseillée du changement",
+			"done": "Changé : {{from}} → {{to}}. Une note figure dans le chat de supervision.",
 			"action": "Remplacer",
 			"labelFor": "Remplacer {{name}}",
 			"title": "Qui doit prendre la relève de {{name}} ?",

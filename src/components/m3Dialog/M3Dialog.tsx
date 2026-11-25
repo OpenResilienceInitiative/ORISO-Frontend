@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ReactNode, useEffect, useId, useState } from 'react';
 import clsx from 'clsx';
-import { CircularProgress, Dialog } from '@mui/material';
+import { CircularProgress, Dialog, useMediaQuery } from '@mui/material';
 import FocusTrap from 'focus-trap-react';
 import { CrossMarkIcon } from '../../resources/img/icons';
 import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
@@ -79,6 +79,7 @@ export interface M3DialogProps {
 	/** Keep the content mounted while closed, e.g. to keep its scroll and state. */
 	'keepMounted'?: boolean;
 	'className'?: string;
+	'motion'?: 'bottom-sheet';
 	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
 	'id'?: string;
 	'data-testid'?: string;
@@ -123,9 +124,12 @@ export const M3Dialog = ({
 	fullScreen = false,
 	keepMounted = false,
 	className,
+	motion,
 	id,
 	'data-testid': testId
 }: M3DialogProps) => {
+	const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+	const bottomSheet = motion === 'bottom-sheet';
 	const titleId = useId();
 	const descriptionId = useId();
 	// A standing notice would sit above the dialog and swallow clicks on its buttons.
@@ -166,6 +170,13 @@ export const M3Dialog = ({
 			maxWidth={false}
 			fullScreen={fullScreen}
 			keepMounted={keepMounted}
+			transitionDuration={
+				bottomSheet
+					? reducedMotion
+						? 0
+						: { enter: 220, exit: 160 }
+					: undefined
+			}
 			className={clsx(
 				'm3Dialog',
 				severity === 'error' && 'm3Dialog--error',
@@ -179,7 +190,11 @@ export const M3Dialog = ({
 				'ref': setPaper,
 				'tabIndex': reachableOutside ? -1 : undefined,
 				'id': id,
-				'className': 'm3Dialog__surface',
+				'className': clsx(
+					'm3Dialog__surface',
+					bottomSheet && 'm3Dialog__surface--bottom-sheet',
+					bottomSheet && open && 'm3Dialog__surface--open'
+				),
 				'style': fullScreen ? undefined : { maxWidth: `${width}px` },
 				'data-testid': testId
 			}}

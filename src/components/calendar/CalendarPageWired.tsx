@@ -90,16 +90,18 @@ import {
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
 import { useTranslation } from 'react-i18next';
 import { notifyDirectLinksChanged } from '../../api/apiDirectLinks';
-import { CREATE_CHAT_PATH } from '../app/routePaths';
 import type { DirectLink } from '../conversationCreate/directLink/directLink';
 import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLinkShareDialog';
 import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
 import {
-	toInvitationPresetState,
+	MEDIUM_FOR_KIND,
 	toOpenLinkPresetState,
 	type InvitationPreset,
 	type OpenLinkPreset
 } from '../directInvitation/invitationModel';
+import { useDirectInvitationSetup } from '../conversationCreate/directLink/DirectLinkCreateCard';
+import { CREATE_CHAT_PATH } from '../app/routePaths';
+import { useDirectLinkTopics } from '../conversationCreate/directLink/useDirectLinkTopics';
 import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
 import {
 	InvitationAfterAppointmentError,
@@ -272,6 +274,26 @@ export const CalendarPageWired = () => {
 	const inviteMedia = useDirectLinkMedia(consultant);
 	const allowGuestInvite = inviteMedia.length > 0;
 	const [sharedInvitation, setSharedInvitation] = useState<DirectLink>();
+	/* #2494 *1: "Neue Person per Direkteinladung …" opens the Direkteinladung
+	   popup here; the counsellor stays in the calendar. The full page stays
+	   for "Chat erstellen" in Gespräche only. */
+	const [invitePreset, setInvitePreset] = useState<InvitationPreset>();
+	// #2523: advice seekers use this page too; only counsellors invite.
+	const directLinkTopics = useDirectLinkTopics(consultant);
+	const calendarInvitation = useDirectInvitationSetup({
+		topics: directLinkTopics.topics,
+		agencies: directLinkTopics.agencies,
+		compact,
+		preset: invitePreset,
+		topicsLoadFailed: directLinkTopics.failed,
+		onRetryTopics: () => void directLinkTopics.load(),
+		onCreated: (link) => {
+			// The link carries the slot: the calendar shows it as an entry.
+			notifyAppointmentsChanged();
+			notifyDirectLinksChanged();
+			setSharedInvitation(link);
+		}
+	});
 	/* "Im Kalender öffnen" on an appointment's card in the chat: the page
 	   mounts fresh from that link, so the first address is the one meant. */
 	const [openOnDay] = useState(() =>
@@ -776,8 +798,19 @@ export const CalendarPageWired = () => {
 	};
 
 	/* "Neue Person per Direkteinladung …": door A with the calendar's slot. */
-	const inviteNewPerson = (preset: InvitationPreset) =>
-		navigate(CREATE_CHAT_PATH, { state: toInvitationPresetState(preset) });
+	const inviteNewPerson = (preset: InvitationPreset) => {
+		const fromKind = preset.kind ? MEDIUM_FOR_KIND[preset.kind] : undefined;
+		/* An Art with a medium that is not allowed gets no link at all (the
+		   form refuses it); only an Art-less slot takes the first allowed
+		   medium. Never swap the medium silently. */
+		if (fromKind && !inviteMedia.includes(fromKind)) return;
+		const medium = fromKind ?? inviteMedia[0];
+		if (!medium) return;
+		if (!directLinkTopics.loaded || directLinkTopics.failed)
+			void directLinkTopics.load();
+		setInvitePreset(preset);
+		calendarInvitation.startWithDetails(medium);
+	};
 	/* FE#2510 *2: "Neuer Eintrag" without a date — door A's open link. */
 	const createOpenLink = (preset: OpenLinkPreset) =>
 		navigate(CREATE_CHAT_PATH, { state: toOpenLinkPresetState(preset) });
@@ -1490,6 +1523,7 @@ export const CalendarPageWired = () => {
 					})
 				}
 			/>
+			{calendarInvitation.dialog}
 			{sharedInvitation && (
 				<DirectLinkShareDialog
 					open

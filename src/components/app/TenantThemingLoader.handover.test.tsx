@@ -1,5 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { act, cleanup, render } from '@testing-library/react';
 import {
 	afterEach,
@@ -54,7 +55,7 @@ describe('TenantThemingLoader during a login handover', () => {
 
 	it('keeps the handover until the theme is loaded after the app is ready', async () => {
 		beginLoginHandover();
-		const view = render(<TenantThemingLoader />);
+		const view = render(<TenantThemingLoader />, { wrapper: MemoryRouter });
 
 		act(() => finishLoginHandover());
 		await frames();
@@ -64,9 +65,22 @@ describe('TenantThemingLoader during a login handover', () => {
 		).toBeNull();
 
 		isLoadingTheme = false;
-		view.rerender(<TenantThemingLoader />);
+		view.rerender(<TenantThemingLoader />, { wrapper: MemoryRouter });
 		await frames();
 		expect(isLoginHandoverActive()).toBe(false);
+		expect(
+			view.container.querySelector('[data-cy="theme-modal"]')
+		).toBeNull();
+	});
+
+	it('shows the theme loader outside the handover until the tenant is resolved', () => {
+		const view = render(<TenantThemingLoader />, { wrapper: MemoryRouter });
+		expect(
+			view.container.querySelector('[data-cy="theme-modal"]')
+		).not.toBeNull();
+
+		isLoadingTheme = false;
+		view.rerender(<TenantThemingLoader />);
 		expect(
 			view.container.querySelector('[data-cy="theme-modal"]')
 		).toBeNull();
@@ -75,7 +89,7 @@ describe('TenantThemingLoader during a login handover', () => {
 	it('ends at once when the theme is already there', async () => {
 		isLoadingTheme = false;
 		beginLoginHandover();
-		render(<TenantThemingLoader />);
+		render(<TenantThemingLoader />, { wrapper: MemoryRouter });
 		act(() => finishLoginHandover());
 		await frames();
 		expect(isLoginHandoverActive()).toBe(false);
@@ -83,7 +97,7 @@ describe('TenantThemingLoader during a login handover', () => {
 
 	it('failure exits still end at once while the theme loads', () => {
 		beginLoginHandover();
-		render(<TenantThemingLoader />);
+		render(<TenantThemingLoader />, { wrapper: MemoryRouter });
 		act(() => endLoginHandover());
 		expect(isLoginHandoverActive()).toBe(false);
 	});

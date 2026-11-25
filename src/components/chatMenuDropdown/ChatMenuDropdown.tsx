@@ -1,6 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import './chatMenuDropdown.styles';
+import { ReactComponent as ChevronIcon } from '../../resources/img/icons/keyboard_arrow_down.svg';
 
 export const ChatMenuDropdown = React.forwardRef<
 	HTMLDivElement,
@@ -306,3 +307,70 @@ export const ChatMenuDropdownItemContent = ({
 		</span>
 	</>
 );
+
+/**
+ * A group of menu rows behind a heading the reader can fold open and shut
+ * ("ein- oder ausklappbar"). Disclosure pattern: the heading is a button with
+ * `aria-expanded`/`aria-controls`; the rows are hidden (not only invisible)
+ * while closed, so keyboard and screen readers skip them.
+ *
+ * Use it for rarely used rows in a long menu; keep daily rows outside.
+ * Only inside a `role="dialog"` card (the default) — a `role="menu"` may own
+ * menu items only.
+ */
+export const ChatMenuDropdownCollapsibleGroup = ({
+	label,
+	children,
+	defaultOpen = false,
+	'open': controlledOpen,
+	onOpenChange,
+	'data-cy': dataCy
+}: {
+	'label': React.ReactNode;
+	'children': React.ReactNode;
+	'defaultOpen'?: boolean;
+	'open'?: boolean;
+	'onOpenChange'?: (open: boolean) => void;
+	'data-cy'?: string;
+}) => {
+	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
+	const open = controlledOpen ?? uncontrolledOpen;
+	const panelId = React.useId();
+	const toggle = () => {
+		const next = !open;
+		if (controlledOpen === undefined) setUncontrolledOpen(next);
+		onOpenChange?.(next);
+	};
+	return (
+		<div
+			className={clsx(
+				'chatMenuDropdown__collapsible',
+				open && 'chatMenuDropdown__collapsible--open'
+			)}
+			data-cy={dataCy}
+		>
+			<button
+				type="button"
+				className="chatMenuDropdown__groupToggle"
+				aria-expanded={open}
+				aria-controls={panelId}
+				onClick={toggle}
+			>
+				<span className="chatMenuDropdown__groupToggleLabel">
+					{label}
+				</span>
+				<ChevronIcon
+					className="chatMenuDropdown__groupToggleChevron"
+					aria-hidden="true"
+				/>
+			</button>
+			<div
+				id={panelId}
+				className="chatMenuDropdown__section"
+				hidden={!open}
+			>
+				{children}
+			</div>
+		</div>
+	);
+};

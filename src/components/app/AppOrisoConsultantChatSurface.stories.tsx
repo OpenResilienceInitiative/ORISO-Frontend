@@ -1317,7 +1317,7 @@ function ChatPanel() {
 						placeholder={
 							surfaceRole === 'asker'
 								? 'Nachricht schreiben'
-								: 'Nachricht an Klient:in schreiben'
+								: 'Nachricht an ratsuchende Person'
 						}
 						onSendButton={noop}
 						isTyping={noop}
@@ -1452,7 +1452,8 @@ const surfaceStory = (
 });
 
 /** The split button below the header, once the appointments are read. */
-const SPLIT_BUTTON = '[data-cy="room-next-appointment"] .splitButton__main';
+const SPLIT_BUTTON =
+	'[data-cy="room-next-appointment"] [data-cy="room-appointment-pennant"]';
 const splitButtonShown = (canvasElement: HTMLElement) => () => {
 	const found = canvasElement.querySelector<HTMLElement>(SPLIT_BUTTON);
 	if (!found) throw new Error('appointment not shown yet');
@@ -1565,7 +1566,10 @@ export const ConsultantChat: Story = {
 			'.sessionInfo__metaInfo__content'
 		);
 		await expect(topicTags).toHaveLength(1);
-		await expect(topicTags[0]).toHaveTextContent(/^Suchtprobleme$/);
+		await expect(topicTags[0]).toHaveAttribute('title', 'Suchtprobleme');
+		await expect(
+			topicTags[0].querySelector('[aria-hidden]')
+		).toHaveTextContent(/^Sucht$/);
 		const topicBounds = topicTags[0].getBoundingClientRect();
 		const headerBounds = header.getBoundingClientRect();
 		await expect(topicBounds.left).toBeGreaterThanOrEqual(
@@ -1595,6 +1599,10 @@ export const ConsultantChat: Story = {
 		const titleStyle = getComputedStyle(headerTitle!);
 		await expect(titleStyle.whiteSpace).toBe('nowrap');
 		await expect(titleStyle.textOverflow).toBe('ellipsis');
+		await expect(headerTitle!).toHaveAttribute(
+			'title',
+			'Sanftes Alpaka Kala'
+		);
 		await expect(
 			headerTitle!.getBoundingClientRect().height
 		).toBeLessThanOrEqual(Number.parseFloat(titleStyle.lineHeight) + 1);

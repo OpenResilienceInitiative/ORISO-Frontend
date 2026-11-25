@@ -44,6 +44,8 @@ export interface InvitationDialogValue {
 	kind?: AppointmentKind;
 	/** The conversation, when the door asks it (the calendar). */
 	sessionId?: number;
+	/** #2494 *1: topic id and optional name, when the door asks them (`linkDetails`). */
+	linkDetails?: { topic: string; name?: string };
 	/** Fields actually changed by an edit; omitted when creating. */
 	changed?: {
 		appointment: boolean;

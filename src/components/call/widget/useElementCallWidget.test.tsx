@@ -18,7 +18,10 @@ import {
 	vi
 } from 'vite-plus/test';
 
-import { useElementCallWidget } from './useElementCallWidget';
+import {
+	type ElementCallAppearance,
+	useElementCallWidget
+} from './useElementCallWidget';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { setAppConfig } from '../../../utils/appConfig';
 
@@ -885,6 +888,130 @@ describe('useElementCallWidget', () => {
 		window.dispatchEvent(spoofedMessage);
 
 		expect(stopImmediatePropagation).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['single', true, 'light'],
+		['single', false, 'dark'],
+		['group', true, 'dark'],
+		['circle', true, 'dark']
+	] as const)(
+		'opens the %s call (video %s) with %s',
+		async (callType, isVideo, expected) => {
+			const client = createClient();
+			const { result } = renderHook(() =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo,
+					callType
+				})
+			);
+			await waitFor(() => expect(result.current.url).not.toBeNull());
+			const params = new URLSearchParams(
+				new URL(result.current.url!).hash.slice(2)
+			);
+			expect(params.get('theme')).toBe(expected);
+			expect(params.get('fontScale')).toBeNull();
+			expect(params.get('callIntent')).toBe(isVideo ? 'video' : 'audio');
+		}
+	);
+
+	it('updates appearance after ready without moving the iframe or changing start media', async () => {
+		const client = createClient();
+		type Input = {
+			client: typeof client;
+			theme: ElementCallAppearance['theme'];
+			fontScale: number;
+		};
+		const initial: Input = {
+			client,
+			theme: 'light-medium-contrast',
+			fontScale: 1.25
+		};
+		const start = { audioEnabled: false, videoEnabled: true } as const;
+		const { result, rerender } = renderHook(
+			({ client, theme, fontScale }: Input) =>
+				useElementCallWidget(client, {
+					roomId: CALL_ROOM,
+					isVideo: true,
+					callType: 'single',
+					callStart: start,
+					appearance: { theme, fontScale }
+				}),
+			{ initialProps: initial }
+		);
+		await waitFor(() => expect(result.current.url).not.toBeNull());
+		const src = result.current.url!;
+		const params = new URLSearchParams(new URL(src).hash.slice(2));
+		expect(params.get('fontScale')).toBe('1.25');
+		expect(params.get('theme')).toBe('light-medium-contrast');
+		expect(params.get('roomId')).toBe(CALL_ROOM);
+		expect(params.get('audioEnabled')).toBe('false');
+		expect(params.get('videoEnabled')).toBe('true');
+		const iframe = document.createElement('iframe');
+		iframe.src = src;
+		act(() => result.current.attachIframe(iframe));
+		const api = widgetApiMocks.apiInstances[0];
+		const attach = result.current.attachIframe;
+
+		rerender({ ...initial, theme: 'dark-medium-contrast', fontScale: 1.5 });
+		expect(api.updateTheme).not.toHaveBeenCalled();
+		act(() => api.emit('ready', new CustomEvent('ready')));
+		expect(api.updateTheme).toHaveBeenLastCalledWith({
+			name: 'dark-medium-contrast',
+			fontScale: 1.5
+		});
+
+		const activeDevices = { audio_enabled: false, video_enabled: true };
+		const mediaEvent = 'io.element.device_mute';
+		act(() =>
+			api.emit(
+				`action:${mediaEvent}`,
+				new CustomEvent(mediaEvent, {
+					cancelable: true,
+					detail: {
+						action: mediaEvent,
+						requestId: 'appearance-devices',
+						widgetId: 'widget',
+						data: activeDevices
+					}
+				})
+			)
+		);
+		expect(result.current.devices).toEqual(activeDevices);
+
+		const next: Input = {
+			...initial,
+			theme: 'dark-high-contrast',
+			fontScale: 2
+		};
+		rerender(next);
+		expect(api.updateTheme).toHaveBeenLastCalledWith({
+			name: 'dark-high-contrast',
+			fontScale: 2
+		});
+		rerender({ ...next, theme: 'dark', fontScale: 1 });
+		expect(api.updateTheme).toHaveBeenLastCalledWith({
+			name: 'dark',
+			fontScale: 1
+		});
+		expect(api.updateTheme).toHaveBeenCalledTimes(3);
+		expect(result.current.devices).toEqual(activeDevices);
+		expect(result.current.url).toBe(src);
+		expect(result.current.attachIframe).toBe(attach);
+		expect(iframe.src).toBe(src);
+		expect(api.stop).not.toHaveBeenCalled();
+		expect(widgetApiMocks.apiInstances).toEqual([api]);
+
+		// Refresh the Matrix client at the same identity and retain the exact address.
+		rerender({
+			...next,
+			client: createClient(),
+			theme: 'dark',
+			fontScale: 1
+		});
+		await waitFor(() => expect(result.current.url).toBe(src));
+		expect(iframe.src).toBe(src);
 	});
 
 	it('uses the ContentLoaded lifecycle and handles the first-party widget actions', async () => {

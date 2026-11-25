@@ -6,7 +6,8 @@
 	right: 0;
 	top: 0;
 	bottom: 0;
-	background-color: $white;
+	background-color: var(--m3-surface, $white);
+	color: var(--m3-on-surface, #1a1c1e);
 
 	display: flex;
 	justify-content: center;

@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Display",
+		"accessibility": "Accessibility",
+		"textSize": "Text size",
+		"currentSize": "Selected text size",
+		"smaller": "Smaller",
+		"larger": "Larger",
+		"contrastLabel": "Contrast",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Medium",
+			"high": "High"
+		},
+		"schemeLabel": "Colour scheme",
+		"scheme": {
+			"system": "System",
+			"light": "Light",
+			"dark": "Dark"
+		}
+	},
 	"addons": {
 		"loadError": "This add-on could not be loaded.",
 		"notAvailable": "This add-on is not available.",
@@ -150,7 +170,7 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-			"mobileHeadline": "There is room here for what is on your mind.",
+
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"stop": "Stop",
@@ -690,6 +710,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "End-to-end encrypted",
 		"attachment": {
 			"decryption_error": "Error while decrypting",
 			"encrypted": "Decrypt file for download",
@@ -2252,6 +2273,13 @@
 			"quoteUnknown": "Earlier message",
 			"jumpToQuote": "Jump to the quoted passage from {{author}}"
 		},
+		"blurRemoved": {
+			"title": "Redaction removed",
+			"by": "by {{name}}",
+			"byMe": "by you",
+			"text": "The message from {{name}} is readable again.",
+			"textAnonymous": "The message is readable again."
+		},
 		"selectionReply": {
 			"blur": "Blur",
 			"blurredLabel": "Blurred passage",
@@ -2260,8 +2288,10 @@
 			"removeBlurLabel": "Blurred passage – remove blur",
 			"blurBar": "Actions for the blurred passage",
 			"toolbar": "Actions for the marked passage",
-			"reply": "Reply",
+			"reply": "Reply here",
 			"replyVoice": "Reply with a voice message",
+			"replyInSupervision": "Reply in supervision",
+			"replyInTeam": "Reply in team chat",
 			"startThread": "Thread",
 			"dialog": "Reply to the passage marked from {{author}}",
 			"cancel": "Cancel",
@@ -2313,9 +2343,12 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision changed",
-		"supervisionChangedDescription": "{{name}} now supervises this chat in place of {{from}}."
+		"supervisionChangedDescription": "{{name}} now supervises this chat in place of {{from}}.",
+		"supervisionChangedReason": "Reason: {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "More",
 		"appointments": "Video dates",
 		"asker": {
 			"sessions": {
@@ -2527,6 +2560,10 @@
 			"supervisorAssigned": {
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision changed",
+				"text": "A different person now supervises the counselling in this chat."
 			},
 			"topicDuplicateStarted": {
 				"title": "Another counselling session on the same topic",
@@ -4279,7 +4316,8 @@
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
 			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
-			"extend": "Extend access"
+			"extend": "Extend access",
+			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",
@@ -4753,7 +4791,8 @@
 				"agencyFallback": "Counseling center {{id}}",
 				"filteredOutAll": "Your search and filters hide every consultation.",
 				"removeFilters": "Remove filters",
-				"removeFiltersKeepSearch": "Remove filters, keep search"
+				"removeFiltersKeepSearch": "Remove filters, keep search",
+				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
 			},
 			"menu": {
 				"ariaLabel": "List options"
@@ -4849,7 +4888,8 @@
 					"failedTitle": "Request not answered",
 					"taken": "This time is no longer free. Decline the request or suggest another time in the chat.",
 					"failed": "That did not work. Please try again."
-				}
+				},
+				"menu": "Appointment menu"
 			}
 		},
 		"deletedAsker": {
@@ -5474,10 +5514,13 @@
 	"voice": {
 		"recording": {
 			"active": "Recording…",
+			"paused": "Recording paused",
 			"error": {
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"pause": "Pause recording",
+			"resume": "Resume recording",
 			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
@@ -5669,7 +5712,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Ask for advice"
+		"requestAdvice": "Ask for advice",
+		"group": {
+			"handover": "Pass on counselling",
+			"supervision": "Manage supervision",
+			"askerAccount": "Advice seeker & account",
+			"settingsLegal": "Settings & legal"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "We are looking for a counsellor for you.",
@@ -5911,6 +5960,8 @@
 			},
 			"privacyHint": "This channel is never visible to the person seeking advice.",
 			"close": "Close supervision",
+			"changeSupervisor": "Change supervisor",
+			"bookAppointment": "Book an appointment with the supervisor",
 			"collapse": "Minimise supervision",
 			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
 			"unread": "{{count}} unread messages",
@@ -5937,6 +5988,33 @@
 				"divider": "Divider – arrow keys change the supervision width, Home and End set minimum and maximum",
 				"mainPane": "Counselling chat",
 				"secondaryPane": "Side room"
+			}
+		},
+		"appointment": {
+			"title": "Book an appointment with the supervisor",
+			"with": "With",
+			"description": "Choose the day, time and kind. The appointment then shows in both calendars.",
+			"unreachable": "{{name}} cannot be reached from your calendar. An appointment is not possible here; write to {{name}} in the supervision chat.",
+			"failed": "The appointment could not be saved. Please try again.",
+			"withSupervision": "Supervision",
+			"changeFailed": "The appointment could not be changed. Please try again.",
+			"menu": {
+				"accept": {
+					"title": "Accept appointment",
+					"description": "The appointment is then fixed."
+				},
+				"decline": {
+					"title": "Decline appointment",
+					"description": "It leaves both calendars."
+				},
+				"cancel": {
+					"title": "Cancel appointment",
+					"description": "It leaves both calendars."
+				},
+				"calendar": {
+					"title": "Open in calendar",
+					"description": "You can also move the appointment there."
+				}
 			}
 		}
 	},
@@ -7460,7 +7538,8 @@
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
 		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
-		"fromCalendarOpenLink": "From the calendar: open invitation link without a date."
+		"fromCalendarOpenLink": "From the calendar: open invitation link without a date.",
+		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Loading: {{names}}",
@@ -8204,6 +8283,8 @@
 			"confirm": "Really remove?"
 		},
 		"replace": {
+			"notifyClient": "Tell the advice seeker about the change",
+			"done": "Changed: {{from}} → {{to}}. A note is in the supervision chat.",
 			"action": "Replace",
 			"labelFor": "Replace {{name}}",
 			"title": "Who should take over from {{name}}?",

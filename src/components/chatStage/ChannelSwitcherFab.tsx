@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ReactComponent as SupervisionAttentionGlyph } from '../../resources/img/icons/supervision_on_400_24px.svg';
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu-close.svg';
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';

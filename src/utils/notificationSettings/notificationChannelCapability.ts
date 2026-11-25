@@ -294,6 +294,12 @@ export const EVENT_CASES: ReadonlyArray<EventCase> = [
 		source: `${ES}.createCounselorRenamedNotification`
 	},
 	{
+		eventType: 'supervisor.replaced',
+		recipients: ASKER,
+		emitted: true,
+		source: `${ES}.createSupervisorReplacedNotification`
+	},
+	{
 		eventType: 'topic_duplicate.started',
 		recipients: CONSULTANT,
 		emitted: true,

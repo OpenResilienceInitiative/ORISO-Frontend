@@ -34,15 +34,50 @@ const navigate = vi.fn();
 vi.mock('react-router-dom', () => ({ useNavigate: () => navigate }));
 /* "Direkteinladung erlauben" needs the tenant and agencies; off unless a
    test switches it on. */
-const directLinks = vi.hoisted(() => ({ allowed: false }));
+const directLinks = vi.hoisted(() => ({
+	allowed: false,
+	media: ['CHAT', 'AUDIO', 'VIDEO']
+}));
 vi.mock('../directLinks/useDirectLinksAllowed', () => ({
-	useDirectLinkMedia: () =>
-		directLinks.allowed ? ['CHAT', 'AUDIO', 'VIDEO'] : []
+	useDirectLinkMedia: () => (directLinks.allowed ? directLinks.media : [])
 }));
 const { invite } = vi.hoisted(() => ({ invite: vi.fn() }));
 vi.mock('../../api/apiDirectLinks', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api/apiDirectLinks')>()),
 	apiCreateSessionDirectInvitation: invite
+}));
+/* #2494 *1: the calendar's own Direkteinladung popup. The hook is the one
+   "Chat erstellen" uses; here it only records how the calendar drives it. */
+const invitationSetup = vi.hoisted(() => ({
+	options: undefined as
+		| undefined
+		| {
+				preset?: unknown;
+				onCreated: (link: { url: string }) => void;
+		  },
+	startWithDetails: vi.fn()
+}));
+vi.mock('../conversationCreate/directLink/DirectLinkCreateCard', () => ({
+	useDirectInvitationSetup: (options: typeof invitationSetup.options) => {
+		invitationSetup.options = options;
+		return {
+			start: vi.fn(),
+			startWithDetails: invitationSetup.startWithDetails,
+			submitting: false,
+			dialog: null
+		};
+	}
+}));
+const topicsLoad = vi.hoisted(() => vi.fn());
+const topicsState = vi.hoisted(() => ({ loaded: false, failed: false }));
+vi.mock('../conversationCreate/directLink/useDirectLinkTopics', () => ({
+	useDirectLinkTopics: () => ({
+		topics: [{ value: '11', label: 'Schwangerschaftsberatung' }],
+		agencies: [],
+		loaded: topicsState.loaded,
+		failed: topicsState.failed,
+		load: topicsLoad
+	})
 }));
 vi.mock('../conversationCreate/directLink/DirectLinkShareDialog', () => ({
 	DirectLinkShareDialog: ({ link }: { link: { url: string } }) => (
@@ -426,28 +461,85 @@ describe('CalendarPageWired', () => {
 			);
 		});
 
-		it('hands a new person to "Chat erstellen" with the slot and Art', async () => {
+		it('opens the Direkteinladung popup with the slot and Art, staying in the calendar (#2494 *1)', async () => {
 			directLinks.allowed = true;
-			render(<CalendarPageWired />);
+			const view = render(<CalendarPageWired />);
 			await showWeek();
 			expect(props.allowGuestInvite).toBe(true);
 			const start = new Date('2026-11-17T09:00:00Z');
 			const end = new Date('2026-11-17T10:00:00Z');
+			act(() => props.onInviteNewPerson?.({ start, end, kind: 'video' }));
+			expect(navigate).not.toHaveBeenCalled();
+			expect(topicsLoad).toHaveBeenCalled();
+			expect(invitationSetup.startWithDetails).toHaveBeenCalledWith(
+				'VIDEO'
+			);
+			await waitFor(() =>
+				expect(invitationSetup.options?.preset).toEqual({
+					start,
+					end,
+					kind: 'video'
+				})
+			);
 			act(() =>
-				props.onInviteNewPerson?.({ start, end, kind: 'onsite' })
+				invitationSetup.options?.onCreated({
+					url: 'https://x/invite/new'
+				})
 			);
-			expect(navigate).toHaveBeenCalledWith(
-				'/sessions/consultant/sessionView/createGroupChat/',
-				{
-					state: {
-						invitationPreset: {
-							start: start.toISOString(),
-							end: end.toISOString(),
-							kind: 'onsite'
-						}
-					}
-				}
+			expect((await view.findByTestId('share-dialog')).textContent).toBe(
+				'https://x/invite/new'
 			);
+		});
+
+		it('loads the topics once, and again after a failed load (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			topicsState.loaded = true;
+			try {
+				const view = render(<CalendarPageWired />);
+				await showWeek();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				topicsLoad.mockClear();
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).not.toHaveBeenCalled();
+				topicsState.failed = true;
+				view.rerender(<CalendarPageWired />);
+				act(() => props.onInviteNewPerson?.({ start, end }));
+				expect(topicsLoad).toHaveBeenCalledTimes(1);
+			} finally {
+				topicsState.loaded = false;
+				topicsState.failed = false;
+			}
+		});
+
+		it('falls back to an allowed medium when the Art has none', async () => {
+			directLinks.allowed = true;
+			render(<CalendarPageWired />);
+			await showWeek();
+			const start = new Date('2026-11-17T09:00:00Z');
+			const end = new Date('2026-11-17T10:00:00Z');
+			act(() => props.onInviteNewPerson?.({ start, end }));
+			expect(invitationSetup.startWithDetails).toHaveBeenLastCalledWith(
+				'CHAT'
+			);
+		});
+
+		it('never swaps a not-allowed Art medium for another one (review thread on #2509)', async () => {
+			directLinks.allowed = true;
+			directLinks.media = ['CHAT'];
+			try {
+				render(<CalendarPageWired />);
+				await showWeek();
+				invitationSetup.startWithDetails.mockClear();
+				const start = new Date('2026-11-17T09:00:00Z');
+				const end = new Date('2026-11-17T10:00:00Z');
+				act(() =>
+					props.onInviteNewPerson?.({ start, end, kind: 'video' })
+				);
+				expect(invitationSetup.startWithDetails).not.toHaveBeenCalled();
+			} finally {
+				directLinks.media = ['CHAT', 'AUDIO', 'VIDEO'];
+			}
 		});
 
 		it('binds the invitation to the new appointment and shows its link', async () => {

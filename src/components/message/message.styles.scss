@@ -8,7 +8,6 @@ $icon-size-small: 24px;
 // `--thread-entry-font-size`, `--session-preview-font-size`); the fallbacks
 // here repeat the defaults (14/20, name 12/16, thread entry 14/20).
 $message-attachment-color: $secondary !default;
-$message-avatar-ring: #ebe2e2;
 
 // $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
 // to resources/styles/settings.scss so other bubble renderers (e.g. the
@@ -31,8 +30,11 @@ $message-avatar-overlap: -19px;
 	display: flex;
 	flex-direction: column;
 	margin-bottom: 32px;
-	opacity: 0;
-	animation: appearMessageItem 150ms ease forwards;
+	animation: appearMessageItem 150ms ease both;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
 
 	@for $i from 1 through 50 {
 		&:nth-last-child(#{$i}) {
@@ -123,7 +125,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--user {
-			color: #000000;
+			color: var(--m3-on-surface, #1b1b1c);
 		}
 
 		&--consultant {
@@ -135,7 +137,7 @@ $message-avatar-overlap: -19px;
 	 * Second line of the sender header: the counselling centre a counsellor
 	 * speaks for, with its postcode (Figma "Message Recipient Header",
 	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
-	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * agency icon in its own column. Rendered only when there is
 	 * an agency to name, so every other message keeps its one-line header.
 	 * See OpenResilienceInitiative/ORISO-Frontend#895.
 	 */
@@ -146,6 +148,10 @@ $message-avatar-overlap: -19px;
 		flex-direction: column;
 		align-items: flex-start;
 		min-width: 0;
+
+		&:has(.messageItem__usernameSubtitle) .messageItem__username {
+			padding-inline-start: 12px;
+		}
 	}
 
 	// Figma 783:19926 (Beratungsstelle row): 16px house-heart icon, 2px gap,
@@ -155,11 +161,10 @@ $message-avatar-overlap: -19px;
 		align-items: center;
 		gap: 2px;
 		padding-left: 20px;
-		margin-top: 2px;
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 14px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #646d78);
 		text-align: left;
 		overflow-wrap: anywhere;
 	}
@@ -237,7 +242,7 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the white
+	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the canvas-coloured
 	// ring got thicker by growing OUTWARD into that frame space (6px ring),
 	// so the visible avatar stays 48px and the ring cuts into the bubble
 	// corner without touching the kebab.
@@ -271,7 +276,7 @@ $message-avatar-overlap: -19px;
 	 * circle, and the glyph's chin sits exactly on that edge — so it was
 	 * rendered with a flat-cut bottom and shaved sides (review screenshot on
 	 * ORISO-Frontend#491). Figma App.Oriso 9564-86125 draws the full robot on
-	 * an unclipped white disc; the 6px ring is white too, so letting the glyph
+	 * an unclipped disc; the ring matches the chat canvas, so letting the glyph
 	 * reach into it changes nothing but the missing pixels.
 	 */
 	&__avatar--bot {
@@ -328,6 +333,11 @@ $message-avatar-overlap: -19px;
 
 		&--left {
 			translate: 0% -25%;
+
+			// The taller sender header still has to cut into the bubble.
+			.messageItem__messageWrap:has(.messageItem__usernameSubtitle) & {
+				translate: 0 calc(-25% + var(--message-name-line-height, 16px));
+			}
 		}
 
 		&--right {
@@ -371,7 +381,7 @@ $message-avatar-overlap: -19px;
 
 			path,
 			circle {
-				fill: #17191c;
+				fill: var(--m3-on-surface-variant, #444748);
 			}
 		}
 
@@ -761,9 +771,11 @@ $message-avatar-overlap: -19px;
 	// The system-notice icon (`SystemMessageIcon`) as the avatar of a
 	// platform entry (#2237): its own size and colour, centred in the shared
 	// avatar frame instead of the inline offset it has beside a subject.
+	// Same footprint as a person's picture in the 60px frame (48px), so the
+	// info avatar lines up with the asker's (#2494, Frank 24 Nov).
 	&__avatar--system .systemMessage__icon {
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		margin: 0;
 		padding: 0;
 	}
@@ -918,6 +930,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		.messageItem__highlight {
+			color: var(--m3-on-secondary-fixed, #141c25);
 			padding: 0 2px;
 			border-radius: 3px;
 			background-color: #fff59d;
@@ -941,6 +954,14 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__highlight[data-color='#b3e5fc'] {
 			background-color: #b3e5fc;
+		}
+
+		@media (forced-colors: active) {
+			.messageItem__highlight[data-color],
+			mark:not([data-color]) {
+				color: MarkText;
+				background-color: Mark;
+			}
 		}
 
 		.messageItem__align {
@@ -1046,6 +1067,12 @@ $message-avatar-overlap: -19px;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
+			.messageItem__messageTime,
+			.messageItem__deliveryStatus svg path {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+				fill: currentColor;
+			}
+
 			// The voice player runs with bubble="none" inside this bubble, so
 			// its unplayed tiles have to read against the outgoing surface
 			// rather than against the incoming one.
@@ -1133,7 +1160,7 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__senderInfoName {
-		color: $text-low-emphasis;
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: $font-size-secondary;
 		line-height: 13px;
 		font-weight: 600;
@@ -1147,7 +1174,7 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 12px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #646d78);
 		min-width: 0;
 		max-width: 100%;
 		overflow-wrap: anywhere;
@@ -1675,8 +1702,8 @@ $message-avatar-overlap: -19px;
 	}
 }
 
-// Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
-// bubble, sharing the time rail. Own reaction = red count.
+// Reactions (Figma 336-12244 / 336-12225): M3 assist chips inside the bubble,
+// sharing the time rail. The active count uses the brand text role.
 // Issue #564: overflow must scroll horizontally — never wrap/stack.
 .messageItem__reactions {
 	display: flex;
@@ -1710,12 +1737,9 @@ $message-avatar-overlap: -19px;
 		padding: 6px 8px;
 		white-space: nowrap;
 
-		// M3 outlined chips stroke with `outline-variant`; this design uses
-		// the custom Figma role `outline-variant-light`, which is fixed white
-		// and NOT emitted by the OrisoScheme engine — hence the literal.
-		border: 1px solid #fff;
+		border: 1px solid transparent;
 		border-radius: 8px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #fff);
 		font-size: 16px;
 		line-height: 1;
 		cursor: pointer;
@@ -1723,6 +1747,10 @@ $message-avatar-overlap: -19px;
 		&:hover,
 		&:focus-visible {
 			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+		}
+
+		&:focus-visible {
+			@include control-focus-ring(-3px);
 		}
 
 		.messageItem__reactionPillCount {
@@ -1873,6 +1901,20 @@ $message-avatar-overlap: -19px;
 	// lift pushed the avatar out of the top of its own container and clipped it.
 	.messageItem__sideColumnGroup--left {
 		translate: none;
+	}
+
+	// Mine (Figma 8606:42438): mirrored. The avatar sits bottom-right like any
+	// own message (8498-32645), so the content needs no left overlap and the
+	// title/subtitle align right above the bubble (#2494 *9).
+	&.messageItem--right {
+		.messageItem__content {
+			margin-left: 0;
+		}
+
+		.messageItem__systemNotificationHeaderText {
+			padding-left: 0;
+			text-align: right;
+		}
 	}
 
 	// The kebab is a pure affordance here — there is no message action menu

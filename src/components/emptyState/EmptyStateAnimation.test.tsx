@@ -7,7 +7,9 @@ import { EmptyStateAnimation } from './EmptyStateAnimation';
 import { EmptyState } from './EmptyState';
 
 vi.mock('lottie-react', () => ({
-	default: () => <div data-lottie="true" />
+	default: ({ autoplay }: { autoplay: boolean }) => (
+		<div data-lottie="true" data-autoplay={String(autoplay)} />
+	)
 }));
 
 const stubReducedMotion = (matches: boolean) =>
@@ -51,16 +53,18 @@ describe('EmptyStateAnimation over the shared player', () => {
 		expect(host?.getAttribute('data-loop')).toBe('false');
 	});
 
-	it('holds its box under reduced motion, even without a static twin', () => {
-		// The empty-state animations have no fallback illustration yet; the host
-		// still has to occupy its space so the layout does not collapse.
+	it('shows the original artwork without autoplay under reduced motion', () => {
 		stubReducedMotion(true);
 		const { container } = render(
 			<EmptyStateAnimation animationData={{}} variant="archive" />
 		);
 
 		expect(container.querySelector('.emptyState__animation')).toBeTruthy();
-		expect(container.querySelector('[data-lottie="true"]')).toBeNull();
+		expect(
+			container
+				.querySelector('[data-lottie="true"]')
+				?.getAttribute('data-autoplay')
+		).toBe('false');
 	});
 });
 
@@ -69,7 +73,7 @@ describe('EmptyState', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('holds layout under reduced motion without playing Lottie', () => {
+	it('holds layout and displays a still frame under reduced motion', () => {
 		stubReducedMotion(true);
 		const { container } = render(
 			<EmptyState headline="Nothing here yet" variant="archive" />
@@ -78,6 +82,10 @@ describe('EmptyState', () => {
 		expect(
 			container.querySelector('[data-cy="empty-state-animation"]')
 		).toBeTruthy();
-		expect(container.querySelector('[data-lottie="true"]')).toBeNull();
+		expect(
+			container
+				.querySelector('[data-lottie="true"]')
+				?.getAttribute('data-autoplay')
+		).toBe('false');
 	});
 });

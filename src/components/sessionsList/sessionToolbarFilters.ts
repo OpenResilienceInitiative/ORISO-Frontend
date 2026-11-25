@@ -104,6 +104,21 @@ const isSupervisedByMe = (
 	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
 
 /**
+ * #2494 *5: the viewer's own case that a colleague supervises. The row keeps
+ * its own kind (1:1, live chat …); only the Supervision chip, its visibility
+ * and its unread count also take it in, so the chip shows both the cases I
+ * supervise and my cases under supervision (Frank, 24 Nov 2026).
+ */
+export const isOwnCaseUnderSupervision = (
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined
+): boolean =>
+	Boolean(currentUserId) &&
+	String(raw?.consultant?.id ?? '') === String(currentUserId) &&
+	getSupervisionListState(extended, currentUserId) === 'supervisedByOthers';
+
+/**
  * Exactly one kind per row, evaluated in the spec's order (§5.2): supervision
  * by backend marker (only if the viewer can supervise) → circle → internal
  * group → live chat → supervision by legacy fallback (no marker, row owned
@@ -249,9 +264,10 @@ export const countUnreadSupervisedSessions = (
 	currentUserId?: string
 ): number =>
 	pairs.filter(
-		({ extended }) =>
-			getSupervisionListState(extended, currentUserId) ===
-				'supervisedByMe' &&
+		({ raw, extended }) =>
+			(getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' ||
+				isOwnCaseUnderSupervision(raw, extended, currentUserId)) &&
 			isRoomUnread(extended.item?.supervision?.sideRoomId)
 	).length;
 
@@ -340,11 +356,12 @@ export function sessionMatchesToolbar(
 		}
 	} else if (effectiveChip === 'supervision') {
 		// Same rule as the display filter (#1703): a colleague's group chat
-		// is never supervision, whatever the marker fallback says. The chip
-		// is only listed for consultants who can supervise.
+		// is never supervision, whatever the marker fallback says. My own
+		// cases under supervision count too (#2494 *5).
 		if (
 			classifySession(raw, extended, currentUserId, true) !==
-			'supervision'
+				'supervision' &&
+			!isOwnCaseUnderSupervision(raw, extended, currentUserId)
 		) {
 			return false;
 		}

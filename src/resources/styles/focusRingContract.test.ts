@@ -25,10 +25,6 @@ const ALLOWED = new Map<string, string>([
 	[
 		'src/components/call/GroupCallWidget.scss',
 		'the group-call stage is always dark video; its trigger keeps a white ring'
-	],
-	[
-		'src/components/messageSubmitInterface/inputField/sendButton.styles.scss',
-		'the filled send button gets its inner on-primary ring in Frontend#2451; drop this entry there'
 	]
 ]);
 

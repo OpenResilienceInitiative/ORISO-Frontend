@@ -89,6 +89,7 @@ const BROWSER_ASSOCIATIONS: Record<
 			'supervisor.added',
 			'supervisor.removed',
 			'supervisor.assigned',
+			'supervisor.replaced',
 			'counselor.renamed'
 		]
 	},

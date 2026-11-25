@@ -6,6 +6,7 @@ import {
 	CarimatMessageBubble,
 	CarimatMessageFrame
 } from '../carimat/CarimatMessageFrame';
+import type { ErstantwortLink } from './erstantwortPayload';
 import type {
 	ErstantwortFixedModule,
 	ErstantwortPanelSection,
@@ -49,7 +50,34 @@ export interface ErstantwortModuleSequenceProps {
 	/** Sender shown in the kicker line; defaults to the platform name. */
 	name?: string;
 	subtitle?: string;
+	/**
+	 * As in version 1: a history re-render shows every bubble at once; a
+	 * fresh first reply reveals them one after the other.
+	 */
+	skipAnimation?: boolean;
+	staggerMs?: number;
+	/** Fires once, when the first bubble is visible. */
+	onFirstReveal?: () => void;
 }
+
+const DEFAULT_STAGGER_MS = 1400;
+
+const Links = ({ links }: { links?: ErstantwortLink[] }) =>
+	links?.length ? (
+		<ul className="erstantwort__links">
+			{links.map((link) => (
+				<li key={link.url}>
+					<a
+						href={link.url}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{link.label}
+					</a>
+				</li>
+			))}
+		</ul>
+	) : null;
 
 type Bubble =
 	| { key: string; kind: 'message'; sections: ErstantwortSection[] }
@@ -94,9 +122,12 @@ const toBubbles = (
 
 const Panel = ({ section }: { section: ErstantwortPanelSection }) => {
 	const body = (
-		<p className="pseudonymCard__bubbleText erstantwort__body">
-			{section.body}
-		</p>
+		<>
+			<p className="pseudonymCard__bubbleText erstantwort__body">
+				{section.body}
+			</p>
+			<Links links={section.links} />
+		</>
 	);
 	if (section.display === 'open') {
 		return (
@@ -153,7 +184,10 @@ export const ErstantwortModuleSequence: React.FC<
 	answeredSectionIds = [],
 	counsellorReplied = false,
 	name,
-	subtitle
+	subtitle,
+	skipAnimation = true,
+	staggerMs = DEFAULT_STAGGER_MS,
+	onFirstReveal
 }) => {
 	const { t } = useTranslation();
 	const bubbles = toBubbles(
@@ -161,7 +195,35 @@ export const ErstantwortModuleSequence: React.FC<
 		(module) => slots?.[module] != null,
 		counsellorReplied
 	);
-	if (!bubbles.length) return null;
+	const total = bubbles.length;
+	const [revealed, setRevealed] = React.useState(skipAnimation ? total : 0);
+	// A ref, so a new callback identity does not restart the sequence.
+	const onFirstRevealRef = React.useRef(onFirstReveal);
+	React.useEffect(() => {
+		onFirstRevealRef.current = onFirstReveal;
+	}, [onFirstReveal]);
+	const firstRevealFired = React.useRef(false);
+	React.useEffect(() => {
+		if (skipAnimation) {
+			setRevealed(total);
+			return undefined;
+		}
+		setRevealed(0);
+		firstRevealFired.current = false;
+		const timers = Array.from({ length: total }, (_, index) =>
+			window.setTimeout(
+				() => setRevealed((current) => Math.max(current, index + 1)),
+				staggerMs * (index + 1)
+			)
+		);
+		return () => timers.forEach((timer) => window.clearTimeout(timer));
+	}, [total, staggerMs, skipAnimation]);
+	React.useEffect(() => {
+		if (revealed < 1 || firstRevealFired.current) return;
+		firstRevealFired.current = true;
+		onFirstRevealRef.current?.();
+	}, [revealed]);
+	if (!total) return null;
 
 	return (
 		<CarimatMessageFrame
@@ -170,7 +232,7 @@ export const ErstantwortModuleSequence: React.FC<
 			aria-live="polite"
 			data-testid="erstantwort-module-sequence"
 		>
-			{bubbles.map((bubble, index) => {
+			{bubbles.slice(0, revealed).map((bubble, index) => {
 				const topic = index === 0 ? name : undefined;
 				if (bubble.kind === 'message') {
 					return (
@@ -190,12 +252,12 @@ export const ErstantwortModuleSequence: React.FC<
 									);
 								}
 								return section.kind === 'message' ? (
-									<p
-										key={section.id}
-										className="pseudonymCard__bubbleText erstantwort__body"
-									>
-										{section.body}
-									</p>
+									<React.Fragment key={section.id}>
+										<p className="pseudonymCard__bubbleText erstantwort__body">
+											{section.body}
+										</p>
+										<Links links={section.links} />
+									</React.Fragment>
 								) : null;
 							})}
 						</CarimatMessageBubble>
@@ -214,6 +276,12 @@ export const ErstantwortModuleSequence: React.FC<
 									{bubble.section.title}
 								</h4>
 							)}
+							{bubble.section.body && (
+								<p className="pseudonymCard__bubbleText erstantwort__body">
+									{bubble.section.body}
+								</p>
+							)}
+							<Links links={bubble.section.links} />
 							{slots?.[bubble.section.module]}
 						</CarimatMessageBubble>
 					);

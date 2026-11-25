@@ -1,4 +1,5 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { acceptSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
@@ -90,6 +91,7 @@ import { useDockedComposerOffset } from '../chatStage/useDockedComposerOffset';
 import { useComposerFocus } from '../chatStage/useComposerFocus';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { KeyBackupRecoveryNoticeSlot } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -122,6 +124,7 @@ import {
 } from '../sessionsListItem/supervisionListState';
 import {
 	pickDisplayOrUsername,
+	pickAppointmentSupervisor,
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
@@ -141,7 +144,10 @@ import {
 } from '../../utils/threadUnread';
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
-import { PanelCallActions } from '../chatStage/PanelCallActions';
+import {
+	PanelCallActions,
+	type PanelMenuItem
+} from '../chatStage/PanelCallActions';
 import { resolveSupervisionCallFeatureGates } from '../call/callFeatureGates';
 import { startRoomCall } from '../call/startRoomCall';
 import {
@@ -257,6 +263,10 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import { ReactComponent as CalendarPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
+import { AppointmentPennant } from '../sessionsList/timeline/AppointmentPennant';
+import { useSupervisorPennant } from '../sessionsList/timeline/useSupervisorPennant';
+import { SupervisorAppointmentDialogWired } from '../supervisionPanel/SupervisorAppointmentDialog';
 import {
 	parseAddonPanel,
 	useOpenAddonPanel,
@@ -267,12 +277,19 @@ import {
 	canRenderClientComposer,
 	shouldHideHeaderBackOnPhone
 } from './clientComposerPolicy';
-import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
+import {
+	SelectionReplyLayer,
+	type SideRoomReply,
+	type SideRoomTarget
+} from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
 import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
-import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
+import {
+	isCaseHandoverCoAccess,
+	isTeamCounsellingReader
+} from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
 	conversationActionsResetKey,
@@ -381,6 +398,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isSupervisorView =
 		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
 	const isCoAccessViewer = isCaseHandoverCoAccess(props.caseHandoverStatus);
+	// FE#2494 *4: a Teamberatung colleague reads the case like a co-access
+	// viewer, without expiry; only the assigned counsellor writes.
+	const isTeamReader =
+		!isCoAccessViewer &&
+		isTeamCounsellingReader({ activeSession, userData, type });
+	const isReadOnlyViewer = isCoAccessViewer || isTeamReader;
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -1198,6 +1221,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		sessionSupervisorsRevision
 	]);
 
+	// #2494 *6: a supervisor who took over continues the side room; import the
+	// history keys the counsellor sent (once per room and page load).
+	const supervisionSideRoomId = supervisionRoomLookup?.roomId;
+	const counsellorMatrixUserId = activeSession.item?.consultantMatrixUserId;
+	useEffect(() => {
+		if (!isSupervisor || !supervisionSideRoomId) return;
+		void acceptSupervisionHistory(
+			matrixClientService?.getClient?.(),
+			supervisionSideRoomId,
+			counsellorMatrixUserId
+		);
+	}, [
+		isSupervisor,
+		supervisionSideRoomId,
+		counsellorMatrixUserId,
+		matrixClientService
+	]);
+
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
 	// supervisor view. First choice is the marker's `counsellorDisplayName`
 	// (backend-resolved, never a real name); the by-id lookup stays as the
@@ -1245,12 +1286,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		const canWrite =
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
 		setCanWriteMessage(canWrite);
 	}, [
-		isCoAccessViewer,
+		isReadOnlyViewer,
 		type,
 		isRejectedSession,
 		isAnonymousAskerExperience,
@@ -2477,7 +2518,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
-	const { fromL } = useResponsive();
+	const { fromL, untilXS } = useResponsive();
 	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
@@ -3147,6 +3188,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!isOnlyEnquiry &&
 		!activeSession.isEnquiry &&
 		!isPracticing;
+	// FE#2494: the counsellor books an appointment with the supervisor from
+	// the Supervision ⋮ (the calendar's colleague appointment as a popup).
+	// The supervisor side has nobody fixed to book: no entry there.
+	// Id and name from the same supervisor (`pickAppointmentSupervisor`).
+	const appointmentSupervisor = useMemo(
+		() =>
+			isSupervisor || isPracticing || !isConsultantUser
+				? undefined
+				: pickAppointmentSupervisor(
+						sessionSupervisors,
+						userData?.userId,
+						supervisionPeople
+					),
+		[
+			isSupervisor,
+			isPracticing,
+			isConsultantUser,
+			sessionSupervisors,
+			userData?.userId,
+			supervisionPeople
+		]
+	);
+	// FE#2494: the next appointment with the supervisor hangs from the
+	// Supervision panel's hairline, as the main chat's pennants do.
+	const supervisorPennant = useSupervisorPennant(appointmentSupervisor?.id);
+	const [bookingSupervisor, setBookingSupervisor] = useState(false);
+	const supervisionMenuItems: PanelMenuItem[] = appointmentSupervisor
+		? [
+				{
+					'id': 'appointment',
+					'icon': <CalendarPlusIcon aria-hidden />,
+					'title': translate('supervision.panel.bookAppointment'),
+					'onClick': () => setBookingSupervisor(true),
+					'data-cy': 'panel-menu-book-appointment'
+				}
+			]
+		: [];
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -3160,6 +3238,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			});
 		},
 		[supervisionRoomId, supervisionParticipants.length]
+	);
+
+	// FE#2494 *7: the team panel starts a call in the TEAM room, the same
+	// way supervision does in its own. Teamberatung is internal as well, so
+	// it shares supervision's tenant call flags; more than two people make
+	// it a group call.
+	// Teamberatung also runs on open enquiries (the team is consulted
+	// before someone takes the case), so it does not share supervision's
+	// enquiry exclusion; OPEN, rejected and the tenant flags are checked
+	// where the buttons render. Practice: nobody real to call.
+	const mayCallInTeamRoom = isConsultantUser && !isPracticing;
+	const startTeamCall = useCallback(
+		(isVideo: boolean) => {
+			if (!teamRoomId) {
+				return;
+			}
+			startRoomCall({
+				roomId: teamRoomId,
+				isVideo,
+				// Read at the click: someone may have joined the team room
+				// without writing, which the memoised header list misses.
+				isGroup: stackParticipantsOf(teamRoomId, 'team').length > 2
+			});
+		},
+		[teamRoomId, stackParticipantsOf]
 	);
 
 	// "Nicht mehr einblenden": a counsellor who dismissed a side chat's
@@ -3357,7 +3460,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		matrixRoomId: resolvedMatrixRoomId,
 		canReply:
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			!isSupervisorView &&
 			canRenderClientComposer({
 				canWriteMessage,
@@ -3367,6 +3470,82 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isSupervisor,
 		senderDisplayName: userData?.displayName || userData?.userName || null
 	});
+	// FE#2494 *7: "In Supervision antworten" / "Im Team-Chat antworten".
+	// The answer to a passage marked in the main chat collects in the side
+	// chat's own reply field and leaves only from there. Both side hooks
+	// share the main recorder, so a voice answer survives the hop.
+	const senderDisplayName =
+		userData?.displayName || userData?.userName || null;
+	const supervisionPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasSupervisionSideRoom ? supervisionRoomId : null,
+		canReply: hasSupervisionSideRoom && !isRejectedSession,
+		isSupervisor,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice,
+		// The supervision composer sets `feedbackMailIntent`; answers to
+		// marked passages take the same protected mail path.
+		feedbackMailIntent: true
+	});
+	const teamPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasTeamSideRoom ? teamRoomId : null,
+		canReply:
+			hasTeamSideRoom &&
+			props.teamDiscussionStatus === 'OPEN' &&
+			!isRejectedSession,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice,
+		teamDiscussion: true
+	});
+	const {
+		enabled: supervisionReplyEnabled,
+		collect: collectForSupervision,
+		sendNow: sendNowToSupervision
+	} = supervisionPassageReplies;
+	const {
+		enabled: teamReplyEnabled,
+		collect: collectForTeam,
+		sendNow: sendNowToTeam
+	} = teamPassageReplies;
+	const replyInSideRoom = useMemo(() => {
+		const handlers: Partial<Record<SideRoomTarget, SideRoomReply>> = {};
+		if (supervisionReplyEnabled) {
+			handlers.supervision = {
+				onCollect: (answer) => {
+					collectForSupervision(answer);
+					openChannel({ kind: 'supervision' });
+				},
+				onSend: sendNowToSupervision
+			};
+		}
+		if (teamReplyEnabled) {
+			handlers.team = {
+				onCollect: (answer) => {
+					collectForTeam(answer);
+					openChannel({ kind: 'team' });
+				},
+				onSend: sendNowToTeam
+			};
+		}
+		return Object.keys(handlers).length ? handlers : undefined;
+	}, [
+		supervisionReplyEnabled,
+		collectForSupervision,
+		sendNowToSupervision,
+		teamReplyEnabled,
+		collectForTeam,
+		sendNowToTeam,
+		openChannel
+	]);
+	const collectedPassageCount = useCallback(
+		(target: SideRoomTarget | null) =>
+			(target === 'supervision'
+				? supervisionPassageReplies
+				: target === 'team'
+					? teamPassageReplies
+					: passageReplies
+			).pending.length,
+		[passageReplies, supervisionPassageReplies, teamPassageReplies]
+	);
 	const authorForPassage = useCallback(
 		(eventId: string) =>
 			(messages || []).find(
@@ -3393,7 +3572,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData,
 		isConsultant: isConsultantUser,
 		isSupervisorView,
-		isReadOnly: isRejectedSession || isCoAccessViewer
+		isReadOnly: isRejectedSession || isReadOnlyViewer
 	});
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
@@ -3664,6 +3843,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__threadListBar">
 							<button
 								type="button"
+								aria-expanded={isThreadListOpen}
 								className={clsx(
 									'session__threadListToggle',
 									isThreadListOpen &&
@@ -3791,6 +3971,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
+					)}
+					{!blocksConversation && untilXS && (
+						<KeyBackupRecoveryNoticeSlot />
 					)}
 					{(!shouldBlockAnonymousInquiryChat ||
 						isInAnonymousWaitingQueuePhase) &&
@@ -3927,11 +4110,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								<SelectionReplyLayer
 									enabled={
 										passageReplies.enabled ||
-										passageBlur.canBlur
+										passageBlur.canBlur ||
+										!!replyInSideRoom
 									}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
+									onReplyInSideRoom={replyInSideRoom}
+									canReplyHere={passageReplies.enabled}
+									collectedCount={collectedPassageCount}
 									onStartThread={
 										isThreadsEnabled
 											? handleThreadFromPassage
@@ -4006,7 +4193,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										resolveReplyQuote={resolveReplyQuote}
 										onReplyDirect={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReplyDirect
 										}
@@ -4023,13 +4210,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										reactionsFor={getReactionsFor}
 										onReact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReact
 										}
 										onUnreact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleUnreact
 										}
@@ -4257,6 +4444,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						sessionId={activeSession.item?.id}
 						canExtend={props.caseHandoverStatus?.canExtend}
 						onStatusChange={props.onCaseHandoverStatusChange}
+					/>
+				)}
+				{isTeamReader && (
+					<CaseHandoverReadOnlyNotice
+						sessionId={activeSession.item?.id}
+						ownerName={pickDisplayOrUsername(
+							activeSession.consultant
+						)}
 					/>
 				)}
 				{!isRejectedSession &&
@@ -4720,12 +4915,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
 							onReact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleReact
 							}
 							onUnreact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleUnreact
 							}
@@ -4783,7 +4978,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 				composer={
 					!isRejectedSession &&
-					!isCoAccessViewer && (
+					!isReadOnlyViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
 							placeholder={translate(
@@ -4823,6 +5018,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
+	// FE#2494 *7: a quote in a side chat points into the client chat. On a
+	// phone the panel covers it, so close the panel first and jump once
+	// the main timeline is back on screen.
+	const handleJumpFromSideRoom = useCallback(
+		(reply: PassageReply) => {
+			if (isPhoneLayout) {
+				closeChannel();
+				window.requestAnimationFrame(() => handleJumpToPassage(reply));
+				return;
+			}
+			handleJumpToPassage(reply);
+		},
+		[isPhoneLayout, closeChannel, handleJumpToPassage]
+	);
+
 	const supervisionPanel =
 		openPanel === 'supervision' ? (
 			<SidePanel
@@ -4841,36 +5051,83 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
-						actions={
-							mayCallInSideRoom ? (
-								<PanelCallActions
-									onStartCall={startSupervisionCall}
-									audioEnabled={supervisionCallGates.audio}
-									videoEnabled={supervisionCallGates.video}
-									participantCount={
-										supervisionParticipants.length
-									}
-									// The panel fills the screen on the phone;
-									// on the desktop it is as wide as the drag
-									// left it.
-									width={isPhoneLayout ? null : panelWidth}
-									phone={isPhoneLayout}
-									copy={{
-										video: translate(
-											'videoCall.button.startVideoCall'
-										),
-										audio: translate(
-											'videoCall.button.startCall'
-										),
-										menu: translate('app.menu'),
-										participants: translate(
-											'chatStage.panel.participantCount',
-											{
-												count: supervisionParticipants.length
-											}
-										)
-									}}
+						appointments={
+							supervisorPennant && (
+								<AppointmentPennant
+									entry={supervisorPennant.entry}
+									role="counsellor"
+									menuItems={supervisorPennant.menuItems}
+									onAction={supervisorPennant.onAction}
 								/>
+							)
+						}
+						actions={
+							mayCallInSideRoom ||
+							supervisionMenuItems.length > 0 ? (
+								<>
+									<PanelCallActions
+										menuItems={supervisionMenuItems}
+										onStartCall={startSupervisionCall}
+										audioEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.audio
+										}
+										videoEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.video
+										}
+										participantCount={
+											supervisionParticipants.length
+										}
+										// The panel fills the screen on the phone;
+										// on the desktop it is as wide as the drag
+										// left it.
+										width={
+											isPhoneLayout ? null : panelWidth
+										}
+										phone={isPhoneLayout}
+										copy={{
+											video: translate(
+												'videoCall.button.startVideoCall'
+											),
+											audio: translate(
+												'videoCall.button.startCall'
+											),
+											menu: translate('app.menu'),
+											participants: translate(
+												'chatStage.panel.participantCount',
+												{
+													count: supervisionParticipants.length
+												}
+											)
+										}}
+									/>
+									{bookingSupervisor &&
+										appointmentSupervisor && (
+											<SupervisorAppointmentDialogWired
+												supervisor={
+													appointmentSupervisor
+												}
+												ownerId={userData?.userId ?? ''}
+												fullScreen={isPhoneLayout}
+												supervisionRoom={
+													supervisionRoomId
+														? {
+																sessionId:
+																	activeSession
+																		.item
+																		.id,
+																matrixRoomId:
+																	supervisionRoomId
+															}
+														: undefined
+												}
+												onClose={() =>
+													setBookingSupervisor(false)
+												}
+											/>
+										)}
+								</>
 							) : undefined
 						}
 						{...panelHeaderNav}
@@ -4901,6 +5158,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					>
 						<MessageTimeline
 							keyPrefix="supervision-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={supervisionTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
@@ -4996,6 +5254,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						}
 						messages={supervisionMessages}
 						isOwnMessage={isMyMessageMatrix}
+						pendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.pending
+								: undefined
+						}
+						onRemovePendingQuote={supervisionPassageReplies.remove}
+						onSendPendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.sendCollected
+								: undefined
+						}
 					/>
 				}
 				switcher={phoneBackFab}
@@ -5030,6 +5299,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						chip={teamText('chatStage.panel.team.onlyMarker')}
 						participants={teamParticipants}
 						unreadCount={teamUnreadCount}
+						actions={
+							mayCallInTeamRoom &&
+							props.teamDiscussionStatus === 'OPEN' &&
+							!isRejectedSession ? (
+								<PanelCallActions
+									onStartCall={startTeamCall}
+									audioEnabled={supervisionCallGates.audio}
+									videoEnabled={supervisionCallGates.video}
+									participantCount={teamParticipants.length}
+									width={isPhoneLayout ? null : panelWidth}
+									phone={isPhoneLayout}
+									copy={{
+										video: translate(
+											'videoCall.button.startVideoCall'
+										),
+										audio: translate(
+											'videoCall.button.startCall'
+										),
+										menu: translate('app.menu'),
+										participants: translate(
+											'chatStage.panel.participantCount',
+											{
+												count: teamParticipants.length
+											}
+										)
+									}}
+								/>
+							) : undefined
+						}
 						{...panelHeaderNav}
 					/>
 				}
@@ -5067,6 +5365,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<>
 						<MessageTimeline
 							keyPrefix="team-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={teamTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
@@ -5187,6 +5486,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}
 							messages={teamMessages}
 							isOwnMessage={isMyMessageMatrix}
+							pendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.pending
+									: undefined
+							}
+							onRemovePendingQuote={teamPassageReplies.remove}
+							onSendPendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.sendCollected
+									: undefined
+							}
 						/>
 					) : undefined
 				}

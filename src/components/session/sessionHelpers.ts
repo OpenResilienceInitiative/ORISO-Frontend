@@ -219,6 +219,10 @@ export const prepareMessages = (messagesData): MessageItem[] => {
 				isEdited: !!message.isEdited,
 				...(message.undecryptableReason
 					? { undecryptableReason: message.undecryptableReason }
+					: {}),
+				// #2494 *9: "Schwärzung aufgehoben" notice.
+				...(message.blurRemoved
+					? { blurRemoved: message.blurRemoved }
 					: {})
 			};
 		})

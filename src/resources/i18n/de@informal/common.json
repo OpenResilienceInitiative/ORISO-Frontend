@@ -680,6 +680,9 @@
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
 		},
+		"blurRemoved": {
+			"byMe": "von dir"
+		},
 		"selectionReply": {
 			"sendFailed": {
 				"text": "Deine Antworten auf die markierten Stellen sind noch gesammelt. Bitte sende sie erneut."
@@ -1676,7 +1679,8 @@
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
 				},
-				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus.",
+				"teamPeopleHint": "Teamberatung: Wähle eine Kolleg:in deiner Beratungsstelle und drück Enter. Dann siehst du ihre Fälle und kannst sie mitlesen."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -2368,6 +2372,17 @@
 			"empty": {
 				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
 			}
+		},
+		"appointment": {
+			"description": "Wähle Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in deinem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreib {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuch es erneut.",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuche es erneut.",
+			"menu": {
+				"calendar": {
+					"description": "Dort kannst du den Termin auch verschieben."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {
@@ -2408,7 +2423,6 @@
 	"app": {
 		"cancel": "Abbrechen",
 		"stage": {
-			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"stop": "Stopp"
@@ -2580,7 +2594,8 @@
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"teamNotice": "Teamberatung: Du liest mit. Nur {{name}} schreibt in diesem Fall Nachrichten."
 		},
 		"consent": {
 			"senderRole": "Kurze Orientierung",

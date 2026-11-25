@@ -27,7 +27,7 @@ import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-men
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
 // Reused, not invented: the Notification Center already marks a
 // Team-Besprechung with this glyph (`notificationsCenter/eventDescriptors/icons.tsx`).
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import {
 	ChatMenuDropdown,

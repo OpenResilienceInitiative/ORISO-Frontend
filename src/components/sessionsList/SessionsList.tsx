@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -51,6 +52,7 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { peopleSearchHintKeys } from '../session/caseHandoverHelpers';
 import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -74,6 +76,7 @@ import {
 } from './SessionsListToolbar';
 import {
 	countUnreadSupervisedSessions,
+	isOwnCaseUnderSupervision,
 	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
@@ -1121,7 +1124,15 @@ export const SessionsList = ({
 	);
 
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
-	const sessionsRef = useUpdatingRef(sessions);
+	// Live message events read the list through this ref. Keep it current
+	// with the committed list (layout effect, not a passive one): a message
+	// that arrives between the commit and the passive effects would otherwise
+	// look like it came from an unknown room and refetch the whole list
+	// instead of refreshing its room (#2480).
+	const sessionsRef = useRef(sessions);
+	useLayoutEffect(() => {
+		sessionsRef.current = sessions;
+	}, [sessions]);
 
 	// #2480: messages replayed by the Matrix sync arrive in bursts; refresh
 	// their rooms together instead of one request per message.
@@ -1789,8 +1800,26 @@ export const SessionsList = ({
 				classifySession(raw, extended, userData?.userId, true) ===
 				'supervision'
 		);
+	// #2494 *5: a counsellor whose own case is supervised gets the chip too
+	// ("Dynamisch"); "Fest" in Ansicht einstellen keeps it without such a case.
+	const hasOwnCaseUnderSupervision =
+		isEligibleForSupervision &&
+		sessionToolbarPairs.some(({ raw, extended }) =>
+			isOwnCaseUnderSupervision(raw, extended, userData?.userId)
+		);
+	const supervisionChipPinned =
+		isEligibleForSupervision &&
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		kindPillMode(listDisplayFilter, 'supervision') === 'fixed';
+	/* #2494 *5: the chip has rows (or is pinned), so a chosen "supervision"
+	   chip stays; without this the list cleared it once all pages loaded. */
+	const supervisionRowsLoaded = canSupervise || hasOwnCaseUnderSupervision;
+	const supervisionChipBacked =
+		supervisionRowsLoaded || supervisionChipPinned;
 	const showSupervisionChip =
 		canSupervise ||
+		hasOwnCaseUnderSupervision ||
+		supervisionChipPinned ||
 		(isEligibleForSupervision &&
 			type === SESSION_LIST_TYPES.MY_SESSION &&
 			hasMoreSessionPages);
@@ -1946,7 +1975,14 @@ export const SessionsList = ({
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'supervision':
-					return showSupervisionChip;
+					// #2494 *5: listed for every counsellor in "Meine
+					// Gespräche", so "Fest" can be chosen before any case is
+					// supervised; "Dynamisch" decides whether the chip shows.
+					return (
+						showSupervisionChip ||
+						(isEligibleForSupervision &&
+							type === SESSION_LIST_TYPES.MY_SESSION)
+					);
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -1978,6 +2014,8 @@ export const SessionsList = ({
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
 					modes: kind === 'liveChat',
+					// #2494 *5: Dynamisch / Fest / Aus for the Supervision chip.
+					autoModes: kind === 'supervision',
 					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
 						kind as SessionKindId
 					),
@@ -1994,6 +2032,7 @@ export const SessionsList = ({
 		);
 	}, [
 		hasDirectLinkRow,
+		isEligibleForSupervision,
 		rowsByKind,
 		showSupervisionChip,
 		showCreateGroupChatAction,
@@ -2389,7 +2428,7 @@ export const SessionsList = ({
 		if (
 			sessionToolbarChip === 'supervision' &&
 			sessionsReady &&
-			!canSupervise &&
+			!supervisionChipBacked &&
 			(!hasMoreSessionPages || type !== SESSION_LIST_TYPES.MY_SESSION) &&
 			!isLoading &&
 			!isRequestInProgress &&
@@ -2414,7 +2453,7 @@ export const SessionsList = ({
 			handleToolbarChipToggle(sessionToolbarChip);
 		}
 	}, [
-		canSupervise,
+		supervisionChipBacked,
 		hasMoreSessionPages,
 		isLoading,
 		isRequestInProgress,
@@ -2515,7 +2554,9 @@ export const SessionsList = ({
 		const needsSupervisionPage =
 			ownConversations &&
 			sessionToolbarChip === 'supervision' &&
-			!canSupervise;
+			// A pinned chip keeps the chip, not the scan: page on until a
+			// supervision row has loaded.
+			!supervisionRowsLoaded;
 		const visibleRows = pageSupervisionRows
 			? sessionToolbarFilteredPairs.length
 			: displayVisiblePairs.length;
@@ -2534,7 +2575,7 @@ export const SessionsList = ({
 		}
 		loadMoreSessions();
 	}, [
-		canSupervise,
+		supervisionRowsLoaded,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
 		hasMoreSessionPages,
@@ -2942,9 +2983,9 @@ export const SessionsList = ({
 					searchPeopleStatus={caseHandoverSearch.eligibleStatus}
 					searchPeopleHint={
 						showConsultantToolbarActions
-							? translate(
-									'sessionList.toolbar.search.handoverPeopleHint'
-								)
+							? peopleSearchHintKeys(userData?.agencies)
+									.map((key) => translate(key))
+									.join(' ')
 							: undefined
 					}
 					searchPeopleCappedNote={

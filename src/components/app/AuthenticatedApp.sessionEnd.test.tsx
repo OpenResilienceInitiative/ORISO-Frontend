@@ -180,7 +180,8 @@ vi.mock('../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner', () => ({
 	E2EEncryptionSupportBanner: () => null
 }));
 vi.mock('../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt', () => ({
-	KeyBackupRecoveryPrompt: () => null
+	KeyBackupRecoveryBoundary: ({ children }: React.PropsWithChildren) =>
+		children
 }));
 vi.mock('../E2EEncryptionSupportBanner/RecoveryKeySaveReminder', () => ({
 	RecoveryKeySaveReminder: () => null

@@ -81,7 +81,9 @@ describe('useSessionPassageBlur', () => {
 		});
 		expect(transport.redactMessage).toHaveBeenCalledWith({
 			matrixRoomId: '!room:hs',
-			targetEventId: '$blur'
+			targetEventId: '$blur',
+			// #2494 *9: the chat shows "Schwärzung aufgehoben", not "gelöscht".
+			reason: 'org.oriso.passage_blur.removed $msg'
 		});
 	});
 

@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Text } from '../text/Text';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { ReactComponent as CalendarICSIcon } from '../../resources/img/icons/calendar-ics.svg';
 import './downloadICSFile.styles';
-import { useTranslation } from 'react-i18next';
 import { buildAppointmentIcs } from '../../utils/appointmentIcs';
 import { downloadICSFile } from '../../utils/downloadICSFile';
 
@@ -31,19 +30,20 @@ const handleICSAppointment = (appointmentInfo: AppointmentInfoICS) => {
 	}
 };
 
-export const DownloadICSFile = (params: AppointmentInfoICS) => {
-	const { t: translate } = useTranslation();
-	return (
-		<div
-			className="downloadICSFile--flex"
-			onClick={() => handleICSAppointment(params)}
-		>
-			<CalendarICSIcon className="downloadICSFile__icon" />
-			<Text
-				type="standard"
-				text={translate('message.appointmentSet.addToCalendar')}
-				className="downloadICSFile__text downloadICSFile--primary"
-			/>
-		</div>
-	);
-};
+export const DownloadICSFile = (params: AppointmentInfoICS) => (
+	<Button
+		type="button"
+		item={{
+			type: BUTTON_TYPES.LINK_INLINE,
+			label: 'message.appointmentSet.addToCalendar',
+			icon: (
+				<CalendarICSIcon
+					className="downloadICSFile__icon"
+					aria-hidden="true"
+				/>
+			)
+		}}
+		className="downloadICSFile"
+		buttonHandle={() => handleICSAppointment(params)}
+	/>
+);
