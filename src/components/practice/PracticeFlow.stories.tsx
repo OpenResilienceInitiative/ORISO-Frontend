@@ -12,6 +12,7 @@ import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { NavigationBar } from '../app/NavigationBar';
 import { RouterConfigConsultant } from '../app/RouterConfig';
 import { SessionsZone } from '../app/SessionsZone';
+import { CalendarPageWired } from '../calendar/CalendarPageWired';
 import { Header } from '../header/Header';
 import { Profile } from '../profile/Profile';
 import { Walkthrough } from '../walkthrough/Walkthrough';
@@ -289,6 +290,12 @@ const PracticeFlowStage = ({
 																		}
 																	/>
 																	<Route
+																		path="/booking/events"
+																		element={
+																			<CalendarPageWired />
+																		}
+																	/>
+																	<Route
 																		path="/profile/*"
 																		element={
 																			<div className="contentWrapper__profile">
@@ -360,7 +367,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The practice area end to end (#1622): the real Help page, practice cards, tour host, banner, navigation, header and session views, wired as in `Routing.tsx`. Practice runs on the in-memory world. Every request that reaches the page is recorded; only the tutorial progress is answered, everything else fails like an unreachable backend.'
+					'The practice area end to end (#1622): the real Help page, practice cards, tour host, banner, navigation, header, session views and calendar, wired as in `Routing.tsx`. Practice runs on the in-memory world. Every request that reaches the page is recorded; only the tutorial progress is answered, everything else fails like an unreachable backend.'
 			}
 		}
 	},
@@ -966,4 +973,173 @@ export const LiveChatWithSidebarToggle: Story = {
 		}
 	},
 	play: practiseLiveChat(() => target('livechat-availability-toggle'))
+};
+
+/** A dialog of the calendar, by its test id. */
+const calendarDialog = async (testId: string): Promise<HTMLElement> => {
+	let dialog: HTMLElement | null = null;
+	await waitFor(() => {
+		dialog = document.querySelector<HTMLElement>(
+			`[data-testid="${testId}"]`
+		);
+		expect(dialog, testId).not.toBeNull();
+	}, SLOW);
+	return dialog!;
+};
+
+/**
+ * "Neu" on the real calendar: the practice conversation, optionally with
+ * "Weitere Personen per Link einladen", saved with the dialog's own button.
+ */
+const enterPracticeAppointment = async (inviteOthers = false) => {
+	await userEvent.click(await target('calendar-create'));
+	const dialog = await calendarDialog('calendar-appointment-dialog');
+	await userEvent.click(within(dialog).getByRole('combobox'));
+	// The practice advice seeker is the only conversation.
+	const [conversation] = await screen.findAllByRole('option', {}, SLOW);
+	await userEvent.click(conversation);
+	if (inviteOthers)
+		await userEvent.click(
+			within(dialog).getByRole('switch', {
+				name: 'Weitere Personen per Link einladen'
+			})
+		);
+	await userEvent.click(
+		within(dialog).getByTestId('calendar-appointment-save')
+	);
+	await waitFor(
+		() =>
+			expect(
+				document.querySelector(
+					'[data-testid="calendar-appointment-dialog"]'
+				)
+			).toBeNull(),
+		SLOW
+	);
+};
+
+export const Calendar: Story = {
+	name: 'Calendar · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Starts the Kalender tour from Help with the practice area open (FE#2545). On the real "Meine Termine" the counsellor enters an appointment with the practice advice seeker, a second one with a Terminlink (a practice link to a reserved host), cancels one from "Als Nächstes", enters a Sperrzeit and switches "Buchungen automatisch bestätigen" on in the Sprechstunden. Every calendar request is answered in memory; only the completed progress is written.'
+			}
+		}
+	},
+	play: async ({ canvas, step }) => {
+		const of = 7;
+		const storageBefore = storageSnapshot();
+		// The navigation's own real reads before the start are not practice.
+		let practiceStart = 0;
+		await step('Start the Kalender tour from its Help card', async () => {
+			const card = (
+				await canvas.findByRole('heading', { name: 'Kalender' }, SLOW)
+			).closest('li')!;
+			await userEvent.click(
+				within(card).getByRole('button', { name: 'Starten' })
+			);
+		});
+		await step('1: Read that this is an exercise', async () => {
+			await expectStep(1, of);
+			await expect(getPracticeSnapshot().status).toBe('active');
+			practiceStart = requestLog.length;
+			await next();
+		});
+		await step('2: Enter an appointment', async () => {
+			await expectStep(2, of);
+			await enterPracticeAppointment();
+		});
+		await step('3: Enter one with a Terminlink', async () => {
+			await expectStep(3, of);
+			await enterPracticeAppointment(true);
+			const share = await calendarDialog('direct-link-share-dialog');
+			await expect(
+				within(share).getByDisplayValue(
+					/^https:\/\/practice\.invalid\//
+				)
+			).toBeVisible();
+			await userEvent.click(
+				within(share).getByRole('button', { name: 'Schließen' })
+			);
+		});
+		await step('4: Cancel one from "Als Nächstes"', async () => {
+			await expectStep(4, of);
+			await target('calendar-upcoming');
+			const row = await waitFor(() => {
+				const found = document.querySelector<HTMLElement>(
+					'[data-tour-target="calendar-upcoming"] [data-cy^="calendar-upcoming-practice-appointment-"]'
+				);
+				expect(found).not.toBeNull();
+				return found!;
+			}, SLOW);
+			await userEvent.click(row);
+			await userEvent.click(
+				await waitFor(() => {
+					const item = document.querySelector<HTMLElement>(
+						'[data-cy="calendar-entry-cancel"]'
+					);
+					expect(item).not.toBeNull();
+					return item!;
+				}, SLOW)
+			);
+			await userEvent.click(
+				await screen.findByTestId('calendar-cancel-confirm', {}, SLOW)
+			);
+		});
+		await step('5: Enter a Sperrzeit', async () => {
+			await expectStep(5, of);
+			await userEvent.click(await target('calendar-create'));
+			await userEvent.click(
+				await screen.findByRole('tab', { name: 'Sperrzeit' }, SLOW)
+			);
+			const dialog = await calendarDialog('calendar-blocker-dialog');
+			await userEvent.click(
+				within(dialog).getByTestId('calendar-blocker-save')
+			);
+		});
+		await step(
+			'6: Switch automatic confirmation on in the Sprechstunden',
+			async () => {
+				await expectStep(6, of);
+				await userEvent.click(await target('calendar-settings'));
+				await userEvent.click(
+					await screen.findByText('Sprechstunden', {}, SLOW)
+				);
+				const dialog = await calendarDialog(
+					'calendar-consultation-hours-dialog'
+				);
+				const autoAccept = within(dialog).getByTestId(
+					'consultation-hours-auto-accept'
+				);
+				await userEvent.click(
+					autoAccept.querySelector('input') ?? autoAccept
+				);
+				await userEvent.click(
+					within(dialog).getByTestId('consultation-hours-save')
+				);
+			}
+		);
+		await step(
+			`${of}: Finish and return to Help without outbound writes`,
+			async () => {
+				await expectStep(of, of);
+				await expect(
+					getPracticeNetworkGuard()?.blockedRequests
+				).toEqual([]);
+				await next('Fertig');
+				await expectExited(canvas, storageBefore);
+				// The practice calendar never reached the network.
+				await expect(
+					requestLog
+						.slice(practiceStart)
+						.filter(({ url }) =>
+							/\/calendar\/|appointments|direct-invitations|directlinks/.test(
+								url
+							)
+						)
+				).toEqual([]);
+			}
+		);
+	}
 };
