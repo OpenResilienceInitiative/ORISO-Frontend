@@ -132,6 +132,17 @@ in the table below were reviewed by hand; no test pins them.
 | Live-chat availability heartbeat                          | nothing until it lapses                                                     | accept for now: the blocked POST drops availability after about 2 minutes (decision below) |
 | Language switch, mute bell, absence overlay               | own settings                                                                | accept: the server write is blocked while practising                                       |
 
+**Live-chat availability in practice (FE#2545).** The live-chat practice tour
+asks the counsellor to switch "Bin verfügbar" on with the real control (the
+settings switch, or the rail toggle with `liveChatViaSidebar`). While
+practising, both controls and the session list read
+`usePracticeLiveChatAvailability`: an in-memory value per practice run that
+starts off and never calls the API, writes localStorage or feeds the heartbeat.
+The heartbeat and the loss/DPA notices keep the real state. Proof:
+`practiceLiveChatAvailability.test.tsx` and the two live-chat runs in
+`PracticeFlow.integration.test.tsx` (no availability PUT or heartbeat POST, no
+`oriso_liveChat*` storage write, real state shown again after the exit).
+
 Open decisions (Frank): a counsellor who is live-chat available drops out after
 about 2 minutes of practice (allowlist the heartbeat, or switch live chat off
 at the start); a real incoming call cannot be answered while practising (end

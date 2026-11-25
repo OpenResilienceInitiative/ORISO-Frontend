@@ -6726,6 +6726,10 @@
 				"reply": {
 					"title": "Yanıtla",
 					"intro": "Sohbet sürüyor. Kişiye kısa bir yanıt yazın ve gönderin. Yanıt alıştırmada kalır ve hiçbir yere kaydedilmez."
+				},
+				"practiceAvailability": {
+					"title": "Uygun ol",
+					"intro": "Canlı sohbetler yalnızca uygun olanlara sunulur. “Uygunum” ayarını burada ya da menü çubuğunda açın; alıştırmada gerçek durumunuz değişmez."
 				}
 			}
 		},

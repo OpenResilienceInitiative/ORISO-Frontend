@@ -11,7 +11,12 @@ import trTranslations from '../resources/i18n/tr/common.json';
 import { frontendTours } from '../components/productTour/tourDefinitions';
 import { resolveTourSteps } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
-import { practiceAcceptedSessionRoute } from './practiceRoutes';
+import {
+	practiceAcceptedSessionRoute,
+	PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
+} from './practiceRoutes';
+import { LIVE_CHAT_QUEUE_PATH } from '../components/app/liveChatRailTarget';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
@@ -19,6 +24,7 @@ import {
 	practiceAcceptTour,
 	practiceGroupCircleTour,
 	practiceHostedTours,
+	practiceLiveChatTour,
 	practiceSupervisionTour,
 	practiceTours
 } from './practiceTours';
@@ -429,6 +435,62 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 				).toBe('string');
 			}
 		});
+	});
+});
+
+describe('practiceLiveChatTour (FE#2545)', () => {
+	const step = (id: string) =>
+		practiceLiveChatTour.steps.find((s) => s.id === id)!;
+
+	it('switches availability on before the queue', () => {
+		expect(stepIds(practiceLiveChatTour.steps)).toEqual([
+			'intro',
+			'availability',
+			'queue',
+			'open-request',
+			'accept',
+			'reply',
+			'done'
+		]);
+	});
+
+	it('points at the control the counsellor uses, on the settings page, and waits for the practice switch-on', () => {
+		const availability = step('availability');
+		expect(availability.route).toBe(PRACTICE_LIVE_CHAT_SETTINGS_ROUTE);
+		expect(availability.target).toBe('livechat-availability-control');
+		// Required: whichever preference, exactly one control carries it.
+		expect(availability.optional).toBeFalsy();
+		expect(availability.advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.liveChatAvailable
+		});
+	});
+
+	it('goes on where switching on lands: the queue with the live-chat filter on', () => {
+		expect(PRACTICE_LIVE_CHAT_QUEUE_ROUTE).toBe(LIVE_CHAT_QUEUE_PATH);
+		expect(step('queue').route).toBe(PRACTICE_LIVE_CHAT_QUEUE_ROUTE);
+		// The filter is already on: a click would switch it off.
+		expect(step('queue').advanceOn).toBeUndefined();
+		expect(step('open-request').route).toBe(PRACTICE_LIVE_CHAT_QUEUE_ROUTE);
+	});
+
+	it('ships the availability copy in every full locale, du-form in the overlay only', () => {
+		const { titleKey, contentKey } = step('availability');
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				[titleKey, contentKey].forEach((key) =>
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string')
+				);
+			});
+		expect(resolveKey(deTranslations, contentKey)).toMatch(/\bSie\b/);
+		expect(resolveKey(deInformalTranslations, titleKey)).toBeUndefined();
+		expect(resolveKey(deInformalTranslations, contentKey)).toMatch(
+			/\bdein\b/
+		);
 	});
 });
 
