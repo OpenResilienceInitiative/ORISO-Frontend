@@ -10,7 +10,7 @@ import { assertControlPhase } from './verification-control-results.mjs';
 const positives = [
 	'Healthy',
 	'Native Phone Viewport',
-	'Legacy Phone Viewport',
+	'Phone 390 Viewport',
 	'Exact Expected Error',
 	'Mui Theme',
 	'State Writer',

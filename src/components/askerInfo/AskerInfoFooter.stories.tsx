@@ -54,7 +54,5 @@ export const PendingChange: Story = {
 /** 320px is the narrowest layout the issue asks for. */
 export const NarrowViewport: Story = {
 	decorators: [withPendingChange(true)],
-	parameters: {
-		viewport: { defaultViewport: 'mobile1' }
-	}
+	globals: { viewport: { value: 'mobile1', isRotated: false } }
 };

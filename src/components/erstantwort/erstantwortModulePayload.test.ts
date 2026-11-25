@@ -227,4 +227,35 @@ describe('parseErstantwortModule (ADR-036 decision 8)', () => {
 		const [panel] = parsed.sections;
 		expect(panel.kind === 'panel' && panel.safety).toBe(true);
 	});
+
+	it('keeps http(s) links and the explanation of a fixed module', () => {
+		const parsed = parseErstantwortModule(
+			v2([
+				{
+					id: 'privacy',
+					kind: 'message',
+					body: 'Wie wir mit Ihren Daten umgehen.',
+					links: [
+						{ label: 'Datenschutz', url: 'https://example.org/ds' },
+						{ label: 'Böse', url: 'data:text/html,boom' }
+					]
+				},
+				{
+					id: 'mail',
+					kind: 'fixed',
+					module: 'email',
+					title: 'Benachrichtigung per E-Mail',
+					body: 'Der Inhalt der Beratung steht nie in dieser E-Mail.'
+				}
+			])
+		);
+		const [privacy, mail] = parsed.sections;
+		expect(privacy.links).toEqual([
+			{ label: 'Datenschutz', url: 'https://example.org/ds' }
+		]);
+		expect(mail.kind === 'fixed' && mail.body).toBe(
+			'Der Inhalt der Beratung steht nie in dieser E-Mail.'
+		);
+		expect(mail.links).toBeUndefined();
+	});
 });

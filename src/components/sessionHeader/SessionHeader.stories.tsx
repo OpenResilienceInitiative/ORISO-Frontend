@@ -2053,6 +2053,91 @@ export const OneToOneAppointmentWithSupervisor: Story = {
 	}
 };
 
+const inNarrowPaneAt200 = (header: React.ReactNode) => (
+	<div
+		data-oriso-personal-text-size="200"
+		style={
+			{
+				'maxInlineSize': 320,
+				'--oriso-personal-text-scale': 2
+			} as React.CSSProperties
+		}
+	>
+		{header}
+	</div>
+);
+
+const expectWholeHeaderText = async (canvasElement: HTMLElement) => {
+	const header = await within(canvasElement).findByRole('heading', {
+		level: 3
+	});
+	const panel = header.closest('.sessionInfo')!;
+	const bounds = panel.getBoundingClientRect();
+	for (const label of [
+		header,
+		...panel.querySelectorAll('.sessionInfo__metaInfo__content')
+	]) {
+		const range = document.createRange();
+		range.selectNodeContents(label);
+		const text = range.getBoundingClientRect();
+		await expect(text.left).toBeGreaterThanOrEqual(bounds.left - 0.5);
+		await expect(text.right).toBeLessThanOrEqual(bounds.right + 0.5);
+		await expect(getComputedStyle(label).textOverflow).toBe('clip');
+	}
+};
+
+export const SingleRoomHeaderAt200InNarrowPane: Story = {
+	name: 'Conversation details at 200% in a narrow pane',
+	globals: {
+		viewport: { value: 'phone320' },
+		scheme: 'dark',
+		contrast: 'high'
+	},
+	render: () =>
+		inNarrowPaneAt200(
+			renderSessionHeader(mockActiveConversationWithParticipants())
+		),
+	play: async ({ canvasElement }) => {
+		const heading = await within(canvasElement).findByRole('heading', {
+			level: 3
+		});
+		const panel = heading.closest('.sessionInfo')!;
+		const bounds = panel.getBoundingClientRect();
+		for (const label of [
+			heading,
+			...panel.querySelectorAll('.sessionInfo__metaInfo__content')
+		]) {
+			const rect = label.getBoundingClientRect();
+			const style = getComputedStyle(label);
+			await expect(label.getAttribute('title')).toBeTruthy();
+			await expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 0.5);
+			await expect(rect.right).toBeLessThanOrEqual(bounds.right + 0.5);
+			await expect(style.whiteSpace).toBe('nowrap');
+			await expect(style.textOverflow).toBe('ellipsis');
+			const singleLine = [
+				style.lineHeight,
+				style.paddingBlockStart,
+				style.paddingBlockEnd,
+				style.borderBlockStartWidth,
+				style.borderBlockEndWidth
+			].reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+			await expect(rect.height).toBeLessThanOrEqual(singleLine + 2);
+		}
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+export const GroupRoomHeaderAt200InNarrowPane: Story = {
+	name: 'Group heading at 200% in a narrow pane',
+	globals: {
+		viewport: { value: 'tablet820' },
+		scheme: 'dark',
+		contrast: 'high'
+	},
+	render: () => inNarrowPaneAt200(renderGroupHeader(mockGroupSessionSmall())),
+	play: async ({ canvasElement }) => expectWholeHeaderText(canvasElement)
+};
+
 /** A longer room name in the real group header; the wrapper models a resizable chat pane. */
 export const LongRoomTitleInResizablePane: Story = {
 	name: 'Long room title in a resizable pane',

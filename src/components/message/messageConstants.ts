@@ -7,6 +7,10 @@ import {
 	parseConsultantRenamedNotice
 } from './consultantRenamedNotice';
 import {
+	parseSupervisorReplacedNotice,
+	SupervisorReplacedNotice
+} from './supervisorReplacedNotice';
+import {
 	type AppointmentNotice,
 	parseAppointmentNoticePayload
 } from './appointmentNotice';
@@ -144,6 +148,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as FurtherCounsellingNotice | null,
 			systemNotificationConsultantRenamed:
 				null as ConsultantRenamedNotice | null,
+			systemNotificationSupervisorReplaced:
+				null as SupervisorReplacedNotice | null,
 			systemNotificationDirectInvitationRenewed:
 				null as DirectInvitationRenewedNotice | null,
 			systemNotificationAppointment: null as AppointmentNotice | null,
@@ -169,6 +175,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
 		null;
 	let systemNotificationConsultantRenamed: ConsultantRenamedNotice | null =
+		null;
+	let systemNotificationSupervisorReplaced: SupervisorReplacedNotice | null =
 		null;
 	let systemNotificationDirectInvitationRenewed: DirectInvitationRenewedNotice | null =
 		null;
@@ -261,6 +269,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				parseFurtherCounsellingNotice(parsed);
 			systemNotificationConsultantRenamed =
 				parseConsultantRenamedNotice(parsed);
+			systemNotificationSupervisorReplaced =
+				parseSupervisorReplacedNotice(parsed);
 			systemNotificationDirectInvitationRenewed =
 				parseDirectInvitationRenewedNotice(parsed);
 			systemNotificationAppointment =
@@ -304,6 +314,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationAcceptance,
 		systemNotificationFurtherCounselling,
 		systemNotificationConsultantRenamed,
+		systemNotificationSupervisorReplaced,
 		systemNotificationDirectInvitationRenewed,
 		systemNotificationAppointment,
 		systemNotificationDismissKind,

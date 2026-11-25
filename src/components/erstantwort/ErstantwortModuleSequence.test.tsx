@@ -172,6 +172,68 @@ describe('ErstantwortModuleSequence (ADR-036, version-2 payload)', () => {
 		);
 	});
 
+	it('draws section links as links and a fixed module with its explanation', () => {
+		render(
+			<ErstantwortModuleSequence
+				sections={[
+					{
+						...greeting,
+						links: [
+							{ label: 'Impressum', url: 'https://example.org/i' }
+						]
+					},
+					{
+						...email,
+						title: 'Benachrichtigung per E-Mail',
+						body: 'Der Inhalt steht nie in der E-Mail.'
+					}
+				]}
+				slots={{ email: <p>E-Mail-Karte</p> }}
+			/>
+		);
+		const link = screen.getByRole('link', { name: 'Impressum' });
+		expect(link.getAttribute('href')).toBe('https://example.org/i');
+		expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+		expect(
+			screen.getByText('Der Inhalt steht nie in der E-Mail.')
+		).toBeTruthy();
+	});
+
+	it('reveals a fresh first reply bubble by bubble, as version 1 does', () => {
+		vi.useFakeTimers();
+		try {
+			const onFirstReveal = vi.fn();
+			render(
+				<ErstantwortModuleSequence
+					sections={[greeting, email]}
+					slots={{ email: <p>E-Mail-Karte</p> }}
+					skipAnimation={false}
+					staggerMs={100}
+					onFirstReveal={onFirstReveal}
+				/>
+			);
+			expect(
+				screen.queryAllByTestId('erstantwort-module-bubble')
+			).toHaveLength(0);
+			React.act(() => {
+				vi.advanceTimersByTime(100);
+			});
+			expect(
+				screen.getAllByTestId('erstantwort-module-bubble')
+			).toHaveLength(1);
+			expect(onFirstReveal).toHaveBeenCalledTimes(1);
+			React.act(() => {
+				vi.advanceTimersByTime(100);
+			});
+			expect(
+				screen.getAllByTestId('erstantwort-module-bubble')
+			).toHaveLength(2);
+			expect(onFirstReveal).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('renders every question type of a question block in its own bubble', () => {
 		render(
 			<ErstantwortModuleSequence

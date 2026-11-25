@@ -1,4 +1,5 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { acceptSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
@@ -90,6 +91,7 @@ import { useDockedComposerOffset } from '../chatStage/useDockedComposerOffset';
 import { useComposerFocus } from '../chatStage/useComposerFocus';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { KeyBackupRecoveryNoticeSlot } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -284,7 +286,10 @@ import { useSessionPassageReplies } from '../selectionReply/useSessionPassageRep
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
 import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
-import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
+import {
+	isCaseHandoverCoAccess,
+	isTeamCounsellingReader
+} from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
 	conversationActionsResetKey,
@@ -393,6 +398,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isSupervisorView =
 		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
 	const isCoAccessViewer = isCaseHandoverCoAccess(props.caseHandoverStatus);
+	// FE#2494 *4: a Teamberatung colleague reads the case like a co-access
+	// viewer, without expiry; only the assigned counsellor writes.
+	const isTeamReader =
+		!isCoAccessViewer &&
+		isTeamCounsellingReader({ activeSession, userData, type });
+	const isReadOnlyViewer = isCoAccessViewer || isTeamReader;
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -1210,6 +1221,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		sessionSupervisorsRevision
 	]);
 
+	// #2494 *6: a supervisor who took over continues the side room; import the
+	// history keys the counsellor sent (once per room and page load).
+	const supervisionSideRoomId = supervisionRoomLookup?.roomId;
+	const counsellorMatrixUserId = activeSession.item?.consultantMatrixUserId;
+	useEffect(() => {
+		if (!isSupervisor || !supervisionSideRoomId) return;
+		void acceptSupervisionHistory(
+			matrixClientService?.getClient?.(),
+			supervisionSideRoomId,
+			counsellorMatrixUserId
+		);
+	}, [
+		isSupervisor,
+		supervisionSideRoomId,
+		counsellorMatrixUserId,
+		matrixClientService
+	]);
+
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
 	// supervisor view. First choice is the marker's `counsellorDisplayName`
 	// (backend-resolved, never a real name); the by-id lookup stays as the
@@ -1257,12 +1286,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		const canWrite =
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
 		setCanWriteMessage(canWrite);
 	}, [
-		isCoAccessViewer,
+		isReadOnlyViewer,
 		type,
 		isRejectedSession,
 		isAnonymousAskerExperience,
@@ -2489,7 +2518,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
-	const { fromL } = useResponsive();
+	const { fromL, untilXS } = useResponsive();
 	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
@@ -3431,7 +3460,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		matrixRoomId: resolvedMatrixRoomId,
 		canReply:
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			!isSupervisorView &&
 			canRenderClientComposer({
 				canWriteMessage,
@@ -3543,7 +3572,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData,
 		isConsultant: isConsultantUser,
 		isSupervisorView,
-		isReadOnly: isRejectedSession || isCoAccessViewer
+		isReadOnly: isRejectedSession || isReadOnlyViewer
 	});
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
@@ -3814,6 +3843,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__threadListBar">
 							<button
 								type="button"
+								aria-expanded={isThreadListOpen}
 								className={clsx(
 									'session__threadListToggle',
 									isThreadListOpen &&
@@ -3941,6 +3971,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
+					)}
+					{!blocksConversation && untilXS && (
+						<KeyBackupRecoveryNoticeSlot />
 					)}
 					{(!shouldBlockAnonymousInquiryChat ||
 						isInAnonymousWaitingQueuePhase) &&
@@ -4160,7 +4193,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										resolveReplyQuote={resolveReplyQuote}
 										onReplyDirect={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReplyDirect
 										}
@@ -4177,13 +4210,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										reactionsFor={getReactionsFor}
 										onReact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReact
 										}
 										onUnreact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleUnreact
 										}
@@ -4411,6 +4444,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						sessionId={activeSession.item?.id}
 						canExtend={props.caseHandoverStatus?.canExtend}
 						onStatusChange={props.onCaseHandoverStatusChange}
+					/>
+				)}
+				{isTeamReader && (
+					<CaseHandoverReadOnlyNotice
+						sessionId={activeSession.item?.id}
+						ownerName={pickDisplayOrUsername(
+							activeSession.consultant
+						)}
 					/>
 				)}
 				{!isRejectedSession &&
@@ -4874,12 +4915,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
 							onReact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleReact
 							}
 							onUnreact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleUnreact
 							}
@@ -4937,7 +4978,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 				composer={
 					!isRejectedSession &&
-					!isCoAccessViewer && (
+					!isReadOnlyViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
 							placeholder={translate(

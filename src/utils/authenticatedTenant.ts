@@ -52,3 +52,16 @@ export const getAuthenticatedAccountIdentity = (): string | null => {
 		? JSON.stringify([subject, getAuthenticatedTenantId()])
 		: null;
 };
+
+/** A browser preference outlives token refreshes and belongs to one issuer. */
+export const getAuthenticatedPreferenceIdentity = (): string | null => {
+	const claims = parseJwt(getValueFromCookie('keycloak') ?? '');
+	const issuer = claims?.iss;
+	const subject = claims?.sub;
+	return typeof issuer === 'string' &&
+		issuer &&
+		typeof subject === 'string' &&
+		subject
+		? JSON.stringify([issuer, subject, getAuthenticatedTenantId()])
+		: null;
+};

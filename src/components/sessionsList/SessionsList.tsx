@@ -51,6 +51,7 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { peopleSearchHintKeys } from '../session/caseHandoverHelpers';
 import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -2973,9 +2974,9 @@ export const SessionsList = ({
 					searchPeopleStatus={caseHandoverSearch.eligibleStatus}
 					searchPeopleHint={
 						showConsultantToolbarActions
-							? translate(
-									'sessionList.toolbar.search.handoverPeopleHint'
-								)
+							? peopleSearchHintKeys(userData?.agencies)
+									.map((key) => translate(key))
+									.join(' ')
 							: undefined
 					}
 					searchPeopleCappedNote={

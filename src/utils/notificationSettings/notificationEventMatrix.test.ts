@@ -131,6 +131,7 @@ const EXPECTED_ROW: Record<
 	'supervisor.removed': { consultant: 'conversations/standard' },
 	'supervisor.assigned': { consultant: 'conversations/standard' },
 	'counselor.renamed': { asker: 'conversations/standard' },
+	'supervisor.replaced': { asker: 'conversations/standard' },
 	'topic_duplicate.started': { consultant: 'conversations/standard' },
 	'service.notice.planned': { consultant: 'conversations/standard' },
 	'session.asker_deleted': { consultant: 'conversations/standard' },

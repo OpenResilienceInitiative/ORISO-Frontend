@@ -398,6 +398,7 @@ describe('#2226 showsConversationPreview', () => {
 			'supervisor.added',
 			'supervisor.removed',
 			'supervisor.assigned',
+			'supervisor.replaced',
 			'counselor.renamed',
 			'handover.requested',
 			'case.handover.granted',

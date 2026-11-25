@@ -254,6 +254,12 @@ export const SharedAvatarOutlineWithCustomSurface: Story = {
 				'.carimatMessageFrame__avatar'
 			)!
 		];
+		// The message entrance scales the row; measure the settled frame.
+		await Promise.all(
+			canvasElement
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished)
+		);
 		for (const frame of frames) {
 			expect(frame.getBoundingClientRect().width).toBe(60);
 			expect(getComputedStyle(frame).backgroundColor).toBe(

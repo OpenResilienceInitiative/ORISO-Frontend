@@ -23,7 +23,7 @@
 
 	.loadingCard {
 		margin: 0 auto;
-		background: white;
+		background: var(--m3-surface-container-lowest, #fff);
 		width: 100%;
 		margin-bottom: 3px;
 		text-align: center;

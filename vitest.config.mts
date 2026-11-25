@@ -197,6 +197,11 @@ export default defineConfig({
 						},
 						enabled: true,
 						headless: true,
+						// Storybook 11's addon-vitest turns browser API writes off unless
+						// the project allows them. Stories save visual evidence with
+						// page.screenshot() into test-results/. The API server stays on
+						// localhost; code execution (allowExec) stays off.
+						api: { allowWrite: true },
 						provider: playwright({
 							launchOptions: { channel: 'chrome' },
 							contextOptions: {

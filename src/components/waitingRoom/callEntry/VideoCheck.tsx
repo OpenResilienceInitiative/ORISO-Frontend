@@ -136,7 +136,8 @@ export const VideoCheck = ({
 						<Typography
 							sx={{
 								display: { xs: 'none', sm: 'block' },
-								fontSize: 14,
+								fontSize:
+									'calc(0.875rem * var(--oriso-personal-text-scale, 1))',
 								fontWeight: 500,
 								color: avatar.iconColor
 							}}
@@ -151,15 +152,15 @@ export const VideoCheck = ({
 						position: 'absolute',
 						left: 12,
 						top: 12,
+						maxWidth: 'calc(100% - 24px)',
 						display: 'flex',
 						alignItems: 'center',
 						gap: 1,
 						px: 1.25,
 						py: 0.5,
 						borderRadius: '12px',
-						/* .6, not .45: white 13px text keeps 4.5:1 on any
-						   animal colour, even white (.45 gave 4.04:1). */
-						bgcolor: 'rgba(0,0,0,.6)',
+						/* White text over this scrim stays legible even on white video. */
+						bgcolor: 'rgba(0,0,0,.7)',
 						color: '#fff'
 					}}
 				>
@@ -174,11 +175,15 @@ export const VideoCheck = ({
 						<MicOffRoundedIcon sx={{ fontSize: 18 }} />
 					)}
 					<Typography
+						title={name || undefined}
 						sx={{
-							fontSize: 13,
+							fontSize:
+								'calc(0.8125rem * var(--oriso-personal-text-scale, 1))',
 							fontWeight: 600,
 							color: '#fff',
-							maxWidth: 160,
+							minWidth: 0,
+							maxWidth:
+								'calc(10rem * var(--oriso-personal-text-scale, 1))',
 							overflow: 'hidden',
 							textOverflow: 'ellipsis',
 							whiteSpace: 'nowrap'

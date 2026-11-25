@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Anzeige",
+		"accessibility": "Zugänglichkeit",
+		"textSize": "Textgröße",
+		"currentSize": "Gewählte Textgröße",
+		"smaller": "Kleiner",
+		"larger": "Größer",
+		"contrastLabel": "Kontrast",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Mittel",
+			"high": "Hoch"
+		},
+		"schemeLabel": "Farbschema",
+		"scheme": {
+			"system": "System",
+			"light": "Hell",
+			"dark": "Dunkel"
+		}
+	},
 	"addons": {
 		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
 		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
+
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"stop": "Stopp",
@@ -702,6 +722,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Ende-zu-Ende verschlüsselt",
 		"attachment": {
 			"decryption_error": "Fehler beim entschlüsseln",
 			"encrypted": "Datei für Download entschlüsseln",
@@ -2344,9 +2365,12 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision gewechselt",
-		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}."
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}.",
+		"supervisionChangedReason": "Grund: {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "Mehr",
 		"appointments": "Video - Termine",
 		"asker": {
 			"sessions": {
@@ -2560,6 +2584,10 @@
 			"supervisorAssigned": {
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision gewechselt",
+				"text": "In diesem Chat begleitet jetzt eine andere Person die Beratung als Supervision."
 			},
 			"topicDuplicateStarted": {
 				"title": "Weitere Beratung zum selben Thema",
@@ -4342,7 +4370,8 @@
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
 			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"extend": "Zugriff verlängern"
+			"extend": "Zugriff verlängern",
+			"teamNotice": "Teamberatung: Sie lesen mit. Nur {{name}} schreibt in diesem Fall Nachrichten."
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
@@ -4813,7 +4842,8 @@
 				"agencyFallback": "Beratungsstelle {{id}}",
 				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
 				"removeFilters": "Filter entfernen",
-				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten"
+				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten",
+				"teamPeopleHint": "Teamberatung: Wählen Sie eine Kolleg:in Ihrer Beratungsstelle und drücken Sie Enter. Dann sehen Sie ihre Fälle und können sie mitlesen."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -8322,6 +8352,8 @@
 			"confirm": "Wirklich entfernen?"
 		},
 		"replace": {
+			"notifyClient": "Ratsuchende über den Wechsel benachrichtigen",
+			"done": "Gewechselt: {{from}} → {{to}}. Im Supervisions-Chat steht ein Hinweis.",
 			"action": "Wechseln",
 			"labelFor": "{{name}} wechseln",
 			"title": "Wer soll {{name}} ablösen?",

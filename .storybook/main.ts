@@ -48,6 +48,24 @@ const config: StorybookConfig = {
 		'@storybook/addon-vitest'
 	],
 	framework: { name: '@storybook/react-vite', options: {} },
+	// Storybook 11 reads story order from the main config (storySorts), no longer
+	// from parameters.options.storySort in the preview.
+	storySorts: [
+		{
+			order: [
+				'Entry flows',
+				[
+					'Overview',
+					'Postcode counselling',
+					'Live chat',
+					'Self-help groups',
+					'Temporary guests',
+					'Existing account'
+				],
+				'*'
+			]
+		}
+	],
 	async viteFinal(cfg) {
 		return mergeConfig(cfg, {
 			// `../public` is already a staticDir above, and Vite's default

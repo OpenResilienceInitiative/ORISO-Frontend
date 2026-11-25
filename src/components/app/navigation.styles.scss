@@ -1115,7 +1115,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 	}
 
 	.navigation__item--active .navigation__title--figma {
-		color: var(--oriso-nav-active-border);
+		color: var(--oriso-nav-bar-pill);
 		font-weight: 600;
 
 		@include breakpoint($fromLarge) {
