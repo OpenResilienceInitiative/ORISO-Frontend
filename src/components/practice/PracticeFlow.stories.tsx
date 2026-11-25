@@ -618,38 +618,66 @@ export const CancelAnExercise: Story = {
 	}
 };
 
-export const AddASupervisor: Story = {
-	name: 'Add a supervisor · desktop',
+/** A tour anchor that `target` has waited for. */
+const anchor = (name: string) =>
+	document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`)!;
+
+/** Opens the header "+" of the open case and picks an entry of its menu. */
+const pickPlusMenuEntry = async (
+	entry: 'Supervisor verwalten' | 'Beratung übergeben'
+) => {
+	await userEvent.click(await target('session-supervisor-add'));
+	await userEvent.click(
+		await screen.findByRole('menuitem', { name: new RegExp(entry) }, SLOW)
+	);
+};
+
+/** Picks an option of a real select inside a dialog. */
+const choose = async (
+	select: HTMLElement,
+	option: (name: string) => boolean
+) => {
+	await userEvent.click(within(select).getByRole('combobox'));
+	const options = await screen.findAllByRole('option', {}, SLOW);
+	await userEvent.click(
+		options.find((element) => option(element.textContent ?? ''))!
+	);
+};
+
+export const HandOverCases: Story = {
+	name: 'Hand over cases · desktop',
 	parameters: {
 		docs: {
 			description: {
-				story: 'Starts "Übung: Supervision hinzufügen" from Help, adds Robin through the real picker, reads the reply in the supervision thread, and finishes back on Help. No practice write reaches the real network, Matrix service or browser storage.'
+				story: 'Starts "Fälle übergeben" from Help with the practice area open (FE#2545). In the accepted practice case the counsellor adds Robin through "+" → "Supervisor verwalten" (the former card "Supervisor hinzufügen"), offers the case to Alex through "+" → "Beratung übergeben", searches "Alex" in the sessions list, clicks "Zugriff anfragen" on Alex\'s case and sends the request through the curtain. Every handover request is answered in memory; only the completed progress is written.'
 			}
 		}
 	},
 	play: async ({ canvas, step }) => {
+		const of = 10;
 		const storageBefore = storageSnapshot();
-		await step('Start supervision from its Help card', async () => {
+		await step('Start "Fälle übergeben" from its Help card', async () => {
 			const card = (
 				await canvas.findByRole(
 					'heading',
-					{ name: 'Übung: Supervision hinzufügen' },
+					{ name: 'Fälle übergeben' },
 					SLOW
 				)
 			).closest('li')!;
 			await userEvent.click(
-				within(card).getByRole('button', { name: 'Übung starten' })
+				within(card).getByRole('button', { name: 'Starten' })
 			);
 		});
+		await step('1: Read that this is an exercise', async () => {
+			await expectStep(1, of);
+			await expect(getPracticeSnapshot().status).toBe('active');
+			await next();
+		});
 		await step(
-			'1: Choose Robin, enter a reason and add the supervisor',
+			'2: "+" → "Supervisor verwalten": choose Robin and add him',
 			async () => {
-				await expectStep(1, 4);
-				await expect(getPracticeSnapshot().status).toBe('active');
-				await expect(
-					canvas.queryByLabelText('Klassisches Design')
-				).toBeNull();
-				await userEvent.click(await target('session-supervisor-add'));
+				await expectStep(2, of);
+				await pickPlusMenuEntry('Supervisor verwalten');
 				await userEvent.click(
 					await screen.findByRole(
 						'button',
@@ -668,7 +696,6 @@ export const AddASupervisor: Story = {
 						name: 'Robin (Übung) hinzufügen'
 					})
 				);
-				// Practice closes the dialog, so the next step's panel is visible.
 				await waitFor(
 					() =>
 						expect(
@@ -678,37 +705,156 @@ export const AddASupervisor: Story = {
 				);
 			}
 		);
-		await step(
-			'2: Read the supervisor reply in the side thread',
-			async () => {
-				await expectStep(2, 4);
-				await target('supervision-panel');
-				await waitFor(async () => {
-					await expect(
-						document.querySelector(
-							'[data-tour-target="supervision-panel"]'
-						)?.textContent
-					).toContain('Das klingt gut so.');
-				}, SLOW);
+		await step("3: Read Robin's reply in the side thread", async () => {
+			await expectStep(3, of);
+			await waitFor(async () => {
 				await expect(
-					document.querySelector('.chatStage__mainPane')?.textContent
-				).not.toContain('Das klingt gut so.');
-				await next();
-			}
-		);
-		await step('3: Read the standing assignment explanation', async () => {
-			await expectStep(3, 4);
+					document.querySelector(
+						'[data-tour-target="supervision-panel"]'
+					)?.textContent
+				).toContain('Das klingt gut so.');
+			}, SLOW);
 			await next();
 		});
 		await step(
-			'4: Finish and return to Help without outbound writes',
+			'4: "+" → "Beratung übergeben": Alex, a reason, "Übergabe anbieten"',
 			async () => {
-				await expectStep(4, 4);
+				await expectStep(4, of);
+				await pickPlusMenuEntry('Beratung übergeben');
+				const dialog = await screen.findByTestId(
+					'supervisor-dialog',
+					{},
+					SLOW
+				);
+				await choose(
+					within(dialog).getByTestId('supervisor-dialog-person'),
+					(name) => name.startsWith('Alex (Übung)')
+				);
+				await choose(
+					within(dialog).getByTestId('supervisor-dialog-reason'),
+					(name) => name.trim() !== '' && !/auswählen/i.test(name)
+				);
+				await userEvent.click(
+					within(dialog).getByRole('button', {
+						name: 'Übergabe anbieten'
+					})
+				);
+			}
+		);
+		await step(
+			'5: The offer waits for Alex; close its dialog',
+			async () => {
+				await expectStep(5, of);
+				const state = await screen.findByTestId(
+					'case-handover-state-dialog',
+					{},
+					SLOW
+				);
+				// The dialog fades in.
+				await waitFor(
+					() =>
+						expect(
+							within(state).getByRole('button', {
+								name: 'Angebot zurückziehen'
+							})
+						).toBeVisible(),
+					SLOW
+				);
+				await userEvent.click(
+					within(state)
+						.getAllByRole('button', { name: 'Schließen' })
+						.at(-1)!
+				);
+				await next();
+			}
+		);
+		await step('6: Search "Alex" in the sessions list', async () => {
+			await expectStep(6, of);
+			await target('sessions-search');
+			const search = anchor('sessions-search');
+			if (!search.querySelector('input')) {
+				await userEvent.click(
+					within(search).getByRole('button', {
+						name: 'Suchergebnisse öffnen oder schließen'
+					})
+				);
+			}
+			await userEvent.type(
+				await waitFor(() => {
+					const input = search.querySelector('input');
+					expect(input).not.toBeNull();
+					return input!;
+				}, SLOW),
+				'Alex'
+			);
+		});
+		await step('7: "Zugriff anfragen" on Alex\'s case', async () => {
+			await expectStep(7, of);
+			await target('case-handover-request-access');
+			const action = anchor('case-handover-request-access');
+			await userEvent.click(
+				action.matches('button')
+					? action
+					: within(action).getAllByRole('button')[0]
+			);
+		});
+		await step(
+			'8: The curtain: a reason, a short text, "Zugriff anfragen"',
+			async () => {
+				await expectStep(8, of);
+				await target('case-handover-curtain');
+				const curtain = anchor('case-handover-curtain');
+				await userEvent.click(
+					within(curtain).getByRole('button', {
+						name: 'Schritt für Schritt zeigen'
+					})
+				);
+				await userEvent.click(
+					(await within(curtain).findAllByRole('radio', {}, SLOW))[0]
+				);
+				const forward = () =>
+					document.querySelector<HTMLButtonElement>(
+						'[data-cy="case-handover-curtain-next"]'
+					)!;
+				await userEvent.click(forward());
+				await userEvent.type(
+					await waitFor(() => {
+						const field = document.querySelector<HTMLElement>(
+							'[data-cy="case-handover-curtain-explanation"]'
+						);
+						expect(field).not.toBeNull();
+						return field!;
+					}, SLOW),
+					'Ich vertrete Alex in dieser Woche.'
+				);
+				await userEvent.click(forward());
+				await waitFor(
+					() =>
+						expect(curtain.textContent).toContain(
+							'Warten auf Freigabe'
+						),
+					SLOW
+				);
+			}
+		);
+		await step('9: Where the status shows', async () => {
+			await expectStep(9, of);
+			await next();
+		});
+		await step(
+			`${of}: Finish and return to Help without outbound writes`,
+			async () => {
+				await expectStep(of, of);
 				await expect(
 					getPracticeNetworkGuard()?.blockedRequests
 				).toEqual([]);
 				await next('Fertig');
 				await expectExited(canvas, storageBefore);
+				await expect(
+					requestLog.filter(({ url }) =>
+						url.includes('case-handover')
+					)
+				).toEqual([]);
 			}
 		);
 	}
@@ -732,25 +878,28 @@ export const SupervisorPickerWithKeyboard: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Uses only Tab, Enter and typing to start supervision, reach the real add button, choose Robin in the modal, and end practice while the picker is open. The permanent banner stays accessible and no practice data leaves the page.'
+				story: 'Uses only Tab, Enter and typing to start "Fälle übergeben", open "+" → "Supervisor verwalten", choose Robin in the modal, and end practice while the picker is open. The permanent banner stays accessible and no practice data leaves the page.'
 			}
 		}
 	},
 	play: async ({ canvas, step }) => {
 		const storageBefore = storageSnapshot();
-		await step('Start supervision with Tab and Enter', async () => {
+		await step('Start "Fälle übergeben" with Tab and Enter', async () => {
 			const card = (
 				await canvas.findByRole(
 					'heading',
-					{ name: 'Übung: Supervision hinzufügen' },
+					{ name: 'Fälle übergeben' },
 					SLOW
 				)
 			).closest('li')!;
+			await tabTo(within(card).getByRole('button', { name: 'Starten' }));
+			await userEvent.keyboard('{Enter}');
+			await expectStep(1, 10);
 			await tabTo(
-				within(card).getByRole('button', { name: 'Übung starten' })
+				within(await tooltip()).getByRole('button', { name: 'Weiter' })
 			);
 			await userEvent.keyboard('{Enter}');
-			await expectStep(1, 4);
+			await expectStep(2, 10);
 			await waitFor(
 				() =>
 					expect(document.activeElement).toBe(
@@ -766,8 +915,15 @@ export const SupervisorPickerWithKeyboard: Story = {
 			);
 		});
 		await step(
-			'Open the picker, choose Robin and type the reason with the keyboard',
+			'Open "+" → "Supervisor verwalten", choose Robin and type the reason with the keyboard',
 			async () => {
+				await userEvent.keyboard('{Enter}');
+				const entry = await screen.findByRole(
+					'menuitem',
+					{ name: /Supervisor verwalten/ },
+					SLOW
+				);
+				await waitFor(() => expect(entry).toHaveFocus(), SLOW);
 				await userEvent.keyboard('{Enter}');
 				const robin = await screen.findByRole(
 					'button',
