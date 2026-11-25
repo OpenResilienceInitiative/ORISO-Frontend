@@ -154,3 +154,19 @@ $control-focus-ring-color: $focus-ring-color !default;
 	outline: $focus-ring-width solid $focus-ring-on-fill-color;
 	outline-offset: -($focus-ring-width + $inset);
 }
+
+// One row of a phone menu sheet (the "More" sheet, the language list):
+// size, padding, shape and resting surface. Selected and current-route
+// colours stay with each list.
+@mixin menu-sheet-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	inline-size: 100%;
+	min-block-size: 52px;
+	padding: 0.375rem 0.75rem;
+	border-radius: 1rem;
+	background: var(--m3-surface, #fcf9f9);
+	color: var(--m3-on-surface, #1b1b1c);
+	text-align: start;
+}

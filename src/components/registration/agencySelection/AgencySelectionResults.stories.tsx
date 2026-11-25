@@ -1,4 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../../utils/theme/wcagContrast';
 import { AgencySelectionResults } from './AgencySelectionResults';
 import type { AgencyDataInterface } from '../../../globalState/interfaces';
 import { ORISO_M3_FIGMA_URL } from '../../storybookDesignLinks';
@@ -56,6 +61,59 @@ export const OnlyExternal: Story = {
 			} as AgencyDataInterface
 		]
 	}
+};
+
+const checkDarkHighContrast: NonNullable<Story['play']> = async ({
+	canvasElement
+}) => {
+	const canvas = within(canvasElement);
+	const heading = canvas.getByRole('heading', { level: 5 });
+	const card = heading.parentElement;
+	if (!card) throw new Error('The result heading has no card');
+	const description = within(card).getByRole('paragraph');
+	const action = within(card).getByRole('link');
+
+	await waitFor(() => {
+		const root = canvasElement.ownerDocument.documentElement;
+		expect(root.dataset.orisoPersonalScheme).toBe('dark');
+		expect(root.dataset.orisoContrastLevel).toBe('high');
+		for (const text of [heading, description, action]) {
+			const { color, fontSize, fontWeight } = getComputedStyle(text);
+			const size = Number.parseFloat(fontSize);
+			const largeText =
+				size >= 24 ||
+				(size >= (14 * 4) / 3 && Number(fontWeight) >= 700);
+			expect(
+				wcagContrast(color, effectiveBackground(text)),
+				text.textContent ?? ''
+			).toBeGreaterThanOrEqual(largeText ? 4.5 : 7);
+		}
+	});
+};
+
+export const NoResultsDarkHigh: Story = {
+	...NoResults,
+	name: 'Keine Online-Beratungsstelle gefunden · Dunkel und Hoch',
+	globals: { scheme: 'dark', contrast: 'high' },
+	play: async (context) => {
+		await checkDarkHighContrast(context);
+		await waitFor(
+			() => {
+				const artwork = context.canvasElement.querySelector(
+					'[data-animated-illustration="search"] svg'
+				);
+				expect(artwork?.querySelector('path')).toBeTruthy();
+			},
+			{ timeout: 6000 }
+		);
+	}
+};
+
+export const OnlyExternalDarkHigh: Story = {
+	...OnlyExternal,
+	name: 'Nur externe Beratungsstellen · Dunkel und Hoch',
+	globals: { scheme: 'dark', contrast: 'high' },
+	play: checkDarkHighContrast
 };
 
 export const TeamAndSingle: Story = {

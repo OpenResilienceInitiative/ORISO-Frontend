@@ -1,32 +1,12 @@
-.downloadICSFile {
-	&--flex {
-		display: flex;
+.downloadICSFile .button__item {
+	align-items: center;
+	display: inline-flex;
+	gap: $grid-base;
+	min-height: 44px;
 
-		svg {
-			min-width: 20px;
-		}
-	}
-
-	&--primary {
-		color: var(--oriso-primary-text, var(--m3-primary, $primary));
-	}
-
-	&__icon {
-		&--mobile {
-			display: flex;
-			margin-top: 0.5rem;
-
-			@include breakpoint($fromLarge) {
-				display: none;
-			}
-
-			p {
-				margin-left: 0.5rem;
-			}
-		}
-	}
-
-	&__text {
-		margin-left: 0.5rem;
+	svg {
+		flex: 0 0 auto;
+		margin: 0;
+		min-width: 20px;
 	}
 }

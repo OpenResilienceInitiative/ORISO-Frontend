@@ -1,7 +1,7 @@
 // @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -11,6 +11,7 @@ import {
 	CheckAnimation,
 	EmailSentAnimation
 } from './AnimatedIllustration';
+import { THEME_APPLIED_EVENT } from '../../utils/theme/themeEvents';
 
 vi.mock('lottie-react', () => ({
 	default: ({ animationData }: { animationData: Record<string, any> }) => (
@@ -115,6 +116,26 @@ describe('AnimatedIllustration', () => {
 		expect(colors).toContain('#a5000a');
 		expect(colors).toContain('#444748');
 		expect(colors).not.toContain('#33cccc');
+	});
+
+	it('updates existing SVG animation roles when the shared palette changes', () => {
+		stubReducedMotion(false);
+		const { container } = render(<CheckAnimation />);
+		const role = '--oriso-lottie-success-accent-color';
+		const html = document.documentElement;
+		try {
+			act(() => {
+				html.style.setProperty(role, '#ffb4aa');
+				window.dispatchEvent(new Event(THEME_APPLIED_EVENT));
+			});
+			expect(
+				container
+					.querySelector('[data-lottie="true"]')
+					?.getAttribute('data-colors')
+			).toContain('#ffb4aa');
+		} finally {
+			html.style.removeProperty(role);
+		}
 	});
 
 	it('renders the static illustration when the user prefers reduced motion', () => {

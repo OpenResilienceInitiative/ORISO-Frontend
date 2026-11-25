@@ -19,7 +19,7 @@ import './emojiPickerPopup.styles.scss';
 // emoji-picker-react is ~200KB of emoji data — load it only when opened.
 const EmojiPicker = lazyWithReload(() => import('emoji-picker-react'));
 
-/** Keep light chrome even when the OS prefers dark (avoids #835 dark clip). */
+/** Use one vendor base so the ORISO palette also controls manual scheme switches. */
 const LIGHT_THEME = 'light' as Theme;
 
 const PICKER_WIDTH = 320;
@@ -35,6 +35,8 @@ export interface EmojiPickerPopupProps {
 	 * clipping (#835).
 	 */
 	anchorEl: HTMLElement | null;
+	/** The launcher when the popup is positioned against a larger container. */
+	returnFocusEl?: HTMLElement | null;
 	/**
 	 * Overrides the `direction`-derived placement. The message action menu
 	 * passes a side placement so the picker opens *beside* the menu instead of
@@ -53,6 +55,7 @@ export const EmojiPickerPopup = ({
 	onPick,
 	onClose,
 	anchorEl,
+	returnFocusEl = anchorEl,
 	placement
 }: EmojiPickerPopupProps) => {
 	const { t } = useTranslation();
@@ -146,7 +149,13 @@ export const EmojiPickerPopup = ({
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
 				event.preventDefault();
+				const dismissingFromPicker = popupRef.current?.contains(
+					document.activeElement
+				);
 				onClose();
+				if (dismissingFromPicker) {
+					returnFocusEl?.focus({ preventScroll: true });
+				}
 			}
 		};
 		document.addEventListener('pointerdown', handlePointerDown);
@@ -155,7 +164,7 @@ export const EmojiPickerPopup = ({
 			document.removeEventListener('pointerdown', handlePointerDown);
 			document.removeEventListener('keydown', handleKeyDown);
 		};
-	}, [onClose]);
+	}, [onClose, returnFocusEl]);
 
 	if (typeof document === 'undefined') {
 		return null;

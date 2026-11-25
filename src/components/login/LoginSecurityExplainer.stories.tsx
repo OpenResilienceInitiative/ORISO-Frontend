@@ -51,7 +51,7 @@ export const Desktop: Story = {
 
 export const MobileSheet: Story = {
 	render: () => <Card />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: { viewport: { value: 'mobile1', isRotated: false } }
 };
 
 /**

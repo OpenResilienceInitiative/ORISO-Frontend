@@ -5,6 +5,7 @@ import { CircularProgress } from '@mui/material';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { OrisoTextarea } from '../form/OrisoTextarea';
+import { M3Checkbox } from '../M3Checkbox';
 import { UserAvatar } from '../message/UserAvatar';
 import {
 	ManagedPeopleSource,
@@ -51,6 +52,8 @@ export const ManagePeopleDialog = ({
 	const [chosen, setChosen] = useState<PersonCandidate | null>(null);
 	const [reason, setReason] = useState('');
 	const [reasonMissing, setReasonMissing] = useState(false);
+	/** #2494 *6: tell the advice seeker about a replacement (default yes). */
+	const [notifyClient, setNotifyClient] = useState(true);
 	const [replacing, setReplacing] = useState<ManagedPerson | null>(null);
 	const [confirmingRemove, setConfirmingRemove] = useState<string | null>(
 		null
@@ -63,6 +66,7 @@ export const ManagePeopleDialog = ({
 		setReasonMissing(false);
 		setReplacing(null);
 		setQuery('');
+		setNotifyClient(true);
 	};
 
 	useEffect(() => {
@@ -95,7 +99,12 @@ export const ManagePeopleDialog = ({
 			setReasonMissing(true);
 			return;
 		}
-		const input = source.requiresReason ? { reason: trimmed } : {};
+		const input = {
+			...(source.requiresReason ? { reason: trimmed } : {}),
+			...(replacing && source.replaceCanNotifyClient
+				? { notifyClient }
+				: {})
+		};
 		const done = replacing
 			? await people.replacePerson(replacing, candidate, input)
 			: await people.addPerson(candidate, input);
@@ -331,6 +340,14 @@ export const ManagePeopleDialog = ({
 					}
 				}}
 			/>
+			{replacing && source.replaceCanNotifyClient && (
+				<M3Checkbox
+					checked={notifyClient}
+					onChange={setNotifyClient}
+					label={shared('replace.notifyClient')}
+					dataCy="manage-people-notify-client"
+				/>
+			)}
 			<div className="managePeople__chosenActions">
 				<button
 					type="button"
@@ -458,6 +475,11 @@ export const ManagePeopleDialog = ({
 			)}
 			<p role="status" className="managePeople__success">
 				{people.added && copy('added', { name: people.added.name })}
+				{people.replaced &&
+					shared('replace.done', {
+						from: people.replaced.from,
+						to: people.replaced.to
+					})}
 			</p>
 		</>
 	);

@@ -103,3 +103,17 @@ export const AfterExtend: Story = {
 		await waitFor(() => expect(canvas.queryByRole('button')).toBeNull());
 	}
 };
+
+/**
+ * FE#2494 (Frank, 24 Nov): in a Teamberatung centre a colleague reads the
+ * case of the counsellor they found in the search. Standing access: no
+ * expiry, no extension; only the owner writes.
+ */
+export const TeamCounselling: Story = {
+	args: { ownerName: 'Ingrid K.', canExtend: true, sessionId: 5 },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('status')).toHaveTextContent('Ingrid K.');
+		await expect(canvas.queryByRole('button')).toBeNull();
+	}
+};

@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Görünüm",
+		"accessibility": "Erişilebilirlik",
+		"textSize": "Metin boyutu",
+		"currentSize": "Seçilen metin boyutu",
+		"smaller": "Küçült",
+		"larger": "Büyüt",
+		"contrastLabel": "Kontrast",
+		"contrast": {
+			"standard": "Standart",
+			"medium": "Orta",
+			"high": "Yüksek"
+		},
+		"schemeLabel": "Renk düzeni",
+		"scheme": {
+			"system": "Sistem",
+			"light": "Açık",
+			"dark": "Koyu"
+		}
+	},
 	"addons": {
 		"loadError": "Bu eklenti yüklenemedi.",
 		"notAvailable": "Bu eklenti kullanılamıyor.",
@@ -151,7 +171,7 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-			"mobileHeadline": "Endişeleriniz için burada yer var.",
+
 			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"stop": "Dur",
@@ -707,6 +727,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Uçtan uca şifreli",
 		"attachment": {
 			"decryption_error": "Şifre çözme sırasında hata",
 			"encrypted": "İndirmek için dosyanın şifresini çözme",
@@ -2323,9 +2344,12 @@
 			}
 		},
 		"supervisionChangedTitle": "Süpervizyon değiştirildi",
-		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor."
+		"supervisionChangedDescription": "{{name}} artık bu sohbeti {{from}} yerine süpervize ediyor.",
+		"supervisionChangedReason": "Gerekçe: {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "Gezinme",
+		"mobileMore": "Diğer",
 		"appointments": "Video - Tarihler",
 		"asker": {
 			"sessions": {
@@ -2539,6 +2563,10 @@
 			"supervisorAssigned": {
 				"title": "Süpervizör atandı",
 				"text": "Bu vakaya bir süpervizör atandı."
+			},
+			"supervisorReplaced": {
+				"title": "Süpervizyon değişti",
+				"text": "Bu sohbetteki danışmanlığa artık başka bir kişi süpervizyon veriyor."
 			},
 			"topicDuplicateStarted": {
 				"title": "Aynı konuda başka bir danışmanlık",
@@ -4322,7 +4350,8 @@
 		"readOnly": {
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
 			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
-			"extend": "Erişimi uzat"
+			"extend": "Erişimi uzat",
+			"teamNotice": "Ekip danışmanlığı: Bu vakayı okuyorsunuz. Bu vakada yalnızca {{name}} mesaj yazar."
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
@@ -4779,7 +4808,8 @@
 				"agencyFallback": "Danışma merkezi {{id}}",
 				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
 				"removeFilters": "Filtreleri kaldır",
-				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru",
+				"teamPeopleHint": "Ekip danışmanlığı: Danışma merkezinizden bir meslektaş seçin ve vakalarını görmek ve takip etmek için Enter'a basın."
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"
@@ -8332,6 +8362,8 @@
 			"confirm": "Gerçekten çıkarılsın mı?"
 		},
 		"replace": {
+			"notifyClient": "Danışanı değişiklik hakkında bilgilendir",
+			"done": "Değiştirildi: {{from}} → {{to}}. Süpervizyon sohbetinde bir not var.",
 			"action": "Değiştir",
 			"labelFor": "{{name}} değiştir",
 			"title": "{{name}} yerine kim geçsin?",

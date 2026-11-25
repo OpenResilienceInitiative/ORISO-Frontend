@@ -1,5 +1,9 @@
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
-import { SYSTEM_NOTIFICATION_FIRST_RESPONSE } from './erstantwortPayload';
+import {
+	normaliseLinks,
+	SYSTEM_NOTIFICATION_FIRST_RESPONSE,
+	type ErstantwortLink
+} from './erstantwortPayload';
 
 /**
  * ADR-036 decision 8: the version-2 Erstantwort payload.
@@ -79,6 +83,8 @@ export interface ErstantwortQuestion {
 
 interface SectionBase {
 	id: string;
+	/** Link targets of the text (privacy, imprint, links the editor wrote). */
+	links?: ErstantwortLink[];
 }
 
 export interface ErstantwortMessageSection extends SectionBase {
@@ -98,6 +104,8 @@ export interface ErstantwortPanelSection extends SectionBase {
 export interface ErstantwortFixedSection extends SectionBase {
 	kind: 'fixed';
 	title?: string;
+	/** What the platform component is for, e.g. the e-mail explanation. */
+	body?: string;
 	module: ErstantwortFixedModule;
 }
 
@@ -192,21 +200,29 @@ const normaliseSection = (raw: unknown): ErstantwortSection | null => {
 	const body = text(source.body);
 	const display: ErstantwortDisplay =
 		source.display === 'open' ? 'open' : 'collapsed';
+	const links = normaliseLinks(source.links);
+	const withLinks = <T extends ErstantwortSection>(section: T): T =>
+		links ? { ...section, links } : section;
 
 	switch (kind) {
 		case 'message':
-			return body ? { id, kind, body } : null;
+			return body ? withLinks({ id, kind, body }) : null;
 		case 'panel':
 			/* A panel is a titled disclosure; without a title there is nothing
 			   to tap, and without a body nothing to show. */
 			if (!title || !body) return null;
-			return source.safety === true
-				? { id, kind, title, display, body, safety: true }
-				: { id, kind, title, display, body };
+			return withLinks(
+				source.safety === true
+					? { id, kind, title, display, body, safety: true }
+					: { id, kind, title, display, body }
+			);
 		case 'fixed': {
 			const module = oneOf(ERSTANTWORT_FIXED_MODULES, source.module);
 			if (!module) return null;
-			return title ? { id, kind, module, title } : { id, kind, module };
+			const section: ErstantwortFixedSection = { id, kind, module };
+			if (title) section.title = title;
+			if (body) section.body = body;
+			return withLinks(section);
 		}
 		case 'questions': {
 			const questions = (

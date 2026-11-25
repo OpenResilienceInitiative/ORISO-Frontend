@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Text } from '../text/Text';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
 import './appointment.styles';
 import { ReactComponent as CalendarCheckIcon } from '../../resources/img/icons/calendar-check.svg';
@@ -8,7 +9,7 @@ import { formatToHHMM } from '../../utils/dateHelpers';
 import { DownloadICSFile } from '../downloadICSFile/downloadICSFile';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { parseAppointmentData } from './appointmentData';
 
 interface AppointmentPresentation {
@@ -71,6 +72,7 @@ export const Appointment = (param: {
 }) => {
 	const { t: translate } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
+	const noteId = useId();
 	const parsedData = parseAppointmentData(param.data);
 	const presentation = appointmentPresentations[param.messageType];
 
@@ -156,24 +158,27 @@ export const Appointment = (param: {
 							className="appointmentSet__note__title"
 							text={translate('message.note.title')}
 						/>
-						<Text
-							type="standard"
-							className="appointmentSet__note__descriptionText"
-							text={parsedData.note}
-						/>
+						<div id={noteId}>
+							<Text
+								type="standard"
+								className="appointmentSet__note__descriptionText"
+								text={parsedData.note}
+							/>
+						</div>
 						{parsedData.note.length > 110 && (
-							<>
-								<div
-									className="appointmentSet__note appointmentSet--flex appointmentSet--pointer"
-									onClick={() => setExpanded(!expanded)}
-								>
-									<Text
-										text={translate(translateKey)}
-										type="standard"
-										className="appointmentSet__note__showMore bookingEvents--pointer bookingEvents--primary"
-									/>
-								</div>
-							</>
+							<Button
+								type="button"
+								item={{
+									type: BUTTON_TYPES.LINK_INLINE,
+									label: translateKey
+								}}
+								className="appointmentSet__action"
+								ariaExpanded={expanded}
+								ariaControls={noteId}
+								buttonHandle={() =>
+									setExpanded((previous) => !previous)
+								}
+							/>
 						)}
 					</div>
 				)}

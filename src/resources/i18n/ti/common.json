@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "ምርኢት",
+		"accessibility": "ተበጻሕነት",
+		"textSize": "መጠን ጽሑፍ",
+		"currentSize": "ዝተመርጸ መጠን ጽሑፍ",
+		"smaller": "ኣንእስ",
+		"larger": "ኣዕቢ",
+		"contrastLabel": "ንጽጽር ብርሃን",
+		"contrast": {
+			"standard": "ልሙድ",
+			"medium": "ማእከላይ",
+			"high": "ልዑል"
+		},
+		"schemeLabel": "ሕብራዊ ስርዓት",
+		"scheme": {
+			"system": "ሲስተም",
+			"light": "ብርሃን",
+			"dark": "ጸልማት"
+		}
+	},
 	"addons": {
 		"loadError": "እዚ ተወሳኺ ክጽዓን ኣይከኣለን።",
 		"notAvailable": "እዚ ተወሳኺ ኣይርከብን።",
@@ -151,7 +171,7 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-			"mobileHeadline": "ኣብዚ ንሻቕሎትኩም ቦታ ኣሎ።",
+
 			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"stop": "ደው ኣብል",
@@ -681,6 +701,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "ካብ ጫፍ ናብ ጫፍ ብምስጢር ዝተሓለወ",
 		"attachment": {
 			"decryption_error": "ጌጋ ምፍታሕ",
 			"encrypted": "ፋይል ንምውራድ ዲክሪፕት ምግባር",
@@ -2297,9 +2318,12 @@
 			}
 		},
 		"supervisionChangedTitle": "ምክትታል ተቐይሩ",
-		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።"
+		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።",
+		"supervisionChangedReason": "ምኽንያት: {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "ዳህሳስ",
+		"mobileMore": "ተወሳኺ",
 		"appointments": "ቪድዮ - ቆጸራታት",
 		"asker": {
 			"sessions": {
@@ -2513,6 +2537,10 @@
 			"supervisorAssigned": {
 				"title": "ተቖጻጻሪ ተመዲቡ",
 				"text": "ናብዚ ጉዳይ ተቖጻጻሪ ተመዲቡ።"
+			},
+			"supervisorReplaced": {
+				"title": "ሱፐርቪዥን ተቐይሩ",
+				"text": "ኣብዚ ቻት ሕጂ ካልእ ሰብ ነቲ ምኽሪ ይቆጻጸር ኣሎ።"
 			},
 			"topicDuplicateStarted": {
 				"title": "ብተመሳሳሊ ኣርእስቲ ተወሳኺ ምኽሪ",
@@ -4296,7 +4324,8 @@
 		"readOnly": {
 			"notice": "ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
 			"noticeUntil": "ክሳብ {{until}} ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
-			"extend": "ፍቓድ ኣናውሕ"
+			"extend": "ፍቓድ ኣናውሕ",
+			"teamNotice": "ናይ ጉጅለ ምኽሪ፦ ነዚ ጉዳይ ተንብቡ ኣለኹም። ኣብዚ ጉዳይ መልእኽቲ ዝጽሕፍ {{name}} ጥራይ እዩ።"
 		},
 		"standingPreference": {
 			"label": "ቅድሚ ተወሳኺ መእተዊ ምሃብ ኩሉ ግዜ ሕተቱ",
@@ -4753,7 +4782,8 @@
 				"agencyFallback": "ማእከል ምኽሪ {{id}}",
 				"filteredOutAll": "ምድላይኩምን መጻረዪታትኩምን ንኹሉ ምኽርታት ይሓብእዎ ኣለዉ።",
 				"removeFilters": "መጻረዪታት ኣልግስ",
-				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ"
+				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ",
+				"teamPeopleHint": "ናይ ጉጅለ ምኽሪ፦ ካብ ማእከል ምኽሪኹም ሓደ መሳርሕቲ ምረጹ እሞ Enter ጠውቑ፣ ጉዳያቶም ንምርኣይን ንምክትታልን።"
 			},
 			"menu": {
 				"ariaLabel": "ዝርዝር ኣማራጺታት"
@@ -8299,6 +8329,8 @@
 			"confirm": "ብሓቂ ይውጻእ?"
 		},
 		"replace": {
+			"notifyClient": "ንሓታቲ ምኽሪ ብዛዕባ እቲ ለውጢ ኣፍልጥ",
+			"done": "ተቐይሩ: {{from}} → {{to}}። ኣብ ዕላል ቁጽጽር መዘኻኸሪ ኣሎ።",
 			"action": "ቀይር",
 			"labelFor": "{{name}} ቀይር",
 			"title": "ኣብ ክንዲ {{name}} መን ይኹን?",

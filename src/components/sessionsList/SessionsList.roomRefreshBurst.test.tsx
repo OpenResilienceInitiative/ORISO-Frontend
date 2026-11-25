@@ -50,6 +50,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 afterEach(() => {
+	vi.useRealTimers();
 	cleanup();
 });
 
@@ -142,9 +143,15 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 	const rows = () =>
 		document.body.textContent?.match(/sessionList\.user\.writeEnquiry/g)
 			?.length ?? 0;
-	await waitFor(() => expect(rows()).toBe(2));
+	// The burst is collected for 300 ms; a loaded CI runner needs more than
+	// waitFor's default 1 s around that.
+	const slow = { timeout: 5000 };
+	await waitFor(() => expect(rows()).toBe(2), slow);
 
-	act(() => {
+	// Advance the queue's debounce deterministically; the full CI suite can be
+	// too CPU-bound for a real 300 ms timer to fire inside waitFor's timeout.
+	vi.useFakeTimers();
+	await act(async () => {
 		for (let i = 0; i < 20; i += 1) {
 			messageEventEmitter.emit({
 				roomId: '!r1:oriso',
@@ -155,15 +162,12 @@ it('looks up the rooms of a message burst with one batched request', async () =>
 				timestamp: 1_000 + i
 			});
 		}
+		await vi.advanceTimersByTimeAsync(300);
 	});
 
-	await waitFor(() => expect(sessionRooms).toHaveBeenCalled());
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 400));
-	});
 	expect(sessionRooms).toHaveBeenCalledOnce();
 	expect([...sessionRooms.mock.calls[0][0]].sort()).toEqual([
 		'!r1:oriso',
 		'!r2:oriso'
 	]);
-});
+}, 15_000);

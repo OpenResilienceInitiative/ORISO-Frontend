@@ -15,6 +15,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { ManagePeopleDialog } from '../managePeople/ManagePeopleDialog';
 import { createSupervisionPeopleSource } from '../managePeople/supervisionPeopleSource';
+import { shareSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -59,6 +60,7 @@ import {
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { PersonalDisplayEntry } from '../../features/personal-display/PersonalDisplayEntry';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
 	finishAnonymousChatErrorOverlayItem,
@@ -95,7 +97,6 @@ import {
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
-import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { SessionTopic } from './SessionTopic';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -128,6 +129,7 @@ import {
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
+import { offersCaseHandoverIn } from '../session/caseHandoverHelpers';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { isPracticeId, isPracticeRoomId } from '../../practice/practiceIds';
@@ -496,12 +498,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		// The people dialog has already changed the case; the rest is
 		// non-blocking bookkeeping. The system message handles its own
 		// failure, so the dialog does not wait for the Matrix send.
-		void postSupervisorSystemMessage(
-			origin,
-			change.kind,
-			change.kind === 'replaced' ? change.to : change.name,
-			change.kind === 'replaced' ? change.from : undefined
-		).catch(() => undefined);
+		if (change.kind === 'replaced') {
+			// #2494 *6: the server posts the swap notice into the supervision
+			// side room; the case chat gets nothing. The new supervisor
+			// continues that room, so hand them its history keys (MSC4268).
+			void shareSupervisionHistory(
+				matrixClientService?.getClient?.(),
+				change.sideRoomId,
+				change.supervisorMatrixUserId
+			);
+		} else {
+			void postSupervisorSystemMessage(
+				origin,
+				change.kind,
+				change.name
+			).catch(() => undefined);
+		}
 		if (isOriginOnScreen) {
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();
@@ -1081,10 +1093,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		activeSession?.agency,
 		translate
 	);
+	const contactSheet =
+		isAskerUser &&
+		!isConsultantUser &&
+		activeSession.isSession &&
+		!isChatFinished &&
+		[STATUS_ENQUIRY, STATUS_ACTIVE].includes(activeSession.item.status) &&
+		activeSession.item.agencyId > 0
+			? { sessionId: activeSession.item.id, email: userData.email }
+			: undefined;
+	const showAskerProfile = isAskerInfoAvailable();
+	const hasConsultantTitle = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	return (
 		<div
-			className="sessionInfo"
+			className="sessionInfo sessionInfo--conversation"
 			ref={paneRef}
 			data-density={density.compact ? 'compact' : 'roomy'}
 		>
@@ -1101,10 +1127,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				)}
 				<div
 					className={clsx('sessionInfo__username', {
-						'sessionInfo__username--deactivate':
-							!isAskerInfoAvailable()
+						'sessionInfo__username--deactivate': !showAskerProfile
 					})}
 				>
+					{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+						(hasConsultantTitle && !showAskerProfile)) && (
+						<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
+					)}
 					{(() => {
 						/* The Figma pill always carries the conversation
 						   type. When supervision management is available,
@@ -1139,6 +1168,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						const canHandOverHere =
 							!untilL &&
 							!isPracticeConversation &&
+							offersCaseHandoverIn(
+								activeSession,
+								userData?.agencies
+							) &&
 							canRecommendFurtherCounselling({
 								isRejectedCase:
 									Number(activeSession.item.status) ===
@@ -1248,23 +1281,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							</div>
 						);
 					})()}
-					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
-					)}
-					{hasUserAuthority(
-						AUTHORITIES.CONSULTANT_DEFAULT,
-						userData
-					) ? (
-						isAskerInfoAvailable() ? (
-							<Link to={userProfileLink}>
-								<FittedHeaderTitle>
-									{headerTitle}
-								</FittedHeaderTitle>
-							</Link>
-						) : (
+					{hasConsultantTitle && showAskerProfile && (
+						<Link to={userProfileLink}>
 							<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
-						)
-					) : null}
+						</Link>
+					)}
 				</div>
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					!activeSession.isGroup &&
@@ -1316,6 +1337,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							</span>
 						</button>
 					)}
+				<PersonalDisplayEntry placement="conversation" />
 				<SessionMenu
 					hasUserInitiatedStopOrLeaveRequest={
 						props.hasUserInitiatedStopOrLeaveRequest
@@ -1328,7 +1350,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					teamChatToggling={props.teamChatToggling}
 					onCreateAppointment={openCreateAppointment}
 					onSendNewLink={sendNewLink}
-					isAskerInfoAvailable={isAskerInfoAvailable()}
+					isAskerInfoAvailable={showAskerProfile}
+					contactSheet={contactSheet}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
 					showMobileSupervisionAction={
@@ -1386,12 +1409,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						 * line (not raw agency.name) so an empty API name with a
 						 * tenant i18n override still shows.
 						 */
-						<div className="sessionInfo__metaInfo__content">
+						<div
+							className="sessionInfo__metaInfo__content"
+							title={agencyLine}
+						>
 							{agencyLine}
 						</div>
 					)}
 					{showMetaDetails && topic?.name && (
-						<SessionTopic name={topic.name} />
+						<SessionTopic
+							name={topic.name}
+							shortName={topic.titles?.short}
+						/>
 					)}
 					{/* FE#2494: the team chat hangs beside the topic as a
 					    pennant; the name row keeps its width for the name. */}
@@ -1432,20 +1461,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					onChange={handleSendNewLinkChange}
 				/>
 			)}
-			{isAskerUser &&
-				!isConsultantUser &&
-				activeSession.isSession &&
-				!isChatFinished &&
-				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
-					activeSession.item.status
-				) &&
-				activeSession.item.agencyId > 0 && (
-					<ContactSheetRequest
-						key={activeSession.item.id}
-						sessionId={activeSession.item.id}
-						email={userData.email}
-					/>
-				)}
 
 			<CaseHandoverOffer handover={caseHandover} presentation="dialog" />
 

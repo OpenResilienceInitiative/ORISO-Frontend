@@ -145,10 +145,9 @@ const CreateConversationFlow = ({
 	const navigate = useNavigate();
 	const location = useLocation();
 	const tenantData = useTenant();
-	const {
-		userData,
-		userData: { agencies = [] }
-	} = useContext(UserDataContext);
+	const { userData } = useContext(UserDataContext);
+	// #2523: the backend sends `agencies: null` for advice seekers.
+	const agencies = useMemo(() => userData?.agencies ?? [], [userData]);
 	const { fromL } = useResponsive();
 	const { submit, isSubmitting, errorReason, clearError } =
 		useInternalSubsetChatSubmit();

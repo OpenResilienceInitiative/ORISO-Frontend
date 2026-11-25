@@ -40,6 +40,7 @@ import {
 	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
 import {
+	MESSAGE_STORY_BACKGROUND,
 	desktop1440Globals,
 	mobileParameters,
 	phone320Globals,
@@ -117,7 +118,7 @@ function MessageItemContextDecorator({
 									padding: compact
 										? '16px 12px'
 										: '24px 16px',
-									background: '#ffffff'
+									background: MESSAGE_STORY_BACKGROUND
 								}}
 							>
 								{children}
@@ -266,6 +267,55 @@ export const ClientIn1on1Incoming: Story = {
 		}),
 		...baseHandlers
 	}
+};
+
+/** The colour an element actually sits on: the first opaque ancestor fill. */
+const backdropOf = (element: Element): string => {
+	for (let node = element.parentElement; node; node = node.parentElement) {
+		const fill = getComputedStyle(node).backgroundColor;
+		if (fill && !/rgba\(.*,\s*0\)$/.test(fill) && fill !== 'transparent') {
+			return fill;
+		}
+	}
+	return getComputedStyle(document.body).backgroundColor;
+};
+
+/**
+ * Avatar ring contract (Frontend#1134). The 6 px ring around every message
+ * avatar is cut out of the bubble in the colour of the chat canvas, so it
+ * must follow light and dark. A fixed light ring (#ebe2e2 before) shows as a
+ * white halo on the dark canvas.
+ */
+const avatarRingPlay: Story['play'] = async ({ canvasElement }) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector('.messageItem__avatar')
+		).not.toBeNull()
+	);
+	const avatar = canvasElement.querySelector(
+		'.messageItem__avatar'
+	) as HTMLElement;
+	const style = getComputedStyle(avatar);
+	// The shared chat avatar frame paints the ring with its own background
+	// through a transparent 6 px border (Frontend#2463).
+	await expect(style.borderTopWidth).toBe('6px');
+	await expect(style.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+	await expect(style.backgroundClip).toBe('border-box');
+	await expect(style.backgroundColor).toBe(backdropOf(avatar.parentElement!));
+};
+
+export const AvatarRingContractLight: Story = {
+	...ClientIn1on1Incoming,
+	name: 'Avatar ring contract · light',
+	globals: { scheme: 'light' },
+	play: avatarRingPlay
+};
+
+export const AvatarRingContractDark: Story = {
+	...ClientIn1on1Incoming,
+	name: 'Avatar ring contract · dark',
+	globals: { scheme: 'dark' },
+	play: avatarRingPlay
 };
 
 export const ClientIn1on1Outgoing: Story = {

@@ -34,12 +34,14 @@ const { GroupInfoGallery } = await import('./GroupInfoGallery');
 const stubReducedMotion = (matches: boolean) =>
 	vi.stubGlobal(
 		'matchMedia',
-		vi.fn().mockReturnValue({
-			matches,
-			media: '(prefers-reduced-motion: reduce)',
+		vi.fn().mockImplementation((query: string) => ({
+			matches: query === '(prefers-reduced-motion: reduce)' && matches,
+			media: query,
 			addEventListener: vi.fn(),
-			removeEventListener: vi.fn()
-		} as unknown as MediaQueryList)
+			removeEventListener: vi.fn(),
+			addListener: vi.fn(),
+			removeListener: vi.fn()
+		}))
 	);
 
 describe('GroupInfoGallery', () => {

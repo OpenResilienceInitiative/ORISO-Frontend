@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 
 export interface StageMobileHeroProps {
@@ -10,7 +11,7 @@ export interface StageMobileHeroProps {
 	leadingAction?: ReactNode;
 	/**
 	 * `hero` (default) is the 230px head of the login screens (design 2e):
-	 * brand row, headline, claim. `bar` is the same brand row alone on the
+	 * language and other actions, the stage title, and the tenant claim. `bar` is the same brand row alone on the
 	 * same red surface (design 8a) — the registration steps carry their own
 	 * headline per step, so the big head would only push the form down.
 	 * `branding` uses the desktop stage's title and claim for the login.
@@ -40,6 +41,10 @@ export const StageMobileHero = ({
 	const { t: translate } = useTranslation();
 	const isBar = variant === 'bar';
 	const isBranding = variant === 'branding';
+	const tenant = useTenant();
+	const title = translate('app.stage.title');
+	const shownClaim =
+		claim || tenant?.content?.claim || translate('app.claim');
 
 	return (
 		<div
@@ -61,10 +66,8 @@ export const StageMobileHero = ({
 			)}
 
 			<div className="stageMobileHero__bar">
-				{!isBranding && (
-					<span className="stageMobileHero__brand">
-						{translate('app.stage.title')}
-					</span>
+				{isBar && (
+					<span className="stageMobileHero__brand">{title}</span>
 				)}
 				<span className="stageMobileHero__actions">
 					{leadingAction}
@@ -79,16 +82,8 @@ export const StageMobileHero = ({
 
 			{!isBar && (
 				<div className="stageMobileHero__copy">
-					<h1 className="stageMobileHero__headline">
-						{translate(
-							isBranding
-								? 'app.stage.title'
-								: 'app.stage.mobileHeadline'
-						)}
-					</h1>
-					<p className="stageMobileHero__claim">
-						{claim || translate('app.claim')}
-					</p>
+					<h1 className="stageMobileHero__headline">{title}</h1>
+					<p className="stageMobileHero__claim">{shownClaim}</p>
 				</div>
 			)}
 		</div>

@@ -435,6 +435,14 @@ export const RuntimeComponent: Story = {
 	}
 };
 
+export const ContrastWithTenantAccent: Story = {
+	...RuntimeComponent,
+	name: 'Kontrast mit hellem Trägerakzent',
+	parameters: {
+		orisoSeeds: { primary: '#a5000a', accent: '#ffd700', signal: '#db005b' }
+	}
+};
+
 /**
  * Regression for #1225 / follow-up to #834: the session-list surface must use
  * the same transport-to-plain-text conversion as the Threads list.
@@ -2576,7 +2584,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'

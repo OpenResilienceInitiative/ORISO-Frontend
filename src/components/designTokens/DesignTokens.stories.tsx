@@ -463,7 +463,7 @@ export const Applied: StoryObj = {
 				row().getByText(getComputedStyle(node).fill)
 			).toHaveTextContent('rgb(1, 2, 3)');
 			if (import.meta.env.MODE === 'test') {
-				const { page } = await import('@vitest/browser/context');
+				const { page } = await import('vitest/browser');
 				await page.screenshot({
 					path: `../../../test-results/applied-token-ui-${window.innerWidth}-mismatch.png`
 				});
@@ -478,7 +478,7 @@ export const Applied: StoryObj = {
 		const previousViewport = [window.innerWidth, window.innerHeight];
 		const browser =
 			import.meta.env.MODE === 'test'
-				? await import('@vitest/browser/context')
+				? await import('vitest/browser')
 				: null;
 		const viewports = browser
 			? [
