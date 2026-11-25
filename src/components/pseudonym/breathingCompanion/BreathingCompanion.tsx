@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { breathingVoiceFor } from './breathingSpeech';
 
 // All user-facing copy, including accessible labels. Translate the entire quote
 // template; keep each placeholder once, in whichever order the language needs.
@@ -781,15 +782,19 @@ export default function BreathingCompanion({
 		utterance.rate = 0.92;
 		utterance.pitch = 0.9;
 		utterance.volume = 0.8;
-		const voices = speechSynthesis
-			.getVoices()
-			.filter((v) =>
-				v.lang
-					.toLowerCase()
-					.startsWith(utterance.lang.slice(0, 2).toLowerCase())
-			);
-		utterance.voice =
-			voices.find((v) => v.localService) || voices[0] || null;
+		// Only an on-device voice: a network voice (or the browser default)
+		// would send the cue text off the device. Without one, stay silent.
+		const voice = breathingVoiceFor(
+			speechSynthesis.getVoices(),
+			utterance.lang
+		);
+		if (!voice) {
+			voiceRef.current = false;
+			setVoice(false);
+			setAudioError(copyRef.current.voiceMissing);
+			return;
+		}
+		utterance.voice = voice;
 		spokenRef.current = utterance;
 		audioRef.current?.duck(true);
 		utterance.onend = () => {
