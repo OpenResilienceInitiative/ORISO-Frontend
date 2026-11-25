@@ -47,7 +47,9 @@ const call = vi.hoisted(() => ({
 }));
 vi.mock('../../services/CallManager', () => ({
 	callManager: {
-		getCurrentCall: () => call.current,
+		hasActiveCall: () =>
+			call.current !== null &&
+			(call.current as { state: string }).state !== 'left',
 		getWaitingCall: () => null,
 		subscribe: (listener: () => void) => {
 			call.listeners.add(listener);
@@ -150,8 +152,8 @@ it('keeps the floating sign-out notice off the screen while a call rings or runs
 	expect(
 		screen.queryByRole('button', { name: 'Abmelden und erneut anmelden' })
 	).toBeNull();
-	// The call is over: the notice is back.
-	call.current = null;
+	// Left: the call stays on record for rejoining, but the notice is back.
+	call.current = { callId: 'c1', state: 'left', isIncoming: true };
 	act(() => call.listeners.forEach((listener) => listener()));
 	expect(
 		screen.getByRole('button', { name: 'Abmelden und erneut anmelden' })

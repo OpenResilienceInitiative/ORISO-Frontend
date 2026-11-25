@@ -109,6 +109,40 @@ describe('answerOrKnock ("Annehmen")', () => {
 		expect(calls.answerCall).toHaveBeenCalledTimes(1);
 	});
 
+	it('joins the running call when the person is let in after the ringing stopped', async () => {
+		rememberDirectLinkSession(9, {
+			token: 'tok',
+			medium: 'VIDEO',
+			matrixRoomId: ROOM
+		});
+		let current: CallData | null = ringing;
+		const calls = {
+			getCurrentCall: vi.fn(() => current),
+			answerCall: vi.fn(),
+			joinExistingCall: vi.fn().mockResolvedValue('joined')
+		};
+		const mine = vi
+			.fn()
+			.mockResolvedValue({ id: 31, medium: 'VIDEO', status: 'PENDING' });
+		await answerOrKnock(ringing, calls, { asker: true, mine });
+		// The invitation's lifetime is over; the counsellor admits afterwards.
+		current = null;
+		takeAdmittedJoin(9)?.();
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(calls.answerCall).not.toHaveBeenCalled();
+		// The same call, by id and rooms: a later call is never joined.
+		expect(calls.joinExistingCall).toHaveBeenCalledWith(
+			expect.objectContaining({
+				callId: 'call-1',
+				roomRef: ROOM,
+				callRoomId: '!call:oriso',
+				state: 'running'
+			}),
+			false
+		);
+	});
+
 	it('does not answer a call that stopped ringing while the person waited', async () => {
 		rememberDirectLinkSession(9, {
 			token: 'tok',

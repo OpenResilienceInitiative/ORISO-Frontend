@@ -199,17 +199,14 @@ export const KeyBackupRecoveryBoundary = ({
  * "Abmelden und erneut anmelden" and landed on the login page instead of in
  * the call. The notice waits until the call is over.
  */
+/* A call the person left stays on record for rejoining; it is not in progress. */
+const isCallInProgress = () =>
+	callManager.hasActiveCall() || Boolean(callManager.getWaitingCall());
+
 const useCallInProgress = () => {
-	const [inProgress, setInProgress] = useState(() =>
-		Boolean(callManager.getCurrentCall() ?? callManager.getWaitingCall())
-	);
+	const [inProgress, setInProgress] = useState(isCallInProgress);
 	useEffect(() => {
-		const read = () =>
-			setInProgress(
-				Boolean(
-					callManager.getCurrentCall() ?? callManager.getWaitingCall()
-				)
-			);
+		const read = () => setInProgress(isCallInProgress());
 		read();
 		return callManager.subscribe(read);
 	}, []);

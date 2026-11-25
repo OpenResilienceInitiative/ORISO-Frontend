@@ -1,4 +1,5 @@
 import type { CallData } from '../../services/CallManager';
+import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
 import { joinOrKnock } from './callMessageKnock';
 import type { CallJoinResult, JoinOrKnockDeps } from './callMessageKnock';
 import { directLinkSessionIdOfRoom } from './directLinkEntryFlow';
@@ -7,6 +8,11 @@ import { directLinkSessionIdOfRoom } from './directLinkEntryFlow';
 export interface RingingCalls {
 	getCurrentCall: () => CallData | null;
 	answerCall: () => void;
+	/** Joins the call if the server confirms it still runs. */
+	joinExistingCall?: (
+		call: CallLifecycleMessage,
+		isGroup: boolean
+	) => Promise<CallJoinResult>;
 }
 
 /**
@@ -45,6 +51,30 @@ export const answerOrKnock = (
 		calls.answerCall();
 		return Promise.resolve('joined');
 	};
+	/*
+	 * Let in after the ringing stopped: the invitation rings for a limited
+	 * time, the counsellor may take longer to answer the knock. The call is
+	 * still there, so the person joins it; the server confirms that it is
+	 * this very call and still running, so a later call is never joined by
+	 * an old "Annehmen".
+	 */
+	const answerOrJoinRunning = async (): Promise<CallJoinResult> => {
+		const answered = await answer();
+		if (answered !== 'ended') return answered;
+		const sourceRoom = call.signalRoomId;
+		if (!calls.joinExistingCall || !sourceRoom) return 'ended';
+		return calls.joinExistingCall(
+			{
+				callId: call.callId,
+				roomRef: sourceRoom,
+				callRoomId: call.roomId,
+				state: 'running',
+				callType: call.isVideo ? 'video' : 'audio',
+				participants: []
+			},
+			Boolean(call.isGroup)
+		);
+	};
 	if (!asker) return answer();
 	const sessionId = sessionIdOfRoom([
 		call.signalRoomId,
@@ -52,5 +82,8 @@ export const answerOrKnock = (
 		call.elementCallRoomId
 	]);
 	if (sessionId === null) return answer();
-	return joinOrKnock(sessionId, answer, { ...deps, asker: true });
+	return joinOrKnock(sessionId, answerOrJoinRunning, {
+		...deps,
+		asker: true
+	});
 };
