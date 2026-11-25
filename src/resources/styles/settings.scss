@@ -332,7 +332,10 @@ $session-list-item-border-radius: 4px;
 $sessions-list-background-color-primary: #f5f5f5;
 $sessions-list-background-color-secondary: #f5f5f5;
 $session-menu-legal-links-color: white;
-$statistics-highlight-color: $primary;
+
+// Dark: the brand red reads 2.6:1 on the dark profile surface; the theme's
+// legible primary-text tone takes over there, light keeps $primary.
+$statistics-highlight-color: var(--oriso-statistics-highlight, $primary);
 $tab-border-radius: 25px;
 $tab-background-color: rgba(0, 0, 0, 0.05);
 $tab-background-color-hover: rgba(0, 0, 0, 0.2);

@@ -345,6 +345,12 @@ $profile-footer-justify-content: center !default;
 			.text {
 				margin-top: $grid-base;
 			}
+
+			// Dark: the title's icon button kept the browser's light button
+			// face (#efefef) under a light icon; it takes a dark container.
+			html[data-oriso-personal-scheme='dark'] & .button-as-link {
+				background-color: var(--m3-surface-container-highest, #353535);
+			}
 		}
 
 		.editableData {

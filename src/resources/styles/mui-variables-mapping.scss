@@ -177,6 +177,10 @@ html[data-oriso-personal-scheme='dark'] {
 	--oriso-menu-hover-surface: var(--m3-secondary-container, #3f4852);
 	--oriso-menu-hover-description: var(--m3-on-secondary-container, #dae3f0);
 	--oriso-quiet-text: var(--m3-on-surface-variant, #c4c7c8);
+	--oriso-statistics-highlight: var(
+		--oriso-primary-text,
+		var(--m3-primary, #ffb4aa)
+	);
 
 	// Outlines: the pastel `-fixed` pinks stay light in dark, so thin lines
 	// turn neutral and selection/focus rings take the scheme's primary.
