@@ -3426,9 +3426,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Als CSV herunterladen",
 					"label": "Download Excel Datei"
 				},
 				"filename": "Statistik Online-Beratung",
+				"hintMonth": "Eine Zeile pro Woche und eine Summenzeile. Lässt sich auch in Excel öffnen.",
+				"hintWeek": "Eine Zeile pro Tag und eine Summenzeile. Lässt sich auch in Excel öffnen.",
+				"hintYear": "Eine Zeile pro Monat und eine Summenzeile. Lässt sich auch in Excel öffnen.",
 				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:",
 				"total": "Gesamt"
 			},
@@ -3445,7 +3449,20 @@
 				"period": "Zeitraum",
 				"videoCallDuration": "Dauer von Video-Calls in Minuten:Sekunden"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Abgesagt",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "Vor Ort",
+				"numberOfPhoneAppointments": "Telefon",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Dieser Monat",
+					"currentWeek": "Diese Woche",
+					"lastMonth": "Letzter Monat",
+					"lastWeek": "Letzte Woche"
+				},
 				"currentMonth": "diesen Monat",
 				"currentWeek": "diese Woche",
 				"currentYear": "dieses Jahr",
@@ -3457,7 +3474,17 @@
 				"lastMonth": "letzten Monat",
 				"lastWeek": "letzte Woche",
 				"lastYear": "letztes Jahr",
-				"prefix": "Ihre Zahlen für"
+				"offsetLabel": "Zeitraum",
+				"prefix": "Ihre Zahlen für",
+				"unitLabel": "Zeiteinheit",
+				"unitMonth": "Monat",
+				"unitWeek": "Woche",
+				"unitYear": "Jahr"
+			},
+			"state": {
+				"empty": "In diesem Zeitraum gibt es noch keine Zahlen.",
+				"error": "Die Zahlen konnten gerade nicht geladen werden.",
+				"retry": "Erneut versuchen"
 			},
 			"title": "Meine Statistik"
 		},
