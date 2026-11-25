@@ -3235,9 +3235,6 @@
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
 	},
-	"dashboard": {
-		"title": "Dein Überblick"
-	},
 	"temporaryAccount": {
 		"keepDialog": {
 			"title": "Sollen deine Nachrichten bleiben?",

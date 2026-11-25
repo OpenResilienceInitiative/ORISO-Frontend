@@ -7457,18 +7457,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Genel bakışınız",
-		"stats": {
-			"title": "Danışmanlıklar",
-			"period": "Son 30 gün",
-			"assigned": "Yeni üstlenilen",
+		"quiet": {
 			"active": "Aktif",
-			"archived": "Arşivlenen",
-			"sentMessages": "Gönderilen mesajlar"
-		},
-		"circles": {
-			"title": "Yaklaşan öz yardım grupları",
-			"assignedCounsellors": "Danışman ekibi: {{count}}"
+			"assigned": "Yeni devralınan (30 gün)"
 		}
 	},
 	"temporaryAccount": {

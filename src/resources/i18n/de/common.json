@@ -7447,18 +7447,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Ihr Überblick",
-		"stats": {
-			"title": "Beratungen",
-			"period": "Letzte 30 Tage",
-			"assigned": "Neu übernommen",
+		"quiet": {
 			"active": "Aktiv",
-			"archived": "Archiviert",
-			"sentMessages": "Gesendete Nachrichten"
-		},
-		"circles": {
-			"title": "Nächste Gesprächskreise",
-			"assignedCounsellors": "Beratungsteam: {{count}}"
+			"assigned": "Neu übernommen (30 Tage)"
 		}
 	},
 	"temporaryAccount": {
