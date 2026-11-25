@@ -791,9 +791,15 @@ export const Supervision: Story = {
 			// The same system line the server posts after a replace
 			// (#2494 *6), built locally in the practice room.
 			const panel = within(await target('supervision-panel'));
-			await expect(
-				await panel.findByText('Supervision gewechselt', {}, SLOW)
-			).toBeVisible();
+			// The message item mounts at opacity 0 and fades in
+			// (appearMessageItem, with a stagger delay), so the line is found
+			// before it shows. Wait for it to show, not just to exist.
+			const swapTitle = await panel.findByText(
+				'Supervision gewechselt',
+				{},
+				SLOW
+			);
+			await waitFor(() => expect(swapTitle).toBeVisible(), SLOW);
 			await expect(
 				panel.getByText(
 					/Kim \(Übung\) supervidiert diesen Chat jetzt anstelle von Robin \(Übung\)\./
