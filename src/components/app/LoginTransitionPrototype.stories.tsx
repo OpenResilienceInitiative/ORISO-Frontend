@@ -7,7 +7,6 @@ import {
 	useState,
 	useSyncExternalStore
 } from 'react';
-import { createPortal } from 'react-dom';
 import { expect, waitFor } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
@@ -184,7 +183,6 @@ const LoginTransitionPrototype = ({
 	const [matrixFailed, setMatrixFailed] = useState(false);
 	const [matrixActive, setMatrixActive] = useState(false);
 	const formRef = useRef<HTMLFormElement>(null);
-	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const scene = useRef<ReturnType<
 		typeof import('./loginMatrixDissolve').startLoginMatrix
 	> | null>(null);
@@ -194,7 +192,6 @@ const LoginTransitionPrototype = ({
 	const formAvailable = phase === 'form';
 	const displayValues = matrix && !formAvailable;
 	const showingMatrix = displayValues && phase !== 'app';
-	const panel = formRef.current?.closest('.stageLayout__contentWrapper');
 
 	useEffect(() => {
 		if (!waiting) return;
@@ -216,14 +213,13 @@ const LoginTransitionPrototype = ({
 	};
 
 	useLayoutEffect(() => {
-		const canvas = canvasRef.current;
 		const form = formRef.current;
-		if (!showingMatrix || !canvas || !form || reduce) return;
+		if (!showingMatrix || !form || reduce) return;
 		let stopped = false;
 		void loadMatrixDissolve()
 			.then(({ startLoginMatrix }) => {
 				if (stopped || !form.closest('[data-phase="loading"]')) return;
-				scene.current = startLoginMatrix(canvas, form);
+				scene.current = startLoginMatrix(form);
 				setMatrixActive(true);
 			})
 			.catch(() => {
@@ -303,23 +299,13 @@ const LoginTransitionPrototype = ({
 											color: 'var(--m3-on-surface)'
 										}}
 									>
-										<span data-cipher-at={965}>
-											{t('login.headline')}
-										</span>
+										<span>{t('login.headline')}</span>
 									</Typography>
 									<OrisoTextField
 										label={
-											<span data-cipher-at={1000}>
-												{t('login.user.label')}
-											</span>
+											<span>{t('login.user.label')}</span>
 										}
 										value={DEMO_USERNAME}
-										inputProps={{
-											'data-binary-username': true,
-											'data-cipher-length':
-												DEMO_USERNAME.length,
-											'data-cipher-input': 855
-										}}
 										InputProps={{
 											readOnly: true,
 											startAdornment: (
@@ -331,17 +317,12 @@ const LoginTransitionPrototype = ({
 									/>
 									<OrisoTextField
 										label={
-											<span data-cipher-at={1035}>
+											<span>
 												{t('login.password.label')}
 											</span>
 										}
 										value={DEMO_PASSWORD}
 										type="password"
-										inputProps={{
-											'data-cipher-length':
-												DEMO_PASSWORD.length,
-											'data-cipher-input': 890
-										}}
 										InputProps={{
 											readOnly: true,
 											startAdornment: (
@@ -355,8 +336,6 @@ const LoginTransitionPrototype = ({
 										variant="body2"
 										sx={secondaryText}
 										textAlign="left"
-										data-binary-note
-										data-cipher-at={1080}
 									>
 										{t(
 											'twoFactorAuth.activate.email.resend.hint'
@@ -364,7 +343,7 @@ const LoginTransitionPrototype = ({
 									</Typography>
 									<OrisoTextField
 										label={
-											<span data-cipher-at={1050}>
+											<span>
 												{t(
 													'twoFactorAuth.activate.otp.input.label.text'
 												)}
@@ -378,10 +357,7 @@ const LoginTransitionPrototype = ({
 											setCode(event.target.value)
 										}
 										inputProps={{
-											'data-binary-code': true,
-											'data-cipher-length': code.length,
-											'data-cipher-input': 925,
-											'inputMode': 'numeric'
+											inputMode: 'numeric'
 										}}
 										InputProps={{
 											readOnly: displayValues,
@@ -407,7 +383,7 @@ const LoginTransitionPrototype = ({
 												minHeight: 48
 											}}
 										>
-											<span data-cipher-at={70}>
+											<span>
 												{t('login.button.label')}
 											</span>
 										</Button>
@@ -430,16 +406,6 @@ const LoginTransitionPrototype = ({
 									</div>
 								</Stack>
 							</form>
-							{showingMatrix &&
-								panel &&
-								createPortal(
-									<canvas
-										className="loginTransitionPrototype__binary"
-										ref={canvasRef}
-										aria-hidden
-									/>,
-									panel
-								)}
 							{!matrix && !formAvailable && (
 								<div className="loginTransitionPrototype__loader">
 									<Loading
