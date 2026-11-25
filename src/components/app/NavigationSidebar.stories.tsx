@@ -465,6 +465,16 @@ export const RuntimeConsultantMobile375Shell: Story = {
 		const dialog = await within(
 			canvasElement.ownerDocument.body
 		).findByRole('dialog', { name: 'Mehr' });
+		// MUI fades the dialog in. At the very first frame its container is
+		// still at opacity 0, so anything inside counts as invisible; act
+		// only once the sheet is fully shown, as a user would.
+		await waitFor(() =>
+			expect(
+				getComputedStyle(
+					dialog.closest('.MuiDialog-container') ?? dialog
+				).opacity
+			).toBe('1')
+		);
 		const language = within(dialog).getByRole('button', {
 			name: /Deutsch/,
 			expanded: false
