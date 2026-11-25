@@ -91,6 +91,9 @@ export const StaffCallJoin = ({
 	const renderCall = deps?.renderCall ?? defaultRenderCall(token);
 	const [state, setState] = useState<State>({ phase: 'offer' });
 	const mounted = useRef(true);
+	/* Bumped on "Abbrechen": an answer to a request sent before it is stale
+	   and must neither bring the waiting room back nor open the call. */
+	const attempt = useRef(0);
 	useEffect(
 		() => () => {
 			mounted.current = false;
@@ -104,9 +107,11 @@ export const StaffCallJoin = ({
 
 	const visit = useCallback(
 		async (waitingFor?: number) => {
+			const mine = attempt.current;
+			const current = () => mounted.current && mine === attempt.current;
 			try {
 				const answer = await join(token, waitingFor);
-				if (!mounted.current) return;
+				if (!current()) return;
 				switch (answer.outcome) {
 					case 'MEMBER':
 						navigate(ownSessionPath(answer.sessionId));
@@ -128,7 +133,7 @@ export const StaffCallJoin = ({
 						return;
 				}
 			} catch (error) {
-				if (mounted.current) setState({ phase: phaseOfError(error) });
+				if (current()) setState({ phase: phaseOfError(error) });
 			}
 		},
 		[join, navigate, token]
@@ -168,6 +173,7 @@ export const StaffCallJoin = ({
 				void visit();
 			}}
 			onCancel={() => {
+				attempt.current += 1;
 				void leave(token).catch(() => undefined);
 				setState({ phase: 'offer' });
 			}}

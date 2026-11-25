@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -69,9 +69,13 @@ export const Offer: Story = {
 	globals: desktop1440Globals,
 	play: async ({ canvasElement, args }) => {
 		await expectWaitingRoomLayout(canvasElement);
-		await expect(
-			body().getByRole('heading', { name: 'Als Berater:in beitreten' })
-		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				body().getByRole('heading', {
+					name: 'Als Berater:in beitreten'
+				})
+			).toBeVisible()
+		);
 		await userEvent.click(body().getByTestId('staff-join-button'));
 		await expect(args.onJoin).toHaveBeenCalledTimes(1);
 	}
@@ -88,9 +92,11 @@ export const OfferAudioEnglish: Story = {
 	globals: { ...desktop1440Globals, locale: 'en' },
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
-		await expect(
-			body().getByRole('heading', { name: 'Join as counsellor' })
-		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				body().getByRole('heading', { name: 'Join as counsellor' })
+			).toBeVisible()
+		);
 	}
 };
 
@@ -105,9 +111,11 @@ export const Waiting: Story = {
 	globals: desktop1440Globals,
 	play: async ({ canvasElement, args }) => {
 		await expectWaitingRoomLayout(canvasElement);
-		await expect(
-			body().getByRole('heading', { name: 'Sie haben angeklopft' })
-		).toBeVisible();
+		await waitFor(() =>
+			expect(
+				body().getByRole('heading', { name: 'Sie haben angeklopft' })
+			).toBeVisible()
+		);
 		await userEvent.click(body().getByTestId('staff-join-cancel'));
 		await expect(args.onCancel).toHaveBeenCalledTimes(1);
 	}

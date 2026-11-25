@@ -81,13 +81,13 @@ export const RoomIcon = ({ children }: { children: React.ReactNode }) => (
 	</Box>
 );
 
-export const RoomText = ({ children }: { children: React.ReactNode }) => (
+const RoomText = ({ children }: { children: React.ReactNode }) => (
 	<Typography sx={{ ...registrationScreenIntroSx, mt: 1.5 }}>
 		{children}
 	</Typography>
 );
 
-export const roomColumnSx = {
+const roomColumnSx = {
 	flex: 1,
 	display: 'flex',
 	flexDirection: 'column',

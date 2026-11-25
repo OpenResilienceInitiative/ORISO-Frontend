@@ -2,25 +2,22 @@
  * ORISO-Frontend#2356: what a signed-in counsellor sees on a Direkteinladung's
  * page. They join the call only, with their own account; the conversation's
  * counsellor lets them in like a guest. One room of the shared waiting-room
- * frame (`EntryRoomShell` → `WaitingRoomFrame`, the shared bar), in the
- * pattern of `InvitationEntryStates`.
+ * frame (`EntryRoomShell` → `WaitingRoomFrame`), laid out by the one
+ * `WaitingRoomTemplate` with the `HandoverGateButton` as its gate.
  */
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Typography } from '@mui/material';
+import { Box, ButtonBase } from '@mui/material';
 import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import CallEndOutlinedIcon from '@mui/icons-material/CallEndOutlined';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
-import { WaitingRoomBar } from '../../waitingRoom/WaitingRoomBar';
-import { registrationScreenTitleSx } from '../../registration/registrationDesign/registrationDesign';
-import {
-	RoomIcon,
-	RoomText,
-	roomColumnSx
-} from '../../directInvitation/InvitationEntryStates';
+import { WaitingRoomTemplate } from '../../waitingRoom/WaitingRoomTemplate';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import { RoomIcon } from '../../directInvitation/InvitationEntryStates';
 
 export const STAFF_JOIN_KEYS = 'directLink.staffJoin';
 
@@ -73,28 +70,35 @@ export const StaffCallJoinRoom = ({
 	const icon =
 		ICONS[phase] ??
 		(medium === 'VIDEO' ? <VideocamOutlinedIcon /> : <CallOutlinedIcon />);
-	const primary =
+	const waiting = phase === 'waiting' || phase === 'notStarted';
+	/* The gate: open to join or retry, a quiet sweep while waiting, and the
+	   way back to the own conversations once this call is out of reach. */
+	const gate =
 		phase === 'offer' || phase === 'joining' || phase === 'error'
 			? {
+					state:
+						phase === 'joining'
+							? ('entering' as const)
+							: ('ready' as const),
 					label: t(
 						phase === 'error'
 							? `${STAFF_JOIN_KEYS}.retry`
 							: `${STAFF_JOIN_KEYS}.offer.join`
 					),
-					onClick: onJoin,
-					busy: phase === 'joining',
-					disabled: phase === 'joining',
+					onEnter: onJoin,
 					testId: 'staff-join-button'
 				}
-			: phase === 'waiting' || phase === 'notStarted'
+			: waiting
 				? {
-						label: t(`${STAFF_JOIN_KEYS}.cancel`),
-						onClick: onCancel,
-						testId: 'staff-join-cancel'
+						state: 'queued' as const,
+						label: t(`${STAFF_JOIN_KEYS}.${key}.status`),
+						onEnter: () => undefined,
+						testId: 'staff-join-waiting'
 					}
 				: {
+						state: 'ready' as const,
 						label: t(`${STAFF_JOIN_KEYS}.openOwnSessions`),
-						onClick: onOpenOwnSessions,
+						onEnter: onOpenOwnSessions,
 						testId: 'staff-join-own-sessions'
 					};
 	return (
@@ -102,24 +106,62 @@ export const StaffCallJoinRoom = ({
 			kicker={t(`${STAFF_JOIN_KEYS}.kicker`)}
 			statusLine={t(`${STAFF_JOIN_KEYS}.${key}.status`)}
 		>
+			{/* `contents`: the template's parts stay children of the room's
+			    column; this box only carries the test hooks. */}
 			<Box
-				component="section"
-				aria-labelledby="staffJoinTitle"
 				data-testid="staff-join-room"
 				data-phase={phase}
-				sx={roomColumnSx}
+				sx={{ display: 'contents' }}
 			>
-				<RoomIcon>{icon}</RoomIcon>
-				<Typography
-					id="staffJoinTitle"
-					component="h1"
-					sx={{ ...registrationScreenTitleSx, mt: 3 }}
+				<WaitingRoomTemplate
+					headline={t(`${STAFF_JOIN_KEYS}.${key}.title`)}
+					status={t(`${STAFF_JOIN_KEYS}.${key}.text`)}
+					aside={
+						waiting ? (
+							<ButtonBase
+								data-testid="staff-join-cancel"
+								onClick={onCancel}
+								sx={{
+									fontSize: 14,
+									color: registrationMd3.onSurfaceVariant,
+									textDecoration: 'underline',
+									textAlign: 'left'
+								}}
+							>
+								{t(`${STAFF_JOIN_KEYS}.cancel`)}
+							</ButtonBase>
+						) : undefined
+					}
+					gate={
+						<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+							<HandoverGateButton
+								state={gate.state}
+								onEnter={() => {
+									gate.onEnter();
+									return undefined;
+								}}
+								label={gate.label}
+								/* The room's status line already says (and
+								   announces) this; a second live region would
+								   read it twice. */
+								status=""
+								testId={gate.testId}
+							/>
+						</Box>
+					}
 				>
-					{t(`${STAFF_JOIN_KEYS}.${key}.title`)}
-				</Typography>
-				<RoomText>{t(`${STAFF_JOIN_KEYS}.${key}.text`)}</RoomText>
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center'
+						}}
+					>
+						<RoomIcon>{icon}</RoomIcon>
+					</Box>
+				</WaitingRoomTemplate>
 			</Box>
-			<WaitingRoomBar primary={primary} />
 		</EntryRoomShell>
 	);
 };

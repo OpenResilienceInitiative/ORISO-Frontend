@@ -27,13 +27,16 @@ vi.mock('../../anonymousChat/entryRoom/EntryRoomShell', () => ({
 	)
 }));
 vi.mock('../../waitingRoom/WaitingRoomBar', () => ({
-	WaitingRoomBar: ({ primary }: any) => (
+	WaitingRoomBar: ({ children }: any) => <footer>{children}</footer>
+}));
+vi.mock('../../app/registrationLoader/HandoverGateButton', () => ({
+	HandoverGateButton: (props: any) => (
 		<button
-			data-testid={primary.testId}
-			disabled={primary.disabled}
-			onClick={primary.onClick}
+			data-testid={props.testId}
+			disabled={props.state !== 'ready'}
+			onClick={props.onEnter}
 		>
-			{primary.label}
+			{props.label}
 		</button>
 	)
 }));
@@ -183,6 +186,35 @@ describe('StaffCallJoin (#2356)', () => {
 		await clickJoin();
 		expect(deps.join).toHaveBeenCalledTimes(2);
 		expect(phase()).toBe('waiting');
+	});
+
+	it('ignores an answer that arrives after "Abbrechen"', async () => {
+		let answer: (value: StaffJoin) => void = () => undefined;
+		const join = vi
+			.fn()
+			.mockResolvedValueOnce({ outcome: 'WAITING', knockId: 9 })
+			.mockImplementationOnce(
+				() => new Promise<StaffJoin>((resolve) => (answer = resolve))
+			);
+		const renderCall = vi.fn(() => <div data-testid="call" />);
+		render(
+			<StaffCallJoin
+				token="tok"
+				medium="VIDEO"
+				deps={{ join, renderCall, leave: () => Promise.resolve() }}
+			/>
+		);
+		await clickJoin();
+		await act(async () => {
+			vi.advanceTimersByTime(STAFF_JOIN_POLL_MS);
+		});
+		expect(join).toHaveBeenCalledTimes(2);
+
+		fireEvent.click(screen.getByTestId('staff-join-cancel'));
+		await act(async () => answer({ outcome: 'SEATED', seat: SEAT }));
+
+		expect(phase()).toBe('offer');
+		expect(renderCall).not.toHaveBeenCalled();
 	});
 
 	it('withdraws the knock on cancel and when the page closes', async () => {
