@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import { UserDataContext } from '../../globalState';
+import { ConsultingTypesContext, UserDataContext } from '../../globalState';
 import { CalendarPageWired } from './CalendarPageWired';
 
 /**
@@ -32,11 +32,11 @@ const EMPTY_ANSWERS: [RegExp, unknown][] = [
 	[/\/service\/users\/sessions\/askers\b/, { sessions: [] }]
 ];
 
-const answerSeekerCalendar = () => {
+const answerWith = (answers: [RegExp, unknown][]) => () => {
 	const previous = globalThis.fetch;
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
-		const match = EMPTY_ANSWERS.find(([pattern]) => pattern.test(url));
+		const match = answers.find(([pattern]) => pattern.test(url));
 		if (match)
 			return new Response(JSON.stringify(match[1]), {
 				status: 200,
@@ -57,7 +57,7 @@ const meta: Meta<typeof CalendarPageWired> = {
 		layout: 'fullscreen',
 		router: { initialPath: '/booking/events' }
 	},
-	beforeEach: answerSeekerCalendar,
+	beforeEach: answerWith(EMPTY_ANSWERS),
 	decorators: [
 		(Story) => (
 			<UserDataContext.Provider
@@ -82,5 +82,75 @@ export const AgenciesNull: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(await canvas.findByTestId('calendar-view')).toBeTruthy();
+	}
+};
+
+const tomorrowAtUtc = (hour: number, minute = 0) => {
+	const day = new Date();
+	day.setUTCDate(day.getUTCDate() + 1);
+	day.setUTCHours(hour, minute, 0, 0);
+	return day.toISOString();
+};
+const slot = (hour: number, minute = 0) => ({
+	startTime: tomorrowAtUtc(hour, minute),
+	endTime: tomorrowAtUtc(hour + 1, minute),
+	bookingMode: 'INSTANT'
+});
+
+/**
+ * #2494 *2c: "Freie Sprechzeiten" names the counsellor. As on Dev, the
+ * advice seeker's own list carries the advice seeker as `user`; the panel
+ * used to show that username instead of the counsellor's name.
+ */
+export const FreeOfficeHoursNameTheCounsellor: Story = {
+	globals: { locale: 'en' },
+	decorators: [
+		(Story) => (
+			<ConsultingTypesContext.Provider
+				value={
+					{
+						consultingTypes: [{ id: 1, isVideoCallAllowed: true }],
+						setConsultingTypes: () => undefined
+					} as never
+				}
+			>
+				<Story />
+			</ConsultingTypesContext.Provider>
+		)
+	],
+	beforeEach: answerWith([
+		[
+			/\/service\/users\/sessions\/askers\b/,
+			{
+				sessions: [
+					{
+						session: {
+							id: 12,
+							status: 2,
+							matrixRoomId: '!room:oriso',
+							agencyId: 101,
+							consultingType: 1
+						},
+						user: { username: SEEKER.userName },
+						consultant: {
+							consultantId: 'c1',
+							username: 'lberger_1234',
+							displayName: 'Laura Berger'
+						}
+					}
+				]
+			}
+		],
+		[
+			/\/service\/users\/sessions\/12\/appointment-slots\b/,
+			[slot(8), slot(8, 30), slot(9)]
+		]
+	]),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const line = await canvas.findByText(/Laura Berger/, undefined, {
+			timeout: 8000
+		});
+		await expect(line.textContent).not.toContain(SEEKER.userName);
 	}
 };

@@ -82,6 +82,7 @@ import { apiSetAbsence } from '../../api/apiSetAbsence';
 import type { AbsenceDraft } from './AbsenceForm';
 import { getSessionNavigationPath } from '../sessionsListItem/sessionsListItemHelpers';
 import { personAvatarOfSession, withPersonAvatars } from './calendarAvatar';
+import { formatMessagePersonName } from '../message/messageNameUtils';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	notifyAppointmentsChanged,
@@ -216,11 +217,17 @@ const toConversations = (
 					item.consultant?.id &&
 					item.consultant.id !== ownUserId
 				),
-			username:
-				item.user?.username ??
-				item.consultant?.displayName ??
-				item.consultant?.username ??
-				String(item.session.id),
+			// The other person. In the advice seeker's own view `user` is the
+			// advice seeker, so the counsellor's public name goes here (#2494).
+			username: ownUserId
+				? (item.user?.username ??
+					item.consultant?.displayName ??
+					item.consultant?.username ??
+					String(item.session.id))
+				: formatMessagePersonName(
+						item.consultant?.displayName,
+						item.consultant?.username
+					) || String(item.session.id),
 			matrixRoomId: item.session.matrixRoomId,
 			// The advice seeker's view names its counsellor `consultantId`;
 			// only an active conversation has office hours to book (dev,
