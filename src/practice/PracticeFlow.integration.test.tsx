@@ -861,6 +861,35 @@ describe('practice flows on the real app shell', () => {
 		expectRealAvailabilityUntouched(storageBefore);
 	}, 120000);
 
+	it('Live chat: narrowing the window ends the practice run instead of swapping in the explanation tour, and widening does not restart it', async () => {
+		const app = renderApp({ width: 1440 });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+
+		app.resize(899);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(document.querySelector('.productTourTooltip')).toBeNull();
+
+		app.resize(1440);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		expect(document.querySelector('.productTourTooltip')).toBeNull();
+		expect(progressWrites()).not.toContain('completed');
+	}, 120000);
+
+	it('Live chat launched on a small screen keeps its explanation tour', async () => {
+		const app = renderApp({ width: 899 });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+	});
+
 	it('Live chat without the practice area: the explanation tour runs on the real page', async () => {
 		const app = renderApp({ practiceArea: false });
 		await app.request(LIVE_CHAT);

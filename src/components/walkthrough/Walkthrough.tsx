@@ -71,14 +71,32 @@ export const Walkthrough = () => {
 					(tour) => tour.id === launchRequest.tourId
 				)
 			: undefined;
-	const requestedTour = launchRequest
-		? (practiceTour ??
-			frontendTours.find((tour) => tour.id === launchRequest.tourId))
-		: undefined;
-	const unavailablePracticeRequest =
+	// The request that started a practice run. If the practice area closes
+	// for it (e.g. the window narrows below L), the run ends like a card
+	// flow: no silent switch to the explanation tour, and no automatic
+	// restart when the window widens again. A topic tour launched on a
+	// small screen keeps its explanation tour.
+	const [practiceRunRequest, setPracticeRunRequest] =
+		useState<typeof launchRequest>(null);
+	useEffect(() => {
+		if (practiceTour && launchRequest) {
+			setPracticeRunRequest(launchRequest);
+		}
+	}, [practiceTour, launchRequest]);
+	const lostPracticeRun =
 		!!launchRequest &&
-		isPracticeCardTourId(launchRequest.tourId) &&
-		!practiceOpenFor(launchRequest.tourId);
+		!practiceTour &&
+		practiceRunRequest === launchRequest;
+	const requestedTour =
+		launchRequest && !lostPracticeRun
+			? (practiceTour ??
+				frontendTours.find((tour) => tour.id === launchRequest.tourId))
+			: undefined;
+	const unavailablePracticeRequest =
+		lostPracticeRun ||
+		(!!launchRequest &&
+			isPracticeCardTourId(launchRequest.tourId) &&
+			!practiceOpenFor(launchRequest.tourId));
 	useEffect(() => {
 		if (unavailablePracticeRequest) {
 			// Resizing may end an active practice run. Widening the window

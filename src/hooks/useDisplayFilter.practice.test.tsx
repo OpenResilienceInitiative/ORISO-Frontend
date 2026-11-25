@@ -6,6 +6,7 @@ import {
 	withGlobalFilter
 } from '../utils/displayFilter/model';
 import { displayFilterStore } from '../utils/displayFilter/store';
+import { useDisplayFilter } from './useDisplayFilter';
 
 let practising = false;
 const listeners = new Set<() => void>();
@@ -16,8 +17,6 @@ vi.mock('../practice/practiceMode', () => ({
 		return () => listeners.delete(listener);
 	}
 }));
-
-import { useDisplayFilter } from './useDisplayFilter';
 
 const setPractising = (next: boolean) =>
 	act(() => {
