@@ -1,4 +1,8 @@
 import type { DeletedAskerSession } from '../../api/apiGetDeletedAskerSessions';
+import type {
+	ListItemInterface,
+	TopicsDataInterface
+} from '../../globalState/interfaces';
 
 /**
  * A card "Gelöschte:r Ratsuchende:r" in the counsellor's
@@ -13,12 +17,19 @@ export interface DeletedAskerRow {
 	timestamp: number;
 	/** Shown in the archive tab: already moved there by the counsellor. */
 	archived?: boolean;
+	/**
+	 * The topic of the former chat where it is still known, so the card keeps
+	 * its chip like every conversation (Frank, 2026-11-25).
+	 */
+	topic?: string;
 }
 
 /** A chat whose advice seeker is marked for deletion but not yet deleted. */
 export interface MarkedForDeletionSession {
 	sessionId: number;
 	lastInteraction: number;
+	/** Topic name of the chat, when the topic list knows it. */
+	topic?: string;
 }
 
 /**
@@ -33,11 +44,12 @@ export const buildDeletedAskerRows = (
 	shownSessionIds: ReadonlySet<number>
 ): DeletedAskerRow[] => {
 	const rows = new Map<number, DeletedAskerRow>();
-	markedForDeletion.forEach(({ sessionId, lastInteraction }) => {
+	markedForDeletion.forEach(({ sessionId, lastInteraction, topic }) => {
 		rows.set(sessionId, {
 			key: `deleted-asker:${sessionId}`,
 			formerSessionId: sessionId,
-			timestamp: lastInteraction
+			timestamp: lastInteraction,
+			...(topic ? { topic } : {})
 		});
 	});
 	placeholders.forEach(({ formerSessionId, deletedAt }) => {
@@ -78,4 +90,76 @@ export const placeDeletedAskerRows = (
 		}
 	});
 	return { before, trailing: hasMorePages ? [] : rows.slice(next) };
+};
+
+/** Where a card sits in the grouped list: flush with its neighbours. */
+export interface ListGroupEdges {
+	isGroupStart: boolean;
+	isGroupEnd: boolean;
+	isBeforeActive: boolean;
+	isAfterActive: boolean;
+}
+
+/**
+ * The grouped list is one outline, broken only around the active card
+ * (Frank, 2026-11-25: "der Scroller ordentlich, nicht zerhackt"). Deleted
+ * cards stand between the conversations, so the group edges are worked out
+ * over both kinds in the order they are drawn: a conversation right below a
+ * deleted card is no longer the start of a group, and the last conversation
+ * is not the end while deleted cards follow it.
+ */
+export const listGroupEdges = (
+	placement: { before: DeletedAskerRow[][]; trailing: DeletedAskerRow[] },
+	sessionActive: boolean[],
+	isRowActive: (row: DeletedAskerRow) => boolean
+): {
+	sessions: ListGroupEdges[];
+	rows: Map<string, ListGroupEdges>;
+} => {
+	const slots: { key: string; active: boolean; session?: number }[] = [];
+	sessionActive.forEach((active, index) => {
+		(placement.before[index] ?? []).forEach((row) =>
+			slots.push({ key: row.key, active: isRowActive(row) })
+		);
+		slots.push({ key: `session:${index}`, active, session: index });
+	});
+	placement.trailing.forEach((row) =>
+		slots.push({ key: row.key, active: isRowActive(row) })
+	);
+	const sessions: ListGroupEdges[] = sessionActive.map(() => ({
+		isGroupStart: true,
+		isGroupEnd: true,
+		isBeforeActive: false,
+		isAfterActive: false
+	}));
+	const rows = new Map<string, ListGroupEdges>();
+	slots.forEach((slot, index) => {
+		const previous = slots[index - 1];
+		const next = slots[index + 1];
+		const edges: ListGroupEdges = {
+			isGroupStart: !previous || previous.active,
+			isGroupEnd: !next || next.active,
+			isBeforeActive: !!next?.active,
+			isAfterActive: !!previous?.active
+		};
+		if (slot.session === undefined) rows.set(slot.key, edges);
+		else sessions[slot.session] = edges;
+	});
+	return { sessions, rows };
+};
+
+/**
+ * The topic name of a chat whose advice seeker is marked for deletion: the
+ * name the session carries, else the one from the topic list. Undefined when
+ * neither knows it, so the card says "gelöscht" instead.
+ */
+export const deletedAskerTopicName = (
+	raw: ListItemInterface,
+	topics?: TopicsDataInterface[] | null
+): string | undefined => {
+	const topic = raw?.session?.topic;
+	if (topic?.name) return topic.name;
+	const id = topic?.id ?? raw?.session?.mainTopicId;
+	if (typeof id !== 'number') return undefined;
+	return topics?.find((candidate) => candidate.id === id)?.name || undefined;
 };

@@ -4896,7 +4896,8 @@
 			"title": "Deleted advice seeker",
 			"hint": "This chat was deleted. Personal data and messages are no longer available.",
 			"preview": "Chat was deleted",
-			"previewArchived": "Deleted · in archive"
+			"previewArchived": "Deleted · in archive",
+			"topicUnknown": "deleted"
 		}
 	},
 	"statusOverlay": {
