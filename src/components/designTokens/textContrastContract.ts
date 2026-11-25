@@ -19,22 +19,45 @@ export type LowContrastText = {
 	element: Element;
 };
 
-const parse = (value: string): Rgba | null => {
-	const match = value.match(/rgba?\(([^)]+)\)/);
-	if (!match) {
-		return null;
-	}
-	const parts = match[1]
+const channels = (list: string): number[] =>
+	list
 		.split(/[\s,/]+/)
 		.filter(Boolean)
-		.map(Number);
-	return {
-		r: parts[0],
-		g: parts[1],
-		b: parts[2],
-		a: parts.length > 3 ? parts[3] : 1
-	};
+		.map((part) =>
+			part.endsWith('%') ? Number(part.slice(0, -1)) / 100 : Number(part)
+		);
+
+/**
+ * Computed colours come as `rgb()`/`rgba()`, or as `color(srgb …)` once a
+ * `color-mix(in srgb, …)` is involved. Anything else (another colour space)
+ * is `null`, and callers report it instead of passing it.
+ */
+const parse = (value: string): Rgba | null => {
+	const legacy = value.match(/^rgba?\(([^)]+)\)$/);
+	if (legacy) {
+		const parts = channels(legacy[1]);
+		return {
+			r: parts[0],
+			g: parts[1],
+			b: parts[2],
+			a: parts.length > 3 ? parts[3] : 1
+		};
+	}
+	const srgb = value.match(/^color\(srgb\s+([^)]+)\)$/);
+	if (srgb) {
+		const parts = channels(srgb[1]);
+		return {
+			r: parts[0] * 255,
+			g: parts[1] * 255,
+			b: parts[2] * 255,
+			a: parts.length > 3 ? parts[3] : 1
+		};
+	}
+	return null;
 };
+
+const isTransparent = (value: string): boolean =>
+	value === 'transparent' || value === 'rgba(0, 0, 0, 0)';
 
 const over = (top: Rgba, bottom: Rgba): Rgba => ({
 	r: top.r * top.a + bottom.r * (1 - top.a),
@@ -56,12 +79,22 @@ const ratio = (a: Rgba, b: Rgba): number => {
 	return (light + 0.05) / (dark + 0.05);
 };
 
-/** The colour the element sits on: its own and its ancestors' fills, stacked. */
-const paintedBackground = (element: Element): Rgba => {
+/**
+ * The colour the element sits on: its own and its ancestors' fills, stacked.
+ * `null` when one of those fills is in a colour format `parse` cannot read.
+ */
+const paintedBackground = (element: Element): Rgba | null => {
 	const layers: Rgba[] = [];
 	for (let node: Element | null = element; node; node = node.parentElement) {
-		const fill = parse(getComputedStyle(node).backgroundColor);
-		if (fill && fill.a > 0) {
+		const value = getComputedStyle(node).backgroundColor;
+		const fill = parse(value);
+		if (!fill) {
+			if (isTransparent(value)) {
+				continue;
+			}
+			return null;
+		}
+		if (fill.a > 0) {
 			layers.push(fill);
 			if (fill.a >= 0.99) {
 				break;
@@ -99,6 +132,64 @@ const hasBackgroundImage = (element: Element): boolean => {
 	return false;
 };
 
+/** Opacity the element is painted with: its own times its ancestors'. */
+const effectiveOpacity = (element: Element): number => {
+	let opacity = 1;
+	for (let node: Element | null = element; node; node = node.parentElement) {
+		opacity *= Number(getComputedStyle(node).opacity);
+	}
+	return opacity;
+};
+
+const NON_TEXT_INPUTS = new Set([
+	'checkbox',
+	'radio',
+	'range',
+	'color',
+	'file',
+	'hidden',
+	'image',
+	'button',
+	'submit',
+	'reset'
+]);
+
+/**
+ * The text a form field shows: its value, or else its placeholder (which
+ * is drawn in the `::placeholder` colour). `null` for anything else.
+ */
+const fieldText = (
+	element: Element
+): { text: string; placeholder: boolean } | null => {
+	if (
+		!(element instanceof HTMLInputElement) &&
+		!(element instanceof HTMLTextAreaElement)
+	) {
+		return null;
+	}
+	if (
+		element instanceof HTMLInputElement &&
+		NON_TEXT_INPUTS.has(element.type)
+	) {
+		return null;
+	}
+	if (element.value.trim().length > 0) {
+		return { text: element.value, placeholder: false };
+	}
+	if (element.placeholder.trim().length > 0) {
+		return { text: element.placeholder, placeholder: true };
+	}
+	return null;
+};
+
+const hasOwnText = (element: Element): boolean =>
+	fieldText(element) !== null ||
+	Array.from(element.childNodes).some(
+		(node) =>
+			node.nodeType === Node.TEXT_NODE &&
+			(node.textContent ?? '').trim().length > 0
+	);
+
 const isMeasurable = (element: Element): boolean => {
 	if (
 		element.closest(
@@ -107,12 +198,7 @@ const isMeasurable = (element: Element): boolean => {
 	) {
 		return false;
 	}
-	const ownText = Array.from(element.childNodes).some(
-		(node) =>
-			node.nodeType === Node.TEXT_NODE &&
-			(node.textContent ?? '').trim().length > 0
-	);
-	if (!ownText) {
+	if (!hasOwnText(element)) {
 		return false;
 	}
 	const box = element.getBoundingClientRect();
@@ -120,41 +206,82 @@ const isMeasurable = (element: Element): boolean => {
 		return false;
 	}
 	const style = getComputedStyle(element);
-	if (style.visibility === 'hidden' || Number(style.opacity) === 0) {
+	if (style.visibility === 'hidden' || effectiveOpacity(element) === 0) {
 		return false;
 	}
 	// Hatched and gradient fills have no single colour to score against.
 	return !hasBackgroundImage(element);
 };
 
-/** Visible texts under `root` that miss `minimum` (AA body text: 4.5). */
+/** The colour the element's text is drawn in (`::placeholder` for a placeholder). */
+const inkValue = (element: Element): string =>
+	fieldText(element)?.placeholder
+		? getComputedStyle(element, '::placeholder').color
+		: getComputedStyle(element).color;
+
+/**
+ * Contrast of the element's ink against what it sits on. The ink is
+ * composited with the element's effective opacity (its own and its
+ * ancestors'), so faded text is scored as it is painted. `null` when a
+ * colour is in a format `parse` cannot read.
+ */
+const measure = (
+	element: Element
+): { ratio: number; color: string; background: Rgba } | null => {
+	const background = paintedBackground(element);
+	const color = inkValue(element);
+	const ink = parse(color);
+	if (!background || !ink) {
+		return null;
+	}
+	const painted = over(
+		{ ...ink, a: ink.a * effectiveOpacity(element) },
+		background
+	);
+	return {
+		ratio: Math.round(ratio(painted, background) * 100) / 100,
+		color,
+		background
+	};
+};
+
+const label = (element: Element): string =>
+	(fieldText(element)?.text ?? element.textContent ?? '').trim().slice(0, 40);
+
+/**
+ * Visible texts under `root` (root included) that miss `minimum` (AA body
+ * text: 4.5). A text whose colours cannot be read is reported with ratio 0
+ * and `background: 'unsupported colour'`, never passed silently.
+ */
 export const findLowContrastText = (
 	root: Element,
 	minimum = 4.5
 ): LowContrastText[] =>
-	Array.from(root.querySelectorAll('*'))
+	[root, ...Array.from(root.querySelectorAll('*'))]
 		.filter(isMeasurable)
-		.map((element) => {
-			const background = paintedBackground(element);
-			const ink = parse(getComputedStyle(element).color);
-			if (!ink) {
-				return null;
+		.map((element): LowContrastText => {
+			const result = measure(element);
+			if (!result) {
+				return {
+					text: label(element),
+					ratio: 0,
+					color: inkValue(element),
+					background: 'unsupported colour',
+					element
+				};
 			}
-			const painted = over(ink, background);
+			const { background } = result;
 			return {
-				text: (element.textContent ?? '').trim().slice(0, 40),
-				ratio: Math.round(ratio(painted, background) * 100) / 100,
-				color: getComputedStyle(element).color,
+				text: label(element),
+				ratio: result.ratio,
+				color: result.color,
 				background: `rgb(${Math.round(background.r)}, ${Math.round(
 					background.g
 				)}, ${Math.round(background.b)})`,
 				element
 			};
 		})
-		.filter(
-			(entry): entry is LowContrastText =>
-				entry !== null && entry.ratio < minimum
-		);
+		.filter((entry) => entry.ratio < minimum);
 
 /** Readable summary for a failing expectation. */
 export const describeLowContrast = (entries: LowContrastText[]): string[] =>
@@ -163,12 +290,9 @@ export const describeLowContrast = (entries: LowContrastText[]): string[] =>
 			`"${text}" ${value}:1 (${color} on ${background}) in ${element.tagName.toLowerCase()}.${Array.from(element.classList).slice(0, 2).join('.')}`
 	);
 
-/** Contrast of an element's own `color` (text or currentColor icon) against what it sits on. */
-export const paintedContrast = (element: Element): number => {
-	const background = paintedBackground(element);
-	const ink = parse(getComputedStyle(element).color);
-	if (!ink) {
-		return 0;
-	}
-	return Math.round(ratio(over(ink, background), background) * 100) / 100;
-};
+/**
+ * Contrast of an element's own `color` (text or currentColor icon) against
+ * what it sits on, opacity included; 0 when a colour cannot be read.
+ */
+export const paintedContrast = (element: Element): number =>
+	measure(element)?.ratio ?? 0;

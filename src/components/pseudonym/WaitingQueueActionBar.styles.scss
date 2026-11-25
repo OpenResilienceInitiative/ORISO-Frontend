@@ -161,10 +161,6 @@
 		0 1px 3px 0 rgba(0, 0, 0, 0.3);
 	overflow: hidden;
 	animation: waitingQueueActionBar-outlineGlow 4.8s ease-in-out infinite;
-
-	html[data-oriso-personal-scheme='dark'] & {
-		color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
-	}
 }
 
 .waitingQueueActionBar__queueBtn--mobile {
@@ -216,12 +212,11 @@
 	font-size: 18px;
 	line-height: 18px;
 	font-weight: 400;
+
+	// The pink pill keeps its light fill in every scheme, so its dark ink
+	// stays too (P0 dark mode, 2026-11-25).
 	color: #650033;
 	text-align: center;
-
-	html[data-oriso-personal-scheme='dark'] & {
-		color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
-	}
 }
 
 .waitingQueueActionBar__queueCount {

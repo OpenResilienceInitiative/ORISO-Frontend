@@ -426,14 +426,6 @@
 
 		&--yellow {
 			background: #ffe57f;
-
-			html[data-oriso-personal-scheme='dark'] & {
-				background: color-mix(
-					in srgb,
-					var(--m3-primary, #ffb4aa) 14%,
-					var(--m3-surface, #131314)
-				);
-			}
 		}
 
 		&--orange {

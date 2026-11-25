@@ -666,6 +666,12 @@ $cal-off-hatch: repeating-linear-gradient(
 			&.calEntry--appointment:not(.calEntry--k-group) {
 			color: var(--m3-on-primary-fixed, #410001) !important;
 
+			// The dark hover layer would put that dark ink on near-black; the
+			// row keeps a `-fixed` pink under the pointer instead.
+			&:hover {
+				background: var(--m3-primary-fixed-dim, #ffb4aa) !important;
+			}
+
 			// FullCalendar's list cell sits between the row and the content
 			// and brings its own colour, so the content names its ink.
 			.calEntry__inner {
@@ -673,6 +679,10 @@ $cal-off-hatch: repeating-linear-gradient(
 			}
 
 			.calendarSoon {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+			}
+
+			.calEntry__range {
 				color: var(--m3-on-primary-fixed-variant, #930008);
 			}
 		}
@@ -1583,11 +1593,18 @@ $cal-page-gap: 12px;
 	padding: 5px 14px 5px 5px;
 	border-color: rgba(255, 255, 255, 0.7);
 	border-radius: 999px;
-	background: #f4f2f2;
+
+	// Dark sets the row and hover surfaces in `mui-variables-mapping.scss`;
+	// as aliases they keep the class-level weight, so `--soon` and `:hover`
+	// still win over the plain row.
+	background: var(--oriso-row-surface, #f4f2f2);
 	font-size: 14px;
 
 	&:hover {
-		background: var(--m3-surface-container-lowest, #ffffff);
+		background: var(
+			--oriso-row-hover-surface,
+			var(--m3-surface-container-lowest, #ffffff)
+		);
 	}
 
 	// The next one within 15 minutes is filled (prototype v17).
@@ -1618,11 +1635,17 @@ $cal-page-gap: 12px;
 	&--proposal,
 	&--received {
 		border: 1px dashed var(--m3-outline, #747878);
-		background: var(--m3-surface-container-low, #f6f3f3);
-	}
+		background: var(
+			--oriso-row-surface,
+			var(--m3-surface-container-low, #f6f3f3)
+		);
 
-	html[data-oriso-personal-scheme='dark'] & {
-		background: var(--m3-surface-container-low, #1b1b1c);
+		&:hover {
+			background: var(
+				--oriso-row-hover-surface,
+				var(--m3-surface-container-lowest, #ffffff)
+			);
+		}
 	}
 }
 

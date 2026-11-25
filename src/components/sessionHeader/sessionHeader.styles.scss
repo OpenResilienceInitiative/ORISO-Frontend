@@ -694,6 +694,12 @@ $room-header-back-gap: 8px;
 		min-width: 76px;
 		padding: 0 12px 0 4px;
 		background: var(--m3-secondary-container, #646d78);
+
+		// Dark: the container turns dark, so the type icon and the clock
+		// take its `on-` ink instead of the white surface.
+		html[data-oriso-personal-scheme='dark'] & {
+			--chatroom-main-icon-ink: var(--m3-on-secondary-container, #dae3f0);
+		}
 	}
 
 	&__add {
@@ -772,7 +778,10 @@ $room-header-back-gap: 8px;
 		width: 24px;
 		height: 24px;
 		display: block;
-		background: var(--m3-surface-container-lowest, #ffffff);
+		background: var(
+			--chatroom-main-icon-ink,
+			var(--m3-surface-container-lowest, #ffffff)
+		);
 		mask-image: var(--chatroom-main-icon-url);
 		mask-size: contain;
 		mask-position: center;
@@ -803,7 +812,10 @@ $room-header-back-gap: 8px;
 			top: 4px;
 			width: 2px;
 			border-radius: 2px;
-			background: var(--m3-surface-container-lowest, #ffffff);
+			background: var(
+				--chatroom-main-icon-ink,
+				var(--m3-surface-container-lowest, #ffffff)
+			);
 			transform-origin: bottom center;
 		}
 

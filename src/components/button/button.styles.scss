@@ -170,9 +170,14 @@ $buttonMaxWidth: 400px;
 			background-color: var(--m3-surface-container-lowest, #ffffff);
 
 			svg {
+				// Dark: the hover fill is the near-black lowest surface, so the
+				// glyph takes the surface ink (`--oriso-text-high`, dark only).
 				fill: var(
-					--m3-on-secondary,
-					$button-small-icon-background-color-default
+					--oriso-text-high,
+					var(
+						--m3-on-secondary,
+						$button-small-icon-background-color-default
+					)
 				);
 			}
 		}

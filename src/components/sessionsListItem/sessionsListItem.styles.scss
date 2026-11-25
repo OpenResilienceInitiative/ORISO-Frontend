@@ -196,23 +196,22 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// which `__content--flow` gives back, so nothing moves.
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-			html[data-oriso-personal-scheme='dark'] & {
-				--session-list-username-color: var(
-					--m3-on-primary-fixed-variant,
-					#930008
-				);
-				--session-list-subject-color: var(
-					--m3-on-primary-fixed,
-					#410001
-				);
-			}
 
-			// The open menu keeps this pale card in both schemes.
+			// Light keeps the pale card and its fixed ink.
 			--session-preview-color: var(--black, #1e1e1e);
 			border: $list-item-active-menu-border-width solid
 				$session-light-border !important;
 
+			// Dark: the card takes the low surface, so all three texts take
+			// the surface inks (as `session-card-secondary` does).
 			html[data-oriso-personal-scheme='dark'] & {
+				--session-list-username-color: var(
+					--m3-on-surface-variant,
+					#c4c7c8
+				);
+				--session-list-subject-color: var(--m3-on-surface, #e4e2e2);
+				--session-preview-color: var(--m3-on-surface, #e4e2e2);
+
 				background: var(--m3-surface-container-low, #1b1b1c) !important;
 			}
 		}

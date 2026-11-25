@@ -62,6 +62,40 @@
 				}
 			}
 		}
+
+		// Dark: the overlay is the near-black surface, so the frame and the
+		// icon take the surface ink at the same two strengths.
+		html[data-oriso-personal-scheme='dark'] & {
+			border-color: color-mix(
+				in srgb,
+				var(--m3-on-surface, #e4e2e2) 40%,
+				transparent
+			);
+
+			.dropContainer__icon path {
+				fill: color-mix(
+					in srgb,
+					var(--m3-on-surface, #e4e2e2) 40%,
+					transparent
+				);
+			}
+
+			&.can-drop {
+				border-color: color-mix(
+					in srgb,
+					var(--m3-on-surface, #e4e2e2) 87%,
+					transparent
+				);
+
+				.dropContainer__icon path {
+					fill: color-mix(
+						in srgb,
+						var(--m3-on-surface, #e4e2e2) 87%,
+						transparent
+					);
+				}
+			}
+		}
 	}
 }
 

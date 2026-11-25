@@ -370,9 +370,15 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		border-radius: 999px;
 
 		// Figma: white dragger
+		// Dark: `--oriso-scroll-thumb` (dark only) is the outline role,
+		// which stands out from the list surface.
 		background: color-mix(
 			in srgb,
-			var(--m3-surface-container-lowest, #ffffff) 96%,
+			var(
+					--oriso-scroll-thumb,
+					var(--m3-surface-container-lowest, #ffffff)
+				)
+				96%,
 			transparent
 		);
 		box-shadow:
@@ -388,13 +394,19 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		@media (hover: hover) {
 			&:hover {
-				background: var(--m3-surface-container-lowest, #ffffff);
+				background: var(
+					--oriso-scroll-thumb,
+					var(--m3-surface-container-lowest, #ffffff)
+				);
 			}
 		}
 
 		&:active {
 			cursor: grabbing;
-			background: var(--m3-surface-container-lowest, #ffffff);
+			background: var(
+				--oriso-scroll-thumb,
+				var(--m3-surface-container-lowest, #ffffff)
+			);
 			box-shadow:
 				0 0 0 1px rgba(0, 0, 0, 0.08),
 				0 2px 8px rgba(0, 0, 0, 0.12);

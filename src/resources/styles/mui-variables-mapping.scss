@@ -200,4 +200,9 @@ html[data-oriso-personal-scheme='dark'] {
 	--oriso-toolbar-chip-border: var(--m3-outline-variant, #444748);
 	--oriso-toolbar-chip-hover-bg: var(--m3-surface-container, #1f1f20);
 	--oriso-toolbar-chip-hover-border: var(--m3-outline, #8e9192);
+
+	// List rows (calendar side rows) and the custom scroll thumb.
+	--oriso-row-surface: var(--m3-surface-container-low, #1b1b1c);
+	--oriso-row-hover-surface: var(--m3-surface-container-high, #2a2a2b);
+	--oriso-scroll-thumb: var(--m3-outline, #8e9192);
 }

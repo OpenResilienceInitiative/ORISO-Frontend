@@ -37,7 +37,8 @@
 			&:hover {
 				background: #f2f2f2;
 
-				html[data-oriso-personal-scheme='dark'] & {
+				// An active button keeps its pink under the pointer.
+				html[data-oriso-personal-scheme='dark'] &:not(.is-active) {
 					background: var(--m3-surface-container-low, #1b1b1c);
 				}
 			}
