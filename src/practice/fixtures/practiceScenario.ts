@@ -27,8 +27,11 @@ import {
 import type { ScriptEngine } from '../script/ScriptEngine';
 import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 
-/** F1 starts with an open enquiry, F2 with an already accepted case. */
-export type PracticeStart = 'enquiry' | 'acceptedCase';
+/**
+ * F1 starts with an open enquiry, F2 with an already accepted case, the
+ * Live-Chat tour (FE#2545) with a waiting anonymous live chat.
+ */
+export type PracticeStart = 'enquiry' | 'acceptedCase' | 'liveChat';
 
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
 
@@ -131,20 +134,27 @@ export const createPracticeScenario = ({
 	now?: number;
 }): PracticeScenario => {
 	const accepted = start === 'acceptedCase';
+	const liveChat = start === 'liveChat';
 	const { cast, texts } = script;
 	const topic = createPracticeTopic(script.names.topic);
 	const minute = 60_000;
-	const enquiryTs = now - 30 * minute;
+	// A live chat is waiting right now; an enquiry came in half an hour ago.
+	const enquiryTs = now - (liveChat ? 2 : 30) * minute;
 	const counsellorMember = {
 		userId: PRACTICE_COUNSELLOR_MATRIX_USER_ID,
 		displayName: counsellorDisplayName(counsellor)
 	};
 	const mainMessages: PracticeMessageSeed[] = [
-		{
-			sender: PRACTICE_SYSTEM_MATRIX_USER_ID,
-			body: erstantwortBody(texts.erstantwortGreeting),
-			ts: enquiryTs - minute
-		},
+		// A live chat has no Erstantwort: the counsellor answers in person.
+		...(liveChat
+			? []
+			: [
+					{
+						sender: PRACTICE_SYSTEM_MATRIX_USER_ID,
+						body: erstantwortBody(texts.erstantwortGreeting),
+						ts: enquiryTs - minute
+					}
+				]),
 		{
 			sender: cast.asker.matrixUserId,
 			body: texts.askerFirstMessage,
@@ -175,7 +185,7 @@ export const createPracticeScenario = ({
 				agencyId: PRACTICE_AGENCY_ID,
 				consultingType: counsellor.agencies?.[0]?.consultingType ?? 0,
 				status: accepted ? STATUS_ACTIVE : STATUS_ENQUIRY,
-				conversationType: 'AGENCY_COUNSELLING',
+				conversationType: liveChat ? 'LIVE_CHAT' : 'AGENCY_COUNSELLING',
 				postcode: '00000',
 				language: 'de',
 				matrixRoomId: PRACTICE_MAIN_ROOM_ID,
@@ -188,7 +198,7 @@ export const createPracticeScenario = ({
 				),
 				messagesRead: true,
 				isTeamSession: false,
-				registrationType: 'REGISTERED',
+				registrationType: liveChat ? 'ANONYMOUS' : 'REGISTERED',
 				createDate: new Date(enquiryTs).toISOString(),
 				topic: {
 					id: topic.id,

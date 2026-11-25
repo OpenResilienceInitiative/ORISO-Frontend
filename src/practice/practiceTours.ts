@@ -7,8 +7,10 @@ import {
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
+import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
 
 /*
  * The two practice flows, a registry of their own: `frontendTours` feeds the
@@ -150,6 +152,93 @@ export const practiceSupervisionTour: TourDefinition = {
 export const practiceTours: TourDefinition[] = [
 	practiceAcceptTour,
 	practiceSupervisionTour
+];
+
+/**
+ * FE#2545: the Live-Chat topic tour as a practice flow. A practice live chat
+ * from an anonymous practice asker waits in the queue; the counsellor opens
+ * it, starts the chat with the real button and writes the first reply, which
+ * the script answers. Same id and version as the explanation tour it replaces
+ * where practice is open, so Help shows one status; no card of its own.
+ */
+export const practiceLiveChatTour: TourDefinition = {
+	id: PRACTICE_LIVE_CHAT_TOUR_ID,
+	version: LIVE_CHAT_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: 'tour.liveChat.title',
+	summaryKey: 'tour.liveChat.summary',
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	when: { flag: 'featureAnonymousChatEnabled' },
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.liveChat.step.intro.title',
+			contentKey: 'tour.liveChat.step.practiceIntro.intro'
+		},
+		{
+			id: 'queue',
+			route: PRACTICE_ENQUIRIES_ROUTE,
+			target: 'livechat-queue',
+			placement: 'bottom',
+			// The chip shows only where the Träger lists live chats apart.
+			optional: true,
+			// The filter shows the shared queue: only the waiting live chat.
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.liveChat.step.queue.title',
+			contentKey: 'tour.liveChat.step.queue.intro'
+		},
+		{
+			id: 'open-request',
+			route: PRACTICE_ENQUIRIES_ROUTE,
+			target: 'enquiry-list-item',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.liveChat.step.openRequest.title',
+			contentKey: 'tour.liveChat.step.openRequest.intro'
+		},
+		{
+			id: 'accept',
+			target: 'enquiry-accept-button',
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.liveChat.step.accept.title',
+			contentKey: 'tour.liveChat.step.accept.intro'
+		},
+		{
+			id: 'reply',
+			// The chat is started; Back would show a request that is gone.
+			hideBack: true,
+			target: 'session-composer',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.messageSent
+			},
+			titleKey: 'tour.liveChat.step.reply.title',
+			contentKey: 'tour.liveChat.step.reply.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.liveChat.step.done.title',
+			contentKey: 'tour.liveChat.step.done.intro'
+		}
+	]
+};
+
+/**
+ * Every tour the practice world can host: the card flows and the topic tours
+ * that run as practice where it is open. The tour host, the banner and the
+ * host hooks read this list; the practice cards read `practiceTours` only.
+ */
+export const practiceHostedTours: TourDefinition[] = [
+	...practiceTours,
+	practiceLiveChatTour
 ];
 
 /**

@@ -13,10 +13,11 @@ import { resolveTourSteps } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import { practiceAcceptedSessionRoute } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
-import { PRACTICE_TOUR_IDS } from './practiceTourIds';
+import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
 	practiceAcceptTour,
+	practiceHostedTours,
 	practiceSupervisionTour,
 	practiceTours
 } from './practiceTours';
@@ -49,8 +50,13 @@ const stepIds = (steps: Array<{ id: string }>) => steps.map((s) => s.id);
 const TEAM_OFF = { flags: { featureTeamDiscussionEnabled: false } };
 
 describe('practiceTours registry', () => {
-	it('holds the two practice tours under the ids the guard allows', () => {
-		expect(practiceTours.map((t) => t.id)).toEqual([...PRACTICE_TOUR_IDS]);
+	it('holds the two practice cards, and every hosted tour under an id the guard allows', () => {
+		expect(practiceTours.map((t) => t.id)).toEqual([
+			...PRACTICE_CARD_TOUR_IDS
+		]);
+		expect(practiceHostedTours.map((t) => t.id)).toEqual([
+			...PRACTICE_TOUR_IDS
+		]);
 		expect(practiceAcceptTour.id).toBe('consultant-practice-accept');
 		expect(practiceSupervisionTour.id).toBe(
 			'consultant-practice-supervision'

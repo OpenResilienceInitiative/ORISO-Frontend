@@ -1,6 +1,13 @@
 import type { TourDefinition } from '../types';
 
 /**
+ * Version 2 (FE#2545): where the practice area is open the tour runs as a
+ * practice flow (`practiceLiveChatTour`) under this id and version, so the
+ * Help list shows one status for both renderings.
+ */
+export const LIVE_CHAT_TOUR_VERSION = 2;
+
+/**
  * TOUR-12 / FE#2342: Live chat for counsellors. Difference-first: live chat
  * is link-based, anonymous and topic-bound, and runs from one shared queue.
  * Watch-only — no step switches availability or accepts a chat. The rail
@@ -10,7 +17,7 @@ import type { TourDefinition } from '../types';
  */
 export const consultantLiveChatTour: TourDefinition = {
 	id: 'consultant-live-chat',
-	version: 1,
+	version: LIVE_CHAT_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
 	titleKey: 'tour.liveChat.title',

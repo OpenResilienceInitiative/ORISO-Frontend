@@ -6677,6 +6677,17 @@
 				"done": {
 					"title": "Chat beenden",
 					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Live-Chats kommen ohne Registrierung über einen Link, die Person schreibt anonym. Gleich wartet ein Übungs-Live-Chat auf Sie."
+				},
+				"openRequest": {
+					"title": "Live-Chat öffnen",
+					"intro": "In der Liste wartet ein Live-Chat einer anonymen ratsuchenden Person. Klicken Sie darauf, um ihn zu öffnen."
+				},
+				"reply": {
+					"title": "Antworten",
+					"intro": "Der Chat läuft. Schreiben Sie der Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
 				}
 			}
 		},

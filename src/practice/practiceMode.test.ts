@@ -52,8 +52,12 @@ describe('practice mode (module-level core)', () => {
 		globalThis.fetch = originalFetch;
 	});
 
-	it('knows the two practice tours of the spec', () => {
-		expect([...PRACTICE_TOUR_IDS]).toEqual([ACCEPT, SUPERVISION]);
+	it('knows the two practice flows of the spec and the Live-Chat tour (FE#2545)', () => {
+		expect([...PRACTICE_TOUR_IDS]).toEqual([
+			ACCEPT,
+			SUPERVISION,
+			'consultant-live-chat'
+		]);
 	});
 
 	it('is inactive until entered, and exit returns to inactive', () => {

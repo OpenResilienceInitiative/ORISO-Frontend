@@ -134,6 +134,7 @@ vi.mock('react-joyride', async () => {
 
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
+const LIVE_CHAT = 'consultant-live-chat';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
@@ -438,6 +439,16 @@ const expectStep = async (index: number) => {
 		: document.querySelector<HTMLElement>(target)!;
 };
 
+/** The step that points at this tour target, in the resolved run. */
+const stepIndexOf = (name: string) => {
+	const index =
+		joyride?.steps.findIndex(
+			({ target }) => target === `[data-tour-target="${name}"]`
+		) ?? -1;
+	expect(index, name).toBeGreaterThanOrEqual(0);
+	return index;
+};
+
 const pressNext = (index: number) =>
 	act(() => {
 		joyride!.onEvent({
@@ -653,6 +664,92 @@ describe('practice flows on the real app shell', () => {
 		},
 		120000
 	);
+
+	it('Live chat (FE#2545): a practice live chat waits, is started with the real button and answered', async () => {
+		const app = renderApp();
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(LIVE_CHAT);
+
+		// 1: what is different about live chat; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		pressNext(0);
+
+		// 2: the live-chat filter, the shared queue; click it.
+		const chip = await expectStep(stepIndexOf('livechat-queue'));
+		await act(async () => {
+			fireEvent.click(chip!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// 3: the waiting live chat, the only row of the queue; click it.
+		const open = stepIndexOf('enquiry-list-item');
+		await expectStep(open);
+		// The queue filter stays on: only live chats are listed.
+		expect(route()).toBe(`${PRACTICE_ENQUIRIES_ROUTE}?chip=liveChat`);
+		const rowSelector = joyride!.steps[open].target;
+		await waitFor(() => {
+			const row = document.querySelector<HTMLElement>(rowSelector);
+			expect(row?.isConnected).toBe(true);
+			expect(row?.textContent).toContain(SCRIPT.cast.asker.displayName);
+		}, SLOW);
+		await act(async () => {
+			fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// The real "Chat starten"; it takes the live-chat accept path.
+		const accept = await expectStep(open + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.enquiryAccepted,
+			async () => {
+				fireEvent.click(accept!);
+			}
+		);
+		expect(
+			network.some(({ url }) =>
+				url.includes('/conversations/askers/anonymous/')
+			)
+		).toBe(false);
+		await waitFor(
+			() => expect(route()).toMatch(/sessionView\/!practice-1/),
+			SLOW
+		);
+
+		// The composer; the scripted asker answers the first reply.
+		await expectStep(open + 2);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.askerFirstMessage
+				),
+			SLOW
+		);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
+			typeAndSend(
+				() => document.querySelector('.chatStage__mainPane'),
+				'Hallo, schön, dass Sie schreiben. Was beschäftigt Sie?'
+			)
+		);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.askerReply
+				),
+			SLOW
+		);
+
+		// Done: completion is written for the live-chat tour itself.
+		await finish(open + 3);
+	}, 120000);
+
+	it('Live chat without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
 
 	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
 		const app = renderApp();
