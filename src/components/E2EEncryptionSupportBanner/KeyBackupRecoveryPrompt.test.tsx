@@ -1,6 +1,12 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
@@ -35,9 +41,25 @@ vi.mock('../modal/OrisoDialog', () => ({
 		<div role="dialog">{children}</div>
 	)
 }));
+const call = vi.hoisted(() => ({
+	current: null as unknown,
+	listeners: new Set<() => void>()
+}));
+vi.mock('../../services/CallManager', () => ({
+	callManager: {
+		getCurrentCall: () => call.current,
+		getWaitingCall: () => null,
+		subscribe: (listener: () => void) => {
+			call.listeners.add(listener);
+			return () => call.listeners.delete(listener);
+		}
+	}
+}));
 const userId = '@synthetic:test';
 const service = { getClient: () => ({ getUserId: () => userId }) } as any;
 afterEach(() => {
+	call.current = null;
+	call.listeners.clear();
 	cleanup();
 	clearRecoveryRuntimeState();
 });
@@ -107,4 +129,31 @@ it('offers a fresh sign-in, not the recovery-key dialog, when the password unloc
 	);
 	expect(logout).toHaveBeenCalledOnce();
 	expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+it('keeps the floating sign-out notice off the screen while a call rings or runs', () => {
+	setRecoveryRuntimeStatus(userId, 'needs-sign-in');
+	call.current = { callId: 'c1', state: 'ringing', isIncoming: true };
+	render(
+		<MemoryRouter>
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService: service,
+					setMatrixClientService: vi.fn()
+				}}
+			>
+				<KeyBackupRecoveryPrompt />
+			</MatrixClientContext.Provider>
+		</MemoryRouter>
+	);
+	// Its "Abmelden und erneut anmelden" rested over the call card's "Beitreten".
+	expect(
+		screen.queryByRole('button', { name: 'Abmelden und erneut anmelden' })
+	).toBeNull();
+	// The call is over: the notice is back.
+	call.current = null;
+	act(() => call.listeners.forEach((listener) => listener()));
+	expect(
+		screen.getByRole('button', { name: 'Abmelden und erneut anmelden' })
+	).toBeTruthy();
 });

@@ -2,7 +2,7 @@ import { UserDataContext } from '../../globalState';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -23,6 +23,7 @@ import {
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
 import { logout } from '../logout/logout';
+import { callManager } from '../../services/CallManager';
 import {
 	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
 	M3_SNACKBAR_PHONE_MEDIA,
@@ -191,6 +192,30 @@ export const KeyBackupRecoveryBoundary = ({
 	);
 };
 
+/**
+ * A call rings or runs for this person. The floating notice rests over the
+ * end of the timeline, which is where the call's card and its "Beitreten"
+ * are: on Dev (25 Nov 2026) a guest aiming at "Beitreten" hit the notice's
+ * "Abmelden und erneut anmelden" and landed on the login page instead of in
+ * the call. The notice waits until the call is over.
+ */
+const useCallInProgress = () => {
+	const [inProgress, setInProgress] = useState(() =>
+		Boolean(callManager.getCurrentCall() ?? callManager.getWaitingCall())
+	);
+	useEffect(() => {
+		const read = () =>
+			setInProgress(
+				Boolean(
+					callManager.getCurrentCall() ?? callManager.getWaitingCall()
+				)
+			);
+		read();
+		return callManager.subscribe(read);
+	}, []);
+	return inProgress;
+};
+
 /** Recovery is available inline; opening the restore dialog is always explicit. */
 export const KeyBackupRecoveryPrompt = ({
 	timelineTarget
@@ -213,6 +238,7 @@ export const KeyBackupRecoveryPrompt = ({
 	   blocks the screen while somebody is working. */
 	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 	const showRecovery = openedFor === userId;
+	const callInProgress = useCallInProgress();
 	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
 	// The password unlocks this history at sign-in; no key to ask for (#1741).
 	const signInAgain = status === 'needs-sign-in';
@@ -221,7 +247,8 @@ export const KeyBackupRecoveryPrompt = ({
 	const notice = dismissedFor !== dismissKey && (
 		<M3Snackbar
 			role="status"
-			open={!showRecovery}
+			/* Inline it is part of the timeline and covers nothing. */
+			open={!showRecovery && (Boolean(timelineTarget) || !callInProgress)}
 			placement={timelineTarget ? 'inline' : 'floating'}
 			sx={timelineTarget ? recoveryInlineStyle : undefined}
 			testId="key-backup-recovery-action"
