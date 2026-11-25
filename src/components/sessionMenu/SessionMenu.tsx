@@ -377,7 +377,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// same offer flow (and pending state) as the profile button.
 	// FE#2494 *4: not in a Teamberatung case, where there is no handover.
 	const showCaseHandover =
-		showRequestAdvice && offersCaseHandoverIn(activeSession);
+		showRequestAdvice &&
+		offersCaseHandoverIn(activeSession, userData?.agencies);
 	const caseHandover = useCaseHandoverOffer();
 	const showEndTopicDuplicate =
 		!activeSession.isGroup &&

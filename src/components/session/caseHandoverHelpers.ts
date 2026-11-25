@@ -32,6 +32,8 @@ interface CaseHandoverSessionInput {
 		/** Teamberatung (FE#2494 *4): colleagues read, only the owner writes. */
 		isTeamSession?: boolean;
 		agencyId?: number;
+		/** FE#2494 *4: the model the case was created under; absent until stamped. */
+		caseSharingModel?: string | null;
 	};
 	consultant?: {
 		id?: string | number;
@@ -106,16 +108,27 @@ export const isCaseHandoverCandidate = ({
 };
 
 /**
+ * FE#2494 *4: whether the case is a Teamberatung case. The case keeps the
+ * model it was created under (`caseSharingModel`); only a case created before
+ * the model was stamped falls back to its team flag.
+ */
+const isTeamCase = (
+	item: CaseHandoverSessionInput['item'] | null | undefined
+): boolean =>
+	item?.caseSharingModel
+		? item.caseSharingModel === 'TEAM_COUNSELLING'
+		: Boolean(item?.isTeamSession);
+
+/**
  * FE#2494 *4 (decision d): in Teamberatung a colleague of the department reads
  * an accepted case without a request but never writes; only the assigned
  * counsellor does. The server enforces it with the Matrix reader power level.
- * The case keeps the model it was created under, so a later switch of the
- * centre changes nothing here (Frank, 2026-11-25).
+ * A later switch of the centre changes nothing here (Frank, 2026-11-25).
  */
 export const isTeamCounsellingReader = (
 	input: Omit<CaseHandoverCandidateInput, 'sessionListTab'>
 ): boolean =>
-	Boolean(input.activeSession?.item?.isTeamSession) &&
+	isTeamCase(input.activeSession?.item) &&
 	isCaseHandoverAccessControlled(input);
 
 /** A counsellor's centre; `teamAgency` follows the centre's current case sharing choice. */
@@ -125,15 +138,26 @@ export interface CaseSharingCentreInput {
 }
 
 /**
- * FE#2494 *4: a team case has no case handover, so "Beratung übergeben" is
- * not offered in it (header "+", session menu, profile). The case keeps the
- * model it was created under: an older case handover case in a centre that
- * has since switched to Teamberatung keeps it, and a team case keeps none
- * after a switch back. The server decides by the same stamp.
+ * FE#2494 *4: "Beratung übergeben" (header "+", session menu, profile) is
+ * offered only in a case created under case handover, whatever the centre
+ * chose since; the server decides by the same stamp. A case created before the
+ * stamp existed falls back to the centre's current choice: not in a team case
+ * of a centre in Teamberatung, otherwise offered and decided by the server.
  */
 export const offersCaseHandoverIn = (
-	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined
-): boolean => !activeSession?.item?.isTeamSession;
+	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined,
+	centres?: readonly CaseSharingCentreInput[] | null
+): boolean => {
+	const item = activeSession?.item;
+	if (item?.caseSharingModel) {
+		return item.caseSharingModel === 'CASE_HANDOVER';
+	}
+	if (!item?.isTeamSession) {
+		return true;
+	}
+	const centre = centres?.find((candidate) => candidate.id === item.agencyId);
+	return centre?.teamAgency !== true;
+};
 
 /**
  * The people search hint for the counsellor's centres: Teamberatung, case

@@ -55,9 +55,43 @@ const consultantUser = {
 describe('caseHandoverHelpers', () => {
 	it('offers case handover by the model the case was created under', () => {
 		// FE#2494 *4: a later switch of the centre does not change a running case.
-		expect(offersCaseHandoverIn({ item: { isTeamSession: true } })).toBe(
+		const teamCentre = [{ id: 1, teamAgency: true }];
+		const handoverCentre = [{ id: 1, teamAgency: false }];
+		const stamped = (caseSharingModel: string, isTeamSession = false) => ({
+			item: { caseSharingModel, isTeamSession, agencyId: 1 }
+		});
+		expect(offersCaseHandoverIn(stamped('CASE_HANDOVER'), teamCentre)).toBe(
+			true
+		);
+		// Stamped "none": no offer, so nobody runs into the server's refusal.
+		expect(offersCaseHandoverIn(stamped('NONE'), handoverCentre)).toBe(
 			false
 		);
+		expect(
+			offersCaseHandoverIn(
+				stamped('TEAM_COUNSELLING', true),
+				handoverCentre
+			)
+		).toBe(false);
+	});
+
+	it('falls back to the centre for a case created before the stamp', () => {
+		const centres = [
+			{ id: 1, teamAgency: true },
+			{ id: 2, teamAgency: false }
+		];
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 1 } },
+				centres
+			)
+		).toBe(false);
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 2 } },
+				centres
+			)
+		).toBe(true);
 		expect(
 			offersCaseHandoverIn({
 				item: { isTeamSession: false, agencyId: 1 }
@@ -113,23 +147,29 @@ describe('caseHandoverHelpers', () => {
 		).toBe(false);
 	});
 
-	it('keeps team reading after the centre has switched to another model', () => {
-		const teamCase = {
-			...baseSession,
-			item: { ...baseSession.item, isTeamSession: true, agencyId: 5 }
-		};
-		const reader = (teamAgency?: boolean) =>
+	it('makes a colleague a reader by the model the case was created under', () => {
+		const reader = (item: Record<string, unknown>, teamAgency?: boolean) =>
 			isTeamCounsellingReader({
-				activeSession: teamCase,
+				activeSession: {
+					...baseSession,
+					item: { ...baseSession.item, agencyId: 5, ...item }
+				},
 				userData: {
 					...consultantUser,
 					agencies: [{ id: 5, teamAgency }]
 				},
 				type: MY_SESSION_TYPE
 			});
-		expect(reader(true)).toBe(true);
-		expect(reader(false)).toBe(true);
-		expect(reader(undefined)).toBe(true);
+		// The centre's current choice does not matter.
+		expect(reader({ isTeamSession: true }, false)).toBe(true);
+		expect(
+			reader(
+				{ isTeamSession: true, caseSharingModel: 'TEAM_COUNSELLING' },
+				false
+			)
+		).toBe(true);
+		expect(reader({ caseSharingModel: 'CASE_HANDOVER' }, true)).toBe(false);
+		expect(reader({ caseSharingModel: 'NONE' }, true)).toBe(false);
 	});
 
 	it('marks another counsellor owned my-session as handover candidate', () => {

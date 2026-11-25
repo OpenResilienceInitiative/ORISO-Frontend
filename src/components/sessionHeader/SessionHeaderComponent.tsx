@@ -1168,7 +1168,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						const canHandOverHere =
 							!untilL &&
 							!isPracticeConversation &&
-							offersCaseHandoverIn(activeSession) &&
+							offersCaseHandoverIn(
+								activeSession,
+								userData?.agencies
+							) &&
 							canRecommendFurtherCounselling({
 								isRejectedCase:
 									Number(activeSession.item.status) ===
