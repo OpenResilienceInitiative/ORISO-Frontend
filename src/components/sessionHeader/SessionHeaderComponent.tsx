@@ -15,6 +15,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { ManagePeopleDialog } from '../managePeople/ManagePeopleDialog';
 import { createSupervisionPeopleSource } from '../managePeople/supervisionPeopleSource';
+import { shareSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -497,12 +498,22 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		// The people dialog has already changed the case; the rest is
 		// non-blocking bookkeeping. The system message handles its own
 		// failure, so the dialog does not wait for the Matrix send.
-		void postSupervisorSystemMessage(
-			origin,
-			change.kind,
-			change.kind === 'replaced' ? change.to : change.name,
-			change.kind === 'replaced' ? change.from : undefined
-		).catch(() => undefined);
+		if (change.kind === 'replaced') {
+			// #2494 *6: the server posts the swap notice into the supervision
+			// side room; the case chat gets nothing. The new supervisor
+			// continues that room, so hand them its history keys (MSC4268).
+			void shareSupervisionHistory(
+				matrixClientService?.getClient?.(),
+				change.sideRoomId,
+				change.supervisorMatrixUserId
+			);
+		} else {
+			void postSupervisorSystemMessage(
+				origin,
+				change.kind,
+				change.name
+			).catch(() => undefined);
+		}
 		if (isOriginOnScreen) {
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();

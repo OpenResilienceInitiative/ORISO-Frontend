@@ -2344,7 +2344,8 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision gewechselt",
-		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}."
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}.",
+		"supervisionChangedReason": "Grund: {{reason}}"
 	},
 	"navigation": {
 		"appointments": "Video - Termine",
@@ -2560,6 +2561,10 @@
 			"supervisorAssigned": {
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision gewechselt",
+				"text": "In diesem Chat begleitet jetzt eine andere Person die Beratung als Supervision."
 			},
 			"topicDuplicateStarted": {
 				"title": "Weitere Beratung zum selben Thema",
@@ -8324,6 +8329,8 @@
 			"confirm": "Wirklich entfernen?"
 		},
 		"replace": {
+			"notifyClient": "Ratsuchende über den Wechsel benachrichtigen",
+			"done": "Gewechselt: {{from}} → {{to}}. Im Supervisions-Chat steht ein Hinweis.",
 			"action": "Wechseln",
 			"labelFor": "{{name}} wechseln",
 			"title": "Wer soll {{name}} ablösen?",

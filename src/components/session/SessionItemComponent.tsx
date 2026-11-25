@@ -1,4 +1,5 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { acceptSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
@@ -1217,6 +1218,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData.userId,
 		practiceSupervisorsRevision,
 		sessionSupervisorsRevision
+	]);
+
+	// #2494 *6: a supervisor who took over continues the side room; import the
+	// history keys the counsellor sent (once per room and page load).
+	const supervisionSideRoomId = supervisionRoomLookup?.roomId;
+	const counsellorMatrixUserId = activeSession.item?.consultantMatrixUserId;
+	useEffect(() => {
+		if (!isSupervisor || !supervisionSideRoomId) return;
+		void acceptSupervisionHistory(
+			matrixClientService?.getClient?.(),
+			supervisionSideRoomId,
+			counsellorMatrixUserId
+		);
+	}, [
+		isSupervisor,
+		supervisionSideRoomId,
+		counsellorMatrixUserId,
+		matrixClientService
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the

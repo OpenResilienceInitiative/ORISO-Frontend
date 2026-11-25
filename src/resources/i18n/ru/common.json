@@ -2328,7 +2328,8 @@
 			}
 		},
 		"supervisionChangedTitle": "Супервизор заменён",
-		"supervisionChangedDescription": "{{name}} теперь супервизирует этот чат вместо {{from}}."
+		"supervisionChangedDescription": "{{name}} теперь супервизирует этот чат вместо {{from}}.",
+		"supervisionChangedReason": "Причина: {{reason}}"
 	},
 	"navigation": {
 		"appointments": "Видео - Даты",
@@ -2544,6 +2545,10 @@
 			"supervisorAssigned": {
 				"title": "Супервизор назначен",
 				"text": "Этому случаю был назначен супервизор."
+			},
+			"supervisorReplaced": {
+				"title": "Супервизия изменена",
+				"text": "Теперь консультирование в этом чате супервизирует другой человек."
 			},
 			"topicDuplicateStarted": {
 				"title": "Ещё одна консультация по той же теме",
@@ -8363,6 +8368,8 @@
 			"confirm": "Точно удалить?"
 		},
 		"replace": {
+			"notifyClient": "Сообщить обратившемуся о замене",
+			"done": "Заменено: {{from}} → {{to}}. В чате супервизии есть заметка.",
 			"action": "Заменить",
 			"labelFor": "Заменить: {{name}}",
 			"title": "Кто заменит: {{name}}?",

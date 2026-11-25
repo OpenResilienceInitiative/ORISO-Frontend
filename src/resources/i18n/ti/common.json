@@ -2297,7 +2297,8 @@
 			}
 		},
 		"supervisionChangedTitle": "ምክትታል ተቐይሩ",
-		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።"
+		"supervisionChangedDescription": "{{name}} ሕጂ ነዚ ዕላል ከም ምትካል {{from}} ይከታተሎ።",
+		"supervisionChangedReason": "ምኽንያት: {{reason}}"
 	},
 	"navigation": {
 		"appointments": "ቪድዮ - ቆጸራታት",
@@ -2513,6 +2514,10 @@
 			"supervisorAssigned": {
 				"title": "ተቖጻጻሪ ተመዲቡ",
 				"text": "ናብዚ ጉዳይ ተቖጻጻሪ ተመዲቡ።"
+			},
+			"supervisorReplaced": {
+				"title": "ሱፐርቪዥን ተቐይሩ",
+				"text": "ኣብዚ ቻት ሕጂ ካልእ ሰብ ነቲ ምኽሪ ይቆጻጸር ኣሎ።"
 			},
 			"topicDuplicateStarted": {
 				"title": "ብተመሳሳሊ ኣርእስቲ ተወሳኺ ምኽሪ",
@@ -8301,6 +8306,8 @@
 			"confirm": "ብሓቂ ይውጻእ?"
 		},
 		"replace": {
+			"notifyClient": "ንሓታቲ ምኽሪ ብዛዕባ እቲ ለውጢ ኣፍልጥ",
+			"done": "ተቐይሩ: {{from}} → {{to}}። ኣብ ዕላል ቁጽጽር መዘኻኸሪ ኣሎ።",
 			"action": "ቀይር",
 			"labelFor": "{{name}} ቀይር",
 			"title": "ኣብ ክንዲ {{name}} መን ይኹን?",

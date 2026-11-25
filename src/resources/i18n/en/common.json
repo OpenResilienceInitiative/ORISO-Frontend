@@ -2322,7 +2322,8 @@
 			}
 		},
 		"supervisionChangedTitle": "Supervision changed",
-		"supervisionChangedDescription": "{{name}} now supervises this chat in place of {{from}}."
+		"supervisionChangedDescription": "{{name}} now supervises this chat in place of {{from}}.",
+		"supervisionChangedReason": "Reason: {{reason}}"
 	},
 	"navigation": {
 		"appointments": "Video dates",
@@ -2536,6 +2537,10 @@
 			"supervisorAssigned": {
 				"title": "Supervisor assigned",
 				"text": "A supervisor was assigned to this case."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision changed",
+				"text": "A different person now supervises the counselling in this chat."
 			},
 			"topicDuplicateStarted": {
 				"title": "Another counselling session on the same topic",
@@ -8249,6 +8254,8 @@
 			"confirm": "Really remove?"
 		},
 		"replace": {
+			"notifyClient": "Tell the advice seeker about the change",
+			"done": "Changed: {{from}} → {{to}}. A note is in the supervision chat.",
 			"action": "Replace",
 			"labelFor": "Replace {{name}}",
 			"title": "Who should take over from {{name}}?",

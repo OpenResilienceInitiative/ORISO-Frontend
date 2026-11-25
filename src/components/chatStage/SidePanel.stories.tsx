@@ -33,6 +33,8 @@ import {
 	SUPERVISOR_NAME,
 	supervisionMessages,
 	supervisionSystemNotice,
+	supervisorReplacedNotice,
+	PREVIOUS_SUPERVISOR_NAME,
 	THREAD_ROOT_ID,
 	threadMessages,
 	mainChatMessages,
@@ -127,10 +129,13 @@ function SupervisionSideRoom({
 	firstVisit = false,
 	unread = 0,
 	viewerRole = 'consultant',
+	afterSwap = false,
 	brokenMessageIds,
 	onBack,
 	switcher
 }: {
+	/** #2494 *6: the counsellor just replaced the supervisor. */
+	afterSwap?: boolean;
 	variant?: SidePanelVariant;
 	withBanner?: boolean;
 	empty?: boolean;
@@ -221,7 +226,10 @@ function SupervisionSideRoom({
 												}
 											)
 										),
-										...supervisionMessages()
+										...supervisionMessages(),
+										...(afterSwap
+											? [supervisorReplacedNotice()]
+											: [])
 									]
 						}
 						renderMode="main"
@@ -829,6 +837,67 @@ export const SupervisorView: Story = {
 			panel.querySelector('.infoBanner__title')?.textContent
 		).toBe('Supervisionsgrund');
 		await expect(panel.textContent ?? '').not.toContain(CLIENT_NAME);
+	}
+};
+
+/**
+ * #2494 *6: the counsellor replaced the supervisor ("Supervisor verwalten" →
+ * "Wechseln"). One system note in this side room names both and the reason;
+ * the old supervisor has already left the room and the client room gets
+ * nothing. The earlier conversation stays above it.
+ */
+export const SupervisorReplaced: Story = {
+	name: 'Supervisor replaced — one note in the side room',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom afterSwap />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		await expectRealChatParts(canvasElement, 5);
+		const panel = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="supervision-side-panel"]'
+		)!;
+		const notes = panel.querySelectorAll<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		);
+		await expect(notes.length).toBe(1);
+		const text = notes[0].textContent ?? '';
+		await expect(text).toContain('Supervision gewechselt');
+		await expect(text).toContain(
+			`${SUPERVISOR_NAME} supervidiert diesen Chat jetzt anstelle von ${PREVIOUS_SUPERVISOR_NAME}`
+		);
+		await expect(text).toContain(
+			'Grund: Clara C. ist ab Dezember in Elternzeit.'
+		);
+		// Never the raw payload, never the client.
+		await expect(panel.textContent ?? '').not.toContain(
+			'SUPERVISOR_REPLACED'
+		);
+		await expect(panel.textContent ?? '').not.toContain(CLIENT_NAME);
+	}
+};
+
+/** #2494 *6: the new supervisor reads the same note, and the history above it. */
+export const SupervisorReplacedNewSupervisorView: Story = {
+	name: 'Supervisor replaced — new supervisor view',
+	args: { header: null, label: 'Supervision' },
+	render: () => (
+		<Host>
+			<SupervisionSideRoom afterSwap viewerRole="supervisor" />
+		</Host>
+	),
+	play: async ({ canvasElement }) => {
+		const panel = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="supervision-side-panel"]'
+		)!;
+		await waitFor(() =>
+			expect(panel.textContent ?? '').toContain('Supervision gewechselt')
+		);
+		await expect(
+			panel.querySelector('[data-cy="panel-header-name"]')?.textContent
+		).toBe(COUNSELLOR_NAME);
 	}
 };
 

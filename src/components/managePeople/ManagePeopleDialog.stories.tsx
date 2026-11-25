@@ -65,6 +65,8 @@ interface MemorySourceOptions {
 	failAdd?: 'error' | 'refused';
 	canAdd?: boolean;
 	newPerson?: Partial<ManagedPerson>;
+	/** FE#2494 *6: the swap dialog offers "notify the advice seeker". */
+	replaceCanNotifyClient?: boolean;
 }
 
 const useMemorySource = ({
@@ -75,7 +77,8 @@ const useMemorySource = ({
 	failCandidates,
 	failAdd,
 	canAdd = true,
-	newPerson
+	newPerson,
+	replaceCanNotifyClient
 }: MemorySourceOptions): ManagedPeopleSource =>
 	React.useMemo(() => {
 		let members = initialMembers;
@@ -95,6 +98,7 @@ const useMemorySource = ({
 		return {
 			kind,
 			requiresReason,
+			replaceCanNotifyClient,
 			loadMembers: async () => members,
 			loadCandidates: canAdd
 				? async () => {
@@ -323,7 +327,8 @@ const SUPERVISION_SWAPPABLE: MemorySourceOptions = {
 	members: [
 		{ ...SELMA, isStanding: false, canRemove: true, canReplace: true }
 	],
-	newPerson: { role: 'supervisor', canRemove: true, canReplace: true }
+	newPerson: { role: 'supervisor', canRemove: true, canReplace: true },
+	replaceCanNotifyClient: true
 };
 
 const swapSupervisor = async () => {
@@ -341,12 +346,22 @@ const swapSupervisor = async () => {
 		canvas.getByRole('textbox', { name: /Grund/ }),
 		'Selma ist im Urlaub'
 	);
+	// FE#2494 *6: ticked by default; the counsellor may untick it per swap.
+	await expect(
+		canvas.getByRole('checkbox', {
+			name: 'Ratsuchende über den Wechsel benachrichtigen'
+		})
+	).toBeChecked();
 	await userEvent.click(
 		canvas.getByRole('button', { name: 'Zu Herb Powell wechseln' })
 	);
-	await waitFor(() => expect(canvas.queryByText('Selma Bouvier')).toBeNull());
+	// One confirmation instead of the old "Wird geladen …" hang.
+	await canvas.findByText(
+		'Gewechselt: Selma Bouvier → Herb Powell. Im Supervisions-Chat steht ein Hinweis.'
+	);
 	await canvas.findByText('Herb Powell');
 	await canvas.findByText('Selma ist im Urlaub');
+	await expect(canvas.queryByText('Wird geladen …')).toBeNull();
 };
 
 /** Swap the supervisor in one step: pick, give the reason, confirm. */
@@ -360,6 +375,21 @@ export const PhoneSupervisionSwapInOneStep: Story = {
 	globals: phone390Globals,
 	render: () => <SessionStageDialog options={SUPERVISION_SWAPPABLE} phone />,
 	play: swapSupervisor
+};
+
+/**
+ * FE#2494 *6 click-through: the same swap without a scripted play, so a
+ * reviewer can walk the steps by hand (Wechseln → pick → reason and
+ * "notify" → confirm → confirmation line).
+ */
+export const SupervisionSwapClickThrough: Story = {
+	render: () => <SessionStageDialog options={SUPERVISION_SWAPPABLE} />
+};
+
+/** The click-through on the phone. */
+export const PhoneSupervisionSwapClickThrough: Story = {
+	globals: phone390Globals,
+	render: () => <SessionStageDialog options={SUPERVISION_SWAPPABLE} phone />
 };
 
 /** Today's Dev data: nobody is marked as a supervisor, so nobody can take over. */
