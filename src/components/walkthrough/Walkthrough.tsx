@@ -9,7 +9,8 @@ import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
 import {
 	consultantWalkthroughTour,
-	frontendTours
+	frontendTours,
+	INTRO_PRACTICE_POINTER_CONTENT_KEY
 } from '../productTour/tourDefinitions';
 import {
 	activeTourIdAtom,
@@ -43,6 +44,25 @@ const isCurrentVersionFinished = (
 			item.tourVersion === tour.version &&
 			(item.status === 'completed' || item.status === 'skipped')
 	);
+
+/**
+ * FE#2545: the watch-only Einführung ends with a pointer to its practice
+ * where the practice area is open to this counsellor, also on a phone ("on a
+ * computer, …"). Only the last step's text changes; the step count stays.
+ */
+const withPracticePointer = (
+	steps: TourStep[],
+	pointToPractice: boolean
+): TourStep[] =>
+	pointToPractice && steps.length
+		? [
+				...steps.slice(0, -1),
+				{
+					...steps[steps.length - 1],
+					contentKey: INTRO_PRACTICE_POINTER_CONTENT_KEY
+				}
+			]
+		: steps;
 
 /**
  * Frontend tour host. Renders whichever tour the Help → Tours list requested;
@@ -195,9 +215,13 @@ export const Walkthrough = () => {
 					isPracticeRun &&
 					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
-						: resolveTourSteps(activeTour, {
-								flags: { ...tenantSettings }
-							})
+						: withPracticePointer(
+								resolveTourSteps(activeTour, {
+									flags: { ...tenantSettings }
+								}),
+								activeTour === consultantWalkthroughTour &&
+									canUsePractice(settings, userData)
+							)
 			}
 		};
 	}

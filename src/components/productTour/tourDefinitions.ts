@@ -22,6 +22,16 @@ import { consultantVideoCallTour } from './tours/videoCallTour';
 export const INTRO_TOUR_VERSION = 2;
 
 /**
+ * FE#2545 (PO): where the practice area is open, the last step of the
+ * watch-only Einführung ends with one sentence pointing to the practice
+ * (Help → Tours). The host swaps this content in for that step only; the
+ * definition keeps the plain text, so ORISO-Admin and the catalogue see one
+ * step list.
+ */
+export const INTRO_PRACTICE_POINTER_CONTENT_KEY =
+	'walkthrough.step.6.introWithPractice';
+
+/**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
  * steps, same i18n keys, same route behavior. Targets are semantic
  * `data-tour-target` anchors instead of the removed styling classes. Since

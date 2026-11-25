@@ -5629,6 +5629,7 @@
 			},
 			"6": {
 				"intro": "Im Profilbereich können Sie persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Ihres Urlaubs aktivieren, Ihr Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen.",
+				"introWithPractice": "Im Profilbereich können Sie persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Ihres Urlaubs aktivieren, Ihr Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen. <br /><br /> Am Computer können Sie das unter Hilfe → Rundgänge auch üben.",
 				"title": "Profil"
 			},
 			"done": "Fertig",

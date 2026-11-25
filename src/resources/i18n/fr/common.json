@@ -5612,6 +5612,7 @@
 			},
 			"6": {
 				"intro": "Dans la zone de profil, vous pouvez gérer les informations personnelles et publiques, activer le message d'absence pendant vos vacances, modifier votre mot de passe et utiliser de nombreuses autres fonctions (comme la configuration de l'authentification à deux facteurs).",
+				"introWithPractice": "Dans la zone de profil, vous pouvez gérer les informations personnelles et publiques, activer le message d'absence pendant vos vacances, modifier votre mot de passe et utiliser de nombreuses autres fonctions (comme la configuration de l'authentification à deux facteurs). <br /><br /> Sur un ordinateur, vous pouvez aussi vous exercer sous Aide → Visites guidées.",
 				"title": "Profil"
 			},
 			"done": "Prêt",

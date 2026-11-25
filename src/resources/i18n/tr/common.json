@@ -5612,6 +5612,7 @@
 			},
 			"6": {
 				"intro": "Profil alanında, kişisel ve genel bilgileri yönetebilir, tatiliniz sırasında ofis dışında mesajını etkinleştirebilir, şifrenizi değiştirebilir ve diğer birçok işlevi (2 faktörlü kimlik doğrulama ayarlama gibi) kullanabilirsiniz.",
+				"introWithPractice": "Profil alanında, kişisel ve genel bilgileri yönetebilir, tatiliniz sırasında ofis dışında mesajını etkinleştirebilir, şifrenizi değiştirebilir ve diğer birçok işlevi (2 faktörlü kimlik doğrulama ayarlama gibi) kullanabilirsiniz. <br /><br /> Bilgisayarda bunu Yardım → Turlar altında da deneyebilirsiniz.",
 				"title": "Profil"
 			},
 			"done": "Bitti",

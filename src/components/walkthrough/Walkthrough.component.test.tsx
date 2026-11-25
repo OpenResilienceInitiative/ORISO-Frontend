@@ -731,6 +731,63 @@ describe('Walkthrough', () => {
 			expect(adapterProps.onBeforeStart).toBeUndefined();
 		});
 
+		describe('the pointer to the practice on the last watch-only step (FE#2545)', () => {
+			const lastContentKey = () =>
+				adapterProps.tour.steps[adapterProps.tour.steps.length - 1]
+					.contentKey;
+
+			it('points to the practice while the practice area is open, also on a phone', async () => {
+				practiceOn();
+				renderWalkthrough(
+					{ ...consultant, isWalkThroughEnabled: true },
+					null,
+					undefined,
+					390
+				);
+
+				await waitFor(() => expect(adapterProps).not.toBeNull());
+				expect(adapterProps.tour.steps).toHaveLength(5);
+				expect(lastContentKey()).toBe(
+					'walkthrough.step.6.introWithPractice'
+				);
+			});
+
+			it('keeps the plain last step while the release flag is off', async () => {
+				renderWalkthrough({
+					...consultant,
+					isWalkThroughEnabled: true
+				});
+
+				await waitFor(() => expect(adapterProps).not.toBeNull());
+				expect(lastContentKey()).toBe('walkthrough.step.6.intro');
+			});
+
+			it('keeps the plain last step for anybody who cannot practise', async () => {
+				practiceOn();
+				renderWalkthrough({
+					grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+					isWalkThroughEnabled: true
+				});
+
+				await waitFor(() => expect(adapterProps).not.toBeNull());
+				expect(lastContentKey()).toBe('walkthrough.step.6.intro');
+			});
+
+			it('leaves the definition itself untouched', async () => {
+				practiceOn();
+				renderWalkthrough({
+					...consultant,
+					isWalkThroughEnabled: true
+				});
+
+				await waitFor(() => expect(adapterProps).not.toBeNull());
+				const profile = frontendTours
+					.find((tour) => tour.id === 'consultant-walkthrough')!
+					.steps.find((step) => step.id === 'profile')!;
+				expect(profile.contentKey).toBe('walkthrough.step.6.intro');
+			});
+		});
+
 		it('auto-starts the Einführung again for who completed version 1 (shows as new)', async () => {
 			vi.mocked(
 				versionedTourProgressRepository.getProgress

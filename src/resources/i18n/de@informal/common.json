@@ -2042,7 +2042,8 @@
 				"intro": "In diesem Bereich kannst Du alle aktiven Beratungen, die jemand in Deinem Team gerade bearbeitet, einsehen und zu ihnen beitragen."
 			},
 			"6": {
-				"intro": "Im Profilbereich kannst Du persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Deines Urlaubs aktivieren, Dein Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen."
+				"intro": "Im Profilbereich kannst Du persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Deines Urlaubs aktivieren, Dein Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen.",
+				"introWithPractice": "Im Profilbereich kannst Du persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Deines Urlaubs aktivieren, Dein Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen. <br /><br /> Am Computer kannst Du das unter Hilfe → Rundgänge auch üben."
 			}
 		},
 		"subtitle": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten.",

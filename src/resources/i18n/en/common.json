@@ -5577,6 +5577,7 @@
 			},
 			"6": {
 				"intro": "In the profile area you can manage personal and public information, enable out-of-office messaging during your vacation, change your password and use many other features (like setting up 2-factor authentication).",
+				"introWithPractice": "In the profile area you can manage personal and public information, enable out-of-office messaging during your vacation, change your password and use many other features (like setting up 2-factor authentication). <br /><br /> On a computer, you can also practise this under Help → Tours.",
 				"title": "Profile"
 			},
 			"done": "Ready",
