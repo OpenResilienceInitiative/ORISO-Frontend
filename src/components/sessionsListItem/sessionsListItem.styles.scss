@@ -774,7 +774,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	&__dropdownOptionDescription {
 		font-size: 12px;
-		color: var(--m3-on-surface-variant, #444748);
+		color: var(--oriso-quiet-text, #646d78);
 		line-height: 20px;
 		margin: 0;
 
@@ -1561,15 +1561,9 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		font-weight: 400;
 	}
 
-	// The selected card is a surface card, not a `-fixed` one: the brand
-	// ink is the legible `--oriso-primary-text` (light pink in dark mode;
-	// unset in light, where the deep red stays). P0 dark mode, 2026-11-25.
 	.sessionsListItem__consultingTypeIcon
 		.sessionsListItem__consultingTypeIcon--kindIcon {
-		color: var(
-			--oriso-primary-text,
-			var(--m3-on-primary-fixed-variant, #930008)
-		);
+		color: var(--m3-on-primary-fixed-variant, #930008);
 		background-color: currentcolor;
 	}
 
@@ -1577,10 +1571,26 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	.sessionsListItem__consultingTypeIcon--internalLabel,
 	.sessionsListItem__consultingTypeIcon--selfHelpLabel,
 	.sessionsListItem__consultingTypeIcon--supervisionLabel {
-		color: var(
-			--oriso-primary-text,
-			var(--m3-on-primary-fixed-variant, #930008)
-		) !important;
+		color: var(--m3-on-primary-fixed-variant, #930008) !important;
+	}
+
+	// Dark scheme (P0 dark mode, 2026-11-25): the selected card is a dark
+	// surface, not a `-fixed` fill; the deep red read as red on black.
+	html[data-oriso-personal-scheme='dark'] & {
+		.sessionsListItem__consultingTypeIcon
+			.sessionsListItem__consultingTypeIcon--kindIcon {
+			color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+		}
+
+		.sessionsListItem__consultingTypeIcon--nearbyLabel,
+		.sessionsListItem__consultingTypeIcon--internalLabel,
+		.sessionsListItem__consultingTypeIcon--selfHelpLabel,
+		.sessionsListItem__consultingTypeIcon--supervisionLabel {
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, #ffb4aa)
+			) !important;
+		}
 	}
 }
 

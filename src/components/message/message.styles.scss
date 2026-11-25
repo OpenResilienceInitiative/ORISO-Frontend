@@ -1111,7 +1111,7 @@ $message-avatar-overlap: -19px;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: var(--m3-on-surface-variant, #444748);
+		color: var(--oriso-quiet-text, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -1827,7 +1827,7 @@ $message-avatar-overlap: -19px;
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
-	color: var(--m3-on-surface-variant, #444748);
+	color: var(--oriso-quiet-text, #646d78);
 }
 
 .messageItem__sendFailedRetry {

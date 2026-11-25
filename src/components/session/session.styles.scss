@@ -666,7 +666,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 15px;
 		line-height: 1.4;
 		color: var(--m3-secondary, #4c555f);
-		background-color: #f4f6f9;
+		background-color: var(--m3-surface-container-low, #f4f6f9);
 	}
 
 	&__readOnlyExtend {

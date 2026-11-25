@@ -406,6 +406,12 @@
 
 		.notificationsCenter__cardTitle {
 			color: var(--m3-on-primary-fixed, #410001);
+
+			// Dark scheme: the active card is a dark surface, not a `-fixed`
+			// fill (P0 dark mode, 2026-11-25).
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+			}
 		}
 
 		.notificationsCenter__cardTitleRow {
@@ -418,6 +424,10 @@
 		.notificationsCenter__cardText {
 			color: var(--m3-on-tertiary-fixed, #141c25);
 			-webkit-line-clamp: 3;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface, #e4e2e2);
+			}
 			padding-right: 24px;
 		}
 
@@ -429,7 +439,7 @@
 
 		.notificationsCenter__cardTime--footer {
 			margin-top: auto;
-			color: var(--m3-on-surface-variant, #444748);
+			color: var(--oriso-quiet-text, #646d78);
 			font-weight: 600;
 		}
 

@@ -45,14 +45,16 @@
 	&--soon,
 	&--soon:hover {
 		background: var(--m3-primary, #a5000a);
-		color: #ffe2de;
+		// `on-primary`, not a light literal: `primary` is light pink in dark
+		// mode (P0 dark mode, 2026-11-25).
+		color: var(--m3-on-primary, #ffe2de);
 	}
 
 	// The same as a selected chat card (Figma 316-16775).
 	&--selected:not(&--soon),
 	&--selected:not(&--soon):hover {
 		border-color: var(--m3-primary-fixed-dim, #ffb4aa);
-		background: #f5f5f5;
+		background: var(--m3-surface-container-low, #f5f5f5);
 	}
 
 	&--selected#{&}--soon {
@@ -98,7 +100,7 @@
 
 	// The magenta dot disappears on the red pill.
 	.tlp__entry--soon:not(.tlp__entry--selected) & {
-		--oriso-unread-indicator-color: var(--m3-on-primary-container, #ffe2de);
+		--oriso-unread-indicator-color: var(--m3-on-primary, #ffe2de);
 	}
 
 	svg {

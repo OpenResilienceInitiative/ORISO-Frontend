@@ -572,6 +572,11 @@ $cal-off-hatch: repeating-linear-gradient(
 		.calEntry__range {
 			color: var(--m3-on-primary-fixed-variant, #930008);
 		}
+
+		// "Beginnt gleich" on the pink; the red "soon" fill below sets its own.
+		&:not(.calEntry--soon) .calendarSoon {
+			color: var(--m3-on-primary-fixed-variant, #930008);
+		}
 	}
 
 	// The next appointment, from 15 minutes before its start. Doubled class:
@@ -4209,7 +4214,7 @@ $cal-new-pill-hover: #4b4f51;
 	padding: 1px 8px 1px 6px;
 	border-radius: 999px;
 	background: var(--m3-surface-container-lowest, #fff);
-	color: var(--m3-on-secondary-fixed, #141c25);
+	color: var(--m3-on-surface, #141c25);
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 18px;

@@ -63,6 +63,12 @@
 		#3f4852
 	);
 
+	// Quiet secondary text on a surface (sender lines, hints, counters). The
+	// light value is the long-used `secondary-container` grey; dark mode
+	// takes `on-surface-variant`, because `secondary-container` is a near-
+	// black fill there (P0 dark mode, 2026-11-25).
+	--oriso-quiet-text: var(--m3-secondary-container, #646d78);
+
 	// Secondary fixed family (M3 Light table = engine output, T27).
 	--m3-secondary-fixed: #dae3f0;
 	--m3-secondary-fixed-dim: #bec7d4;
@@ -170,4 +176,5 @@
 html[data-oriso-personal-scheme='dark'] {
 	--oriso-menu-hover-surface: var(--m3-secondary-container, #3f4852);
 	--oriso-menu-hover-description: var(--m3-on-secondary-container, #dae3f0);
+	--oriso-quiet-text: var(--m3-on-surface-variant, #c4c7c8);
 }
