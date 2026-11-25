@@ -58,22 +58,23 @@ export const answerOrKnock = (
 	 * this very call and still running, so a later call is never joined by
 	 * an old "Annehmen".
 	 */
-	const answerOrJoinRunning = async (): Promise<CallJoinResult> => {
-		const answered = await answer();
-		if (answered !== 'ended') return answered;
-		const sourceRoom = call.signalRoomId;
-		if (!calls.joinExistingCall || !sourceRoom) return 'ended';
-		return calls.joinExistingCall(
-			{
+	/* The call as the call message's "Beitreten" would name it. */
+	const running: CallLifecycleMessage | null = call.signalRoomId
+		? {
 				callId: call.callId,
-				roomRef: sourceRoom,
+				roomRef: call.signalRoomId,
 				callRoomId: call.roomId,
 				state: 'running',
 				callType: call.isVideo ? 'video' : 'audio',
 				participants: []
-			},
-			Boolean(call.isGroup)
-		);
+			}
+		: null;
+	const isGroup = Boolean(call.isGroup);
+	const answerOrJoinRunning = async (): Promise<CallJoinResult> => {
+		const answered = await answer();
+		if (answered !== 'ended') return answered;
+		if (!calls.joinExistingCall || !running) return 'ended';
+		return calls.joinExistingCall(running, isGroup);
 	};
 	if (!asker) return answer();
 	const sessionId = sessionIdOfRoom([
@@ -82,7 +83,12 @@ export const answerOrKnock = (
 		call.elementCallRoomId
 	]);
 	if (sessionId === null) return answer();
+	/*
+	 * The call goes on record with the knock: a person who reloads the
+	 * waiting tab is still taken into this call once let in.
+	 */
 	return joinOrKnock(sessionId, answerOrJoinRunning, {
+		...(running ? { call: running, isGroup } : {}),
 		...deps,
 		asker: true
 	});

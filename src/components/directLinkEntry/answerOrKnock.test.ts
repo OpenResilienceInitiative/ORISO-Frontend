@@ -7,7 +7,7 @@ import {
 	readPendingKnock,
 	rememberDirectLinkSession
 } from './directLinkEntryFlow';
-import { takeAdmittedJoin } from './callMessageKnock';
+import { admissionAction, takeAdmittedJoin } from './callMessageKnock';
 import type { CallData } from '../../services/CallManager';
 
 vi.mock('../registration/autoLogin', () => ({ redirectToApp: vi.fn() }));
@@ -104,6 +104,15 @@ describe('answerOrKnock ("Annehmen")', () => {
 		const pending = readPendingKnock();
 		expect(pending).toMatchObject({ knockId: 31, sessionId: 9 });
 		expect(isKnockingOnCall(pending, [ROOM])).toBe(true);
+		// The call is on record too: a reloaded waiting tab still joins it.
+		expect(pending?.joinCall).toMatchObject({
+			callId: 'call-1',
+			roomRef: ROOM,
+			callRoomId: '!call:oriso',
+			state: 'running',
+			isGroup: false
+		});
+		expect(admissionAction(pending!, undefined)).toBe('joinRunningCall');
 		// Let in: the stored join answers the call that still rings.
 		takeAdmittedJoin(9)?.();
 		expect(calls.answerCall).toHaveBeenCalledTimes(1);
