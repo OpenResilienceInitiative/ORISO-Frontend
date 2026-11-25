@@ -4,6 +4,7 @@ import { useConversationFeatureSettings } from '../../hooks/useConversationFeatu
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
+import { forwardComposerWheel } from './composerWheel';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
 import * as React from 'react';
 import {
@@ -3336,6 +3337,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
+	// #2513: the composer dock sits over the timeline, so a scroll over it
+	// never reached the timeline — on a laptop that is half of the chat. The
+	// pane is there from the first render; the lazy composer is not.
+	useEffect(() => {
+		const pane = mainPaneRef.current;
+		if (!pane) {
+			return undefined;
+		}
+		const onWheel = (event: WheelEvent) =>
+			forwardComposerWheel(event, pane, scrollContainerRef.current);
+		pane.addEventListener('wheel', onWheel, { passive: false });
+		return () => pane.removeEventListener('wheel', onWheel);
+	}, []);
 
 	// D7 (phone): the composer's back arrow does what the header's Link
 	// did — list route AND `mobileListView()`.
