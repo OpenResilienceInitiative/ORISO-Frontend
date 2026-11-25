@@ -27,6 +27,7 @@ import {
 	practiceHostedTours,
 	practiceLiveChatTour,
 	practiceSupervisionTour,
+	practiceTimelineTour,
 	practiceTours
 } from './practiceTours';
 import {
@@ -38,6 +39,10 @@ import {
 	CALENDAR_TOUR_VERSION,
 	consultantCalendarTour
 } from '../components/productTour/tours/calendarTour';
+import {
+	consultantTimelineTour,
+	TIMELINE_TOUR_VERSION
+} from '../components/productTour/tours/timelineTour';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
@@ -605,6 +610,131 @@ describe('practiceCalendarTour (FE#2545, Kalender)', () => {
 				expect(informal, `${key} duplicates de`).not.toBe(de);
 			}
 			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
+	});
+});
+
+describe('practiceTimelineTour (FE#2545, Zeitstrahl und Entwürfe)', () => {
+	const tour = practiceTimelineTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+	const de = (key: string) => resolveKey(deTranslations, key) as string;
+
+	it('runs under the explanation tour id and its bumped version, without a card', () => {
+		expect(tour.id).toBe(consultantTimelineTour.id);
+		expect(TIMELINE_TOUR_VERSION).toBe(2);
+		expect(tour.version).toBe(TIMELINE_TOUR_VERSION);
+		expect(consultantTimelineTour.version).toBe(TIMELINE_TOUR_VERSION);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+		expect(tour.titleKey).toBe(consultantTimelineTour.titleKey);
+		expect(tour.summaryKey).toBe(consultantTimelineTour.summaryKey);
+	});
+
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+	});
+
+	it('reads the new activity, marks it read, opens an entry, finds the draft and sends it', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['timeline', 'timeline-page'],
+			['mark-all-read', 'timeline-mark-all-read'],
+			['open-entry', 'timeline-entry'],
+			['drafts-filter', 'timeline-chip-drafts'],
+			['open-draft', 'timeline-draft-entry'],
+			['continue', 'timeline-open-action'],
+			['send', 'session-composer'],
+			['done', '']
+		]);
+	});
+
+	it('moves on with the real control: a click, and the sent message for the send', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			['mark-all-read', { type: 'click' }],
+			['open-entry', { type: 'click' }],
+			['drafts-filter', { type: 'click' }],
+			['open-draft', { type: 'click' }],
+			['continue', { type: 'click' }],
+			['send', { type: 'event', name: PRACTICE_TOUR_EVENTS.messageSent }]
+		]);
+	});
+
+	it('works in the Zeitstrahl until the draft opens its conversation', () => {
+		[
+			'timeline',
+			'mark-all-read',
+			'open-entry',
+			'drafts-filter',
+			'open-draft',
+			'continue'
+		].forEach((id) => expect(step(id).route, id).toBe('/notifications'));
+		expect(step('send').route).toBeUndefined();
+		expect(step('send').hideBack).toBe(true);
+	});
+
+	it('skips only the drafts chip, which the display filter can hide', () => {
+		expect(tour.steps.filter((s) => s.optional).map((s) => s.id)).toEqual([
+			'drafts-filter'
+		]);
+		expect(stepIds(resolveTourSteps(tour))).toHaveLength(9);
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it('names the real controls in its German copy', () => {
+		expect(de(step('mark-all-read').contentKey)).toContain(
+			resolveKey(deTranslations, 'notifications.center.markAllRead')
+		);
+		expect(de(step('continue').contentKey)).toContain(
+			resolveKey(deTranslations, 'notifications.center.open')
+		);
+		expect(de(step('send').contentKey)).toContain(
+			resolveKey(deTranslations, 'enquiry.write.input.button.title')
+		);
+	});
+
+	it('ships its copy in every full locale, two sentences at most, and a sparse du-form overlay', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		bundledLocales.forEach(([locale, bundle]) =>
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				expect(
+					text.split(/(?<=[.!?。።])\s+/).filter(Boolean).length,
+					`${locale} ${s.contentKey}`
+				).toBeLessThanOrEqual(2);
+			})
+		);
+		keysOf(tour).forEach((key) => {
+			const text = resolveKey(deTranslations, key) as string;
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(text);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(text)) {
 				expect(
 					typeof informal,
 					`${key} is formal in de but has no du-form`

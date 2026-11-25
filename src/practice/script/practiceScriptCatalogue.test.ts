@@ -29,8 +29,8 @@ const valuesOf = (locale: PracticeScriptLocale) =>
 	) as Record<string, string>;
 
 describe('practiceScript catalogue', () => {
-	it('is read through 13 literal keys', () => {
-		expect(engineKeys).toHaveLength(13);
+	it('is read through 14 literal keys', () => {
+		expect(engineKeys).toHaveLength(14);
 	});
 
 	it.each(

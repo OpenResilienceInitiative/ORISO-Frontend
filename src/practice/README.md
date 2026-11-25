@@ -128,7 +128,7 @@ in the table below were reviewed by hand; no test pins them.
 | Outside the sandbox                                       | Shows                                                                       | Decision                                                                            |
 | --------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Navigation bar links, `/notifications` badge              | labels; an own unread number                                                | accept: no case data; the app-level sessions store is never written                 |
-| Zeitstrahl feed (`/notifications`, inside the outlet)     | real rows with asker names and links                                        | neutralised: the sandbox blanks the feed and its actions                            |
+| Zeitstrahl feed (`/notifications`, inside the outlet)     | real rows with asker names and links                                        | neutralised: blank, or the practice timeline during the Zeitstrahl tour             |
 | Header title, claim, agency logo                          | tenant; the practice agency while a practice case is open                   | accept                                                                              |
 | Header UI version switch                                  | one click opens Element with every real room                                | neutralised: hidden while practising                                                |
 | Toast host, sound, OS banner                              | toasts of the practice views; real feed events after the exit, in one burst | accept (generic titles, no names)                                                   |
@@ -177,15 +177,38 @@ until its next load (at most a minute). Proof: the calendar tests in
 `PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
 Calendar`.
 
-, so a
-counsellor who is really live-chat available stays in the real queue while
-practising. Open decisions (Frank): a real incoming call cannot be answered while practising (end
+**Zeitstrahl und Entwürfe in practice (FE#2545).** The Zeitstrahl topic
+tour (`consultant-timeline`, version 2) runs on the real Zeitstrahl. The
+sandbox's notifications context serves `world.timeline`
+(`practiceTimeline.ts`): three practice entries (a new message from the
+practice advice seeker, "Anfrage angenommen", a new team-chat message), all
+leading to the practice case. `FakeRestBackend` seeds one practice draft
+(`PRACTICE_TIMELINE_DRAFT_SCOPE`) that the real drafts loader turns into a
+Zeitstrahl card. The counsellor reads all, opens "Anfrage angenommen",
+filters "Entwürfe", opens the draft, continues it with "Chat öffnen" in the
+practice conversation and sends it there. Read states and the draft stay in
+memory; the real `eventNotifications` feed stays empty, so the real provider
+never takes in a practice row. No allowlist entry was added. Known limits:
+on a desktop the Zeitstrahl opens and reads its newest entry at once, so the
+tour explains that instead of asking for it; the team-chat preview is
+unavailable in practice, so the open step uses "Anfrage angenommen"; the
+"Entwürfe" step is optional because the display filter can hide the chip;
+in the icon-rail layout the anchors are absent and the tour stops; the
+`/drafts` page is not used (its frame would load a real app instance); the
+navigation badge stays real. The tour host now also scrolls a target that a
+scrolling row cuts off (`bringTargetIntoView`): at 1440 px the chip row hid
+"Alle als gelesen markieren". Proof: `practiceTimeline.test.ts`, the
+timeline tests in `FakeRestBackend.test.ts`, the Zeitstrahl runs (practice
+and explanation) in `PracticeFlow.integration.test.tsx` and the story
+`Organisms/PracticeFlow › Zeitstrahl`.
+
+Open decisions (Frank): a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
 
 ## Proof on Dev (T2)
 
 `playwright/practice-network-guard.smoke.spec.ts` (helpers in
-`playwright/practice-proof.ts`) walks both flows through the real UI of a
+`playwright/practice-proof.ts`) walks the flows through the real UI of a
 deployed build and checks, from outside the page, what the unit tests claim.
 It skips unless `ORISO_TOUR_STORAGE_STATE` is set, and it needs a build of this
 branch on Dev. It was dry-run against the Storybook stage only (selectors and
@@ -207,7 +230,8 @@ npx playwright test practice-network-guard --project=chromium
 
 The spec forces `enableWalkthrough` and `releaseToggles.enablePracticeArea` on in
 the `/service/settings` response of its own page only, opens Profile, Help,
-"Meine Rundgänge", starts the card and drives the real controls. Per run, from
+"Meine Rundgänge", starts the card (for F3 the Zeitstrahl's own tour card)
+and drives the real controls. Per run, from
 the card click to the end of the practice:
 
 1. no write except the tutorial-progress PUT of the running tour (and the token
@@ -216,10 +240,12 @@ the card click to the end of the practice:
    `practice.invalid`), carries what was typed, or is a WebSocket publish;
 3. localStorage, sessionStorage and the IndexedDB database names equal the
    snapshot before the start (differences are reported as key names, never values);
-4. the real Anfragen list afterwards holds no practice id or name.
+4. the real Anfragen list afterwards holds no practice id or name; after F3
+   the real Zeitstrahl shows neither the practice draft nor the practice name.
 
 Runs: F1 to the end, F1 ended half way from the banner, F2 to the end (skipped
-with a message when the tenant has no supervision). F1 has eight steps with the
+with a message when the tenant has no supervision), F3 Zeitstrahl und Entwürfe to
+the end (nine steps; eight when the display filter hides the "Entwürfe" chip). F1 has eight steps with the
 Träger's Team-Besprechung and six without; the run reports which variant the
 tenant has, so the other one needs a tenant with the other setting. The run marks
 the account's practice tours as completed (the one allowed write): use a test

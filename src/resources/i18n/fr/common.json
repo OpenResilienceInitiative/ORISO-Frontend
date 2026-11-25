@@ -3586,7 +3586,8 @@
 			"greeting": "Votre demande nous est bien parvenue. Une conseillère ou un conseiller vous répondra prochainement."
 		},
 		"counsellor": {
-			"acceptedCaseMessage": "Bonjour, merci pour votre message. Ici, l’accompagnement se fait par écrit et en toute confidentialité."
+			"acceptedCaseMessage": "Bonjour, merci pour votre message. Ici, l’accompagnement se fait par écrit et en toute confidentialité.",
+			"draft": "Je réponds volontiers à votre question sur le déroulement : vous nous écrivez, et nous répondons en général sous deux jours ouvrés."
 		},
 		"names": {
 			"agency": "Service d’exercice",
@@ -6792,6 +6793,40 @@
 				"draftsCenter": {
 					"title": "Tous les brouillons",
 					"intro": "Tous les brouillons sont ici, enregistrés par chat et par fil. Ouvrez un brouillon pour continuer à écrire, ou supprimez-le."
+				},
+				"practiceIntro": {
+					"title": "Exercice : fil d’activité et brouillons",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous lisez de nouvelles entrées, les marquez comme lues et terminez un brouillon resté non envoyé."
+				},
+				"practiceTimeline": {
+					"intro": "À gauche, les événements de vos chats, les nouveaux avec un point ; à droite, la conversation de l’entrée choisie. Le fil a déjà ouvert l’entrée la plus récente, elle compte donc comme lue."
+				},
+				"practiceOpenEntry": {
+					"title": "Ouvrir une entrée",
+					"intro": "Cliquez sur « Demande acceptée » : à droite s’affiche la conversation à laquelle l’entrée appartient."
+				},
+				"practiceMarkAllRead": {
+					"intro": "L’entrée du chat d’équipe n’est pas encore lue. Cliquez sur « Tout marquer comme lu » : les messages de vos chats restent inchangés."
+				},
+				"practiceDraftsFilter": {
+					"title": "Filtrer les brouillons",
+					"intro": "Cliquez sur le filtre « Brouillons » : le fil n’affiche alors que vos messages non envoyés."
+				},
+				"practiceOpenDraft": {
+					"title": "Trouver le brouillon",
+					"intro": "Cliquez sur « Brouillon enregistré ». Les messages non envoyés ne se perdent pas ; ils sont conservés par chat."
+				},
+				"practiceContinue": {
+					"title": "Continuer à écrire",
+					"intro": "Cliquez sur « Ouvrir le chat » : la conversation s’ouvre, votre brouillon est déjà dans le champ de saisie."
+				},
+				"practiceSend": {
+					"title": "Envoyer le brouillon",
+					"intro": "Complétez le texte si vous le souhaitez et cliquez sur « Envoyer un message ». Dans l’exercice, le message n’atteint que la personne fictive."
+				},
+				"practiceDone": {
+					"title": "Terminé",
+					"intro": "Vous avez lu de nouvelles entrées, les avez marquées comme lues, en avez ouvert une et terminé un brouillon. Dans le vrai fil, vous voyez ainsi d’un coup d’œil ce qui est nouveau dans tous vos chats."
 				}
 			}
 		},

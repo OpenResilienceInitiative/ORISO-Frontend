@@ -22,7 +22,7 @@ const flush = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 
 const worldIn = (
 	locale: PracticeScriptLocale = 'de',
-	start: 'enquiry' | 'acceptedCase' = 'enquiry'
+	start: 'enquiry' | 'acceptedCase' | 'timeline' = 'enquiry'
 ) =>
 	createPracticeWorld({
 		counsellor: practiceCounsellorFixture(),
@@ -432,8 +432,32 @@ describe('practice world tour events', () => {
 	});
 });
 
+describe('practice world: the Zeitstrahl start (FE#2545)', () => {
+	it('is the accepted case, answered already, with its own timeline', async () => {
+		const counts = watch();
+		const world = worldIn('de', 'timeline');
+		expect(world.rest.getCase().session.status).toBe(2);
+		expect(world.timeline?.getFeed()).toHaveLength(3);
+		expect(worldIn('de', 'acceptedCase').timeline).toBeNull();
+
+		// Sending the continued draft is a counsellor message, and the asker
+		// has answered already: no scripted reaction follows.
+		const before = world.matrix.getRoomMessages(PRACTICE_MAIN_ROOM_ID);
+		await world.matrix.sendMessage(
+			PRACTICE_MAIN_ROOM_ID,
+			world.script.texts.counsellorDraft
+		);
+		await flush();
+		await flush();
+		expect(counts[PRACTICE_TOUR_EVENTS.messageSent]).toBe(1);
+		expect(
+			world.matrix.getRoomMessages(PRACTICE_MAIN_ROOM_ID)
+		).toHaveLength(before.length + 1);
+	});
+});
+
 describe('practice world ids', () => {
-	it.each(['enquiry', 'acceptedCase'] as const)(
+	it.each(['enquiry', 'acceptedCase', 'timeline'] as const)(
 		"are all practice ids (%s), apart from the counsellor's own identity",
 		async (start) => {
 			const world = worldIn('de', start);
@@ -463,7 +487,11 @@ describe('practice world ids', () => {
 						...world.matrix
 							.getRoomMessages(room.roomId)
 							.map((event) => event.getSender())
-					])
+					]),
+				...(world.timeline?.getFeed() ?? []).flatMap((item) => [
+					item.id,
+					item.params?.roomRef
+				])
 			];
 
 			expect(ids.length).toBeGreaterThan(15);

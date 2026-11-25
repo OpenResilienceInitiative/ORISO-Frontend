@@ -1,7 +1,11 @@
 // @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { createFakeRestBackend } from './FakeRestBackend';
+import {
+	createFakeRestBackend,
+	PRACTICE_TIMELINE_DRAFT_SCOPE
+} from './FakeRestBackend';
+import { practiceAcceptedSessionRoute } from '../practiceRoutes';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
 import {
 	PRACTICE_AGENCY_ID,
@@ -778,5 +782,87 @@ describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
 				await backend.handle(new Request(`${calendar}/entries?${week}`))
 			)
 		).toEqual([]);
+	});
+});
+
+describe('FakeRestBackend: the practice timeline (FE#2545)', () => {
+	const scope = `scope:${PRACTICE_MAIN_ROOM_ID}|thread:main`;
+	const list = `${endpoints.userDrafts}?page=0&perPage=200`;
+	const single = `${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent(scope)}`;
+	const now = () => Date.parse('2026-11-25T10:00:00Z');
+	const timeline = () => backendFor({ start: 'timeline', now });
+
+	it('starts on the accepted case with one unsent practice draft to the advice seeker', async () => {
+		const backend = timeline();
+		expect(backend.getCase().session.status).toBe(2);
+		const { items } = await json(await backend.handle(new Request(list)));
+		expect(items).toEqual([
+			{
+				scopeKey: scope,
+				text: script.texts.counsellorDraft,
+				actionPath: practiceAcceptedSessionRoute(),
+				title: script.cast.asker.displayName,
+				sourceSessionId: PRACTICE_ENQUIRY_SESSION_ID,
+				roomRef: PRACTICE_MAIN_ROOM_ID,
+				threadRootId: null,
+				updatedAt: '2026-11-25T09:55:00.000Z'
+			}
+		]);
+		expect(PRACTICE_TIMELINE_DRAFT_SCOPE).toBe(scope);
+		expect(
+			await json(await backend.handle(new Request(single)))
+		).toMatchObject({ text: script.texts.counsellorDraft });
+	});
+
+	it('continues and discards the draft in memory only', async () => {
+		const backend = timeline();
+		await backend.handle(
+			send(
+				`${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scope)}`,
+				'PATCH',
+				{ text: `${script.texts.counsellorDraft} Gern.` }
+			)
+		);
+		expect(
+			await json(await backend.handle(new Request(single)))
+		).toMatchObject({
+			text: `${script.texts.counsellorDraft} Gern.`,
+			// Stamped on save, as the server does: the Zeitstrahl sorts by it.
+			updatedAt: '2026-11-25T10:00:00.000Z'
+		});
+		await backend.handle(
+			send(
+				`${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scope)}`,
+				'DELETE'
+			)
+		);
+		expect(
+			(await json(await backend.handle(new Request(list)))).items
+		).toEqual([]);
+		backend.reset();
+		expect(
+			(await json(await backend.handle(new Request(list)))).items
+		).toHaveLength(1);
+	});
+
+	it('seeds no draft for the other starts, and keeps the event feed empty for the real provider', async () => {
+		for (const start of [
+			'enquiry',
+			'acceptedCase',
+			'liveChat',
+			'groupCircle'
+		] as const) {
+			const backend = backendFor({ start });
+			expect(
+				(await json(await backend.handle(new Request(list)))).items
+			).toEqual([]);
+		}
+		const { items, unreadCount } = await json(
+			await timeline().handle(
+				new Request(`${endpoints.eventNotifications}?page=0&perPage=20`)
+			)
+		);
+		expect(items).toEqual([]);
+		expect(unreadCount).toBe(0);
 	});
 });

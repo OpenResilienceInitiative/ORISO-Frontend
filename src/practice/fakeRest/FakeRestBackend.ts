@@ -20,6 +20,8 @@ import {
 	PRACTICE_MATRIX_SERVER,
 	PRACTICE_CIRCLE_CHAT_ID,
 	PRACTICE_CIRCLE_ROOM_ID,
+	PRACTICE_ENQUIRY_SESSION_ID,
+	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID,
@@ -27,6 +29,7 @@ import {
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
+import { practiceAcceptedSessionRoute } from '../practiceRoutes';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { endpoints } from '../../resources/scripts/endpoints';
 import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
@@ -52,6 +55,12 @@ import type {
 	SessionAppointmentSlot
 } from '../../api/apiSessionAppointments';
 import type { DirectLinkDTO } from '../../api/apiDirectLinks';
+
+/**
+ * The Zeitstrahl tour's unsent draft (FE#2545): the composer scope of the
+ * practice conversation's main thread, where the composer finds it again.
+ */
+export const PRACTICE_TIMELINE_DRAFT_SCOPE = `scope:${PRACTICE_MAIN_ROOM_ID}|thread:main`;
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -225,6 +234,20 @@ export const createFakeRestBackend = ({
 			now: now()
 		}).practiceCase;
 		drafts = new Map();
+		if (start === 'timeline') {
+			// Written five minutes ago and not sent: the tour finds it in the
+			// Zeitstrahl and continues it in the conversation.
+			drafts.set(PRACTICE_TIMELINE_DRAFT_SCOPE, {
+				scopeKey: PRACTICE_TIMELINE_DRAFT_SCOPE,
+				text: script.texts.counsellorDraft,
+				actionPath: practiceAcceptedSessionRoute(),
+				title: script.cast.asker.displayName,
+				sourceSessionId: PRACTICE_ENQUIRY_SESSION_ID,
+				roomRef: PRACTICE_MAIN_ROOM_ID,
+				threadRootId: null,
+				updatedAt: new Date(now() - 5 * 60_000).toISOString()
+			});
+		}
 		supervisorSeq = 0;
 		circle = null;
 		calendar = [];
@@ -1057,7 +1080,12 @@ export const createFakeRestBackend = ({
 			duringDrain: isIsolatedDraftRequest,
 			handle: async ({ url, body }) => {
 				const scopeKey = url.searchParams.get('scopeKey') || '';
-				drafts.set(scopeKey, { ...(await body()), scopeKey });
+				// Stamped like the server does: the Zeitstrahl sorts by it.
+				drafts.set(scopeKey, {
+					...(await body()),
+					scopeKey,
+					updatedAt: new Date(now()).toISOString()
+				});
 				return noContent();
 			}
 		},

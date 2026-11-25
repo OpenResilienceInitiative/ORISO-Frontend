@@ -10,8 +10,13 @@ import {
 } from './fakeMatrix/FakeMatrixService';
 import {
 	createPracticeScenario,
+	startsAccepted,
 	type PracticeStart
 } from './fixtures/practiceScenario';
+import {
+	createPracticeTimeline,
+	type PracticeTimeline
+} from './practiceTimeline';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
 import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
@@ -23,6 +28,8 @@ export interface PracticeWorld {
 	readonly script: ScriptEngine;
 	readonly rest: FakeRestBackend;
 	readonly matrix: FakeMatrixService;
+	/** The practice Zeitstrahl entries; only the Zeitstrahl tour has them. */
+	readonly timeline: PracticeTimeline | null;
 }
 
 /**
@@ -49,7 +56,7 @@ export const createPracticeWorld = ({
 		now: now()
 	});
 	// The accepted case (F2) already contains the asker's answer.
-	let askerAnswered = start === 'acceptedCase';
+	let askerAnswered = startsAccepted(start);
 	let supervisorAnswered = false;
 
 	const play = (reaction: ScriptReaction | null) => {
@@ -133,5 +140,8 @@ export const createPracticeWorld = ({
 		}
 	});
 
-	return { start, script, rest, matrix };
+	const timeline =
+		start === 'timeline' ? createPracticeTimeline({ script, now }) : null;
+
+	return { start, script, rest, matrix, timeline };
 };

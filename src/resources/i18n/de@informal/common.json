@@ -2978,6 +2978,33 @@
 				},
 				"draftsCenter": {
 					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffne einen Entwurf, um weiterzuschreiben, oder lösche ihn."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du liest neue Einträge im Zeitstrahl, markierst sie als gelesen und schreibst einen liegengebliebenen Entwurf zu Ende."
+				},
+				"practiceTimeline": {
+					"intro": "Links die Ereignisse aus deinen Chats, neue mit einem Punkt, rechts das Gespräch zum gewählten Eintrag. Den neuesten Eintrag hat der Zeitstrahl schon geöffnet, damit gilt er als gelesen."
+				},
+				"practiceOpenEntry": {
+					"intro": "Klicke auf „Anfrage angenommen“: Rechts siehst du das Gespräch, zu dem der Eintrag gehört."
+				},
+				"practiceMarkAllRead": {
+					"intro": "Der Eintrag aus dem Team-Chat ist noch ungelesen. Klicke auf „Alle als gelesen markieren“: Die Nachrichten in den Chats bleiben davon unberührt."
+				},
+				"practiceDraftsFilter": {
+					"intro": "Klicke auf den Filter „Entwürfe“: Der Zeitstrahl zeigt dann nur deine ungesendeten Nachrichten."
+				},
+				"practiceOpenDraft": {
+					"intro": "Klicke auf „Entwurf gespeichert“. Ungesendete Nachrichten gehen nicht verloren, sie bleiben pro Chat gespeichert."
+				},
+				"practiceContinue": {
+					"intro": "Klicke auf „Chat öffnen“: Das Gespräch öffnet sich, und dein Entwurf steht schon im Eingabefeld."
+				},
+				"practiceSend": {
+					"intro": "Ergänze den Text, wenn du möchtest, und klicke auf „Nachricht senden“. In der Übung erreicht die Nachricht nur die erfundene Person."
+				},
+				"practiceDone": {
+					"intro": "Du hast neue Einträge gelesen, als gelesen markiert, einen geöffnet und einen Entwurf zu Ende geschrieben. Im echten Zeitstrahl siehst du so auf einen Blick, was in all deinen Chats neu ist."
 				}
 			}
 		},

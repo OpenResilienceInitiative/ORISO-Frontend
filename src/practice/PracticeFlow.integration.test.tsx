@@ -39,6 +39,7 @@ import { LiveChatAvailability } from '../components/profile/LiveChatAvailability
 import { Header } from '../components/header/Header';
 import { RouterConfigConsultant } from '../components/app/RouterConfig';
 import { CalendarPageWired } from '../components/calendar/CalendarPageWired';
+import { NotificationsCenter } from '../components/notificationsCenter/NotificationsCenter';
 import { Walkthrough } from '../components/walkthrough/Walkthrough';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
@@ -145,6 +146,8 @@ const LIVE_CHAT = 'consultant-live-chat';
 const GROUP_CIRCLE = 'consultant-group-circle';
 const CALENDAR = 'consultant-calendar';
 const CALENDAR_ROUTE = '/booking/events';
+const TIMELINE = 'consultant-timeline';
+const TIMELINE_ROUTE = '/notifications';
 /** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
 /** The counsellor's own Beratungsstellen, as the create entry reads them. */
 const REAL_AGENCIES_URL = /^\/service\/agencies\/(\d+(?:,\d+)*)$/;
@@ -222,6 +225,11 @@ const realMatrixService = new Proxy(
 				/^(send|set|join|invite|leave|redact|create)/.test(key)
 			) {
 				realMatrixWrites.push(key);
+			}
+			// A subscription (`onClientChange`, …) hands back its unsubscribe,
+			// as the real service does; effects return it.
+			if (typeof key === 'string' && /^on[A-Z]/.test(key)) {
+				return () => () => undefined;
 			}
 			return () => null;
 		}
@@ -400,6 +408,10 @@ const renderApp = ({
 									<Route
 										path={SETTINGS_ROUTE.slice(1)}
 										element={<LiveChatAvailability />}
+									/>
+									<Route
+										path={TIMELINE_ROUTE.slice(1)}
+										element={<NotificationsCenter />}
 									/>
 									<Route
 										path="*"
@@ -1364,6 +1376,149 @@ describe('practice flows on the real app shell', () => {
 		await app.request(CALENDAR);
 		await expectStep(0);
 		expect(joyride!.steps).toHaveLength(7);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('Zeitstrahl (FE#2545): the newest entry opens and is read, the rest is marked read, another entry opens its conversation, and the practice draft is found, continued and sent', async () => {
+		const app = renderApp();
+		await app.request(TIMELINE);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		const practiceStart = network.length;
+		pressNext(0);
+
+		// 2: the Zeitstrahl with the practice entries and the draft. The
+		// newest entry, the advice seeker's reply, is open and read; Next.
+		await expectStep(1);
+		expect(route()).toBe(TIMELINE_ROUTE);
+		const cards = () =>
+			[
+				...document.querySelectorAll<HTMLElement>(
+					'.notificationsCenter__card'
+				)
+			].map((card) => ({
+				target: card.getAttribute('data-tour-target'),
+				unread: !!card.querySelector('.notificationsCenter__cardUnread')
+			}));
+		await waitFor(
+			() =>
+				expect(
+					cards(),
+					document.querySelector('.notificationsCenter__list')
+						?.textContent ?? ''
+				).toEqual([
+					{ target: 'timeline-draft-entry', unread: false },
+					{ target: null, unread: false },
+					{ target: 'timeline-entry', unread: false },
+					{ target: null, unread: true }
+				]),
+			SLOW
+		);
+		await waitFor(
+			() =>
+				expect(textOf('.notificationsCenter__detail')).toContain(
+					SCRIPT.texts.askerReply
+				),
+			SLOW
+		);
+		pressNext(1);
+
+		// 3: "Alle als gelesen markieren" reads the team-chat entry too.
+		const markAll = await expectStep(2);
+		await act(async () => {
+			fireEvent.click(markAll!);
+		});
+		await waitFor(() =>
+			expect(cards().every(({ unread }) => !unread)).toBe(true)
+		);
+
+		// 4: the accept entry: its conversation shows beside the list,
+		// under a bar with "Chat öffnen".
+		const entry = await expectStep(3);
+		await act(async () => {
+			fireEvent.click(entry!);
+		});
+		await waitFor(() => {
+			expect(entry!.className).toContain(
+				'notificationsCenter__card--active'
+			);
+			expect(textOf('.notificationsCenter__detail')).toContain(
+				SCRIPT.texts.acceptedCaseCounsellorMessage
+			);
+		}, SLOW);
+
+		// 5: the "Entwürfe" chip: only the draft is left.
+		const chip = await expectStep(4);
+		await act(async () => {
+			fireEvent.click(chip!);
+		});
+		await waitFor(() =>
+			expect(cards()).toEqual([
+				{ target: 'timeline-draft-entry', unread: false }
+			])
+		);
+
+		// 6: the draft entry; its detail names "Chat öffnen".
+		const draft = await expectStep(5);
+		await act(async () => {
+			fireEvent.click(draft!);
+		});
+
+		// 7: "Chat öffnen" opens the practice conversation with the draft.
+		const open = await expectStep(6);
+		expect(open!.textContent).toContain('notifications.center.open');
+		await act(async () => {
+			fireEvent.click(open!);
+		});
+		await waitFor(
+			() =>
+				expect(route()).toMatch(
+					/sessionView\/(!|%21)practice-1[^?]*\?draftScopeKey=/
+				),
+			SLOW
+		);
+
+		// 8: the composer holds the draft; it is continued and sent.
+		await expectStep(7);
+		const composer = () => document.querySelector('.chatStage__mainPane');
+		await waitFor(
+			() =>
+				expect(liveEditor(composer)?.getText()).toContain(
+					SCRIPT.texts.counsellorDraft
+				),
+			SLOW
+		);
+		const addition = 'Melden Sie sich gern wieder.';
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
+			typeAndSend(composer, addition)
+		);
+		await waitFor(
+			() => expect(textOf('.chatStage__mainPane')).toContain(addition),
+			SLOW
+		);
+
+		// 9: done. Completion is the one write, and nothing of the exercise
+		// (entries, read states, the draft) reached the real feed or drafts.
+		await finish(8);
+		expect(
+			network
+				.slice(practiceStart)
+				.filter(({ url }) =>
+					/\/service\/users\/drafts|notifications/.test(url)
+				)
+		).toEqual([]);
+	}, 120000);
+
+	it('Zeitstrahl without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(TIMELINE);
+		await expectStep(0);
+		expect(joyride!.steps.map(({ target }) => target)).toContain(
+			'[data-tour-target="timeline-page"]'
+		);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});

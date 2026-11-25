@@ -42,6 +42,39 @@ export const waitForTarget = (
  * stays off (`skipScroll`): it scrolls the window, which would break the
  * fixed app shell; `scrollIntoView` moves the nearest scrolling pane.
  */
+/**
+ * A scrolling ancestor (FE#2545: the Zeitstrahl's chip row) can cut a
+ * target off although the target lies inside the window. Only containers
+ * the counsellor can scroll count; one that merely hides its overflow is a
+ * layout choice, not a hiding place.
+ */
+const cutOffByScroller = (target: Element, rect: DOMRect): boolean => {
+	for (
+		let parent = target.parentElement;
+		parent && parent !== document.body;
+		parent = parent.parentElement
+	) {
+		const { overflowX, overflowY } = getComputedStyle(parent);
+		const scrollsX =
+			/auto|scroll/.test(overflowX) &&
+			parent.scrollWidth > parent.clientWidth;
+		const scrollsY =
+			/auto|scroll/.test(overflowY) &&
+			parent.scrollHeight > parent.clientHeight;
+		if (!scrollsX && !scrollsY) continue;
+		const box = parent.getBoundingClientRect();
+		if (
+			(scrollsX &&
+				(rect.left < box.left - 1 || rect.right > box.right + 1)) ||
+			(scrollsY &&
+				(rect.top < box.top - 1 || rect.bottom > box.bottom + 1))
+		) {
+			return true;
+		}
+	}
+	return false;
+};
+
 export const bringTargetIntoView = (target: Element | null): void => {
 	if (!target) return;
 	const rect = target.getBoundingClientRect();
@@ -57,6 +90,14 @@ export const bringTargetIntoView = (target: Element | null): void => {
 		target.scrollIntoView({
 			block: tall ? 'start' : 'center',
 			inline: 'nearest'
+		});
+	} else if (cutOffByScroller(target, rect)) {
+		// At once: the chip row scrolls smoothly, and the spotlight is
+		// measured right after this call.
+		target.scrollIntoView({
+			block: 'nearest',
+			inline: 'nearest',
+			behavior: 'instant'
 		});
 	}
 };

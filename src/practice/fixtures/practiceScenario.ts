@@ -32,12 +32,19 @@ import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
  * F1 starts with an open enquiry, F2 with an already accepted case, the
  * Live-Chat tour (FE#2545) with a waiting anonymous live chat, the
  * Gesprächskreis tour (FE#2545) with no circle yet: the counsellor creates it.
+ * The Zeitstrahl tour (FE#2545) starts on the accepted case as well, with
+ * practice timeline entries and one unsent draft to the asker.
  */
 export type PracticeStart =
 	| 'enquiry'
 	| 'acceptedCase'
 	| 'liveChat'
-	| 'groupCircle';
+	| 'groupCircle'
+	| 'timeline';
+
+/** The starts on the already accepted case. */
+export const startsAccepted = (start: PracticeStart): boolean =>
+	start === 'acceptedCase' || start === 'timeline';
 
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
 
@@ -139,7 +146,7 @@ export const createPracticeScenario = ({
 	start?: PracticeStart;
 	now?: number;
 }): PracticeScenario => {
-	const accepted = start === 'acceptedCase';
+	const accepted = startsAccepted(start);
 	const liveChat = start === 'liveChat';
 	const { cast, texts } = script;
 	const topic = createPracticeTopic(script.names.topic);
