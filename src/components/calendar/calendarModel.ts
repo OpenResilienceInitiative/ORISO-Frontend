@@ -390,7 +390,10 @@ export type CalendarRole = 'consultant' | 'asker';
 /** A conversation an appointment can belong to. */
 export interface CalendarConversation {
 	sessionId: number;
-	/** The advice seeker's username. */
+	/**
+	 * The other person: the advice seeker's username for a counsellor, the
+	 * counsellor's public name for an advice seeker.
+	 */
 	username: string;
 	/**
 	 * False for a deleted advice seeker or another counsellor's
