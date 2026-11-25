@@ -8,7 +8,7 @@ sections 4 and 5. Two claims must stay provable:
    OPTIONS pass; every other request is blocked (fetch rejects with
    `PracticeBlockedRequestError`, XHR errors out, beacon returns `false`) and
    counted by method and URL, never query or body. Proof: the guard's unit
-   tests (`networkGuard.test.ts`) and the runs of both flows that record every
+   tests (`networkGuard.test.ts`) and the runs of the flows that record every
    request: the jsdom integration tests (`PracticeSandbox.integration.test.tsx`,
    `PracticeFlow.integration.test.tsx`) and the Chromium story
    `Organisms/PracticeFlow`. The Playwright run against Dev
@@ -77,23 +77,23 @@ Unsent composer cleanup stays in memory too: composite practice room/thread
 scopes and the shared draft index remain isolated while the fake REST layer
 drains. Real draft scopes and list reads from the restored page pass through.
 
-**Required actions.** Both practice tours use `requiredTargetPolicy: 'stop'`.
+**Required actions.** Every practice tour uses `requiredTargetPolicy: 'stop'`.
 A missing required control interrupts the run without a terminal progress
 write; it cannot fall through to the explanations and record completion.
 Regular tours keep their existing missing-target skip policy. Proof:
 `ProductTourAdapter.component.test.tsx` records the progress HTTP boundary for
 the Supervision tour with absent controls, and `tourEngine.test.ts` covers a disappearing target.
 
-**Window size.** F1 starts in the real controls' `fromL` layout; the
-Supervision tour needs `fromXL`, where the real supervisor plus is
-interactive. Narrower, its Help card shows the window hint and cannot start
-(there is no explanation tour). Resizing a
-practice run below its range ends it, so widening the window requires another
-deliberate Start. The phone hint and F1's existing range are preserved.
-Proof: `PracticeOverviewSection.test.tsx` checks F1 at 1024;
-`HelpToursSection.test.tsx` checks the Supervision card hint at 1199 and
-390; `PracticeFlow.integration.test.tsx` checks the Supervision boundary at
-1199/1200.
+**Window size.** The Einführung starts as practice in the real accept
+controls' `fromL` layout (900 px, F1's range); the Supervision tour needs
+`fromXL`, where the real supervisor plus is interactive. Below its range the
+Einführung's card still starts and runs the watch-only Einführung; the
+Supervision card shows the window hint (phone: phone hint) and cannot start
+(there is no explanation tour). Resizing a practice run below its range ends
+it, so widening the window requires another deliberate Start.
+Proof: `HelpToursSection.test.tsx` checks both cards at 1199, 1200 and 390;
+`PracticeFlow.integration.test.tsx` checks the Einführung at 1199 (practice),
+899 and 390 (watch-only) and the Supervision boundary at 1199/1200.
 
 **Restart.** The banner asks the tour host for a new run of the same tour. The
 host ends and re-enters on the running guard; the re-enter runs the restart
@@ -113,7 +113,7 @@ The sandbox wraps the routed content only (`<Outlet/>` in `Routing.tsx`): the
 case views get the fake Matrix service, the practice sessions store, topics and
 notifications. Its `fetch` patch is page-wide, so the shell's requests for
 practice endpoints are answered from memory too. The shell around it stays on
-the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks F1 (both
+the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks the Einführung (both
 variants) and the topic tours through the real navigation bar, header, banner and tour host.
 
 **Permanent controls.** The banner uses a page-level portal and the theme's
@@ -179,6 +179,30 @@ until its next load (at most a minute). Proof: the calendar tests in
 `PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
 Calendar`.
 
+**Einführung in practice (FE#2545).** The counsellor Einführung
+(`consultant-walkthrough`) absorbed the card "Übung: Anfrage annehmen"
+(F1, `consultant-practice-accept`); there are no practice cards any more
+(`PracticeOverviewSection` and `PracticeCards` are gone, and with them the
+"Übungsbereich" part of Help). Version 2 (PO: a reworked tour shows as new):
+a completion of version 1 does not count, in Help or for the auto-start.
+Where practice can run (practice area open, `fromL`), its Help card and the
+"?" launcher start `practiceIntroTour`: welcome, the Anfragen list, the
+practice enquiry opened and accepted with the real controls, a first reply
+(the script answers, as F1 did), the answer, "Meine Beratungen" and "Archiv",
+done; 9 steps, F1's practice start, accept and script. Everywhere else the
+watch-only Einführung (`consultantWalkthroughTour`, same id and version, one
+status in Help) runs on the real page, so the Einführung never disappears
+for a new counsellor. The auto-start after login is always the watch-only
+Einführung, also on a desktop where practice could run: practice mode never
+starts without a deliberate Start (first-login dialogs such as 2FA keep
+their writes). In practice, the deleted-asker placeholders of "Meine
+Beratungen" and "Archiv" (`/users/sessions/consultants/deleted-askers`) are
+answered with none, so no real placeholder row shows in the practice lists.
+A stale launch of the old card id reaches nothing. Proof:
+`practiceTours.test.ts`, `Walkthrough.component.test.tsx`, the Einführung
+runs in `PracticeFlow.integration.test.tsx` and the stories
+`Organisms/PracticeFlow › Einführung …`.
+
 **Supervision in practice (FE#2545).** The Supervision topic tour (Help →
 Rundgänge → "Supervision") runs under the id of the old card F2,
 `consultant-practice-supervision`, so no new id needs the UserService
@@ -217,7 +241,7 @@ practice on ring, or accept); the feed burst after the exit.
 ## Proof on Dev (T2)
 
 `playwright/practice-network-guard.smoke.spec.ts` (helpers in
-`playwright/practice-proof.ts`) walks both flows through the real UI of a
+`playwright/practice-proof.ts`) walks the flows through the real UI of a
 deployed build and checks, from outside the page, what the unit tests claim.
 It skips unless `ORISO_TOUR_STORAGE_STATE` is set, and it needs a build of this
 branch on Dev. It was dry-run against the Storybook stage only (selectors and
@@ -239,8 +263,8 @@ npx playwright test practice-network-guard --project=chromium
 
 The spec forces `enableWalkthrough` and `releaseToggles.enablePracticeArea` on in
 the `/service/settings` response of its own page only, opens Profile, Help,
-"Meine Rundgänge", starts the card and drives the real controls. Per run, from
-the card click to the end of the practice:
+"Meine Rundgänge", starts the tour card and drives the real controls. Per run,
+from the card click to the end of the practice:
 
 1. no write except the tutorial-progress PUT of the running tour (and the token
    refresh), and a PUT with status `completed` was sent (not for the half-way End);
@@ -250,14 +274,13 @@ the card click to the end of the practice:
    snapshot before the start (differences are reported as key names, never values);
 4. the real Anfragen list afterwards holds no practice id or name.
 
-Runs: F1 to the end, F1 ended half way from the banner, the Supervision topic
-tour to the end from its topic card (skipped with a message when the tenant has
-no supervision; 12 steps with the appointment, 11 where the supervision chat
-allows no call). F1 has eight steps with the
-Träger's Team-Besprechung and six without; the run reports which variant the
-tenant has, so the other one needs a tenant with the other setting. The run marks
-the account's practice tours as completed (the one allowed write): use a test
-account.
+Runs: the Einführung as practice to the end (9 steps), the Einführung ended
+half way from the banner, the Supervision topic tour to the end from its topic
+card (skipped with a message when the tenant has no supervision; 12 steps with
+the appointment, 11 where the supervision chat allows no call), and the
+Einführung in a 899 px window, where the watch-only Einführung runs and no
+practice starts. The run marks the account's Einführung and Supervision as
+completed (the one allowed write): use a test account.
 
 Limits: a pre-install `fetch`, form or link navigations and the real live-chat
 heartbeat after the exit are outside the window (see Lifecycle). Real-mode
