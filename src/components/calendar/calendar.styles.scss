@@ -560,22 +560,29 @@ $cal-off-hatch: repeating-linear-gradient(
 	// The pink is a `-fixed` role and stays light in dark mode, so its ink
 	// and icons are the `on-primary-fixed` roles (P0 dark mode, 2026-11-25).
 	&--appointment:not(.calEntry--k-group) {
-		--cal-kind: var(--m3-on-primary-fixed-variant, #930008);
-
 		background: var(--m3-primary-fixed, #ffdad5) !important;
-		color: var(--m3-on-primary-fixed, #410001) !important;
 
-		.calEntry__inner {
-			color: var(--m3-on-primary-fixed, #410001);
-		}
+		// Light keeps its scheme ink, which is dark there anyway. In dark
+		// the ink turns light while the pink stays, so it names the
+		// `on-primary-fixed` roles.
+		// The red "soon" fill below sets its own ink, so it is left out.
+		html[data-oriso-personal-scheme='dark'] &:not(.calEntry--soon) {
+			--cal-kind: var(--m3-on-primary-fixed-variant, #930008);
 
-		.calEntry__range {
-			color: var(--m3-on-primary-fixed-variant, #930008);
-		}
+			color: var(--m3-on-primary-fixed, #410001) !important;
 
-		// "Beginnt gleich" on the pink; the red "soon" fill below sets its own.
-		&:not(.calEntry--soon) .calendarSoon {
-			color: var(--m3-on-primary-fixed-variant, #930008);
+			.calEntry__inner {
+				color: var(--m3-on-primary-fixed, #410001);
+			}
+
+			.calEntry__range {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+			}
+
+			// "Beginnt gleich" on the pink.
+			.calendarSoon {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+			}
 		}
 	}
 
@@ -653,9 +660,10 @@ $cal-off-hatch: repeating-linear-gradient(
 			color: var(--m3-primary, #a5000a);
 		}
 
-		// One's own appointment keeps its pink in the list too; on that
-		// `-fixed` fill the ink is `on-primary-fixed` in every scheme.
-		&.calEntry--appointment:not(.calEntry--k-group) {
+		// One's own appointment keeps its pink in the list too; in dark the
+		// ink on that `-fixed` fill is `on-primary-fixed`.
+		html[data-oriso-personal-scheme='dark']
+			&.calEntry--appointment:not(.calEntry--k-group) {
 			color: var(--m3-on-primary-fixed, #410001) !important;
 
 			// FullCalendar's list cell sits between the row and the content
