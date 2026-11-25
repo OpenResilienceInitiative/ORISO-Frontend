@@ -6687,6 +6687,21 @@
 				"done": {
 					"title": "Sohbeti bitir",
 					"intro": "Görüşme bitince ⋮ menüsünden “Sohbeti bitir” ile sonlandırın. Ardından sıraya geri dönersiniz."
+				},
+				"practiceIntro": {
+					"intro": "Bu bir alıştırmadır: Buradaki herkes hayal ürünüdür, hiçbir şey gönderilmez veya kaydedilmez. Canlı sohbetler kayıt olmadan bir bağlantı üzerinden gelir ve kişi anonim yazar. Birazdan sizi bir alıştırma canlı sohbeti bekleyecek."
+				},
+				"openRequest": {
+					"title": "Canlı sohbeti aç",
+					"intro": "Listede anonim bir danışanın canlı sohbeti bekliyor. Açmak için üzerine tıklayın."
+				},
+				"reply": {
+					"title": "Yanıtla",
+					"intro": "Sohbet sürüyor. Kişiye kısa bir yanıt yazın ve gönderin. Yanıt alıştırmada kalır ve hiçbir yere kaydedilmez."
+				},
+				"practiceAvailability": {
+					"title": "Uygun ol",
+					"intro": "Canlı sohbetler yalnızca uygun olanlara sunulur. “Uygunum” ayarını burada ya da menü çubuğunda açın; alıştırmada gerçek durumunuz değişmez."
 				}
 			}
 		},

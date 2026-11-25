@@ -18,7 +18,7 @@ import type { TourDefinition } from '../components/productTour/types';
 import { usePractice } from './PracticeProvider';
 import { PRACTICE_BANNER_RESTING } from './practiceBannerPlacement';
 import { nextPracticeLaunchRequest } from './practiceLaunch';
-import { practiceTours } from './practiceTours';
+import { practiceHostedTours } from './practiceTours';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
 import { holdPracticeExit } from './practiceMode';
 import { versionedTourProgressRepository } from '../components/productTour/versionedTourProgressRepository';
@@ -80,7 +80,7 @@ export interface PracticeBannerProps {
  * component: the snackbar stack auto-hides and folds, this one must not.
  */
 export const PracticeBanner = ({
-	tours = practiceTours
+	tours = practiceHostedTours
 }: PracticeBannerProps) => {
 	const { t: translate } = useTranslation();
 	const practice = usePractice();

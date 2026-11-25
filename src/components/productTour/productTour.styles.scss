@@ -230,3 +230,9 @@
 		}
 	}
 }
+
+// While a tour step shows, toasts sit below the tour card and its overlay
+// (Joyride z-index 53), so a toast never covers the step's buttons.
+body.productTour--running .MuiSnackbar-root {
+	z-index: 52;
+}
