@@ -5136,6 +5136,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													appointmentSupervisor
 												}
 												ownerId={userData?.userId ?? ''}
+												callGates={supervisionCallGates}
 												fullScreen={isPhoneLayout}
 												supervisionRoom={
 													supervisionRoomId
