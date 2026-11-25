@@ -787,6 +787,22 @@ export const Supervision: Story = {
 				SLOW
 			);
 		});
+		await step('The side chat shows the swap notice', async () => {
+			// The same system line the server posts after a replace
+			// (#2494 *6), built locally in the practice room.
+			const panel = within(await target('supervision-panel'));
+			await expect(
+				await panel.findByText('Supervision gewechselt', {}, SLOW)
+			).toBeVisible();
+			await expect(
+				panel.getByText(
+					/Kim \(Übung\) supervidiert diesen Chat jetzt anstelle von Robin \(Übung\)\./
+				)
+			).toBeVisible();
+			await expect(
+				panel.getByText(/Grund: Robin ist im Urlaub\./)
+			).toBeVisible();
+		});
 		await step('10: Read that calls can be allowed here', async () => {
 			await expectStep(10, of);
 			await next();

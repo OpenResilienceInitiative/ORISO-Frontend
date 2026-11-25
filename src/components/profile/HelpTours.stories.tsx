@@ -40,6 +40,8 @@ interface StageOptions {
 	practiceArea?: boolean;
 	/** Tenant-level feature gate. */
 	supervision?: boolean;
+	/** Tenant gate for one-on-one supervision (the Supervision practice case). */
+	oneOnOne?: boolean;
 	progress?: ProgressFixture;
 	/** Render as an advice seeker instead of a counsellor (FE#2340). */
 	asker?: boolean;
@@ -200,7 +202,9 @@ const renderStage = (options: StageOptions) => () => (
 									tenant: {
 										settings: {
 											featureSupervisionEnabled:
-												options.supervision ?? true
+												options.supervision ?? true,
+											featureSupervisionOneOnOneChatsEnabled:
+												options.oneOnOne ?? true
 										}
 									}
 								} as never
@@ -490,6 +494,16 @@ export const PracticeCardsOn: Story = {
 		})) {
 			await expect(button).toBeEnabled();
 		}
+		// FE#2545: Supervision exists only as practice; on the desktop it
+		// starts from its topic card.
+		const supervision = learning
+			.getByRole('heading', { name: 'Supervision' })
+			.closest('li')!;
+		if (window.innerWidth >= 1200) {
+			await expect(
+				within(supervision).getByRole('button', { name: 'Starten' })
+			).toBeEnabled();
+		}
 	}
 };
 
@@ -511,10 +525,24 @@ export const PracticeCardsPhone: Story = {
 				name: 'Übung starten'
 			})
 		).toHaveLength(1);
-		// FE#2545: Supervision is a topic tour of the list, not a card.
-		await expect(
-			within(card).getByRole('heading', { name: 'Supervision' })
-		).toBeVisible();
+		// FE#2545: Supervision is a topic tour of the list, not a card, and
+		// exists only as practice: below its width, a hint and no start.
+		const supervision = within(card)
+			.getByRole('heading', { name: 'Supervision' })
+			.closest('li')!;
+		await expect(supervision).toBeVisible();
+		if (window.innerWidth < 1200) {
+			await expect(
+				within(supervision).getByRole('button', { name: 'Starten' })
+			).toBeDisabled();
+			await expect(
+				within(supervision).getByText(
+					window.innerWidth < 900
+						? 'Bitte üben Sie am Computer.'
+						: 'Bitte vergrößern Sie das Browserfenster für diese Übung.'
+				)
+			).toBeVisible();
+		}
 		if (window.innerWidth < 900) {
 			for (const button of within(card).getAllByRole('button', {
 				name: 'Übung starten'
@@ -543,6 +571,30 @@ export const PracticeSupervisionOff: Story = {
 		await expect(
 			await canvas.findByRole('heading', { name: 'Mail-Beratung' })
 		).toBeVisible();
+	}
+};
+
+export const PracticeSupervisionOneOnOneOff: Story = {
+	name: 'Supervision hidden without one-on-one supervision',
+	...desktop,
+	parameters: {
+		...desktop.parameters,
+		docs: {
+			description: {
+				story: 'FE#2545: the Supervision tour exists only as practice, and its practice case is a one-on-one chat. Where the tenant switched one-on-one supervision off, the card is hidden.'
+			}
+		}
+	},
+	render: renderStage({ practiceArea: true, oneOnOne: false }),
+	play: async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole('heading', {
+				name: 'Übung: Anfrage annehmen'
+			})
+		).toBeVisible();
+		await expect(
+			canvas.queryByRole('heading', { name: 'Supervision' })
+		).toBeNull();
 	}
 };
 
