@@ -10,7 +10,12 @@ export const CALL_KNOCK_REQUESTED = 'call.knock.requested';
  */
 export const WAITING_GUEST_WINDOW_MS = 2 * 60 * 60 * 1000;
 
-/** Conversations asked about at once; a counsellor rarely has more waiting. */
+/**
+ * Conversations asked about at once; a counsellor rarely has more waiting.
+ * Over the cap the NEWEST entries stay: an entry does not say whether its
+ * knock is still open, so older ones are mostly answered already, and a
+ * person who knocks now must never be crowded out by them.
+ */
 export const MAX_WAITING_CONVERSATIONS = 5;
 
 /** A conversation in which somebody knocked, as its knock entry names it. */
@@ -59,8 +64,11 @@ export const waitingConversations = (
 			at
 		});
 	});
-	return [...byId.values()]
-		.sort((left, right) => left.at - right.at)
-		.slice(-MAX_WAITING_CONVERSATIONS)
-		.map(({ at: _at, ...conversation }) => conversation);
+	return (
+		[...byId.values()]
+			.sort((left, right) => left.at - right.at)
+			// The newest ones, see MAX_WAITING_CONVERSATIONS; still oldest first.
+			.slice(-MAX_WAITING_CONVERSATIONS)
+			.map(({ at: _at, ...conversation }) => conversation)
+	);
 };

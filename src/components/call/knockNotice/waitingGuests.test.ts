@@ -81,4 +81,17 @@ describe('waitingConversations', () => {
 		expect(list).toHaveLength(MAX_WAITING_CONVERSATIONS);
 		expect(list[list.length - 1].sessionId).toBe(many.length);
 	});
+
+	it('never drops the person who knocks now for older, answered knocks', () => {
+		// Six conversations knocked today; the first five are long answered,
+		// which the entries cannot tell. The sixth person knocks right now.
+		const answered = Array.from(
+			{ length: MAX_WAITING_CONVERSATIONS },
+			(_, index) => entry(index + 1, 110 - index * 10)
+		);
+		const list = waitingConversations([...answered, entry(600, 0)], NOW);
+		expect(list.map(({ sessionId }) => sessionId)).toEqual([
+			2, 3, 4, 5, 600
+		]);
+	});
 });
