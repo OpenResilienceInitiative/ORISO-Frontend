@@ -44,6 +44,7 @@ interface CaseHandoverSessionInput {
 interface CaseHandoverUserInput {
 	userId?: string | number;
 	grantedAuthorities?: readonly string[];
+	agencies?: readonly CaseSharingCentreInput[];
 }
 
 interface CaseHandoverCandidateInput {
@@ -113,7 +114,18 @@ export const isTeamCounsellingReader = (
 	input: Omit<CaseHandoverCandidateInput, 'sessionListTab'>
 ): boolean =>
 	Boolean(input.activeSession?.item?.isTeamSession) &&
+	// A centre that has switched to another model has no team readers any more.
+	!isKnownNonTeamCentre(
+		input.activeSession?.item?.agencyId,
+		input.userData?.agencies
+	) &&
 	isCaseHandoverAccessControlled(input);
+
+const isKnownNonTeamCentre = (
+	agencyId: number | undefined,
+	centres: readonly CaseSharingCentreInput[] | null | undefined
+): boolean =>
+	centres?.find((centre) => centre.id === agencyId)?.teamAgency === false;
 
 /** A counsellor's centre; `teamAgency` follows the centre's current case sharing choice. */
 export interface CaseSharingCentreInput {

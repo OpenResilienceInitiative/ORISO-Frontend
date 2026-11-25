@@ -130,6 +130,26 @@ describe('caseHandoverHelpers', () => {
 		).toBe(false);
 	});
 
+	it('ends team reading once the centre has switched to another model', () => {
+		const teamCase = {
+			...baseSession,
+			item: { ...baseSession.item, isTeamSession: true, agencyId: 5 }
+		};
+		const reader = (teamAgency?: boolean) =>
+			isTeamCounsellingReader({
+				activeSession: teamCase,
+				userData: {
+					...consultantUser,
+					agencies: [{ id: 5, teamAgency }]
+				},
+				type: MY_SESSION_TYPE
+			});
+		expect(reader(true)).toBe(true);
+		expect(reader(false)).toBe(false);
+		// Unknown mode: stay read-only, the server decides what is visible.
+		expect(reader(undefined)).toBe(true);
+	});
+
 	it('marks another counsellor owned my-session as handover candidate', () => {
 		expect(
 			isCaseHandoverCandidate({
