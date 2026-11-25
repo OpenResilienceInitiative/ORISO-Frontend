@@ -2800,6 +2800,7 @@
 				"notJoined": "Read only until your join is confirmed and the room has loaded.",
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
 				"teamClosed": "The team chat is closed.",
+				"threadsDisabled": "Thread replies are not available here.",
 				"curtained": "This case is not visible to you right now.",
 				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
 				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",

@@ -181,6 +181,7 @@ const READ_ONLY_TEXT: Partial<Record<string, string>> = {
 	supervisor: 'notifications.center.preview.supervisorNoComposer',
 	notJoined: 'notifications.center.preview.notJoined',
 	teamClosed: 'notifications.center.preview.teamClosed',
+	threadsDisabled: 'notifications.center.preview.threadsDisabled',
 	curtained: 'notifications.center.preview.curtained',
 	enquiry: 'notifications.center.preview.enquiryOpenToAccept',
 	rejected: 'enquiry.rejection.closed',

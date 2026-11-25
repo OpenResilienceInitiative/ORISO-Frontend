@@ -4320,7 +4320,13 @@ export const MessageSubmitInterfaceComponent = ({
 					start &&
 					(!start.moved || event?.type === 'pointercancel')
 				) {
-					setComposerHeight(start.previousHeight);
+					// The viewport may have shrunk during the drag: the restored height
+					// must fit the current bounds too.
+					setComposerHeight(
+						start.previousHeight === null
+							? null
+							: clampComposerHeight(start.previousHeight)
+					);
 				}
 				composerResizeStartRef.current = null;
 				setIsComposerResizing(false);

@@ -1374,7 +1374,8 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 
 	it.each([
 		['notJoined', 'notJoined'],
-		['teamClosed', 'teamClosed']
+		['teamClosed', 'teamClosed'],
+		['threadsDisabled', 'threadsDisabled']
 	] as const)('%s: explains why', (reason, key) => {
 		conversation();
 		open({ access: { capabilities: readOnly(reason) } });
