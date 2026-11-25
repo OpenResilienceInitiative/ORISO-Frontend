@@ -15,11 +15,32 @@ import {
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
 import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
+import { SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED } from '../components/message/supervisorReplacedNotice';
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from './practiceIds';
+
+/**
+ * The side-room notice the server posts after a supervisor swap (#2494 *6,
+ * `SessionSupervisorFacade.buildReplacedNoticeBody`): names and the reason,
+ * with the server's German fallback. The app words it in the reader's
+ * language (`supervisorReplacedNotice.ts`). Built locally; nothing is sent.
+ */
+const supervisorReplacedNoticeBody = (
+	previousName: string,
+	newName: string,
+	reason?: string | null
+) =>
+	`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+		type: SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED,
+		previousName,
+		newName,
+		...(reason?.trim() ? { reason: reason.trim() } : {}),
+		title: 'Supervision gewechselt',
+		description: `${newName} supervidiert diesen Chat jetzt anstelle von ${previousName}.`
+	})}`;
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {
@@ -160,10 +181,16 @@ export const createPracticeWorld = ({
 			onAutoAcceptOn: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn),
 			onSupervisorReplaced: (from, to) => {
-				const person = [
+				const supervisors = [
 					script.cast.supervisor,
 					script.cast.secondSupervisor
-				].find(({ id }) => id === to.supervisorConsultantId);
+				];
+				const previous = supervisors.find(
+					({ id }) => id === from.supervisorConsultantId
+				);
+				const person = supervisors.find(
+					({ id }) => id === to.supervisorConsultantId
+				);
 				if (from.supervisorMatrixUserId && person) {
 					matrix.replaceMember(
 						PRACTICE_SUPERVISION_ROOM_ID,
@@ -172,6 +199,16 @@ export const createPracticeWorld = ({
 							userId: person.matrixUserId,
 							displayName: person.displayName
 						}
+					);
+				}
+				if (previous && person) {
+					matrix.postServerNotice(
+						PRACTICE_SUPERVISION_ROOM_ID,
+						supervisorReplacedNoticeBody(
+							previous.displayName,
+							person.displayName,
+							to.notes
+						)
 					);
 				}
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorReplaced);

@@ -451,6 +451,17 @@ export class FakeMatrixService {
 		room.addMember(to.userId, to.displayName);
 	}
 
+	/**
+	 * A notice the server posts in the counsellor's name (FE#2545: the swap
+	 * notice). It is not the counsellor writing, so no practice reaction or
+	 * tour event follows it.
+	 */
+	postServerNotice(roomId: string, body: string): MatrixEvent {
+		return this.append(roomId, this.client.getUserId(), textOf(body), {
+			fromServer: true
+		});
+	}
+
 	/** Scripted messages from the cast (asker, colleague, supervisor). */
 	appendMessage(roomId: string, sender: string, body: string): MatrixEvent {
 		return this.append(roomId, sender, textOf(body));
@@ -459,7 +470,8 @@ export class FakeMatrixService {
 	private append(
 		roomId: string,
 		sender: string,
-		content: Record<string, any>
+		content: Record<string, any>,
+		{ fromServer = false }: { fromServer?: boolean } = {}
 	): MatrixEvent {
 		const room = this.client.getRoom(roomId);
 		if (!room) {
@@ -470,7 +482,7 @@ export class FakeMatrixService {
 		const data = { liveEvent: true, timeline: room.getLiveTimeline() };
 		this.client.emit('Room.timeline', event, room, false, false, data);
 		room.emit('Room.timeline', event, room, false, false, data);
-		if (sender === this.client.getUserId()) {
+		if (!fromServer && sender === this.client.getUserId()) {
 			this.onCounsellorMessage?.(roomId, String(content.body ?? ''), {
 				isEdit: content['m.relates_to']?.rel_type === 'm.replace'
 			});

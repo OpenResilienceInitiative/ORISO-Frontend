@@ -10,6 +10,7 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from './practiceIds';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
+import { parseSupervisorReplacedNotice } from '../components/message/supervisorReplacedNotice';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { endpoints } from '../resources/scripts/endpoints';
@@ -506,6 +507,9 @@ describe('practice world: the Supervision tour (FE#2545)', () => {
 	it('swaps Robin for Kim in the side room on "Wechseln" and emits supervisor-replaced once', async () => {
 		const world = await supervisionWorld();
 		const counts = watch();
+		const caseRoomBefore = world.matrix.getRoomMessages(
+			PRACTICE_MAIN_ROOM_ID
+		).length;
 
 		await replace(world);
 
@@ -518,9 +522,46 @@ describe('practice world: the Supervision tour (FE#2545)', () => {
 		expect(
 			room.getMember(world.script.cast.supervisor.matrixUserId)
 		).toBeNull();
-		// Nobody is told anything: no message in any room.
+		// Nobody real is told anything: no message in the case room.
 		expect(
-			world.matrix.getRoomMessages(PRACTICE_SUPERVISION_ROOM_ID)
+			world.matrix.getRoomMessages(PRACTICE_MAIN_ROOM_ID)
+		).toHaveLength(caseRoomBefore);
+	});
+
+	it("posts the server's swap notice into the side room only, as the counsellor, in its real format", async () => {
+		const world = await supervisionWorld();
+		const counts = watch();
+
+		await replace(world);
+		await flush();
+
+		const notices = world.matrix.getRoomMessages(
+			PRACTICE_SUPERVISION_ROOM_ID
+		);
+		expect(notices).toHaveLength(1);
+		const [notice] = notices;
+		expect(notice.getSender()).toBe(world.matrix.getClient().getUserId());
+		expect(
+			parseSupervisorReplacedNotice(
+				JSON.parse(
+					String(notice.getContent().body).slice(
+						SYSTEM_NOTIFICATION_PREFIX.length
+					)
+				)
+			)
+		).toEqual({
+			previousName: world.script.cast.supervisor.displayName,
+			newName: world.script.cast.secondSupervisor.displayName,
+			reason: 'Vertretung'
+		});
+		// The notice is not the counsellor writing to the supervisor.
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisionMessageSent]).toBe(0);
+		expect(
+			bodiesFrom(
+				world,
+				PRACTICE_SUPERVISION_ROOM_ID,
+				world.script.cast.secondSupervisor.matrixUserId
+			)
 		).toEqual([]);
 	});
 
