@@ -1,3 +1,8 @@
+import {
+	canScrollAlong,
+	wheelDeltaPx
+} from '../messageSubmitInterface/inputField/scrollableBar';
+
 /**
  * #2513: the composer dock is absolutely positioned over the bottom of the
  * timeline (T41). It is not inside the timeline, so a wheel or touchpad
@@ -11,31 +16,22 @@
  */
 
 const DOCK_SELECTOR = '.messageSubmit__wrapper';
-const LINE_HEIGHT_PX = 16;
 
-/** Vertical travel in pixels, whatever unit the device reports. */
-export const wheelDeltaPx = (
-	deltaY: number,
-	deltaMode: number,
-	pageHeight: number
-): number => {
-	if (deltaMode === 1) {
-		return deltaY * LINE_HEIGHT_PX;
-	}
-	if (deltaMode === 2) {
-		return deltaY * pageHeight;
-	}
-	return deltaY;
-};
-
+// The unit conversion and the can-scroll rule are shared with the composer
+// toolbar's sideways scroll (`useScrollableBar`). The listener stays here:
+// that one turns a wheel sideways inside the toolbar, this one hands a wheel
+// over the whole dock to the timeline behind it.
 const canScrollY = (element: Element, delta: number): boolean => {
 	const { overflowY } = getComputedStyle(element);
 	if (overflowY !== 'auto' && overflowY !== 'scroll') {
 		return false;
 	}
-	return delta < 0
-		? element.scrollTop > 0
-		: element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+	return canScrollAlong(
+		element.scrollTop,
+		element.scrollHeight,
+		element.clientHeight,
+		delta
+	);
 };
 
 /** Something between the pointer and `boundary` scrolls this way on its own. */

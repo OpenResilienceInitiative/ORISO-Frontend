@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import { afterEach, describe, expect, it } from 'vite-plus/test';
-import { forwardComposerWheel, wheelDeltaPx } from './composerWheel';
+import { forwardComposerWheel } from './composerWheel';
 
 /**
  * #2513: a scroll over the composer dock, which sits over the timeline,
@@ -96,13 +96,5 @@ describe('forwardComposerWheel', () => {
 		const { draft, timeline, wheel } = setup();
 		wheel(draft, { deltaY: -40, ctrlKey: true });
 		expect(timeline.scrollTop).toBe(600);
-	});
-});
-
-describe('wheelDeltaPx', () => {
-	it('converts lines and pages to pixels', () => {
-		expect(wheelDeltaPx(-3, 0, 400)).toBe(-3);
-		expect(wheelDeltaPx(-3, 1, 400)).toBe(-48);
-		expect(wheelDeltaPx(-1, 2, 400)).toBe(-400);
 	});
 });
