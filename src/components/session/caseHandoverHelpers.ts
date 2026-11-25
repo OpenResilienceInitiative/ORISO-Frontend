@@ -109,23 +109,14 @@ export const isCaseHandoverCandidate = ({
  * FE#2494 *4 (decision d): in Teamberatung a colleague of the department reads
  * an accepted case without a request but never writes; only the assigned
  * counsellor does. The server enforces it with the Matrix reader power level.
+ * The case keeps the model it was created under, so a later switch of the
+ * centre changes nothing here (Frank, 2026-11-25).
  */
 export const isTeamCounsellingReader = (
 	input: Omit<CaseHandoverCandidateInput, 'sessionListTab'>
 ): boolean =>
 	Boolean(input.activeSession?.item?.isTeamSession) &&
-	// A centre that has switched to another model has no team readers any more.
-	!isKnownNonTeamCentre(
-		input.activeSession?.item?.agencyId,
-		input.userData?.agencies
-	) &&
 	isCaseHandoverAccessControlled(input);
-
-const isKnownNonTeamCentre = (
-	agencyId: number | undefined,
-	centres: readonly CaseSharingCentreInput[] | null | undefined
-): boolean =>
-	centres?.find((centre) => centre.id === agencyId)?.teamAgency === false;
 
 /** A counsellor's centre; `teamAgency` follows the centre's current case sharing choice. */
 export interface CaseSharingCentreInput {
@@ -134,23 +125,15 @@ export interface CaseSharingCentreInput {
 }
 
 /**
- * FE#2494 *4: a centre in Teamberatung has no case handover, so "Beratung
- * übergeben" is not offered in its team cases (header "+", session menu,
- * profile). The assigned counsellor keeps it everywhere else: in a case
- * handover centre, and in an older team case whose centre has since switched
- * to case handover. An unknown centre keeps it; the server decides.
+ * FE#2494 *4: a team case has no case handover, so "Beratung übergeben" is
+ * not offered in it (header "+", session menu, profile). The case keeps the
+ * model it was created under: an older case handover case in a centre that
+ * has since switched to Teamberatung keeps it, and a team case keeps none
+ * after a switch back. The server decides by the same stamp.
  */
 export const offersCaseHandoverIn = (
-	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined,
-	centres?: readonly CaseSharingCentreInput[] | null
-): boolean => {
-	const item = activeSession?.item;
-	if (!item?.isTeamSession) {
-		return true;
-	}
-	const centre = centres?.find((candidate) => candidate.id === item.agencyId);
-	return centre?.teamAgency !== true;
-};
+	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined
+): boolean => !activeSession?.item?.isTeamSession;
 
 /**
  * The people search hint for the counsellor's centres: Teamberatung, case

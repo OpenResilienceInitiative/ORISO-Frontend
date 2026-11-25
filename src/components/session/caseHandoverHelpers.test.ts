@@ -53,35 +53,18 @@ const consultantUser = {
 };
 
 describe('caseHandoverHelpers', () => {
-	it('offers no case handover in a team case of a centre in Teamberatung', () => {
-		const centres = [
-			{ id: 1, teamAgency: true },
-			{ id: 2, teamAgency: false }
-		];
-		expect(
-			offersCaseHandoverIn(
-				{ item: { isTeamSession: true, agencyId: 1 } },
-				centres
-			)
-		).toBe(false);
-		// The centre has switched to case handover: the owner may hand over again.
-		expect(
-			offersCaseHandoverIn(
-				{ item: { isTeamSession: true, agencyId: 2 } },
-				centres
-			)
-		).toBe(true);
-		// Unknown centre: offered, the server decides.
+	it('offers case handover by the model the case was created under', () => {
+		// FE#2494 *4: a later switch of the centre does not change a running case.
 		expect(offersCaseHandoverIn({ item: { isTeamSession: true } })).toBe(
-			true
+			false
 		);
 		expect(
-			offersCaseHandoverIn(
-				{ item: { isTeamSession: false, agencyId: 1 } },
-				centres
-			)
+			offersCaseHandoverIn({
+				item: { isTeamSession: false, agencyId: 1 }
+			})
 		).toBe(true);
 		expect(offersCaseHandoverIn({ item: {} })).toBe(true);
+		expect(offersCaseHandoverIn(null)).toBe(true);
 	});
 
 	it('picks the people search hint from the counsellor centres', () => {
@@ -130,7 +113,7 @@ describe('caseHandoverHelpers', () => {
 		).toBe(false);
 	});
 
-	it('ends team reading once the centre has switched to another model', () => {
+	it('keeps team reading after the centre has switched to another model', () => {
 		const teamCase = {
 			...baseSession,
 			item: { ...baseSession.item, isTeamSession: true, agencyId: 5 }
@@ -145,8 +128,7 @@ describe('caseHandoverHelpers', () => {
 				type: MY_SESSION_TYPE
 			});
 		expect(reader(true)).toBe(true);
-		expect(reader(false)).toBe(false);
-		// Unknown mode: stay read-only, the server decides what is visible.
+		expect(reader(false)).toBe(true);
 		expect(reader(undefined)).toBe(true);
 	});
 
