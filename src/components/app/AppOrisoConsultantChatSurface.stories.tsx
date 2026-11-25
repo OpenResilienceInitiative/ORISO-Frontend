@@ -448,8 +448,8 @@ const findRuntimeSession = (id: number) =>
  * counsellor has one 1:1 booking. Off for every other story.
  */
 let runtimeTimelineFixtures = false;
-/** No open enquiries: the "Anfragen" list is empty. Off for every other story. */
-let runtimeNoEnquiries = false;
+/** Both sessions and enquiries are empty in the collapsed-list story. */
+let runtimeEmptyLists = false;
 const inDays = (days: number, hour: number) => {
 	const date = new Date();
 	date.setDate(date.getDate() + days);
@@ -457,16 +457,18 @@ const inDays = (days: number, hour: number) => {
 	return date.toISOString();
 };
 const runtimeListSessions = () =>
-	runtimeTimelineFixtures
-		? runtimeSessions.map((session) =>
-				session.chat
-					? {
-							...session,
-							chat: { ...session.chat, repeatCount: 8 }
-						}
-					: session
-			)
-		: runtimeSessions;
+	runtimeEmptyLists
+		? []
+		: runtimeTimelineFixtures
+			? runtimeSessions.map((session) =>
+					session.chat
+						? {
+								...session,
+								chat: { ...session.chat, repeatCount: 8 }
+							}
+						: session
+				)
+			: runtimeSessions;
 
 let appOrisoRoutingFetchMockDepth = 0;
 let appOrisoRoutingOriginalFetch: typeof globalThis.fetch | null = null;
@@ -509,6 +511,10 @@ const installAppOrisoRoutingFetchMocks = () => {
 		const parsed = new URL(url);
 		const { pathname } = parsed;
 
+		if (runtimeEmptyLists && pathname === '/service/users/directlinks') {
+			return storybookJsonResponse([]);
+		}
+
 		// The Anfragen list also asks for anonymous live-chat enquiries; none
 		// here, answered like the backend answers an empty feed (204). Unanswered
 		// it logged a console error, which fails the Storybook verification.
@@ -520,21 +526,13 @@ const installAppOrisoRoutingFetchMocks = () => {
 		}
 
 		if (
-			runtimeNoEnquiries &&
-			pathname ===
-				'/service/conversations/consultants/enquiries/registered'
-		) {
-			return storybookJsonResponse({ sessions: [], total: 0 });
-		}
-
-		if (
 			pathname === '/service/users/sessions/consultants' ||
 			pathname ===
 				'/service/conversations/consultants/enquiries/registered'
 		) {
 			return storybookJsonResponse({
 				sessions: runtimeListSessions(),
-				total: runtimeSessions.length
+				total: runtimeListSessions().length
 			});
 		}
 
@@ -652,7 +650,7 @@ function RuntimeSessionsDataProvider({
 }) {
 	const [state, setState] = useState({
 		ready: true,
-		sessions: runtimeSessions
+		sessions: runtimeListSessions()
 	});
 
 	const dispatch = React.useCallback((action: any) => {
@@ -1319,7 +1317,7 @@ function ChatPanel() {
 						placeholder={
 							surfaceRole === 'asker'
 								? 'Nachricht schreiben'
-								: 'Nachricht an Klient:in schreiben'
+								: 'Nachricht an ratsuchende Person'
 						}
 						onSendButton={noop}
 						isTyping={noop}
@@ -1454,7 +1452,8 @@ const surfaceStory = (
 });
 
 /** The split button below the header, once the appointments are read. */
-const SPLIT_BUTTON = '[data-cy="room-next-appointment"] .splitButton__main';
+const SPLIT_BUTTON =
+	'[data-cy="room-next-appointment"] [data-cy="room-appointment-pennant"]';
 const splitButtonShown = (canvasElement: HTMLElement) => () => {
 	const found = canvasElement.querySelector<HTMLElement>(SPLIT_BUTTON);
 	if (!found) throw new Error('appointment not shown yet');
@@ -1567,7 +1566,10 @@ export const ConsultantChat: Story = {
 			'.sessionInfo__metaInfo__content'
 		);
 		await expect(topicTags).toHaveLength(1);
-		await expect(topicTags[0]).toHaveTextContent(/^Suchtprobleme$/);
+		await expect(topicTags[0]).toHaveAttribute('title', 'Suchtprobleme');
+		await expect(
+			topicTags[0].querySelector('[aria-hidden]')
+		).toHaveTextContent(/^Sucht$/);
 		const topicBounds = topicTags[0].getBoundingClientRect();
 		const headerBounds = header.getBoundingClientRect();
 		await expect(topicBounds.left).toBeGreaterThanOrEqual(
@@ -1597,6 +1599,10 @@ export const ConsultantChat: Story = {
 		const titleStyle = getComputedStyle(headerTitle!);
 		await expect(titleStyle.whiteSpace).toBe('nowrap');
 		await expect(titleStyle.textOverflow).toBe('ellipsis');
+		await expect(headerTitle!).toHaveAttribute(
+			'title',
+			'Sanftes Alpaka Kala'
+		);
 		await expect(
 			headerTitle!.getBoundingClientRect().height
 		).toBeLessThanOrEqual(Number.parseFloat(titleStyle.lineHeight) + 1);
@@ -1849,9 +1855,9 @@ export const RailKeepsTheSearch: Story = {
 		)
 	],
 	beforeEach: () => {
-		runtimeNoEnquiries = true;
+		runtimeEmptyLists = true;
 		return () => {
-			runtimeNoEnquiries = false;
+			runtimeEmptyLists = false;
 		};
 	},
 	render: () => <AppOrisoRoutingRuntimeShell />,
@@ -1865,6 +1871,18 @@ export const RailKeepsTheSearch: Story = {
 			if (!found) throw new Error('list not mounted yet');
 			return found;
 		});
+		const expectDivider = async () => {
+			await waitFor(() => {
+				const endHandle = wrapper()?.querySelector(
+					'.sessionsList__resizeHandle--end'
+				);
+				expect(endHandle).not.toBeNull();
+				const line = getComputedStyle(endHandle!, '::before');
+				expect(line.width).toBe('1px');
+				expect(line.backgroundColor).toBe('rgb(255, 255, 255)');
+			});
+		};
+		await expectDivider();
 		handle.focus();
 		handle.dispatchEvent(
 			new KeyboardEvent('keydown', { key: 'Home', bubbles: true })
@@ -1872,6 +1890,7 @@ export const RailKeepsTheSearch: Story = {
 		await waitFor(() =>
 			expect(wrapper()!.getBoundingClientRect().width).toBe(80)
 		);
+		await expectDivider();
 		// Gespräche: the rail starts with the search button.
 		await waitFor(() =>
 			expect(
@@ -1901,7 +1920,7 @@ export const RailKeepsTheSearch: Story = {
 				)
 			).not.toBeNull()
 		);
-		await new Promise((resolve) => setTimeout(resolve, 500));
+		await expectDivider();
 		await expect(
 			canvasElement.querySelector('.sessionsList__emptyState')
 		).toBeNull();

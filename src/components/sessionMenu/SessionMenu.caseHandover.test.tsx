@@ -216,6 +216,54 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		expect(items[recommendAt + 1]).toContain(HANDOVER);
 	});
 
+	it('sits in the folded "Beratung weitergeben" group, closed until opened', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+		const toggle = screen.getByRole('button', {
+			name: 'sessionMenu.group.handover'
+		});
+		expect(toggle.getAttribute('aria-expanded')).toBe('false');
+		expect(screen.queryByRole('button', { name: HANDOVER })).toBeNull();
+		fireEvent.click(toggle);
+		expect(toggle.getAttribute('aria-expanded')).toBe('true');
+		expect(screen.getByRole('button', { name: HANDOVER })).toBeTruthy();
+	});
+
+	it('starts with the group closed again on the next opening', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		const trigger = screen.getAllByRole('button', { name: 'app.menu' })[0];
+		const handoverToggle = () =>
+			screen.getByRole('button', { name: 'sessionMenu.group.handover' });
+		fireEvent.click(trigger);
+		fireEvent.click(handoverToggle());
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('true');
+		fireEvent.click(trigger);
+		fireEvent.click(trigger);
+		expect(handoverToggle().getAttribute('aria-expanded')).toBe('false');
+	});
+
+	it('lets ArrowDown move past the closed group to the next row', () => {
+		renderMenu({
+			user: counsellor,
+			activeSession: oneOnOne(sessionItem(1))
+		});
+		fireEvent.click(screen.getAllByRole('button', { name: 'app.menu' })[0]);
+		const toggle = screen.getByRole('button', {
+			name: 'sessionMenu.group.handover'
+		});
+		toggle.focus();
+		fireEvent.keyDown(toggle, { key: 'ArrowDown' });
+		const focused = document.activeElement as HTMLElement;
+		expect(focused).not.toBe(toggle);
+		expect(focused.closest('[hidden]')).toBeNull();
+	});
+
 	it.each([
 		[
 			'another counsellor',
@@ -233,7 +281,19 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 				}
 			}
 		],
-		['the advice seeker', { user: asker }]
+		['the advice seeker', { user: asker }],
+		[
+			'a team case of a centre in Teamberatung (FE#2494 *4)',
+			{
+				user: {
+					...counsellor,
+					agencies: [{ id: 5, teamAgency: true }]
+				},
+				activeSession: oneOnOne(
+					sessionItem(1, { isTeamSession: true, agencyId: 5 })
+				)
+			}
+		]
 	])('is not offered to %s', (_label, change) => {
 		renderMenu({
 			user: counsellor,
@@ -241,6 +301,16 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 			...(change as object)
 		});
 		expect(document.body.textContent).not.toContain(HANDOVER);
+	});
+
+	it('is still offered in an older team case once its centre chose case handover', () => {
+		renderMenu({
+			user: { ...counsellor, agencies: [{ id: 5, teamAgency: false }] },
+			activeSession: oneOnOne(
+				sessionItem(1, { isTeamSession: true, agencyId: 5 })
+			)
+		});
+		expect(document.body.textContent).toContain(HANDOVER);
 	});
 
 	it('opens the same handover dialog as the profile button', async () => {

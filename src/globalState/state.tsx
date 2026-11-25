@@ -12,6 +12,7 @@ import {
 	AgencySpecificProvider,
 	TopicsProvider
 } from '.';
+import { PersonalDisplayProvider } from '../features/personal-display/PersonalDisplayProvider';
 import { KeyboardShortcutsProvider } from '../features/keyboard-shortcuts';
 import { useGlobalShortcuts } from '../features/keyboard-shortcuts/hooks/useGlobalShortcuts';
 import { ShortcutHelpDialog } from '../features/keyboard-shortcuts/components/ShortcutHelpDialog';
@@ -69,6 +70,7 @@ function ContextProvider({ children }) {
 				<NotificationsProvider />,
 				<UpdateSessionListProvider />,
 				<UserDataProvider />,
+				<PersonalDisplayProvider />,
 				<AgencySpecificProvider />,
 				<WebsocketConnectionDeactivatedProvider />,
 				<SessionsDataProvider />,

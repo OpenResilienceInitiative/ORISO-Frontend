@@ -14,6 +14,7 @@ import { WebsocketHandler } from './WebsocketHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
+import { SystemLoginAppearance } from './SystemLoginAppearance';
 import { LoginHandoverGate } from './LoginHandoverScreen';
 import {
 	AppConfigProvider,
@@ -150,6 +151,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 
 	return (
 		<Router>
+			<SystemLoginAppearance />
 			{/* v7: providers move above <Routes> (they use no routing hooks);
 			    the old pathless catch-all <Route> wrapper is gone. */}
 			<ContextProvider>

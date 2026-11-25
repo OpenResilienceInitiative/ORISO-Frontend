@@ -37,6 +37,7 @@ import {
 	DEFAULT_VISIBILITY,
 	draftConflicts,
 	moveProblem,
+	repeatedColleagueNames,
 	soonEntry,
 	type AppointmentDraft,
 	type AppointmentKind,
@@ -186,7 +187,12 @@ import {
 	useWorkingHoursSummary
 } from './WorkingHoursDialog';
 import { ConsultationHoursDialog } from './ConsultationHoursDialog';
-import type { ConsultationHours } from './calendarConsultationHours';
+import {
+	isConsultationOnceOverBlocker,
+	oneOffRefusalKey,
+	type ConsultationHours,
+	type OneOffConsultation
+} from './calendarConsultationHours';
 import {
 	CalendarSyncDialog,
 	type CalendarFeed,
@@ -291,6 +297,20 @@ export interface CalendarPageProps {
 	 * the real links panel, stories a sample.
 	 */
 	linksPanel?: React.ReactNode;
+	/**
+	 * Beside the stage, the same size: the advice seeker's "Freie
+	 * Sprechzeiten" (FE#2494 *2c). On the phone it comes under the stage.
+	 */
+	besidePanel?: React.ReactNode;
+	/**
+	 * Releases a free stretch once for advice seekers (FE#2494 *2b);
+	 * without it "Sprechzeit" offers only the weekly hours.
+	 */
+	onSaveOneOffConsultation?: (oneOff: OneOffConsultation) => ChangeResult;
+	/** Withdraws a released one-off Sprechzeit (FE#2494 review). */
+	onWithdrawOneOffConsultation?: (oneOff: OneOffConsultation) => ChangeResult;
+	/** One's own one-off Sprechzeiten, banded in the time grid. */
+	oneOffConsultations?: OneOffConsultation[];
 	/** Storybook: colleagues shown from the start. */
 	initialShownColleagues?: string[];
 	initialFullscreen?: boolean;
@@ -451,6 +471,8 @@ type Dialog =
 	  }
 	| { type: 'workingHours' }
 	| { type: 'consultationHours' }
+	/** "Sprechzeit" from the grid: released once (FE#2494 *2b). */
+	| { type: 'consultation'; slot?: { start: Date; end: Date } }
 	| { type: 'sync' }
 	| { type: 'autoAccept' }
 	| null;
@@ -589,6 +611,10 @@ export const CalendarPage = ({
 	initialView,
 	initialDate,
 	linksPanel,
+	besidePanel,
+	onSaveOneOffConsultation,
+	oneOffConsultations,
+	onWithdrawOneOffConsultation,
 	initialShownColleagues = [],
 	initialFullscreen = false,
 	initialSwitcherStyle = 'menu',
@@ -744,6 +770,10 @@ export const CalendarPage = ({
 	/** A new entry onto other entries, made outside a dialog, waits too. */
 	/** "Absagen" asks first: the advice seeker is told at once (test C10). */
 	const [cancelAsk, setCancelAsk] = useState<CalendarEntry | null>(null);
+	/** A released one-off asked to be withdrawn (FE#2494 review). */
+	const [withdrawAsk, setWithdrawAsk] = useState<OneOffConsultation | null>(
+		null
+	);
 	const [createAsk, setCreateAsk] = useState<{
 		conflicts: CalendarEntry[];
 		blocker: boolean;
@@ -1592,6 +1622,64 @@ export const CalendarPage = ({
 
 	// --- Working-hours grips (own calendar) ---
 	const editHours = workingHoursLoaded && !!onSaveWorkingHours;
+	/* Open until the save settles: reopened meanwhile, the dialog (or the
+	   tab "Sprechzeit" of "Neuer Eintrag", FE#2494 *2b) would show the old
+	   set and save it back over this one. A failed save keeps the draft
+	   for a retry. */
+	/* Closes only the dialog that saved: another opened meanwhile keeps
+	   its draft. */
+	const settleConsultationSave = (saved: boolean | Promise<boolean>) => {
+		const origin = dialog;
+		const close = () =>
+			setDialog((current) => (current === origin ? null : current));
+		if (typeof saved === 'boolean') {
+			if (saved) close();
+			return;
+		}
+		setSavingConsultationHours(true);
+		void saved.then((ok) => {
+			setSavingConsultationHours(false);
+			if (ok) close();
+		});
+	};
+	const saveConsultationHours = (hours: ConsultationHours) =>
+		settleConsultationSave(
+			run(onSaveConsultationHours?.(hours), {
+				message: t('calendar.consultationHours.saved')
+			})
+		);
+	/* A Sperrzeit the loaded entries do not show refuses the release: the
+	   form says so, and saving again releases over it. */
+	const [oneOffBlockerConflict, setOneOffBlockerConflict] = useState<{
+		start: Date;
+		end: Date;
+	}>();
+	useEffect(() => {
+		if (!dialog) setOneOffBlockerConflict(undefined);
+	}, [dialog]);
+	const saveOneOffConsultation = (oneOff: OneOffConsultation) =>
+		settleConsultationSave(
+			run(
+				onSaveOneOffConsultation?.(oneOff),
+				{ message: t('calendar.consultationHours.onceSaved') },
+				(error) => {
+					const refusal = oneOffRefusalKey(error);
+					if (refusal) return { message: t(refusal, { count: 50 }) };
+					if (!isConsultationOnceOverBlocker(error))
+						return { message: t('calendar.saveFailed') };
+					setOneOffBlockerConflict({
+						start: oneOff.start,
+						end: oneOff.end
+					});
+					return {
+						message: t(
+							'calendar.consultationHours.overBlockerConflict'
+						)
+					};
+				}
+			)
+		);
+
 	const editConsultationHours =
 		consultant && !!consultationHours && !!onSaveConsultationHours;
 	const retryConsultationHours =
@@ -2160,6 +2248,17 @@ export const CalendarPage = ({
 				conversations={bookable}
 				onPick={pickSlotPerson}
 				onMore={moreSlotDetails}
+				onConsultation={
+					editConsultationHours && onSaveOneOffConsultation
+						? () => {
+								setMenu(null);
+								setDialog({
+									type: 'consultation',
+									slot: menu.range
+								});
+							}
+						: undefined
+				}
 			/>
 		);
 	} else if (menu?.type === 'month') {
@@ -2464,6 +2563,7 @@ export const CalendarPage = ({
 		switcherStyle === 'digits' && !compact ? (
 			<div
 				className="calendarStage__digits"
+				data-tour-target="calendar-view-switch"
 				role="radiogroup"
 				aria-label={t('calendar.viewSwitch')}
 			>
@@ -2496,6 +2596,7 @@ export const CalendarPage = ({
 				})}
 				onClick={openAt('view')}
 				data-cy="calendar-view-menu"
+				data-tour-target="calendar-view-switch"
 			>
 				<span className="calendarStage__viewIcon" aria-hidden="true">
 					{VIEW_ICON[view]}
@@ -2524,6 +2625,7 @@ export const CalendarPage = ({
 						aria-label={t('calendar.header.newEntry')}
 						onClick={() => setDialog({ type: 'appointment' })}
 						data-cy="calendar-create"
+						data-tour-target="calendar-create"
 					>
 						<AddIcon aria-hidden />
 						<span
@@ -2612,6 +2714,7 @@ export const CalendarPage = ({
 							aria-expanded={menu?.type === 'settings'}
 							onClick={openAt('settings')}
 							data-cy="calendar-settings"
+							data-tour-target="calendar-settings"
 						>
 							<MoreVertIcon />
 						</button>
@@ -2759,11 +2862,7 @@ export const CalendarPage = ({
 	// (prototype v17).
 	// Names that repeat get their Beratungsstelle on the chip, so two
 	// "Bart Simpson" can be told apart (test finding C12).
-	const twinNames = new Set(
-		colleagues
-			.map((c) => c.displayName)
-			.filter((name, i, all) => all.indexOf(name) !== i)
-	);
+	const twinNames = repeatedColleagueNames(colleagues);
 	// The second hint under a chip: the centre's code always; for a name
 	// that repeats, the username (UserService#1663), else the centre.
 	const chipHint = (colleague: Colleague) =>
@@ -3030,6 +3129,14 @@ export const CalendarPage = ({
 							now={fixedNow}
 							initialDate={anchorDate}
 							workingPlan={workingPlan}
+							consultationWindows={
+								consultant
+									? consultationHours?.windows
+									: undefined
+							}
+							consultationOnce={
+								consultant ? oneOffConsultations : undefined
+							}
 							onEdgeChange={gripsOn ? onEdgeChange : undefined}
 							slotPx={slotPx}
 							proposals={gridProposals}
@@ -3143,7 +3250,8 @@ export const CalendarPage = ({
 				'calendarPage',
 				compact && 'calendarPage--compact',
 				sheetShown && 'calendarPage--sheet',
-				fullscreen && 'calendarPage--fullscreen'
+				fullscreen && 'calendarPage--fullscreen',
+				besidePanel && !fullscreen && 'calendarPage--beside'
 			]
 				.filter(Boolean)
 				.join(' ')}
@@ -3235,6 +3343,9 @@ export const CalendarPage = ({
 				{peopleBar}
 				<div className="calendarStage__grid">{body}</div>
 			</section>
+			{besidePanel && !fullscreen && (
+				<div className="calendarPage__beside">{besidePanel}</div>
+			)}
 			{sheetCovers && (
 				// A tap above the sheet lowers it (Escape does, too).
 				<div
@@ -3319,7 +3430,9 @@ export const CalendarPage = ({
 					fullScreen={compact}
 				/>
 			)}
-			{(dialog?.type === 'appointment' || dialog?.type === 'blocker') && (
+			{(dialog?.type === 'appointment' ||
+				dialog?.type === 'blocker' ||
+				dialog?.type === 'consultation') && (
 				<NewEntryDialog
 					open
 					initialTab={dialog.type}
@@ -3372,7 +3485,30 @@ export const CalendarPage = ({
 					}
 					onSaveAbsence={onSaveAbsence ? saveAbsence : undefined}
 					initialAbsence={absence}
-					onClose={() => setDialog(null)}
+					consultationHours={
+						editConsultationHours ? consultationHours : undefined
+					}
+					onSaveConsultationHours={
+						editConsultationHours
+							? saveConsultationHours
+							: undefined
+					}
+					savingConsultationHours={savingConsultationHours}
+					oneOffBlockerConflict={oneOffBlockerConflict}
+					oneOffConsultations={oneOffConsultations}
+					onWithdrawOneOffConsultation={
+						onWithdrawOneOffConsultation
+							? setWithdrawAsk
+							: undefined
+					}
+					onSaveOneOffConsultation={
+						editConsultationHours && onSaveOneOffConsultation
+							? saveOneOffConsultation
+							: undefined
+					}
+					onClose={() => {
+						if (!savingConsultationHours) setDialog(null);
+					}}
 				/>
 			)}
 			{dialog?.type === 'autoAccept' && onSaveAutoAccept && (
@@ -3421,28 +3557,7 @@ export const CalendarPage = ({
 						hours={consultationHours}
 						fullScreen={compact}
 						saving={savingConsultationHours}
-						onSave={(hours) => {
-							/* Open until the save settles: reopened meanwhile, the
-							   dialog would show the old set and save it back over
-							   this one. A failed save keeps the draft for a retry. */
-							const saved = run(
-								onSaveConsultationHours?.(hours),
-								{
-									message: t(
-										'calendar.consultationHours.saved'
-									)
-								}
-							);
-							if (typeof saved === 'boolean') {
-								if (saved) setDialog(null);
-								return;
-							}
-							setSavingConsultationHours(true);
-							void saved.then((ok) => {
-								setSavingConsultationHours(false);
-								if (ok) setDialog(null);
-							});
-						}}
+						onSave={saveConsultationHours}
 						onClose={() => {
 							if (!savingConsultationHours) setDialog(null);
 						}}
@@ -3459,6 +3574,47 @@ export const CalendarPage = ({
 					onSaveImport={(url) => onSaveImport?.(url)}
 					onRemoveImport={() => onRemoveImport?.()}
 					onClose={() => setDialog(null)}
+				/>
+			)}
+			{withdrawAsk && (
+				<M3Dialog
+					open
+					data-testid="calendar-once-withdraw-dialog"
+					title={t(
+						'calendar.consultationHours.onceWithdrawAsk.title'
+					)}
+					description={t(
+						'calendar.consultationHours.onceWithdrawAsk.description',
+						{ time: format(withdrawAsk.start, withdrawAsk.end) }
+					)}
+					severity="error"
+					fullScreen={false}
+					onClose={() => setWithdrawAsk(null)}
+					closeLabel={t('app.close')}
+					actions={[
+						{
+							label: t(
+								'calendar.consultationHours.onceWithdrawAsk.keep'
+							),
+							onClick: () => setWithdrawAsk(null)
+						},
+						{
+							label: t(
+								'calendar.consultationHours.onceWithdrawAsk.confirm'
+							),
+							primary: true,
+							onClick: () => {
+								const oneOff = withdrawAsk;
+								setWithdrawAsk(null);
+								run(onWithdrawOneOffConsultation?.(oneOff), {
+									message: t(
+										'calendar.consultationHours.onceWithdrawn'
+									)
+								});
+							},
+							testId: 'calendar-once-withdraw-confirm'
+						}
+					]}
 				/>
 			)}
 			{cancelAsk && (

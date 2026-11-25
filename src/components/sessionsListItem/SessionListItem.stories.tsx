@@ -37,6 +37,7 @@ import {
 	SessionListItemComponent,
 	type SessionCardDatePlacement
 } from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
 import './sessionsListItem.styles.scss';
@@ -434,6 +435,14 @@ export const RuntimeComponent: Story = {
 	}
 };
 
+export const ContrastWithTenantAccent: Story = {
+	...RuntimeComponent,
+	name: 'Kontrast mit hellem Trägerakzent',
+	parameters: {
+		orisoSeeds: { primary: '#a5000a', accent: '#ffd700', signal: '#db005b' }
+	}
+};
+
 /**
  * Regression for #1225 / follow-up to #834: the session-list surface must use
  * the same transport-to-plain-text conversion as the Threads list.
@@ -566,7 +575,10 @@ export const SupervisedByOthers: Story = {
 				'[data-testid="supervision-indicator"]'
 			);
 			expect(indicator).not.toBeNull();
-			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			// #2494 *5: a 32px round icon; the name shows on hover.
+			expect(indicator!.getAttribute('title')).toContain(
+				'Sabine Supervisor'
+			);
 			expect(
 				indicator!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
@@ -1091,7 +1103,7 @@ const expectCardLayout = async (
 		const menu = at('.sessionsListItem__menuIcon');
 		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
 
-		// 48 px avatar straight under the chip row, without its outline.
+		// 48 px avatar straight under the chip row, with the shared chat outline.
 		const avatar = at('.sessionsListItem__icon');
 		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
 		await expect(Math.round(avatar.top - box.top)).toBe(
@@ -1100,6 +1112,13 @@ const expectCardLayout = async (
 		await expect(Math.round(avatar.left - box.left)).toBe(
 			CARD_BORDER + CARD_INSET
 		);
+		const avatarFrame = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		await expect(getComputedStyle(avatarFrame, '::after').content).toBe(
+			'none'
+		);
+		await expect(getComputedStyle(avatarFrame).boxShadow).toContain('2px');
 		const circle = card.querySelector<HTMLElement>(
 			'[data-testid="user-avatar"] > div'
 		)!;
@@ -2405,8 +2424,13 @@ export const SupervisionRowLabel: Story = {
 				'[data-testid="supervision-modality"]'
 			);
 			expect(modality).not.toBeNull();
-			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
-			expect(modality!.querySelector('svg')).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since
+			// FE#2494 it is the same 32 px kind icon (a mask) as Mail.
+			expect(
+				modality!.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
+			).not.toBeNull();
 			// The mail label is gone for this viewer.
 			expect(
 				canvasElement.querySelector(
@@ -2560,7 +2584,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'
@@ -3176,5 +3200,47 @@ export const EnquiryWaitingHiddenWhenOff: Story = {
 		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
 			longTopic.name
 		);
+	}
+};
+
+/** The compact group rail uses UserAvatar directly, rather than MessageAvatar. */
+export const GroupRailAvatarCustomTheme: Story = {
+	name: 'Gruppenleiste — Avatar im eigenen Theme',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div
+				style={
+					{
+						...listShell,
+						'--m3-outline-variant': '#314f69'
+					} as React.CSSProperties
+				}
+			>
+				<div role="tablist" aria-label="Conversations">
+					<SessionListRailProvider rail>
+						<RuntimeCard
+							item={runtimeGroupChat({
+								id: 5901,
+								name: 'Eine Person'
+							})}
+						/>
+					</SessionListRailProvider>
+				</div>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		const animal = avatar.querySelector<HTMLElement>(':scope > div')!;
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		const railFrame = avatar.closest<HTMLElement>(
+			'.sessionRailPill__avatar'
+		)!;
+		expect(getComputedStyle(railFrame).boxShadow).toContain('2px');
+		expect(getComputedStyle(animal).borderTopWidth).toBe('0px');
+		expect(getComputedStyle(animal).boxShadow).toBe('none');
 	}
 };

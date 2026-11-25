@@ -1,0 +1,22 @@
+// Shared 60px timeline frame: 48px content and 6px surface around it.
+// The surface also cuts the incoming bubble corner without a second outline.
+@mixin chat-avatar-frame {
+	width: 60px;
+	height: 60px;
+	min-width: 60px;
+	min-height: 60px;
+	border: 6px solid transparent;
+	border-radius: 50%;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-sizing: border-box;
+}
+
+// Small overlapping avatars retain their footprint and a subtle surface gap.
+@mixin chat-avatar-small-halo(
+	$surface: var(
+			--participant-ring,
+			var(--m3-surface-container-lowest, #ffffff)
+		)
+) {
+	box-shadow: 0 0 0 2px $surface;
+}

@@ -15,6 +15,7 @@ import { DirectLinkMediumIcon } from './DirectLinkMediumIcon';
 import { DirectLinkModeChip } from './DirectLinkModeChip';
 import { formatScheduledAt } from './directLinkSchedule';
 import './directLink.styles.scss';
+import '../../directInvitation/directInvitation.styles.scss';
 
 /** How long the check stays on a copied tile. */
 const COPIED_MS = 2_000;
@@ -36,6 +37,12 @@ interface MyDirectLinksProps {
 	title?: string;
 	/** *19: one line under the title. */
 	description?: string;
+	/**
+	 * FE#2494 *2a: `rows` lists each link as one compact row (small medium
+	 * icon, name, topic, actions) like the appointments above it; the
+	 * illustrated `tiles` stay for "Chat erstellen".
+	 */
+	variant?: 'tiles' | 'rows';
 }
 
 /**
@@ -52,7 +59,8 @@ export const MyDirectLinks = ({
 	headerAction,
 	emptyState,
 	title,
-	description
+	description,
+	variant = 'tiles'
 }: MyDirectLinksProps) => {
 	const { t, i18n } = useTranslation();
 	const [copiedId, setCopiedId] = useState<string>();
@@ -78,6 +86,100 @@ export const MyDirectLinks = ({
 		}
 	};
 
+	/* Copy, QR, edit and the on/off switch: the same in a tile and a row. */
+	const actionsOf = (link: DirectLink) => (
+		<>
+			<button
+				type="button"
+				className="myDirectLinks__iconButton"
+				aria-label={t('directLink.copy')}
+				title={t('directLink.copy')}
+				disabled={!link.active}
+				onClick={() => void copy(link)}
+			>
+				{copiedId === link.id ? (
+					<CheckOutlinedIcon aria-hidden />
+				) : (
+					<ContentCopyOutlinedIcon aria-hidden />
+				)}
+			</button>
+			<button
+				type="button"
+				className="myDirectLinks__iconButton"
+				aria-label={t('directLink.list.qr')}
+				title={t('directLink.list.qr')}
+				disabled={!link.active}
+				onClick={() => onShowQr(link)}
+			>
+				<QrCode2OutlinedIcon aria-hidden />
+			</button>
+			{onEdit && (
+				<button
+					type="button"
+					className="myDirectLinks__iconButton"
+					aria-label={t('directLink.list.edit', {
+						name: link.name
+					})}
+					title={t('directLink.edit.title')}
+					onClick={() => onEdit(link)}
+				>
+					<EditOutlinedIcon aria-hidden />
+				</button>
+			)}
+			<Switch
+				checked={link.active}
+				disabled={pendingIds?.has(link.id)}
+				onChange={(active) => onToggle(link.id, active)}
+				aria-label={t('directLink.list.active', {
+					name: link.name
+				})}
+			/>
+		</>
+	);
+
+	const rows = (
+		<ul
+			className="invitationsOverview__rows"
+			data-testid="direct-link-rows"
+		>
+			{links.map((link) => (
+				<li
+					key={link.id}
+					className={`invitationRow directLinkRow${
+						link.active ? '' : ' directLinkRow--off'
+					}`}
+					data-testid="direct-link-row"
+				>
+					<span className="invitationRow__time directLinkRow__medium">
+						<DirectLinkMediumIcon medium={link.medium} filled />
+						{t(`directLink.medium.${link.medium.toLowerCase()}`)}
+					</span>
+					<div className="invitationRow__body">
+						<span className="invitationRow__name">{link.name}</span>
+						<span className="invitationRow__meta directLinkRow__meta">
+							{link.scheduledAt && (
+								<time
+									dateTime={link.scheduledAt}
+									data-testid="direct-link-scheduled-at"
+								>
+									{formatScheduledAt(
+										link.scheduledAt,
+										i18n?.language
+									)}
+								</time>
+							)}
+							{link.topic}
+							<DirectLinkModeChip link={link} />
+						</span>
+					</div>
+					<div className="invitationRow__actions directLinkRow__actions">
+						{actionsOf(link)}
+					</div>
+				</li>
+			))}
+		</ul>
+	);
+
 	return (
 		<section className="myDirectLinks" aria-labelledby="myDirectLinksTitle">
 			<header className="myDirectLinks__header">
@@ -101,6 +203,8 @@ export const MyDirectLinks = ({
 			)}
 			{links.length === 0 && emptyState ? (
 				emptyState
+			) : variant === 'rows' ? (
+				rows
 			) : (
 				<ul className="myDirectLinks__grid">
 					{links.map((link) => (
@@ -149,61 +253,7 @@ export const MyDirectLinks = ({
 									<DirectLinkModeChip link={link} />
 								</span>
 								<div className="directLinkTile__actions">
-									<button
-										type="button"
-										className="myDirectLinks__iconButton"
-										aria-label={t('directLink.copy')}
-										title={t('directLink.copy')}
-										disabled={!link.active}
-										onClick={() => void copy(link)}
-									>
-										{copiedId === link.id ? (
-											<CheckOutlinedIcon aria-hidden />
-										) : (
-											<ContentCopyOutlinedIcon
-												aria-hidden
-											/>
-										)}
-									</button>
-									<button
-										type="button"
-										className="myDirectLinks__iconButton"
-										aria-label={t('directLink.list.qr')}
-										title={t('directLink.list.qr')}
-										disabled={!link.active}
-										onClick={() => onShowQr(link)}
-									>
-										<QrCode2OutlinedIcon aria-hidden />
-									</button>
-									{onEdit && (
-										<button
-											type="button"
-											className="myDirectLinks__iconButton"
-											aria-label={t(
-												'directLink.list.edit',
-												{
-													name: link.name
-												}
-											)}
-											title={t('directLink.edit.title')}
-											onClick={() => onEdit(link)}
-										>
-											<EditOutlinedIcon aria-hidden />
-										</button>
-									)}
-									<Switch
-										checked={link.active}
-										disabled={pendingIds?.has(link.id)}
-										onChange={(active) =>
-											onToggle(link.id, active)
-										}
-										aria-label={t(
-											'directLink.list.active',
-											{
-												name: link.name
-											}
-										)}
-									/>
+									{actionsOf(link)}
 								</div>
 							</div>
 						</li>

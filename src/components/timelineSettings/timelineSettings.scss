@@ -26,3 +26,26 @@
 		margin: 4px 0 0 !important;
 	}
 }
+
+html[data-oriso-personal-scheme='dark'] .timelineSettings__group {
+	.radioButton__label {
+		color: var(--m3-on-surface, #1a1c1e);
+	}
+
+	.radioButton__input {
+		border-color: var(--m3-outline, #747878);
+	}
+
+	.radioButton__input:focus-visible {
+		outline: 2px solid var(--m3-outline, #747878);
+		outline-offset: -2px;
+	}
+
+	&:disabled {
+		opacity: 1;
+
+		.radioButton__input {
+			opacity: 0.6;
+		}
+	}
+}

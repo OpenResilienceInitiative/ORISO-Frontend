@@ -65,6 +65,14 @@ import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
+import {
+	useConversationFeatureSettings,
+	useConversationFeatureSettingsSettled
+} from '../../hooks/useConversationFeatureSettings';
+import {
+	isTeamDiscussionAfterAcceptEnabled,
+	isTeamDiscussionEnabled
+} from '../../utils/conversationFeatureSettings';
 import { useMatrixTyping } from './useMatrixTyping';
 import {
 	chatTransportService,
@@ -212,6 +220,8 @@ export const SessionStream = ({
 		useState(false);
 	const [caseHandoverConsentError, setCaseHandoverConsentError] =
 		useState('');
+	const [unavailableConsentScopeKey, setUnavailableConsentScopeKey] =
+		useState<string | null>(null);
 	const [
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
@@ -290,6 +300,7 @@ export const SessionStream = ({
 		}
 		setCaseHandoverConsentSubmitting(false);
 		setCaseHandoverConsentError('');
+		setUnavailableConsentScopeKey(null);
 	}, [consentScopeKey]);
 	useLayoutEffect(
 		() => () => {
@@ -318,24 +329,42 @@ export const SessionStream = ({
 	 * right"), and answers 204 while no room exists — so `undefined` here
 	 * means "no team channel", exactly as it does for supervision.
 	 */
-	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	// FE#2491: read like supervision — the effective platform -> Träger ->
+	// Beratungsstelle policy, never the raw tenant value. Until the agency
+	// has answered the lookup stays unresolved, so a deep link is not
+	// mistaken for a stale route and closed.
+	const conversationFeatures =
+		useConversationFeatureSettings(getTenantSettings());
+	const conversationFeaturesSettled = useConversationFeatureSettingsSettled();
 	const teamDiscussionEnabled =
-		featureTeamDiscussionEnabled &&
+		isTeamDiscussionEnabled(conversationFeatures) &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 		!activeSession.isGroup &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
 		!!activeSession.item?.id;
+	// FE#2491: an open enquiry always switches its team chat on and off; an
+	// accepted case only where Träger AND Beratungsstelle keep it after
+	// accept. Otherwise accept archives it read-only (ADR-016).
+	const canSwitchTeamDiscussion =
+		Boolean(activeSession.isEnquiry) ||
+		isTeamDiscussionAfterAcceptEnabled(conversationFeatures);
 	const {
 		discussion: teamDiscussion,
 		error: teamDiscussionError,
-		resolved: teamDiscussionResolved,
-		retry: retryTeamDiscussion
+		resolved: teamDiscussionLookupResolved,
+		retry: retryTeamDiscussion,
+		switchOn: switchTeamDiscussionOn,
+		switchOff: switchTeamDiscussionOff,
+		toggling: teamDiscussionToggling,
+		toggleError: teamDiscussionToggleError
 	} = useTeamDiscussionChannel({
 		sessionId: activeSession.item?.id,
 		enabled: teamDiscussionEnabled,
-		allowCreate: Boolean(activeSession.isEnquiry),
+		allowCreate: canSwitchTeamDiscussion,
 		teamChannelRequested
 	});
+	const teamDiscussionResolved =
+		conversationFeaturesSettled && teamDiscussionLookupResolved;
 	const teamRoomId = teamDiscussion?.matrixRoomId;
 	const teamMessages =
 		teamMessageState.sessionId === activeSession.item?.id &&
@@ -1553,16 +1582,43 @@ export const SessionStream = ({
 	 * status is consultant-only and answers 403). A status that names another
 	 * session or request is no answer for this card.
 	 */
-	const readCaseHandoverRequestStatus = (
+	const readCaseHandoverRequestStatus = async (
 		sessionId: number,
 		requestId: number
-	) =>
-		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+	): Promise<CaseHandoverStatus | null> => {
+		try {
+			const status = await apiGetCaseHandoverRequestStatus(
+				sessionId,
+				requestId
+			);
 			if (!isStatusOfConsentRequest(status, sessionId, requestId)) {
 				throw new Error('Status does not belong to this request');
 			}
 			return status;
-		});
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === FETCH_ERRORS.NO_MATCH
+			) {
+				return null;
+			}
+			throw error;
+		}
+	};
+
+	const applyCaseHandoverRequestStatus = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus | null
+	) => {
+		if (status === null) {
+			// An unavailable request has no actionable or confirmed outcome.
+			setUnavailableConsentScopeKey(consentScopeKey);
+			return true;
+		}
+		if (isPendingCaseHandoverStatus(status.status)) return false;
+		settleCaseHandoverConsent(notification, status);
+		return true;
+	};
 
 	// A card whose request was closed elsewhere (takeover, decline on another
 	// device, expiry) stays visible until its unread notification is answered.
@@ -1583,14 +1639,12 @@ export const SessionStream = ({
 			.then((status) => {
 				if (
 					!cancelled &&
-					consentScope.current.generation === generation &&
-					!isPendingCaseHandoverStatus(status.status)
+					consentScope.current.generation === generation
 				) {
-					settleCaseHandoverConsent(notification, status);
+					applyCaseHandoverRequestStatus(notification, status);
 				}
 			})
-			// Not readable or offline: the card keeps its controls, a later
-			// decision reports the real outcome.
+			// Keep the existing card when the read fails without a definite result.
 			.catch(() => undefined);
 		return () => {
 			cancelled = true;
@@ -1683,10 +1737,14 @@ export const SessionStream = ({
 				return readCaseHandoverRequestStatus(sessionId, requestId).then(
 					(currentStatus) => {
 						if (!current()) return;
-						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+						if (
+							!applyCaseHandoverRequestStatus(
+								notification,
+								currentStatus
+							)
+						) {
 							throw new Error('Consent request is still open');
 						}
-						settleCaseHandoverConsent(notification, currentStatus);
 					}
 				);
 			})
@@ -1718,16 +1776,43 @@ export const SessionStream = ({
 
 	return (
 		<div className="session__wrapper">
-			{teamChannelRequested && teamDiscussionError && (
-				<div role="alert">
-					<p>{translate('teamDiscussion.error.open')}</p>
-					<Button
-						item={{
-							label: translate('sessionList.reloadButton.label'),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={retryTeamDiscussion}
-					/>
+			{teamChannelRequested &&
+				teamDiscussionError &&
+				(teamDiscussionError.message === FETCH_ERRORS.BAD_REQUEST ? (
+					// FE#2491 D4: this case may not start a team chat (e.g. it
+					// moved to another Beratungsstelle) — retrying cannot help.
+					<div role="alert" data-cy="team-discussion-not-allowed">
+						<p>
+							{translate(
+								'teamDiscussion.error.switchOnNotAllowed'
+							)}
+						</p>
+					</div>
+				) : (
+					<div role="alert" data-cy="team-discussion-open-error">
+						<p>{translate('teamDiscussion.error.open')}</p>
+						<Button
+							item={{
+								label: translate(
+									'sessionList.reloadButton.label'
+								),
+								type: BUTTON_TYPES.SECONDARY
+							}}
+							buttonHandle={retryTeamDiscussion}
+						/>
+					</div>
+				))}
+			{teamDiscussionToggleError && (
+				<div role="alert" data-cy="team-discussion-toggle-error">
+					<p>
+						{translate(
+							teamDiscussionToggleError === 'on'
+								? 'teamDiscussion.error.switchOn'
+								: teamDiscussionToggleError === 'onNotAllowed'
+									? 'teamDiscussion.error.switchOnNotAllowed'
+									: 'teamDiscussion.error.switchOff'
+						)}
+					</p>
 				</div>
 			)}
 			<SessionItemComponent
@@ -1735,6 +1820,7 @@ export const SessionStream = ({
 				mainTimelineSupplement={
 					<>
 						{displayedConsent &&
+							unavailableConsentScopeKey !== consentScopeKey &&
 							activityEventCaseHandoverRequestId(
 								displayedConsent
 							) !== null && (
@@ -1829,11 +1915,20 @@ export const SessionStream = ({
 				teamRoomId={teamRoomId}
 				teamDiscussionAvailable={
 					teamDiscussionEnabled &&
-					(Boolean(activeSession.isEnquiry) || !!teamDiscussion)
+					(canSwitchTeamDiscussion || !!teamDiscussion)
 				}
 				teamDiscussionStatus={teamDiscussion?.status}
 				teamDiscussionResolved={teamDiscussionResolved}
 				teamDiscussionError={!!teamDiscussionError}
+				onSwitchTeamDiscussionOn={
+					canSwitchTeamDiscussion ? switchTeamDiscussionOn : undefined
+				}
+				onSwitchTeamDiscussionOff={
+					canSwitchTeamDiscussion
+						? switchTeamDiscussionOff
+						: undefined
+				}
+				teamDiscussionToggling={teamDiscussionToggling}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 				onLoadEarlierMessages={loadEarlierMessages}

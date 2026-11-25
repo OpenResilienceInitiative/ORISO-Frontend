@@ -148,6 +148,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			&-send-message {
+				--composer-corner: 4px;
 				--composer-expanded-height: min(
 					calc(var(--composer-visible-height, 100dvh) * 0.78),
 					760px
@@ -163,7 +164,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				max-width: var(--composer-max-width, 895px);
 				position: relative;
 				margin: 0 auto;
-				background-color: var(--m3-surface-container-lowest, #ffffff) !important;
+				background-color: var(
+					--m3-surface-container-lowest,
+					#ffffff
+				) !important;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
@@ -181,10 +185,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				}
 
 				&--selected:not(.textarea__wrapper-send-message--flush) {
-					border-color: var(
-						--m3-primary-container,
-						#cc1e1c
-					) !important;
+					border-color: var(--m3-primary, #a5000a) !important;
 					border-width: 2px !important;
 				}
 
@@ -515,20 +516,21 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			line-height: 20px;
 			width: 100%;
 			height: 100%;
-			border-radius: 16px 4px 16px 16px;
+			border-radius: 16px var(--composer-corner, 4px) 16px 16px;
 			border: 1px solid var(--m3-primary-fixed, #ffdad5);
 			box-sizing: border-box;
 			position: relative;
 
 			// T31: 4 px bottom corners on the phone (Frank's red boxes).
 			@media screen and (width <= 899px) {
-				border-radius: 0 0 4px 4px;
+				border-radius: 0 0 var(--composer-corner, 4px)
+					var(--composer-corner, 4px);
 			}
 
 			// Expanded state on mobile restores the desktop rounded top-left
 			.textarea__wrapper-send-message--expanded & {
 				@media screen and (width <= 899px) {
-					border-radius: 16px 0 4px 4px;
+					border-top-left-radius: 16px;
 				}
 			}
 
@@ -555,22 +557,20 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		// #597: selected composer — text area gets the primary active border
 		&__wrapper-send-message--selected.textarea__wrapper-send-message--flush
 			.textarea__input {
-			border: 2px solid var(--m3-primary-container, #cc1e1c);
+			border: 2px solid var(--m3-primary, #a5000a);
 		}
 
 		@media screen and (width <= 899px) {
 			&__wrapper-send-message--selected .textarea__input {
-				border: 2px solid var(--m3-primary-container, #cc1e1c);
+				border: 2px solid var(--m3-primary, #a5000a);
 			}
 		}
 
-		// Figma 7851:34817 — in the selected state the pale send button gets a
-		// red top+right edge so the container's frame stays continuous at the
-		// top-right notch (the ready state is already fully red).
+		// Continue the selected field's outline across the resting send control.
 		&__wrapper-send-message--selected .sendButton--empty,
 		&__wrapper-send-message--selected .sendButton--disabled {
-			border-top: 2px solid var(--m3-primary-container, #cc1e1c);
-			border-right: 2px solid var(--m3-primary-container, #cc1e1c);
+			border-top: 2px solid var(--m3-primary, #a5000a);
+			border-right: 2px solid var(--m3-primary, #a5000a);
 		}
 
 		&__characterCounter {
@@ -1794,10 +1794,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			.textarea__wrapper-send-message--expanded & {
-				@media screen and (width <= 899px) {
-					right: 0;
-					top: 0;
-				}
+				top: 16px;
+				right: 16px;
 			}
 		}
 

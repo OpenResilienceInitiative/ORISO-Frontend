@@ -8,6 +8,7 @@
  * compiled legacy palette keeps applying unchanged (UAT-E).
  */
 import {
+	type ContrastLevel,
 	OrisoSchemeName,
 	OrisoSeeds,
 	computeOrisoPalette,
@@ -83,42 +84,47 @@ export const computeOrisoSchemes = (
 
 /**
  * Custom properties a tenant palette put on a root, so they can be taken off
- * again. Theme Builder preview tokens are deliberately not tracked: the
- * preview is independent of tenant resolution and must survive a reset (#1788).
+ * again. The preview owns a separate set so tenant resets preserve its
+ * palette (#1788) and leaving the preview can explicitly clear it.
  */
-const appliedTokens = new WeakMap<HTMLElement, Set<string>>();
+type PaletteTokens = WeakMap<HTMLElement, Set<string>>;
+const appliedTokens: PaletteTokens = new WeakMap();
+const previewTokens: PaletteTokens = new WeakMap();
 
 const setPaletteTokens = (
 	root: HTMLElement,
 	tokens: Record<string, string>,
-	track: boolean
+	registry: PaletteTokens
 ) => {
+	const names = new Set(Object.keys(tokens));
+	registry.get(root)?.forEach((name) => {
+		if (!names.has(name)) root.style.removeProperty(name);
+	});
 	Object.entries(tokens).forEach(([name, value]) =>
 		root.style.setProperty(name, value)
 	);
-	if (!track) {
-		return;
-	}
-	const names = appliedTokens.get(root) ?? new Set<string>();
-	Object.keys(tokens).forEach((name) => names.add(name));
-	appliedTokens.set(root, names);
+	registry.set(root, names);
 };
 
 /**
  * Takes back what `applyTenantPalette` set, so the compiled default palette
  * applies again (#1788). A Theme Builder preview palette stays.
  */
-export const resetTenantPalette = (
-	root: HTMLElement = document.documentElement
-): void => {
-	const names = appliedTokens.get(root);
-	if (!names?.size) {
-		return;
-	}
+const clearPaletteTokens = (root: HTMLElement, registry: PaletteTokens) => {
+	const names = registry.get(root);
+	if (!names?.size) return;
+
 	names.forEach((name) => root.style.removeProperty(name));
-	appliedTokens.delete(root);
+	registry.delete(root);
 	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 };
+
+export const resetTenantPalette = (root = document.documentElement): void =>
+	clearPaletteTokens(root, appliedTokens);
+
+export const resetThemePreviewPalette = (
+	root = document.documentElement
+): void => clearPaletteTokens(root, previewTokens);
 
 const tryComputePalette = (
 	seeds: OrisoSeeds,
@@ -260,17 +266,24 @@ export const resolveTenantSeeds = (
  */
 export const applyTenantPalette = (
 	theming: TenantThemingSeedFields | null | undefined,
-	root: HTMLElement = document.documentElement
+	root: HTMLElement = document.documentElement,
+	scheme: 'light' | 'dark' = 'light',
+	contrast: ContrastLevel = 'standard'
 ): boolean => {
 	const palette = resolveTenantPalette(theming, (...args) => {
 		// eslint-disable-next-line no-console
 		console.warn(...args);
 	});
-	if (!palette) {
-		return false;
-	}
-
-	setPaletteTokens(root, palette.tokens, true);
+	const tokens =
+		scheme === 'light' && contrast === 'standard'
+			? palette?.tokens
+			: computeOrisoPalette(
+					palette?.seeds ?? { primary: '#A5000A' },
+					scheme,
+					contrast
+				).tokens;
+	if (!tokens) return false;
+	setPaletteTokens(root, tokens, appliedTokens);
 	window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 	return true;
 };
@@ -344,7 +357,7 @@ export const applyPreviewFromLocation = (
 				`Theme preview: seed ${seeds.primary} is too pale (chroma < 12); a stored tenant seed like this would be ignored.`
 			);
 		}
-		setPaletteTokens(root, tokens, false);
+		setPaletteTokens(root, tokens, previewTokens);
 		window.dispatchEvent(new CustomEvent(THEME_APPLIED_EVENT));
 		return true;
 	} catch (error) {

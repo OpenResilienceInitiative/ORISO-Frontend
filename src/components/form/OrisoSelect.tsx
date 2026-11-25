@@ -5,6 +5,7 @@ import {
 	Chip,
 	FormControl,
 	FormHelperText,
+	FormLabel,
 	InputLabel,
 	ListItemText,
 	ListSubheader,
@@ -17,6 +18,7 @@ import {
 } from '@mui/material';
 import {
 	orisoInputColors,
+	orisoSelectLabelAboveSx,
 	orisoSelectMenuProps,
 	orisoSelectSx
 } from './orisoInputDesign';
@@ -37,6 +39,14 @@ export interface OrisoSelectProps
 	value: string;
 	helperText?: React.ReactNode;
 	error?: boolean;
+	/**
+	 * Puts the label above the field instead of floating inside it. For
+	 * question forms, where the label is a whole sentence that a floating
+	 * label would cut off on a phone.
+	 */
+	labelAbove?: boolean;
+	/** Shown in the empty field; only with `labelAbove`. */
+	placeholder?: string;
 	onChange?: (
 		event: SelectChangeEvent<string>,
 		child: React.ReactNode
@@ -96,29 +106,74 @@ export const OrisoSelect = ({
 	error,
 	id,
 	fullWidth = true,
+	labelAbove = false,
+	placeholder,
 	onChange,
+	SelectDisplayProps,
+	'aria-describedby': ariaDescribedBy,
 	...props
 }: OrisoSelectProps) => {
 	const selectId = useSelectId(id);
 	const labelId = `${selectId}-label`;
+	const helperId = helperText ? `${selectId}-helper` : undefined;
+	const describedBy = [
+		ariaDescribedBy,
+		SelectDisplayProps?.['aria-describedby'],
+		helperId
+	]
+		.filter(
+			(entry): entry is string =>
+				typeof entry === 'string' && entry.length > 0
+		)
+		.join(' ');
+	const placeholderLabel = (selected: string) =>
+		options.find((option) => option.value === selected)?.label ?? (
+			<span className="orisoSelect__placeholder">{placeholder}</span>
+		);
 
 	return (
 		<FormControl
 			fullWidth={fullWidth}
 			error={error}
 			disabled={props.disabled}
-			sx={orisoSelectSx}
+			sx={
+				labelAbove
+					? {
+							...orisoSelectSx,
+							'mt': 0,
+							'& .orisoSelect__placeholder': {
+								color: orisoInputColors.onSurfaceVariant
+							}
+						}
+					: orisoSelectSx
+			}
 		>
-			<InputLabel id={labelId}>{label}</InputLabel>
+			{labelAbove ? (
+				<FormLabel id={labelId} sx={orisoSelectLabelAboveSx}>
+					{label}
+				</FormLabel>
+			) : (
+				<InputLabel id={labelId}>{label}</InputLabel>
+			)}
 			<Select
 				{...props}
 				id={selectId}
 				labelId={labelId}
 				value={value}
-				label={label}
+				label={labelAbove ? undefined : label}
 				variant="outlined"
-				input={<OutlinedInput label={label} />}
+				input={<OutlinedInput label={labelAbove ? undefined : label} />}
+				SelectDisplayProps={{
+					...SelectDisplayProps,
+					'aria-invalid':
+						SelectDisplayProps?.['aria-invalid'] ??
+						(error ? true : undefined),
+					...(describedBy ? { 'aria-describedby': describedBy } : {})
+				}}
 				MenuProps={props.MenuProps ?? orisoSelectMenuProps}
+				{...(labelAbove && placeholder
+					? { displayEmpty: true, renderValue: placeholderLabel }
+					: {})}
 				onChange={onChange}
 			>
 				{options.map((option) => (
@@ -131,7 +186,9 @@ export const OrisoSelect = ({
 					</MenuItem>
 				))}
 			</Select>
-			{helperText && <FormHelperText>{helperText}</FormHelperText>}
+			{helperText && (
+				<FormHelperText id={helperId}>{helperText}</FormHelperText>
+			)}
 		</FormControl>
 	);
 };

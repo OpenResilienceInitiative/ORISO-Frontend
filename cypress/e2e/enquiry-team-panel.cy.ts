@@ -41,6 +41,17 @@ const syntheticText = (text: string | null | undefined) => {
 	return text;
 };
 
+/**
+ * FE#2491 (Frank, 23 Nov): the team chat has no button beside "Annehmen";
+ * it is switched on or opened in "Weitere Funktionen".
+ */
+const openTeamChatFromMenu = (
+	row: 'session-menu-team-chat-on' | 'session-menu-team-chat'
+) => {
+	cy.get('.sessionMenu__icon:visible').first().click();
+	cy.get(`[data-cy="${row}"]`).filter(':visible').first().click();
+};
+
 beforeEach(() => {
 	causalTrace.length = 0;
 	causalSequence = 0;
@@ -350,11 +361,44 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			matrixRoomId: teamRoomId,
 			status: archived ? 'ARCHIVED' : 'OPEN'
 		}).as('openTeam');
+		// FE#2491: an ARCHIVED (or CLOSED) team chat is read through the
+		// read-only join, never the switch-on POST (US#1778).
+		cy.intercept('POST', '**/sessions/1375/team-discussion/join', {
+			matrixRoomId: teamRoomId,
+			status: 'ARCHIVED'
+		}).as('joinTeam');
 		cy.intercept('GET', '**/service/users/chat-series/join-requests', []);
 		cy.fastLogin({ userId: USER_CONSULTANT });
+		// FE#2491: the team chat follows the agency policy. This AgencyService
+		// does not serve the team-chat key yet, which UserService reads as on.
+		// Registered after the login mocks so it wins over their empty list.
+		cy.intercept('GET', '**/service/agencies/1', [
+			{
+				id: 1,
+				name: 'agency name',
+				postcode: '12345',
+				city: 'city',
+				description: null,
+				offline: false,
+				consultingType: 1,
+				settings: { permissionPolicies: {} }
+			}
+		]).as('agencyPolicy');
 		cy.visit(enquiryListPath);
 		cy.get('[data-cy="session-list-item"]').first().click();
-		cy.wait(archived ? '@readTeam' : '@openTeam');
+		cy.wait('@readTeam');
+		if (!archived) {
+			// Opening an enquiry without a team room creates nothing;
+			// "Weitere Funktionen" → Team-Chat einschalten creates it.
+			cy.get('[data-cy="stage-panel"]').should('not.exist');
+			openTeamChatFromMenu('session-menu-team-chat-on');
+			cy.wait('@openTeam');
+			// From now on the room exists: later visits open it, never enable it.
+			cy.intercept('GET', '**/sessions/1375/team-discussion', {
+				matrixRoomId: teamRoomId,
+				status: 'OPEN'
+			}).as('readTeam');
+		}
 		if (width >= 900) {
 			cy.get('[data-cy="stage-main"]').should('contain.text', text);
 			cy.get(
@@ -561,98 +605,21 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 
 		cy.get('.encryption-recovery-notice').should('be.visible');
 
-		cy.get('[data-cy="enquiry-open-team"]')
-			.should('be.visible')
-			.and('contain.text', 'Team-Chat öffnen');
+		// FE#2491: Accept and Decline only — no team-chat button beside them.
+		cy.get('[data-cy="enquiry-open-team"]').should('not.exist');
 		cy.get('.session__acceptance button').should((buttons) => {
-			expect(buttons).to.have.length(3);
+			expect(buttons).to.have.length(2);
 			expect(buttons[0].getAttribute('data-tour-target')).to.equal(
 				'enquiry-accept-button'
 			);
-			expect(buttons[1].getAttribute('data-cy')).to.equal(
-				'enquiry-open-team'
-			);
-			expect(buttons[2].textContent.trim()).to.equal('Anfrage ablehnen');
-			expect(buttons.eq(2).prop('disabled')).to.equal(false);
-			expect(buttons[0].getBoundingClientRect().height).to.equal(
-				buttons[1].getBoundingClientRect().height
-			);
-			const accept = buttons[0].getBoundingClientRect();
-			const team = buttons[1].getBoundingClientRect();
-			const footer = buttons[1].closest('.session__acceptance');
-			const footerRect = footer.getBoundingClientRect();
-			const win = buttons[1].ownerDocument.defaultView;
-			const arrow = win.getComputedStyle(buttons[1], '::after');
-			expect(arrow.maskImage, 'supplied SVG arrow mask').to.contain(
-				'arrow_right_24px'
-			);
-			expect(arrow.width, 'arrow width').to.equal('24px');
-			expect(arrow.height, 'arrow height').to.equal('24px');
-			expect(arrow.content, 'decorative arrow has no text').to.equal(
-				'""'
-			);
-			if (width >= 900) {
-				expect(team.top, 'desktop actions share a row').to.equal(
-					accept.top
-				);
-				expect(
-					footerRect.right - buttons[2].getBoundingClientRect().right,
-					'comfortable right inset'
-				).to.be.closeTo(32, 1);
-			} else {
-				// Below desktop the three actions wrap; every row stays centered and
-				// no action overlaps another or leaves the footer.
-				const rects = [
-					accept,
-					team,
-					buttons[2].getBoundingClientRect()
-				];
-				const center = (footerRect.left + footerRect.right) / 2;
-				const rows = new Map<number, DOMRect[]>();
-				for (const rect of rects) {
-					expect(rect.left, 'action inside footer').to.be.at.least(
-						footerRect.left
-					);
-					expect(rect.right, 'action inside footer').to.be.at.most(
-						footerRect.right
-					);
-					const row = [...rows.keys()].find(
-						(top) => Math.abs(top - rect.top) < 1
-					);
-					rows.set(row ?? rect.top, [
-						...(rows.get(row ?? rect.top) ?? []),
-						rect
-					]);
-				}
-				rects.forEach((a, i) =>
-					rects
-						.slice(i + 1)
-						.forEach((b) =>
-							expect(
-								a.right <= b.left ||
-									b.right <= a.left ||
-									a.bottom <= b.top ||
-									b.bottom <= a.top,
-								'actions do not overlap'
-							).to.equal(true)
-						)
-				);
-				for (const row of rows.values()) {
-					const left = Math.min(...row.map((rect) => rect.left));
-					const right = Math.max(...row.map((rect) => rect.right));
-					expect(
-						(left + right) / 2,
-						'action row centered'
-					).to.be.closeTo(center, 1);
-				}
-			}
+			expect(buttons[1].textContent.trim()).to.equal('Anfrage ablehnen');
 		});
 		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',
 			scale: true,
 			disableTimersAndAnimations: false
 		});
-		cy.get('[data-cy="enquiry-open-team"]').click();
+		openTeamChatFromMenu('session-menu-team-chat');
 		cy.get('[data-cy="stage-panel"]').should('be.visible');
 		cy.get(closeControl).click();
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
@@ -777,7 +744,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.get('[data-cy="session-list-item"]').should('have.length', 30);
 	};
 	it(
-		'shows the complete original enquiry beside its automatic team panel',
+		'shows the complete original enquiry beside the team panel it opens',
 		verifyTeamPanel(false)
 	);
 	it(

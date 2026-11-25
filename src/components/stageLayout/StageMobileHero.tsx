@@ -1,19 +1,22 @@
 import * as React from 'react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 
 export interface StageMobileHeroProps {
+	claim?: string;
 	/** Optional trailing action, e.g. the "to login" icon button. */
 	action?: ReactNode;
 	leadingAction?: ReactNode;
 	/**
 	 * `hero` (default) is the 230px head of the login screens (design 2e):
-	 * brand row, headline, claim. `bar` is the same brand row alone on the
+	 * language and other actions, the stage title, and the tenant claim. `bar` is the same brand row alone on the
 	 * same red surface (design 8a) — the registration steps carry their own
 	 * headline per step, so the big head would only push the form down.
+	 * `branding` uses the desktop stage's title and claim for the login.
 	 */
-	variant?: 'hero' | 'bar';
+	variant?: 'hero' | 'bar' | 'branding';
 }
 
 /**
@@ -32,18 +35,20 @@ export interface StageMobileHeroProps {
 export const StageMobileHero = ({
 	action,
 	leadingAction,
+	claim,
 	variant = 'hero'
 }: StageMobileHeroProps) => {
 	const { t: translate } = useTranslation();
 	const isBar = variant === 'bar';
+	const isBranding = variant === 'branding';
+	const tenant = useTenant();
+	const title = translate('app.stage.title');
+	const shownClaim =
+		claim || tenant?.content?.claim || translate('app.claim');
 
 	return (
 		<div
-			className={
-				isBar
-					? 'stageMobileHero stageMobileHero--bar'
-					: 'stageMobileHero'
-			}
+			className={`stageMobileHero stageMobileHero--${variant}`}
 			data-cy="stage-mobile-hero"
 			data-cy-variant={variant}
 		>
@@ -61,24 +66,24 @@ export const StageMobileHero = ({
 			)}
 
 			<div className="stageMobileHero__bar">
-				<span className="stageMobileHero__brand">
-					{translate('app.stage.title')}
-				</span>
+				{isBar && (
+					<span className="stageMobileHero__brand">{title}</span>
+				)}
 				<span className="stageMobileHero__actions">
 					{leadingAction}
-					<LocaleSwitchPill variant="circle" />
+					<LocaleSwitchPill
+						variant={
+							isBranding ? 'circleOnPrimaryContainer' : 'circle'
+						}
+					/>
 					{action}
 				</span>
 			</div>
 
 			{!isBar && (
 				<div className="stageMobileHero__copy">
-					<h1 className="stageMobileHero__headline">
-						{translate('app.stage.mobileHeadline')}
-					</h1>
-					<p className="stageMobileHero__claim">
-						{translate('app.claim')}
-					</p>
+					<h1 className="stageMobileHero__headline">{title}</h1>
+					<p className="stageMobileHero__claim">{shownClaim}</p>
 				</div>
 			)}
 		</div>

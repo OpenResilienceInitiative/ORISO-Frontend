@@ -24,6 +24,7 @@ import {
 } from 'vite-plus/test';
 import * as calendarApi from '../../api/apiCalendar';
 import * as askerListApi from '../../api/apiGetAskerSessionList';
+import { UserDataContext } from '../../globalState';
 import { CalendarPageWired } from './CalendarPageWired';
 
 vi.mock('react-i18next', () => ({
@@ -91,6 +92,9 @@ vi.mock('../../api/apiCalendar', () => ({
 	apiGetCalendarConsultationHours: vi.fn(() =>
 		Promise.resolve({ windows: [] })
 	),
+	apiGetCalendarConsultationOnce: vi.fn(() => Promise.resolve([])),
+	apiCreateCalendarConsultationOnce: vi.fn(),
+	apiDeleteCalendarConsultationOnce: vi.fn(),
 	apiSetCalendarWorkingHours: vi.fn(),
 	apiPutWorkingDayException: vi.fn(),
 	apiDeleteWorkingDayException: vi.fn(),
@@ -111,7 +115,9 @@ vi.mock('../../api/apiCalendar', () => ({
 vi.mock('../../api/apiSessionAppointments', () => ({
 	apiCreateSessionAppointment: vi.fn(),
 	apiMoveSessionAppointment: vi.fn(),
-	apiCancelSessionAppointment: vi.fn()
+	apiCancelSessionAppointment: vi.fn(),
+	apiGetAppointmentSlots: vi.fn(() => Promise.resolve([])),
+	apiBookAppointmentSlot: vi.fn()
 }));
 vi.mock('../../api/apiGetConsultantSessionList', () => ({
 	apiGetConsultantSessionList: vi.fn(() => Promise.resolve({ sessions: [] }))
@@ -332,5 +338,29 @@ describe('CalendarPageWired — answering a move proposal, page included', () =>
 				loads
 			)
 		);
+	});
+});
+
+/* #2523: an advice seeker's user data carries `agencies: null`. The page
+   crashed into the error page because the direct-link topics read it. */
+describe('CalendarPageWired — advice seeker with agencies null (#2523)', () => {
+	it('mounts "My dates" instead of throwing', async () => {
+		user.consultant = false;
+		api.apiGetCalendarEntries.mockResolvedValue([] as never);
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { userId: 'me', agencies: null }
+					} as never
+				}
+			>
+				<CalendarPageWired />
+			</UserDataContext.Provider>
+		);
+		await waitFor(() =>
+			expect(api.apiGetCalendarEntries).toHaveBeenCalled()
+		);
+		expect(screen.getByTestId('calendar-view')).toBeTruthy();
 	});
 });

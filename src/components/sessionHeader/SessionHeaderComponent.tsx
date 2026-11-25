@@ -1,14 +1,21 @@
+import { TeamChatPennant } from '../teamDiscussion/TeamChatPennant';
+import { FittedHeaderTitle } from './FittedHeaderTitle';
 import * as React from 'react';
 import { isDeletedGuest } from '../temporaryAccount/temporaryAccountStore';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
-import { useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import {
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+	useCallback,
+	useRef
+} from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-	SupervisorManagementDialog,
-	SUPERVISOR_DIALOG_TITLE_ID
-} from './SupervisorManagementDialog';
+import { ManagePeopleDialog } from '../managePeople/ManagePeopleDialog';
+import { createSupervisionPeopleSource } from '../managePeople/supervisionPeopleSource';
+import { shareSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -19,8 +26,6 @@ import {
 	apiGetSessionSupervisors,
 	SessionSupervisor
 } from '../../api/apiGetSessionSupervisors';
-import { apiAddSessionSupervisor } from '../../api/apiAddSessionSupervisor';
-import { apiRemoveSessionSupervisor } from '../../api/apiRemoveSessionSupervisor';
 import { apiSendMessage } from '../../api/apiSendMessage';
 import { ConversationAppointmentSlot } from '../sessionsList/timeline/ConversationAppointmentSlot';
 import { ConversationNewLinkAction } from '../directInvitation/ConversationNewLinkAction';
@@ -55,6 +60,7 @@ import {
 	SESSION_LIST_TYPES
 } from '../session/sessionHelpers';
 import { getModality, Modality } from '../session/getModality';
+import { PersonalDisplayEntry } from '../../features/personal-display/PersonalDisplayEntry';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import {
 	finishAnonymousChatErrorOverlayItem,
@@ -91,7 +97,6 @@ import {
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
-import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { SessionTopic } from './SessionTopic';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -100,8 +105,6 @@ import { GroupChatHeader } from './GroupChatHeader';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useTopic } from '../../globalState';
-import { Button, ButtonItem, BUTTON_TYPES } from '../button/Button';
-import { OrisoTextarea } from '../form/OrisoTextarea';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import {
 	useConversationFeatureSettings,
@@ -123,14 +126,10 @@ import {
 	buildSupervisorSystemMessagePayload,
 	type SupervisorSystemMessageKind
 } from './supervisorSystemMessage';
-import {
-	getConsultantLabel,
-	SupervisorConsultantPicker
-} from './SupervisorConsultantPicker';
-import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
 import { HeaderPlusMenu } from './HeaderPlusMenu';
 import { canRecommendFurtherCounselling } from '../furtherCounselling/furtherCounsellingRules';
+import { offersCaseHandoverIn } from '../session/caseHandoverHelpers';
 import { useCaseHandoverOffer } from '../caseHandover/useCaseHandoverOffer';
 import { CaseHandoverOffer } from '../caseHandover/CaseHandoverOffer';
 import { isPracticeId, isPracticeRoomId } from '../../practice/practiceIds';
@@ -164,6 +163,18 @@ export interface SessionHeaderProps {
 	 * header reads it.
 	 */
 	hideGroupTopic?: boolean;
+	/** Opens the team conversation from the shared More menu. */
+	onOpenTeamChat?: () => void;
+	teamChatUnreadCount?: number;
+	/** FE#2491: "Weitere Funktionen" → Team-Chat einschalten / ausschalten. */
+	onSwitchTeamChatOn?: () => void;
+	onSwitchTeamChatOff?: () => Promise<void> | void;
+	teamChatToggling?: 'on' | 'off' | null;
+	/**
+	 * FE#2491: the team chat of this enquiry is on — the header carries the
+	 * "Team-Chat" chip, as it carries the supervisors while supervised.
+	 */
+	teamChatIndicator?: { active: boolean; onOpen: () => void };
 }
 
 type SupervisorSnapshot = {
@@ -272,14 +283,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const supervisors = hasCurrentSupervisorSnapshot
 		? supervisorSnapshot.supervisors
 		: EMPTY_SUPERVISORS;
-	const supervisorLoadState = hasCurrentSupervisorSnapshot
-		? supervisorSnapshot.state
-		: 'loading';
-	const isLoadingSupervisors = supervisorLoadState === 'loading';
 	const [isSupervisorModalOpen, setIsSupervisorModalOpen] = useState(false);
 	// Frank 17.11.2026: on desktop the "+" also offers "Beratung übergeben"
 	// to the assigned counsellor — the same audience and dialog as the ⋮
-	// entry (FE#2250). The phone keeps its grey "+" and the ⋮ entry.
+	// entry (FE#2250). On the phone the "+" opens the supervision dialog
+	// full screen; the handover stays in the ⋮ entry.
 	const caseHandover = useCaseHandoverOffer();
 	const plusButtonRef = useRef<HTMLElement | null>(null);
 	const [plusMenuOpen, setPlusMenuOpen] = useState(false);
@@ -302,9 +310,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(open?: () => void) => setSendNewLink(() => open),
 		[]
 	);
-	const [supervisionReason, setSupervisionReason] = useState<string>('');
-	const [supervisionReasonError, setSupervisionReasonError] = useState(false);
-	const [isAddingSupervisor, setIsAddingSupervisor] = useState(false);
 	const supervisorRequestIdRef = useRef(0);
 	const activeSupervisorSessionIdRef = useRef(activeSession.item.id);
 	useEffect(() => {
@@ -314,48 +319,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		sessionAgencyId: activeSession.item?.agencyId,
 		metadataAgencyId: activeSession.agency?.id
 	});
-	const {
-		state: supervisorDirectoryState,
-		consultants: availableConsultants,
-		directoryConsultants,
-		selectedConsultantId,
-		selectedConsultant,
-		setSelectedConsultantId
-	} = useSupervisorConsultantDirectory({
-		isOpen: isSupervisionEnabledForCurrentChat && isSupervisorModalOpen,
-		sessionId: activeSession.item.id,
-		agencyId: supervisorDirectoryAgencyId,
-		currentConsultantId: userData.userId,
-		supervisorState: supervisorLoadState,
-		supervisors,
-		onLoadError: () => {
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.loadConsultants.title'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.loadConsultants.text'
-				),
-				closeable: true,
-				timeout: 5000
-			});
-		}
-	});
-
-	// Prepare Button for add supervisor
-	const addSupervisorButton: ButtonItem = React.useMemo(
-		() => ({
-			label: isAddingSupervisor
-				? translate('sessionHeader.supervisor.modal.adding')
-				: translate('sessionHeader.supervisor.modal.addButton'),
-			function: '',
-			type: BUTTON_TYPES.PRIMARY,
-			disabled: !selectedConsultant || isAddingSupervisor
-		}),
-		[selectedConsultant, isAddingSupervisor, translate]
-	);
-
 	const [isSubscriberFlyoutOpen, setIsSubscriberFlyoutOpen] = useState(false);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = () =>
@@ -447,34 +410,32 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
-	// Helper function to get consultant name from supervisor
-	const getSupervisorName = (supervisor: SessionSupervisor): string => {
-		const consultant = directoryConsultants.find(
-			(c) => c.consultantId === supervisor.supervisorConsultantId
-		);
-		if (consultant) {
-			return `${consultant.firstName} ${consultant.lastName}`;
-		}
-		// Fallback to username if consultant not found (shouldn't happen, but just in case)
-		return (
-			supervisor.supervisorUsername || supervisor.supervisorConsultantId
-		);
-	};
+	/** The case a supervision change belongs to, fixed when its dialog source is made. */
+	interface SupervisionOrigin {
+		sessionId: number;
+		rid: string;
+		matrixRoomId?: string | null;
+		chatDisplayName: string;
+		actionPath: string;
+	}
 
 	const postSupervisorSystemMessage = async (
+		origin: SupervisionOrigin,
 		kind: SupervisorSystemMessageKind,
-		supervisorName: string
+		supervisorName: string,
+		previousName?: string
 	) => {
-		const matrixRoomId = isMatrixRoom(activeSession.rid)
-			? activeSession.rid
-			: activeSession.item?.matrixRoomId;
-		if (!matrixRoomId || !activeSession.item.id) {
+		const matrixRoomId = isMatrixRoom(origin.rid)
+			? origin.rid
+			: origin.matrixRoomId;
+		if (!matrixRoomId || !origin.sessionId) {
 			return;
 		}
 		const payload = buildSupervisorSystemMessagePayload(
 			kind,
 			supervisorName,
-			translate
+			translate,
+			previousName
 		);
 		try {
 			const client = matrixClientService?.getClient?.();
@@ -487,10 +448,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			}
 			await apiSendMessage(
 				`${SYSTEM_NOTIFICATION_PREFIX}${payload}`,
-				activeSession.rid,
+				origin.rid,
 				false,
 				false,
-				activeSession.item.id,
+				origin.sessionId,
 				matrixRoomId,
 				null,
 				true,
@@ -501,144 +462,112 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		}
 	};
 
-	const handleAddSupervisor = async () => {
-		if (!selectedConsultant || !activeSession.item.id) return;
-		if (!supervisionReason.trim()) {
-			setSupervisionReasonError(true);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.reasonRequired.title'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.reasonRequired.text'
-				),
-				closeable: true,
-				timeout: 5000
-			});
-			return;
+	const handleSupervisionChanged = async (
+		change: Parameters<
+			NonNullable<
+				Parameters<typeof createSupervisionPeopleSource>[0]['onChanged']
+			>
+		>[0],
+		origin: SupervisionOrigin
+	) => {
+		const { sessionId } = origin;
+		if (!sessionId) return;
+		// The counsellor may have opened another case while the change ran:
+		// the header, the dialog and practice belong to the case on screen.
+		const isOriginOnScreen =
+			activeSupervisorSessionIdRef.current === sessionId;
+		// The practice tour's next step points at the supervision panel, which
+		// the open dialog would cover; real cases keep the dialog open.
+		if (
+			isOriginOnScreen &&
+			change.kind === 'added' &&
+			(isPracticeId(sessionId) || isPracticeRoomId(origin.matrixRoomId))
+		) {
+			setIsSupervisorModalOpen(false);
 		}
-		setIsAddingSupervisor(true);
-		const selectedConsultantIdForRequest = selectedConsultant.consultantId;
-		const selectedSupervisorName = getConsultantLabel(selectedConsultant);
-		const chatDisplayName =
-			resolveAnonymousChatDisplayName(contact) ||
-			`Session ${activeSession.item.id}`;
-		try {
-			await apiAddSessionSupervisor(
-				activeSession.item.id,
-				selectedConsultantIdForRequest,
-				supervisionReason
+		const noteKind: 'add' | 'remove' | 'replace' =
+			change.kind === 'added'
+				? 'add'
+				: change.kind === 'removed'
+					? 'remove'
+					: 'replace';
+		const who =
+			change.kind === 'replaced'
+				? `${change.from} -> ${change.to}`
+				: change.name;
+		// The people dialog has already changed the case; the rest is
+		// non-blocking bookkeeping. The system message handles its own
+		// failure, so the dialog does not wait for the Matrix send.
+		if (change.kind === 'replaced') {
+			// #2494 *6: the server posts the swap notice into the supervision
+			// side room; the case chat gets nothing. The new supervisor
+			// continues that room, so hand them its history keys (MSC4268).
+			void shareSupervisionHistory(
+				matrixClientService?.getClient?.(),
+				change.sideRoomId,
+				change.supervisorMatrixUserId
 			);
-			await postSupervisorSystemMessage('added', selectedSupervisorName);
+		} else {
+			void postSupervisorSystemMessage(
+				origin,
+				change.kind,
+				change.name
+			).catch(() => undefined);
+		}
+		if (isOriginOnScreen) {
 			await loadSupervisors();
 			notifyPracticeSupervisorsChanged();
-			setSelectedConsultantId('');
-			setSupervisionReason('');
-			setSupervisionReasonError(false);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate('sessionHeader.supervisor.success.add.title'),
-				text: `${translate(
-					'sessionHeader.supervisor.success.add.text'
-				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				closeable: true,
-				timeout: 5000
-			});
-			addEventNotification({
-				type: NOTIFICATION_TYPE_SUCCESS,
-				eventType: 'supervisor.added',
-				title: translate('sessionHeader.supervisor.success.add.title'),
-				text: `${translate(
-					'sessionHeader.supervisor.success.add.text'
-				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
-				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate('notifications.center.open'),
-				sourceSessionId: activeSession.item.id,
-				category: 'system'
-			});
-			// Close modal after successful add
-			setIsSupervisorModalOpen(false);
-		} catch (error) {
-			// console.error('Failed to add supervisor:', error);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate('sessionHeader.supervisor.error.add.title'),
-				text: translate('sessionHeader.supervisor.error.add.text'),
-				closeable: true,
-				timeout: 5000
-			});
-		} finally {
-			setIsAddingSupervisor(false);
 		}
-	};
-
-	const handleRemoveSupervisor = async (supervisorId: number) => {
-		if (!activeSession.item.id) return;
-		if (
-			!window.confirm(
-				translate('sessionHeader.supervisor.remove.confirm')
-			)
-		) {
-			return;
-		}
-		const supervisorToRemove = supervisors.find(
-			(s) => s.id === supervisorId
+		const title = translate(
+			`sessionHeader.supervisor.success.${noteKind}.title`
 		);
-		const supervisorToRemoveName = supervisorToRemove
-			? getSupervisorName(supervisorToRemove)
-			: String(supervisorId);
-		const chatDisplayName =
-			resolveAnonymousChatDisplayName(contact) ||
-			`Session ${activeSession.item.id}`;
-		try {
-			await apiRemoveSessionSupervisor(
-				activeSession.item.id,
-				supervisorId
-			);
-			await postSupervisorSystemMessage(
-				'removed',
-				supervisorToRemoveName
-			);
-			await loadSupervisors();
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate(
-					'sessionHeader.supervisor.success.remove.title'
-				),
-				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text'
-				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				closeable: true,
-				timeout: 5000
-			});
-			addEventNotification({
-				type: NOTIFICATION_TYPE_SUCCESS,
-				eventType: 'supervisor.removed',
-				title: translate(
-					'sessionHeader.supervisor.success.remove.title'
-				),
-				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text'
-				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
-				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate('notifications.center.open'),
-				sourceSessionId: activeSession.item.id,
-				category: 'system'
-			});
-			// Close modal after successful remove
-			setIsSupervisorModalOpen(false);
-		} catch (error) {
-			// console.error('Failed to remove supervisor:', error);
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate('sessionHeader.supervisor.error.remove.title'),
-				text: translate('sessionHeader.supervisor.error.remove.text'),
-				closeable: true,
-				timeout: 5000
-			});
-		}
+		const text = `${translate(
+			`sessionHeader.supervisor.success.${noteKind}.text`
+		)} (${who} / ${origin.chatDisplayName})`;
+		addNotification({
+			notificationType: NOTIFICATION_TYPE_SUCCESS,
+			title,
+			text,
+			closeable: true,
+			timeout: 5000
+		});
+		addEventNotification({
+			type: NOTIFICATION_TYPE_SUCCESS,
+			eventType: `supervisor.${change.kind}`,
+			title,
+			text,
+			actionPath: origin.actionPath,
+			actionLabel: translate('notifications.center.open'),
+			sourceSessionId: sessionId,
+			category: 'system'
+		});
 	};
+	// The source lives as long as the case; it always calls the latest handler
+	// with the case it was made for.
+	const supervisionChangedRef = useRef(handleSupervisionChanged);
+	supervisionChangedRef.current = handleSupervisionChanged;
+	const supervisionPeopleSource = useMemo(() => {
+		const origin: SupervisionOrigin = {
+			sessionId: activeSession.item.id,
+			rid: activeSession.rid,
+			matrixRoomId: activeSession.item?.matrixRoomId,
+			chatDisplayName:
+				resolveAnonymousChatDisplayName(contact) ||
+				`Session ${activeSession.item.id}`,
+			actionPath: getCanonicalConversationActionPath()
+		};
+		return createSupervisionPeopleSource({
+			sessionId: activeSession.item.id,
+			agencyId: supervisorDirectoryAgencyId
+				? String(supervisorDirectoryAgencyId)
+				: null,
+			currentConsultantId: userData?.userId,
+			unknownName: translate('managePeople.supervision.unknownName'),
+			onChanged: (change) => supervisionChangedRef.current(change, origin)
+		});
+		// The origin is fixed per case on purpose.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activeSession.item.id, supervisorDirectoryAgencyId, userData?.userId]);
 
 	const sessionView = getViewPathForType(type);
 	const userProfileLink = `/sessions/consultant/${sessionView}/${
@@ -652,6 +581,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isConsultantUser =
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('CONSULTANT');
+	// FE#2494: the counsellor's appointment with the supervisor hangs as a
+	// second pennant; the supervisor's own view has nobody fixed to show.
+	const appointmentSupervisorId =
+		isConsultantUser && !isSupervisor
+			? supervisors.find(
+					(s) =>
+						s.supervisorConsultantId &&
+						s.supervisorConsultantId !== userData.userId
+				)?.supervisorConsultantId
+			: undefined;
 	const isAskerUser =
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
@@ -659,6 +598,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		(userData?.userRoles || []).includes('ANONYMOUS');
 	const isAnonymousAsker =
 		isAnonymousChat && isAskerUser && !isConsultantUser;
+	// The agency line, topic and team chat are for registered users only.
+	const showMetaDetails =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	// FE#2494: the appointment pennant also for anonymous advice seekers.
+	const showAppointmentSlot =
+		activeSession.isSession && (isAskerUser || isConsultantUser);
 	const assignedConsultantLabel = resolveAssignedConsultantLabel(
 		activeSession,
 		userData,
@@ -1147,10 +1093,24 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		activeSession?.agency,
 		translate
 	);
+	const contactSheet =
+		isAskerUser &&
+		!isConsultantUser &&
+		activeSession.isSession &&
+		!isChatFinished &&
+		[STATUS_ENQUIRY, STATUS_ACTIVE].includes(activeSession.item.status) &&
+		activeSession.item.agencyId > 0
+			? { sessionId: activeSession.item.id, email: userData.email }
+			: undefined;
+	const showAskerProfile = isAskerInfoAvailable();
+	const hasConsultantTitle = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 
 	return (
 		<div
-			className="sessionInfo"
+			className="sessionInfo sessionInfo--conversation"
 			ref={paneRef}
 			data-density={density.compact ? 'compact' : 'roomy'}
 		>
@@ -1167,10 +1127,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				)}
 				<div
 					className={clsx('sessionInfo__username', {
-						'sessionInfo__username--deactivate':
-							!isAskerInfoAvailable()
+						'sessionInfo__username--deactivate': !showAskerProfile
 					})}
 				>
+					{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+						(hasConsultantTitle && !showAskerProfile)) && (
+						<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
+					)}
 					{(() => {
 						/* The Figma pill always carries the conversation
 						   type. When supervision management is available,
@@ -1192,7 +1155,6 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								!activeSession.isGroup &&
 								!activeSession.isEnquiry,
 							isSupervisor,
-							isMobile: untilL,
 							isSettled: areConversationFeaturesSettled
 						});
 						const canOpenSupervisorModal =
@@ -1206,6 +1168,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						const canHandOverHere =
 							!untilL &&
 							!isPracticeConversation &&
+							offersCaseHandoverIn(
+								activeSession,
+								userData?.agencies
+							) &&
 							canRecommendFurtherCounselling({
 								isRejectedCase:
 									Number(activeSession.item.status) ===
@@ -1315,25 +1281,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							</div>
 						);
 					})()}
-					{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) && (
-						<h3 title={headerTitle}>{headerTitle}</h3>
+					{hasConsultantTitle && showAskerProfile && (
+						<Link to={userProfileLink}>
+							<FittedHeaderTitle>{headerTitle}</FittedHeaderTitle>
+						</Link>
 					)}
-					{hasUserAuthority(
-						AUTHORITIES.CONSULTANT_DEFAULT,
-						userData
-					) ? (
-						isAskerInfoAvailable() ? (
-							<Link to={userProfileLink}>
-								<h3 title={headerTitle}>{headerTitle}</h3>
-							</Link>
-						) : (
-							<h3 title={headerTitle}>{headerTitle}</h3>
-						)
-					) : null}
 				</div>
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 					!activeSession.isGroup &&
 					!activeSession.isEnquiry && <AddonSessionActions />}
+				{/* FE#2494: the Team-Chat hangs as a pennant beside the topic. */}
 				{/* Anonymous end/delete actions live in SessionMenu on all breakpoints. */}
 				{/* Supervisor Management Button replaced by the "+" overlay on
 				    the avatar stack above. Keeping the render behind a hard
@@ -1380,14 +1337,21 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							</span>
 						</button>
 					)}
+				<PersonalDisplayEntry placement="conversation" />
 				<SessionMenu
 					hasUserInitiatedStopOrLeaveRequest={
 						props.hasUserInitiatedStopOrLeaveRequest
 					}
 					callsInMenu={callsInMenu}
+					onOpenTeamChat={props.onOpenTeamChat}
+					teamChatUnreadCount={props.teamChatUnreadCount}
+					onSwitchTeamChatOn={props.onSwitchTeamChatOn}
+					onSwitchTeamChatOff={props.onSwitchTeamChatOff}
+					teamChatToggling={props.teamChatToggling}
 					onCreateAppointment={openCreateAppointment}
 					onSendNewLink={sendNewLink}
-					isAskerInfoAvailable={isAskerInfoAvailable()}
+					isAskerInfoAvailable={showAskerProfile}
+					contactSheet={contactSheet}
 					bannedUsers={props.bannedUsers}
 					isSupervisor={isSupervisor}
 					showMobileSupervisionAction={
@@ -1432,10 +1396,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				/>
 			</div>
 
-			{(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
-				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) && (
+			{(showMetaDetails || showAppointmentSlot) && (
 				<div className="sessionInfo__metaInfo">
-					{agencyLine && (
+					{showMetaDetails && agencyLine && (
 						/*
 						 * The counselling centre with its postcode (#895). The
 						 * postcode is what the advice seeker chose their agency
@@ -1446,11 +1409,46 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						 * line (not raw agency.name) so an empty API name with a
 						 * tenant i18n override still shows.
 						 */
-						<div className="sessionInfo__metaInfo__content">
+						<div
+							className="sessionInfo__metaInfo__content"
+							title={agencyLine}
+						>
 							{agencyLine}
 						</div>
 					)}
-					{topic?.name && <SessionTopic name={topic.name} />}
+					{showMetaDetails && topic?.name && (
+						<SessionTopic
+							name={topic.name}
+							shortName={topic.titles?.short}
+						/>
+					)}
+					{/* FE#2494: the team chat hangs beside the topic as a
+					    pennant; the name row keeps its width for the name. */}
+					{showMetaDetails &&
+						props.teamChatIndicator &&
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							userData
+						) && (
+							<TeamChatPennant
+								active={props.teamChatIndicator.active}
+								onOpen={props.teamChatIndicator.onOpen}
+							/>
+						)}
+					{/* FE#2494: the appointments hang beside the topic. */}
+					{showAppointmentSlot && (
+						<ConversationAppointmentSlot
+							onCreateChange={handleCreateAppointmentChange}
+							supervisorId={appointmentSupervisorId}
+							canChange={
+								// Handover co-access may create too: the backend decides
+								// for a colleague who is not the assigned counsellor.
+								isConsultantUser &&
+								!isChatFinished &&
+								activeSession.item.status === STATUS_ACTIVE
+							}
+						/>
+					)}
 				</div>
 			)}
 			{activeSession.isSession && isConsultantUser && (
@@ -1463,328 +1461,21 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					onChange={handleSendNewLinkChange}
 				/>
 			)}
-			{activeSession.isSession && (isAskerUser || isConsultantUser) && (
-				<ConversationAppointmentSlot
-					onCreateChange={handleCreateAppointmentChange}
-					canChange={
-						// Handover co-access may create too: the backend decides
-						// for a colleague who is not the assigned counsellor.
-						isConsultantUser &&
-						!isChatFinished &&
-						activeSession.item.status === STATUS_ACTIVE
-					}
-				/>
-			)}
-			{isAskerUser &&
-				!isConsultantUser &&
-				activeSession.isSession &&
-				!isChatFinished &&
-				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
-					activeSession.item.status
-				) &&
-				activeSession.item.agencyId > 0 && (
-					<ContactSheetRequest
-						key={activeSession.item.id}
-						sessionId={activeSession.item.id}
-						email={userData.email}
-					/>
-				)}
 
 			<CaseHandoverOffer handover={caseHandover} presentation="dialog" />
 
-			{/* Supervisor Management Modal - Rendered via Portal */}
-			{isSupervisionEnabledForCurrentChat &&
-				isSupervisorModalOpen &&
-				createPortal(
-					<SupervisorManagementDialog
-						onClose={() => setIsSupervisorModalOpen(false)}
-					>
-						<div>
-							<div
-								style={{
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									marginBottom: '20px'
-								}}
-							>
-								<h2
-									id={SUPERVISOR_DIALOG_TITLE_ID}
-									style={{ margin: 0 }}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.title'
-									)}
-								</h2>
-								<button
-									aria-label={translate('app.close')}
-									onClick={() =>
-										setIsSupervisorModalOpen(false)
-									}
-									style={{
-										background: 'none',
-										border: 'none',
-										fontSize: '24px',
-										cursor: 'pointer',
-										color: '#666'
-									}}
-								>
-									×
-								</button>
-							</div>
-
-							{/* Current Supervisors */}
-							<div style={{ marginBottom: '24px' }}>
-								<h3
-									style={{
-										marginBottom: '12px',
-										fontSize: '16px',
-										fontWeight: '600'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.current'
-									)}
-								</h3>
-								<div
-									style={{
-										marginBottom: '8px',
-										fontSize: '12px',
-										color: '#666'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.note'
-									)}
-								</div>
-								{isLoadingSupervisors ? (
-									<div>
-										{translate(
-											'sessionHeader.supervisor.modal.loading'
-										)}
-									</div>
-								) : supervisors.length === 0 ? (
-									<div style={{ color: '#666' }}>
-										{translate(
-											'sessionHeader.supervisor.modal.noSupervisors'
-										)}
-									</div>
-								) : (
-									<div
-										style={{
-											display: 'flex',
-											flexDirection: 'column',
-											gap: '20px',
-											width: '100%'
-										}}
-									>
-										{supervisors.map((supervisor) => (
-											<div
-												key={supervisor.id}
-												style={{
-													display: 'flex',
-													justifyContent:
-														'space-between',
-													alignItems: 'center',
-													padding: '12px',
-													border: '1px solid #ddd',
-													borderRadius: '4px',
-													marginBottom: '8px',
-													backgroundColor: '#fff'
-												}}
-											>
-												<div style={{ flex: 1 }}>
-													<div
-														style={{
-															fontWeight: '500',
-															fontSize: '14px',
-															color: '#3F373F'
-														}}
-													>
-														{getSupervisorName(
-															supervisor
-														)}
-													</div>
-													<div
-														style={{
-															fontSize: '12px',
-															color: '#666',
-															marginTop: '4px'
-														}}
-													>
-														{translate(
-															'sessionHeader.supervisor.modal.added'
-														)}
-														:{' '}
-														{new Date(
-															supervisor.addedDate
-														).toLocaleDateString()}
-													</div>
-													{supervisor.notes && (
-														<div
-															style={{
-																fontSize:
-																	'12px',
-																color: '#666',
-																marginTop:
-																	'8px',
-																fontStyle:
-																	'normal'
-															}}
-														>
-															<strong>
-																{translate(
-																	'sessionHeader.supervisor.modal.reason'
-																)}
-																:
-															</strong>{' '}
-															{supervisor.notes}
-														</div>
-													)}
-												</div>
-												<button
-													onClick={() =>
-														handleRemoveSupervisor(
-															supervisor.id
-														)
-													}
-													style={{
-														padding: '6px 12px',
-														borderRadius: '4px',
-														border: '1px solid #c62828',
-														backgroundColor:
-															'transparent',
-														color: '#c62828',
-														cursor: 'pointer',
-														fontSize: '12px',
-														fontWeight: '500'
-													}}
-													title={translate(
-														'sessionHeader.supervisor.modal.remove'
-													)}
-												>
-													{translate(
-														'sessionHeader.supervisor.modal.remove'
-													)}
-												</button>
-											</div>
-										))}
-									</div>
-								)}
-							</div>
-
-							{/* Add Supervisor */}
-							<div>
-								<h3
-									style={{
-										marginBottom: '12px',
-										fontSize: '16px',
-										fontWeight: '600'
-									}}
-								>
-									{translate(
-										'sessionHeader.supervisor.modal.add'
-									)}
-								</h3>
-								<SupervisorConsultantPicker
-									state={supervisorDirectoryState}
-									consultants={availableConsultants}
-									selectedConsultantId={selectedConsultantId}
-									onChange={setSelectedConsultantId}
-									labels={{
-										loading: translate(
-											'sessionHeader.supervisor.modal.loadingConsultants'
-										),
-										error: translate(
-											'sessionHeader.supervisor.error.loadConsultants.text'
-										),
-										empty: translate(
-											'sessionHeader.supervisor.modal.noConsultants'
-										),
-										select: translate(
-											'sessionHeader.supervisor.modal.selectConsultant'
-										)
-									}}
-								/>
-								{supervisorDirectoryState === 'ready' &&
-									availableConsultants.length > 0 && (
-										<div>
-											<div style={{ width: '100%' }}>
-												<span
-													style={{ display: 'none' }}
-												>
-													{translate(
-														'sessionHeader.supervisor.modal.reasonLabel'
-													)}
-												</span>
-												<OrisoTextarea
-													fullWidth
-													minRows={5}
-													value={supervisionReason}
-													onChange={(e) => {
-														setSupervisionReason(
-															e.target.value
-														);
-														if (
-															supervisionReasonError &&
-															e.target.value.trim()
-														) {
-															setSupervisionReasonError(
-																false
-															);
-														}
-													}}
-													label={translate(
-														'sessionHeader.supervisor.modal.reasonLabel'
-													)}
-													placeholder={translate(
-														'sessionHeader.supervisor.modal.reasonPlaceholder'
-													)}
-													error={
-														supervisionReasonError
-													}
-													sx={{ mt: 0 }}
-												/>
-												{supervisionReasonError && (
-													<div
-														style={{
-															marginTop: '6px',
-															color: '#c62828',
-															fontSize: '12px'
-														}}
-													>
-														{translate(
-															'sessionHeader.supervisor.modal.reasonError'
-														)}
-													</div>
-												)}
-											</div>
-											<div
-												style={{
-													marginTop: '12px',
-													display: 'flex',
-													justifyContent: 'center'
-												}}
-											>
-												<Button
-													item={addSupervisorButton}
-													buttonHandle={
-														handleAddSupervisor
-													}
-													disabled={
-														!selectedConsultant ||
-														!supervisionReason.trim() ||
-														isAddingSupervisor
-													}
-												/>
-											</div>
-										</div>
-									)}
-							</div>
-						</div>
-					</SupervisorManagementDialog>,
-					document.body
-				)}
+			{/* Supervision of this case: the shared "Personen verwalten"
+			    dialog; full screen on the phone. */}
+			{isSupervisionEnabledForCurrentChat && isSupervisorModalOpen && (
+				<ManagePeopleDialog
+					// A new case starts with a fresh picker.
+					key={activeSession.item.id}
+					open
+					onClose={() => setIsSupervisorModalOpen(false)}
+					source={supervisionPeopleSource}
+					fullScreen={untilM}
+				/>
+			)}
 
 			{isEndChatOverlayActive && endChatOverlayItem && (
 				<Overlay

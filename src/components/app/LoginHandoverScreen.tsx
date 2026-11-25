@@ -14,8 +14,10 @@ import {
 	endLoginHandover,
 	getContinuedLoginHandoverLabel,
 	isLoginHandoverActive,
+	isLoginHandoverDocumentCurtain,
 	removeLoginHandoverSplash,
-	useLoginHandoverActive
+	useLoginHandoverActive,
+	useLoginHandoverSourceCurtain
 } from './loginHandover';
 import './loginHandoverScreen.styles.scss';
 
@@ -31,6 +33,8 @@ export interface LoginHandoverScreenProps {
 	leaving?: boolean;
 	/** Overrides the default label (the words the login page showed). */
 	label?: string;
+	/** The pre-script curtain paints the viewport while this announces loading. */
+	curtainStatus?: boolean;
 }
 
 /**
@@ -41,28 +45,41 @@ export interface LoginHandoverScreenProps {
 export const LoginHandoverScreen = forwardRef<
 	HTMLDivElement,
 	LoginHandoverScreenProps
->(({ animateIn = false, leaving = false, label: labelProp }, ref) => {
-	const { t } = useTranslation();
-	const label = labelProp ?? t('app.wait');
-	return (
-		<div
-			ref={ref}
-			className={clsx('loginHandoverScreen', {
-				'loginHandoverScreen--enter': animateIn,
-				'loginHandoverScreen--leaving': leaving
-			})}
-			data-cy="login-handover-screen"
-			role="status"
-			aria-label={label}
-			aria-live="polite"
-			tabIndex={-1}
-		>
-			<div aria-hidden="true">
-				<Loading layout="page" delayMs={0} label={label} />
+>(
+	(
+		{
+			animateIn = false,
+			leaving = false,
+			label: labelProp,
+			curtainStatus = false
+		},
+		ref
+	) => {
+		const { t } = useTranslation();
+		const label = labelProp ?? t('app.wait');
+		return (
+			<div
+				ref={ref}
+				className={clsx('loginHandoverScreen', {
+					'loginHandoverScreen--enter': animateIn,
+					'loginHandoverScreen--leaving': leaving,
+					'loginHandoverScreen--curtainStatus': curtainStatus
+				})}
+				data-cy="login-handover-screen"
+				role="status"
+				aria-label={label}
+				aria-live="polite"
+				tabIndex={-1}
+			>
+				{!curtainStatus && (
+					<div aria-hidden="true">
+						<Loading layout="page" delayMs={0} label={label} />
+					</div>
+				)}
 			</div>
-		</div>
-	);
-});
+		);
+	}
+);
 LoginHandoverScreen.displayName = 'LoginHandoverScreen';
 
 const prefersReducedMotion = () => {
@@ -76,7 +93,12 @@ const prefersReducedMotion = () => {
 /** Shows `LoginHandoverScreen` while a login handover is active. */
 export const LoginHandoverGate = () => {
 	const active = useLoginHandoverActive();
-	const [mounted, setMounted] = useState(active);
+	const sourceCurtain = useLoginHandoverSourceCurtain();
+	const showScreen = active && !sourceCurtain;
+	const [mounted, setMounted] = useState(showScreen);
+	const [documentCurtain, setDocumentCurtain] = useState(
+		isLoginHandoverDocumentCurtain
+	);
 	const screenRef = useRef<HTMLDivElement>(null);
 	// Active on the first render means a new document continues the handover:
 	// the screen is already there (app.html painted its background), so it
@@ -84,9 +106,24 @@ export const LoginHandoverGate = () => {
 	const [continued] = useState(() => isLoginHandoverActive());
 
 	// app.html painted a still of the screen for the document load; once this
-	// live screen is on screen (two frames), the still goes.
+	// live screen is on screen (two frames), the still goes. A document
+	// curtain stays until readiness, with the live loader as its escape hatch.
 	useLayoutEffect(() => {
 		if (!mounted) return;
+		if (documentCurtain) {
+			const onExpiry = () => setDocumentCurtain(false);
+			window.addEventListener(
+				'oriso:login-handover-splash-expired',
+				onExpiry
+			);
+			if (!isLoginHandoverDocumentCurtain()) onExpiry();
+			return () => {
+				window.removeEventListener(
+					'oriso:login-handover-splash-expired',
+					onExpiry
+				);
+			};
+		}
 		let second = 0;
 		const first = window.requestAnimationFrame(() => {
 			second = window.requestAnimationFrame(removeLoginHandoverSplash);
@@ -95,14 +132,14 @@ export const LoginHandoverGate = () => {
 			window.cancelAnimationFrame(first);
 			window.cancelAnimationFrame(second);
 		};
-	}, [mounted]);
+	}, [mounted, documentCurtain]);
 
 	// The screen is portalled outside the app container so the covered login
 	// page can be made inert without also disabling this status. Move focus to
 	// the status while it covers the page, then return it when a same-document
 	// failure reveals the form again.
 	useLayoutEffect(() => {
-		if (!active || !mounted) return;
+		if (!showScreen || !mounted) return;
 		const covered = document.querySelector<HTMLElement>('.app__container');
 		const previousFocus =
 			document.activeElement instanceof HTMLElement
@@ -121,10 +158,10 @@ export const LoginHandoverGate = () => {
 				}
 			});
 		};
-	}, [active, mounted]);
+	}, [showScreen, mounted]);
 
 	useEffect(() => {
-		if (active) {
+		if (showScreen) {
 			setMounted(true);
 			return;
 		}
@@ -133,7 +170,7 @@ export const LoginHandoverGate = () => {
 			prefersReducedMotion() ? 0 : LOGIN_HANDOVER_FADE_MS
 		);
 		return () => window.clearTimeout(timeout);
-	}, [active]);
+	}, [showScreen]);
 
 	useEffect(() => {
 		if (!active) return;
@@ -154,13 +191,14 @@ export const LoginHandoverGate = () => {
 		return () => window.removeEventListener('pageshow', onPageShow);
 	}, []);
 
-	if (!mounted) return null;
+	if (!mounted || sourceCurtain) return null;
 	return createPortal(
 		<LoginHandoverScreen
 			ref={screenRef}
 			animateIn={!continued}
 			leaving={!active}
 			label={continued ? getContinuedLoginHandoverLabel() : undefined}
+			curtainStatus={documentCurtain}
 		/>,
 		document.body
 	);

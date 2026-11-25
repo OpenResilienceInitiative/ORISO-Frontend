@@ -21,6 +21,15 @@ import {
 import { BaseSequencer } from 'vite-plus/test/node';
 import VerificationReporter from '../../scripts/verification-reporter.mjs';
 
+// The manifest records the installed Storybook; read it instead of pinning a
+// version here, so a Storybook upgrade does not break this test.
+const installedStorybookVersion: string = JSON.parse(
+	readFileSync(
+		path.resolve(process.cwd(), 'node_modules/storybook/package.json'),
+		'utf8'
+	)
+).version;
+
 const directories: string[] = [];
 let initialExitCode: typeof process.exitCode;
 beforeEach(() => {
@@ -261,7 +270,7 @@ describe('durable verification inventory', () => {
 			toolchain: {
 				vitePlus: '1.6.0',
 				vitest: '5.1.0',
-				storybook: '10.6.7',
+				storybook: installedStorybookVersion,
 				vite: {
 					package: '@voidzero-dev/vite-plus-core',
 					packageVersion: '1.6.0',

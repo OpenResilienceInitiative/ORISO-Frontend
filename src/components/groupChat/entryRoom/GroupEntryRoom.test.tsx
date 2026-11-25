@@ -58,6 +58,15 @@ vi.mock('../../../api', () => ({
 	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' },
 	FETCH_ERRORS: { USER_BANNED_FROM_CHAT: 'USER_BANNED_FROM_CHAT' }
 }));
+const waiting = vi.hoisted(() => ({ status: 'WAITING' as string }));
+vi.mock('../../../api/apiGroupWaitingRoom', () => ({
+	apiWaitInGroupChat: vi.fn(() =>
+		Promise.resolve({ id: 77, status: waiting.status })
+	)
+}));
+vi.mock('../../../api/apiDirectLinks', () => ({
+	apiCancelOwnCallKnock: vi.fn(() => Promise.resolve())
+}));
 vi.mock('../../../api/apiGetChatRoomById', () => ({
 	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
 }));
@@ -87,12 +96,17 @@ vi.mock('./GroupWaitingRoom', () => ({
 		joinNotice?: string;
 		plannedStart: Date | null;
 		onJoin: () => unknown;
+		admissionWaiting?: string;
+		openBeforeStart?: boolean;
 	}) => (
 		<div
 			data-testid="waiting-room"
 			data-planned={props.plannedStart?.toISOString()}
 		>
 			{props.joinNotice && <p role="alert">{props.joinNotice}</p>}
+			{props.admissionWaiting && (
+				<p data-testid="admission-waiting">{props.admissionWaiting}</p>
+			)}
 			<span>{props.topicName}</span>
 			<span>{props.agencyName}</span>
 			<button
@@ -116,6 +130,7 @@ const { GroupEntryRoom } = await import('./GroupEntryRoom');
 const { apiGetChatOccurrences } = await import(
 	'../../../api/apiGetChatOccurrences'
 );
+const { apiWaitInGroupChat } = await import('../../../api/apiGroupWaitingRoom');
 const { apiPutGroupChat, apiGetAskerSessionList } = await import(
 	'../../../api'
 );
@@ -189,6 +204,60 @@ describe('GroupEntryRoom', () => {
 		vi.clearAllMocks();
 		sessionState.ready = true;
 		sessionState.item = { ...sessionState.item, active: false };
+		delete (sessionState.item as Record<string, unknown>).modality;
+		waiting.status = 'WAITING';
+	});
+
+	/* ORISO-UserService#1747 flow 2: someone who came through a video or
+	   audio circle's invitation link knocks like everyone else (#2237). The
+	   room used to join at once, so the moderator never saw them. */
+	it('knocks in a video circle instead of joining, and joins once let in', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'VIDEO'
+		};
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiWaitInGroupChat).toHaveBeenCalledWith(15)
+		);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+		expect(await screen.findByTestId('admission-waiting')).toBeTruthy();
+	});
+
+	it('joins the video circle and opens the chat after the moderator let the person in', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'AUDIO'
+		};
+		waiting.status = 'ADMITTED';
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/user/view/!room%3Aoriso/15',
+				{ replace: true }
+			)
+		);
+	});
+
+	it('keeps "agree and join" for a text circle', async () => {
+		sessionState.item = {
+			...sessionState.item,
+			active: true,
+			modality: 'TEXT'
+		};
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
+		);
+		expect(apiWaitInGroupChat).not.toHaveBeenCalled();
 	});
 
 	it('feeds the room from the chat: topic and agency come from the item', async () => {

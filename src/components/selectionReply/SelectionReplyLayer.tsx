@@ -7,7 +7,13 @@ import {
 	useState
 } from 'react';
 
-import { SelectionReplyToolbar } from './SelectionReplyToolbar';
+import { SelectionReplyToolbar, ToolbarAction } from './SelectionReplyToolbar';
+import { useTranslation } from 'react-i18next';
+import { ReactComponent as ReplyBubbleIcon } from '../../resources/img/icons/reply-bubble.svg';
+import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
+import { ReactComponent as BlurIcon } from '../../resources/img/icons/blur_400.svg';
+import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
+import { ReactComponent as TeamChatIcon } from '../../resources/img/icons/team-chat-3p.svg';
 import { PassageBlurBar } from './PassageBlurBar';
 import { passageBlurFromRange, type PassageBlur } from './passageBlur';
 import {
@@ -29,6 +35,18 @@ import {
 } from './passageRange';
 import './selectionReply.styles.scss';
 
+export type SideRoomTarget = 'supervision' | 'team';
+
+/**
+ * FE#2494 *7: "In Supervision antworten" opens the answer field for that
+ * side chat; stacking puts the answer into the side chat's composer, send
+ * posts it there at once. Never into the chat the passage came from.
+ */
+export interface SideRoomReply {
+	onCollect: (answer: SelectionAnswer) => void;
+	onSend: (answer: SelectionAnswer) => void;
+}
+
 /** An answer to one marked passage. */
 export interface SelectionAnswer {
 	passage: MarkedPassage;
@@ -41,8 +59,12 @@ export interface SelectionAnswer {
  * MediaRecorder today; stories pass a stand-in.
  */
 export interface SelectionVoiceRecorder {
-	start: () => Promise<void> | void;
+	/** Resolves with the live microphone, for the level dots. */
+	start: () => Promise<MediaStream | void> | void;
 	stop: () => Promise<{ src: string; durationSec: number }>;
+	/** FE#2494: hold the take without ending it (optional for stand-ins). */
+	pause?: () => void;
+	resume?: () => void;
 	cancel: () => void;
 }
 
@@ -55,6 +77,39 @@ export interface SelectionReplyLayerProps {
 	onSendNow: (answer: SelectionAnswer) => void;
 	/** Last toolbar option: open a thread on the marked passage. */
 	onStartThread?: (passage: MarkedPassage) => void;
+	/**
+	 * FE#2494 *7: "In Supervision antworten" / "Im Team-Chat antworten".
+	 * Each handler receives the marked passage; the side chat collects it
+	 * in its own reply field. Missing handler = the entry is not offered.
+	 */
+	onReplyInSideRoom?: Partial<Record<SideRoomTarget, SideRoomReply>>;
+	/**
+	 * How many answers already wait in the composer the answer would go
+	 * to (null = this chat's own), shown as the stack's number.
+	 */
+	collectedCount?: (target: SideRoomTarget | null) => number;
+	/**
+	 * FE#2494 *8: the microphone sits inside the reply field; the bar can
+	 * drop its own voice entry. Default keeps today's bar.
+	 */
+	voiceInToolbar?: boolean;
+	/**
+	 * FE#2494 *7 (review): false when this person may not write in this
+	 * chat (supervisor, read-only co-access) but may answer in a side room.
+	 * Then only the side-room entries are offered, and nothing is ever
+	 * handed to `onAddToComposer` / `onSendNow`.
+	 */
+	canReplyHere?: boolean;
+	/**
+	 * FE#2494 *7 variant: 'bubble' shows a small reply handle at the top
+	 * right of the marked passage instead of the bar; the handle opens one
+	 * speech-bubble menu with the field and every other action.
+	 */
+	menu?: 'toolbar' | 'bubble';
+	/** FE#2494 variant: the side-chat badge hangs on the quote. */
+	badgeOn?: 'bubble' | 'quote' | 'bottom';
+	/** Stack button icon: numbered cards (default) or reply-all. */
+	stackIcon?: 'count' | 'replyAll';
 	/** Focus the composer once an answer was collected or sent. */
 	focusComposer?: () => void;
 	recorder?: SelectionVoiceRecorder;
@@ -78,6 +133,8 @@ export interface SelectionReplyLayerProps {
 	/** Story hook: open with this selection already made. */
 	initialSelection?: MessageSelection | null;
 	initialMode?: 'toolbar' | 'popover';
+	/** Story hook: the answer field opens for this side chat. */
+	initialTarget?: SideRoomTarget | null;
 	/** Story hook: the answer field opens in this voice state. */
 	initialVoice?: SelectionReplyVoice;
 	/** Story hook: open with the bar of this blurred passage. */
@@ -112,6 +169,13 @@ export const SelectionReplyLayer = ({
 	onAddToComposer,
 	onSendNow,
 	onStartThread,
+	onReplyInSideRoom,
+	collectedCount,
+	voiceInToolbar = true,
+	canReplyHere = true,
+	menu = 'toolbar',
+	badgeOn = 'bubble',
+	stackIcon = 'count',
 	focusComposer,
 	recorder,
 	onBlurPassage,
@@ -122,10 +186,12 @@ export const SelectionReplyLayer = ({
 	initialSelection = null,
 	initialMode,
 	initialVoice,
+	initialTarget = null,
 	initialBlurTarget = null
 }: SelectionReplyLayerProps) => {
 	const layerRef = useRef<HTMLDivElement | null>(null);
 	const toolbarRef = useRef<HTMLDivElement | null>(null);
+	const handleRef = useRef<HTMLButtonElement | null>(null);
 	const blurBarRef = useRef<HTMLDivElement | null>(null);
 	const [blurTarget, setBlurTarget] = useState<BlurTarget | null>(null);
 	// Half the bar's real width, so a wider bar (with "Blur") stays inside.
@@ -137,10 +203,19 @@ export const SelectionReplyLayer = ({
 		initialSelection ? initialMode || 'toolbar' : 'none'
 	);
 	const [draft, setDraft] = useState('');
+	// The stop of a running take is async: the delivery after it must read
+	// what is in the field THEN (edits made while it stopped included) and
+	// which side chats are still open THEN, not the values of the click.
+	const draftRef = useRef(draft);
+	draftRef.current = draft;
+	const finishingRef = useRef(false);
+	const sideRoomsRef = useRef(onReplyInSideRoom);
+	sideRoomsRef.current = onReplyInSideRoom;
 	const [voice, setVoice] = useState<SelectionReplyVoice>(
 		initialVoice || { mode: 'idle' }
 	);
 	const [startWithVoice, setStartWithVoice] = useState(false);
+	const [target, setTarget] = useState<SideRoomTarget | null>(initialTarget);
 	const [voiceError, setVoiceError] = useState(false);
 	// Each start/stop/discard/close bumps this; a recorder call that finishes
 	// after a newer one (or after the reply closed) is ignored.
@@ -163,6 +238,7 @@ export const SelectionReplyLayer = ({
 	useEffect(() => {
 		if (initialSelection) {
 			setMode(initialMode || 'toolbar');
+			setTarget(initialTarget);
 			if (initialVoice) {
 				setVoice(initialVoice);
 			}
@@ -202,6 +278,7 @@ export const SelectionReplyLayer = ({
 		setVoice({ mode: 'idle' });
 		setVoiceError(false);
 		setStartWithVoice(false);
+		setTarget(null);
 		clear();
 	}, [clear, abandonVoice]);
 
@@ -288,6 +365,7 @@ export const SelectionReplyLayer = ({
 			const target = event.target as Node;
 			if (
 				toolbarRef.current?.contains(target) ||
+				handleRef.current?.contains(target) ||
 				popoverRef.current?.contains(target)
 			) {
 				return;
@@ -335,6 +413,7 @@ export const SelectionReplyLayer = ({
 		setVoiceError(false);
 		startPendingRef.current = true;
 		const previous = startSettlingRef.current;
+		let stream: MediaStream | null = null;
 		const run = (async () => {
 			if (previous) {
 				await previous;
@@ -344,7 +423,7 @@ export const SelectionReplyLayer = ({
 				}
 			}
 			try {
-				await recorder.start();
+				stream = (await recorder.start()) || null;
 			} catch {
 				if (op === voiceOpRef.current) {
 					startPendingRef.current = false;
@@ -370,13 +449,13 @@ export const SelectionReplyLayer = ({
 			return;
 		}
 		startPendingRef.current = false;
-		setVoice({ mode: 'recording', durationSec: 0 });
+		setVoice({ mode: 'recording', durationSec: 0, stream });
 		stopTimer();
 		timerRef.current = window.setInterval(() => {
 			setVoice((current) =>
-				current.mode === 'recording'
+				current.mode === 'recording' && !current.paused
 					? {
-							mode: 'recording',
+							...current,
 							durationSec: current.durationSec + 1
 						}
 					: current
@@ -384,9 +463,12 @@ export const SelectionReplyLayer = ({
 		}, 1000);
 	}, [recorder]);
 
-	const stopVoice = useCallback(async () => {
+	const stopVoice = useCallback(async (): Promise<{
+		src: string;
+		durationSec: number;
+	} | null> => {
 		if (!recorder) {
-			return;
+			return null;
 		}
 		stopTimer();
 		voiceOpRef.current += 1;
@@ -400,12 +482,29 @@ export const SelectionReplyLayer = ({
 				setVoice({ mode: 'idle' });
 				setVoiceError(true);
 			}
-			return;
+			return null;
 		}
 		// A take that arrives after a discard or close stays discarded.
 		if (op === voiceOpRef.current) {
 			setVoice({ mode: 'review', ...take });
+			return take;
 		}
+		return null;
+	}, [recorder]);
+
+	// FE#2494: Pause holds the take; the same button records on.
+	const togglePauseVoice = useCallback(() => {
+		setVoice((current) => {
+			if (current.mode !== 'recording') {
+				return current;
+			}
+			if (current.paused) {
+				recorder?.resume?.();
+			} else {
+				recorder?.pause?.();
+			}
+			return { ...current, paused: !current.paused };
+		});
 	}, [recorder]);
 
 	const discardVoice = useCallback(() => {
@@ -422,17 +521,57 @@ export const SelectionReplyLayer = ({
 		}
 	};
 
-	const answer = (): SelectionAnswer | null =>
+	const answer = (
+		take?: { src: string; durationSec: number } | null
+	): SelectionAnswer | null =>
 		active
 			? {
 					passage: active.passage,
-					text: draft.trim(),
+					text: draftRef.current.trim(),
 					voice:
-						voice.mode === 'review'
+						take ??
+						(voice.mode === 'review'
 							? { src: voice.src, durationSec: voice.durationSec }
-							: null
+							: null)
 				}
 			: null;
+
+	/**
+	 * FE#2494 (Frank, 24 Nov): stacking or sending while recording first
+	 * stops the take cleanly, then goes on with it — no extra Stop click.
+	 */
+	const withFinishedTake = async (
+		deliver: (next: SelectionAnswer) => void
+	) => {
+		if (voice.mode === 'recording') {
+			// A second Send/Stack while the take still stops would stop it
+			// twice and could deliver an empty take: one delivery at a time.
+			if (finishingRef.current) {
+				return;
+			}
+			finishingRef.current = true;
+			let take: Awaited<ReturnType<typeof stopVoice>>;
+			try {
+				take = await stopVoice();
+			} finally {
+				finishingRef.current = false;
+			}
+			if (!take) {
+				// Finishing the take failed (or it was discarded meanwhile):
+				// keep the draft and the error, never send text alone.
+				return;
+			}
+			const next = answer(take);
+			if (next && (next.text || next.voice)) {
+				deliver(next);
+			}
+			return;
+		}
+		const next = answer();
+		if (next) {
+			deliver(next);
+		}
+	};
 
 	// Leaving the answer field unmounts it; focus must not fall to the
 	// page. It goes back to the marked message, a stable place in the
@@ -457,23 +596,42 @@ export const SelectionReplyLayer = ({
 		reset();
 	};
 
-	const addToComposer = () => {
-		const next = answer();
-		if (next) {
-			onAddToComposer(next);
+	const addToComposer = () =>
+		withFinishedTake((next) => {
+			const side = target && sideRoomsRef.current?.[target];
+			if (side) {
+				side.onCollect(next);
+			} else if (!target && canReplyHere) {
+				// A side chat that closed while the answer was drafted
+				// (Team-Chat closed) is no reason to send it to the advice
+				// seeker: the draft stays.
+				onAddToComposer(next);
+			} else {
+				return;
+			}
 			focusComposer?.();
 			reset();
-		}
-	};
+		});
 
-	const sendNow = () => {
-		const next = answer();
-		if (next && (next.text || next.voice)) {
-			onSendNow(next);
+	const sendNow = () =>
+		withFinishedTake((next) => {
+			if (!next.text && !next.voice) {
+				return;
+			}
+			const side = target && sideRoomsRef.current?.[target];
+			if (side) {
+				side.onSend(next);
+			} else if (!target && canReplyHere) {
+				// A side chat that closed while the answer was drafted
+				// (Team-Chat closed) is no reason to send it to the advice
+				// seeker: the draft stays.
+				onSendNow(next);
+			} else {
+				return;
+			}
 			focusComposer?.();
 			reset();
-		}
-	};
+		});
 
 	const blurPassage = () => {
 		const layer = layerRef.current;
@@ -648,6 +806,13 @@ export const SelectionReplyLayer = ({
 		setBlurTarget(null);
 	};
 
+	const replyInSideRoom = (room: SideRoomTarget) => {
+		if (active && onReplyInSideRoom?.[room]) {
+			setTarget(room);
+			openPopover(false);
+		}
+	};
+
 	const startThread = () => {
 		if (active && onStartThread) {
 			onStartThread(active.passage);
@@ -670,7 +835,108 @@ export const SelectionReplyLayer = ({
 		}
 	}, [mode, active]);
 
+	const { t: translate } = useTranslation();
 	const anchor = active?.anchor;
+	// The bubble opens this chat's answer field before a destination is
+	// chosen; without a right to write here only the bar is offered, which
+	// names the side chats only.
+	const isBubble = menu === 'bubble' && canReplyHere;
+	const HANDLE_SIZE = 32;
+	// The handle sits right after the end of the marked text (its last
+	// line), so it never covers words.
+	const lastLine = (() => {
+		const layer = layerRef.current;
+		const rects = active?.range?.getClientRects();
+		if (!isBubble || !layer || !rects || rects.length === 0) {
+			return null;
+		}
+		const box = layer.getBoundingClientRect();
+		const last = rects[rects.length - 1];
+		return {
+			right: last.right - box.left,
+			middle: last.top - box.top + last.height / 2
+		};
+	})();
+	const handleLeft = anchor
+		? clamp(
+				(lastLine?.right ?? anchor.right ?? anchor.centerX) + 4,
+				EDGE,
+				anchor.layerWidth - HANDLE_SIZE - EDGE
+			)
+		: 0;
+	const handleTop = anchor
+		? (lastLine?.middle ?? anchor.top) - HANDLE_SIZE / 2
+		: 0;
+	const popoverLeft = anchor
+		? clamp(
+				isBubble
+					? handleLeft + HANDLE_SIZE - POPOVER_WIDTH
+					: anchor.centerX - POPOVER_WIDTH / 2,
+				EDGE,
+				anchor.layerWidth - POPOVER_WIDTH - EDGE
+			)
+		: 0;
+	const bubbleActions = isBubble ? (
+		<>
+			{onReplyInSideRoom?.supervision && (
+				<ToolbarAction
+					withLabel
+					label={translate(
+						'message.selectionReply.replyInSupervision'
+					)}
+					icon={
+						<SupervisionIcon
+							aria-hidden
+							className="selectionReply__sideRoomIcon"
+						/>
+					}
+					onClick={() => replyInSideRoom('supervision')}
+					dataCy="selection-reply-supervision"
+				/>
+			)}
+			{onReplyInSideRoom?.team && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.replyInTeam')}
+					icon={
+						<TeamChatIcon
+							aria-hidden
+							className="selectionReply__sideRoomIcon"
+						/>
+					}
+					onClick={() => replyInSideRoom('team')}
+					dataCy="selection-reply-team"
+				/>
+			)}
+			{onStartThread && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.startThread')}
+					icon={
+						<ThreadEntryIcon
+							aria-hidden
+							className="selectionReply__threadIcon"
+						/>
+					}
+					onClick={startThread}
+				/>
+			)}
+			{onBlurPassage && (
+				<ToolbarAction
+					withLabel
+					label={translate('message.selectionReply.blur')}
+					icon={
+						<BlurIcon
+							aria-hidden
+							className="selectionReply__blurIcon"
+						/>
+					}
+					onClick={blurPassage}
+					dataCy="selection-blur"
+				/>
+			)}
+		</>
+	) : undefined;
 	// Above the passage when it fits in the visible band, else below it.
 	const toolbarTop = anchor
 		? anchor.top - TOOLBAR_HEIGHT - TOOLBAR_GAP < anchor.visibleTop
@@ -695,7 +961,26 @@ export const SelectionReplyLayer = ({
 			onKeyDown={onLayerKeyDown}
 		>
 			{children}
-			{anchor && mode === 'toolbar' && (
+			{anchor && mode === 'toolbar' && isBubble && (
+				<button
+					type="button"
+					className="selectionReply__handle"
+					ref={handleRef}
+					data-cy="selection-reply-handle"
+					style={{
+						top: handleTop,
+						left: handleLeft
+					}}
+					aria-label={translate('message.selectionReply.toolbar')}
+					title={translate('message.selectionReply.reply')}
+					// Keep the native selection while it is pressed.
+					onMouseDown={(event) => event.preventDefault()}
+					onClick={() => openPopover(false)}
+				>
+					<ReplyBubbleIcon aria-hidden />
+				</button>
+			)}
+			{anchor && mode === 'toolbar' && !isBubble && (
 				<SelectionReplyToolbar
 					ref={toolbarRef}
 					style={{
@@ -706,9 +991,21 @@ export const SelectionReplyLayer = ({
 							anchor.layerWidth - EDGE - toolbarHalf
 						)
 					}}
-					showVoice={Boolean(recorder)}
+					showVoice={Boolean(recorder) && voiceInToolbar}
 					showThread={Boolean(onStartThread)}
-					onReply={() => openPopover(false)}
+					onReplyInSupervision={
+						onReplyInSideRoom?.supervision
+							? () => replyInSideRoom('supervision')
+							: undefined
+					}
+					onReplyInTeam={
+						onReplyInSideRoom?.team
+							? () => replyInSideRoom('team')
+							: undefined
+					}
+					onReply={
+						canReplyHere ? () => openPopover(false) : undefined
+					}
 					onReplyWithVoice={() => openPopover(true)}
 					onStartThread={startThread}
 					onBlur={onBlurPassage ? blurPassage : undefined}
@@ -744,14 +1041,58 @@ export const SelectionReplyLayer = ({
 				<SelectionReplyPopover
 					ref={popoverRef}
 					passage={active.passage}
-					style={{
-						top: popoverTop,
-						left: clamp(
-							anchor.centerX - POPOVER_WIDTH / 2,
-							EDGE,
-							anchor.layerWidth - POPOVER_WIDTH - EDGE
-						)
-					}}
+					style={
+						{
+							'top': popoverTop,
+							'left': popoverLeft,
+							'--bubble-tail-x': `${Math.max(
+								16,
+								Math.min(
+									POPOVER_WIDTH - 28,
+									handleLeft +
+										HANDLE_SIZE / 2 -
+										popoverLeft -
+										6
+								)
+							)}px`
+						} as React.CSSProperties
+					}
+					bubble={
+						isBubble
+							? anchor && popoverTop < anchor.top
+								? 'above'
+								: 'below'
+							: false
+					}
+					// Choosing a side chat already happened: the bubble then
+					// shows only the field for that chat.
+					actions={target ? undefined : bubbleActions}
+					badgeOn={badgeOn}
+					stackIcon={stackIcon}
+					targetBadge={
+						target === 'supervision'
+							? {
+									label: translate(
+										'message.selectionReply.replyInSupervision'
+									),
+									short: translate('supervision.panel.title'),
+									icon: <SupervisionIcon />,
+									kind: 'supervision'
+								}
+							: target === 'team'
+								? {
+										label: translate(
+											'message.selectionReply.replyInTeam'
+										),
+										short: translate(
+											'chatStage.panel.team.title'
+										),
+										icon: <TeamChatIcon />,
+										kind: 'team'
+									}
+								: undefined
+					}
+					collectedCount={collectedCount?.(target) ?? 0}
 					draft={draft}
 					onDraftChange={setDraft}
 					voice={voice}
@@ -759,6 +1100,9 @@ export const SelectionReplyLayer = ({
 					showVoice={Boolean(recorder)}
 					onStartVoice={() => void startVoice()}
 					onStopVoice={() => void stopVoice()}
+					onPauseVoice={
+						recorder?.pause ? togglePauseVoice : undefined
+					}
 					onDiscardVoice={discardVoice}
 					onAddToComposer={addToComposer}
 					onSendNow={sendNow}

@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState
@@ -51,6 +52,7 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { peopleSearchHintKeys } from '../session/caseHandoverHelpers';
 import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -74,6 +76,7 @@ import {
 } from './SessionsListToolbar';
 import {
 	countUnreadSupervisedSessions,
+	isOwnCaseUnderSupervision,
 	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
@@ -118,7 +121,12 @@ import {
 } from './timeline/timelineModel';
 import { useTimelineSettings } from '../../hooks/useTimelineSettings';
 import { refetchEnquiryListState } from './refetchEnquiryList';
-import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
+import {
+	createRefreshThrottle,
+	createRoomRefreshQueue,
+	isRoomInSessions,
+	lookUpSessionRooms
+} from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -1028,48 +1036,15 @@ export const SessionsList = ({
 			Always try to get each subscription from the backend because closed
 			group chats still listed as sessions but no longer backed by a room
 			 */
-			Promise.all(
-				rids.map((rid) => {
-					// Get session from api
-					return apiGetSessionRoomsByRoomIds([rid])
-						.then(({ sessions }) => {
-							const session = sessions[0];
-
-							if (!session) {
-								const loadedSession = loadedSessions.find(
-									(s) => s?.chat?.matrixRoomId === rid
-								);
-								// If repetitive group chat reload it by id because groupId has changed
-								if (
-									loadedSession &&
-									getModality(loadedSession) ===
-										Modality.SELF_HELP
-								) {
-									return ['reload', loadedSession.chat.id];
-								}
-								return ['removed', rid];
-							}
-
-							const sessionType = getSessionType(
-								session,
-								userData.userId
-							);
-
-							// If subscription session type has changed add it to remove list for current view
-							if (
-								sessionTypes.indexOf(sessionType) < 0 ||
-								(sessionType === SESSION_TYPE_ARCHIVED &&
-									sessionListTab !==
-										SESSION_LIST_TAB_ARCHIVE) ||
-								(sessionType !== SESSION_TYPE_ARCHIVED &&
-									sessionListTab === SESSION_LIST_TAB_ARCHIVE)
-							) {
-								return ['removed', rid];
-							}
-
-							return ['insert', session];
-						})
-						.catch(() => {
+			// #2480: one batched request for all rooms, with a single-room
+			// fallback inside lookUpSessionRooms.
+			lookUpSessionRooms(rids, (roomIds) =>
+				apiGetSessionRoomsByRoomIds(roomIds)
+			)
+				.then((found) =>
+					rids.map((rid) => {
+						const session = found.get(rid);
+						if (!session) {
 							const loadedSession = loadedSessions.find(
 								(s) => s?.chat?.matrixRoomId === rid
 							);
@@ -1082,55 +1057,92 @@ export const SessionsList = ({
 								return ['reload', loadedSession.chat.id];
 							}
 							return ['removed', rid];
-						});
-				})
-			).then((sessions) => {
-				const updatedSessions = sessions
-					.filter(([event]) => event === 'insert')
-					.map(([, s]) => s);
+						}
 
-				if (updatedSessions.length > 0) {
-					dispatch({
-						type: UPDATE_SESSIONS,
-						sessions: updatedSessions as ListItemInterface[]
-					});
-				}
+						const sessionType = getSessionType(
+							session,
+							userData.userId
+						);
 
-				const removedSessions = sessions
-					.filter(([event]) => event === 'removed')
-					.map(([, rid]) => rid);
+						// If subscription session type has changed add it to remove list for current view
+						if (
+							sessionTypes.indexOf(sessionType) < 0 ||
+							(sessionType === SESSION_TYPE_ARCHIVED &&
+								sessionListTab !== SESSION_LIST_TAB_ARCHIVE) ||
+							(sessionType !== SESSION_TYPE_ARCHIVED &&
+								sessionListTab === SESSION_LIST_TAB_ARCHIVE)
+						) {
+							return ['removed', rid];
+						}
 
-				if (removedSessions.length > 0) {
-					dispatch({
-						type: REMOVE_SESSIONS,
-						ids: removedSessions as string[]
-					});
-				}
+						return ['insert', session];
+					})
+				)
+				.then((sessions) => {
+					const updatedSessions = sessions
+						.filter(([event]) => event === 'insert')
+						.map(([, s]) => s);
 
-				const reloadedSessions = sessions
-					.filter(([event]) => event === 'reload')
-					.map(([, id]) => id as number);
-
-				if (reloadedSessions.length > 0) {
-					Promise.all(
-						reloadedSessions.map((id) => apiGetChatRoomById(id))
-					).then((sessions) => {
+					if (updatedSessions.length > 0) {
 						dispatch({
 							type: UPDATE_SESSIONS,
-							sessions: sessions.reduce<ListItemInterface[]>(
-								(acc, { sessions }) => acc.concat(sessions),
-								[]
-							)
+							sessions: updatedSessions as ListItemInterface[]
 						});
-					});
-				}
-			});
+					}
+
+					const removedSessions = sessions
+						.filter(([event]) => event === 'removed')
+						.map(([, rid]) => rid);
+
+					if (removedSessions.length > 0) {
+						dispatch({
+							type: REMOVE_SESSIONS,
+							ids: removedSessions as string[]
+						});
+					}
+
+					const reloadedSessions = sessions
+						.filter(([event]) => event === 'reload')
+						.map(([, id]) => id as number);
+
+					if (reloadedSessions.length > 0) {
+						Promise.all(
+							reloadedSessions.map((id) => apiGetChatRoomById(id))
+						).then((sessions) => {
+							dispatch({
+								type: UPDATE_SESSIONS,
+								sessions: sessions.reduce<ListItemInterface[]>(
+									(acc, { sessions }) => acc.concat(sessions),
+									[]
+								)
+							});
+						});
+					}
+				});
 		},
 		[dispatch, sessionListTab, sessionTypes, sessions, userData.userId]
 	);
 
 	const handleRIDsRef = useUpdatingRef(handleRIDs);
-	const sessionsRef = useUpdatingRef(sessions);
+	// Live message events read the list through this ref. Keep it current
+	// with the committed list (layout effect, not a passive one): a message
+	// that arrives between the commit and the passive effects would otherwise
+	// look like it came from an unknown room and refetch the whole list
+	// instead of refreshing its room (#2480).
+	const sessionsRef = useRef(sessions);
+	useLayoutEffect(() => {
+		sessionsRef.current = sessions;
+	}, [sessions]);
+
+	// #2480: messages replayed by the Matrix sync arrive in bursts; refresh
+	// their rooms together instead of one request per message.
+	const roomRefreshQueue = useRef(
+		createRoomRefreshQueue((roomIds) => handleRIDsRef.current(roomIds))
+	);
+	useEffect(() => {
+		const queue = roomRefreshQueue.current;
+		return () => queue.cancel();
+	}, []);
 
 	// #1206: one refetch per burst of messages from rooms this list does not know.
 	const unknownRoomThrottle = useRef(createRefreshThrottle());
@@ -1262,7 +1274,7 @@ export const SessionsList = ({
 					s?.session?.matrixRoomId === roomId
 			);
 			if (touchesLoadedSession) {
-				handleRIDsRef.current([roomId]);
+				roomRefreshQueue.current.add(roomId);
 			}
 		};
 
@@ -1788,8 +1800,26 @@ export const SessionsList = ({
 				classifySession(raw, extended, userData?.userId, true) ===
 				'supervision'
 		);
+	// #2494 *5: a counsellor whose own case is supervised gets the chip too
+	// ("Dynamisch"); "Fest" in Ansicht einstellen keeps it without such a case.
+	const hasOwnCaseUnderSupervision =
+		isEligibleForSupervision &&
+		sessionToolbarPairs.some(({ raw, extended }) =>
+			isOwnCaseUnderSupervision(raw, extended, userData?.userId)
+		);
+	const supervisionChipPinned =
+		isEligibleForSupervision &&
+		type === SESSION_LIST_TYPES.MY_SESSION &&
+		kindPillMode(listDisplayFilter, 'supervision') === 'fixed';
+	/* #2494 *5: the chip has rows (or is pinned), so a chosen "supervision"
+	   chip stays; without this the list cleared it once all pages loaded. */
+	const supervisionRowsLoaded = canSupervise || hasOwnCaseUnderSupervision;
+	const supervisionChipBacked =
+		supervisionRowsLoaded || supervisionChipPinned;
 	const showSupervisionChip =
 		canSupervise ||
+		hasOwnCaseUnderSupervision ||
+		supervisionChipPinned ||
 		(isEligibleForSupervision &&
 			type === SESSION_LIST_TYPES.MY_SESSION &&
 			hasMoreSessionPages);
@@ -1945,7 +1975,14 @@ export const SessionsList = ({
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'supervision':
-					return showSupervisionChip;
+					// #2494 *5: listed for every counsellor in "Meine
+					// Gespräche", so "Fest" can be chosen before any case is
+					// supervised; "Dynamisch" decides whether the chip shows.
+					return (
+						showSupervisionChip ||
+						(isEligibleForSupervision &&
+							type === SESSION_LIST_TYPES.MY_SESSION)
+					);
 				case 'directLinks':
 					return hasDirectLinkRow;
 				default:
@@ -1977,6 +2014,8 @@ export const SessionsList = ({
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
 					modes: kind === 'liveChat',
+					// #2494 *5: Dynamisch / Fest / Aus for the Supervision chip.
+					autoModes: kind === 'supervision',
 					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
 						kind as SessionKindId
 					),
@@ -1993,6 +2032,7 @@ export const SessionsList = ({
 		);
 	}, [
 		hasDirectLinkRow,
+		isEligibleForSupervision,
 		rowsByKind,
 		showSupervisionChip,
 		showCreateGroupChatAction,
@@ -2388,7 +2428,7 @@ export const SessionsList = ({
 		if (
 			sessionToolbarChip === 'supervision' &&
 			sessionsReady &&
-			!canSupervise &&
+			!supervisionChipBacked &&
 			(!hasMoreSessionPages || type !== SESSION_LIST_TYPES.MY_SESSION) &&
 			!isLoading &&
 			!isRequestInProgress &&
@@ -2413,7 +2453,7 @@ export const SessionsList = ({
 			handleToolbarChipToggle(sessionToolbarChip);
 		}
 	}, [
-		canSupervise,
+		supervisionChipBacked,
 		hasMoreSessionPages,
 		isLoading,
 		isRequestInProgress,
@@ -2514,7 +2554,9 @@ export const SessionsList = ({
 		const needsSupervisionPage =
 			ownConversations &&
 			sessionToolbarChip === 'supervision' &&
-			!canSupervise;
+			// A pinned chip keeps the chip, not the scan: page on until a
+			// supervision row has loaded.
+			!supervisionRowsLoaded;
 		const visibleRows = pageSupervisionRows
 			? sessionToolbarFilteredPairs.length
 			: displayVisiblePairs.length;
@@ -2533,7 +2575,7 @@ export const SessionsList = ({
 		}
 		loadMoreSessions();
 	}, [
-		canSupervise,
+		supervisionRowsLoaded,
 		displayFilterHiddenCount,
 		displayVisiblePairs.length,
 		hasMoreSessionPages,
@@ -2899,14 +2941,23 @@ export const SessionsList = ({
 			</div>
 		);
 
+	const listIsEmpty =
+		!isLoading &&
+		!isCreateChatActive &&
+		!isReloadButtonVisible &&
+		visibleListItemCount === 0;
+
 	return (
 		<div
 			ref={innerWrapperRef}
+			data-list-empty={listIsEmpty || undefined}
 			className="sessionsList__innerWrapper"
 			data-tour-target={
 				type === SESSION_LIST_TYPES.ENQUIRY
 					? 'consultant-enquiries-list'
-					: 'consultant-sessions-list'
+					: hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+						? 'sessions-list'
+						: 'consultant-sessions-list'
 			}
 		>
 			{/* {showEnquiryFilterChips && (
@@ -2932,9 +2983,9 @@ export const SessionsList = ({
 					searchPeopleStatus={caseHandoverSearch.eligibleStatus}
 					searchPeopleHint={
 						showConsultantToolbarActions
-							? translate(
-									'sessionList.toolbar.search.handoverPeopleHint'
-								)
+							? peopleSearchHintKeys(userData?.agencies)
+									.map((key) => translate(key))
+									.join(' ')
 							: undefined
 					}
 					searchPeopleCappedNote={
@@ -3502,23 +3553,17 @@ export const SessionsList = ({
 
 			{/* Not in the rail: 80 px set the sentence one letter per line
 			    (Frank, 2026-11-17); the rail's search button stays. */}
-			{!isLoading &&
-				!isRail &&
-				!isCreateChatActive &&
-				!isReloadButtonVisible &&
-				visibleListItemCount === 0 && (
-					<EmptyListItem
-						headlineOverride={
-							toolbarFilteredOutAll
-								? translate(
-										'sessionList.toolbar.emptyFilterResult'
-									)
-								: undefined
-						}
-						sessionListTab={sessionListTab}
-						type={type}
-					/>
-				)}
+			{listIsEmpty && !isRail && (
+				<EmptyListItem
+					headlineOverride={
+						toolbarFilteredOutAll
+							? translate('sessionList.toolbar.emptyFilterResult')
+							: undefined
+					}
+					sessionListTab={sessionListTab}
+					type={type}
+				/>
+			)}
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				!caseHandoverReviewOpen && (

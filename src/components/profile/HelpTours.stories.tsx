@@ -459,8 +459,11 @@ export const PracticeCardsOn: Story = {
 			.getByRole('heading', { name: 'Meine Rundgänge' })
 			.closest('section')!;
 		const learning = within(card);
+		// The video-call tour (FE#2342) carries the same title as the
+		// Video-Call help card; pick the heading outside the tours card.
 		const videoCard = canvas
-			.getByRole('heading', { name: 'Video-Call' })
+			.getAllByRole('heading', { name: 'Video-Call' })
+			.find((heading) => !card.contains(heading))!
 			.closest('section')!;
 		await expect(card.getBoundingClientRect().left).toBeLessThan(
 			videoCard.getBoundingClientRect().left

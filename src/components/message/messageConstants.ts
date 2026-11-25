@@ -7,6 +7,10 @@ import {
 	parseConsultantRenamedNotice
 } from './consultantRenamedNotice';
 import {
+	parseSupervisorReplacedNotice,
+	SupervisorReplacedNotice
+} from './supervisorReplacedNotice';
+import {
 	type AppointmentNotice,
 	parseAppointmentNoticePayload
 } from './appointmentNotice';
@@ -115,6 +119,14 @@ export const chatEndedTextKey = (
 	return viewerIsConsultant ? 'message.userLeftChat' : 'message.chatEnded';
 };
 
+/** The side chat an intro notice belongs to (`sideChatIntroPreference`). */
+export type SideChatIntroDismissKind = 'team' | 'supervision';
+
+const toSideChatIntroDismissKind = (
+	value: unknown
+): SideChatIntroDismissKind | null =>
+	value === 'team' || value === 'supervision' ? value : null;
+
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
 		return {
@@ -136,9 +148,13 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				null as FurtherCounsellingNotice | null,
 			systemNotificationConsultantRenamed:
 				null as ConsultantRenamedNotice | null,
+			systemNotificationSupervisorReplaced:
+				null as SupervisorReplacedNotice | null,
 			systemNotificationDirectInvitationRenewed:
 				null as DirectInvitationRenewedNotice | null,
 			systemNotificationAppointment: null as AppointmentNotice | null,
+			systemNotificationDismissKind:
+				null as SideChatIntroDismissKind | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -148,6 +164,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let isSystemNotification = false;
 	let systemNotificationTitle = '';
 	let systemNotificationDescription = '';
+	let systemNotificationDismissKind: SideChatIntroDismissKind | null = null;
 	let systemNotificationType: string | null = null;
 	let systemNotificationUsername = '';
 	let systemNotificationEndedBy: ChatEndedBy | null = null;
@@ -158,6 +175,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationFurtherCounselling: FurtherCounsellingNotice | null =
 		null;
 	let systemNotificationConsultantRenamed: ConsultantRenamedNotice | null =
+		null;
+	let systemNotificationSupervisorReplaced: SupervisorReplacedNotice | null =
 		null;
 	let systemNotificationDirectInvitationRenewed: DirectInvitationRenewedNotice | null =
 		null;
@@ -234,6 +253,9 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationEndedBy = toChatEndedBy(parsed?.endedBy);
 			systemNotificationTitle = parsed?.title?.trim() || '';
 			systemNotificationDescription = parsed?.description?.trim() || '';
+			systemNotificationDismissKind = toSideChatIntroDismissKind(
+				(parsed as { dismissKind?: unknown })?.dismissKind
+			);
 			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
 			systemNotificationExplanation = parsed?.explanation?.trim() || '';
 			if (
@@ -247,6 +269,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				parseFurtherCounsellingNotice(parsed);
 			systemNotificationConsultantRenamed =
 				parseConsultantRenamedNotice(parsed);
+			systemNotificationSupervisorReplaced =
+				parseSupervisorReplacedNotice(parsed);
 			systemNotificationDirectInvitationRenewed =
 				parseDirectInvitationRenewedNotice(parsed);
 			systemNotificationAppointment =
@@ -290,8 +314,10 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationAcceptance,
 		systemNotificationFurtherCounselling,
 		systemNotificationConsultantRenamed,
+		systemNotificationSupervisorReplaced,
 		systemNotificationDirectInvitationRenewed,
 		systemNotificationAppointment,
+		systemNotificationDismissKind,
 		visibleToUserIds
 	};
 };

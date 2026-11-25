@@ -188,7 +188,7 @@ export const LoadFailed: Story = {
 export const Phone: Story = {
 	name: 'Links (phone 390)',
 	args: { initial: SAMPLE_LINKS, fullScreen: true },
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	decorators: [
 		(StoryComponent) => (
 			<div style={{ maxWidth: 390 }}>

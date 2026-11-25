@@ -30,9 +30,11 @@ export const NativePhoneViewport = {
     render: () => <p>Native phone viewport</p>,
     play: async () => { await expect([window.innerWidth, window.innerHeight]).toEqual([375, 812]); },
 };
-export const LegacyPhoneViewport = {
-    parameters: { viewport: { defaultViewport: 'phone390' } },
-    render: () => <p>Legacy phone viewport</p>,
+// Storybook 11's addon-vitest sizes the iframe from globals.viewport only;
+// parameters.viewport.defaultViewport is no longer read.
+export const Phone390Viewport = {
+    globals: { viewport: { value: 'phone390' } },
+    render: () => <p>Phone 390 viewport</p>,
     play: async () => { await expect([window.innerWidth, window.innerHeight]).toEqual([390, 844]); },
 };
 

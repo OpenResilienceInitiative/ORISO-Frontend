@@ -177,6 +177,94 @@ describe('useTenantTheming – Theme Builder preview seeds', () => {
 		await waitFor(() => expect(appliedPrimary()).not.toBe(''));
 	});
 
+	it('lets the locale bootstrap fetch the tenant without writing over the app palette', async () => {
+		document.documentElement.style.setProperty('--m3-primary', '#abcdef');
+		document.documentElement.dataset.orisoPersonalScheme = 'dark';
+		mocks.apiGetTenantTheming.mockResolvedValue(tenantResponse(''));
+		renderHook(() => useTenantTheming({ ownsPalette: false }), { wrapper });
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalled()
+		);
+		expect(appliedPrimary()).toBe('#abcdef');
+		expect(document.documentElement.dataset.orisoPersonalScheme).toBe(
+			'dark'
+		);
+		delete document.documentElement.dataset.orisoPersonalScheme;
+	});
+
+	it('applies the selected level and restores the isolated preview at the next route', () => {
+		location.subdomain = '';
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		const { rerender } = renderHook(
+			({
+				pathname,
+				search,
+				scheme
+			}: {
+				pathname: string;
+				search: string;
+				scheme?: 'light' | 'dark';
+			}) =>
+				useTenantTheming({
+					location: { pathname, search },
+					scheme,
+					contrast: 'high'
+				}),
+			{
+				wrapper,
+				initialProps: {
+					pathname: '/sessions/user/view',
+					search: '',
+					scheme: 'dark'
+				}
+			}
+		);
+		expect(document.documentElement.dataset.orisoContrastLevel).toBe(
+			'high'
+		);
+		rerender({
+			pathname: '/theme-demo',
+			search: '?themePreviewPrimary=0061ff',
+			scheme: 'dark'
+		});
+		expect(
+			document.documentElement.dataset.orisoContrastLevel
+		).toBeUndefined();
+		expect(appliedPrimary()).not.toBe('');
+		rerender({ pathname: '/login', search: '', scheme: undefined });
+		expect(
+			document.documentElement.dataset.orisoContrastLevel
+		).toBeUndefined();
+		expect(appliedPrimary()).toBe('');
+	});
+
+	it('updates preview drafts in place and clears them on the next route', async () => {
+		location.subdomain = '';
+		mocks.apiGetTenantTheming.mockResolvedValue({
+			id: 7,
+			name: 'Beratung'
+		});
+		window.history.replaceState({}, '', '/login');
+		const { rerender } = renderHook(() => useTenantTheming(), { wrapper });
+		expect(appliedPrimary()).toBe('');
+
+		setSearch('?themePreviewPrimary=0061ff');
+		rerender();
+		const blue = appliedPrimary();
+		expect(blue).not.toBe('');
+
+		setSearch('?themePreviewPrimary=a5000a');
+		rerender();
+		expect(appliedPrimary()).not.toBe(blue);
+
+		window.history.replaceState({}, '', '/login');
+		rerender();
+		expect(appliedPrimary()).toBe('');
+	});
+
 	it('applies the URL seeds when the tenant has no stored theming', async () => {
 		mocks.apiGetTenantTheming.mockResolvedValue({
 			id: 7,

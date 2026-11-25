@@ -15,9 +15,7 @@ runs:
 
         - name: Install dependencies
           shell: bash
-          run: |
-              npm ci --ignore-scripts --legacy-peer-deps
-              npm run patch:matrix-sdk
+          run: npm ci --ignore-scripts --legacy-peer-deps
 
         - name: Lint scripts and type-check
           shell: bash

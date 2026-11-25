@@ -43,7 +43,20 @@ export const CONVERSATION_FEATURE_KEYS = [
 	'featureThreadsGroupChatsEnabled',
 	// Irregular wire name (no "Chats"); matches TenantService/AgencyService policy key.
 	'featureThreadsOneOnOneEnabled',
-	'featureThreadsSupervisionChatsEnabled'
+	'featureThreadsSupervisionChatsEnabled',
+	// FE#2491: the team chat on an open enquiry is a policy like supervision
+	// (TenantService#405, AgencyService#389), with its own chat features.
+	'featureTeamDiscussionEnabled',
+	// FE#2491: off (default) archives the team chat read-only at accept
+	// (ADR-016); on keeps it switchable in the accepted case.
+	'featureTeamDiscussionAfterAcceptEnabled',
+	'featureVideoCallsTeamDiscussionsEnabled',
+	'featureAudioCallsTeamDiscussionsEnabled',
+	'featureVoiceMessagesTeamDiscussionsEnabled',
+	'featureThreadsTeamDiscussionsEnabled',
+	'featureMediaUploadTeamDiscussionsEnabled',
+	'featureMediaInlineDisplayTeamDiscussionsEnabled',
+	'featureMediaAiScanTeamDiscussionsEnabled'
 ] as const;
 export type ConversationFeatureKey = (typeof CONVERSATION_FEATURE_KEYS)[number];
 export type ConversationFeatureSettings = Partial<

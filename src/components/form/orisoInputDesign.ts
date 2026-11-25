@@ -29,7 +29,7 @@ export const orisoInputColors = {
 	hoverLayer: 'rgba(27, 27, 28, 0.04)'
 } as const;
 
-const orisoInputAutofill = '#e8f0fe';
+const orisoInputAutofill = 'var(--oriso-input-autofill, #e8f0fe)';
 
 export const orisoTextFieldSx = {
 	'&': {
@@ -228,6 +228,17 @@ export const orisoSelectSx = {
 		color: `${orisoInputColors.error} !important`
 	}
 } as const;
+
+/** Label above the field (`OrisoSelect labelAbove`): M3 body-medium, full width, wraps. */
+export const orisoSelectLabelAboveSx = {
+	'mb': '8px',
+	'color': orisoInputColors.onSurface,
+	'fontSize': '15px',
+	'fontWeight': 600,
+	'lineHeight': '21px',
+	'&.Mui-focused': { color: orisoInputColors.onSurface },
+	'&.Mui-error': { color: orisoInputColors.error }
+};
 
 export const orisoSelectMenuProps = {
 	sx: {

@@ -1,4 +1,5 @@
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
+import { acceptSupervisionHistory } from '../supervisionPanel/supervisionHistoryKeys';
 import { useFrozenPhoneLayout } from '../../utils/embeddedComposerFullscreen';
 import { useConversationFeatureSettings } from '../../hooks/useConversationFeatureSettings';
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
@@ -72,8 +73,9 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { useSideChatIntroDismissed } from '../chatStage/sideChatIntroPreference';
+import { resolveEnquiryTeamChatState } from '../teamDiscussion/enquiryTeamChatState';
 import { Button, BUTTON_TYPES } from '../button/Button';
-import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -89,6 +91,7 @@ import { useDockedComposerOffset } from '../chatStage/useDockedComposerOffset';
 import { useComposerFocus } from '../chatStage/useComposerFocus';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { KeyBackupRecoveryNoticeSlot } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import {
 	buildSessionChannelPath,
 	channelFromId,
@@ -121,6 +124,7 @@ import {
 } from '../sessionsListItem/supervisionListState';
 import {
 	pickDisplayOrUsername,
+	pickAppointmentSupervisor,
 	pickSupervisionCounterpartName,
 	CounterpartNameSource
 } from '../supervisionPanel/supervisionCounterpart';
@@ -140,7 +144,10 @@ import {
 } from '../../utils/threadUnread';
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
-import { PanelCallActions } from '../chatStage/PanelCallActions';
+import {
+	PanelCallActions,
+	type PanelMenuItem
+} from '../chatStage/PanelCallActions';
 import { resolveSupervisionCallFeatureGates } from '../call/callFeatureGates';
 import { startRoomCall } from '../call/startRoomCall';
 import {
@@ -235,7 +242,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import LegalLinks from '../legalLinks/LegalLinks';
 import { renderToString } from 'react-dom/server';
 import { mobileListView } from '../app/navigationHandler';
-import { UserAvatar } from '../message/UserAvatar';
+import { InlineTypingIndicator } from './InlineTypingIndicator';
 import {
 	isLegacyGuestLoginLabel,
 	resolveAnonymousChatDisplayName,
@@ -256,19 +263,33 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
+import { ReactComponent as CalendarPlusIcon } from '../../resources/img/icons/calendar-plus.svg';
+import { AppointmentPennant } from '../sessionsList/timeline/AppointmentPennant';
+import { useSupervisorPennant } from '../sessionsList/timeline/useSupervisorPennant';
+import { SupervisorAppointmentDialogWired } from '../supervisionPanel/SupervisorAppointmentDialog';
 import {
 	parseAddonPanel,
 	useOpenAddonPanel,
 	withAddonPanel
 } from '../../addons/addonPanel';
 import { AddonSessionPanel } from '../../addons/AddonSessionPanel';
-import { canRenderClientComposer } from './clientComposerPolicy';
-import { SelectionReplyLayer } from '../selectionReply/SelectionReplyLayer';
+import {
+	canRenderClientComposer,
+	shouldHideHeaderBackOnPhone
+} from './clientComposerPolicy';
+import {
+	SelectionReplyLayer,
+	type SideRoomReply,
+	type SideRoomTarget
+} from '../selectionReply/SelectionReplyLayer';
 import { useSessionPassageReplies } from '../selectionReply/useSessionPassageReplies';
 import { jumpToPassage } from '../selectionReply/passageRange';
 import type { PassageReply } from '../selectionReply/PassageReplyBlocks';
 import { useSessionPassageBlur } from '../selectionReply/useSessionPassageBlur';
-import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
+import {
+	isCaseHandoverCoAccess,
+	isTeamCounsellingReader
+} from './caseHandoverHelpers';
 import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
 import {
 	conversationActionsResetKey,
@@ -327,6 +348,14 @@ interface SessionItemProps {
 	teamDiscussionStatus?: TeamDiscussionStatus;
 	teamDiscussionResolved?: boolean;
 	teamDiscussionError?: boolean;
+	/**
+	 * FE#2491: switch the team chat of an OPEN enquiry on (POST — creates or
+	 * reopens a CLOSED one) or off (DELETE — CLOSED, read-only for all).
+	 * Absent for accepted cases: after accept it is archived (ADR-016).
+	 */
+	onSwitchTeamDiscussionOn?: () => Promise<void>;
+	onSwitchTeamDiscussionOff?: () => Promise<void>;
+	teamDiscussionToggling?: 'on' | 'off' | null;
 	typingUsers: TypingUser[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -369,6 +398,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const isSupervisorView =
 		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
 	const isCoAccessViewer = isCaseHandoverCoAccess(props.caseHandoverStatus);
+	// FE#2494 *4: a Teamberatung colleague reads the case like a co-access
+	// viewer, without expiry; only the assigned counsellor writes.
+	const isTeamReader =
+		!isCoAccessViewer &&
+		isTeamCounsellingReader({ activeSession, userData, type });
+	const isReadOnlyViewer = isCoAccessViewer || isTeamReader;
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -1186,6 +1221,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		sessionSupervisorsRevision
 	]);
 
+	// #2494 *6: a supervisor who took over continues the side room; import the
+	// history keys the counsellor sent (once per room and page load).
+	const supervisionSideRoomId = supervisionRoomLookup?.roomId;
+	const counsellorMatrixUserId = activeSession.item?.consultantMatrixUserId;
+	useEffect(() => {
+		if (!isSupervisor || !supervisionSideRoomId) return;
+		void acceptSupervisionHistory(
+			matrixClientService?.getClient?.(),
+			supervisionSideRoomId,
+			counsellorMatrixUserId
+		);
+	}, [
+		isSupervisor,
+		supervisionSideRoomId,
+		counsellorMatrixUserId,
+		matrixClientService
+	]);
+
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
 	// supervisor view. First choice is the marker's `counsellorDisplayName`
 	// (backend-resolved, never a real name); the by-id lookup stays as the
@@ -1233,12 +1286,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	useEffect(() => {
 		const canWrite =
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			(type !== SESSION_LIST_TYPES.ENQUIRY ||
 				(isAnonymousAskerExperience && waitingGateDismissed));
 		setCanWriteMessage(canWrite);
 	}, [
-		isCoAccessViewer,
+		isReadOnlyViewer,
 		type,
 		isRejectedSession,
 		isAnonymousAskerExperience,
@@ -2335,6 +2388,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const locationRef = useRef(location);
 	locationRef.current = location;
 	const sessionIdForChannelMemory = activeSession.item?.id;
+	const sessionIdRef = useRef(sessionIdForChannelMemory);
+	sessionIdRef.current = sessionIdForChannelMemory;
 	const setChannelRoute = useCallback(
 		(channel: SessionChannel | null, mode: 'push' | 'replace') => {
 			const current = locationRef.current;
@@ -2463,7 +2518,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// ONE breakpoint source for the phone layout (checklist 5): the app's
 	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
-	const { fromL } = useResponsive();
+	const { fromL, untilXS } = useResponsive();
 	const isPhoneLayout = useFrozenPhoneLayout(!fromL);
 
 	// The panel the URL asks for, resolved against what exists. A thread
@@ -2575,19 +2630,34 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (!sessionId || !isSupervisionPanelViewer) {
 			return;
 		}
+		const remembered = readLastChannel(safeChannelStorage(), sessionId);
+		// Do not pick supervision while a first-visit enquiry is still checking
+		// whether its existing team room should take precedence.
+		if (
+			activeSession.isEnquiry &&
+			!props.teamDiscussionResolved &&
+			!routeChannel &&
+			!addonPanelRequested &&
+			remembered === undefined &&
+			!isPracticing
+		) {
+			return;
+		}
 		const decision = decideAutoOpen({
 			routeChannel,
 			alreadySettled: autoOpenedForSessionRef.current === sessionId,
-			remembered: readLastChannel(safeChannelStorage(), sessionId),
+			remembered,
 			loadedRootIds: messages
 				? messages.map((message) => message._id)
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
+			// A switched-off (CLOSED) team chat never opens by itself.
 			canStartTeamDiscussion:
 				Boolean(activeSession.isEnquiry) &&
-				canOpenTeamSideRoom &&
+				hasTeamSideRoom &&
+				props.teamDiscussionStatus !== 'CLOSED' &&
 				!isPracticing,
 			addonPanelRequested
 		});
@@ -2604,6 +2674,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		props.teamDiscussionStatus,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
 		isPracticing,
@@ -2673,6 +2744,56 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			),
 		[teamMessages, openPanel, teamSeenAt, isMyMessageMatrix]
 	);
+
+	// FE#2491: the team chat is switched on and off like supervision —
+	// "Weitere Funktionen" carries the switch, the header the indication. One
+	// state, read by every entry point. Switchable on an open enquiry, and in
+	// an accepted case only with "Team-Chat nach Annahme" on (the stream
+	// hands the switch over only then); otherwise accepted cases keep the
+	// read-only archive (ADR-016).
+	const teamChatState = resolveEnquiryTeamChatState({
+		eligible:
+			canOpenTeamSideRoom &&
+			!isRejectedSession &&
+			!!props.onSwitchTeamDiscussionOn,
+		resolved: props.teamDiscussionResolved === true,
+		hasRoom: hasTeamSideRoom,
+		status: props.teamDiscussionStatus
+	});
+	const openTeamChat = useCallback(
+		() => selectChannelFromFab(channelId({ kind: 'team' })),
+		[selectChannelFromFab]
+	);
+	const onSwitchTeamDiscussionOn = props.onSwitchTeamDiscussionOn;
+	const switchTeamChatOn = useCallback(async () => {
+		// No room yet: opening the team route creates it (the long-standing
+		// enquiry contract). CLOSED: only this explicit POST reopens it.
+		if (props.teamDiscussionStatus === 'CLOSED') {
+			const requestedSessionId = sessionIdForChannelMemory;
+			try {
+				await onSwitchTeamDiscussionOn?.();
+			} catch {
+				return;
+			}
+			// The user left this case while it reopened: never route the next
+			// case to its team chat (that could create a room there).
+			if (sessionIdRef.current !== requestedSessionId) return;
+		}
+		openTeamChat();
+	}, [
+		onSwitchTeamDiscussionOn,
+		openTeamChat,
+		props.teamDiscussionStatus,
+		sessionIdForChannelMemory
+	]);
+	const onSwitchTeamDiscussionOff = props.onSwitchTeamDiscussionOff;
+	const switchTeamChatOff = useCallback(async () => {
+		try {
+			await onSwitchTeamDiscussionOff?.();
+		} catch {
+			// The stream shows the error; the state stays OPEN.
+		}
+	}, [onSwitchTeamDiscussionOff]);
 
 	// New side-room message from someone else while no panel is open:
 	// desktop re-opens the supervision channel (auto re-open); the phone
@@ -2863,12 +2984,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	]);
 	// Channels not on screen — the desktop FAB (while no panel is open)
 	// offers these; the panel header's menu lists all of them (T15).
-	const otherChannels = useMemo(
+	const mainSwitcherChannels = useMemo(
 		() =>
 			secondaryChannels.filter(
+				(channel) =>
+					channel.kind !== 'team' ||
+					(Boolean(activeSession.isEnquiry) &&
+						type !== SESSION_LIST_TYPES.ENQUIRY &&
+						(hasTeamSideRoom ||
+							!props.teamDiscussionResolved ||
+							props.teamDiscussionError))
+			),
+		[
+			secondaryChannels,
+			activeSession.isEnquiry,
+			type,
+			hasTeamSideRoom,
+			props.teamDiscussionResolved,
+			props.teamDiscussionError
+		]
+	);
+	const otherChannels = useMemo(
+		() =>
+			mainSwitcherChannels.filter(
 				(channel) => channel.id !== shownChannelId
 			),
-		[secondaryChannels, shownChannelId]
+		[mainSwitcherChannels, shownChannelId]
 	);
 
 	// Room participants for the panel headers (the same avatar stack the
@@ -3054,6 +3195,43 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		!isOnlyEnquiry &&
 		!activeSession.isEnquiry &&
 		!isPracticing;
+	// FE#2494: the counsellor books an appointment with the supervisor from
+	// the Supervision ⋮ (the calendar's colleague appointment as a popup).
+	// The supervisor side has nobody fixed to book: no entry there.
+	// Id and name from the same supervisor (`pickAppointmentSupervisor`).
+	const appointmentSupervisor = useMemo(
+		() =>
+			isSupervisor || isPracticing || !isConsultantUser
+				? undefined
+				: pickAppointmentSupervisor(
+						sessionSupervisors,
+						userData?.userId,
+						supervisionPeople
+					),
+		[
+			isSupervisor,
+			isPracticing,
+			isConsultantUser,
+			sessionSupervisors,
+			userData?.userId,
+			supervisionPeople
+		]
+	);
+	// FE#2494: the next appointment with the supervisor hangs from the
+	// Supervision panel's hairline, as the main chat's pennants do.
+	const supervisorPennant = useSupervisorPennant(appointmentSupervisor?.id);
+	const [bookingSupervisor, setBookingSupervisor] = useState(false);
+	const supervisionMenuItems: PanelMenuItem[] = appointmentSupervisor
+		? [
+				{
+					'id': 'appointment',
+					'icon': <CalendarPlusIcon aria-hidden />,
+					'title': translate('supervision.panel.bookAppointment'),
+					'onClick': () => setBookingSupervisor(true),
+					'data-cy': 'panel-menu-book-appointment'
+				}
+			]
+		: [];
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -3068,6 +3246,37 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		},
 		[supervisionRoomId, supervisionParticipants.length]
 	);
+
+	// FE#2494 *7: the team panel starts a call in the TEAM room, the same
+	// way supervision does in its own. Teamberatung is internal as well, so
+	// it shares supervision's tenant call flags; more than two people make
+	// it a group call.
+	// Teamberatung also runs on open enquiries (the team is consulted
+	// before someone takes the case), so it does not share supervision's
+	// enquiry exclusion; OPEN, rejected and the tenant flags are checked
+	// where the buttons render. Practice: nobody real to call.
+	const mayCallInTeamRoom = isConsultantUser && !isPracticing;
+	const startTeamCall = useCallback(
+		(isVideo: boolean) => {
+			if (!teamRoomId) {
+				return;
+			}
+			startRoomCall({
+				roomId: teamRoomId,
+				isVideo,
+				// Read at the click: someone may have joined the team room
+				// without writing, which the memoised header list misses.
+				isGroup: stackParticipantsOf(teamRoomId, 'team').length > 2
+			});
+		},
+		[teamRoomId, stackParticipantsOf]
+	);
+
+	// "Nicht mehr einblenden": a counsellor who dismissed a side chat's
+	// intro notice starts that room with its first message.
+	const [supervisionIntroDismissed] =
+		useSideChatIntroDismissed('supervision');
+	const [teamIntroDismissed] = useSideChatIntroDismissed('team');
 
 	// T7: the side room opens with the system notice "Supervision durch
 	// {name} ist aktiv …" as its first item (frontend-rendered, exactly as
@@ -3091,9 +3300,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			description: translate('supervision.panel.systemNotice', {
 				name: supervisorName
 			}),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'supervision',
+			dismissed: supervisionIntroDismissed
 		});
 	}, [
+		supervisionIntroDismissed,
 		hasSupervisionSideRoom,
 		supervisionMessages,
 		supervisionRoomId,
@@ -3116,11 +3328,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			roomId: teamRoomId || '',
 			title: teamChannelTitle,
 			description: teamText('chatStage.panel.team.systemNotice'),
-			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+			dismissKind: 'team',
+			dismissed: teamIntroDismissed
 		});
 		// teamText is rebuilt each render from `translate` (stable per locale).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		teamIntroDismissed,
 		hasTeamSideRoom,
 		teamMessages,
 		teamRoomId,
@@ -3154,17 +3369,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
-	const showEnquiryTeamAction =
-		type === SESSION_LIST_TYPES.ENQUIRY &&
-		activeSession.isEnquiry &&
-		!shouldBlockAnonymousInquiryChat &&
-		!isAnonymousAskerExperience &&
-		canOpenTeamSideRoom &&
-		!canRenderClientComposer({
-			canWriteMessage,
-			isSupervisor: isSupervisorView,
-			shouldBlockAnonymousInquiryChat
-		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -3263,7 +3467,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		matrixRoomId: resolvedMatrixRoomId,
 		canReply:
 			!isRejectedSession &&
-			!isCoAccessViewer &&
+			!isReadOnlyViewer &&
 			!isSupervisorView &&
 			canRenderClientComposer({
 				canWriteMessage,
@@ -3273,6 +3477,82 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isSupervisor,
 		senderDisplayName: userData?.displayName || userData?.userName || null
 	});
+	// FE#2494 *7: "In Supervision antworten" / "Im Team-Chat antworten".
+	// The answer to a passage marked in the main chat collects in the side
+	// chat's own reply field and leaves only from there. Both side hooks
+	// share the main recorder, so a voice answer survives the hop.
+	const senderDisplayName =
+		userData?.displayName || userData?.userName || null;
+	const supervisionPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasSupervisionSideRoom ? supervisionRoomId : null,
+		canReply: hasSupervisionSideRoom && !isRejectedSession,
+		isSupervisor,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice,
+		// The supervision composer sets `feedbackMailIntent`; answers to
+		// marked passages take the same protected mail path.
+		feedbackMailIntent: true
+	});
+	const teamPassageReplies = useSessionPassageReplies({
+		matrixRoomId: hasTeamSideRoom ? teamRoomId : null,
+		canReply:
+			hasTeamSideRoom &&
+			props.teamDiscussionStatus === 'OPEN' &&
+			!isRejectedSession,
+		senderDisplayName,
+		sharedVoice: passageReplies.voice,
+		teamDiscussion: true
+	});
+	const {
+		enabled: supervisionReplyEnabled,
+		collect: collectForSupervision,
+		sendNow: sendNowToSupervision
+	} = supervisionPassageReplies;
+	const {
+		enabled: teamReplyEnabled,
+		collect: collectForTeam,
+		sendNow: sendNowToTeam
+	} = teamPassageReplies;
+	const replyInSideRoom = useMemo(() => {
+		const handlers: Partial<Record<SideRoomTarget, SideRoomReply>> = {};
+		if (supervisionReplyEnabled) {
+			handlers.supervision = {
+				onCollect: (answer) => {
+					collectForSupervision(answer);
+					openChannel({ kind: 'supervision' });
+				},
+				onSend: sendNowToSupervision
+			};
+		}
+		if (teamReplyEnabled) {
+			handlers.team = {
+				onCollect: (answer) => {
+					collectForTeam(answer);
+					openChannel({ kind: 'team' });
+				},
+				onSend: sendNowToTeam
+			};
+		}
+		return Object.keys(handlers).length ? handlers : undefined;
+	}, [
+		supervisionReplyEnabled,
+		collectForSupervision,
+		sendNowToSupervision,
+		teamReplyEnabled,
+		collectForTeam,
+		sendNowToTeam,
+		openChannel
+	]);
+	const collectedPassageCount = useCallback(
+		(target: SideRoomTarget | null) =>
+			(target === 'supervision'
+				? supervisionPassageReplies
+				: target === 'team'
+					? teamPassageReplies
+					: passageReplies
+			).pending.length,
+		[passageReplies, supervisionPassageReplies, teamPassageReplies]
+	);
 	const authorForPassage = useCallback(
 		(eventId: string) =>
 			(messages || []).find(
@@ -3299,7 +3579,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		userData,
 		isConsultant: isConsultantUser,
 		isSupervisorView,
-		isReadOnly: isRejectedSession || isCoAccessViewer
+		isReadOnly: isRejectedSession || isReadOnlyViewer
 	});
 	const handleThreadFromPassage = useCallback(
 		(passage: { eventId: string }) => {
@@ -3334,6 +3614,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}, [activeSession.item?.id, activeSession.isGroup]);
 
 	// Phone: a side panel fills the screen instead of the main chat.
+	// The same guard that renders the main composer below; it carries the
+	// phone's back arrow (D7), so the header only drops its own then.
+	const mainComposerShown =
+		!shouldShowGroupConsentGate &&
+		!isRejectedSession &&
+		!isFinishedLiveChatOfLastingAccount &&
+		areRobotMessagesComplete &&
+		canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat: blocksConversation
+		});
 	const mainChatHidden = isPhoneLayout && openPanel !== null;
 	const { onMainChatHiddenChange } = props;
 	useEffect(() => {
@@ -3501,14 +3793,51 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								props.hasUserInitiatedStopOrLeaveRequest
 							}
 							bannedUsers={props.bannedUsers}
-							// D7: the composer carries the phone's back arrow. The
-							// group privacy gate renders no composer, so its header
-							// keeps the arrow there.
-							hideBackButton={
-								isPhoneLayout && !shouldShowGroupConsentGate
-							}
+							// D7: the composer carries the phone's back arrow. Where
+							// no main composer renders (enquiry, read-only, closed,
+							// group privacy gate) the header keeps it.
+							hideBackButton={shouldHideHeaderBackOnPhone({
+								isPhoneLayout,
+								mainComposerShown
+							})}
 							callsInMenu={isPhoneLayout}
 							hideGroupTopic={shouldShowGroupConsentGate}
+							teamChatUnreadCount={teamUnreadCount}
+							onOpenTeamChat={
+								teamChatState === 'unavailable'
+									? // Accepted case, setting off: the
+										// archived history, read-only.
+										!activeSession.isEnquiry &&
+										canOpenTeamSideRoom
+										? openTeamChat
+										: undefined
+									: teamChatState === 'on' ||
+										  teamChatState === 'closed' ||
+										  teamChatState === 'archived'
+										? openTeamChat
+										: undefined
+							}
+							onSwitchTeamChatOn={
+								teamChatState === 'off' ||
+								teamChatState === 'closed'
+									? switchTeamChatOn
+									: undefined
+							}
+							onSwitchTeamChatOff={
+								teamChatState === 'on' &&
+								props.onSwitchTeamDiscussionOff
+									? switchTeamChatOff
+									: undefined
+							}
+							teamChatToggling={props.teamDiscussionToggling}
+							teamChatIndicator={
+								teamChatState === 'on'
+									? {
+											active: openPanel === 'team',
+											onOpen: openTeamChat
+										}
+									: undefined
+							}
 						/>
 					)}
 				</div>
@@ -3521,6 +3850,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__threadListBar">
 							<button
 								type="button"
+								aria-expanded={isThreadListOpen}
 								className={clsx(
 									'session__threadListToggle',
 									isThreadListOpen &&
@@ -3648,6 +3978,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
+					)}
+					{!blocksConversation && untilXS && (
+						<KeyBackupRecoveryNoticeSlot />
 					)}
 					{(!shouldBlockAnonymousInquiryChat ||
 						isInAnonymousWaitingQueuePhase) &&
@@ -3784,11 +4117,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								<SelectionReplyLayer
 									enabled={
 										passageReplies.enabled ||
-										passageBlur.canBlur
+										passageBlur.canBlur ||
+										!!replyInSideRoom
 									}
 									authorFor={authorForPassage}
 									onAddToComposer={passageReplies.collect}
 									onSendNow={passageReplies.sendNow}
+									onReplyInSideRoom={replyInSideRoom}
+									canReplyHere={passageReplies.enabled}
+									collectedCount={collectedPassageCount}
 									onStartThread={
 										isThreadsEnabled
 											? handleThreadFromPassage
@@ -3863,7 +4200,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										resolveReplyQuote={resolveReplyQuote}
 										onReplyDirect={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReplyDirect
 										}
@@ -3880,13 +4217,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										reactionsFor={getReactionsFor}
 										onReact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleReact
 										}
 										onUnreact={
 											isRejectedSession ||
-											isCoAccessViewer
+											isReadOnlyViewer
 												? undefined
 												: handleUnreact
 										}
@@ -3958,42 +4295,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									/>
 								))}
 							{shouldShowInlineTypingIndicator && (
-								<div className="messageItem session__inlineTypingIndicator">
-									<div className="messageItem__messageWrap">
-										<div className="messageItem__avatar">
-											<UserAvatar
-												username={
-													primaryTypingUser.name
-												}
-												displayName={
-													primaryTypingUser.name
-												}
-												userId={
-													primaryTypingUser.userId
-												}
-												choice={
-													primaryTypingUser.choice
-												}
-												ring={false}
-											/>
-										</div>
-										<div className="messageItem__content">
-											<div className="session__inlineTypingLabel">
-												{typingIndicatorLabel}
-											</div>
-											<div
-												className="session__inlineTypingBubble"
-												aria-hidden="true"
-											>
-												<div className="session__inlineTypingDots">
-													<span />
-													<span />
-													<span />
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
+								<InlineTypingIndicator
+									name={primaryTypingUser.name}
+									userId={primaryTypingUser.userId}
+									choice={primaryTypingUser.choice}
+									label={typingIndicatorLabel}
+								/>
 							)}
 						</div>
 					)}
@@ -4008,30 +4315,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					(activeSession.isEnquiry || isRejectedSession) &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign
-							btnLabel={'enquiry.acceptButton.known'}
-							secondaryAction={
-								showEnquiryTeamAction && openPanel === null ? (
-									<Button
-										item={{
-											type: BUTTON_TYPES.SECONDARY,
-											label: 'enquiry.teamDiscussion.open',
-											icon: (
-												<TeamActionGlyph aria-hidden="true" />
-											)
-										}}
-										className="session__teamDiscussionAction"
-										testingAttribute="enquiry-open-team"
-										tourTarget="enquiry-team-button"
-										buttonHandle={() =>
-											selectChannelFromFab(
-												channelId({ kind: 'team' })
-											)
-										}
-									/>
-								) : undefined
-							}
-						/>
+						// FE#2491 (Frank, 23 Nov): no team-chat button beside
+						// "Annehmen" — the team chat is reached through
+						// "Weitere Funktionen" and the header chip only.
+						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -4164,6 +4451,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						sessionId={activeSession.item?.id}
 						canExtend={props.caseHandoverStatus?.canExtend}
 						onStatusChange={props.onCaseHandoverStatusChange}
+					/>
+				)}
+				{isTeamReader && (
+					<CaseHandoverReadOnlyNotice
+						sessionId={activeSession.item?.id}
+						ownerName={pickDisplayOrUsername(
+							activeSession.consultant
+						)}
 					/>
 				)}
 				{!isRejectedSession &&
@@ -4306,12 +4601,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.some(
-					(channel) =>
-						!showEnquiryTeamAction || channel.kind !== 'team'
-				) && (
+				{otherChannels.length > 0 && (
 					<ChannelSwitcherFab
-						channels={secondaryChannels}
+						channels={mainSwitcherChannels}
 						activeChannelId={shownChannelId}
 						onSelect={selectChannelFromFab}
 						bottomOffset={fabOffset}
@@ -4630,12 +4922,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
 							onReact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleReact
 							}
 							onUnreact={
-								isRejectedSession || isCoAccessViewer
+								isRejectedSession || isReadOnlyViewer
 									? undefined
 									: handleUnreact
 							}
@@ -4693,7 +4985,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 				composer={
 					!isRejectedSession &&
-					!isCoAccessViewer && (
+					!isReadOnlyViewer && (
 						<MessageSubmitInterfaceComponent
 							isTyping={props.isTyping}
 							placeholder={translate(
@@ -4733,6 +5025,21 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			/>
 		) : null;
 
+	// FE#2494 *7: a quote in a side chat points into the client chat. On a
+	// phone the panel covers it, so close the panel first and jump once
+	// the main timeline is back on screen.
+	const handleJumpFromSideRoom = useCallback(
+		(reply: PassageReply) => {
+			if (isPhoneLayout) {
+				closeChannel();
+				window.requestAnimationFrame(() => handleJumpToPassage(reply));
+				return;
+			}
+			handleJumpToPassage(reply);
+		},
+		[isPhoneLayout, closeChannel, handleJumpToPassage]
+	);
+
 	const supervisionPanel =
 		openPanel === 'supervision' ? (
 			<SidePanel
@@ -4751,36 +5058,83 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						subtitle={supervisionHeaderRole}
 						participants={supervisionParticipants}
 						unreadCount={supervisionUnreadCount}
-						actions={
-							mayCallInSideRoom ? (
-								<PanelCallActions
-									onStartCall={startSupervisionCall}
-									audioEnabled={supervisionCallGates.audio}
-									videoEnabled={supervisionCallGates.video}
-									participantCount={
-										supervisionParticipants.length
-									}
-									// The panel fills the screen on the phone;
-									// on the desktop it is as wide as the drag
-									// left it.
-									width={isPhoneLayout ? null : panelWidth}
-									phone={isPhoneLayout}
-									copy={{
-										video: translate(
-											'videoCall.button.startVideoCall'
-										),
-										audio: translate(
-											'videoCall.button.startCall'
-										),
-										menu: translate('app.menu'),
-										participants: translate(
-											'chatStage.panel.participantCount',
-											{
-												count: supervisionParticipants.length
-											}
-										)
-									}}
+						appointments={
+							supervisorPennant && (
+								<AppointmentPennant
+									entry={supervisorPennant.entry}
+									role="counsellor"
+									menuItems={supervisorPennant.menuItems}
+									onAction={supervisorPennant.onAction}
 								/>
+							)
+						}
+						actions={
+							mayCallInSideRoom ||
+							supervisionMenuItems.length > 0 ? (
+								<>
+									<PanelCallActions
+										menuItems={supervisionMenuItems}
+										onStartCall={startSupervisionCall}
+										audioEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.audio
+										}
+										videoEnabled={
+											mayCallInSideRoom &&
+											supervisionCallGates.video
+										}
+										participantCount={
+											supervisionParticipants.length
+										}
+										// The panel fills the screen on the phone;
+										// on the desktop it is as wide as the drag
+										// left it.
+										width={
+											isPhoneLayout ? null : panelWidth
+										}
+										phone={isPhoneLayout}
+										copy={{
+											video: translate(
+												'videoCall.button.startVideoCall'
+											),
+											audio: translate(
+												'videoCall.button.startCall'
+											),
+											menu: translate('app.menu'),
+											participants: translate(
+												'chatStage.panel.participantCount',
+												{
+													count: supervisionParticipants.length
+												}
+											)
+										}}
+									/>
+									{bookingSupervisor &&
+										appointmentSupervisor && (
+											<SupervisorAppointmentDialogWired
+												supervisor={
+													appointmentSupervisor
+												}
+												ownerId={userData?.userId ?? ''}
+												fullScreen={isPhoneLayout}
+												supervisionRoom={
+													supervisionRoomId
+														? {
+																sessionId:
+																	activeSession
+																		.item
+																		.id,
+																matrixRoomId:
+																	supervisionRoomId
+															}
+														: undefined
+												}
+												onClose={() =>
+													setBookingSupervisor(false)
+												}
+											/>
+										)}
+								</>
 							) : undefined
 						}
 						{...panelHeaderNav}
@@ -4811,6 +5165,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					>
 						<MessageTimeline
 							keyPrefix="supervision-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={supervisionTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
@@ -4906,6 +5261,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						}
 						messages={supervisionMessages}
 						isOwnMessage={isMyMessageMatrix}
+						pendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.pending
+								: undefined
+						}
+						onRemovePendingQuote={supervisionPassageReplies.remove}
+						onSendPendingQuotes={
+							supervisionPassageReplies.enabled
+								? supervisionPassageReplies.sendCollected
+								: undefined
+						}
 					/>
 				}
 				switcher={phoneBackFab}
@@ -4940,11 +5306,46 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						chip={teamText('chatStage.panel.team.onlyMarker')}
 						participants={teamParticipants}
 						unreadCount={teamUnreadCount}
+						actions={
+							mayCallInTeamRoom &&
+							props.teamDiscussionStatus === 'OPEN' &&
+							!isRejectedSession ? (
+								<PanelCallActions
+									onStartCall={startTeamCall}
+									audioEnabled={supervisionCallGates.audio}
+									videoEnabled={supervisionCallGates.video}
+									participantCount={teamParticipants.length}
+									width={isPhoneLayout ? null : panelWidth}
+									phone={isPhoneLayout}
+									copy={{
+										video: translate(
+											'videoCall.button.startVideoCall'
+										),
+										audio: translate(
+											'videoCall.button.startCall'
+										),
+										menu: translate('app.menu'),
+										participants: translate(
+											'chatStage.panel.participantCount',
+											{
+												count: teamParticipants.length
+											}
+										)
+									}}
+								/>
+							) : undefined
+						}
 						{...panelHeaderNav}
 					/>
 				}
 				banner={
-					!teamMessages || teamMessages.length === 0 ? (
+					props.teamDiscussionStatus === 'CLOSED' ? (
+						<InfoBanner
+							data-cy="team-chat-closed-banner"
+							title={translate('teamDiscussion.closed.title')}
+							text={translate('teamDiscussion.closed.text')}
+						/>
+					) : !teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
 							title={
 								props.teamDiscussionStatus === 'OPEN' &&
@@ -4971,6 +5372,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					<>
 						<MessageTimeline
 							keyPrefix="team-"
+							onJumpToPassage={handleJumpFromSideRoom}
 							messages={teamTimelineMessages}
 							renderMode="main"
 							threadsEnabled={false}
@@ -5045,8 +5447,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					props.teamDiscussionStatus === 'OPEN' &&
-					!isRejectedSession ? (
+					props.teamDiscussionStatus === 'CLOSED' &&
+					teamChatState === 'closed' ? (
+						<div className="session__teamChatSwitchOn">
+							<Button
+								item={{
+									type: BUTTON_TYPES.SECONDARY,
+									label: 'teamDiscussion.switchOn.again',
+									disabled:
+										props.teamDiscussionToggling === 'on'
+								}}
+								testingAttribute="team-chat-switch-on-again"
+								buttonHandle={switchTeamChatOn}
+							/>
+						</div>
+					) : props.teamDiscussionStatus === 'OPEN' &&
+					  !isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
 							isTyping={handleSideRoomTyping}
 							placeholder={teamText(
@@ -5075,6 +5491,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}
 							messages={teamMessages}
 							isOwnMessage={isMyMessageMatrix}
+							pendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.pending
+									: undefined
+							}
+							onRemovePendingQuote={teamPassageReplies.remove}
+							onSendPendingQuotes={
+								teamPassageReplies.enabled
+									? teamPassageReplies.sendCollected
+									: undefined
+							}
 						/>
 					) : undefined
 				}

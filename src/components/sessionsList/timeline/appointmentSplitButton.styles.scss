@@ -1,8 +1,24 @@
-// ADR-021: the room's next appointment sits right below the header divider.
+// FE#2494: the room's appointments hang from the header divider as
+// pennants (appointmentPennant.styles.scss). Standing alone (group rooms)
+// the row lines up with the topic of a 1:1 header.
 .roomNextAppointment {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
-	padding: 8px 16px;
-	background: var(--m3-surface-container-lowest, #fff);
+	padding: 0 16px 10px 38px;
+}
+
+// Inside the 1:1 topic row: no own padding, the row already has it.
+.sessionInfo__metaInfo .roomNextAppointment {
+	display: inline-flex;
+	flex: 0 1 auto;
+	flex-wrap: nowrap;
+	min-width: 0;
+	padding: 0 0 10px;
+}
+
+// Two pennants share the width; each keeps its bubbles and cuts the date.
+.roomAppointmentPennants > .appointmentPennant {
+	flex: 0 1 auto;
+	min-width: 96px;
 }

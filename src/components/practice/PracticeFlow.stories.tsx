@@ -446,7 +446,9 @@ const acceptAnEnquiry: NonNullable<Story['play']> = async ({
 	step,
 	args
 }) => {
-	const of = args.teamDiscussion ? 8 : 6;
+	// FE#2491: the team chat lives in "Weitere Funktionen"; the tour has no
+	// team steps whatever the flag says.
+	const of = 6;
 	const storageBefore = storageSnapshot();
 	await step('Start the exercise from its Help card', async () => {
 		const card = (
@@ -472,31 +474,12 @@ const acceptAnEnquiry: NonNullable<Story['play']> = async ({
 		await userEvent.click(await target('enquiry-list-item'));
 	});
 
-	if (args.teamDiscussion) {
-		await step('3: Open the team discussion', async () => {
-			await expectStep(3, of);
-			await userEvent.click(await target('enquiry-team-button'));
-		});
-		await step('4: Send a reply in the team discussion', async () => {
-			await expectStep(4, of);
-			const panel = await target('team-discussion-panel');
-			await sendReply(panel, 'Ich übernehme das gern.');
-			await expect(
-				document.querySelector('.chatStage__mainPane')?.textContent
-			).not.toContain('Ich übernehme das gern.');
-		});
-	}
-
-	const acceptAt = args.teamDiscussion ? 5 : 3;
+	const acceptAt = 3;
 	await step(`${acceptAt}: Accept the enquiry`, async () => {
 		await expectStep(acceptAt, of);
-		if (!args.teamDiscussion) {
-			await expect(
-				document.querySelector(
-					'[data-tour-target="enquiry-team-button"]'
-				)
-			).toBeNull();
-		}
+		await expect(
+			document.querySelector('[data-cy="enquiry-open-team"]')
+		).toBeNull();
 		await userEvent.click(await target('enquiry-accept-button'));
 	});
 	await step(
@@ -556,7 +539,7 @@ export const AcceptAnEnquiryWithTeamDiscussion: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Walks all eight acceptance steps with Team-Besprechung enabled. The team reply stays in its side thread; the case reply receives the scripted answer. Completion returns to Help with no practice writes outside the page.'
+				story: 'With the team chat enabled the exercise walks the same six steps (FE#2491: the team chat is switched on in "Weitere Funktionen", there is no team button beside "Annehmen" for the tour to point at). Completion returns to Help with no practice writes outside the page.'
 			}
 		}
 	},
@@ -629,23 +612,30 @@ export const AddASupervisor: Story = {
 				).toBeNull();
 				await userEvent.click(await target('session-supervisor-add'));
 				await userEvent.click(
-					await screen.findByRole('combobox', {}, SLOW)
-				);
-				await userEvent.click(
 					await screen.findByRole(
-						'option',
-						{ name: 'Robin (Übung)' },
+						'button',
+						{ name: 'Robin (Übung) hinzufügen' },
 						SLOW
 					)
 				);
 				await userEvent.type(
-					screen.getByPlaceholderText(
-						'Bitte geben Sie den Grund für die Supervision an...'
+					await screen.findByPlaceholderText(
+						'Warum soll diese Person den Fall supervidieren?'
 					),
 					'Ich möchte mich zum Vorgehen absichern.'
 				);
 				await userEvent.click(
-					screen.getByRole('button', { name: 'Hinzufügen' })
+					screen.getByRole('button', {
+						name: 'Robin (Übung) hinzufügen'
+					})
+				);
+				// Practice closes the dialog, so the next step's panel is visible.
+				await waitFor(
+					() =>
+						expect(
+							screen.queryByTestId('manage-people-dialog')
+						).toBeNull(),
+					SLOW
 				);
 			}
 		);
@@ -740,20 +730,23 @@ export const SupervisorPickerWithKeyboard: Story = {
 			'Open the picker, choose Robin and type the reason with the keyboard',
 			async () => {
 				await userEvent.keyboard('{Enter}');
-				const picker = await screen.findByRole('combobox', {}, SLOW);
-				await tabTo(picker);
-				await userEvent.keyboard('{Enter}');
 				const robin = await screen.findByRole(
-					'option',
-					{ name: 'Robin (Übung)' },
+					'button',
+					{ name: 'Robin (Übung) hinzufügen' },
 					SLOW
 				);
-				await waitFor(() => expect(robin).toHaveFocus(), SLOW);
+				await tabTo(robin);
 				await userEvent.keyboard('{Enter}');
-				await expect(picker).toHaveTextContent('Robin (Übung)');
-				const reason = screen.getByPlaceholderText(
-					'Bitte geben Sie den Grund für die Supervision an...'
+				const reason = await screen.findByPlaceholderText(
+					'Warum soll diese Person den Fall supervidieren?',
+					{},
+					SLOW
 				);
+				await expect(
+					within(screen.getByRole('dialog')).getAllByText(
+						'Robin (Übung)'
+					)[0]
+				).toBeVisible();
 				await tabTo(reason);
 				await userEvent.keyboard(
 					'Ich möchte mich zum Vorgehen absichern.'

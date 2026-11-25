@@ -90,7 +90,7 @@ const Composer = (
 ) => (
 	<ComposerStoryDecorator>
 		<MessageSubmitInterfaceComponent
-			placeholder="Nachricht an Klient:in schreiben"
+			placeholder="Nachricht an ratsuchende Person"
 			onSendButton={() => {}}
 			isTyping={() => {}}
 			language="de"

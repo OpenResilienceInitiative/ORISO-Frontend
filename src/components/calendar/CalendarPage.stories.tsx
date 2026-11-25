@@ -1,5 +1,8 @@
 import * as React from 'react';
-import type { ConsultationHours } from './calendarConsultationHours';
+import type {
+	ConsultationHours,
+	OneOffConsultation
+} from './calendarConsultationHours';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { a11yExcept } from '../../../.storybook/a11yExceptions';
@@ -33,6 +36,8 @@ import {
 	type MoveProposal
 } from './calendarActions';
 import type { CalendarViewName, ViewSwitcherStyle } from './calendarViews';
+import { COMPACT_MAX_WIDTH } from './calendarViews';
+import { useMediaQuery } from 'react-responsive';
 import type { DayExceptions, WorkingHours } from './calendarWorkingHours';
 import type { HolidayRegion } from './calendarHolidays';
 import type { SplitDays } from './CalendarSplitView';
@@ -62,6 +67,8 @@ import {
 import { publishReceivedProposalCount } from './calendarProposalCount';
 import { withPersonAvatars } from './calendarAvatar';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
+import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
+import { storyBookSlot, storyFreeSlots } from './calendarStoryFreeSlots';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -69,6 +76,7 @@ interface HarnessProps {
 	showUsernames?: boolean;
 	state?: CalendarLoadState;
 	empty?: boolean;
+	/** Unset: follows the canvas width, as the app does. */
 	compact?: boolean;
 	/** With `compact`: a phone (three days at most); false = tablet. */
 	phone?: boolean;
@@ -91,6 +99,11 @@ interface HarnessProps {
 	initialSheet?: SheetStop;
 	splitDays?: SplitDays;
 	shell?: boolean;
+	/**
+	 * FE#2494 *2c: the advice seeker's "Freie Sprechzeiten" beside the
+	 * calendar, with sample free times of the counsellor.
+	 */
+	freeTimes?: boolean | 'none';
 }
 
 /**
@@ -153,7 +166,7 @@ const Scenario = ({
 	showUsernames = false,
 	state = 'ready',
 	empty = false,
-	compact = false,
+	compact: compactArg,
 	phone,
 	initialView,
 	links = false,
@@ -169,8 +182,13 @@ const Scenario = ({
 	dayExceptions: initialExceptions = {},
 	initialSheet,
 	splitDays,
-	shell = true
+	shell = true,
+	freeTimes = false
 }: HarnessProps) => {
+	// Unset: as the app does, compact below 960 px of canvas (Frank, 24 Nov:
+	// the desktop layout squeezed into a narrow Storybook canvas broke).
+	const narrow = useMediaQuery({ maxWidth: COMPACT_MAX_WIDTH });
+	const compact = compactArg ?? narrow;
 	const visibility = { scope, showUsernames };
 	const colleagues =
 		role === 'consultant' ? colleaguesInScope(COLLEAGUES, scope) : [];
@@ -188,12 +206,21 @@ const Scenario = ({
 		React.useState<ConsultationHours>({
 			windows: [
 				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 2, start: '16:00', end: '18:00' },
 				{ weekday: 4, start: '14:00', end: '17:00' }
 			],
 			autoAccept: true,
 			noticeDays: 2,
 			slotMinutes: 60
 		});
+	/* FE#2494 *2b: one short-notice Sprechzeit on Wednesday afternoon. */
+	const [oneOffs, setOneOffs] = useState<OneOffConsultation[]>([
+		{
+			start: new Date(2026, 10, 18, 15, 0),
+			end: new Date(2026, 10, 18, 16, 30),
+			noticeMinutes: 30
+		}
+	]);
 	const [region, setRegion] = useState<HolidayRegion | null>(initialRegion);
 	const [exceptions, setExceptions] =
 		useState<DayExceptions>(initialExceptions);
@@ -283,6 +310,22 @@ const Scenario = ({
 					</CalendarLinksBox>
 				) : undefined
 			}
+			besidePanel={
+				freeTimes ? (
+					<AskerFreeTimesPanel
+						sessionId={7}
+						counsellorName="Laura Berger"
+						loadSlots={
+							freeTimes === 'none'
+								? () => Promise.resolve([])
+								: storyFreeSlots
+						}
+						bookSlot={storyBookSlot}
+						onBooked={() => undefined}
+						onLimitReached={() => undefined}
+					/>
+				) : undefined
+			}
 			initialShownColleagues={shownColleagues}
 			initialFullscreen={fullscreen}
 			initialSwitcherStyle={switcherStyle}
@@ -316,6 +359,10 @@ const Scenario = ({
 				role === 'consultant' ? consultationHours : undefined
 			}
 			onSaveConsultationHours={setConsultationHours}
+			onSaveOneOffConsultation={(oneOff) =>
+				setOneOffs((all) => [...all, oneOff])
+			}
+			oneOffConsultations={role === 'consultant' ? oneOffs : undefined}
 			onSaveDayException={(date, windows) =>
 				setExceptions((all) => ({ ...all, [date]: windows }))
 			}
@@ -427,9 +474,14 @@ const Scenario = ({
 			<style>{`
 				.calendarStory { display: flex; height: 100vh; background: var(--m3-surface-container, #f0edee); }
 				.calendarStory__main { flex: 1; min-width: 0; padding: 12px 12px 12px 0; box-sizing: border-box; }
-				.calendarStory--compact { flex-direction: column; }
-				.calendarStory--compact .calendarStory__main { flex: 1; min-height: 0; padding: 0; overflow: auto; }
-				.calendarStory--compact .app__wrapper { flex: none; height: auto; order: 2; }
+				.calendarStory--compact .calendarStory__main { overflow: auto; }
+				/* The app's nav is a bottom bar below 900 px ($fromLarge) and a
+				   rail above, also while the calendar is compact (< 960 px). */
+				@media (max-width: 899px) {
+					.calendarStory--compact { flex-direction: column; }
+					.calendarStory--compact .calendarStory__main { flex: 1; min-height: 0; padding: 0; }
+					.calendarStory--compact .app__wrapper { flex: none; height: auto; order: 2; }
+				}
 			`}</style>
 			<NavigationStoryShell
 				role={role}
@@ -553,9 +605,9 @@ const StoryLinksPanel = () => {
 				}
 				onShowQr={setQr}
 				onEdit={() => undefined}
-				onCreate={() => undefined}
 				onRetry={() => undefined}
 				onCopy={() => undefined}
+				variant="rows"
 			/>
 			{qr && (
 				<DirectLinkShareDialog

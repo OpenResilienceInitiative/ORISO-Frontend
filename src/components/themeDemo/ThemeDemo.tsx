@@ -174,7 +174,7 @@ export const ThemeDemo = () => {
 				<footer className="themeDemo__editor">
 					<div className="textarea themeDemo__textarea">
 						<span className="themeDemo__placeholder">
-							Nachricht an Klient:in schreiben
+							Nachricht an ratsuchende Person
 						</span>
 						<button
 							type="button"

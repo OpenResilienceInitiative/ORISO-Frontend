@@ -253,12 +253,11 @@
 		}
 		background: radial-gradient(
 			120% 90% at 78% 8%,
-			#e0313b 0%,
-			var(--m3-primary, #a5000a) 42%,
-			#8c0e17 78%,
-			#6f0a11 100%
+			var(--oriso-stage-brand-container, #e0313b) 0%,
+			var(--oriso-stage-brand, #a5000a) 42%,
+			var(--oriso-stage-brand-edge, #6f0a11) 100%
 		);
-		color: var(--m3-on-primary, $white);
+		color: var(--oriso-stage-brand-on, $white);
 
 		@include breakpoint($fromXLarge) {
 			display: none;
@@ -315,6 +314,7 @@
 		}
 
 		&__actions {
+			margin-inline-start: auto;
 			display: flex;
 			align-items: center;
 			gap: $grid-base;
@@ -339,7 +339,40 @@
 		&__claim {
 			margin: $grid-base 0 0;
 			font-size: 14px;
-			color: rgba(255, 255, 255, 0.9);
+			color: inherit;
+		}
+	}
+
+	// A single brand surface keeps the overlapping login sheet clean in both
+	// schemes. The language switch sits on the same container as the claim.
+	.stageMobileHero--branding {
+		background: var(--m3-primary-container, #ffdad6);
+		color: var(--m3-on-primary-container, #410002);
+
+		.stageMobileHero__actions {
+			margin-inline-start: auto;
+		}
+
+		.stageMobileHero__claim {
+			color: inherit;
+		}
+
+		&::after {
+			content: none;
+		}
+
+		@media (width < 720px) {
+			--curtain-corner: 1.5rem;
+
+			height: 17rem;
+
+			// Tuck the rounded edge behind the sheet until the curtains part.
+			margin-block-end: calc(-1 * var(--curtain-corner));
+			border-radius: 0 0 var(--curtain-corner) var(--curtain-corner);
+
+			.stageMobileHero__copy {
+				padding-block-end: var(--curtain-corner);
+			}
 		}
 	}
 

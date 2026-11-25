@@ -34,7 +34,7 @@ const toBase64 = (bytes: Uint8Array): string => {
 const toUnpaddedBase64 = (bytes: Uint8Array): string =>
 	toBase64(bytes).replace(/=+$/, '');
 
-const fromBase64 = (value: string): Uint8Array => {
+const fromBase64 = (value: string): Uint8Array<ArrayBuffer> => {
 	const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
 	const padded = normalized.padEnd(
 		normalized.length + ((4 - (normalized.length % 4)) % 4),
@@ -59,7 +59,7 @@ const timingSafeEqual = (left: string, right: string): boolean => {
 	return mismatch === 0;
 };
 
-const buildAesCtrParams = (iv: Uint8Array): AesCtrParams => ({
+const buildAesCtrParams = (iv: Uint8Array<ArrayBuffer>): AesCtrParams => ({
 	name: 'AES-CTR',
 	counter: iv,
 	length: AES_CTR_LENGTH

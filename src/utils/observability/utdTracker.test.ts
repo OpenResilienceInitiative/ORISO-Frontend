@@ -7,6 +7,8 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
+import { MatrixEvent } from 'matrix-js-sdk';
+import { DecryptionError } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
 import { DecryptionFailureCode } from 'matrix-js-sdk/lib/crypto-api';
 
 // vi.mock factories are hoisted above imports, so referenced variables must
@@ -50,10 +52,8 @@ const createFakeMatrixClient = () => {
 };
 
 /**
- * Minimal MatrixEvent double for an `m.room.encrypted` event: enough surface
- * to drive `Event.decrypted` (success/failure) transitions the way
- * matrix-js-sdk does -- `getType()` stays `m.room.encrypted` on failure and
- * only changes on success.
+ * Minimal MatrixEvent double for timer, classification and cleanup tests.
+ * The real Matrix SDK fixtures below also exercise its event transitions.
  */
 const createFakeEncryptedEvent = (id: string) => {
 	const decryptionListeners = new Set<Listener>();
@@ -63,6 +63,7 @@ const createFakeEncryptedEvent = (id: string) => {
 
 	return {
 		getId: () => id,
+		getWireType: () => 'm.room.encrypted',
 		getType: () => type,
 		isDecryptionFailure: () => failing,
 		get decryptionFailureReason() {
@@ -77,7 +78,7 @@ const createFakeEncryptedEvent = (id: string) => {
 		},
 		listenerCount: () => decryptionListeners.size,
 		simulateFailure: (reason: DecryptionFailureCode | null) => {
-			type = 'm.room.encrypted';
+			type = 'm.room.message';
 			failing = true;
 			failureReason = reason;
 			decryptionListeners.forEach((listener) => listener());
@@ -290,6 +291,7 @@ describe('initUtdTracking', () => {
 
 			const plainEvent = {
 				getId: () => '$plain1',
+				getWireType: () => 'm.room.message',
 				getType: () => 'm.room.message',
 				isDecryptionFailure: () => false,
 				decryptionFailureReason: null,
@@ -300,6 +302,86 @@ describe('initUtdTracking', () => {
 
 			expect(plainEvent.on).not.toHaveBeenCalled();
 			expect(mockAdd).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('Matrix SDK event transitions', () => {
+		const missingSession =
+			DecryptionFailureCode.MEGOLM_UNKNOWN_INBOUND_SESSION_ID;
+
+		const setupEncryptedMessage = async () => {
+			const { initUtdTracking, setMatrixClientServiceRef } =
+				await loadModules();
+			const client = createFakeMatrixClient();
+			setMatrixClientServiceRef({ getClient: () => client } as any);
+			initUtdTracking();
+
+			const event = new MatrixEvent({
+				event_id: '$synthetic-encrypted-message',
+				type: 'm.room.encrypted'
+			});
+			const decryptEvent = vi
+				.fn()
+				.mockRejectedValueOnce(
+					new DecryptionError(
+						missingSession,
+						'Synthetic missing session'
+					)
+				)
+				.mockResolvedValue({
+					clearEvent: {
+						type: 'm.room.message',
+						content: { msgtype: 'm.text' }
+					}
+				});
+			const backend = { decryptEvent } as Parameters<
+				MatrixEvent['attemptDecryption']
+			>[0];
+
+			return {
+				event,
+				addToTimeline: () => client.emit('Room.timeline', event),
+				decrypt: () => event.attemptDecryption(backend)
+			};
+		};
+
+		it.each(['before', 'after'])(
+			'counts an SDK failure reported %s the timeline event',
+			async (timing) => {
+				const { event, addToTimeline, decrypt } =
+					await setupEncryptedMessage();
+				if (timing === 'after') addToTimeline();
+				await decrypt();
+				if (timing === 'before') addToTimeline();
+
+				expect(event.getWireType()).toBe('m.room.encrypted');
+				expect(event.getType()).toBe('m.room.message');
+				expect(event.isDecryptionFailure()).toBe(true);
+				vi.advanceTimersByTime(GRACE_PERIOD_MS - 1);
+				expect(mockAdd).not.toHaveBeenCalled();
+				vi.advanceTimersByTime(1);
+				expect(mockAdd).toHaveBeenCalledExactlyOnceWith(1, {
+					outcome: 'permanent',
+					cause: missingSession,
+					category: 'bug'
+				});
+			}
+		);
+
+		it('counts a successful SDK retry within the window as transient', async () => {
+			const { event, addToTimeline, decrypt } =
+				await setupEncryptedMessage();
+			addToTimeline();
+			await decrypt();
+			vi.advanceTimersByTime(30_000);
+			await decrypt();
+			expect(event.isDecryptionFailure()).toBe(false);
+			vi.advanceTimersByTime(GRACE_PERIOD_MS);
+
+			expect(mockAdd).toHaveBeenCalledExactlyOnceWith(1, {
+				outcome: 'transient_resolved',
+				cause: missingSession
+			});
 		});
 	});
 

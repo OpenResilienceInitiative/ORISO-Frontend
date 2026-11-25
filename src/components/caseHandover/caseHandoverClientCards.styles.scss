@@ -103,6 +103,12 @@
 	color: var(--m3-on-surface, #1c1b1f);
 }
 
+.carimatMessageFrame__bubble
+	.caseHandoverMessage__body
+	> .messageItem__systemNotificationDescription {
+	color: var(--m3-on-surface-variant, #444748);
+}
+
 .caseHandoverMessage__body .caseHandoverMessage__reason {
 	margin: 0;
 	font-weight: 500;

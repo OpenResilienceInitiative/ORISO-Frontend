@@ -24,12 +24,17 @@ import {
 import { callManager } from '../../services/CallManager';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { apiCallState } from '../../api/apiCallState';
+import { apiGetCaseHandoverRequestStatus } from '../../api/apiCaseHandover';
 import { apiFetchUserDrafts } from '../../api/apiUserDrafts';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 
 // Third-party decorative animation requires a canvas absent from jsdom.
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../api/apiCallState', () => ({ apiCallState: vi.fn() }));
+vi.mock('../../api/apiCaseHandover', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiCaseHandover')>()),
+	apiGetCaseHandoverRequestStatus: vi.fn()
+}));
 vi.mock('../../api/apiUserDrafts', () => ({ apiFetchUserDrafts: vi.fn() }));
 // #2226: call cards now show their conversation; this file tests joining,
 // so the preview is a stub that records which room it was asked to show.
@@ -790,6 +795,51 @@ it('ignores a second click on a call that is still joining instead of reporting 
 });
 
 it.each([390, 1440])(
+	'opens a pending handover consent request at %spx without marking it read',
+	async (width) => {
+		const consent: NotificationFeedItem = {
+			...callItem,
+			id: 'consent-1',
+			eventType: 'case.handover.consent.requested',
+			sourceSessionId: 103,
+			actionPath:
+				'/sessions/user/view/room-103/103?caseHandoverRequestId=42',
+			params: { caseHandoverRequestId: 42 }
+		};
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue({
+			sessionId: 103,
+			requestId: 42,
+			status: 'PENDING_CLIENT_CONSENT',
+			canViewContent: false,
+			clientConsentRequired: true
+		});
+		await renderCenter(width, consent, [], true, 'asker');
+		await user.click(
+			screen.getByRole('button', { name: /Counsellor access request/ })
+		);
+		if (width === 1440) {
+			await screen.findByRole('button', {
+				name: en.caseHandover.consent.approve
+			});
+			await user.click(
+				screen.getAllByRole('button', {
+					name: 'Open chat',
+					exact: true
+				})[0]
+			);
+		}
+
+		expect(screen.getByLabelText('Current route').textContent).toBe(
+			'/sessions/user/view/room-103/103'
+		);
+		expect(screen.getByLabelText('Current query').textContent).toBe(
+			'?caseHandoverRequestId=42'
+		);
+		expect(markRead).not.toHaveBeenCalled();
+	}
+);
+
+it.each([390, 1440])(
 	'opens a persisted rejection action in the exact asker case at %spx',
 	async (width) => {
 		const rejected: NotificationFeedItem = {
@@ -821,5 +871,6 @@ it.each([390, 1440])(
 			'?rejectedEnquiry=1'
 		);
 		expect(joinRoom).not.toHaveBeenCalled();
+		expect(markRead).toHaveBeenCalledWith('rejection-1');
 	}
 );

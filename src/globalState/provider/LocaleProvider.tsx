@@ -47,7 +47,7 @@ const queueI18nInit = (
 
 export function LocaleProvider(props) {
 	const settings = useAppConfig();
-	const isLoading = useTenantTheming();
+	const isLoading = useTenantTheming({ ownsPalette: false });
 	const tenant = useTenant();
 	const [initialized, setInitialized] = useState(false);
 	// Which tenant language set the current list was built from. Signing in

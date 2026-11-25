@@ -49,7 +49,7 @@ export const MessageSendFailed = ({
 			<div className="messageItem__messageWrap messageItem__messageWrap--left">
 				<div className="messageItem__sideColumn messageItem__sideColumn--left">
 					<div className="messageItem__sideColumnGroup">
-						<div className="messageItem__avatar">
+						<div className="messageItem__avatar messageItem__avatar--failure">
 							<span
 								className="messageItem__sendFailedAvatar"
 								aria-hidden
