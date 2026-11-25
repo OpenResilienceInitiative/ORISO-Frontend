@@ -516,8 +516,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
+		// Keyboard focus: the focus role (primary in dark), not the hairline.
 		box-shadow: 0 0 0 1px
-			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+			var(--oriso-outline-accent, var(--m3-primary-fixed, #ffdad5));
 	}
 
 	&__functionalityWrapper {

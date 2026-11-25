@@ -239,7 +239,8 @@ const measure = (
 		background
 	);
 	return {
-		ratio: Math.round(ratio(painted, background) * 100) / 100,
+		// Unrounded: WCAG compares the exact ratio (4.497 must not pass 4.5).
+		ratio: ratio(painted, background),
 		color,
 		background
 	};
@@ -287,7 +288,7 @@ export const findLowContrastText = (
 export const describeLowContrast = (entries: LowContrastText[]): string[] =>
 	entries.map(
 		({ text, ratio: value, color, background, element }) =>
-			`"${text}" ${value}:1 (${color} on ${background}) in ${element.tagName.toLowerCase()}.${Array.from(element.classList).slice(0, 2).join('.')}`
+			`"${text}" ${Math.floor(value * 100) / 100}:1 (${color} on ${background}) in ${element.tagName.toLowerCase()}.${Array.from(element.classList).slice(0, 2).join('.')}`
 	);
 
 /**

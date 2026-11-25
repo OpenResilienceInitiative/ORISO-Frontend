@@ -306,6 +306,12 @@ $buttonMaxWidth: 400px;
 			&:hover {
 				background-color: var(--m3-primary-hover, $hover-primary);
 				border-color: var(--m3-primary-hover, $hover-primary);
+
+				// Dark: the primary hover fill is a light tone, so the glyph
+				// takes on-primary instead of the surface ink set above.
+				html[data-oriso-personal-scheme='dark'] & svg {
+					fill: var(--m3-on-primary, #690004);
+				}
 			}
 		}
 	}

@@ -20,6 +20,7 @@ $focus-ring-on-fill-color: var(--m3-on-primary, #ffffff);
 
 // Pill entry of the appointment lists (Activity Timeline, counsellor calendar)
 @import './listEntryPill';
+@import './recipientRadio';
 
 // Fixed-height kit textarea (group-chat welcome and rule editors)
 @import './fixedTextareaBox';
