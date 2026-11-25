@@ -1081,13 +1081,17 @@ export const ColleaguesBandCard: Story = {
 		});
 		const inCard = within(card);
 		// Who is busy with what, and who is free.
+		// The people fill in once the colleagues' calendars are in; wait
+		// for them instead of reading the first render.
 		await expect(
-			inCard.getByTestId('calendar-band-person-kaya').textContent
+			(await inCard.findByTestId('calendar-band-person-kaya')).textContent
 		).toContain('Video · 11:00–12:00');
 		await expect(
-			inCard.getByTestId('calendar-band-person-nowak').textContent
+			(await inCard.findByTestId('calendar-band-person-nowak'))
+				.textContent
 		).toContain('Telefon · 11:00–12:00');
-		const free = inCard.getByTestId('calendar-band-free').textContent;
+		const free = (await inCard.findByTestId('calendar-band-free'))
+			.textContent;
 		await expect(free).toContain('E. Demir');
 		await expect(free).toContain('K. Hoffmann');
 		// The band is outlined; the list waits under the card, out of reach;
@@ -1169,7 +1173,7 @@ export const ColleaguesBandCardActions: Story = {
 		// form the calendar already has.
 		await userEvent.click(
 			within(
-				within(card).getByTestId('calendar-band-person-kaya')
+				await within(card).findByTestId('calendar-band-person-kaya')
 			).getByRole('button', { name: /Verschiebung vorschlagen/ })
 		);
 		await findCy('calendar-menu-entry');
@@ -1197,7 +1201,7 @@ export const ColleaguesBandCardFullscreen: Story = {
 		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
 		const menu = within(await findCy('calendar-menu-band'));
 		await expect(
-			menu.getByTestId('calendar-band-person-kaya')
+			await menu.findByTestId('calendar-band-person-kaya')
 		).toBeTruthy();
 		await expect(
 			menu.queryByRole('button', { name: 'Zurück zur Liste' })
@@ -1214,10 +1218,10 @@ export const ColleaguesBandCardPhone: Story = {
 		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
 		const menu = within(await findCy('calendar-menu-band'));
 		await expect(
-			menu.getByTestId('calendar-band-person-nowak')
+			await menu.findByTestId('calendar-band-person-nowak')
 		).toBeTruthy();
 		await expect(
-			menu.getByTestId('calendar-band-free').textContent
+			(await menu.findByTestId('calendar-band-free')).textContent
 		).toContain('E. Demir');
 	}
 };
