@@ -6520,14 +6520,34 @@
 				},
 				"practiceStart": {
 					"title": "Start the circle",
-					"intro": "Participants wait here until you begin. Click \"Start video call\"."
+					"intro": "Participants wait here until you begin. Click \"Start video call\": the circle starts and the practice call opens."
 				},
-				"practiceCall": {
-					"title": "Video call",
-					"intro": "In a real circle you start the video call here. Click it: in the exercise you only see what happens, without camera or microphone."
+				"practiceStage": {
+					"title": "Your video call",
+					"intro": "On the left you see yourself, on the right Mia, a made-up participant, is speaking. The ring shows who is speaking. Nobody else sees or hears you."
+				},
+				"practiceMute": {
+					"title": "Mute",
+					"intro": "Click the microphone to mute yourself. A second click turns it back on."
+				},
+				"practiceCamera": {
+					"title": "Camera",
+					"intro": "Click the camera to turn your picture off. The others then see your initials."
+				},
+				"practiceMinimise": {
+					"title": "Minimise",
+					"intro": "Click here to minimise the call. You can keep working in the chat while the call runs."
+				},
+				"practiceExpand": {
+					"title": "Back to the full view",
+					"intro": "The call keeps running at the bottom right. Click here to open it in full again."
+				},
+				"practiceLeave": {
+					"title": "Leave the call",
+					"intro": "Click the red button to leave the call. You are back in the circle then."
 				},
 				"practiceDone": {
-					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
+					"intro": "Done: you created a conversation circle, started its video call and left it again. In a real circle you share the invitation link beforehand so participants can join."
 				},
 				"practiceConfigure": {
 					"title": "Counselling centre and date",
@@ -7196,10 +7216,16 @@
 		"error": {
 			"start": "The practice could not be started. Please try again."
 		},
-		"callStart": {
-			"title": "Video call (practice)",
-			"description": "This is where the video call for your circle starts. In the exercise, without camera or microphone.",
-			"close": "Got it"
+		"callStage": {
+			"title": "Conversation circle (practice)",
+			"label": "Practice video call",
+			"notice": "Practice: nobody else sees or hears you. Camera and microphone stay on this device.",
+			"noMedia": "Camera or microphone is not available. The exercise continues anyway.",
+			"you": "You",
+			"miaName": "Mia (practice)",
+			"line1": "Hello, I'm Mia. Nice that you opened the circle.",
+			"line2": "I can hear you well. Feel free to try the buttons below.",
+			"line3": "When you're done, just leave the call. See you soon!"
 		}
 	},
 	"counselling": {

@@ -7,9 +7,11 @@ type FormatTenant = Parameters<typeof getConversationFormatAvailability>[0];
 /**
  * Version 2 (FE#2545): where the practice area is open the tour runs as a
  * practice flow (`practiceGroupCircleTour`) under this id and version, so the
- * Help list shows one status for both renderings.
+ * Help list shows one status for both renderings. Version 3: the practice
+ * flow ends in the practice call (D3, revised); the explanation steps are
+ * unchanged, the shared version keeps the one status.
  */
-export const GROUP_CIRCLE_TOUR_VERSION = 2;
+export const GROUP_CIRCLE_TOUR_VERSION = 3;
 
 /**
  * Tour event (`emitTourEvent`) of the circle settings screen: it opened for

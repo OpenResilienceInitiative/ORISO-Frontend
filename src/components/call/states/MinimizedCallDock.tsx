@@ -44,6 +44,9 @@ export interface MinimizedCallDockProps {
 	onExpand: () => void;
 	/** Take keyboard focus when it appears, e.g. after minimizing the call. */
 	autoFocus?: boolean;
+	/** Product-tour anchors (`data-tour-target`) of the dock and its way back. */
+	tourTarget?: string;
+	expandTourTarget?: string;
 }
 
 /** `m:ss`, or `h:mm:ss` past the hour, as the call card shows a duration. */
@@ -75,7 +78,9 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 	onToggleCamera,
 	onHangUp,
 	onExpand,
-	autoFocus = false
+	autoFocus = false,
+	tourTarget,
+	expandTourTarget
 }) => {
 	const { t } = useTranslation();
 	useRegisterFloatingSurface('call-dock');
@@ -137,6 +142,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 				className="minimized-call-dock"
 				aria-label={t('calls.states.dockLabel', { name: party.name })}
 				data-speaking={isSpeaking ? 'true' : undefined}
+				data-tour-target={tourTarget}
 			>
 				<div className="minimized-call-dock__who">
 					<span className="minimized-call-dock__avatar">
@@ -189,6 +195,7 @@ export const MinimizedCallDock: React.FC<MinimizedCallDockProps> = ({
 					ref={expandRef}
 					onClick={onExpand}
 					aria-label={t('calls.states.backToCall')}
+					data-tour-target={expandTourTarget}
 				>
 					<MaximizeIcon aria-hidden="true" />
 				</ButtonBase>

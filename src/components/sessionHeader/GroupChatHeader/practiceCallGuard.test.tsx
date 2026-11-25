@@ -19,6 +19,11 @@ import {
 	exitPracticeMode
 } from '../../../practice/practiceMode';
 import { PRACTICE_TOUR_EVENTS } from '../../../practice/practiceTourEvents';
+import {
+	getPracticeCallState,
+	leavePracticeCall
+} from '../../../practice/practiceCallStore';
+import { callManager } from '../../../services/CallManager';
 
 vi.mock('lottie-web', () => ({ default: {} }));
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -117,6 +122,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	leavePracticeCall();
 	stopListening();
 	cleanup();
 	exitPracticeMode();
@@ -126,8 +132,9 @@ afterEach(() => {
 const macrotask = () =>
 	act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
-it('starts no call in practice: the click only simulates the start (FE#2545 D3)', async () => {
+it('starts no call in practice: the click opens the practice call stage (FE#2545 D3)', async () => {
 	enterPracticeMode({ tourId: 'consultant-group-circle' });
+	const startCall = vi.spyOn(callManager, 'startCall');
 	const button = renderHeader();
 
 	await act(async () => {
@@ -138,6 +145,10 @@ it('starts no call in practice: the click only simulates the start (FE#2545 D3)'
 	expect(callPath.getUserMedia).not.toHaveBeenCalled();
 	expect(callPath.confirm).not.toHaveBeenCalled();
 	expect(callPath.alert).not.toHaveBeenCalled();
+	expect(startCall).not.toHaveBeenCalled();
+	expect(callManager.hasActiveCall()).toBe(false);
+	// The stage asks for the camera itself once it shows (not mounted here).
+	expect(getPracticeCallState().status).toBe('open');
 	expect(callStarts).toBe(1);
 });
 
@@ -152,4 +163,5 @@ it('keeps the real call start outside practice', async () => {
 	// jsdom runs on http: the real handler stops at its HTTPS prompt.
 	expect(callPath.confirm).toHaveBeenCalledTimes(1);
 	expect(callStarts).toBe(0);
+	expect(getPracticeCallState().status).toBe('closed');
 });

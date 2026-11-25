@@ -18,6 +18,7 @@ import {
 } from './practiceRoutes';
 import { LIVE_CHAT_QUEUE_PATH } from '../components/app/liveChatRailTarget';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
 import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
@@ -344,7 +345,7 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 		expect(tour.requiredTargetPolicy).toBe('stop');
 	});
 
-	it('creates, opens and starts a circle, then shows the call button', () => {
+	it('creates, opens and starts a circle, then walks the practice call', () => {
 		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
 			['intro', ''],
 			['create', 'groupchat-create-button'],
@@ -354,12 +355,17 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 			['settings', 'groupchat-circle-create'],
 			['open-circle', 'groupchat-list-item'],
 			['start', 'groupchat-start-button'],
-			['call', 'groupchat-call-button'],
+			['stage', 'practice-call-stage'],
+			['mute', 'practice-call-mute'],
+			['camera', 'practice-call-camera'],
+			['minimise', 'practice-call-minimise'],
+			['expand', 'practice-call-expand'],
+			['leave', 'practice-call-leave'],
 			['done', '']
 		]);
 	});
 
-	it('advances on the learner action: click, event, event, click, event, event', () => {
+	it('advances on the learner action: the start event, then a click on each call control', () => {
 		expect(
 			tour.steps
 				.filter((s) => s.advanceOn)
@@ -376,19 +382,19 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 				'start',
 				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleStarted }
 			],
-			[
-				'call',
-				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCallStarted }
-			]
+			['mute', { type: 'click' }],
+			['camera', { type: 'click' }],
+			['minimise', { type: 'click' }],
+			['expand', { type: 'click' }],
+			['leave', { type: 'click' }]
 		]);
 	});
 
-	it('goes on when the call button was used: the simulated start, no call (D3)', () => {
-		expect(step('call').target).toBe('groupchat-call-button');
-		expect(step('call').advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.circleCallStarted
-		});
+	it('keeps the real start button and its label: no second click on the header call button (D3, revised)', () => {
+		expect(step('start').target).toBe('groupchat-start-button');
+		expect(tour.steps.map((s) => s.target)).not.toContain(
+			'groupchat-call-button'
+		);
 	});
 
 	it('lets the counsellor fill the settings card before "Erstellen", and go back to it', () => {
@@ -413,7 +419,10 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 	it('offers no Back after an action that cannot be undone', () => {
 		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
 			'open-circle',
-			'call'
+			'stage',
+			'expand',
+			'leave',
+			'done'
 		]);
 	});
 
@@ -528,7 +537,20 @@ describe('practice tour wiring', () => {
 		// The navigation renders `nav-<slug>` from this map (FE#2340); it is
 		// the one productTour file that holds rendered anchors, not tours.
 		.concat('src/components/productTour/tourCatalogue.ts')
+		// The practice call (FE#2545 D3) names its anchors in one place; the
+		// test below checks that its stage renders each of them.
+		.concat('src/practice/practiceCallTargets.ts')
 		.map((path) => readFileSync(path, 'utf8'));
+
+	it('the practice call stage renders every practice call anchor', () => {
+		const stage = readFileSync(
+			'src/practice/PracticeCallStage.tsx',
+			'utf8'
+		);
+		Object.keys(PRACTICE_CALL_TARGETS).forEach((key) => {
+			expect(stage, key).toContain(`PRACTICE_CALL_TARGETS.${key}`);
+		});
+	});
 
 	const targetsOf = (tour: TourDefinition): string[] =>
 		tour.steps.flatMap((step) => {

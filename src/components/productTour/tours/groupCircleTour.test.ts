@@ -20,8 +20,8 @@ describe('consultant-group-circle', () => {
 		GROUP_CIRCLE_TOUR_VERSION
 	);
 
-	it('is version 2: the practice rendering (FE#2545) shares id and version', () => {
-		expect(GROUP_CIRCLE_TOUR_VERSION).toBe(2);
+	it('is version 3: the practice rendering (FE#2545) shares id and version, and now ends in the practice call', () => {
+		expect(GROUP_CIRCLE_TOUR_VERSION).toBe(3);
 	});
 
 	const steps = consultantGroupCircleTour.steps;

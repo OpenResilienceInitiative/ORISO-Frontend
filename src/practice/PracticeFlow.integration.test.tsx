@@ -80,6 +80,9 @@ import {
 } from './script/scriptTestSupport';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 import { isPracticeId } from './practiceIds';
+import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
+import { installFakeMedia } from './practiceCallMedia.testkit';
+import { callManager } from '../services/CallManager';
 import {
 	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
 	LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
@@ -765,12 +768,25 @@ const banner = () =>
 
 /**
  * The Gesprächskreis flow from the settings on (FE#2545): "Erstellen" makes
- * the circle in memory, the list opens it, the waiting room starts it, the
- * call button shows the simulated start (D3), and the tour completes.
+ * the circle in memory, the list opens it, the waiting room's start opens the
+ * practice call (D3, revised), the counsellor mutes, turns the camera off,
+ * minimises into the dock, expands and leaves, and the tour completes.
+ * `cameraAllowed: false` refuses camera and microphone like a browser;
+ * `endInCall` presses the banner's End while the call is on screen.
  */
 const createOpenStartAndCall = async (
 	configureIndex: number,
-	{ agency, topic }: { agency?: string; topic?: boolean } = {}
+	{
+		agency,
+		topic,
+		cameraAllowed = true,
+		endInCall = false
+	}: {
+		agency?: string;
+		topic?: boolean;
+		cameraAllowed?: boolean;
+		endInCall?: boolean;
+	} = {}
 ) => {
 	// The settings card: what "Erstellen" needs is filled in there, inside
 	// the spotlight; then Next.
@@ -828,7 +844,30 @@ const createOpenStartAndCall = async (
 		SLOW
 	);
 
-	// The waiting room's real "Video-Call starten"; it starts the circle.
+	// The real call path is watched: the manager, the socket, the media.
+	const media = installFakeMedia({ granted: cameraAllowed });
+	const startCall = vi.spyOn(callManager, 'startCall');
+	const sockets = vi.fn();
+	vi.stubGlobal(
+		'WebSocket',
+		class {
+			constructor(url: string) {
+				sockets(url);
+			}
+		}
+	);
+	const confirm = vi.spyOn(window, 'confirm');
+	const alert = vi.spyOn(window, 'alert');
+	const callAnchor = (name: string) =>
+		document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`);
+	const clickAndWait = (element: HTMLElement) =>
+		act(async () => {
+			fireEvent.click(element);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+	// The waiting room's real "Video-Call starten": it starts the circle in
+	// memory and opens the practice call at once, no second click.
 	const start = await expectStep(open + 1);
 	const startButton = within(start!).getByRole('button', {
 		name: 'videoCall.button.startVideoCall'
@@ -838,35 +877,106 @@ const createOpenStartAndCall = async (
 			fireEvent.click(startButton);
 		});
 	});
+	// The audio started inside that click.
+	expect(media.contexts).toHaveLength(1);
 
-	// The call button of the started circle, used: practice shows a
-	// simulated start (D3) and reaches neither the media nor a prompt.
-	const call = await expectStep(open + 2);
+	// The stage: the own tile and Mia; Next.
+	const stage = await expectStep(open + 2);
+	expect(stage!.dataset.tourTarget).toBe(PRACTICE_CALL_TARGETS.stage);
 	expect(route()).toMatch(/sessionView\/!practice-4/);
-	const getUserMedia = vi.fn();
-	Object.defineProperty(navigator, 'mediaDevices', {
-		configurable: true,
-		value: { getUserMedia }
-	});
-	const confirm = vi.spyOn(window, 'confirm');
-	const alert = vi.spyOn(window, 'alert');
-	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCallStarted, async () => {
-		await act(async () => {
-			fireEvent.click(call!.querySelector('.button__item, button')!);
-		});
-	});
-	expect(getUserMedia).not.toHaveBeenCalled();
+	await waitFor(() => expect(media.getUserMedia).toHaveBeenCalledTimes(1));
+	if (cameraAllowed) {
+		await waitFor(() =>
+			expect(
+				within(stage!).getByTestId('practice-call-own-video')
+			).toBeTruthy()
+		);
+	} else {
+		await waitFor(() =>
+			expect(
+				within(stage!).getByTestId('practice-call-no-media')
+			).toBeTruthy()
+		);
+		expect(
+			within(stage!).queryByTestId('practice-call-own-video')
+		).toBeNull();
+	}
+	expect(
+		within(stage!).getByTestId('practice-call-mia-tile').textContent
+	).toContain('practice.callStage.miaName');
+	if (endInCall) {
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+		expect(media.allTracksEnded()).toBe(true);
+		expect(media.allAudioClosed()).toBe(true);
+		expect(startCall).not.toHaveBeenCalled();
+		expect(sockets).not.toHaveBeenCalled();
+		expect(progressWrites()).not.toContain('completed');
+		expectNothingLeftThePracticeWorld();
+		return;
+	}
+	pressNext(open + 2);
+
+	// Mute, camera, minimise: each a click on the real control.
+	const mute = await expectStep(open + 3);
+	await clickAndWait(mute!);
+	expect(mute!.getAttribute('aria-pressed')).toBe('true');
+	const camera = await expectStep(open + 4);
+	await clickAndWait(camera!);
+	expect(camera!.getAttribute('aria-pressed')).toBe('true');
+	if (cameraAllowed) {
+		const [mic, video] = media.tracks;
+		expect([mic.enabled, video.enabled]).toEqual([false, false]);
+	}
+	const minimise = await expectStep(open + 5);
+	await clickAndWait(minimise!);
+
+	// The real dock with Mia; its way back.
+	const expand = await expectStep(open + 6);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+	expect(
+		callAnchor(PRACTICE_CALL_TARGETS.dock)!.classList.contains(
+			'minimized-call-dock'
+		)
+	).toBe(true);
+	await clickAndWait(expand!);
+
+	// Leave: back in the circle, every track stopped, the audio closed.
+	const leave = await expectStep(open + 7);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.dock)).toBeNull();
+	await clickAndWait(leave!);
+	await expectStep(open + 8);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+	expect(route()).toMatch(/sessionView\/!practice-4/);
+	expect(media.tracks).toHaveLength(cameraAllowed ? 2 : 0);
+	expect(media.allTracksEnded()).toBe(true);
+	expect(media.allAudioClosed()).toBe(true);
+
+	// Nothing of the real call path was touched.
+	expect(media.getUserMedia).toHaveBeenCalledTimes(1);
+	expect(startCall).not.toHaveBeenCalled();
+	expect(callManager.hasActiveCall()).toBe(false);
+	expect(document.querySelector('.element-call-iframe')).toBeNull();
+	expect(sockets).not.toHaveBeenCalled();
 	expect(confirm).not.toHaveBeenCalled();
 	expect(alert).not.toHaveBeenCalled();
-	expect(screen.getByText('practice.callStart.description')).toBeTruthy();
-	fireEvent.click(screen.getByTestId('practice-call-start-close'));
-	await waitFor(() =>
-		expect(screen.queryByText('practice.callStart.description')).toBeNull()
-	);
+	expect(
+		network.filter(
+			({ url }) =>
+				url.includes('/_matrix') ||
+				url.includes('/service/matrix/calls')
+		)
+	).toEqual([]);
 
 	// Done: completion is written for the circle tour itself, and the
 	// circle never left the page.
-	await finish(open + 3);
+	await finish(open + 8);
 	expect(
 		network.filter(({ url }) => url.includes('/service/users/chat'))
 	).toEqual([]);
@@ -1067,13 +1177,13 @@ describe('practice flows on the real app shell', () => {
 	});
 
 	it.each([
-		{ twoAgencies: false, agency: undefined },
+		{ twoAgencies: false, agency: undefined, cameraAllowed: true },
 		// Dev: a counsellor of several Beratungsstellen gets none preselected,
 		// and "Erstellen" waits for her choice in the settings card.
-		{ twoAgencies: true, agency: SECOND_AGENCY.name }
+		{ twoAgencies: true, agency: SECOND_AGENCY.name, cameraAllowed: false }
 	])(
-		'Gesprächskreis (FE#2545, two agencies: $twoAgencies): the real create flow makes a practice circle, which is opened, started and its call start simulated',
-		async ({ twoAgencies, agency }) => {
+		'Gesprächskreis (FE#2545, two agencies: $twoAgencies, camera allowed: $cameraAllowed): the real create flow makes a practice circle, which is opened and started into the practice call',
+		async ({ twoAgencies, agency, cameraAllowed }) => {
 			const app = renderApp({ groupCircle: true, twoAgencies });
 			// The Help list starts topic tours by request; there is no card.
 			await app.request(GROUP_CIRCLE);
@@ -1125,7 +1235,7 @@ describe('practice flows on the real app shell', () => {
 						.hasAttribute('disabled')
 				).toBe(true);
 			}
-			await createOpenStartAndCall(create + 3, { agency });
+			await createOpenStartAndCall(create + 3, { agency, cameraAllowed });
 		},
 		120000
 	);
@@ -1158,6 +1268,23 @@ describe('practice flows on the real app shell', () => {
 		).toBe(true);
 
 		await createOpenStartAndCall(create + 3, { topic: true });
+	}, 120000);
+
+	it('Gesprächskreis: banner End during the practice call stops every track and closes the audio', async () => {
+		const app = renderApp({ groupCircle: true, circleOnly: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		pressNext(0);
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
+		await act(async () => {
+			fireEvent.click(createButton!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+		await createOpenStartAndCall(create + 3, {
+			topic: true,
+			endInCall: true
+		});
 	}, 120000);
 
 	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {

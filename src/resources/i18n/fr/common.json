@@ -6605,14 +6605,34 @@
 				},
 				"practiceStart": {
 					"title": "Démarrer le cercle",
-					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo »."
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo » : le cercle démarre et l'appel d'exercice s'ouvre."
 				},
-				"practiceCall": {
-					"title": "Appel vidéo",
-					"intro": "Dans un vrai cercle, vous démarrez ici l'appel vidéo. Cliquez dessus : dans l'exercice, vous voyez seulement ce qui se passe, sans caméra ni micro."
+				"practiceStage": {
+					"title": "Votre appel vidéo",
+					"intro": "À gauche, vous vous voyez ; à droite, Mia, une participante fictive, parle. L'anneau montre qui parle. Personne d'autre ne vous voit ni ne vous entend."
+				},
+				"practiceMute": {
+					"title": "Couper le micro",
+					"intro": "Cliquez sur le micro pour couper votre son. Un deuxième clic le rallume."
+				},
+				"practiceCamera": {
+					"title": "Caméra",
+					"intro": "Cliquez sur la caméra pour couper votre image. Les autres voient alors vos initiales."
+				},
+				"practiceMinimise": {
+					"title": "Réduire",
+					"intro": "Cliquez ici pour réduire l'appel. Vous continuez à travailler dans le chat pendant l'appel."
+				},
+				"practiceExpand": {
+					"title": "Retour à la grande vue",
+					"intro": "L'appel continue en bas à droite. Cliquez ici pour l'agrandir à nouveau."
+				},
+				"practiceLeave": {
+					"title": "Quitter l'appel",
+					"intro": "Cliquez sur le bouton rouge pour quitter l'appel. Vous êtes alors de retour dans le cercle."
 				},
 				"practiceDone": {
-					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+					"intro": "C'est fait : vous avez créé un cercle de parole, démarré son appel vidéo et l'avez quitté. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
 				},
 				"practiceConfigure": {
 					"title": "Centre de conseil et date",
@@ -7281,10 +7301,16 @@
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
 		},
-		"callStart": {
-			"title": "Appel vidéo (exercice)",
-			"description": "C'est ici que démarre l'appel vidéo de votre cercle. Dans l'exercice, sans caméra ni micro.",
-			"close": "Compris"
+		"callStage": {
+			"title": "Cercle de parole (exercice)",
+			"label": "Appel vidéo d'exercice",
+			"notice": "Exercice : personne d'autre ne vous voit ni ne vous entend. La caméra et le micro restent sur cet appareil.",
+			"noMedia": "La caméra ou le micro n'est pas disponible. L'exercice continue quand même.",
+			"you": "Vous",
+			"miaName": "Mia (exercice)",
+			"line1": "Bonjour, je suis Mia. Merci d'avoir ouvert le cercle.",
+			"line2": "Je vous entends bien. Essayez donc les boutons en bas.",
+			"line3": "Quand vous avez fini, quittez simplement l'appel. À bientôt !"
 		}
 	},
 	"counselling": {

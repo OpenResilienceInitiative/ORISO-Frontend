@@ -6595,14 +6595,34 @@
 				},
 				"practiceStart": {
 					"title": "Gesprächskreis starten",
-					"intro": "Teilnehmende warten hier, bis Sie beginnen. Klicken Sie auf „Video-Call starten“."
+					"intro": "Teilnehmende warten hier, bis Sie beginnen. Klicken Sie auf „Video-Call starten“: Der Kreis startet und der Übungs-Call öffnet sich."
 				},
-				"practiceCall": {
-					"title": "Video-Call",
-					"intro": "Im echten Gesprächskreis starten Sie hier den Video-Call. Klicken Sie darauf: In der Übung sehen Sie nur, was passiert, ohne Kamera und Mikrofon."
+				"practiceStage": {
+					"title": "Ihr Video-Call",
+					"intro": "Links sehen Sie sich selbst, rechts spricht Mia, eine erfundene Teilnehmerin. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört Sie."
+				},
+				"practiceMute": {
+					"title": "Stummschalten",
+					"intro": "Klicken Sie auf das Mikrofon, um sich stummzuschalten. Ein zweiter Klick schaltet es wieder ein."
+				},
+				"practiceCamera": {
+					"title": "Kamera",
+					"intro": "Klicken Sie auf die Kamera, um Ihr Bild auszuschalten. Dann sehen die anderen Ihre Initialen."
+				},
+				"practiceMinimise": {
+					"title": "Verkleinern",
+					"intro": "Klicken Sie hier, um den Call zu verkleinern. So arbeiten Sie im Chat weiter, während der Call läuft."
+				},
+				"practiceExpand": {
+					"title": "Zurück zur großen Ansicht",
+					"intro": "Der Call läuft unten rechts weiter. Klicken Sie hier, um ihn wieder groß zu öffnen."
+				},
+				"practiceLeave": {
+					"title": "Call verlassen",
+					"intro": "Klicken Sie auf den roten Knopf, um den Call zu verlassen. Sie sind dann wieder im Gesprächskreis."
 				},
 				"practiceDone": {
-					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
+					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt, den Video-Call gestartet und wieder verlassen. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
 				},
 				"practiceConfigure": {
 					"title": "Beratungsstelle und Termin",
@@ -7271,10 +7291,16 @@
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 		},
-		"callStart": {
-			"title": "Video-Call (Übung)",
-			"description": "Hier startet jetzt der Video-Call für Ihren Gesprächskreis. In der Übung ohne Kamera und Mikrofon.",
-			"close": "Verstanden"
+		"callStage": {
+			"title": "Gesprächskreis (Übung)",
+			"label": "Übungs-Video-Call",
+			"notice": "Übung: Niemand sonst sieht oder hört Sie. Kamera und Mikrofon bleiben auf diesem Gerät.",
+			"noMedia": "Kamera oder Mikrofon sind nicht verfügbar. Die Übung geht trotzdem weiter.",
+			"you": "Sie",
+			"miaName": "Mia (Übung)",
+			"line1": "Hallo, ich bin Mia. Schön, dass Sie den Kreis eröffnet haben.",
+			"line2": "Ich höre Sie gut. Probieren Sie ruhig die Knöpfe unten aus.",
+			"line3": "Wenn Sie fertig sind, verlassen Sie einfach den Call. Bis bald!"
 		}
 	},
 	"counselling": {

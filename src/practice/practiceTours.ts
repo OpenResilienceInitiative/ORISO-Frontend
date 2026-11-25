@@ -7,6 +7,7 @@ import {
 	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
@@ -264,9 +265,12 @@ const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
  * FE#2545: the Gesprächskreis topic tour as a practice flow. The counsellor
  * creates a circle with the real create flow (topics, co-moderators and the
  * create itself are answered in memory), opens it from the list and starts
- * it with the real "Video-Call starten". The call is simulated (D3): the last
- * step shows the call button and blocks it. Same id and version as the
- * explanation tour it replaces where practice is open; no card of its own.
+ * it with the real "Video-Call starten". That opens the practice call (D3,
+ * revised): her own camera as a local preview and Mia, a made-up
+ * participant; no call is placed. She mutes, turns the camera off, puts the
+ * call into the real dock, brings it back and leaves. Same id and version as
+ * the explanation tour it replaces where practice is open; no card of its
+ * own.
  */
 export const practiceGroupCircleTour: TourDefinition = {
 	id: PRACTICE_GROUP_CIRCLE_TOUR_ID,
@@ -352,6 +356,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 			contentKey: 'tour.groupCircle.step.practiceOpen.intro'
 		},
 		{
+			// Starts the circle in memory and opens the practice call.
 			id: 'start',
 			target: 'groupchat-start-button',
 			placement: 'top',
@@ -363,21 +368,61 @@ export const practiceGroupCircleTour: TourDefinition = {
 			contentKey: 'tour.groupCircle.step.practiceStart.intro'
 		},
 		{
-			// D3: the button is used, and practice shows a simulated start
-			// instead of a call: no camera, no microphone, no request.
-			id: 'call',
+			// The circle is running: no way back to the waiting room.
+			id: 'stage',
 			hideBack: true,
-			target: 'groupchat-call-button',
-			placement: 'bottom',
-			advanceOn: {
-				type: 'event',
-				name: PRACTICE_TOUR_EVENTS.circleCallStarted
-			},
-			titleKey: 'tour.groupCircle.step.practiceCall.title',
-			contentKey: 'tour.groupCircle.step.practiceCall.intro'
+			target: PRACTICE_CALL_TARGETS.stage,
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.practiceStage.title',
+			contentKey: 'tour.groupCircle.step.practiceStage.intro'
 		},
 		{
+			id: 'mute',
+			target: PRACTICE_CALL_TARGETS.mute,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceMute.title',
+			contentKey: 'tour.groupCircle.step.practiceMute.intro'
+		},
+		{
+			id: 'camera',
+			target: PRACTICE_CALL_TARGETS.camera,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceCamera.title',
+			contentKey: 'tour.groupCircle.step.practiceCamera.intro'
+		},
+		{
+			id: 'minimise',
+			target: PRACTICE_CALL_TARGETS.minimise,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceMinimise.title',
+			contentKey: 'tour.groupCircle.step.practiceMinimise.intro'
+		},
+		{
+			// Back would point at the stage, which the dock replaced.
+			id: 'expand',
+			hideBack: true,
+			target: PRACTICE_CALL_TARGETS.expand,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceExpand.title',
+			contentKey: 'tour.groupCircle.step.practiceExpand.intro'
+		},
+		{
+			id: 'leave',
+			hideBack: true,
+			target: PRACTICE_CALL_TARGETS.leave,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceLeave.title',
+			contentKey: 'tour.groupCircle.step.practiceLeave.intro'
+		},
+		{
+			// The call was left: nothing to go back to.
 			id: 'done',
+			hideBack: true,
 			target: '',
 			placement: 'center',
 			titleKey: 'tour.groupCircle.step.done.title',

@@ -6605,14 +6605,34 @@
 				},
 				"practiceStart": {
 					"title": "Çemberi başlat",
-					"intro": "Katılımcılar siz başlayana kadar burada bekler. „Görüntülü aramayı başlat“a tıklayın."
+					"intro": "Katılımcılar siz başlayana kadar burada bekler. „Görüntülü aramayı başlat“a tıklayın: Çember başlar ve alıştırma araması açılır."
 				},
-				"practiceCall": {
-					"title": "Görüntülü arama",
-					"intro": "Gerçek bir çemberde görüntülü aramayı burada başlatırsınız. Tıklayın: alıştırmada yalnızca ne olduğunu görürsünüz, kamera ve mikrofon olmadan."
+				"practiceStage": {
+					"title": "Görüntülü aramanız",
+					"intro": "Solda kendinizi, sağda konuşan Mia’yı görürsünüz; o uydurma bir katılımcıdır. Halka kimin konuştuğunu gösterir. Sizi başka kimse görmez veya duymaz."
+				},
+				"practiceMute": {
+					"title": "Sesi kapat",
+					"intro": "Sesinizi kapatmak için mikrofona tıklayın. İkinci tıklama tekrar açar."
+				},
+				"practiceCamera": {
+					"title": "Kamera",
+					"intro": "Görüntünüzü kapatmak için kameraya tıklayın. Diğerleri o zaman baş harflerinizi görür."
+				},
+				"practiceMinimise": {
+					"title": "Küçült",
+					"intro": "Aramayı küçültmek için buraya tıklayın. Arama sürerken sohbette çalışmaya devam edersiniz."
+				},
+				"practiceExpand": {
+					"title": "Büyük görünüme dön",
+					"intro": "Arama sağ altta devam ediyor. Tekrar büyütmek için buraya tıklayın."
+				},
+				"practiceLeave": {
+					"title": "Aramadan ayrıl",
+					"intro": "Aramadan ayrılmak için kırmızı düğmeye tıklayın. Sonra tekrar çemberdesiniz."
 				},
 				"practiceDone": {
-					"intro": "Tamamlandı: Bir sohbet çemberi oluşturup başlattınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
+					"intro": "Tamamlandı: Bir sohbet çemberi oluşturdunuz, görüntülü aramasını başlattınız ve ayrıldınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
 				},
 				"practiceConfigure": {
 					"title": "Danışma merkezi ve tarih",
@@ -7281,10 +7301,16 @@
 		"error": {
 			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
 		},
-		"callStart": {
-			"title": "Görüntülü arama (alıştırma)",
-			"description": "Çemberinizin görüntülü araması burada başlar. Alıştırmada kamera ve mikrofon olmadan.",
-			"close": "Anladım"
+		"callStage": {
+			"title": "Sohbet çemberi (alıştırma)",
+			"label": "Alıştırma görüntülü araması",
+			"notice": "Alıştırma: Sizi başka kimse görmez veya duymaz. Kamera ve mikrofon bu cihazda kalır.",
+			"noMedia": "Kamera veya mikrofon kullanılamıyor. Alıştırma yine de devam ediyor.",
+			"you": "Siz",
+			"miaName": "Mia (alıştırma)",
+			"line1": "Merhaba, ben Mia. Çemberi açmanız çok güzel.",
+			"line2": "Sizi iyi duyuyorum. Aşağıdaki düğmeleri deneyebilirsiniz.",
+			"line3": "İşiniz bitince aramadan ayrılmanız yeterli. Görüşmek üzere!"
 		}
 	},
 	"counselling": {
