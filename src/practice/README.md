@@ -195,7 +195,11 @@ status in Help) runs on the real page, so the Einführung never disappears
 for a new counsellor. The auto-start after login is always the watch-only
 Einführung, also on a desktop where practice could run: practice mode never
 starts without a deliberate Start (first-login dialogs such as 2FA keep
-their writes). In practice, the deleted-asker placeholders of "Meine
+their writes). Where the practice area is open, the last step of the
+watch-only Einführung ends with one sentence pointing to the practice
+("Am Computer können Sie das unter Hilfe → Rundgänge auch üben."; key
+`walkthrough.step.6.introWithPractice`, swapped in by the host, the step
+count stays 5). In practice, the deleted-asker placeholders of "Meine
 Beratungen" and "Archiv" (`/users/sessions/consultants/deleted-askers`) are
 answered with none, so no real placeholder row shows in the practice lists.
 A stale launch of the old card id reaches nothing. Proof:
