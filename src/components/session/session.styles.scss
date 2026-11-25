@@ -410,7 +410,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__robotIncomingCard {
 		align-self: flex-start;
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid rgba(233, 152, 168, 0.45);
 		border-radius: 14px;
 		padding: 12px 14px;
@@ -546,7 +546,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		animation: robot-typing-wave 0.8s linear infinite;
 	}
 

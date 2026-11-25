@@ -57,6 +57,12 @@
 	// value and is no longer the menu hover.)
 	--oriso-menu-hover-surface: var(--m3-on-secondary-container, #e7effc);
 
+	// Quiet text (descriptions) on that hover surface.
+	--oriso-menu-hover-description: var(
+		--m3-on-secondary-fixed-variant,
+		#3f4852
+	);
+
 	// Secondary fixed family (M3 Light table = engine output, T27).
 	--m3-secondary-fixed: #dae3f0;
 	--m3-secondary-fixed-dim: #bec7d4;
@@ -155,4 +161,13 @@
 		1rem * var(--oriso-personal-text-scale, 1)
 	);
 	--composer-font-size: calc(0.875rem * var(--oriso-personal-text-scale, 1));
+}
+
+// Dark scheme (P0 dark mode, 2026-11-25): `on-secondary-container` turns
+// light pale blue there, and the menu labels turn light pink — light on
+// light. The hover surface takes the dark `secondary-container` instead and
+// its quiet text the matching `on-` role.
+html[data-oriso-personal-scheme='dark'] {
+	--oriso-menu-hover-surface: var(--m3-secondary-container, #3f4852);
+	--oriso-menu-hover-description: var(--m3-on-secondary-container, #dae3f0);
 }

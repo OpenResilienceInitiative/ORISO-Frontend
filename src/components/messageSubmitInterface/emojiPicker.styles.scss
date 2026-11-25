@@ -51,7 +51,7 @@ $emoji-popover-height: 433px;
 		left: 0;
 		z-index: 1000;
 		box-sizing: content-box;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid $dark-grey;
 		border-radius: 12px;
 
@@ -63,7 +63,7 @@ $emoji-popover-height: 433px;
 			height: 16px;
 			width: 16px;
 			transform: rotate(45deg);
-			background-color: white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			border-right: 1px solid $dark-grey;
 			border-bottom: 1px solid $dark-grey;
 		}
@@ -130,7 +130,7 @@ $emoji-popover-height: 433px;
 		list-style: none;
 		border: 1px solid #e0e0e0;
 		border-radius: 0.5em;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		box-shadow: 0 0 0.3em rgba(0, 0, 0, 0.1);
 	}
 	.emoji__selectPopover__toneSelectItem {
@@ -253,7 +253,7 @@ $emoji-popover-height: 433px;
 		position: absolute;
 		min-width: 220px;
 		max-width: 440px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 2px;
 		box-shadow: 0 4px 30px 0 rgba(220, 220, 220, 1);
 		cursor: pointer;

@@ -167,7 +167,7 @@ $buttonMaxWidth: 400px;
 		transition: all 0.6s ease;
 
 		&:hover {
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 
 			svg {
 				fill: var(
@@ -274,7 +274,7 @@ $buttonMaxWidth: 400px;
 
 		&--secondary {
 			border-width: 2px;
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			color: var(--m3-on-surface, $secondary);
 			border-color: var(--m3-on-surface, $secondary);
 

@@ -126,7 +126,7 @@ $header-avatar-gap: 8px;
 	/* M3 label-medium is 12/16. The old 14px box clipped ascenders and
 	   umlauts on the subtitle line. */
 	line-height: 16px;
-	color: var(--m3-secondary-container, #646d78);
+	color: var(--m3-on-surface-variant, #444748);
 }
 
 /* ----- Bubble ----- */

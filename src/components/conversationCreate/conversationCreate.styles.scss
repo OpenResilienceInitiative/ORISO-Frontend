@@ -858,7 +858,7 @@ body.conversationCreate--active .navigation__wrapper {
 		background: var(--m3-primary-fixed, #ffdad6);
 		border: none;
 		border-radius: 28px;
-		color: $cc-primary;
+		color: var(--oriso-primary-text-on-fixed, $cc-primary);
 		cursor: pointer;
 		display: flex;
 		flex-shrink: 0;

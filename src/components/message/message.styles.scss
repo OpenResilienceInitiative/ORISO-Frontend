@@ -506,7 +506,7 @@ $message-avatar-overlap: -19px;
 		padding: 8px;
 		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 12px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		box-shadow:
 			0 30px 28px rgba(0, 0, 0, 0.1),
 			0 0 30px 28px rgba(0, 0, 0, 0.05);
@@ -522,7 +522,7 @@ $message-avatar-overlap: -19px;
 		border: 1px solid #e1e6ee;
 		border-radius: 12px;
 		padding: 4px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 	}
 
 	&__visibilityMenuSectionHeader {
@@ -576,7 +576,7 @@ $message-avatar-overlap: -19px;
 		height: 14px;
 		border-radius: 999px;
 		border: 2px solid var(--m3-secondary-container, #5f6873);
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		flex: 0 0 14px;
 	}
 
@@ -665,7 +665,7 @@ $message-avatar-overlap: -19px;
 		gap: 4px;
 		border-radius: 999px;
 		border: 1px solid #e1e6ee;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		padding: 6px 10px;
 		font-size: 12px;
 		font-weight: 700;
@@ -1111,7 +1111,7 @@ $message-avatar-overlap: -19px;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__visibleOnlyChip {
@@ -1122,7 +1122,7 @@ $message-avatar-overlap: -19px;
 		padding: 0 10px;
 		border: 1px solid #e1e6ee;
 		border-radius: 999px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
@@ -1314,7 +1314,10 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(
+				--oriso-primary-text-on-fixed,
+				var(--oriso-primary-text, var(--m3-primary, #a5000a))
+			);
 		}
 
 		&:focus-visible {
@@ -1459,7 +1462,7 @@ $message-avatar-overlap: -19px;
 
 	&__footer {
 		border-top: 1px solid $line-ochre;
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		position: absolute;
 		bottom: 0;
 		width: 100%;
@@ -1824,7 +1827,7 @@ $message-avatar-overlap: -19px;
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
-	color: var(--m3-secondary-container, #646d78);
+	color: var(--m3-on-surface-variant, #444748);
 }
 
 .messageItem__sendFailedRetry {

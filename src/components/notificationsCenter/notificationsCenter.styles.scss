@@ -429,7 +429,7 @@
 
 		.notificationsCenter__cardTime--footer {
 			margin-top: auto;
-			color: var(--m3-secondary-container, #646d78);
+			color: var(--m3-on-surface-variant, #444748);
 			font-weight: 600;
 		}
 
@@ -533,7 +533,7 @@
 		// As in "Gespräche": 24 px around the card, 12 px towards the grip.
 		padding: 24px 24px 24px 12px;
 		display: flex;
-		background-color: #eae7e8;
+		background-color: var(--m3-surface-container-high, #eae7e8);
 	}
 
 	// Figma: white card, red border, radius 24.
@@ -546,7 +546,7 @@
 		justify-content: center;
 		border: 1.5px solid var(--m3-primary, #a5000a);
 		border-radius: 32px;
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		overflow: hidden;
 	}
 
@@ -568,7 +568,10 @@
 
 		.notificationsCenter__expander {
 			background: var(--m3-primary-fixed, #ffdad7);
-			color: var(--m3-primary, #a5000a);
+			color: var(
+				--oriso-primary-text-on-fixed,
+				var(--m3-primary, #a5000a)
+			);
 
 			&:hover,
 			&:focus-visible {
@@ -704,14 +707,14 @@
 		padding: 0 24px;
 		border: 1px solid #c4c7c7;
 		border-radius: 999px;
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		color: var(--m3-secondary, #4c555f);
 		font-size: 15px;
 		font-weight: 600;
 		cursor: pointer;
 
 		&:hover {
-			background: #f7f4f4;
+			background: var(--m3-surface-container-low, #f7f4f4);
 		}
 
 		&:disabled {
@@ -736,7 +739,7 @@
 		padding: 0 20px;
 		border: 1px solid #c4c7c7;
 		border-radius: 999px;
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		color: var(--m3-secondary, #4c555f);
 		font-weight: 700;
 		cursor: pointer;
@@ -761,7 +764,7 @@
 		width: 100%;
 		height: 100%;
 		border: 0;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 	}
 
 	&__empty,

@@ -561,7 +561,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		position: relative;
 		box-sizing: border-box;
 		border-radius: 32px;
-		border: 1px solid #ffffff;
+		border: 1px solid transparent;
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 		color: #1e1e1e;
 		font: inherit;
@@ -592,7 +592,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		opacity: 1;
 		visibility: visible;
 		box-sizing: border-box;
-		background: white !important;
+		background: var(--m3-surface-container-lowest, #ffffff) !important;
 		width: 301px;
 		max-width: calc(100vw - 32px);
 
@@ -625,7 +625,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	&__dropdownSubtitle {
 		font-size: 12px;
-		color: $form-secondary;
+		color: var(--m3-on-surface-variant, #444748);
 		margin: 0 0 4px 0;
 		line-height: 1.4;
 	}
@@ -633,7 +633,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&__dropdownTitle {
 		font-size: 14px;
 		font-weight: 600;
-		color: rgba(0, 0, 0, 0.9);
+		color: var(--m3-on-surface, #1b1b1c);
 		margin: 0;
 		line-height: 1.4;
 	}
@@ -680,16 +680,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
-			// Dark scheme: the hover surface is light, keep the dark ink.
-			html[data-oriso-personal-scheme='dark'] & {
-				.sessionsListItem__dropdownOptionTitle,
-				.sessionsListItem__dropdownOptionShortcut {
-					color: var(--m3-on-secondary-fixed, #1a1c1e);
-				}
-			}
-
 			.sessionsListItem__dropdownOptionDescription {
-				color: var(--m3-on-primary-fixed, #410001);
+				color: var(--oriso-menu-hover-description, #3f4852);
 			}
 		}
 
@@ -705,16 +697,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
-			// Dark scheme: the hover surface is light, keep the dark ink.
-			html[data-oriso-personal-scheme='dark'] & {
-				.sessionsListItem__dropdownOptionTitle,
-				.sessionsListItem__dropdownOptionShortcut {
-					color: var(--m3-on-secondary-fixed, #1a1c1e);
-				}
-			}
-
 			.sessionsListItem__dropdownOptionDescription {
-				color: var(--m3-on-primary-fixed, #410001);
+				color: var(--oriso-menu-hover-description, #3f4852);
 			}
 		}
 
@@ -731,11 +715,15 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		width: 20px;
 		height: 20px;
 		flex-shrink: 0;
-		fill: $form-secondary;
+		fill: var(--m3-on-surface-variant, #444748);
 		margin-top: 2px;
 
 		&--disabled {
-			fill: var(--m3-tertiary-container, #9ba4b0);
+			fill: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 38%,
+				transparent
+			);
 		}
 	}
 
@@ -761,13 +749,12 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		line-height: 24px;
 		flex: 1;
 
-		// The menu stays white in every scheme: keep a dark title on it.
-		html[data-oriso-personal-scheme='dark'] & {
-			color: var(--m3-on-secondary-fixed, #1a1c1e);
-		}
-
 		&--disabled {
-			color: var(--m3-tertiary-container, #9ba4b0);
+			color: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 38%,
+				transparent
+			);
 		}
 	}
 
@@ -787,12 +774,16 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	&__dropdownOptionDescription {
 		font-size: 12px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #444748);
 		line-height: 20px;
 		margin: 0;
 
 		&--disabled {
-			color: var(--m3-tertiary-container, #9ba4b0);
+			color: color-mix(
+				in srgb,
+				var(--m3-on-surface, #1b1b1c) 38%,
+				transparent
+			);
 		}
 	}
 
@@ -1570,9 +1561,15 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		font-weight: 400;
 	}
 
+	// The selected card is a surface card, not a `-fixed` one: the brand
+	// ink is the legible `--oriso-primary-text` (light pink in dark mode;
+	// unset in light, where the deep red stays). P0 dark mode, 2026-11-25.
 	.sessionsListItem__consultingTypeIcon
 		.sessionsListItem__consultingTypeIcon--kindIcon {
-		color: var(--m3-on-primary-fixed-variant, #930008);
+		color: var(
+			--oriso-primary-text,
+			var(--m3-on-primary-fixed-variant, #930008)
+		);
 		background-color: currentcolor;
 	}
 
@@ -1580,7 +1577,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	.sessionsListItem__consultingTypeIcon--internalLabel,
 	.sessionsListItem__consultingTypeIcon--selfHelpLabel,
 	.sessionsListItem__consultingTypeIcon--supervisionLabel {
-		color: var(--m3-on-primary-fixed-variant, #930008) !important;
+		color: var(
+			--oriso-primary-text,
+			var(--m3-on-primary-fixed-variant, #930008)
+		) !important;
 	}
 }
 

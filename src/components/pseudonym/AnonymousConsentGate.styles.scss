@@ -33,7 +33,7 @@
 	max-width: 560px;
 	padding: 32px;
 	border-radius: 18px;
-	background: #ffffff;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.08),
 		0 1px 3px 0 rgba(0, 0, 0, 0.18);

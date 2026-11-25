@@ -199,7 +199,11 @@ $cal-off-hatch: repeating-linear-gradient(
 	overflow: hidden;
 	padding: 1px 10px 1px 8px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.85);
+	background: color-mix(
+		in srgb,
+		var(--m3-surface-container-lowest, #ffffff) 85%,
+		transparent
+	);
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
 	font-style: italic;
@@ -553,8 +557,21 @@ $cal-off-hatch: repeating-linear-gradient(
 
 	// One's own appointment in light pink; a group stays grey (prototype
 	// v17).
+	// The pink is a `-fixed` role and stays light in dark mode, so its ink
+	// and icons are the `on-primary-fixed` roles (P0 dark mode, 2026-11-25).
 	&--appointment:not(.calEntry--k-group) {
+		--cal-kind: var(--m3-on-primary-fixed-variant, #930008);
+
 		background: var(--m3-primary-fixed, #ffdad5) !important;
+		color: var(--m3-on-primary-fixed, #410001) !important;
+
+		.calEntry__inner {
+			color: var(--m3-on-primary-fixed, #410001);
+		}
+
+		.calEntry__range {
+			color: var(--m3-on-primary-fixed-variant, #930008);
+		}
 	}
 
 	// The next appointment, from 15 minutes before its start. Doubled class:
@@ -629,6 +646,22 @@ $cal-off-hatch: repeating-linear-gradient(
 
 		.calendarSoon {
 			color: var(--m3-primary, #a5000a);
+		}
+
+		// One's own appointment keeps its pink in the list too; on that
+		// `-fixed` fill the ink is `on-primary-fixed` in every scheme.
+		&.calEntry--appointment:not(.calEntry--k-group) {
+			color: var(--m3-on-primary-fixed, #410001) !important;
+
+			// FullCalendar's list cell sits between the row and the content
+			// and brings its own colour, so the content names its ink.
+			.calEntry__inner {
+				color: var(--m3-on-primary-fixed, #410001);
+			}
+
+			.calendarSoon {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+			}
 		}
 	}
 
@@ -1816,7 +1849,7 @@ $cal-page-gap: 12px;
 	padding: 4px 16px;
 	border-radius: 999px;
 	background: var(--m3-primary-fixed-dim, #ffb4aa);
-	color: #410001;
+	color: var(--m3-on-primary-fixed, #410001);
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 18px;
@@ -2172,10 +2205,10 @@ $cal-page-gap: 12px;
 	align-items: center;
 	gap: 6px;
 	padding: 4px 11px;
-	border: 1px solid var(--m3-secondary, #4c555f);
+	border: 1px solid var(--m3-on-secondary-fixed-variant, #3f4852);
 	border-radius: 999px;
 	background: var(--m3-secondary-fixed, #dae3f0);
-	color: var(--m3-secondary, #4c555f);
+	color: var(--m3-on-secondary-fixed-variant, #3f4852);
 	font: inherit;
 	font-size: 12.5px;
 	font-weight: 500;
