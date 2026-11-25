@@ -143,7 +143,9 @@ const SUPERVISION = 'consultant-practice-supervision';
 const LIVE_CHAT = 'consultant-live-chat';
 const GROUP_CIRCLE = 'consultant-group-circle';
 /** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
-const REAL_AGENCY_URL = '/service/agencies/4711';
+/** The counsellor's own Beratungsstellen, as the create entry reads them. */
+const REAL_AGENCIES_URL = /^\/service\/agencies\/(\d+(?:,\d+)*)$/;
+const SECOND_AGENCY = { id: 4712, name: 'Zweite echte Beratungsstelle' };
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
@@ -178,8 +180,11 @@ const networkFetch = vi.fn(
 		network.push({ method, url, status });
 		// A real read the create entry needs: the Beratungsstelle's own
 		// settings, without policies, so the Träger's flags decide.
-		if (method === 'GET' && new URL(url).pathname === REAL_AGENCY_URL) {
-			return new Response(JSON.stringify([{ id: 4711 }]), {
+		const agencyIds =
+			method === 'GET' && REAL_AGENCIES_URL.exec(new URL(url).pathname);
+		if (agencyIds) {
+			const ids = agencyIds[1].split(',').map(Number);
+			return new Response(JSON.stringify(ids.map((id) => ({ id }))), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
 			});
@@ -255,6 +260,8 @@ const renderApp = ({
 	groupCircle = false,
 	/** Only the circle format: the create flow skips its format picker. */
 	circleOnly = false,
+	/** A second Beratungsstelle: the circle settings preselect none. */
+	twoAgencies = false,
 	liveChatViaSidebar = false
 } = {}) => {
 	const settings = {
@@ -281,7 +288,13 @@ const renderApp = ({
 				grantedAuthorities: [
 					...counsellor.grantedAuthorities,
 					'AUTHORIZATION_CREATE_NEW_CHAT'
-				]
+				],
+				agencies: twoAgencies
+					? [
+							...counsellor.agencies,
+							{ ...counsellor.agencies[0], ...SECOND_AGENCY }
+						]
+					: counsellor.agencies
 			}
 		: counsellor;
 	setTenantSettings(flags as any);
@@ -755,8 +768,37 @@ const banner = () =>
  * the circle in memory, the list opens it, the waiting room starts it, the
  * call button shows the simulated start (D3), and the tour completes.
  */
-const createOpenStartAndCall = async (settingsIndex: number) => {
+const createOpenStartAndCall = async (
+	configureIndex: number,
+	{ agency, topic }: { agency?: string; topic?: boolean } = {}
+) => {
+	// The settings card: what "Erstellen" needs is filled in there, inside
+	// the spotlight; then Next.
+	const card = await expectStep(configureIndex);
+	expect(joyride!.steps[configureIndex]).toMatchObject({
+		disableFocusTrap: true
+	});
+	expect(joyride!.steps[configureIndex]).not.toHaveProperty(
+		'blockTargetInteraction'
+	);
+	if (topic) {
+		fireEvent.click(
+			within(card!).getByRole('button', {
+				name: 'groupChat.circle.topicLabel'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', { name: SCRIPT.names.topic })
+		);
+	}
+	if (agency) {
+		fireEvent.mouseDown(within(card!).getByRole('combobox'));
+		fireEvent.click(await screen.findByRole('option', { name: agency }));
+	}
+	pressNext(configureIndex);
+
 	// The real "Erstellen" of the settings; the circle is made in memory.
+	const settingsIndex = configureIndex + 1;
 	const settings = await expectStep(settingsIndex);
 	await waitFor(() => expect(settings!.hasAttribute('disabled')).toBe(false));
 	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
@@ -988,50 +1030,69 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});
 
-	it('Gesprächskreis (FE#2545): the real create flow makes a practice circle, which is opened, started and its call start simulated', async () => {
-		const app = renderApp({ groupCircle: true });
-		// The Help list starts topic tours by request; there is no card.
-		await app.request(GROUP_CIRCLE);
+	it.each([
+		{ twoAgencies: false, agency: undefined },
+		// Dev: a counsellor of several Beratungsstellen gets none preselected,
+		// and "Erstellen" waits for her choice in the settings card.
+		{ twoAgencies: true, agency: SECOND_AGENCY.name }
+	])(
+		'Gesprächskreis (FE#2545, two agencies: $twoAgencies): the real create flow makes a practice circle, which is opened, started and its call start simulated',
+		async ({ twoAgencies, agency }) => {
+			const app = renderApp({ groupCircle: true, twoAgencies });
+			// The Help list starts topic tours by request; there is no card.
+			await app.request(GROUP_CIRCLE);
 
-		// 1: an exercise, nothing is real; Next.
-		await expectStep(0);
-		expect(getPracticeSnapshot().status).toBe('active');
-		pressNext(0);
+			// 1: an exercise, nothing is real; Next.
+			await expectStep(0);
+			expect(getPracticeSnapshot().status).toBe('active');
+			pressNext(0);
 
-		// 2: the real "Erstellen" of the counsellor's own list; click it.
-		const create = stepIndexOf('groupchat-create-button');
-		const createButton = await expectStep(create);
-		expect(route()).toBe('/sessions/consultant/sessionView');
-		await act(async () => {
-			fireEvent.click(createButton!);
-			await new Promise<void>((resolve) => setTimeout(resolve, 0));
-		});
+			// 2: the real "Erstellen" of the counsellor's own list; click it.
+			const create = stepIndexOf('groupchat-create-button');
+			const createButton = await expectStep(create);
+			expect(route()).toBe('/sessions/consultant/sessionView');
+			await act(async () => {
+				fireEvent.click(createButton!);
+				await new Promise<void>((resolve) => setTimeout(resolve, 0));
+			});
 
-		// 3: the circle card among the formats; Next.
-		const format = await expectStep(create + 1);
-		expect(format!.dataset.tourTarget).toBe('groupchat-format-circle');
-		pressNext(create + 1);
+			// 3: the circle card among the formats; Next.
+			const format = await expectStep(create + 1);
+			expect(format!.dataset.tourTarget).toBe('groupchat-format-circle');
+			pressNext(create + 1);
 
-		// 4: the topic: open the list, pick the practice topic, continue.
-		const picker = await expectStep(create + 2);
-		fireEvent.click(
-			within(picker!).getByRole('button', {
-				name: 'groupChat.circle.topicLabel'
-			})
-		);
-		fireEvent.click(
-			await screen.findByRole('option', { name: SCRIPT.names.topic })
-		);
-		await act(async () => {
+			// 4: the topic: open the list, pick the practice topic, continue.
+			const picker = await expectStep(create + 2);
 			fireEvent.click(
 				within(picker!).getByRole('button', {
-					name: SCRIPT.names.topic
+					name: 'groupChat.circle.topicLabel'
 				})
 			);
-		});
+			fireEvent.click(
+				await screen.findByRole('option', { name: SCRIPT.names.topic })
+			);
+			await act(async () => {
+				fireEvent.click(
+					within(picker!).getByRole('button', {
+						name: SCRIPT.names.topic
+					})
+				);
+			});
 
-		await createOpenStartAndCall(create + 3);
-	}, 120000);
+			if (twoAgencies) {
+				await expectStep(create + 3);
+				expect(
+					document
+						.querySelector(
+							'[data-tour-target="groupchat-circle-create"]'
+						)!
+						.hasAttribute('disabled')
+				).toBe(true);
+			}
+			await createOpenStartAndCall(create + 3, { agency });
+		},
+		120000
+	);
 
 	it('Gesprächskreis with only the circle format: the picker steps are skipped and the flow still ends at done', async () => {
 		const app = renderApp({ groupCircle: true, circleOnly: true });
@@ -1047,22 +1108,20 @@ describe('practice flows on the real app shell', () => {
 		});
 
 		// No format picker, no topic card: the settings open directly, and
-		// the tour goes on to their "Erstellen". The topic is picked there.
-		const settings = await expectStep(create + 3);
+		// the tour goes on at their card. The topic is picked there.
+		await expectStep(create + 3);
 		expect(
 			document.querySelector(
 				'[data-tour-target="groupchat-format-circle"]'
 			)
 		).toBeNull();
-		expect(settings!.hasAttribute('disabled')).toBe(true);
-		fireEvent.click(
-			screen.getByRole('button', { name: 'groupChat.circle.topicLabel' })
-		);
-		fireEvent.click(
-			await screen.findByRole('option', { name: SCRIPT.names.topic })
-		);
+		expect(
+			document
+				.querySelector('[data-tour-target="groupchat-circle-create"]')!
+				.hasAttribute('disabled')
+		).toBe(true);
 
-		await createOpenStartAndCall(create + 3);
+		await createOpenStartAndCall(create + 3, { topic: true });
 	}, 120000);
 
 	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {

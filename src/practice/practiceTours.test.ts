@@ -350,6 +350,7 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 			['create', 'groupchat-create-button'],
 			['format', 'groupchat-format-circle'],
 			['topic', 'groupchat-topic-picker'],
+			['configure', 'groupchat-circle-settings'],
 			['settings', 'groupchat-circle-create'],
 			['open-circle', 'groupchat-list-item'],
 			['start', 'groupchat-start-button'],
@@ -388,6 +389,18 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 			type: 'event',
 			name: PRACTICE_TOUR_EVENTS.circleCallStarted
 		});
+	});
+
+	it('lets the counsellor fill the settings card before "Erstellen", and go back to it', () => {
+		const configure = step('configure');
+		expect(configure.advanceOn).toBeUndefined();
+		expect(configure.interactive).toBe(true);
+		expect(configure.optional).toBeFalsy();
+		// "Erstellen" stays disabled without a Beratungsstelle: Back must
+		// bring the counsellor to the card again.
+		expect(step('settings').hideBack).toBeFalsy();
+		const ids = tour.steps.map((s) => s.id);
+		expect(ids.indexOf('configure') + 1).toBe(ids.indexOf('settings'));
 	});
 
 	it('keeps the format card and topic picker optional, like the explanation tour', () => {

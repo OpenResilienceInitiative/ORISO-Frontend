@@ -6511,8 +6511,8 @@
 					"intro": "Choose the practice topic under \"Topic / subject area\", then click the topic button. The settings open next."
 				},
 				"practiceSettings": {
-					"title": "Set up and create",
-					"intro": "Pick a topic if none is set yet, check the date and settings and click \"Create\". In the exercise the circle meets by video."
+					"title": "Create the circle",
+					"intro": "Click \"Create\". In the exercise the circle meets by video."
 				},
 				"practiceOpen": {
 					"title": "Open the circle",
@@ -6528,6 +6528,10 @@
 				},
 				"practiceDone": {
 					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
+				},
+				"practiceConfigure": {
+					"title": "Counselling centre and date",
+					"intro": "Choose the counselling centre the circle is held for and, if none is set yet, the topic. Check the date, time and duration. For the exercise you can leave the rest as it is. Then \"Next\"."
 				}
 			}
 		},

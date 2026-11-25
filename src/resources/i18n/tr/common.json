@@ -6596,8 +6596,8 @@
 					"intro": "„Konu / uzmanlık alanı“ altında alıştırma konusunu seçin, ardından konu düğmesine tıklayın. Ardından ayarlar açılır."
 				},
 				"practiceSettings": {
-					"title": "Ayarla ve oluştur",
-					"intro": "Henüz konu seçilmediyse bir konu seçin, tarihi ve ayarları kontrol edip „Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
+					"title": "Çemberi oluştur",
+					"intro": "„Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
 				},
 				"practiceOpen": {
 					"title": "Çemberi aç",
@@ -6613,6 +6613,10 @@
 				},
 				"practiceDone": {
 					"intro": "Tamamlandı: Bir sohbet çemberi oluşturup başlattınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
+				},
+				"practiceConfigure": {
+					"title": "Danışma merkezi ve tarih",
+					"intro": "Çemberin yapılacağı danışma merkezini ve henüz seçilmediyse konuyu seçin. Tarihi, saati ve süreyi kontrol edin. Alıştırma için gerisini olduğu gibi bırakabilirsiniz. Sonra „Daha ileri“."
 				}
 			}
 		},

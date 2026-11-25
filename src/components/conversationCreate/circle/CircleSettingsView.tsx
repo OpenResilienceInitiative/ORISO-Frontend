@@ -418,6 +418,7 @@ export const CircleSettingsView = ({
 			<div className="circleSettings__columns">
 				<FormatCard
 					className="circleSettings__card"
+					tourTarget="groupchat-circle-settings"
 					title={translate('groupChat.circle.title')}
 					subtitle={translate('groupChat.circle.subtitle')}
 					avatar={<CircleIcon />}

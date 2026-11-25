@@ -74,6 +74,25 @@ describe('mapStepsToJoyride', () => {
 	});
 });
 
+describe('mapStepsToJoyride interactive', () => {
+	it('lets the focus leave the tooltip on a step the learner works in', () => {
+		const [interactive, plain] = mapStepsToJoyride([
+			{
+				id: 'configure',
+				target: 'a',
+				titleKey: 't',
+				contentKey: 'c',
+				interactive: true
+			},
+			{ id: 'b', target: 'b', titleKey: 't', contentKey: 'c' }
+		]);
+
+		expect(interactive).toMatchObject({ disableFocusTrap: true });
+		expect(interactive).not.toHaveProperty('data');
+		expect(plain).not.toHaveProperty('disableFocusTrap');
+	});
+});
+
 describe('mapStepsToJoyride advanceOn', () => {
 	it('carries advanceOn into the joyride step data so the tooltip can hide Next', () => {
 		const joyrideSteps = mapStepsToJoyride([

@@ -151,6 +151,12 @@ const anchorContract: Array<{
 		sourceFile: 'conversationCreate/circle/CircleSettingsView.tsx'
 	},
 	{
+		// The circle settings card: the configure step's spotlight.
+		anchor: 'groupchat-circle-settings',
+		sourceFile: 'conversationCreate/circle/CircleSettingsView.tsx',
+		expected: /tourTarget="groupchat-circle-settings"/
+	},
+	{
 		// The first group row of the counsellor's own list.
 		anchor: 'groupchat-list-item',
 		sourceFile: 'sessionsListItem/SessionListItemComponent.tsx',

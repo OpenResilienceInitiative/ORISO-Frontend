@@ -318,6 +318,18 @@ export const practiceGroupCircleTour: TourDefinition = {
 			contentKey: 'tour.groupCircle.step.practiceTopic.intro'
 		},
 		{
+			// The counsellor fills what "Erstellen" needs, e.g. the
+			// Beratungsstelle when she works for several: the card is the
+			// spotlight, so its fields and their menus stay usable.
+			id: 'configure',
+			target: 'groupchat-circle-settings',
+			placement: 'right',
+			interactive: true,
+			titleKey: 'tour.groupCircle.step.practiceConfigure.title',
+			contentKey: 'tour.groupCircle.step.practiceConfigure.intro'
+		},
+		{
+			// Back returns to `configure` while "Erstellen" is not ready.
 			id: 'settings',
 			target: 'groupchat-circle-create',
 			placement: 'top',

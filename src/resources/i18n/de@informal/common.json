@@ -2835,7 +2835,7 @@
 					"intro": "Wähl unter „Thema / Fachbereich“ das Übungsthema und klick dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
 				},
 				"practiceSettings": {
-					"intro": "Wähl ein Thema, falls noch keins gesetzt ist, prüf Termin und Einstellungen und klick auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+					"intro": "Klick auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
 				},
 				"practiceOpen": {
 					"intro": "Dein Übungskreis steht jetzt in deiner Beratungsliste. Klick darauf, um ihn zu öffnen."
@@ -2848,6 +2848,9 @@
 				},
 				"practiceDone": {
 					"intro": "Geschafft: Du hast einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilst du vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"intro": "Wähl die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keins gesetzt ist, das Thema. Prüf Datum, Uhrzeit und Dauer. Für die Übung kannst du den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},

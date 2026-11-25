@@ -6596,8 +6596,8 @@
 					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
 				},
 				"practiceSettings": {
-					"title": "Régler et créer",
-					"intro": "Choisissez un thème s'il n'y en a pas encore, vérifiez la date et les réglages, puis cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+					"title": "Créer le cercle",
+					"intro": "Cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
 				},
 				"practiceOpen": {
 					"title": "Ouvrir le cercle",
@@ -6613,6 +6613,10 @@
 				},
 				"practiceDone": {
 					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+				},
+				"practiceConfigure": {
+					"title": "Centre de conseil et date",
+					"intro": "Choisissez le centre de conseil pour lequel le cercle a lieu et, s'il n'y en a pas encore, le thème. Vérifiez la date, l'heure et la durée. Pour l'exercice, vous pouvez laisser le reste tel quel. Puis « Continuer »."
 				}
 			}
 		},
