@@ -31,9 +31,8 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 	form.innerHTML = `
 		<h2><span>Anmelden</span></h2>
 		<label for="pass">Passwort</label>
-		<div><input id="pass" type="password"></div>
+		<div class="MuiOutlinedInput-root"><span class="MuiInputAdornment-positionStart"><svg></svg></span><input id="pass" type="password"><fieldset><legend><span>Passwort</span></legend></fieldset></div>
 		<p>Code <b>prüfen</b></p>
-		<legend><span>Passwort</span></legend>
 		<span class="notranslate">​</span>
 		<button type="submit"><span>Anmelden</span></button>
 	`;
@@ -65,10 +64,23 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 				].map(at)
 			)
 		);
-		expect(lines[0]).toBeGreaterThanOrEqual(LOGIN_MATRIX_TIMING.lead - 1);
+		// The heading turns right after the button, the other lines after it.
+		expect(lines[0]).toBeGreaterThanOrEqual(
+			LOGIN_MATRIX_TIMING.heading - 1
+		);
+		expect(lines[1]).toBeGreaterThanOrEqual(LOGIN_MATRIX_TIMING.lead - 1);
+		// The field's outline is redrawn as digits on its own edge.
+		const field = form.querySelector<HTMLElement>(
+			'.MuiOutlinedInput-root'
+		)!;
+		expect(field.dataset.matrixField).toBe('');
+		const edge = field.querySelector('.loginMatrixEdge')!;
+		expect(edge.getAttribute('aria-hidden')).toBe('true');
+		expect(edge.textContent).toMatch(/^[01]+$/);
 		expect(lines).toEqual([...lines].sort((a, b) => a - b));
 		// Hidden copies, zero-width padding and inputs are left alone.
 		expect(form.querySelector('legend .loginMatrixGlyph')).toBeNull();
+		expect(form.querySelector('fieldset .loginMatrixGlyph')).toBeNull();
 		expect(form.querySelector('.notranslate .loginMatrixGlyph')).toBeNull();
 		// Letters stay in the DOM: the accessible text does not change.
 		expect(button.textContent).toBe('Anmelden');

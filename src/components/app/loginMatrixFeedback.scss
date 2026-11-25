@@ -4,7 +4,7 @@
 .loginTransitionPrototype[data-effect='matrix'],
 .loginForm[data-matrix-phase] {
 	--matrix-primary: var(--m3-primary, #a5000a);
-	--login-matrix-turn: calc(260ms * var(--login-matrix-pace, 1));
+	--login-matrix-turn: calc(360ms * var(--login-matrix-pace, 1));
 
 	&:is(
 		[data-phase='loading'],
@@ -35,19 +35,23 @@
 		}
 	}
 
-	.loginMatrixGlyph {
+	.loginMatrixGlyph,
+	[data-matrix-field] {
 		--login-matrix-delay: calc(
 			var(--at, 0) * var(--login-matrix-pace, 1) * 1ms
 		);
+	}
 
+	.loginMatrixGlyph {
 		position: relative;
 
 		> span {
-			animation: login-matrix-letter var(--login-matrix-turn) ease-in
-				var(--login-matrix-delay) both;
+			animation: login-matrix-letter var(--login-matrix-turn)
+				cubic-bezier(0.4, 0, 0.6, 1) var(--login-matrix-delay) both;
 		}
 
-		// The digit sits over the letter's own box, so nothing reflows.
+		// The digit sits over the word's own box, one even cell per letter,
+		// so nothing reflows.
 		&::after {
 			content: attr(data-digit) / '';
 			position: absolute;
@@ -58,8 +62,9 @@
 			text-align: center;
 			font-variant-numeric: tabular-nums;
 			pointer-events: none;
+			transform: translateX(var(--shift, 0)) scaleX(var(--squeeze, 1));
 			animation: login-matrix-digit var(--login-matrix-turn)
-				cubic-bezier(0.2, 0.7, 0.2, 1) var(--login-matrix-delay) both;
+				cubic-bezier(0.16, 1, 0.3, 1) var(--login-matrix-delay) both;
 		}
 	}
 
@@ -67,12 +72,84 @@
 		color: var(--matrix-primary);
 	}
 
+	// Each field: the icon becomes a small grid of digits, the outline turns
+	// into short strokes and then into digits running along the same edge.
+	[data-matrix-field] {
+		.MuiInputAdornment-positionStart {
+			position: relative;
+
+			> svg {
+				animation: login-matrix-letter var(--login-matrix-turn) ease-in
+					var(--login-matrix-delay) both;
+			}
+
+			&::after {
+				content: '010\A 101\A 011' / '';
+				position: absolute;
+				inset-block-start: 50%;
+				inset-inline-start: 50%;
+				transform: translate(-50%, -50%);
+				white-space: pre;
+				font: 600 6px/1.2 monospace;
+				letter-spacing: 1px;
+				color: var(--matrix-primary);
+				animation: login-matrix-digit var(--login-matrix-turn)
+					cubic-bezier(0.16, 1, 0.3, 1) var(--login-matrix-delay) both;
+			}
+		}
+
+		> fieldset {
+			animation: login-matrix-letter calc(var(--login-matrix-turn) * 0.8)
+				ease-in var(--login-matrix-delay) both;
+		}
+	}
+
+	.loginMatrixEdge {
+		--edge-run: calc(640ms * var(--login-matrix-pace, 1));
+
+		position: absolute;
+		overflow: visible;
+		pointer-events: none;
+		color: var(--matrix-primary);
+
+		path {
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1;
+			stroke-dasharray: 1.5 5.5;
+			opacity: 0;
+			animation: login-matrix-strokes var(--edge-run) ease-in-out
+				var(--login-matrix-delay) both;
+		}
+
+		text {
+			font: 500 6px monospace;
+			fill: currentColor;
+			dominant-baseline: central;
+		}
+
+		tspan {
+			opacity: 0;
+			animation: login-matrix-ink calc(var(--login-matrix-turn) * 0.8)
+				ease-out
+				calc(
+					var(--login-matrix-delay) + var(--edge-run) *
+						(0.35 + var(--run) * 0.65)
+				)
+				both;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
-		.loginMatrixGlyph > span {
+		.loginMatrixGlyph > span,
+		[data-matrix-field] > fieldset,
+		[data-matrix-field] .MuiInputAdornment-positionStart > svg {
 			animation: none;
 		}
 
-		.loginMatrixGlyph::after {
+		.loginMatrixGlyph::after,
+		[data-matrix-field] .MuiInputAdornment-positionStart::after,
+		.loginMatrixEdge {
 			display: none;
 		}
 	}
@@ -113,11 +190,28 @@
 @keyframes login-matrix-digit {
 	from {
 		opacity: 0;
-		transform: translateY(-0.45em);
+		translate: 0 -0.35em;
 	}
 
 	to {
 		opacity: 1;
-		transform: none;
+		translate: 0 0;
+	}
+}
+
+// Short strokes appear on the edge, then give way to the digits.
+@keyframes login-matrix-strokes {
+	40% {
+		opacity: 0.55;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes login-matrix-ink {
+	to {
+		opacity: 0.6;
 	}
 }
