@@ -171,7 +171,6 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-
 			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"stop": "Dur",
@@ -7454,6 +7453,48 @@
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"
+		},
+		"staffJoin": {
+			"kicker": "Doğrudan davet",
+			"offer": {
+				"status": "Danışman olarak oturum açtınız",
+				"title": "Danışman olarak katıl",
+				"text": "Görüşmeye kendi hesabınızla katılırsınız ve oturumunuz açık kalır. Sizi davet eden kişi içeri alır. Bu randevunun sohbetini görmezsiniz.",
+				"join": "Danışman olarak katıl"
+			},
+			"waiting": {
+				"status": "İçeri alınmayı bekliyor",
+				"title": "Kapıyı çaldınız",
+				"text": "İçeri alındığınız anda görüşme başlar. Bu sayfayı açık bırakın."
+			},
+			"notStarted": {
+				"status": "Görüşme henüz başlamadı",
+				"title": "Görüşme henüz başlamadı",
+				"text": "Görüşme başlar başlamaz burada devam edilir. Bu sayfayı açık bırakın."
+			},
+			"refused": {
+				"status": "İçeri alınmadınız",
+				"title": "İçeri alınmadınız",
+				"text": "Sizi davet eden kişi bu görüşmeye sizi almadı."
+			},
+			"forbidden": {
+				"status": "Katılmak mümkün değil",
+				"title": "Bu görüşmeye katılamazsınız",
+				"text": "Bağlantı artık etkin değil veya bu görüşmeden çıkarıldınız."
+			},
+			"ended": {
+				"status": "Görüşme sona erdi",
+				"title": "Görüşme sona erdi",
+				"text": "Bu sayfayı artık kapatabilirsiniz."
+			},
+			"error": {
+				"status": "Katılım olmadı",
+				"title": "Katılım olmadı",
+				"text": "Lütfen tekrar deneyin."
+			},
+			"cancel": "İptal",
+			"retry": "Tekrar dene",
+			"openOwnSessions": "Görüşmelerime git"
 		}
 	},
 	"dashboard": {

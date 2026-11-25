@@ -3233,6 +3233,33 @@
 		"edit": {
 			"nameRequired": "Bitte gib einen Namen ein.",
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		},
+		"staffJoin": {
+			"offer": {
+				"text": "Du trittst dem Anruf mit deinem eigenen Konto bei und bleibst angemeldet. Die einladende Person lässt dich herein. Den Chat dieses Termins siehst du dabei nicht.",
+				"status": "Du bist als Berater:in angemeldet"
+			},
+			"waiting": {
+				"title": "Du hast angeklopft",
+				"text": "Sobald du hereingelassen wirst, startet der Anruf. Lass diese Seite offen."
+			},
+			"notStarted": {
+				"text": "Sobald der Anruf läuft, geht es hier weiter. Lass diese Seite offen."
+			},
+			"refused": {
+				"title": "Du wurdest nicht hereingelassen",
+				"text": "Die einladende Person hat dich zu diesem Anruf nicht hereingelassen."
+			},
+			"forbidden": {
+				"title": "Diesem Anruf kannst du nicht beitreten",
+				"text": "Der Link ist nicht mehr aktiv oder du wurdest aus diesem Anruf entfernt."
+			},
+			"ended": {
+				"text": "Du kannst diese Seite jetzt schließen."
+			},
+			"error": {
+				"text": "Bitte versuche es noch einmal."
+			}
 		}
 	},
 	"dashboard": {

@@ -170,7 +170,6 @@
 		"selectLanguage": "Select language",
 		"stage": {
 			"title": "Consulting & Help",
-
 			"carrierLogoAlt": "Show where {{name}} is present"
 		},
 		"stop": "Stop",
@@ -7369,6 +7368,48 @@
 			"failed": "The change could not be saved. Please try again.",
 			"scheduledAt": "Date and time",
 			"clearScheduledAt": "Remove"
+		},
+		"staffJoin": {
+			"kicker": "Direct invitation",
+			"offer": {
+				"status": "You are signed in as a counsellor",
+				"title": "Join as counsellor",
+				"text": "You join the call with your own account and stay signed in. The person who invited you lets you in. You will not see the chat of this appointment.",
+				"join": "Join as counsellor"
+			},
+			"waiting": {
+				"status": "Waiting to be let in",
+				"title": "You have knocked",
+				"text": "The call starts as soon as you are let in. Keep this page open."
+			},
+			"notStarted": {
+				"status": "The call has not started yet",
+				"title": "The call has not started yet",
+				"text": "As soon as the call is running, this page continues. Keep it open."
+			},
+			"refused": {
+				"status": "Not let in",
+				"title": "You were not let in",
+				"text": "The person who invited you did not let you into this call."
+			},
+			"forbidden": {
+				"status": "Joining is not possible",
+				"title": "You cannot join this call",
+				"text": "The link is no longer active, or you were removed from this call."
+			},
+			"ended": {
+				"status": "Call ended",
+				"title": "The call has ended",
+				"text": "You can close this page now."
+			},
+			"error": {
+				"status": "Joining did not work",
+				"title": "Joining did not work",
+				"text": "Please try again."
+			},
+			"cancel": "Cancel",
+			"retry": "Try again",
+			"openOwnSessions": "Go to my conversations"
 		}
 	},
 	"dashboard": {
