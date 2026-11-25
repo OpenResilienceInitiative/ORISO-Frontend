@@ -50,7 +50,7 @@ type Story = StoryObj<typeof meta>;
 const phaseStory = (
 	phase: StaffJoinPhase,
 	button: string,
-	globals = desktop1440Globals
+	globals: Story['globals'] = desktop1440Globals
 ): Story => ({
 	args: { phase },
 	globals,
