@@ -17,6 +17,8 @@ import {
 	recordTraffic,
 	snapshotStorage,
 	startButton,
+	topicStartButton,
+	topicTourCard,
 	type FlowRun
 } from './practice-proof';
 
@@ -55,11 +57,17 @@ import {
  *  - after the practice, the real Anfragen list holds no practice id or name.
  * Flow F1 runs with the Team-Besprechung steps when the tenant has them
  * switched on, and without otherwise: the variant is reported as an annotation.
- * Flow F2 is skipped, with a message, when the tenant has no supervision.
+ * The Supervision topic tour (FE#2545) starts from its topic card in
+ * Rundgänge, not a practice card; it is skipped, with a message, when the
+ * tenant has no supervision. It books the appointment only where the
+ * supervision chat allows a call (12 steps, else 11).
  */
 const storageState = process.env.ORISO_TOUR_STORAGE_STATE;
 
 const [ACCEPT_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
+if (SUPERVISION_TOUR_ID !== 'consultant-practice-supervision') {
+	throw new Error('PRACTICE_TOUR_IDS changed order: fix the spec');
+}
 
 const policyConfig = (tourId: string): RequestPolicyConfig => {
 	const base =
@@ -127,6 +135,8 @@ interface Flow {
 	drive: (page: Page, run: string) => Promise<FlowRun>;
 	/** Offered only where the Träger switched the feature on. */
 	optional?: boolean;
+	/** A topic tour of Rundgänge with a practice rendering (no card). */
+	topic?: boolean;
 }
 
 const ACCEPT_FLOW: Flow = {
@@ -137,11 +147,12 @@ const ACCEPT_FLOW: Flow = {
 };
 
 const SUPERVISION_FLOW: Flow = {
-	name: 'F2 add a supervisor',
+	name: 'Supervision topic tour',
 	tourId: SUPERVISION_TOUR_ID,
-	titleKey: 'tour.practiceSupervision.title',
+	titleKey: 'tour.supervision.title',
 	drive: driveSupervisionFlow,
-	optional: true
+	optional: true,
+	topic: true
 };
 
 /** The page is where practice started: the Help page with its practice cards. */
@@ -176,7 +187,9 @@ const provePracticeRun = async (
 	await expect(practiceCard(page, ACCEPT_FLOW.titleKey)).toBeVisible({
 		timeout: 30_000
 	});
-	const card = practiceCard(page, flow.titleKey);
+	const card = flow.topic
+		? topicTourCard(page, flow.titleKey)
+		: practiceCard(page, flow.titleKey);
 	if (flow.optional) {
 		test.skip(
 			(await card.count()) === 0,
@@ -190,7 +203,7 @@ const provePracticeRun = async (
 	// The run window starts at the click on the card: what the app sent before
 	// is ordinary real-mode traffic.
 	const from = traffic.mark();
-	await startButton(card).click();
+	await (flow.topic ? topicStartButton(card) : startButton(card)).click();
 	await expect(banner(page)).toBeVisible({ timeout: 30_000 });
 	const walked = await walk(run);
 	// The banner goes when the practice starts to close, while the guard is
