@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	apiGetConsultantStatistics,
 	ApiGetConsultantStatisticsInterface,
-	ConsultantStatisticsDTO
+	ConsultantStatisticsDTO,
+	FETCH_ERRORS
 } from '../../api';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -36,6 +37,16 @@ interface ConsultantStatisticsProps {
 	/** Where the figures come from; Storybook passes sample figures. */
 	loadStatistics?: LoadStatistics;
 }
+
+/**
+ * The real endpoint, with errors caught here: a failed request shows the
+ * retry notice in the card instead of leaving for the error page.
+ */
+const loadOwnStatistics: LoadStatistics = (request) =>
+	apiGetConsultantStatistics({
+		...request,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	});
 
 type Unit = 'Week' | 'Month' | 'Year';
 type Offset = 'current' | 'last';
@@ -137,7 +148,7 @@ const SegmentedChoice = <T extends string>({
  * or month plus a total row. Only aggregated own numbers, never content.
  */
 export const ConsultantStatistics = ({
-	loadStatistics = apiGetConsultantStatistics
+	loadStatistics = loadOwnStatistics
 }: ConsultantStatisticsProps) => {
 	const { t: translate } = useTranslation();
 	const [unit, setUnit] = useState<Unit>('Month');

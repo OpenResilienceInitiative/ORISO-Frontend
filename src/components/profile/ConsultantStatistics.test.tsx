@@ -14,6 +14,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../api', () => ({
+	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' },
 	apiGetConsultantStatistics: (...args: unknown[]) =>
 		apiGetConsultantStatisticsMock(...args)
 }));
@@ -43,6 +44,16 @@ describe('ConsultantStatistics', () => {
 		// Assigned/active tiles still render alongside the new one.
 		expect(screen.getByText('7')).toBeDefined();
 		expect(screen.getByText('3')).toBeDefined();
+	});
+
+	it('catches errors itself so a failed request never opens the error page', () => {
+		apiGetConsultantStatisticsMock.mockReturnValue(new Promise(() => {}));
+
+		render(<ConsultantStatistics />);
+
+		expect(apiGetConsultantStatisticsMock).toHaveBeenLastCalledWith(
+			expect.objectContaining({ responseHandling: ['CATCH_ALL'] })
+		);
 	});
 
 	it('asks for the current month split into weeks by default', () => {
