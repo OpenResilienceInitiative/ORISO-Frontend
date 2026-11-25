@@ -15,18 +15,41 @@ import {
 	CALL_TOKEN_MAP
 } from './callTheme';
 import { computeOrisoPalette } from './orisoScheme';
+import { wcagContrast } from './wcagContrast';
 
 const SEED = '#A5000A';
 
-/** Pulls one declaration out of a `.cpd-theme-*` block. */
-const readToken = (css: string, scheme: string, token: string): string => {
-	const block = new RegExp(
-		`\\.cpd-theme-${scheme}[^{]*\\{([\\s\\S]*?)\\n\\}`,
-		'm'
-	).exec(css);
-	if (!block) throw new Error(`no .cpd-theme-${scheme} block in output`);
-	const decl = new RegExp(`${token}:\\s*([^;]+);`).exec(block[1]);
-	return decl ? decl[1].trim() : '';
+const selectors = {
+	standard: {
+		light: '.cpd-theme-light.cpd-theme-light',
+		dark: '.cpd-theme-dark.cpd-theme-dark'
+	},
+	medium: {
+		light: '.cpd-theme-light[data-oriso-contrast-level="medium"]',
+		dark: '.cpd-theme-dark[data-oriso-contrast-level="medium"]'
+	},
+	high: {
+		light: '.cpd-theme-light-hc.cpd-theme-light-hc',
+		dark: '.cpd-theme-dark-hc.cpd-theme-dark-hc'
+	}
+} as const;
+
+/** Pulls one declaration out of the exact selected Compound block. */
+const readToken = (
+	css: string,
+	scheme: keyof typeof selectors.standard,
+	token: string,
+	level: keyof typeof selectors = 'standard'
+): string => {
+	const selector = selectors[level][scheme];
+	const prefix = `${selector} {\n`;
+	const start = css.indexOf(prefix);
+	if (start < 0) throw new Error(`no ${selector} block in output`);
+	const block = css.slice(start + prefix.length, css.indexOf('\n}', start));
+	const decl = block
+		.split('\n')
+		.find((line) => line.startsWith(`\t${token}: `));
+	return decl?.split(';')[0].slice(token.length + 3) ?? '';
 };
 
 describe('buildCallThemeCss', () => {
@@ -34,9 +57,12 @@ describe('buildCallThemeCss', () => {
 	const dark = computeOrisoPalette({ primary: SEED }, 'dark').tokens;
 	const light = computeOrisoPalette({ primary: SEED }, 'light').tokens;
 
-	it('emits a block for both Compound theme classes', () => {
-		expect(css).toContain('.cpd-theme-dark');
-		expect(css).toContain('.cpd-theme-light');
+	it('emits one block for each scheme and contrast level', () => {
+		expect(css.match(/^\.cpd-theme-.* \{$/gm)).toEqual(
+			Object.values(selectors).flatMap((schemes) =>
+				Object.values(schemes).map((selector) => `${selector} {`)
+			)
+		);
 	});
 
 	it('maps body text onto the engine on-surface role', () => {
@@ -74,8 +100,13 @@ describe('buildCallThemeCss', () => {
 
 	it('writes no colour of its own: every value traces to the engine', () => {
 		const engineValues = new Set(
-			[...Object.values(dark), ...Object.values(light)].map((v) =>
-				v.toLowerCase()
+			(['light', 'dark'] as const).flatMap((scheme) =>
+				(['standard', 'medium', 'high'] as const).flatMap((level) =>
+					Object.values(
+						computeOrisoPalette({ primary: SEED }, scheme, level)
+							.tokens
+					).map((value) => value.toLowerCase())
+				)
 			)
 		);
 		const hexes = css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
@@ -124,22 +155,6 @@ describe('the checked-in artefact', () => {
  *
  * WCAG 2.1: 4.5 for body text, 3.0 for UI boundaries and icons.
  */
-const relativeLuminance = (hex: string): number => {
-	const channel = (c: number): number =>
-		c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-	const [r, g, b] = [1, 3, 5].map((i) =>
-		channel(parseInt(hex.slice(i, i + 2), 16) / 255)
-	);
-	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-
-const contrast = (a: string, b: string): number => {
-	const [x, y] = [relativeLuminance(a), relativeLuminance(b)].sort(
-		(m, n) => n - m
-	);
-	return (x + 0.05) / (y + 0.05);
-};
-
 const TEXT_PAIRS: [string, string][] = [
 	['--cpd-color-text-primary', '--cpd-color-bg-canvas-default'],
 	// The Settings dialog sheet — the exact surface that was unreadable.
@@ -168,15 +183,63 @@ const UI_PAIRS: [string, string][] = [
 	['--cpd-color-icon-secondary-alpha', '--cpd-color-bg-canvas-default']
 ];
 
-describe.each(['dark', 'light'])('contrast in %s', (scheme) => {
+describe.each(['dark', 'light'] as const)('contrast in %s', (scheme) => {
 	const css = buildCallThemeCss(SEED);
 	const at = (token: string): string => readToken(css, scheme, token);
 
 	it.each(TEXT_PAIRS)('%s on %s reaches AA (4.5)', (fg, bg) => {
-		expect(contrast(at(fg), at(bg))).toBeGreaterThanOrEqual(4.5);
+		expect(wcagContrast(at(fg), at(bg))).toBeGreaterThanOrEqual(4.5);
 	});
 
 	it.each(UI_PAIRS)('%s on %s reaches 3.0', (fg, bg) => {
-		expect(contrast(at(fg), at(bg))).toBeGreaterThanOrEqual(3);
+		expect(wcagContrast(at(fg), at(bg))).toBeGreaterThanOrEqual(3);
 	});
+});
+
+describe.each([
+	{ level: 'medium', minimum: 5.5 },
+	{ level: 'high', minimum: 7 }
+] as const)('elevated contrast in $level', ({ level, minimum }) => {
+	it.each([
+		[SEED, 'light'],
+		[SEED, 'dark'],
+		['#ffd700', 'light'],
+		['#ffd700', 'dark']
+	] as const)(
+		'keeps text and focus legible with %s in %s',
+		(seed, scheme) => {
+			const css = buildCallThemeCss(seed);
+			const at = (token: string) => readToken(css, scheme, token, level);
+			for (const [foreground, background] of [
+				...TEXT_PAIRS,
+				[
+					'--cpd-color-text-critical-primary',
+					'--cpd-color-bg-subtle-primary'
+				],
+				[
+					'--cpd-color-text-placeholder',
+					'--cpd-color-bg-subtle-primary'
+				],
+				[
+					'--cpd-color-text-link-external',
+					'--cpd-color-bg-subtle-primary'
+				],
+				[
+					'--cpd-color-text-action-accent',
+					'--cpd-color-bg-subtle-primary'
+				]
+			]) {
+				expect(
+					wcagContrast(at(foreground), at(background)),
+					foreground
+				).toBeGreaterThanOrEqual(minimum);
+			}
+			for (const [foreground, background] of UI_PAIRS) {
+				expect(
+					wcagContrast(at(foreground), at(background)),
+					foreground
+				).toBeGreaterThanOrEqual(3);
+			}
+		}
+	);
 });

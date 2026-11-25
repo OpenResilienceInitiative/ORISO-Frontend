@@ -2,7 +2,7 @@ import * as React from 'react';
 import './localeSwitch.styles';
 import { ReactComponent as LanguageIconOutline } from '../../resources/img/icons/language_outline.svg';
 import { useTranslation } from 'react-i18next';
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useId, useRef, useState } from 'react';
 import { UserDataContext, LocaleContext } from '../../globalState';
 import { markLocaleChosen } from '../../globalState/provider/LocaleProvider';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
@@ -14,6 +14,8 @@ import {
 } from '../select/SelectDropdown';
 import { LanguageSelectDropdown } from '../select/LanguageSelectDropdown';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CheckIcon from '@mui/icons-material/Check';
 import LanguageIcon from '@mui/icons-material/Language';
 
 export interface LocaleSwitchProp {
@@ -26,6 +28,7 @@ export interface LocaleSwitchProp {
 	menuPlacement?: MENUPLACEMENT;
 	selectRef?: any;
 	isInsideMenu?: boolean;
+	inlineMenu?: boolean;
 	color?: string;
 	colorHover?: string;
 	iconOnly?: boolean;
@@ -45,6 +48,7 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	label,
 	selectRef,
 	isInsideMenu = false,
+	inlineMenu = false,
 	color = 'var(--m3-on-surface)',
 	colorHover = 'var(--m3-primary-hover)',
 	iconOnly,
@@ -58,6 +62,9 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	const { locale, setLocale, selectableLocales } = useContext(LocaleContext);
 
 	const requestInProgress = useRef(false);
+	const [expanded, setExpanded] = useState(false);
+	const inlineListId = useId();
+	const inlineTriggerRef = useRef<HTMLButtonElement>(null);
 	// The locale whose PATCH failed. userData keeps the old preferredLanguage
 	// when the request fails, so the guard below stays true; without this the
 	// effect would re-send forever. Cleared when the user picks another one.
@@ -95,15 +102,77 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 		return null;
 	}
 
+	const selectLocale = (value: string) => {
+		// Requests triggered by the new locale must see the new cookie.
+		setValueInCookie('lang', value);
+		markLocaleChosen(value);
+		setLocale(value);
+	};
+
+	const localeName = (value: string) =>
+		translate([value, value], { ns: 'languages' }).replace(
+			/^\([^)]+\)\s*/,
+			''
+		);
+
+	if (inlineMenu) {
+		return (
+			<div
+				className="localeSwitchInline"
+				onKeyDown={(event) => {
+					if (expanded && event.key === 'Escape') {
+						event.stopPropagation();
+						setExpanded(false);
+						inlineTriggerRef.current?.focus();
+					}
+				}}
+			>
+				<button
+					type="button"
+					ref={inlineTriggerRef}
+					className="localeSwitchInline__trigger"
+					aria-label={`${translate('app.selectLanguage')}, ${localeName(locale)}`}
+					aria-expanded={expanded}
+					aria-controls={inlineListId}
+					onClick={() => setExpanded(!expanded)}
+				>
+					<span className="localeSwitchInline__globe" aria-hidden>
+						{leadingIconOverride ?? <LanguageIcon />}
+					</span>
+					<span>{localeName(locale)}</span>
+					<ExpandMoreIcon
+						className="localeSwitchInline__chevron"
+						aria-hidden
+					/>
+				</button>
+				<ul
+					className="localeSwitchInline__languages"
+					id={inlineListId}
+					hidden={!expanded}
+				>
+					{selectableLocales.map((value) => (
+						<li key={value}>
+							<button
+								type="button"
+								aria-pressed={value === locale}
+								onClick={() => {
+									selectLocale(value);
+									setExpanded(false);
+									inlineTriggerRef.current?.focus();
+								}}
+							>
+								<span>{localeName(value)}</span>
+								{value === locale && <CheckIcon aria-hidden />}
+							</button>
+						</li>
+					))}
+				</ul>
+			</div>
+		);
+	}
+
 	const languageSelectDropdown: SelectDropdownItem = {
-		handleDropdownSelect: ({ value }) => {
-			// If we wait to be set in LocaleSwitch sometimes we've an problem of reloading the requests
-			// because we're always looking by "locale" from the context but the locale is changed before
-			// we save the cookie so to fix this we set the cookie before the locale switch
-			setValueInCookie('lang', value);
-			markLocaleChosen(value);
-			setLocale(value);
-		},
+		handleDropdownSelect: ({ value }) => selectLocale(value),
 		id: 'languageSelect',
 		ariaLabel: translate('app.selectLanguage'),
 		className,
@@ -174,7 +243,9 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 		styleOverrides: {
 			menu: (base) => ({
 				...base,
-				width: 'auto',
+				'width': iconOnly ? 'auto' : '100%',
+				'backgroundColor': 'var(--m3-surface-container)',
+				'&:before, &:after': { display: 'none' },
 				...(iconOnly &&
 					menuPlacement === MENUPLACEMENT_RIGHT && {
 						left: '-100%'
@@ -225,14 +296,23 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 				display: 'flex'
 			}),
 			menuList: () => ({
-				backgroundColor: '#ffffff'
+				backgroundColor: 'var(--m3-surface-container)'
 			}),
 			option: (base, state) => ({
 				...base,
-				whiteSpace: 'nowrap',
+				whiteSpace: 'normal',
 				fontSize: '14px',
-				color: '#3f373f',
-				backgroundColor: state.isFocused ? '#f5f5f5' : '#ffffff'
+				color:
+					state.isFocused || state.isSelected
+						? 'var(--m3-on-secondary-container)'
+						: 'var(--m3-on-surface)',
+				backgroundColor:
+					state.isFocused || state.isSelected
+						? 'var(--m3-secondary-container)'
+						: 'var(--m3-surface-container)',
+				boxShadow: state.isFocused
+					? 'inset 0 0 0 2px var(--m3-on-secondary-container)'
+					: 'none'
 			})
 		},
 		onMenuOpen,

@@ -1075,6 +1075,7 @@ const preview: Preview = {
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
 		scheme: 'light',
+		contrast: 'standard',
 		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],

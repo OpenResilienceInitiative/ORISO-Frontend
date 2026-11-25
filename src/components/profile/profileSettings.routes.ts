@@ -1,4 +1,5 @@
 import { SecurityPrivacySettings } from './SecurityPrivacySettings';
+import { PersonalDisplayProfile } from '../../features/personal-display/PersonalDisplayEntry';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { TimelineSettings } from '../timelineSettings/TimelineSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
@@ -34,7 +35,8 @@ export const profileRoutesSettings = (
 	/** #1894: false when "Direkteinladung erlauben" allows no medium. */
 	directLinksAllowed = true,
 	/** Effective tenant permissions (#1979); absent = server defaults. */
-	tenantSettings?: Partial<TenantDataSettingsInterface> | null
+	tenantSettings?: Partial<TenantDataSettingsInterface> | null,
+	personalDisplayAvailable = false
 ): (TabGroups | SingleComponentType)[] => [
 	{
 		title: 'profile.routes.settings.security.title',
@@ -121,6 +123,14 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.display',
 		url: '/anzeige',
 		elements: [
+			{
+				condition: (userData) =>
+					personalDisplayAvailable &&
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
+				component: PersonalDisplayProfile,
+				column: COLUMN_LEFT,
+				order: 1
+			},
 			{
 				component: MenuEffectsSettings,
 				tourTarget: 'profile-display',

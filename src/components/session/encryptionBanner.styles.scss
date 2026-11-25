@@ -1,63 +1,23 @@
-.encryption-banner {
+.session-encryption-status {
 	display: flex;
-	align-items: flex-start;
-	gap: 12px;
-	padding: 12px 16px;
-	margin: 16px auto;
-	max-width: 650px;
-	border-radius: 8px;
-	background-color: #e8f5e9;
-	border: 1px solid rgba(76, 175, 80, 0.2);
+	align-items: center;
+	justify-content: center;
+	gap: 0.375rem;
+	max-inline-size: 100%;
+	margin: 0.75rem auto;
+	padding-inline: 0.5rem;
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: calc(0.75rem * var(--oriso-personal-text-scale, 1));
+	line-height: 1.4;
+	overflow-wrap: anywhere;
 
-	&--enabled {
-		background-color: #e8f5e9;
-
-		.encryption-banner__icon svg {
-			fill: #2e7d32;
-			width: 20px;
-			height: 20px;
-		}
+	svg {
+		flex: none;
+		inline-size: 1.125rem;
+		block-size: 1.125rem;
 	}
 
-	&--warning {
-		background-color: #fff3e0;
-		border: 1px solid rgba(255, 152, 0, 0.2);
-
-		.encryption-banner__icon svg {
-			fill: #f57c00;
-			width: 20px;
-			height: 20px;
-		}
-	}
-
-	&__icon {
-		flex-shrink: 0;
-		margin-top: 2px;
-
-		svg {
-			display: block;
-		}
-	}
-
-	&__content {
-		flex: 1;
-		min-width: 0;
-	}
-
-	&__heading {
-		font-size: 14px;
-		font-weight: 600;
-		margin: 0 0 4px;
-		color: rgba(0, 0, 0, 0.87);
-		line-height: 1.4;
-	}
-
-	&__description {
-		font-size: 13px;
-		font-weight: 400;
-		margin: 0;
-		color: rgba(0, 0, 0, 0.65);
-		line-height: 1.5;
+	span {
+		min-inline-size: 0;
 	}
 }
-

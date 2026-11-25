@@ -119,6 +119,10 @@ import {
 	ChatMenuDropdownHeader,
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
+import {
+	ContactSheetRequest,
+	useContactSheetRequest
+} from '../sessionHeader/ContactSheetRequest';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
 import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
@@ -188,6 +192,7 @@ export interface SessionMenuProps {
 	 * conversation. Set only while there is one.
 	 */
 	onSendNewLink?: () => void;
+	contactSheet?: React.ComponentProps<typeof ContactSheetRequest>;
 }
 
 // #1262 — backend advice-request APIs are not ready (US#1034). Keep the owner-only item visible but inert.
@@ -254,6 +259,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	// Bumped on every opening: remounts the foldable groups so each opening
 	// starts with them closed (the portal stays mounted between openings).
 	const [menuOpening, setMenuOpening] = useState(0);
+	// Held here, above the remounting groups, so reopening the menu keeps a
+	// contact-sheet request in flight and its result.
+	const contactSheetState = useContactSheetRequest(
+		props.contactSheet?.sessionId,
+		props.contactSheet?.email
+	);
 	useEffect(() => {
 		if (flyoutOpen) setMenuOpening((count) => count + 1);
 	}, [flyoutOpen]);
@@ -732,7 +743,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const showSessionMenu =
 		!activeSession.isEnquiry ||
 		showAnonymousMobileMenu ||
-		showTeamChatSwitch;
+		showTeamChatSwitch ||
+		Boolean(props.contactSheet);
 	const chatType: 'anonymous' | 'oneOnOne' | 'group' | 'supervision' =
 		props.isSupervisor
 			? 'supervision'
@@ -1612,6 +1624,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										)}
 									/>
 								</div>
+
+								{props.contactSheet && (
+									<ContactSheetRequest
+										key={props.contactSheet.sessionId}
+										{...props.contactSheet}
+										state={contactSheetState}
+									/>
+								)}
 
 								<div className="legalInformationLinks--menu">
 									<LegalLinks

@@ -29,7 +29,7 @@ export const orisoInputColors = {
 	hoverLayer: 'rgba(27, 27, 28, 0.04)'
 } as const;
 
-const orisoInputAutofill = '#e8f0fe';
+const orisoInputAutofill = 'var(--oriso-input-autofill, #e8f0fe)';
 
 export const orisoTextFieldSx = {
 	'&': {

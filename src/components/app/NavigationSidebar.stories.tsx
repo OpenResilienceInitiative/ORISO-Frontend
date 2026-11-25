@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { PersonalDisplayControls } from '../../features/personal-display/PersonalDisplayEntry';
+import { DEFAULT_DISPLAY } from '../../features/personal-display/preferences';
 import i18n from '../../i18n';
 import { NavigationStoryShell } from './NavigationStoryShell';
 import './navigationSidebarStory.styles.scss';
@@ -23,12 +25,14 @@ function RuntimeNavigationRail({
 	railHeightPx,
 	fullMobileShell = false,
 	liveChatViaSidebar = true,
+	languageOptions,
 	tenantSettings
 }: {
 	role: 'consultant' | 'asker';
 	layout?: 'desktop' | 'mobile';
 	/** Profile preference "Live Chat über Menü Leiste aktivieren". */
 	liveChatViaSidebar?: boolean;
+	languageOptions?: string[];
 	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
 	railHeightPx?: number;
 	/** Exercise the production mobile shell and its version overlay. */
@@ -37,6 +41,8 @@ function RuntimeNavigationRail({
 	tenantSettings?: Record<string, unknown>;
 }) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
+	const [displayPreferences, setDisplayPreferences] =
+		useState(DEFAULT_DISPLAY);
 	const isDesktop = layout === 'desktop';
 	const desktopHeight = railHeightPx ?? 860;
 
@@ -44,8 +50,17 @@ function RuntimeNavigationRail({
 		<NavigationStoryShell
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			languageOptions={languageOptions}
 			tenantSettings={tenantSettings}
 			onLogout={() => setLogoutClicked(true)}
+			displayEntry={
+				role === 'asker' && layout === 'mobile' ? (
+					<PersonalDisplayControls
+						preferences={displayPreferences}
+						onChange={setDisplayPreferences}
+					/>
+				) : undefined
+			}
 			className="navigationSidebarStory"
 			data-logout-clicked={logoutClicked}
 			style={
@@ -54,9 +69,8 @@ function RuntimeNavigationRail({
 						? 'row'
 						: 'column',
 					'--storybook-navigation-width': isDesktop ? '85px' : '100%',
-					'--storybook-navigation-max-width': isDesktop
-						? 'none'
-						: '375px',
+					'--storybook-navigation-max-width':
+						isDesktop || fullMobileShell ? 'none' : '375px',
 					'--storybook-navigation-height': isDesktop
 						? `${desktopHeight}px`
 						: fullMobileShell
@@ -78,8 +92,13 @@ function RuntimeNavigationRail({
 		>
 			{fullMobileShell && (
 				<div style={{ flex: 1, minHeight: 0, padding: 24 }}>
-					<h1>Meine Beratungen</h1>
-					<p>Mobile navigation at 375px</p>
+					<h1>
+						{i18n.t(
+							role === 'consultant'
+								? 'navigation.consultant.sessions.nav'
+								: 'navigation.asker.sessions.large'
+						)}
+					</h1>
 				</div>
 			)}
 			{fullMobileShell && (
@@ -133,7 +152,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Below 900px, including narrow Docs canvases, the menu becomes a full-width horizontal bar. Mobile: routes, Live Chat, language, and logout scroll together in one smooth horizontal bar.'
+					'Runtime Storybook target for the shared `NavigationBar` (asker + consultant). Desktop: top routes scroll vertically; logout/actions stay pinned. Below 900px, including narrow Docs canvases, the menu becomes a full-width horizontal bar. Mobile: primary routes and a role-specific Display entry stay in view. More opens profile, remaining routes and account actions.'
 			}
 		}
 	}
@@ -305,125 +324,163 @@ export const RuntimeAskerRail: Story = {
 };
 
 export const RuntimeConsultantMobile: Story = {
-	args: {
-		role: 'consultant',
-		layout: 'mobile'
+	args: { role: 'consultant', layout: 'mobile', fullMobileShell: true },
+	globals: {
+		locale: 'de',
+		viewport: { value: 'phone375', isRotated: false }
 	},
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	play: async ({ canvasElement }) => {
-		const itemContainer = canvasElement.querySelector(
-			'.navigation__itemContainer'
+		const root = within(canvasElement);
+		const bar = root.getByRole('navigation', { name: 'Navigation' });
+		await expect(
+			within(bar).queryByRole('button', { name: 'Anzeige' })
+		).not.toBeInTheDocument();
+		await userEvent.click(
+			within(bar).getByRole('button', { name: 'Mehr' })
 		);
-		const bottomGroup = canvasElement.querySelector(
-			'.navigation__item__bottom'
+		const dialog = within(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'dialog',
+				{ name: 'Mehr' }
+			)
 		);
-		const logoutAction = canvasElement.querySelector(
-			'.navigation__item--nav-logout'
+		await expect(
+			dialog.getByRole('link', { name: /anfragen/i })
+		).toHaveAttribute('href', '/sessions/consultant/sessionPreview');
+		await expect(
+			dialog.getByRole('link', { name: /gespräche|gespräch/i })
+		).toHaveAttribute('href', '/sessions/consultant/sessionView');
+		await expect(
+			dialog.getByRole('link', { name: /mein profil/i })
+		).toHaveAttribute('href', '/profile');
+		await waitFor(() =>
+			expect(
+				dialog.getByRole('switch', { name: /live[- ]chat/i })
+			).toBeVisible()
 		);
-		const liveChat = canvasElement.querySelector(
-			'.navigation__item--liveChatToggle'
-		);
-		const language = canvasElement.querySelector(
-			'.navigation__item__language'
-		);
-
-		await expect(itemContainer).not.toBeNull();
-		await expect(bottomGroup).not.toBeNull();
-		await expect(logoutAction).not.toBeNull();
-		await expect(liveChat).not.toBeNull();
-		await expect(language).not.toBeNull();
-
-		const containerStyles = window.getComputedStyle(
-			itemContainer as Element
-		);
-		await expect(containerStyles.overflowX).toBe('auto');
-
-		const liveStyles = window.getComputedStyle(liveChat as Element);
-		const languageStyles = window.getComputedStyle(language as Element);
-		await expect(liveStyles.display).not.toBe('none');
-		await expect(languageStyles.display).not.toBe('none');
-
-		// Whole row (routes + actions + logout) scrolls as one strip.
-		const container = itemContainer as HTMLElement;
-		await expect(container.scrollWidth).toBeGreaterThan(
-			container.clientWidth
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(
+				within(bar).getByRole('button', { name: 'Mehr' })
+			).toHaveFocus()
 		);
 	}
 };
 
-/**
- * Consultant on a phone who has NOT enabled "Live Chat über Menü Leiste
- * aktivieren" in My Profile: the bottom bar carries no Live Chat entry — the
- * same rule as the desktop rail. Availability is switched in My Profile.
- */
-export const RuntimeConsultantMobileWithoutLiveChatPreference: Story = {
+export const MobileMoreSevenLanguages: Story = {
+	...RuntimeConsultantMobile,
 	args: {
-		role: 'consultant',
-		layout: 'mobile',
-		liveChatViaSidebar: false
+		...RuntimeConsultantMobile.args,
+		languageOptions: ['de', 'en', 'fr', 'ru', 'tr', 'ti', 'uk']
 	},
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	play: async ({ canvasElement }) => {
+		const page = within(canvasElement.ownerDocument.body);
+		await userEvent.click(page.getByRole('button', { name: 'Mehr' }));
+		const dialog = within(
+			await page.findByRole('dialog', { name: 'Mehr' })
+		);
+		await userEvent.click(
+			dialog.getByRole('button', { name: /Deutsch/, expanded: false })
+		);
 		await expect(
-			canvasElement.querySelector('.navigation__item--nav-logout')
-		).not.toBeNull();
+			dialog.getAllByRole('button', { pressed: true }).length
+		).toBe(1);
+	}
+};
+
+export const RuntimeConsultantMobileWithoutLiveChatPreference: Story = {
+	...RuntimeConsultantMobile,
+	args: { ...RuntimeConsultantMobile.args, liveChatViaSidebar: false },
+	play: async ({ canvasElement }) => {
+		await userEvent.click(
+			within(canvasElement).getByRole('button', { name: 'Mehr' })
+		);
+		const dialog = within(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'dialog',
+				{ name: 'Mehr' }
+			)
+		);
+		await waitFor(() =>
+			expect(
+				dialog.getByRole('link', { name: /mein profil/i })
+			).toBeVisible()
+		);
 		await expect(
-			canvasElement.querySelector('.navigation__item--liveChatToggle')
-		).toBeNull();
+			dialog.queryByRole('switch', { name: /live[- ]chat/i })
+		).not.toBeInTheDocument();
 	}
 };
 
 export const RuntimeAskerMobile: Story = {
-	args: {
-		role: 'asker',
-		layout: 'mobile'
+	args: { role: 'asker', layout: 'mobile', fullMobileShell: true },
+	globals: {
+		locale: 'de',
+		viewport: { value: 'phone375', isRotated: false }
 	},
-	globals: { viewport: { value: 'mobile1', isRotated: false } },
-	parameters: {
-		router: {
-			initialPath: '/sessions/user/view/session/123'
-		}
+	parameters: { router: { initialPath: '/sessions/user/view/session/123' } },
+	play: async ({ canvasElement }) => {
+		const bar = within(canvasElement).getByRole('navigation', {
+			name: 'Navigation'
+		});
+		const display = within(bar).getByRole('button', { name: 'Anzeige' });
+		await userEvent.click(display);
+		const dialog = within(
+			await within(canvasElement.ownerDocument.body).findByRole(
+				'dialog',
+				{ name: 'Anzeige' }
+			)
+		);
+		await userEvent.click(dialog.getByRole('button', { name: 'Größer' }));
+		await expect(
+			dialog.getByRole('status', { name: 'Gewählte Textgröße' })
+		).toHaveTextContent('150 %');
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(display).toHaveFocus());
 	}
 };
 
-/** Production shell geometry: scrolling keeps every action reachable at 375px. */
 export const RuntimeConsultantMobile375Shell: Story = {
-	args: { role: 'consultant', layout: 'mobile', fullMobileShell: true },
-	globals: { viewport: { value: 'phone375', isRotated: false } },
+	...RuntimeConsultantMobile,
 	play: async ({ canvasElement }) => {
-		const container = canvasElement.querySelector(
-			'.navigation__itemContainer'
-		) as HTMLElement;
 		const nav = canvasElement.querySelector(
 			'.navigation__wrapper'
 		) as HTMLElement;
+		const bar = nav.querySelector('.navigation__mobileBar') as HTMLElement;
 		const version = canvasElement.querySelector(
 			'.app__platformVersion'
 		) as HTMLElement;
 		const navBounds = nav.getBoundingClientRect();
 		await expect(window.innerWidth).toBe(375);
-		await expect(
-			container.getBoundingClientRect().right
-		).toBeLessThanOrEqual(navBounds.right + 1);
+		await expect(bar.getBoundingClientRect().right).toBeLessThanOrEqual(
+			navBounds.right + 1
+		);
 		await expect(
 			version.getBoundingClientRect().bottom
 		).toBeLessThanOrEqual(navBounds.top);
-		await expect(container.scrollWidth).toBeGreaterThan(
-			container.clientWidth
+		await expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth + 1);
+		await userEvent.click(
+			within(bar).getByRole('button', { name: 'Mehr' })
 		);
-		container.style.scrollBehavior = 'auto';
-		container.scrollLeft = container.scrollWidth;
-		await new Promise((resolve) => requestAnimationFrame(resolve));
-		for (const selector of [
-			'.navigation__item--nav-language',
-			'.navigation__item--nav-logout'
-		]) {
-			const action = canvasElement.querySelector(selector) as HTMLElement;
-			const bounds = action.getBoundingClientRect();
-			await expect(bounds.left).toBeGreaterThanOrEqual(navBounds.left);
-			await expect(bounds.right).toBeLessThanOrEqual(navBounds.right + 1);
-		}
-		const logout = canvasElement.querySelector(
+		const dialog = await within(
+			canvasElement.ownerDocument.body
+		).findByRole('dialog', { name: 'Mehr' });
+		const language = within(dialog).getByRole('button', {
+			name: /Deutsch/,
+			expanded: false
+		});
+		language.focus();
+		await expect(language).toHaveFocus();
+		await userEvent.keyboard('{Enter}');
+		await expect(language).toHaveAttribute('aria-expanded', 'true');
+		await expect(
+			within(dialog).getByRole('button', { name: 'Englisch' })
+		).toBeVisible();
+		await userEvent.tab();
+		await userEvent.keyboard('{Escape}');
+		await expect(language).toHaveFocus();
+		await expect(language).toHaveAttribute('aria-expanded', 'false');
+		const logout = dialog.querySelector(
 			'.navigation__item--nav-logout'
 		) as HTMLElement;
 		logout.focus();

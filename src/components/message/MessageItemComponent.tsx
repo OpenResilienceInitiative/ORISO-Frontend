@@ -2172,7 +2172,7 @@ export const MessageItemComponent = ({
 		</>
 	) : null;
 
-	// Reactions (Figma 336-12244 / 336-12225): white chips inside the bubble,
+	// Reactions (Figma 336-12244 / 336-12225): chips inside the bubble,
 	// sharing one rail with the timestamp. Adding happens via the action menu.
 	const reactionChips =
 		reactions && reactions.length > 0 ? (
@@ -2218,6 +2218,7 @@ export const MessageItemComponent = ({
 									? onUnreact?.(reaction.ownEventId)
 									: onReact?.(reaction.key)
 							}
+							aria-pressed={Boolean(reaction.ownEventId)}
 							aria-label={pillLabel}
 						>
 							{pillContent}
@@ -3715,6 +3716,9 @@ export const MessageItemComponent = ({
 											// the picker never covers "Reply
 											// directly" & co.
 											anchorEl={actionMenuRef.current}
+											returnFocusEl={
+												quickEmojiMoreRef.current
+											}
 											placement="right-start"
 											onPick={applyQuickReaction}
 											onClose={() =>

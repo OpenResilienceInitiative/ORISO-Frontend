@@ -1100,7 +1100,10 @@
 		"fileName": "add-shield.svg",
 		"sourcePath": "src/resources/img/icons/add-shield.svg",
 		"exportNames": ["AddShieldIcon"],
-		"usageFiles": ["src/resources/img/icons.ts"],
+		"usageFiles": [
+			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/resources/img/icons.ts"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1584,7 +1587,10 @@
 		"fileName": "calendar-plus.svg",
 		"sourcePath": "src/resources/img/icons/calendar-plus.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/p0v2018/SideChatReplyStage.tsx"],
+		"usageFiles": [
+			"src/components/p0v2018/SideChatReplyStage.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -2228,6 +2234,10 @@
 		"sourcePath": "src/resources/img/icons/clock.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/calendar/AskerFreeTimesPanel.tsx",
+			"src/components/calendar/calendarMenus.tsx",
+			"src/components/calendar/CalendarView.tsx",
+			"src/components/calendar/ConsultationHoursDialog.tsx",
 			"src/components/conversationCreate/directLink/MyDirectLinks.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/temporaryAccount/GuestRetentionDivider.tsx",
@@ -2264,6 +2274,7 @@
 		"sourcePath": "src/resources/img/icons/close.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/calendar/ConsultationHoursDialog.tsx",
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
@@ -2694,6 +2705,7 @@
 			"src/components/erstantwort/NotificationChoiceCard.tsx",
 			"src/components/profile/EmailNotifications/SetEmailModal/index.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
+			"src/components/sessionHeader/ContactSheetRequest.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/resources/img/icons.ts"
 		],
@@ -3186,6 +3198,7 @@
 		"sourcePath": "src/resources/img/icons/keyboard_arrow_down.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/chatMenuDropdown/ChatMenuDropdown.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/profile/NotificationSettings/ToneControls.tsx",
 			"src/components/splitButton/SplitButton.tsx"
@@ -3328,6 +3341,10 @@
 		"sourcePath": "src/resources/img/icons/lock.svg",
 		"exportNames": ["LockIcon"],
 		"usageFiles": [
+			"src/components/calendar/AskerFreeTimesPanel.tsx",
+			"src/components/calendar/calendarMenus.tsx",
+			"src/components/calendar/CalendarView.tsx",
+			"src/components/calendar/ConsultationHoursDialog.tsx",
 			"src/components/call/states/IncomingCallCard.tsx",
 			"src/components/call/states/MinimizedCallDock.tsx",
 			"src/components/conversationCreate/directLink/MyDirectLinks.tsx",
@@ -3337,7 +3354,6 @@
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/registration/welcomeScreen/WelcomeScreen.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
-			"src/components/session/EncryptionBanner.tsx",
 			"src/components/temporaryAccount/GuestRetentionDivider.tsx",
 			"src/components/temporaryAccount/TemporaryMessageMarker.tsx",
 			"src/resources/img/icons.ts"
@@ -3656,6 +3672,32 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:notice-important:filled",
+		"family": "notice-important",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": 48,
+		"fileName": "notice_important_filled_400_48.svg",
+		"sourcePath": "src/resources/img/icons/notice_important_filled_400_48.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/message/ChatSystemMessageCard.tsx"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:notice-important:400",
+		"family": "notice-important",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 48,
+		"fileName": "notice_important_outline_400_48.svg",
+		"sourcePath": "src/resources/img/icons/notice_important_outline_400_48.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/message/ChatSystemMessageCard.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:notification-audio-off:base",
 		"family": "notification-audio-off",
 		"state": "base",
@@ -3898,7 +3940,6 @@
 			"src/components/askerInfo/AskerInfo.tsx",
 			"src/components/call/states/IncomingCallCard.tsx",
 			"src/components/call/states/MinimizedCallDock.tsx",
-			"src/components/login/Login.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/passwordResetRequest/RequestPasswordResetFormView.tsx",
@@ -4022,9 +4063,11 @@
 		"sourcePath": "src/resources/img/icons/plus.svg",
 		"exportNames": ["NewEnquiryIcon"],
 		"usageFiles": [
+			"src/components/calendar/ConsultationHoursDialog.tsx",
 			"src/components/p0v2018/SideChatReplyStage.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/components/selectionReply/StackCountIcon.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/resources/img/icons.ts"
 		],
@@ -4383,6 +4426,7 @@
 		"usageFiles": [
 			"src/components/message/E2EEActivatedMessage.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -4794,7 +4838,8 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
-			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+			"src/components/sessionsListItem/SessionListItemComponent.tsx",
+			"src/components/sessionsListItem/SupervisionIconButton.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -5309,8 +5354,8 @@
 		"fileName": "url.svg",
 		"sourcePath": "src/resources/img/icons/url.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": ["src/components/sessionMenu/SessionMenu.tsx"],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:verified:base",
@@ -5400,7 +5445,9 @@
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
+			"src/components/sessionsListItem/SupervisionIconButton.tsx",
 			"src/components/supervisorDialog/SupervisorDialog.tsx",
+			"src/features/personal-display/PersonalDisplayEntry.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
 		],

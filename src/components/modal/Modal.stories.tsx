@@ -1,6 +1,7 @@
 import React from 'react';
 import { Meta, StoryObj } from '@storybook/react-vite';
 import { Modal } from './Modal';
+import { Spinner } from '../spinner/Spinner';
 
 const meta = {
 	title: 'Atoms/Modal',
@@ -40,4 +41,15 @@ export const WithCustomClass: Story = {
 			<span>Modal with an extra CSS class applied.</span>
 		</Modal>
 	)
+};
+
+/** The app's tenant theme loader uses this surface and the neutral spinner. */
+export const ThemeLoading: Story = {
+	args: {
+		children: (
+			<div>
+				<Spinner isDark />
+			</div>
+		)
+	}
 };

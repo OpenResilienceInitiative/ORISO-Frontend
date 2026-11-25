@@ -36,7 +36,14 @@ import { endpoints } from '../../../resources/scripts/endpoints';
 import { getElementCallBaseUrl } from '../../../resources/scripts/runtimeConfig';
 import { appConfig } from '../../../utils/appConfig';
 
+export interface ElementCallAppearance {
+	theme: `${'light' | 'dark'}${'' | '-medium-contrast' | '-high-contrast'}`;
+	fontScale?: number;
+}
+
 export interface ElementCallWidgetOptions {
+	/** Effective display selection from the host, independent of call media. */
+	appearance?: ElementCallAppearance;
 	/** The Matrix room the call takes place in. */
 	roomId: string | null;
 	/** Video or audio-only — Element Call starts with the camera off for audio. */
@@ -384,11 +391,26 @@ const sendKnockState = (api: ClientWidgetApi, state: OrisoKnockState) => {
 		});
 };
 
+const callAppearance = (
+	singleVideo: boolean,
+	appearance: ElementCallAppearance | undefined
+) => {
+	const scale = appearance?.fontScale;
+	return {
+		name: singleVideo ? (appearance?.theme ?? 'light') : 'dark',
+		fontScale:
+			singleVideo && scale !== undefined && scale >= 0.5 && scale <= 3
+				? scale
+				: undefined
+	};
+};
+
 export const useElementCallWidget = (
 	client: MatrixClient | null,
 	{
 		roomId,
 		isVideo,
+		appearance,
 		skipLobby = true,
 		onClose,
 		onAlwaysOnScreenChange,
@@ -417,6 +439,7 @@ export const useElementCallWidget = (
 	const [ready, setReady] = useState(false);
 	const [devices, setDeviceState] = useState<CallDeviceState | null>(null);
 	const apiRef = useRef<ClientWidgetApi | null>(null);
+	const readyApiRef = useRef<ClientWidgetApi | null>(null);
 	const driverRef = useRef<OrisoWidgetDriver | null>(null);
 	const attachedIframeRef = useRef<HTMLIFrameElement | null>(null);
 	const instanceNonceRef = useRef(globalThis.crypto.randomUUID());
@@ -452,15 +475,17 @@ export const useElementCallWidget = (
 	// language switch or a late lookup never navigates a running call. Let go
 	// once there is no call room, so the next call starts from what is
 	// current — even in the same room.
-	const hostContextRef = useRef({ callType, callTopic, language });
-	hostContextRef.current = { callType, callTopic, language };
+	const hostContext = {
+		callType,
+		callTopic,
+		language,
+		appearance: callAppearance(isVideo && callType === 'single', appearance)
+	};
+	const hostContextRef = useRef(hostContext);
+	hostContextRef.current = hostContext;
 	const frozenHostContextRef = useRef<{
 		roomId: string;
-		context: {
-			callType: OrisoCallType | null;
-			callTopic: string | null;
-			language: string | null;
-		};
+		context: typeof hostContext;
 	} | null>(null);
 
 	// A widget client cannot join rooms. Gate iframe creation on the host's
@@ -556,12 +581,10 @@ export const useElementCallWidget = (
 					// Element Web embedding of the same build would otherwise
 					// get our grove, our backdrop and our animals.
 					orisoDesign: 'true',
-					// The call UI is deliberately dark even though the app
-					// around it is light; app-wide dark is a separate decision
-					// (ACTIVE_SCHEMES). Pin it rather than inheriting Element
-					// Call's own default, which an upstream merge could change
-					// without anything here to point at.
-					theme: 'dark',
+					theme: host.appearance.name,
+					...(host.appearance.fontScale === undefined
+						? {}
+						: { fontScale: String(host.appearance.fontScale) }),
 					skipLobby: String(skipLobby),
 					// Per-participant media E2EE is the ADR-018 default. Element
 					// Call only encrypts LiveKit media when the host asks for it
@@ -621,6 +644,7 @@ export const useElementCallWidget = (
 		(iframe: HTMLIFrameElement | null) => {
 			// Tear down any previous channel first — leaking a ClientWidgetApi
 			// keeps a postMessage listener alive against a dead iframe.
+			readyApiRef.current = null;
 			if (apiRef.current) {
 				apiRef.current.stop();
 				apiRef.current = null;
@@ -741,13 +765,9 @@ export const useElementCallWidget = (
 			api.setViewedRoomId(roomId);
 
 			api.on('ready', () => {
-				if (apiRef.current === api) setReady(true);
-				// Re-assert the same scheme the URL pins (`theme=dark` above):
-				// the ready-time update guards against Element Call defaulting
-				// differently, and must never contradict the URL parameter.
-				void api.updateTheme({ name: 'dark' }).catch(() => {
-					/* the widget may have closed during capability negotiation */
-				});
+				if (apiRef.current !== api) return;
+				readyApiRef.current = api;
+				setReady(true);
 			});
 
 			const handleClose = (
@@ -896,6 +916,30 @@ export const useElementCallWidget = (
 		if (!ready || !api || windowFullscreen === undefined) return;
 		sendWindowState(api, { fullscreen: windowFullscreen });
 	}, [ready, windowFullscreen]);
+
+	// The URL keeps the entry appearance for this room. The ready channel
+	// carries the latest selection, including edits made during negotiation.
+	const frozenHost = frozenHostContextRef.current;
+	const appearanceCallType =
+		frozenHost?.roomId === roomId ? frozenHost.context.callType : callType;
+	const { name: liveTheme, fontScale: liveFontScale } = callAppearance(
+		isVideo && appearanceCallType === 'single',
+		appearance
+	);
+	useEffect(() => {
+		const api = apiRef.current;
+		if (!ready || !api || readyApiRef.current !== api) return;
+		void api
+			.updateTheme({
+				name: liveTheme,
+				...(liveFontScale === undefined
+					? {}
+					: { fontScale: liveFontScale })
+			})
+			.catch(() => {
+				/* the widget may close during capability negotiation */
+			});
+	}, [ready, liveTheme, liveFontScale]);
 
 	// Not part of the address: the call switches its link entries live.
 	useEffect(() => {
