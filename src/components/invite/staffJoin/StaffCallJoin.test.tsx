@@ -43,10 +43,20 @@ vi.mock('../../app/registrationLoader/HandoverGateButton', () => ({
 vi.mock('../../app/appChunks', () => ({
 	loadAuthenticatedApp: () => new Promise(() => undefined)
 }));
-vi.mock('../../../services/CallManager', () => ({ callManager: {} }));
+const callManager = vi.hoisted(() => ({
+	joinSharedCall: vi.fn(),
+	getCurrentCall: vi.fn(() => null),
+	leaveCall: vi.fn(),
+	subscribe: vi.fn(() => () => undefined)
+}));
+vi.mock('../../../services/CallManager', () => ({ callManager }));
 
-const { StaffCallJoin, STAFF_JOIN_POLL_MS, STAFF_JOIN_NOT_STARTED_POLL_MS } =
-	await import('./StaffCallJoin');
+const {
+	StaffCallJoin,
+	StaffCallSeat,
+	STAFF_JOIN_POLL_MS,
+	STAFF_JOIN_NOT_STARTED_POLL_MS
+} = await import('./StaffCallJoin');
 
 const SEAT = {
 	medium: 'VIDEO' as const,
@@ -118,6 +128,7 @@ describe('StaffCallJoin (#2356)', () => {
 		expect(screen.getByTestId('call')).toBeTruthy();
 		expect(deps.renderCall).toHaveBeenCalledWith(
 			SEAT,
+			expect.any(Function),
 			expect.any(Function)
 		);
 	});
@@ -216,6 +227,57 @@ describe('StaffCallJoin (#2356)', () => {
 		expect(phase()).toBe('offer');
 		expect(renderCall).not.toHaveBeenCalled();
 	});
+
+	it('offers a retry, not the end of the call, when entering the call failed', async () => {
+		const join = vi.fn(() =>
+			Promise.resolve<StaffJoin>({ outcome: 'SEATED', seat: SEAT })
+		);
+		const renderCall = vi.fn(
+			(_seat: unknown, _ended: () => void, failed: () => void) => (
+				<button data-testid="call-failed" onClick={failed}>
+					call
+				</button>
+			)
+		);
+		render(
+			<StaffCallJoin
+				token="tok"
+				medium="VIDEO"
+				deps={{ join, renderCall }}
+			/>
+		);
+		await clickJoin();
+		fireEvent.click(screen.getByTestId('call-failed'));
+
+		expect(phase()).toBe('error');
+		await clickJoin();
+		expect(join).toHaveBeenCalledTimes(2);
+	});
+
+	it.each([
+		['busy', () => Promise.resolve('busy')],
+		['unavailable', () => Promise.resolve('unavailable')],
+		['a rejected entry', () => Promise.reject(new Error('down'))]
+	])(
+		'StaffCallSeat reports %s as a failed entry, never as an end',
+		async (_, outcome) => {
+			callManager.joinSharedCall.mockImplementationOnce(outcome);
+			const onEnded = vi.fn();
+			const onFailed = vi.fn();
+			render(
+				<StaffCallSeat
+					seat={SEAT}
+					onEnded={onEnded}
+					onFailed={onFailed}
+				/>
+			);
+			await flush();
+			await flush();
+
+			expect(onFailed).toHaveBeenCalledTimes(1);
+			expect(onEnded).not.toHaveBeenCalled();
+		}
+	);
 
 	it('withdraws the knock on cancel and when the page closes', async () => {
 		const { deps, view } = setup(

@@ -58,8 +58,16 @@ export interface StaffCallJoinDeps {
 	join: (token: string, waitingFor?: number) => Promise<StaffJoin>;
 	leave: (token: string) => Promise<void>;
 	navigate: (path: string) => void;
-	/** Renders the seated call; the app shell by default. */
-	renderCall: (seat: SharedCallSeat, onEnded: () => void) => React.ReactNode;
+	/**
+	 * Renders the seated call; the app shell by default. `onEnded` is for a
+	 * call that was entered and is over; `onFailed` for an entry that did not
+	 * work, which the page offers to retry.
+	 */
+	renderCall: (
+		seat: SharedCallSeat,
+		onEnded: () => void,
+		onFailed: () => void
+	) => React.ReactNode;
 }
 
 const assignLocation = (path: string) => window.location.assign(path);
@@ -103,6 +111,11 @@ export const StaffCallJoin = ({
 	/* Stable: the seated call must not leave and re-enter on a re-render. */
 	const ended = useCallback(() => {
 		if (mounted.current) setState({ phase: 'ended' });
+	}, []);
+	/* Entering failed (busy, unavailable, an error): the call may well still
+	   run, so the page offers to try again instead of saying it is over. */
+	const failed = useCallback(() => {
+		if (mounted.current) setState({ phase: 'error' });
 	}, []);
 
 	const visit = useCallback(
@@ -162,7 +175,7 @@ export const StaffCallJoin = ({
 	}, [waiting, leave, token]);
 
 	if (state.phase === 'seated') {
-		return <>{renderCall(state.seat, ended)}</>;
+		return <>{renderCall(state.seat, ended, failed)}</>;
 	}
 	return (
 		<StaffCallJoinRoom
@@ -183,13 +196,23 @@ export const StaffCallJoin = ({
 };
 
 const defaultRenderCall = (token: string) => {
-	const render = (seat: SharedCallSeat, onEnded: () => void) => (
+	const render = (
+		seat: SharedCallSeat,
+		onEnded: () => void,
+		onFailed: () => void
+	) => (
 		<React.Suspense fallback={<Loading layout="page" />}>
 			<AuthenticatedApp
 				onAppReady={() => undefined}
 				onLogout={() => undefined}
 				loginPath={loginPathForDirectLink(token)}
-				content={<StaffCallSeat seat={seat} onEnded={onEnded} />}
+				content={
+					<StaffCallSeat
+						seat={seat}
+						onEnded={onEnded}
+						onFailed={onFailed}
+					/>
+				}
 			/>
 		</React.Suspense>
 	);
@@ -202,10 +225,14 @@ const defaultRenderCall = (token: string) => {
  */
 export const StaffCallSeat = ({
 	seat,
-	onEnded
+	onEnded,
+	onFailed
 }: {
 	seat: SharedCallSeat;
+	/** The entered call is over. */
 	onEnded: () => void;
+	/** Entering did not work; the call may still run. */
+	onFailed: () => void;
 }) => {
 	const [joined, setJoined] = useState(false);
 	useEffect(() => {
@@ -217,7 +244,7 @@ export const StaffCallSeat = ({
 				.catch(() => 'unavailable' as const);
 			if (abort.signal.aborted) return;
 			if (result === 'joined') setJoined(true);
-			else onEnded();
+			else onFailed();
 		};
 		// Let Strict Mode's cleanup cancel the first effect before it joins.
 		void Promise.resolve().then(enter);
@@ -227,7 +254,7 @@ export const StaffCallSeat = ({
 			if (active?.sharedCallGuest && active.callId === seat.callId)
 				callManager.leaveCall();
 		};
-	}, [seat, onEnded]);
+	}, [seat, onFailed]);
 	useEffect(() => {
 		if (!joined) return;
 		return callManager.subscribe((call) => {
