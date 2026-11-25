@@ -7039,6 +7039,7 @@
 			"waitingFor": "waiting for {{count}} min",
 			"justArrived": "just arrived",
 			"admit": "Let in",
+			"startAndAdmit": "Start call and let in",
 			"decline": "Decline",
 			"admitAll": "Let everyone in",
 			"position": "{{current}} of {{total}}",

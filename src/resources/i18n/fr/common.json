@@ -7124,6 +7124,7 @@
 			"waitingFor": "attend depuis {{count}} min",
 			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
+			"startAndAdmit": "Démarrer l’appel et laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",
 			"position": "{{current}} sur {{total}}",

@@ -7141,6 +7141,7 @@
 			"waitingFor_many": "ждёт {{count}} мин.",
 			"justArrived": "только что подключился",
 			"admit": "Впустить",
+			"startAndAdmit": "Начать звонок и впустить",
 			"decline": "Отклонить",
 			"admitAll": "Впустить всех",
 			"position": "{{current}} из {{total}}",

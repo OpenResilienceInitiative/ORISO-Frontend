@@ -7098,6 +7098,7 @@
 			"waitingFor": "ን{{count}} ደቓይቕ ይጽበ ኣሎ",
 			"justArrived": "ሕጂ በጺሑ",
 			"admit": "ኣእቱ",
+			"startAndAdmit": "ጻውዒት ጀምር እሞ ኣእቱ",
 			"decline": "ኣይትቐበል",
 			"admitAll": "ንኹሎም ኣእቱ",
 			"position": "{{current}} ካብ {{total}}",
