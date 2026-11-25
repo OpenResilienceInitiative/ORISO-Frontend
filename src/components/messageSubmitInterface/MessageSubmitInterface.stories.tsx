@@ -24,7 +24,6 @@ const INPUT_FIELD_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=18-1989';
 
 const shellStyle: React.CSSProperties = {
-	background: '#eae7e8',
 	// Tall enough that the docked toolbar menus (which open upward, like in
 	// the app where the composer sits at the bottom of the screen) stay
 	// visible inside the story canvas.
@@ -68,7 +67,7 @@ function ComposerShell({
 			userData={userData}
 		>
 			<MessageSubmitInterfaceComponent
-				placeholder="Nachricht an Klient:in schreiben"
+				placeholder="Nachricht an ratsuchende Person"
 				onSendButton={() => {}}
 				isTyping={() => {}}
 				language="de"
@@ -101,7 +100,6 @@ function ComposerShell({
 const meta = {
 	title: 'Components/Message/MessageSubmitInterface',
 	tags: ['autodocs'],
-	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
 		design: [
@@ -387,7 +385,11 @@ export const TemporaryGuestAskedBeforeFirstMessage: Story = {
 		});
 		return () => resetTemporaryAccount();
 	},
-	render: () => <ComposerShell userData={mockComposerAskerData} />,
+	render: () => (
+		<ComposerShell
+			userData={{ ...mockComposerAskerData, temporaryAccount: true }}
+		/>
+	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const body = within(canvasElement.ownerDocument.body);

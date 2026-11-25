@@ -151,7 +151,8 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 /** The group's list item, planned `deltaSeconds` from now, not yet started. */
 export const buildGroupStageListItem = (
-	deltaSeconds: number
+	deltaSeconds: number,
+	modality?: 'TEXT' | 'AUDIO' | 'VIDEO'
 ): ListItemInterface => {
 	const start = new Date(Date.now() + deltaSeconds * 1000);
 	return {
@@ -187,7 +188,8 @@ export const buildGroupStageListItem = (
 			subscribed: true,
 			topic: 'HIV und Aids',
 			conversationType: 'SELF_HELP',
-			createdAt: '2026-09-21T12:00:00.000Z'
+			createdAt: '2026-09-21T12:00:00.000Z',
+			...(modality ? { modality } : {})
 		} as unknown as GroupChatItemInterface
 	} as ListItemInterface;
 };

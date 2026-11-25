@@ -110,8 +110,6 @@ describe('practiceAcceptTour (flow F1)', () => {
 		expect(stepIds(resolveTourSteps(practiceAcceptTour))).toEqual([
 			'nav-enquiries',
 			'open-enquiry',
-			'open-team',
-			'team-reply',
 			'accept',
 			'first-answer',
 			'reply',
@@ -119,7 +117,7 @@ describe('practiceAcceptTour (flow F1)', () => {
 		]);
 	});
 
-	it('drops exactly the two team steps when the Träger switched the team discussion off', () => {
+	it('walks the same six steps when the Träger switched the team chat off (FE#2491: no team steps)', () => {
 		const steps = resolveTourSteps(practiceAcceptTour, TEAM_OFF);
 		expect(stepIds(steps)).toEqual([
 			'nav-enquiries',
@@ -131,7 +129,7 @@ describe('practiceAcceptTour (flow F1)', () => {
 		]);
 	});
 
-	it('keeps the team steps while the flag is unset or on (unset counts as ON)', () => {
+	it('does not depend on the team-chat flag any more', () => {
 		const full = stepIds(resolveTourSteps(practiceAcceptTour));
 		expect(
 			stepIds(resolveTourSteps(practiceAcceptTour, { flags: {} }))
@@ -161,11 +159,6 @@ describe('practiceAcceptTour (flow F1)', () => {
 			practiceAcceptTour.steps.map((s) => [s.id, s])
 		);
 		expect(byId['open-enquiry'].advanceOn).toEqual({ type: 'click' });
-		expect(byId['open-team'].advanceOn).toEqual({ type: 'click' });
-		expect(byId['team-reply'].advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.teamMessageSent
-		});
 		expect(byId.accept.advanceOn).toEqual({ type: 'click' });
 		expect(byId.reply.advanceOn).toEqual({
 			type: 'event',
@@ -174,28 +167,23 @@ describe('practiceAcceptTour (flow F1)', () => {
 		expect(byId['first-answer'].advanceOn).toBeUndefined();
 	});
 
-	it('anchors the steps on the five practice anchors plus the team button and the composer', () => {
+	it('anchors the steps on the practice anchors and the composer', () => {
 		expect(
 			practiceAcceptTour.steps.map((s) => s.target).filter(Boolean)
 		).toEqual([
 			'nav-enquiries',
 			'enquiry-list-item',
-			'enquiry-team-button',
-			'team-discussion-panel',
 			'enquiry-accept-button',
 			'session-composer'
 		]);
 	});
 
-	it('goes back to the enquiries list for the card step and to the open enquiry for the team button', () => {
+	it('goes back to the enquiries list for the card step', () => {
 		const byId = Object.fromEntries(
 			practiceAcceptTour.steps.map((s) => [s.id, s])
 		);
 		expect(byId['open-enquiry'].route).toBe(
 			'/sessions/consultant/sessionPreview'
-		);
-		expect(byId['open-team'].route).toBe(
-			'/sessions/consultant/sessionPreview/session/-1'
 		);
 	});
 
@@ -204,22 +192,9 @@ describe('practiceAcceptTour (flow F1)', () => {
 		expect(stepIds(hidden)).toEqual(['first-answer']);
 	});
 
-	it('gates only the team steps on the team-discussion flag', () => {
-		const gated = practiceAcceptTour.steps.filter((s) => s.when);
-		expect(stepIds(gated)).toEqual(['open-team', 'team-reply']);
-		gated.forEach((s) =>
-			expect(s.when).toEqual({ flag: 'featureTeamDiscussionEnabled' })
-		);
+	it('gates no step on the team-chat flag (FE#2491: the team chat lives in the menu)', () => {
+		expect(practiceAcceptTour.steps.filter((s) => s.when)).toEqual([]);
 		expect(practiceAcceptTour.when).toBeUndefined();
-	});
-
-	it('warns about the team chat closing in the team step, before accepting', () => {
-		const teamReply = practiceAcceptTour.steps.find(
-			(s) => s.id === 'team-reply'
-		)!;
-		expect(
-			resolveKey(deTranslations, teamReply.contentKey) as string
-		).toMatch(/Team-Chat.*(geschlossen|schließt|endet)/);
 	});
 });
 
@@ -343,7 +318,11 @@ describe('practice tour wiring', () => {
 			'**/*.stories.*',
 			'src/components/productTour/**'
 		]
-	}).map((path) => readFileSync(path, 'utf8'));
+	})
+		// The navigation renders `nav-<slug>` from this map (FE#2340); it is
+		// the one productTour file that holds rendered anchors, not tours.
+		.concat('src/components/productTour/tourCatalogue.ts')
+		.map((path) => readFileSync(path, 'utf8'));
 
 	const targetsOf = (tour: TourDefinition): string[] =>
 		tour.steps.flatMap((step) => {

@@ -11,8 +11,7 @@
 	white-space: nowrap;
 
 	&:focus-visible {
-		outline: $focus-outline;
-		outline-offset: 2px;
+		@include control-focus-ring;
 	}
 
 	&--pill {
@@ -47,11 +46,15 @@
 		justify-content: center;
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.14);
-		color: var(--m3-on-primary, #fff);
+		color: inherit;
 		transition: background-color 180ms ease;
 
 		&:hover {
 			background: rgba(255, 255, 255, 0.24);
+		}
+
+		&:focus-visible {
+			outline-color: currentColor;
 		}
 
 		.localeSwitchPill__globe {
@@ -60,6 +63,15 @@
 			background: none;
 			color: inherit;
 			font-size: 19px;
+		}
+	}
+
+	&--onPrimaryContainer {
+		color: var(--m3-on-primary-container, #410002);
+		background: color-mix(in srgb, currentColor 12%, transparent);
+
+		&:hover {
+			background: color-mix(in srgb, currentColor 20%, transparent);
 		}
 	}
 
@@ -90,6 +102,7 @@
 		padding: 6px;
 		border: 1px solid var(--m3-outline-variant, #c4c7c8);
 		border-radius: 8px;
+		background-color: var(--m3-surface-container-high, #fff);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 		.MuiList-root {

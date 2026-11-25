@@ -35,6 +35,37 @@ const baseState = {
 };
 
 describe('resolveErstantwortBausteine — from a persisted event', () => {
+	it('preserves the stored disclosure even when a client trigger is provided', () => {
+		const disclosure = {
+			id: 'whoReadsAlong',
+			headline: 'Wer mitliest',
+			body: 'Unser Team hat diesen Hinweis zu Ihrer Anfrage gespeichert.'
+		};
+		const { bausteine } = resolveErstantwortBausteine({
+			rawMessage: event([disclosure]),
+			trigger: 'AFTER_FIRST_MESSAGE',
+			translate,
+			state: baseState
+		});
+
+		expect(bausteine).toEqual([disclosure]);
+	});
+
+	it('does not add a disclosure to an event that has none', () => {
+		const greeting = {
+			id: 'greeting',
+			body: 'Hallo von Ihrer Beratungsstelle.'
+		};
+		const { bausteine } = resolveErstantwortBausteine({
+			rawMessage: event([greeting]),
+			trigger: 'AFTER_FIRST_MESSAGE',
+			translate,
+			state: baseState
+		});
+
+		expect(bausteine).toEqual([greeting]);
+	});
+
 	it('renders the frozen wording from the event, not the catalogue default', () => {
 		const resolved = resolveErstantwortBausteine({
 			rawMessage: event([
@@ -127,7 +158,10 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 		expect(resolved.bausteine[0].action).toBeUndefined();
 	});
 
-	it('drops the 2FA button when two-factor auth is already active', () => {
+	it('never invites a second factor in the first answer, whatever the tenant or account state', () => {
+		// Frank, 2026-10-14: the second-factor invitation is not wanted in the
+		// first answer. It must disappear as a whole — prose and button — for
+		// events already persisted as well as for the catalogue.
 		const twoFactorEvent = event([
 			{
 				id: 'accountProtection',
@@ -136,31 +170,37 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 			}
 		]);
 
-		expect(
-			resolveErstantwortBausteine({
-				rawMessage: twoFactorEvent,
-				translate,
-				state: { ...baseState, isTwoFactorActive: true }
-			}).bausteine[0].action
-		).toBeUndefined();
+		for (const state of [
+			{
+				...baseState,
+				isTwoFactorEnabled: true,
+				isTwoFactorActive: false
+			},
+			{ ...baseState, isTwoFactorEnabled: true, isTwoFactorActive: true },
+			{ ...baseState, isTwoFactorEnabled: false }
+		]) {
+			expect(
+				resolveErstantwortBausteine({
+					rawMessage: twoFactorEvent,
+					translate,
+					state
+				}).bausteine
+			).toEqual([]);
+		}
 	});
 
-	it('drops the 2FA button when the tenant has not enabled two-factor auth at all', () => {
-		const twoFactorEvent = event([
-			{
-				id: 'accountProtection',
-				body: 'Schützen Sie Ihren Zugang.',
-				action: { kind: 'ENABLE_2FA', label: 'Zugang schützen' }
-			}
-		]);
+	it('leaves the platform-default sequence without the account-protection Baustein', () => {
+		const resolved = resolveErstantwortBausteine({
+			trigger: 'AFTER_FIRST_MESSAGE',
+			context: { conversationType: 'AGENCY_COUNSELLING' },
+			translate,
+			state: { ...baseState, isTwoFactorEnabled: true }
+		});
 
-		expect(
-			resolveErstantwortBausteine({
-				rawMessage: twoFactorEvent,
-				translate,
-				state: { ...baseState, isTwoFactorEnabled: false }
-			}).bausteine[0].action
-		).toBeUndefined();
+		expect(resolved.bausteine.map((b) => b.id)).not.toContain(
+			'accountProtection'
+		);
+		expect(resolved.bausteine.length).toBeGreaterThan(0);
 	});
 
 	it('silences the e-mail Baustein entirely when the Träger switched e-mail off', () => {
@@ -204,6 +244,22 @@ describe('resolveErstantwortBausteine — live action state (ADR-018 §4)', () =
 });
 
 describe('resolveErstantwortBausteine — client-side triggers (no event)', () => {
+	it.each(['AGENCY_COUNSELLING', 'SELF_HELP', 'LIVE_CHAT'])(
+		'does not supply a disclosure for %s without a persisted event',
+		(conversationType) => {
+			const { bausteine } = resolveErstantwortBausteine({
+				trigger: 'AFTER_FIRST_MESSAGE',
+				context: { conversationType },
+				translate,
+				state: baseState
+			});
+
+			expect(bausteine.map(({ id }) => id)).not.toContain(
+				'whoReadsAlong'
+			);
+		}
+	);
+
 	it('falls back to the platform catalogue for a trigger the server does not emit', () => {
 		const resolved = resolveErstantwortBausteine({
 			trigger: 'AFTER_ENQUIRY_DISPATCHED',

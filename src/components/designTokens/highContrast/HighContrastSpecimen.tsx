@@ -342,10 +342,10 @@ export const HighContrastSpecimen: React.FC<HighContrastSpecimenProps> = ({
 		</div>
 		<div className="hcSpecimen__focusRow">
 			<span className="hcSpecimen__ring hcSpecimen__ring--token">
-				Fokus: <code>--m3-primary-outline</code>
+				Fokus: <code>--m3-primary</code>
 			</span>
 			<span className="hcSpecimen__ring hcSpecimen__ring--button">
-				Fokus heute am Button: <code>#199fff</code>
+				Fokus am Button: <code>$focus-outline</code>
 			</span>
 		</div>
 

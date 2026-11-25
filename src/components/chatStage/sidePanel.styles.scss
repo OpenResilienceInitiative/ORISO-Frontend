@@ -369,6 +369,22 @@ $room-actions-gap: 12px;
 		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
+	// FE#2344: the counterpart's role under the name ("Supervisor:in"),
+	// the name-and-subtitle pattern of the counselling-centre line
+	// (`messageItem__usernameSubtitle`): 12/500, quieter than the name.
+	&__subtitle {
+		min-width: 0;
+		margin: 0;
+		overflow: hidden;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.4px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	// Figma: Topic Tag — label/medium 12/500/16, `secondary` on `primary-fixed`.
 	&__chip {
 		flex: 0 0 auto;
@@ -485,5 +501,33 @@ $room-actions-gap: 12px;
 		@media screen and (width <= 899px) {
 			padding-left: 0;
 		}
+	}
+
+	// FE#2494: the room's appointment pennants hang from the hairline beside
+	// the channel tag, as in the main chat's topic row.
+	&__appointments {
+		display: flex;
+		flex: 0 1 auto;
+		min-width: 0;
+		margin-left: 8px;
+	}
+
+	// A side room is narrow: its pennant shows the short date ("Fr 09:00")
+	// so the channel tag stays whole; the full date is in its title.
+	&__appointments
+		.appointmentPennant__label:not(.appointmentPennant__label--short) {
+		display: none;
+	}
+
+	&__appointments
+		.appointmentPennant__label.appointmentPennant__label--short {
+		display: inline-flex;
+	}
+
+	// The Teamberatung wears its own fixed pair: so do its pennants.
+	&--team .appointmentPennant {
+		--pennant-accent: var(--m3-secondary-fixed, #dae3f0);
+		--pennant-on-accent: var(--m3-on-secondary-fixed, #141c25);
+		--pennant-edge: var(--m3-secondary-fixed-dim, #bec7d4);
 	}
 }

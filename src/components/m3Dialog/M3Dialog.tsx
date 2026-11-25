@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { ReactNode, useId } from 'react';
+import { ReactNode, useEffect, useId, useState } from 'react';
 import clsx from 'clsx';
-import { CircularProgress, Dialog } from '@mui/material';
+import { CircularProgress, Dialog, useMediaQuery } from '@mui/material';
+import FocusTrap from 'focus-trap-react';
 import { CrossMarkIcon } from '../../resources/img/icons';
 import { useFloatingSnackbarPresence } from '../m3Snackbar/M3Snackbar';
 import './m3Dialog.styles.scss';
@@ -53,6 +54,13 @@ export interface M3DialogProps {
 	 */
 	'closeLabel'?: string;
 	/**
+	 * Controls outside the dialog that must stay reachable by keyboard and
+	 * screen reader while it is open, for example the permanent practice-mode
+	 * banner. The dialog and these controls then share one focus boundary and
+	 * the page behind is not hidden from assistive technology.
+	 */
+	'reachableOutside'?: HTMLElement | null;
+	/**
 	 * `'error'` paints hero icon and primary action in the M3 error ROLE
 	 * (`--m3-error`), which the generated Oriso scheme owns per tenant. Do not
 	 * substitute a red picked by hand — the error box would then drift away
@@ -71,6 +79,7 @@ export interface M3DialogProps {
 	/** Keep the content mounted while closed, e.g. to keep its scroll and state. */
 	'keepMounted'?: boolean;
 	'className'?: string;
+	'motion'?: 'bottom-sheet';
 	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
 	'id'?: string;
 	'data-testid'?: string;
@@ -109,28 +118,65 @@ export const M3Dialog = ({
 	showDivider = true,
 	closable = true,
 	closeLabel = 'Close',
+	reachableOutside = null,
 	severity = 'info',
 	width = 560,
 	fullScreen = false,
 	keepMounted = false,
 	className,
+	motion,
 	id,
 	'data-testid': testId
 }: M3DialogProps) => {
+	const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+	const bottomSheet = motion === 'bottom-sheet';
 	const titleId = useId();
 	const descriptionId = useId();
 	// A standing notice would sit above the dialog and swallow clicks on its buttons.
 	useFloatingSnackbarPresence(open);
+	const [paper, setPaper] = useState<HTMLElement | null>(null);
+	const sharedScope =
+		reachableOutside && paper ? [paper, reachableOutside] : null;
+	useEffect(() => {
+		if (!open || !reachableOutside) return;
+		// MUI hides every sibling of the dialog from assistive technology.
+		// The outside controls stay readable, so undo that along their path.
+		const reveal = () => {
+			for (
+				let node: HTMLElement | null = reachableOutside;
+				node && node !== document.body;
+				node = node.parentElement
+			) {
+				node.removeAttribute('aria-hidden');
+			}
+		};
+		reveal();
+		const observer = new MutationObserver(reveal);
+		observer.observe(document.body, {
+			attributes: true,
+			attributeFilter: ['aria-hidden'],
+			subtree: true
+		});
+		return () => observer.disconnect();
+	}, [open, reachableOutside]);
 
 	return (
 		<Dialog
 			open={open}
+			disableEnforceFocus={Boolean(reachableOutside)}
 			onClose={onClose}
 			aria-labelledby={titleId}
 			aria-describedby={description ? descriptionId : undefined}
 			maxWidth={false}
 			fullScreen={fullScreen}
 			keepMounted={keepMounted}
+			transitionDuration={
+				bottomSheet
+					? reducedMotion
+						? 0
+						: { enter: 220, exit: 160 }
+					: undefined
+			}
 			className={clsx(
 				'm3Dialog',
 				severity === 'error' && 'm3Dialog--error',
@@ -141,12 +187,30 @@ export const M3Dialog = ({
 			   where `slotProps.paper` is not yet wired on `Dialog`. */
 			BackdropProps={{ className: 'm3Dialog__backdrop' }}
 			PaperProps={{
+				'ref': setPaper,
+				'tabIndex': reachableOutside ? -1 : undefined,
 				'id': id,
-				'className': 'm3Dialog__surface',
+				'className': clsx(
+					'm3Dialog__surface',
+					bottomSheet && 'm3Dialog__surface--bottom-sheet',
+					bottomSheet && open && 'm3Dialog__surface--open'
+				),
 				'style': fullScreen ? undefined : { maxWidth: `${width}px` },
 				'data-testid': testId
 			}}
 		>
+			{sharedScope && (
+				<FocusTrap
+					active={open}
+					containerElements={sharedScope}
+					focusTrapOptions={{
+						allowOutsideClick: true,
+						escapeDeactivates: false,
+						fallbackFocus: () => paper as HTMLElement
+					}}
+				/>
+			)}
+
 			{closable && (
 				<button
 					type="button"

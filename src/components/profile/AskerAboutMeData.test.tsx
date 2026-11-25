@@ -102,32 +102,6 @@ vi.mock('../editableData/EditableData', () => ({
 	)
 }));
 
-vi.mock('../overlay/Overlay', () => ({
-	OVERLAY_FUNCTIONS: {
-		CLOSE: 'close',
-		CLOSE_SUCCESS: 'close-success',
-		CONFIRM_EDIT: 'confirm-edit',
-		DELETE_EMAIL: 'delete-email'
-	},
-	Overlay: ({
-		item,
-		handleOverlay
-	}: React.ComponentProps<typeof import('../overlay/Overlay').Overlay>) => (
-		<div role="dialog">
-			<h2>{item.headline}</h2>
-			{item.buttonSet?.map((button) => (
-				<button
-					key={button.label}
-					type="button"
-					onClick={() => handleOverlay(button.function)}
-				>
-					{button.label}
-				</button>
-			))}
-		</div>
-	)
-}));
-
 vi.mock('../../resources/img/illustrations/check.svg', () => ({
 	ReactComponent: () => <svg />
 }));
@@ -176,6 +150,23 @@ describe('AskerAboutMeData', () => {
 				screen.getByRole('button', { name: 'edit email' })
 			).toBeTruthy();
 		});
+	});
+
+	it('opens a named confirmation that Escape can dismiss without removing the address', async () => {
+		policy.featureAskerEmailEnabled = false;
+		render(<AskerAboutMeData />);
+		const trigger = screen.getByRole('button', {
+			name: 'profile.unsetEmail.confirmOverlay.button.confirm'
+		});
+		trigger.focus();
+		fireEvent.click(trigger);
+		const dialog = screen.getByRole('dialog', {
+			name: 'profile.unsetEmail.confirmOverlay.headline'
+		});
+		fireEvent.keyDown(dialog, { key: 'Escape' });
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(document.activeElement).toBe(trigger);
+		expect(apiDeleteEmailMock).not.toHaveBeenCalled();
 	});
 
 	it('keeps safe deletion but offers no edit or solicitation when collection is forbidden', async () => {

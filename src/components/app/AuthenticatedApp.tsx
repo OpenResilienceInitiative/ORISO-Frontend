@@ -8,6 +8,7 @@ import * as React from 'react';
 import { Navigate } from 'react-router-dom';
 import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { usePersonalDisplayHost } from '../../features/personal-display/PersonalDisplayProvider';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
 import { PasswordChangeConfirmation } from '../passwordReset/PasswordChangeConfirmation';
@@ -64,7 +65,7 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useOneShotSessionFlag } from '../../hooks/useOneShotSessionFlag';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
-import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
+import { KeyBackupRecoveryBoundary } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
 import { PracticeLayer } from '../../practice/PracticeLayer';
 import { ConsultantRequestCenters } from './ConsultantRequestCenters';
@@ -135,6 +136,7 @@ export const AuthenticatedApp = ({
 	const mounted = useRef(true);
 	const [mountedSession] = useState(getAppSessionScope);
 	const [peerExitPath, setPeerExitPath] = useState<string | null>(null);
+	const { pending: displayPending } = usePersonalDisplayHost(!peerExitPath);
 	const matrixBootstrap = useRef<{
 		controller: AbortController;
 		subject: string | null;
@@ -203,10 +205,11 @@ export const AuthenticatedApp = ({
 			void logout(false, loginPath, () => {
 				// Revalidation must not mistake this document's sign-out for a peer's.
 				mounted.current = false;
+				setMatrixClientService(null);
 				setPasswordChangeStatus('signed-out');
 			});
 		},
-		[mountedSession]
+		[mountedSession, setMatrixClientService]
 	);
 	/* Every path that ends in `<Navigate to="/login">` below goes through
 	   here: the old session is torn down *before* the login form renders,
@@ -217,8 +220,8 @@ export const AuthenticatedApp = ({
 		if (!mounted.current) return;
 		matrixBootstrap.current?.controller.abort();
 		displayFilterStore.detachClient();
-		setMatrixClientService(null);
 		teardownLocalSession();
+		setMatrixClientService(null);
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
@@ -307,9 +310,9 @@ export const AuthenticatedApp = ({
 								mounted.current &&
 								!controller.signal.aborted &&
 								getCurrentAuthSubject() === subject;
-							const startMatrix = async (
-								isActive: () => boolean
-							) => {
+							const startMatrix = async (signal: AbortSignal) => {
+								const isActive = () =>
+									!signal.aborted && isCurrent();
 								const loginData = await getMatrixAccessToken();
 								if (!isActive()) return;
 								persistMatrixLoginData(loginData);
@@ -319,15 +322,31 @@ export const AuthenticatedApp = ({
 								);
 								if (!isActive()) return;
 								const clientService = new MatrixClientService();
-								await clientService.initializeClient(
-									withAuthenticatedSessionContext(
-										loginData,
-										hasUserAuthority(
-											AUTHORITIES.ANONYMOUS_DEFAULT,
-											userProfileData
-										)
-									)
+								// Until publication, logout has no registered client to stop.
+								const stopPendingClient = () =>
+									clientService.stopAndCleanup();
+								signal.addEventListener(
+									'abort',
+									stopPendingClient,
+									{ once: true }
 								);
+								try {
+									await clientService.initializeClient(
+										withAuthenticatedSessionContext(
+											loginData,
+											hasUserAuthority(
+												AUTHORITIES.ANONYMOUS_DEFAULT,
+												userProfileData
+											)
+										),
+										isActive
+									);
+								} finally {
+									signal.removeEventListener(
+										'abort',
+										stopPendingClient
+									);
+								}
 								if (!isActive()) {
 									clientService.stopAndCleanup();
 									return;
@@ -360,17 +379,25 @@ export const AuthenticatedApp = ({
 							};
 							const connect = async () => {
 								if (!isCurrent()) return;
-								let active = true;
+								const attempt = new AbortController();
+								const cancelAttempt = () => attempt.abort();
+								controller.signal.addEventListener(
+									'abort',
+									cancelAttempt,
+									{ once: true }
+								);
 								try {
 									await withTimeout(
-										startMatrix(
-											() => active && isCurrent()
-										),
+										startMatrix(attempt.signal),
 										15_000,
 										'Matrix bootstrap timed out'
 									);
 								} finally {
-									active = false;
+									controller.signal.removeEventListener(
+										'abort',
+										cancelAttempt
+									);
+									cancelAttempt();
 								}
 							};
 							const reportMatrixFailure = (error: unknown) => {
@@ -461,11 +488,9 @@ export const AuthenticatedApp = ({
 		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
 		displayFilterStore.detachClient();
 		onLogout();
-		// Clear the React context's Matrix client reference on sign-out so a
-		// stale authenticated client cannot survive into a subsequent session
-		// (logout() also resets the module-level registry).
-		setMatrixClientService(null);
-		logout();
+		// Logout needs the registered client until it has flushed pending work
+		// and stopped that client. Then the React context can release it too.
+		void logout(true, undefined, () => setMatrixClientService(null));
 	}, [onLogout, setMatrixClientService]);
 
 	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the
@@ -516,6 +541,8 @@ export const AuthenticatedApp = ({
 		);
 	}
 
+	if (appReady && displayPending) return <Loading />;
+
 	if (appReady && (userData || passwordChangeStatus !== 'hidden')) {
 		let authenticatedContent: React.ReactNode = null;
 		if (userData && passwordChangeStatus !== 'signed-out') {
@@ -530,11 +557,12 @@ export const AuthenticatedApp = ({
 				authenticatedContent = (
 					<>
 						<E2EEncryptionSupportBanner />
-						<KeyBackupRecoveryPrompt />
-						<RecoveryKeySaveReminder />
-						<PracticeLayer>
-							<Routing logout={handleLogout} />
-						</PracticeLayer>
+						<KeyBackupRecoveryBoundary>
+							<RecoveryKeySaveReminder />
+							<PracticeLayer>
+								<Routing logout={handleLogout} />
+							</PracticeLayer>
+						</KeyBackupRecoveryBoundary>
 						<M3SnackbarHost />
 						{hasUserAuthority(
 							AUTHORITIES.CONSULTANT_DEFAULT,

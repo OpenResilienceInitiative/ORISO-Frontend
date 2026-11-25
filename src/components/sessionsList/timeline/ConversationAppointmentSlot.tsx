@@ -41,6 +41,7 @@ import { lendAppointmentCreate } from './appointmentCreateBridge';
 import { buildFutureEntries, type FutureEntry } from './timelineModel';
 import { useAppointmentActions } from './useAppointmentActions';
 import { useRequestExpiryTick } from './useRequestExpiryTick';
+import { useSupervisorPennant } from './useSupervisorPennant';
 
 /* #2252: "Weitere Personen per Link einladen" only where "Direkteinladung
    erlauben" allows a medium. Mounted with the dialog, so the agencies'
@@ -65,10 +66,16 @@ const CreateOrMoveDialog = (
 
 export const ConversationAppointmentSlot = ({
 	canChange,
-	onCreateChange
+	onCreateChange,
+	supervisorId
 }: {
 	/** Counsellor of this open conversation: may create and move. */
 	canChange: boolean;
+	/**
+	 * FE#2494: the conversation's supervisor. The counsellor's next
+	 * appointment with them hangs as a second pennant.
+	 */
+	supervisorId?: string;
 	/**
 	 * Receives the opener of the create dialog while creating is possible,
 	 * and `undefined` otherwise. The header hands it to its ⋮ menu.
@@ -173,6 +180,7 @@ export const ConversationAppointmentSlot = ({
 	}, [canCreate, onCreateChange, openCreate]);
 	/* A request expires at its start (FE#2287): the slot renders again then. */
 	useRequestExpiryTick(appointments);
+	const supervisorPennant = useSupervisorPennant(supervisorId);
 	/* The split button shows the nearest appointment or request (FE#2287). */
 	const next = Array.isArray(appointments)
 		? nextConversationAppointment(appointments, new Date())
@@ -189,7 +197,14 @@ export const ConversationAppointmentSlot = ({
 			hasUpcoming
 		});
 	}, [canCreate, sessionId, openCreate, hasUpcoming]);
-	if (sessionId === undefined || !Array.isArray(appointments)) return null;
+	if (sessionId === undefined) return null;
+	if (!Array.isArray(appointments))
+		return supervisorPennant ? (
+			<RoomNextAppointment
+				role="counsellor"
+				extra={[supervisorPennant]}
+			/>
+		) : null;
 
 	const entry = next
 		? buildFutureEntries({
@@ -222,6 +237,7 @@ export const ConversationAppointmentSlot = ({
 						: 'counsellor'
 				}
 				onAction={onAction}
+				extra={supervisorPennant ? [supervisorPennant] : undefined}
 			/>
 			{dialog && (
 				<CreateOrMoveDialog

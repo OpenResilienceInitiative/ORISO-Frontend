@@ -509,29 +509,30 @@ const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 	);
 	fireEvent.click(add);
 
-	const picker = await screen.findByRole('combobox', {}, { timeout: 15000 });
-	fireEvent.mouseDown(picker);
-	fireEvent.click(
-		await screen.findByRole('option', {
-			name: PRACTICE_CAST.supervisor.displayName
-		})
+	// The picker offers Robin, and not the colleague who is no supervisor.
+	const dialog = await screen.findByTestId(
+		'manage-people-dialog',
+		{},
+		{ timeout: 15000 }
+	);
+	const robin = await within(dialog).findByText(
+		world!.script.cast.supervisor.displayName,
+		{},
+		{ timeout: 15000 }
 	);
 	expect(
-		screen.queryByRole('option', {
-			name: PRACTICE_CAST.colleague.displayName
-		})
+		within(dialog).queryByText(world!.script.cast.colleague.displayName)
 	).toBeNull();
+	fireEvent.click(robin.closest('button')!);
 	fireEvent.change(
-		screen.getByPlaceholderText(
-			'sessionHeader.supervisor.modal.reasonPlaceholder'
+		await screen.findByPlaceholderText(
+			'managePeople.supervision.reasonPlaceholder'
 		),
 		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
 	);
 	await act(async () => {
 		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'sessionHeader.supervisor.modal.addButton'
-			})
+			screen.getByRole('button', { name: 'managePeople.add.confirm' })
 		);
 	});
 
@@ -539,6 +540,9 @@ const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
 		() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
 		{ timeout: 15000 }
 	);
+	expect(world!.rest.getCase().supervisors[0]).toMatchObject({
+		supervisorConsultantId: PRACTICE_CAST.supervisor.id
+	});
 	// The success toast stays; the feed entry is swallowed (see below).
 	await waitFor(() =>
 		expect(appNotifications.addNotification).toHaveBeenCalledWith(
@@ -650,6 +654,26 @@ describe('practice sandbox on the real session containers', () => {
 			);
 
 		await openThePracticeCase(view.container);
+		// The enquiry has no team room yet; "Weitere Funktionen" → Team-Chat
+		// einschalten creates it (FE#2491: no button beside "Annehmen").
+		const [trigger] = await screen.findAllByRole(
+			'button',
+			{ name: /app\.menu/ },
+			{ timeout: 15000 }
+		);
+		fireEvent.click(trigger);
+		fireEvent.click(
+			await waitFor(
+				() => {
+					const item = document.querySelector<HTMLButtonElement>(
+						'[data-cy="session-menu-team-chat-on"]'
+					);
+					expect(item).not.toBeNull();
+					return item!;
+				},
+				{ timeout: 15000 }
+			)
+		);
 		await waitFor(
 			() =>
 				expect(panel()?.textContent).toContain(

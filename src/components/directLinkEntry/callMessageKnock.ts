@@ -234,6 +234,8 @@ export const joinOrKnock = async (
 				token: link?.token ?? '',
 				knockId: own.id,
 				sessionId,
+				/* The ringing card hides for a knock on its own room. */
+				matrixRoomId: link?.matrixRoomId ?? null,
 				medium: own.medium,
 				status: 'PENDING'
 			},

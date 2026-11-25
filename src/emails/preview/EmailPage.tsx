@@ -141,12 +141,16 @@ export const EmailToneRow: React.FC<{
 						fontSize: 12,
 						letterSpacing: 0.5,
 						textTransform: 'uppercase',
-						color: emailColor.onSurfaceVariant
+						color: `var(--m3-on-surface-variant, ${emailColor.onSurfaceVariant})`
 					}}
 				>
 					{EMAIL_LOCALE_LABELS[locale]}
 					{EMAIL_LOCALE_RELEASE[locale] === 'released' ? null : (
-						<span style={{ color: '#a5000a' }}>
+						<span
+							style={{
+								color: 'var(--oriso-primary-text, #a5000a)'
+							}}
+						>
 							{' '}
 							· human review pending
 						</span>

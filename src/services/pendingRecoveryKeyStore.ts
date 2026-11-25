@@ -4,6 +4,7 @@ import {
 	subscribeRecoveryState
 } from './recoveryReminderState';
 import {
+	deleteHandoffKey,
 	dropHandoffKey,
 	putHandoffKey,
 	readHandoffKey
@@ -81,7 +82,7 @@ const canSeal = (): boolean =>
 
 const toBase64 = (bytes: ArrayBuffer | Uint8Array): string =>
 	btoa(String.fromCharCode(...new Uint8Array(bytes)));
-const fromBase64 = (text: string): Uint8Array =>
+const fromBase64 = (text: string): Uint8Array<ArrayBuffer> =>
 	Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
 const aad = (userId: string) => new TextEncoder().encode(userId);
 
@@ -264,6 +265,26 @@ export const usePendingRecoveryKey = (userId: string): string | null => {
 export const clearPendingRecoveryKey = (userId: string): void => {
 	forget(userId);
 	notifyRecoveryState();
+};
+
+/** Account deletion waits for the sealing-key transaction and reports storage errors. */
+export const clearDeletedAccountRecoveryKey = async (
+	userId: string
+): Promise<boolean> => {
+	cache.delete(userId);
+	bump(userId);
+	let envelopeRemoved = true;
+	try {
+		localStorage.removeItem(`${PENDING_KEY_PREFIX}${userId}`);
+	} catch {
+		envelopeRemoved = false;
+	}
+	try {
+		notifyRecoveryState();
+	} finally {
+		await deleteHandoffKey(sealId(userId));
+	}
+	return envelopeRemoved;
 };
 
 /**

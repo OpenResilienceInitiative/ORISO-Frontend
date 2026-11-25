@@ -101,7 +101,7 @@ describe('computeHighContrastTokens', () => {
 });
 
 describe('evaluateContrastPairs', () => {
-	it('flags the hard-coded button focus ring as a token bypass', () => {
+	it('measures the button focus ring with the primary role the contract draws', () => {
 		const tokens = computeOrisoPalette(
 			{ primary: SEEDS.red },
 			'light'
@@ -112,10 +112,10 @@ describe('evaluateContrastPairs', () => {
 			'--m3-surface': '#ffffff'
 		}).find(({ pair }) => pair.id === 'focus-ring-button');
 
-		// Button.scss draws it as $focus-blue #199fff: 2.82:1 on white.
-		expect(focus?.pair.enforced).toBe(false);
-		expect(focus?.rating.ratio).toBeCloseTo(2.82, 2);
-		expect(focus?.rating.grade).toBe('fail');
+		// $focus-outline reads --m3-primary; the old $focus-blue was 2.82:1.
+		expect(focus?.pair.enforced).toBe(true);
+		expect(focus?.pair.foreground).toBe(tokens['--m3-primary']);
+		expect(focus?.rating.ratio).toBeGreaterThanOrEqual(3);
 	});
 
 	it('flags the hard-coded session-row inks as token bypasses', () => {

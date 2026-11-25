@@ -135,3 +135,24 @@ describe('CaseHandoverReadOnlyNotice — extending co-access', () => {
 		);
 	});
 });
+
+describe('CaseHandoverReadOnlyNotice in a Teamberatung centre (FE#2494)', () => {
+	afterEach(cleanup);
+
+	it('names the owner and offers no extension', () => {
+		render(
+			<CaseHandoverReadOnlyNotice
+				ownerName="Ingrid K."
+				sessionId={5}
+				canExtend
+				expiresAt="2026-09-25T07:36:21"
+				onStatusChange={vi.fn()}
+			/>
+		);
+
+		expect(screen.getByRole('status').textContent).toBe(
+			'caseHandover.readOnly.teamNotice'
+		);
+		expect(screen.queryByRole('button')).toBeNull();
+	});
+});

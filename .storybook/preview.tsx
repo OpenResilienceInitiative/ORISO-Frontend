@@ -929,22 +929,6 @@ const preview: Preview = {
 		return () => finish.complete();
 	},
 	parameters: {
-		options: {
-			storySort: {
-				order: [
-					'Entry flows',
-					[
-						'Overview',
-						'Postcode counselling',
-						'Live chat',
-						'Self-help groups',
-						'Temporary guests',
-						'Existing account'
-					],
-					'*'
-				]
-			}
-		},
 		i18n,
 		a11y: {
 			options: {
@@ -992,9 +976,6 @@ const preview: Preview = {
 		 * fire at the wrong breakpoint. See ORISO-Frontend#849.
 		 */
 		viewport: {
-			// addon-vitest sizes the rendered iframe from Storybook parameters,
-			// overriding browser.viewport. Keep native story-specific overrides.
-			defaultViewport: 'desktop1280',
 			options: {
 				phone320: {
 					name: 'Phone 320 (smallest supported)',
@@ -1084,14 +1065,18 @@ const preview: Preview = {
 	},
 	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
 	initialGlobals: {
+		// addon-vitest sizes the rendered iframe from globals.viewport (Storybook 11
+		// no longer reads parameters.viewport.defaultViewport). Stories that set
+		// their own globals.viewport keep their override.
+		viewport: { value: 'desktop1280', isRotated: false },
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
 		scheme: 'light',
-		entryFormDemo: 'manual',
-		backgrounds: { value: 'light' }
+		contrast: 'standard',
+		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],
 	// The scheme decorator installs custom properties before the story

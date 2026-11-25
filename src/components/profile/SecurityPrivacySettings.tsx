@@ -86,7 +86,10 @@ export const SecurityPrivacySettings = ({
 					</div>
 				</section>
 			)}
-			<section aria-labelledby={`${id}-recovery`}>
+			<section
+				aria-labelledby={`${id}-recovery`}
+				data-tour-target="settings-recovery"
+			>
 				<h2 id={`${id}-recovery`} className="headline headline--4">
 					{t('profile.securityPrivacy.recovery.title')}
 				</h2>

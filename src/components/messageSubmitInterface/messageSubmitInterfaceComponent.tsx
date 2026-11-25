@@ -173,6 +173,10 @@ import {
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { VoiceNoteRow } from '../voicePlayer/VoiceNoteRow';
 import {
+	createVoiceFile,
+	pickVoiceMimeType
+} from '../voicePlayer/voiceRecordingFile';
+import {
 	AttachmentFailureReason,
 	attachmentFailureStatus,
 	classifyAttachmentSendError
@@ -251,7 +255,6 @@ export interface MessageSubmitInterfaceComponentProps {
 	onSendButton?: Function;
 	isTyping?: Function;
 	placeholder: string;
-	typingUsers?: string[];
 	language?: string;
 	preselectedFile?: File;
 	handleMessageSendSuccess?: Function;
@@ -502,7 +505,6 @@ export const MessageSubmitInterfaceComponent = ({
 	onSendButton,
 	isTyping,
 	placeholder,
-	typingUsers,
 	language,
 	preselectedFile,
 	handleMessageSendSuccess: onMessageSendSuccess,
@@ -671,6 +673,8 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 	const [isTypingActive, setIsTypingActive] = useState(activeSession.isGroup);
 	const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+	// The live microphone, for the recorder's level dots.
+	const [voiceStream, setVoiceStream] = useState<MediaStream | null>(null);
 	const [voiceRecordingDurationSec, setVoiceRecordingDurationSec] =
 		useState(0);
 	const [voiceAttachmentDurationSec, setVoiceAttachmentDurationSec] =
@@ -1186,6 +1190,7 @@ export const MessageSubmitInterfaceComponent = ({
 			mediaStreamRef.current.getTracks().forEach((track) => track.stop());
 			mediaStreamRef.current = null;
 		}
+		setVoiceStream(null);
 	}, []);
 
 	const handleCardlessUploadError = useCallback(
@@ -2329,7 +2334,8 @@ export const MessageSubmitInterfaceComponent = ({
 	   or file (uploads and pasted files go out through this button too). */
 	const retentionGate = useGuestRetentionGate(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-			!activeSession.isGroup
+			!activeSession.isGroup,
+		userData?.temporaryAccount
 	);
 	const handleButtonClickRef = useRef<() => unknown>(() => undefined);
 	// The chat this composer shows now; a send that settles later checks it
@@ -2807,26 +2813,32 @@ export const MessageSubmitInterfaceComponent = ({
 	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
 	const isPracticing = usePracticeActive();
 	const effectiveFeatures = useConversationFeatureSettings(tenant?.settings);
+	// FE#2491: the team chat composer asks its own chat features, like the
+	// supervision room does; the main-chat chat type stays as it is.
+	const featureChatType = teamDiscussion ? 'team' : currentChatType;
 	const hasUploadFunctionality =
 		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
-		hasMediaUploadFeature(effectiveFeatures, currentChatType);
+		hasMediaUploadFeature(effectiveFeatures, featureChatType);
 	const {
 		featureVoiceMessagesEnabled = true,
 		featureVoiceMessagesAnonymousChatsEnabled = true,
 		featureVoiceMessagesOneOnOneChatsEnabled = true,
 		featureVoiceMessagesGroupChatsEnabled = true,
-		featureVoiceMessagesSupervisionChatsEnabled = true
+		featureVoiceMessagesSupervisionChatsEnabled = true,
+		featureVoiceMessagesTeamDiscussionsEnabled = true
 	} = effectiveFeatures;
 	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
-		(currentChatType === 'anonymous'
-			? featureVoiceMessagesAnonymousChatsEnabled !== false
-			: currentChatType === 'group'
-				? featureVoiceMessagesGroupChatsEnabled !== false
-				: currentChatType === 'supervision'
-					? featureVoiceMessagesSupervisionChatsEnabled !== false
-					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
+		(featureChatType === 'team'
+			? featureVoiceMessagesTeamDiscussionsEnabled !== false
+			: currentChatType === 'anonymous'
+				? featureVoiceMessagesAnonymousChatsEnabled !== false
+				: currentChatType === 'group'
+					? featureVoiceMessagesGroupChatsEnabled !== false
+					: currentChatType === 'supervision'
+						? featureVoiceMessagesSupervisionChatsEnabled !== false
+						: featureVoiceMessagesOneOnOneChatsEnabled !== false);
 	// A voice note is never sent as an edit (m.replace has no attachment
 	// path): the microphone stays visible but unavailable while editing.
 	const isEditingAnyMessage = Boolean(editingMessage || editingMessageId);
@@ -3696,14 +3708,7 @@ export const MessageSubmitInterfaceComponent = ({
 				return;
 			}
 			mediaStreamRef.current = stream;
-			const mimeTypeCandidates = [
-				'audio/webm;codecs=opus',
-				'audio/ogg;codecs=opus',
-				'audio/webm'
-			];
-			const supportedMimeType = mimeTypeCandidates.find((mimeType) =>
-				MediaRecorder.isTypeSupported(mimeType)
-			);
+			const supportedMimeType = pickVoiceMimeType();
 			const recorder = supportedMimeType
 				? new MediaRecorder(stream, { mimeType: supportedMimeType })
 				: new MediaRecorder(stream);
@@ -3732,33 +3737,10 @@ export const MessageSubmitInterfaceComponent = ({
 				const blob = new Blob(chunks, { type: mimeType });
 				if (blob.size > 0) {
 					const elapsedMs = voiceRecordingStartedAtRef.current
-						? Math.max(
-								1000,
-								Date.now() - voiceRecordingStartedAtRef.current
-							)
-						: Math.max(
-								1000,
-								voiceRecordingDurationRef.current * 1000
-							);
-					const elapsedSec = Math.max(
-						1,
-						Math.round(elapsedMs / 1000)
-					);
-					// iOS Safari records audio/mp4; name it to match so the
-					// receiving side still recognises it as a voice note.
-					const extension = mimeType.includes('ogg')
-						? 'ogg'
-						: mimeType.includes('mp4')
-							? 'm4a'
-							: 'webm';
-					const voiceFile = new File(
-						[blob],
-						`voice-message-${Date.now()}-s${elapsedSec}-ms${elapsedMs}.${extension}`,
-						{
-							type: mimeType,
-							lastModified: Date.now()
-						}
-					);
+						? Date.now() - voiceRecordingStartedAtRef.current
+						: voiceRecordingDurationRef.current * 1000;
+					const { file: voiceFile, durationSec: elapsedSec } =
+						createVoiceFile(blob, mimeType, elapsedMs);
 					if (voicePreviewUrl) {
 						URL.revokeObjectURL(voicePreviewUrl);
 					}
@@ -3784,6 +3766,7 @@ export const MessageSubmitInterfaceComponent = ({
 			setVoiceRecordingDurationSec(0);
 			voiceRecordingStartedAtRef.current = Date.now();
 			setIsVoiceRecording(true);
+			setVoiceStream(stream);
 			voiceRecordingTimerRef.current = window.setInterval(() => {
 				setVoiceRecordingDurationSec((value) => {
 					const next = value + 1;
@@ -5121,6 +5104,7 @@ export const MessageSubmitInterfaceComponent = ({
 									<VoiceNoteRow
 										mode="recording"
 										durationSec={voiceRecordingDurationSec}
+										stream={voiceStream}
 										onStop={() => stopVoiceRecording()}
 										onDiscard={() =>
 											stopVoiceRecording({

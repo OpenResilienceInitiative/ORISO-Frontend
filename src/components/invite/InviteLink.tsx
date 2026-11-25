@@ -19,6 +19,7 @@ import {
 import {
 	isRedeemInviteLinkSessionResponse,
 	isPausedInvite,
+	isTakenGuestName,
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
@@ -86,6 +87,7 @@ import {
 	openDirectLinkConversation
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { StaffCallJoin, staffCallMediumOf } from './staffJoin/StaffCallJoin';
 import {
 	entryGuestAccountMode,
 	withChosenAccount
@@ -237,6 +239,8 @@ export const InviteLink = () => {
 	const chatFirstRef = useRef(false);
 	/* #1795: a counsellor's direct link. Chat guests use the identity step
 	   below; call guests the call entry; signed-in people go straight in. */
+	/* #2356: a Direkteinladung's call a signed-in counsellor can join. */
+	const [staffCall, setStaffCall] = useState<'AUDIO' | 'VIDEO' | null>(null);
 	const [directLink, setDirectLink] = useState<{
 		context: InviteLinkContext;
 		medium: DirectLinkMedium;
@@ -348,6 +352,7 @@ export const InviteLink = () => {
 					return;
 				}
 				const context = read ? withAccessMode(read) : read;
+				setStaffCall(staffCallMediumOf(context));
 				if (holdsCounsellorSession()) {
 					setStatus('staff');
 					return;
@@ -506,7 +511,7 @@ export const InviteLink = () => {
 					applyRedeemSessionCredentials(data);
 					rememberInviteSession(token, data.sessionId);
 					/* A courtesy name before anyone can look: without it
-					   the counsellor's queue shows `anon_N` (#1216). Not
+					   the queue shows the bare User-ID the server rolled. Not
 					   awaited — there is no page load to race any more, and
 					   the room must not wait up to five seconds on a name
 					   the guest is about to confirm or reroll at its door.
@@ -543,54 +548,64 @@ export const InviteLink = () => {
 		})();
 	}, [token, locale, resumeAttempt, t, askJoinConsent]);
 
-	const redeemForRoom = useCallback(async (): Promise<number> => {
-		if (!token) throw new Error(t('inviteLink.error.missingToken'));
-		/* Again here, not only on arrival: cookies are shared across tabs, and a
+	const redeemForRoom = useCallback(
+		async (userId: string): Promise<number> => {
+			if (!token) throw new Error(t('inviteLink.error.missingToken'));
+			/* Again here, not only on arrival: cookies are shared across tabs, and a
 		   counsellor may have signed in elsewhere while this tab waited. */
-		if (holdsCounsellorSession()) {
-			setStatus('staff');
-			throw new Error('A counsellor is signed in in this browser');
-		}
-		let data;
-		try {
-			data = await redeemInviteLink(token);
-			if (!isRedeemInviteLinkSessionResponse(data)) {
-				throw new Error('Invite link did not open a live-chat session');
+			if (holdsCounsellorSession()) {
+				setStatus('staff');
+				throw new Error('A counsellor is signed in in this browser');
 			}
-		} catch (err) {
-			if (await isPausedInvite(err)) {
-				if (mountedRef.current) setStatus('paused');
-				throw err;
-			}
-			const failure = getCounsellingDpaFailure(err);
-			setDpaFailure(failure);
-			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
+			let data;
+			try {
+				data = await redeemInviteLink(token, userId);
+				if (!isRedeemInviteLinkSessionResponse(data)) {
+					throw new Error(
+						'Invite link did not open a live-chat session'
+					);
+				}
+			} catch (err) {
+				/* Somebody took the rolled name meanwhile: the link is fine, the room
+			   offers fresh names. */
+				if (isTakenGuestName(err)) throw err;
+				if (await isPausedInvite(err)) {
+					if (mountedRef.current) setStatus('paused');
+					throw err;
+				}
+				const failure = getCounsellingDpaFailure(err);
+				setDpaFailure(failure);
+				/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
 			   the name cannot fix that, so this is the unusable-invite page the
 			   on-arrival flow showed, not the room's "name not saved". */
-			setResumeFailed(false);
-			setErrorMessage(inviteErrorText(err, t));
-			setStatus('error');
-			throw err;
-		}
-		/* Left the page after "Zum Warteraum" while the POST ran: the guest
+				setResumeFailed(false);
+				setErrorMessage(inviteErrorText(err, t));
+				setStatus('error');
+				throw err;
+			}
+			/* Left the page after "Zum Warteraum" while the POST ran: the guest
 		   exists now, so withdraw it rather than install it on another page. */
-		if (!mountedRef.current) {
-			withdrawDiscardedGuest(data);
-			throw new Error('The invite page was left while the redeem ran');
-		}
-		/* And once more after the POST returns: it takes time, and the guest's
+			if (!mountedRef.current) {
+				withdrawDiscardedGuest(data);
+				throw new Error(
+					'The invite page was left while the redeem ran'
+				);
+			}
+			/* And once more after the POST returns: it takes time, and the guest's
 		   tokens must not land over a counsellor who signed in meanwhile. */
-		if (holdsCounsellorSession()) {
-			withdrawDiscardedGuest(data);
-			setStatus('staff');
-			throw new Error(
-				'A counsellor signed in while the invite was redeemed'
-			);
-		}
-		applyRedeemSessionCredentials(data);
-		rememberInviteSession(token, data.sessionId);
-		return data.sessionId;
-	}, [token, t]);
+			if (holdsCounsellorSession()) {
+				withdrawDiscardedGuest(data);
+				setStatus('staff');
+				throw new Error(
+					'A counsellor signed in while the invite was redeemed'
+				);
+			}
+			applyRedeemSessionCredentials(data);
+			rememberInviteSession(token, data.sessionId);
+			return data.sessionId;
+		},
+		[token, t]
+	);
 
 	const handleReroll = useCallback(() => {
 		if (!identity) return;
@@ -806,6 +821,12 @@ export const InviteLink = () => {
 				<M3SnackbarHost />
 			</>
 		);
+	}
+
+	/* #2356: the counsellor joins the call only, with their own account;
+	   other links keep the notice below. */
+	if (status === 'staff' && staffCall && token) {
+		return <StaffCallJoin token={token} medium={staffCall} />;
 	}
 
 	if (status === 'room' && roomSessionId !== null) {

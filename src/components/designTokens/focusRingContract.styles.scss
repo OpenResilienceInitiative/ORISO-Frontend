@@ -1,0 +1,73 @@
+// Specimen canvas for Design Tokens/Focus ring contract. The two plain
+// controls show the mixins every other component uses.
+.focusRingContract {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	min-height: 100vh;
+	padding: 24px;
+	box-sizing: border-box;
+	background: var(--m3-surface, #fcf9f9);
+	color: var(--m3-on-surface, #1b1b1c);
+
+	&__lead {
+		max-width: 60ch;
+		margin: 0;
+	}
+
+	&__row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 16px;
+	}
+
+	&__control {
+		padding: 8px 16px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 8px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		color: var(--m3-on-surface, #1b1b1c);
+		font: inherit;
+
+		&:focus-visible {
+			@include control-focus-ring;
+		}
+	}
+
+	&__filled {
+		width: 48px;
+		height: 48px;
+		border: none;
+		border-radius: 999px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+		font-size: 20px;
+
+		&:focus-visible {
+			@include control-focus-ring-on-fill;
+		}
+	}
+
+	// Mirrors .stage (stage.styles.scss): a primary-painted surface.
+	&__onPrimary {
+		--oriso-focus-ring-color: var(--m3-on-primary, #ffffff);
+		padding: 24px;
+		border-radius: 16px;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+	}
+
+	&__onPrimaryLink {
+		border: none;
+		background: none;
+		color: inherit;
+		font: inherit;
+		text-decoration: underline;
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+		}
+	}
+}

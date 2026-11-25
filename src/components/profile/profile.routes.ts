@@ -44,7 +44,8 @@ const profileRoutes = (
 	tenant: TenantDataInterface,
 	selectableLocales: string[],
 	isFirstVisit: boolean,
-	directLinksAllowed = true
+	directLinksAllowed = true,
+	personalDisplayAvailable = false
 ): TabsType =>
 	[
 		{
@@ -92,6 +93,7 @@ const profileRoutes = (
 								),
 							component: ConsultantInformation,
 							icon: PersonOutlineIcon,
+							tourTarget: 'profile-public',
 							column: COLUMN_LEFT
 						},
 						{
@@ -210,6 +212,7 @@ const profileRoutes = (
 						{
 							component: AbsenceFormular,
 							icon: AccessAlarmOutlinedIcon,
+							tourTarget: 'profile-absence',
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
@@ -235,7 +238,8 @@ const profileRoutes = (
 				selectableLocales,
 				settings,
 				directLinksAllowed,
-				tenant?.settings
+				tenant?.settings,
+				personalDisplayAvailable
 			)
 		},
 		{

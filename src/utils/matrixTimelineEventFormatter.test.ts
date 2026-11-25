@@ -538,6 +538,29 @@ describe('answered passages (ADR-022, #2202)', () => {
 		expect(formatted.replyToEventId).toBeUndefined();
 	});
 
+	it('renders a collected quote and separate composer text without a raw fallback', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				'msgtype': 'm.text',
+				'body': '> drei Mahnungen\n\nDie schauen wir uns an.',
+				'org.oriso.passage_replies': [
+					{
+						event_id: '$client:hs',
+						author: 'Lena',
+						excerpt: 'drei Mahnungen'
+					}
+				],
+				'org.oriso.passage_replies_text': 'Die schauen wir uns an.'
+			}),
+			null,
+			'encrypted'
+		);
+		expect(formatted.msg).toBe('Die schauen wir uns an.');
+		expect(formatted.passageReplies).toMatchObject([
+			{ eventId: '$client:hs', excerpt: 'drei Mahnungen' }
+		]);
+	});
+
 	it('turns a clip into an encrypted voice attachment with its length', () => {
 		const voice = passageReplyAudioAttachment({
 			file: clip as any,
@@ -550,5 +573,157 @@ describe('answered passages (ADR-022, #2202)', () => {
 			mediaType: 'audio/webm'
 		});
 		expect(voiceDurationMsFromFileName(voice.file.name)).toBe(4000);
+	});
+});
+
+describe('lifted blur (#2494 *9)', () => {
+	const room = {
+		getMember: (id: string) =>
+			({
+				// Counsellor 100, advice seeker 0 (UserService power levels).
+				'@karina:hs': { name: 'Karina P', powerLevel: 100 },
+				'@kala:hs': { name: 'Sanftes Alpaka Kala', powerLevel: 0 }
+			})[id],
+		findEventById: (id: string) =>
+			id === '$msg:hs' ? { getSender: () => '@kala:hs' } : undefined
+	};
+	const redaction = (reason?: string, sender = '@karina:hs') => ({
+		getType: () => 'm.room.redaction',
+		getContent: () => (reason ? { reason } : {}),
+		getSender: () => sender,
+		getId: () => '$redaction:hs',
+		getTs: () => 1700000600000
+	});
+
+	it('turns the redaction that lifted a blur into the notice', () => {
+		const formatted = formatMatrixTimelineEvent(
+			redaction('org.oriso.passage_blur.removed $msg:hs'),
+			room,
+			''
+		);
+		expect(formatted).toMatchObject({
+			_id: '$redaction:hs',
+			t: 'blur-removed',
+			u: { _id: '@karina:hs', name: 'Karina P' },
+			blurRemoved: {
+				targetEventId: '$msg:hs',
+				targetSenderId: '@kala:hs',
+				targetSenderName: 'Sanftes Alpaka Kala'
+			}
+		});
+		expect(formatted?.ts.getTime()).toBe(1700000600000);
+	});
+
+	it('shows no notice for a removal the server refused (local echo NOT_SENT)', () => {
+		expect(
+			formatMatrixTimelineEvent(
+				{
+					...redaction('org.oriso.passage_blur.removed $msg:hs'),
+					status: 'not_sent'
+				},
+				room,
+				''
+			)
+		).toBeNull();
+	});
+
+	it('judges the remover by the power held at the removal, not today', () => {
+		const demoted = {
+			...room,
+			getMember: (id: string) =>
+				id === '@karina:hs'
+					? { name: 'Karina P', powerLevel: 0 }
+					: room.getMember(id),
+			findEventById: (id: string) =>
+				id === '$redaction:hs'
+					? { sender: { powerLevel: 100 } }
+					: room.findEventById(id)
+		};
+		expect(
+			formatMatrixTimelineEvent(
+				{
+					...redaction('org.oriso.passage_blur.removed $msg:hs'),
+					sender: { powerLevel: 100 }
+				},
+				demoted,
+				''
+			)?.t
+		).toBe('blur-removed');
+		expect(
+			formatMatrixTimelineEvent(
+				{
+					...makeEvent({}),
+					getType: () => 'm.room.encrypted',
+					isRedacted: () => true,
+					getUnsigned: () => ({
+						redacted_because: {
+							event_id: '$redaction:hs',
+							sender: '@karina:hs',
+							content: {
+								reason: 'org.oriso.passage_blur.removed $msg:hs'
+							}
+						}
+					})
+				},
+				demoted,
+				''
+			)
+		).toBeNull();
+	});
+
+	it('ignores every other redaction', () => {
+		expect(formatMatrixTimelineEvent(redaction(), room, '')).toBeNull();
+		expect(
+			formatMatrixTimelineEvent(redaction('spam'), room, '')
+		).toBeNull();
+	});
+
+	it('shows nothing for the redacted blur itself (not "gelöscht")', () => {
+		const formatted = formatMatrixTimelineEvent(
+			{
+				...makeEvent({}),
+				getType: () => 'm.room.encrypted',
+				isRedacted: () => true,
+				getUnsigned: () => ({
+					redacted_because: {
+						sender: '@karina:hs',
+						content: {
+							reason: 'org.oriso.passage_blur.removed $msg:hs'
+						}
+					}
+				})
+			},
+			room,
+			''
+		);
+		expect(formatted).toBeNull();
+	});
+
+	it('trusts the marker only from a room moderator (no spoofed notice)', () => {
+		expect(
+			formatMatrixTimelineEvent(
+				redaction('org.oriso.passage_blur.removed $msg:hs', '@kala:hs'),
+				room,
+				''
+			)
+		).toBeNull();
+		const ownDeleted = formatMatrixTimelineEvent(
+			{
+				...makeEvent({}),
+				getSender: () => '@kala:hs',
+				isRedacted: () => true,
+				getUnsigned: () => ({
+					redacted_because: {
+						sender: '@kala:hs',
+						content: {
+							reason: 'org.oriso.passage_blur.removed $x:hs'
+						}
+					}
+				})
+			},
+			room,
+			''
+		);
+		expect(ownDeleted?.t).toBe('rm');
 	});
 });

@@ -217,6 +217,24 @@ export const directLinkSessionOf = (
 		: null;
 };
 
+/**
+ * The conversation a call room belongs to, when it came through an audio or
+ * video direct link on this device. The ringing card knows only the room.
+ */
+export const directLinkSessionIdOfRoom = (
+	roomIds: Array<string | null | undefined>
+): number | null => {
+	const rooms = roomIds.filter(Boolean);
+	const found = Object.entries(readDirectLinkSessions()).find(
+		([, link]) =>
+			link?.medium !== 'CHAT' &&
+			Boolean(link?.matrixRoomId) &&
+			rooms.includes(link.matrixRoomId)
+	);
+	const id = found ? Number(found[0]) : NaN;
+	return Number.isFinite(id) ? id : null;
+};
+
 export const pendingKnockFrom = (
 	token: string,
 	conversation: DirectLinkConversation
@@ -268,6 +286,23 @@ export const rememberAdmittedConversation = (sessionId: number) => {
 
 export const wasAdmittedTo = (sessionId: number | null | undefined) =>
 	sessionId != null && readAdmitted().includes(sessionId);
+
+/**
+ * P0 Direkteinladung: a person who knocked on this call and is not let in yet
+ * is waiting in the knock dialog. The call that the counsellor starts must not
+ * also ring them: "Annehmen" would open the call without admission and end in
+ * "Call access denied" (403).
+ */
+export const isKnockingOnCall = (
+	pending: PendingKnock | null,
+	callRoomIds: Array<string | null | undefined>
+): boolean =>
+	Boolean(
+		pending &&
+			pending.status !== 'ADMITTED' &&
+			pending.matrixRoomId &&
+			callRoomIds.includes(pending.matrixRoomId)
+	);
 
 /** The call notice in the feed knows only the room: it must not skip the knock. */
 export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>

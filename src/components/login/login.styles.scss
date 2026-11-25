@@ -289,7 +289,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		h2 {
 			font-size: 32px;
 			font-weight: 700;
-			color: #1f2937;
+			color: var(--m3-on-surface, #1b1b1c);
 			letter-spacing: -0.5px;
 			margin: 0;
 		}
@@ -338,23 +338,40 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__otp {
-		max-height: 0;
-		overflow: hidden;
-		-webkit-transition: max-height 0.8s;
-		-moz-transition: max-height 0.8s;
-		transition: max-height 0.8s;
+		$reveal-duration: 260ms;
+
+		display: grid;
+		grid-template-rows: 0fr;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			grid-template-rows $reveal-duration cubic-bezier(0.2, 0, 0, 1),
+			opacity 180ms ease-out,
+			visibility 0s linear $reveal-duration;
 
 		&--active {
-			// Room for the e-mail hint, the code field and the resend block
-			// (link, "only the newest code" hint, status line) at 320px.
-			max-height: 480px;
-			overflow: visible;
+			grid-template-rows: 1fr;
+			opacity: 1;
+			visibility: visible;
+			transition-delay: 0s;
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
 		}
 
 		.inputField__icon {
 			top: 50%;
 			transform: translateY(-50%);
 		}
+	}
+
+	&__otpContent {
+		// Clip the collapsing row and leave room around its focus outlines.
+		min-block-size: 0;
+		overflow: hidden;
+		margin-inline: -$grid-base;
+		padding-inline: $grid-base;
 	}
 
 	&__otpEmailResend {
@@ -425,7 +442,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 
 		&:disabled {
-			opacity: 0.5;
+			opacity: 1;
+			background: var(--m3-surface-container-high, #eae7e8);
+			color: var(--m3-on-surface-variant, #444748);
+			box-shadow: none;
 			cursor: not-allowed;
 		}
 	}
@@ -457,7 +477,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 		&__separator {
 			width: 100%;
-			border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+			border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 			text-align: center;
 			height: 18px;
 			margin-bottom: 15px;
@@ -471,10 +491,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 			span {
 				line-height: 15px;
 				padding: 0 10px;
-				background: white;
+				background: var(--m3-surface-container-lowest, #fff);
 				display: inline-block;
 				margin-top: 10px;
-				color: $text-low-emphasis;
+				color: var(--m3-on-surface, #1b1b1c);
 				text-transform: uppercase;
 				letter-spacing: 1.5px;
 				font-weight: 500;
@@ -557,5 +577,42 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+body[data-oriso-login-dark] {
+	color-scheme: dark;
+
+	.loginForm__register__content .text,
+	.stageLayout__toLogin__button .button__item:not(:hover) {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
+
+	.m3Dialog .m3Dialog__backdrop {
+		background: color-mix(in srgb, var(--m3-scrim, #000) 80%, transparent);
+	}
+}
+
+.loginForm__wait {
+	position: fixed;
+	z-index: 5;
+	inset-block-end: 1rem;
+	inset-inline-start: 50%;
+	transform: translateX(-50%);
+	padding: 0.5rem 1rem;
+	border-radius: 2rem;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface, #1b1b1c);
+	box-shadow: 0 0.125rem 0.5rem rgb(0 0 0 / 12%);
+	pointer-events: none;
+
+	@media (prefers-reduced-motion: no-preference) {
+		animation: login-wait-label 120ms ease-out 350ms backwards;
+	}
+}
+
+@keyframes login-wait-label {
+	from {
+		opacity: 0;
 	}
 }

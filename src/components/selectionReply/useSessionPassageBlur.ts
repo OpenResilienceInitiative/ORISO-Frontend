@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { NotificationsContext } from '../../globalState';
 import { NOTIFICATION_TYPE_ERROR } from '../../globalState/provider/NotificationsProvider';
 import { chatTransportService } from '../../services/chatTransportService';
+import { passageBlurRemovedReason } from './passageBlurEvents';
 import {
 	canBlurPassages,
 	type PassageBlurPermissionInput
@@ -60,12 +61,17 @@ export const useSessionPassageBlur = ({
 	);
 
 	const removeBlur = useCallback(
-		(_eventId: string, blurId: string) => {
+		(eventId: string, blurId: string) => {
 			if (!matrixRoomId) {
 				return;
 			}
 			chatTransportService
-				.redactMessage({ matrixRoomId, targetEventId: blurId })
+				.redactMessage({
+					matrixRoomId,
+					targetEventId: blurId,
+					// #2494 *9: the chat shows "Schwärzung aufgehoben".
+					reason: passageBlurRemovedReason(eventId)
+				})
 				.catch(notifyFailed);
 		},
 		[matrixRoomId, notifyFailed]

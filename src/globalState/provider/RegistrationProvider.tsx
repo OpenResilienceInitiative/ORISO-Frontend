@@ -26,7 +26,8 @@ import {
 	mergeRegistrationSteps,
 	RegistrationStep,
 	filterRegistrationStepsForDirectLink,
-	getConsultantDirectLinkTopicIds
+	getConsultantDirectLinkTopicIds,
+	resolveDirectLinkZipcode
 } from '../../components/registration/registrationSteps';
 import { getGroupInviteTopicId } from '../../components/registration/groupInviteEntry/groupInviteEntryState';
 import { agencyExcludesTopic } from '../../components/registration/agencyTopicMatch';
@@ -76,7 +77,6 @@ interface RegistrationContextInterface {
 }
 
 export const registrationSessionStorageKey = 'registrationData';
-const DIRECT_LINK_POSTCODE = '00000';
 
 export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	const getSessionStorageData = (): SessionStorageData =>
@@ -296,6 +296,9 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 	);
 
 	useEffect(() => {
+		// Keep the saved draft intact while its agency and topic data load.
+		if (loading) return;
+
 		// The password stays in memory only — with free stepper navigation the
 		// account step's values are committed on back-navigation too, and a
 		// plaintext password must never be written to sessionStorage.
@@ -309,7 +312,7 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			agencyId: agency?.id,
 			agencyConsultingType: agency?.consultingType
 		});
-	}, [registrationData]);
+	}, [loading, registrationData]);
 
 	useEffect(() => {
 		// Check if agency matches preselected topic
@@ -330,11 +333,11 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			getDirectLinkAgency(
 				registrationData?.mainTopic || preselectedTopic
 			);
-		const directLinkZipcode =
-			preselectedZipcode ||
-			(directLinkAgency || preselectedConsultant
-				? DIRECT_LINK_POSTCODE
-				: undefined);
+		const directLinkZipcode = resolveDirectLinkZipcode({
+			urlZipcode: preselectedZipcode,
+			directLinkAgency,
+			consultantAgencies: preselectedConsultant?.agencies
+		});
 
 		updateRegistrationData({
 			...(directLinkZipcode ? { zipcode: directLinkZipcode } : {}),

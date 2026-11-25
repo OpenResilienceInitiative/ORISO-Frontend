@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useContext, useMemo } from 'react';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
+import { offersCaseHandoverIn } from '../session/caseHandoverHelpers';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
@@ -68,7 +69,13 @@ export const AskerInfoContent = () => {
 					<div className="askerInfo__assign">
 						<AskerInfoAssign
 							showLegacyAssignment={isEnquiryAssignAvailable}
-							handoverEnabled={isOwnerHandoverAvailable}
+							handoverEnabled={
+								isOwnerHandoverAvailable &&
+								offersCaseHandoverIn(
+									activeSession,
+									userData?.agencies
+								)
+							}
 						/>
 					</div>
 				</Box>

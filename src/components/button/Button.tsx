@@ -57,6 +57,8 @@ export interface ButtonProps {
 	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
 	tourTarget?: string;
 	ariaHasPopup?: React.AriaAttributes['aria-haspopup'];
+	ariaExpanded?: boolean;
+	ariaControls?: string;
 	/** Rendered as given instead of translating `item.label`. */
 	children?: React.ReactNode;
 	/** `submit` keeps the native form submission. */
@@ -142,6 +144,8 @@ export const Button = (props: ButtonProps) => {
 				title={item.title}
 				aria-label={item.title}
 				aria-haspopup={props.ariaHasPopup}
+				aria-expanded={props.ariaExpanded}
+				aria-controls={props.ariaControls}
 				className={`
 					button__item
 					${getButtonClassName(item.type)}

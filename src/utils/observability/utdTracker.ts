@@ -128,21 +128,8 @@ const attachToClient = (
 	// we got a listener on) or from the 'Event.decrypted' callback (the
 	// normal path).
 	const evaluate = (eventId: string, event: MatrixEvent): void => {
-		if (event.getType() !== 'm.room.encrypted') {
-			// Decrypted successfully (the event's type was promoted away
-			// from the encrypted envelope type).
-			const pending = pendingFailures.get(eventId);
-			if (pending) {
-				clearPending(eventId);
-				safeAdd({
-					outcome: 'transient_resolved',
-					cause: pending.cause
-				});
-			}
-			detach(eventId);
-			return;
-		}
-
+		// The SDK also exposes a failed decryption as m.room.message
+		// (with msgtype m.bad.encrypted). Check the explicit failure first.
 		if (event.isDecryptionFailure()) {
 			if (pendingFailures.has(eventId)) {
 				// Already tracking this failure; a repeat 'Event.decrypted'
@@ -165,13 +152,25 @@ const attachToClient = (
 			return;
 		}
 
-		// Still the encrypted envelope type but not (yet) a failure: no
-		// decryption attempt has concluded yet. Keep waiting.
+		if (event.getType() === 'm.room.encrypted') {
+			// No decryption attempt has concluded yet.
+			return;
+		}
+
+		const pending = pendingFailures.get(eventId);
+		if (pending) {
+			clearPending(eventId);
+			safeAdd({
+				outcome: 'transient_resolved',
+				cause: pending.cause
+			});
+		}
+		detach(eventId);
 	};
 
 	const handleTimeline = (event: MatrixEvent | undefined): void => {
 		try {
-			if (!event || event.getType() !== 'm.room.encrypted') {
+			if (!event || event.getWireType() !== 'm.room.encrypted') {
 				return;
 			}
 			const eventId = event.getId?.();

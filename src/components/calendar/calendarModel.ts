@@ -9,6 +9,7 @@
  */
 import type { EntryModality } from '../sessionsList/timeline/timelineModel';
 import type { InvitationLinkSettings } from '../directInvitation/invitationModel';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 
 /** ADR-032 §2a: the four kinds of a 1:1 appointment. */
 export type AppointmentKind = 'onsite' | 'video' | 'phone' | 'chat';
@@ -73,6 +74,24 @@ export interface CalendarEntry {
 	 * internal chat of the two.
 	 */
 	meeting?: ColleagueMeeting;
+	/**
+	 * FE#2325: the person's real avatar, taken from the conversation of
+	 * `sessionId`. Absent where no conversation is loaded; the calendar then
+	 * shows initials in the person's tone.
+	 */
+	avatar?: CalendarPersonAvatar;
+}
+
+/**
+ * Who a person's avatar is: the same inputs the conversation list hands the
+ * shared `UserAvatar`, so the calendar shows the same animal or motif.
+ */
+export interface CalendarPersonAvatar {
+	/** The key the derived animal comes from: the Matrix id, else the name. */
+	userId: string;
+	username: string;
+	/** The avatar the person picked; null or absent for the derived one. */
+	choice?: AvatarChoice | null;
 }
 
 /** The other side of an appointment between two counsellors. */
@@ -179,6 +198,16 @@ export interface Colleague {
 	 */
 	internalChat?: boolean;
 }
+
+export const repeatedColleagueNames = (colleagues: readonly Colleague[]) => {
+	const seen = new Set<string>();
+	const repeated = new Set<string>();
+	for (const { displayName } of colleagues) {
+		if (seen.has(displayName)) repeated.add(displayName);
+		seen.add(displayName);
+	}
+	return repeated;
+};
 
 const RELATIONS_IN_SCOPE: Record<CalendarVisibilityScope, ColleagueRelation[]> =
 	{
@@ -361,7 +390,10 @@ export type CalendarRole = 'consultant' | 'asker';
 /** A conversation an appointment can belong to. */
 export interface CalendarConversation {
 	sessionId: number;
-	/** The advice seeker's username. */
+	/**
+	 * The other person: the advice seeker's username for a counsellor, the
+	 * counsellor's public name for an advice seeker.
+	 */
 	username: string;
 	/**
 	 * False for a deleted advice seeker or another counsellor's
@@ -369,6 +401,8 @@ export interface CalendarConversation {
 	 * (test findings C1, C6). Absent means bookable.
 	 */
 	bookable?: boolean;
+	/** FE#2325: the person's real avatar; see `CalendarEntry.avatar`. */
+	avatar?: CalendarPersonAvatar;
 }
 
 export interface AppointmentDraft {

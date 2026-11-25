@@ -25,6 +25,8 @@ $room-header-gap: 6px;
 // `sidePanel.styles.scss` (PanelHeader) mirrors it so both hairlines still
 // end on the same y (T3).
 $room-header-gap-top: 2px;
+$room-header-back-size: 28px;
+$room-header-back-gap: 8px;
 
 .sessionInfo {
 	display: flex;
@@ -33,42 +35,6 @@ $room-header-gap-top: 2px;
 	padding: $room-header-inset $room-header-inset 0;
 	background-color: var(--m3-surface-container-lowest, #fff);
 	box-sizing: border-box;
-
-	&__contactSheetRequest {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 4px 8px;
-		padding: 6px 0 6px 38px;
-		font-size: 12px;
-
-		@media screen and (width < 900px) {
-			padding-left: 0;
-		}
-
-		button {
-			border: 0;
-			border-radius: 12px;
-			padding: 5px 10px;
-			background: var(--m3-secondary-container, #e2e8f0);
-			color: var(--m3-on-secondary-container, #1d2733);
-			cursor: pointer;
-
-			&:disabled {
-				cursor: default;
-				opacity: 0.55;
-			}
-		}
-
-		small {
-			overflow-wrap: anywhere;
-		}
-
-		p {
-			flex-basis: 100%;
-			margin: 0;
-		}
-	}
 
 	@include breakpoint($fromLarge) {
 		align-items: stretch;
@@ -137,14 +103,14 @@ $room-header-gap-top: 2px;
 		cursor: pointer;
 		position: relative;
 		z-index: 10;
-		width: 28px;
-		height: 28px;
+		width: $room-header-back-size;
+		height: $room-header-back-size;
 		border-radius: 50%;
 		background: rgba(255, 209, 209, 0.6);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		margin-right: 8px;
+		margin-right: $room-header-back-gap;
 
 		@include breakpoint($fromLarge) {
 			display: none;
@@ -178,8 +144,8 @@ $room-header-gap-top: 2px;
 	&__feedbackBackButton,
 	&__backButton {
 		@media screen and (width < 900px) {
-			width: 28px;
-			height: 28px;
+			width: $room-header-back-size;
+			height: $room-header-back-size;
 			background-image: url('../../resources/img/illustrations/default-back.svg');
 			background-size: contain;
 			background-repeat: no-repeat;
@@ -232,6 +198,13 @@ $room-header-gap-top: 2px;
 			margin-left: 0;
 		}
 
+		// Keep the title visibly separate from inline call controls. Only
+		// where they sit beside it: on a narrow pane the calls live in the
+		// kebab menu, and the title needs every pixel of the row (#2367).
+		&.sessionInfo__username:has(~ .sessionInfo__videoCallButtons) {
+			margin-inline-end: 8px;
+		}
+
 		&--deactivate {
 			cursor: unset;
 		}
@@ -248,7 +221,7 @@ $room-header-gap-top: 2px;
 		}
 
 		h3 {
-			color: rgba(0, 0, 0, 0.9);
+			color: var(--m3-on-surface, #1b1b1c);
 			margin: 0;
 			font-size: 22px;
 			font-weight: 500;
@@ -306,7 +279,7 @@ $room-header-gap-top: 2px;
 		}
 
 		h3 {
-			color: rgba(0, 0, 0, 0.9);
+			color: var(--m3-on-surface, #1b1b1c);
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -855,5 +828,131 @@ $room-header-gap-top: 2px;
 			// to fade in the open rather than on the capsule's edge.
 			--csl-reach: calc(var(--csl-size) * 1.75);
 		}
+	}
+}
+
+// The measured pane can be as narrow as a phone while the viewport is wide.
+.sessionInfo--conversation {
+	container: conversation-header / inline-size;
+
+	--conversation-header-title-size: 1.375rem;
+
+	@media screen and (width < 900px) {
+		--conversation-header-title-size: 1.125rem;
+	}
+
+	.sessionInfo__username > .sessionInfo__memberStack--single {
+		order: -1;
+	}
+
+	.sessionInfo__username h3 {
+		font-size: calc(
+			var(--conversation-header-title-size, 1.125rem) *
+				var(--oriso-personal-text-scale, 1)
+		);
+	}
+
+	&:not(:has(.sessionInfo__username--groupChat)) .sessionInfo__headerWrapper {
+		height: max(
+			#{$room-header-row},
+			calc(
+				var(--conversation-header-title-size, 1.125rem) *
+					var(--oriso-personal-text-scale, 1) * 1.2
+			)
+		);
+	}
+
+	.sessionInfo__metaInfo {
+		box-sizing: border-box;
+		min-inline-size: 0;
+		align-items: flex-start;
+	}
+
+	.sessionInfo__metaInfo__content {
+		display: block;
+		box-sizing: border-box;
+		min-inline-size: 0;
+		max-inline-size: 100%;
+		font-size: calc(0.75rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&:has(.sessionInfo__username--groupChat) {
+		.sessionInfo__metaInfo {
+			flex-wrap: wrap;
+		}
+
+		.sessionInfo__metaInfo__content {
+			white-space: normal;
+			overflow-wrap: anywhere;
+			overflow: visible;
+			text-overflow: clip;
+		}
+	}
+}
+
+@mixin wrap-conversation-heading {
+	.sessionInfo__headerWrapper {
+		height: auto;
+		min-block-size: $room-header-row;
+
+		.sessionInfo__username h3 {
+			max-inline-size: none;
+			overflow: visible;
+			white-space: normal;
+			overflow-wrap: anywhere;
+			text-overflow: clip;
+		}
+	}
+}
+
+@mixin reflow-conversation-header {
+	@include wrap-conversation-heading;
+
+	.sessionInfo__headerWrapper {
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		row-gap: $room-header-gap;
+
+		> .sessionInfo__username {
+			flex: 1 0
+				calc(100% - $room-header-back-size - $room-header-back-gap);
+			top: 0;
+		}
+
+		.sessionInfo__titleRow {
+			flex-wrap: wrap;
+
+			h3 {
+				flex-basis: 100%;
+			}
+		}
+	}
+}
+
+@container conversation-header (max-width: 22rem) {
+	.sessionInfo--conversation:has(.sessionInfo__username--groupChat) {
+		@include reflow-conversation-header;
+	}
+}
+
+[data-oriso-personal-text-size]:not(
+		[data-oriso-personal-text-size='90'],
+		[data-oriso-personal-text-size='100']
+	)
+	.sessionInfo--conversation:has(.sessionInfo__username--groupChat) {
+	@include wrap-conversation-heading;
+}
+
+@container conversation-header (max-width: 30rem) {
+	[data-oriso-personal-text-size]:not(
+			[data-oriso-personal-text-size='90'],
+			[data-oriso-personal-text-size='100']
+		)
+		.sessionInfo--conversation:has(.sessionInfo__username--groupChat) {
+		@include reflow-conversation-header;
 	}
 }

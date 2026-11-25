@@ -18,7 +18,8 @@ import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 
 const showsTours = (settings: AppSettingsInterface, userData): boolean =>
 	!!settings?.enableWalkthrough &&
-	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData));
 
 export const profileRoutesHelp = (
 	settings: AppSettingsInterface & Pick<AppConfigInterface, 'releaseToggles'>
@@ -29,6 +30,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: HelpToursSection,
+				tourTarget: 'profile-help-tours',
 				icon: ExploreOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: (userData) => showsTours(settings, userData)

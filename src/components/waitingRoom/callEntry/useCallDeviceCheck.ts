@@ -74,6 +74,10 @@ export const useCallDeviceCheck = (
 				setControls((now) => ({ ...now, micOn: !now.micOn })),
 			onToggleCamera: () =>
 				setControls((now) => ({ ...now, cameraOn: !now.cameraOn })),
+			// A blocked or busy camera: "Kamera erneut suchen" asks again
+			// instead of leaving the switch disabled (Dev, 2026-11-21).
+			onCameraRetry: live.retry,
+			cameraBlocker: live.cameraBlocker,
 			onSelectDevice: (kind, id) =>
 				setControls((now) => ({
 					...now,

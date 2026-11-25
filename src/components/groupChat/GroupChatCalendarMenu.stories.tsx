@@ -53,7 +53,7 @@ export const OpenOneDate: Story = {
 
 export const OpenOneDatePhone: Story = {
 	name: 'Open · one date · 390',
-	parameters: { viewport: { defaultViewport: 'mobile1' } },
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	play: async ({ canvasElement }) =>
 		expectCopyButtonsInsideTheMenu(canvasElement)
 };

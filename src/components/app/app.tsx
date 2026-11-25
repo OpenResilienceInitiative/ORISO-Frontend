@@ -14,6 +14,7 @@ import { WebsocketHandler } from './WebsocketHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
+import { SystemLoginAppearance } from './SystemLoginAppearance';
 import { LoginHandoverGate } from './LoginHandoverScreen';
 import {
 	AppConfigProvider,
@@ -41,6 +42,7 @@ import { LiveChatConversionExpired } from '../liveChatConversion/LiveChatConvers
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { DirectLinkKnockGate } from '../directLinkEntry/DirectLinkKnockGate';
 import { GroupCallWidget } from '../call/GroupCallWidget';
+import { WaitingGuestNoticeHost } from '../call/knockNotice/WaitingGuestNoticeHost';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import { loadAuthenticatedApp, loadVideoCall } from './appChunks';
@@ -150,6 +152,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 
 	return (
 		<Router>
+			<SystemLoginAppearance />
 			{/* v7: providers move above <Routes> (they use no routing hooks);
 			    the old pathless catch-all <Route> wrapper is gone. */}
 			<ContextProvider>
@@ -283,6 +286,8 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 							<GroupCallWidget />
 							{/* #1795 / FE#1893: the knock of a call direct link. */}
 							<DirectLinkKnockGate />
+							{/* Somebody waits and no call runs yet: let them in from anywhere. */}
+							<WaitingGuestNoticeHost />
 						</Suspense>
 					</MatrixClientProvider>
 				</CallProvider>

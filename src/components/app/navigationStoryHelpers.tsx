@@ -93,11 +93,13 @@ export function NavigationStoryProviders({
 	liveChatViaSidebar = true,
 	tenantSettings,
 	appointmentFeatureEnabled = false,
+	languageOptions = ['de', 'en'],
 	children
 }: {
 	role: 'consultant' | 'asker';
 	/** Shows the "Meine Termine" rail entry (calendar, FE#1050). */
 	appointmentFeatureEnabled?: boolean;
+	languageOptions?: string[];
 	/**
 	 * The consultant's profile preference "Live Chat über Menü Leiste
 	 * aktivieren" (UserService `liveChatViaSidebar`). Defaults to on so the
@@ -214,8 +216,8 @@ export function NavigationStoryProviders({
 						<LocaleContext.Provider
 							value={{
 								locale: 'de',
-								locales: ['de', 'en'],
-								selectableLocales: ['de', 'en'],
+								locales: languageOptions,
+								selectableLocales: languageOptions,
 								setLocale: () => {},
 								initLocale: 'de'
 							}}

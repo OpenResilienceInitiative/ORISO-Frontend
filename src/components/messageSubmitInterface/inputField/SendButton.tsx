@@ -20,7 +20,7 @@ export { deriveSendButtonState };
 /**
  * Figma "Nachricht senden" (489:16565): 48×48, bottom-left 24 / top-right 4
  * radius. One paper plane throughout: at rest (pointing right) on the pale
- * fixed container when empty, rotated up on primary-container when ready —
+ * resting surface when empty, rotated up on the primary action when ready —
  * the empty → ready transition rotates the plane. Sending launches the
  * fly-out animation.
  */

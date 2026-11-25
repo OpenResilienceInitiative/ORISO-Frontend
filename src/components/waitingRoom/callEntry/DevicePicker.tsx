@@ -15,6 +15,8 @@ const ICONS: Record<CallDeviceKind, React.ReactNode> = {
 	speaker: <VolumeUpRoundedIcon />
 };
 
+const deviceLabelSize = 'calc(0.875rem * var(--oriso-personal-text-scale, 1))';
+
 export interface DevicePickerProps {
 	kind: CallDeviceKind;
 	/** Already translated, e.g. "Mikrofon". */
@@ -55,7 +57,8 @@ export const DevicePicker = ({
 				sx={{
 					'minWidth': 0,
 					'flex': '1 1 0',
-					'height': 44,
+					'minHeight': 44,
+					'py': 0.5,
 					'px': 1.5,
 					'gap': 1,
 					'justifyContent': 'flex-start',
@@ -64,7 +67,7 @@ export const DevicePicker = ({
 					'color': registrationMd3.onSurface,
 					'&.Mui-disabled': { color: registrationMd3.onSurface },
 					'&:focus-visible': {
-						outline: `3px solid ${registrationMd3.focusLayer}`,
+						outline: `3px solid ${registrationMd3.outline}`,
 						outlineOffset: 2
 					},
 					'& > svg:first-of-type': {
@@ -78,11 +81,11 @@ export const DevicePicker = ({
 				<Typography
 					component="span"
 					sx={{
-						fontSize: 14,
+						fontSize: deviceLabelSize,
+						lineHeight: 1.429,
 						minWidth: 0,
-						overflow: 'hidden',
-						textOverflow: 'ellipsis',
-						whiteSpace: 'nowrap'
+						overflowWrap: 'anywhere',
+						textAlign: 'start'
 					}}
 				>
 					{selected?.label ?? '–'}
@@ -101,6 +104,9 @@ export const DevicePicker = ({
 				anchorEl={anchor}
 				open={Boolean(anchor)}
 				onClose={() => setAnchor(null)}
+				PaperProps={{
+					sx: { backgroundColor: registrationMd3.surfaceContainerLow }
+				}}
 			>
 				{devices.map((device) => (
 					<MenuItem
@@ -110,11 +116,31 @@ export const DevicePicker = ({
 							onSelect(device.id);
 							setAnchor(null);
 						}}
-						sx={{ gap: 1, fontSize: 14 }}
+						sx={{
+							'gap': 1,
+							'fontSize': deviceLabelSize,
+							'lineHeight': 1.429,
+							'color': registrationMd3.onSurface,
+							'overflowWrap': 'anywhere',
+							'&:hover, &.Mui-focusVisible': {
+								backgroundColor:
+									registrationMd3.surfaceContainerHigh,
+								color: registrationMd3.onSurface
+							},
+							'&.Mui-focusVisible': {
+								outlineColor: registrationMd3.onSurface
+							},
+							'&:active, &.Mui-selected, &.Mui-selected:hover, &.Mui-selected.Mui-focusVisible':
+								{
+									backgroundColor: registrationMd3.primary,
+									color: registrationMd3.onPrimary,
+									outlineColor: registrationMd3.onPrimary
+								}
+						}}
 					>
 						<Box
 							component="span"
-							sx={{ width: 20, display: 'flex' }}
+							sx={{ width: 20, display: 'flex', flexShrink: 0 }}
 						>
 							{device.id === selected?.id && (
 								<CheckRoundedIcon sx={{ fontSize: 18 }} />

@@ -23,11 +23,12 @@ import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThreadGlyph } from '../../resources/img/icons/fab-menu-thread.svg';
 import { ReactComponent as SupervisionGlyph } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 import { ReactComponent as SupervisionAttentionGlyph } from '../../resources/img/icons/supervision_on_400_24px.svg';
-import { ReactComponent as TeamGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ReactComponent as TeamGlyph } from '../../resources/img/icons/team-chat-3p.svg';
 import { ReactComponent as CloseGlyph } from '../../resources/img/icons/fab-menu-close.svg';
 import { ReactComponent as BackGlyph } from '../../resources/img/icons/close.svg';
 import { ReactComponent as MainChatGlyph } from '../../resources/img/icons/speech-bubble.svg';
 import { ChannelMenu } from './ChannelMenu';
+import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
 import { useChannelMenuPlacement } from './useChannelMenuPlacement';
 import {
 	deriveChannelSwitcherState,
@@ -136,6 +137,7 @@ export const ChannelSwitcherFab = ({
 	// With the back row the card has one more row than the state knows.
 	const menuRows = state.items.length + (insideSecondary ? 1 : 0);
 	const isMenu = menuRows > 1;
+	useRegisterFloatingSurface('channel-switcher', menuRows > 0 && !fabHidden);
 
 	const close = useCallback(() => setOpen(false), []);
 	const closeAndRefocus = useCallback(() => {

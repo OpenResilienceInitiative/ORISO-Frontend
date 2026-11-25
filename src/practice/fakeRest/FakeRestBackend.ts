@@ -308,6 +308,21 @@ export const createFakeRestBackend = ({
 			}
 		},
 		{
+			// FE#2491: read-only join of a CLOSED/ARCHIVED discussion.
+			method: 'POST',
+			path: atSession(
+				(sessionId) => `${endpoints.teamDiscussion(sessionId)}/join`
+			),
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? practiceCase.teamDiscussion
+						? ok(
+								practiceCase.teamDiscussion satisfies TeamDiscussion
+							)
+						: noContent()
+					: null
+		},
+		{
 			method: 'GET',
 			path: at(
 				endpoints.sessionBase,

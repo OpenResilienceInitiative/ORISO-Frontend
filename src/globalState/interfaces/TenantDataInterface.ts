@@ -109,7 +109,17 @@ export interface TenantDataSettingsInterface {
 	featureVideoCallsGroupChatsEnabled?: boolean;
 	featureVideoCallsSupervisionChatsEnabled?: boolean;
 	featureThreadsEnabled?: boolean;
+	/** FE#2491: team chat on open enquiries — a policy like supervision. */
 	featureTeamDiscussionEnabled?: boolean;
+	/** FE#2491: keep the team chat switchable after accept (default off). */
+	featureTeamDiscussionAfterAcceptEnabled?: boolean;
+	featureVideoCallsTeamDiscussionsEnabled?: boolean;
+	featureAudioCallsTeamDiscussionsEnabled?: boolean;
+	featureVoiceMessagesTeamDiscussionsEnabled?: boolean;
+	featureThreadsTeamDiscussionsEnabled?: boolean;
+	featureMediaUploadTeamDiscussionsEnabled?: boolean;
+	featureMediaInlineDisplayTeamDiscussionsEnabled?: boolean;
+	featureMediaAiScanTeamDiscussionsEnabled?: boolean;
 	featureThreadsAnonymousChatsEnabled?: boolean;
 	featureThreadsGroupChatsEnabled?: boolean;
 	featureThreadsOneOnOneEnabled?: boolean;

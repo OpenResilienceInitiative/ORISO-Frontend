@@ -1,4 +1,24 @@
 {
+	"personalDisplay": {
+		"title": "Anzeige",
+		"accessibility": "Zugänglichkeit",
+		"textSize": "Textgröße",
+		"currentSize": "Gewählte Textgröße",
+		"smaller": "Kleiner",
+		"larger": "Größer",
+		"contrastLabel": "Kontrast",
+		"contrast": {
+			"standard": "Standard",
+			"medium": "Mittel",
+			"high": "Hoch"
+		},
+		"schemeLabel": "Farbschema",
+		"scheme": {
+			"system": "System",
+			"light": "Hell",
+			"dark": "Dunkel"
+		}
+	},
 	"addons": {
 		"loadError": "Diese Erweiterung konnte nicht geladen werden.",
 		"notAvailable": "Diese Erweiterung ist nicht verfügbar.",
@@ -42,6 +62,8 @@
 		"recoveryIntro": "Bereiten Sie zuerst den Wiederherstellungsschlüssel für Ihr bestehendes Gespräch vor. So bleiben Ihre Nachrichten auf einem neuen Gerät lesbar.",
 		"pending": "Ein vorheriger Versuch ist noch offen. Verwenden Sie dasselbe Passwort, um ihn abzuschließen.",
 		"recoveryError": "Der Wiederherstellungsschlüssel ist noch nicht verfügbar. Versuchen Sie es erneut oder geben Sie Ihren zuvor gespeicherten Schlüssel ein.",
+		"historyError": "Ihr Chatverlauf konnte noch nicht gesichert werden. Bitte versuchen Sie es erneut.",
+		"fallbackKeyHelp": "Ihr Konto ist bereit, aber Ihr Chatverlauf konnte noch nicht mit Ihrem Passwort verknüpft werden. Speichern Sie diesen Wiederherstellungsschlüssel: Sie brauchen ihn, um dieses Gespräch auf einem neuen Gerät zu lesen.",
 		"existingKey": "Zuvor gespeicherter Wiederherstellungsschlüssel (falls benötigt)",
 		"prepare": "Wiederherstellungsschlüssel vorbereiten",
 		"accountChanged": "Das angemeldete Konto hat sich geändert. Laden Sie die Seite für eine sichere Fortsetzung neu.",
@@ -149,7 +171,6 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-			"mobileHeadline": "Hier ist Raum für Ihre Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"stop": "Stopp",
@@ -485,6 +506,7 @@
 		"panel": {
 			"channelOptions": "Kanal wechseln",
 			"channelOptionsEmpty": "Keine weiteren Kanäle",
+			"dismissIntro": "Nicht mehr einblenden",
 			"participantCount": "{{count}} Beteiligte",
 			"participantCount_one": "1 Person",
 			"close": "Nebenraum schließen",
@@ -648,6 +670,8 @@
 			}
 		},
 		"successOverlay": {
+			"cleanupIncomplete": "Einige Chatdaten könnten in diesem Browser geblieben sein. Schließen Sie alle anderen ORISO-Tabs.",
+			"retryCleanup": "Browserdaten erneut bereinigen",
 			"button": "Schließen",
 			"headline": "Sie haben Ihren Account bei der Caritas Beratung erfolgreich gelöscht."
 		}
@@ -697,6 +721,7 @@
 		}
 	},
 	"e2ee": {
+		"encryptedConversation": "Ende-zu-Ende verschlüsselt",
 		"attachment": {
 			"decryption_error": "Fehler beim entschlüsseln",
 			"encrypted": "Datei für Download entschlüsseln",
@@ -796,7 +821,7 @@
 				"placeholder": {
 					"asker": "Schreiben Sie uns, was Sie bewegt.",
 					"askerAfterFirstMessage": "Etwas vergessen? Senden Sie einfach eine weitere Nachricht.",
-					"consultant": "Nachricht an Klient:in schreiben",
+					"consultant": "Nachricht an ratsuchende Person",
 					"groupChat": "Nachricht schreiben"
 				},
 				"forgotSomething": {
@@ -1041,8 +1066,16 @@
 			"title": "Gesprächsformat wählen",
 			"panelTitle": "Neue Unterhaltung erstellen",
 			"panelMenu": "Weitere Optionen",
+			"discard": {
+				"title": "Eingaben verwerfen?",
+				"description": "Ihre Eingaben in dieser Karte sind noch nicht gespeichert. Wenn Sie die Ansicht schließen, gehen sie verloren.",
+				"keepEditing": "Weiter bearbeiten",
+				"confirm": "Verwerfen und schließen"
+			},
 			"cardsPrevious": "Vorheriges Gesprächsformat",
-			"cardsNext": "Nächstes Gesprächsformat"
+			"cardsNext": "Nächstes Gesprächsformat",
+			"goToCard": "Zu Gesprächsformat {{position}} von {{total}}",
+			"choose": "Auswählen"
 		},
 		"internal": {
 			"addPerson": "Person hinzufügen",
@@ -1082,7 +1115,9 @@
 			"title": "Interna besprechen",
 			"togglePersonList": "Personenliste öffnen oder schließen",
 			"tooMany": "Sie können bis zu {{max}} Personen auswählen.",
-			"vacatedHint": "nicht mehr in der Beratungsstelle"
+			"vacatedHint": "nicht mehr in der Beratungsstelle",
+			"cardShort": "Im Team abstimmen – Chat, Audio, Video.",
+			"infoLabel": "Mehr zu „Interna besprechen“"
 		},
 		"circle": {
 			"addModerator": "Co-Moderator:in hinzufügen",
@@ -2259,6 +2294,13 @@
 			"quoteUnknown": "Frühere Nachricht",
 			"jumpToQuote": "Zur zitierten Stelle von {{author}} springen"
 		},
+		"blurRemoved": {
+			"title": "Schwärzung aufgehoben",
+			"by": "von {{name}}",
+			"byMe": "von Ihnen",
+			"text": "Die Nachricht von {{name}} ist wieder lesbar.",
+			"textAnonymous": "Die Nachricht ist wieder lesbar."
+		},
 		"selectionReply": {
 			"blur": "Schwärzen",
 			"blurredLabel": "Geschwärzte Stelle",
@@ -2267,8 +2309,10 @@
 			"removeBlurLabel": "Geschwärzte Stelle – Schwärzung aufheben",
 			"blurBar": "Aktionen für die geschwärzte Stelle",
 			"toolbar": "Aktionen für die markierte Stelle",
-			"reply": "Antworten",
+			"reply": "Hier antworten",
 			"replyVoice": "Mit Sprachnachricht antworten",
+			"replyInSupervision": "In Supervision antworten",
+			"replyInTeam": "Im Team-Chat antworten",
 			"startThread": "Thread",
 			"dialog": "Auf die markierte Stelle von {{author}} antworten",
 			"cancel": "Abbrechen",
@@ -2318,9 +2362,14 @@
 				"createNew": "Neuen Termin anlegen",
 				"openCalendar": "Im Kalender öffnen"
 			}
-		}
+		},
+		"supervisionChangedTitle": "Supervision gewechselt",
+		"supervisionChangedDescription": "{{name}} supervidiert diesen Chat jetzt anstelle von {{from}}.",
+		"supervisionChangedReason": "Grund: {{reason}}"
 	},
 	"navigation": {
+		"mobileMenu": "Navigation",
+		"mobileMore": "Mehr",
 		"appointments": "Video - Termine",
 		"asker": {
 			"sessions": {
@@ -2534,6 +2583,10 @@
 			"supervisorAssigned": {
 				"title": "Supervisor zugewiesen",
 				"text": "Diesem Fall wurde ein Supervisor zugewiesen."
+			},
+			"supervisorReplaced": {
+				"title": "Supervision gewechselt",
+				"text": "In diesem Chat begleitet jetzt eine andere Person die Beratung als Supervision."
 			},
 			"topicDuplicateStarted": {
 				"title": "Weitere Beratung zum selben Thema",
@@ -2841,7 +2894,8 @@
 		},
 		"avatar": {
 			"label": "Ihr Bild",
-			"default": "Standard"
+			"default": "Standard",
+			"initials": "Initialen"
 		},
 		"appLanguage": {
 			"info": "Stellen Sie hier die Sprache der Anwendung ein.",
@@ -3217,6 +3271,8 @@
 				"intro": "Wählen Sie Ihre Benachrichtigungstöne für jeden Bereich getrennt.",
 				"emailNote": "E-Mails werden nur gesendet, wenn Sie nicht innerhalb von fünf Minuten nach dem Ereignis reagieren.",
 				"noSound": "Kein Ton gewählt",
+				"defaultSound": "Standard",
+				"legacySound": "Früherer Ton",
 				"tone": "Ton #{{number}}",
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
@@ -4106,6 +4162,10 @@
 				"headline": "Dieser Einladungslink funktioniert nicht.",
 				"body": "Der Link ist unvollständig, oder die Gruppe gibt es nicht mehr. Bitte fragen Sie die Person, die Ihnen den Link geschickt hat, nach einem neuen."
 			}
+		},
+		"stepScroll": {
+			"back": "Vorige Schritte",
+			"forward": "Nächste Schritte"
 		}
 	},
 	"releaseNote": {
@@ -4309,7 +4369,8 @@
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
 			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"extend": "Zugriff verlängern"
+			"extend": "Zugriff verlängern",
+			"teamNotice": "Teamberatung: Sie lesen mit. Nur {{name}} schreibt in diesem Fall Nachrichten."
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
@@ -4780,7 +4841,8 @@
 				"agencyFallback": "Beratungsstelle {{id}}",
 				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
 				"removeFilters": "Filter entfernen",
-				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten"
+				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten",
+				"teamPeopleHint": "Teamberatung: Wählen Sie eine Kolleg:in Ihrer Beratungsstelle und drücken Sie Enter. Dann sehen Sie ihre Fälle und können sie mitlesen."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"
@@ -4876,7 +4938,8 @@
 					"failedTitle": "Terminanfrage nicht beantwortet",
 					"taken": "Diese Zeit ist inzwischen belegt. Lehnen Sie die Anfrage ab oder schlagen Sie im Chat eine andere Zeit vor.",
 					"failed": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
-				}
+				},
+				"menu": "Terminmenü"
 			}
 		},
 		"deletedAsker": {
@@ -5502,10 +5565,13 @@
 	"voice": {
 		"recording": {
 			"active": "Aufnahme läuft…",
+			"paused": "Aufnahme pausiert",
 			"error": {
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"pause": "Aufnahme pausieren",
+			"resume": "Aufnahme fortsetzen",
 			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}
@@ -5587,6 +5653,17 @@
 		"introduction": {
 			"title": "Einführung",
 			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		},
+		"launcherSwitch": {
+			"title": "Rundgang-Knopf anzeigen",
+			"label": {
+				"on": "An",
+				"off": "Aus"
+			},
+			"hint": {
+				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
+				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
+			}
 		}
 	},
 	"banner": {
@@ -5709,7 +5786,13 @@
 		}
 	},
 	"sessionMenu": {
-		"requestAdvice": "Rat einholen"
+		"requestAdvice": "Rat einholen",
+		"group": {
+			"handover": "Beratung weitergeben",
+			"supervision": "Supervision verwalten",
+			"askerAccount": "Ratsuchende:r & Konto",
+			"settingsLegal": "Einstellungen & Rechtliches"
+		}
 	},
 	"sessionHeader": {
 		"searchingForConsultant": "Wir suchen eine Beratung für Sie.",
@@ -5791,6 +5874,10 @@
 				"remove": {
 					"title": "Supervisor entfernt",
 					"text": "Der Supervisor wurde erfolgreich entfernt."
+				},
+				"replace": {
+					"title": "Supervisor gewechselt",
+					"text": "Der Supervisor wurde erfolgreich gewechselt."
 				}
 			},
 			"error": {
@@ -5940,12 +6027,15 @@
 			"title": "Supervision",
 			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
 			"headerLabel": "Supervision · {{name}}",
+			"menuHint": "Feedback-Chat mit der Supervision zu dieser Beratung",
 			"role": {
 				"supervisor": "Supervision",
 				"consultant": "Beratung"
 			},
 			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
 			"close": "Supervision schließen",
+			"changeSupervisor": "Supervisor:in ändern",
+			"bookAppointment": "Termin mit Supervisor:in vereinbaren",
 			"collapse": "Supervision minimieren",
 			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
 			"unread": "{{count}} ungelesene Nachrichten",
@@ -5973,6 +6063,33 @@
 				"mainPane": "Beratungschat",
 				"secondaryPane": "Nebenraum"
 			}
+		},
+		"appointment": {
+			"title": "Termin mit Supervisor:in vereinbaren",
+			"with": "Mit",
+			"description": "Wählen Sie Tag, Uhrzeit und Art. Der Termin steht danach in beiden Kalendern.",
+			"unreachable": "{{name}} ist in Ihrem Kalender nicht erreichbar. Ein Termin ist hier nicht möglich; schreiben Sie {{name}} im Supervisions-Chat.",
+			"failed": "Der Termin konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+			"withSupervision": "Supervision",
+			"changeFailed": "Der Termin konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+			"menu": {
+				"accept": {
+					"title": "Termin annehmen",
+					"description": "Der Termin steht dann fest."
+				},
+				"decline": {
+					"title": "Termin ablehnen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"cancel": {
+					"title": "Termin absagen",
+					"description": "Der Termin verschwindet aus beiden Kalendern."
+				},
+				"calendar": {
+					"title": "Im Kalender öffnen",
+					"description": "Dort können Sie den Termin auch verschieben."
+				}
+			}
 		}
 	},
 	"teamDiscussion": {
@@ -5988,7 +6105,29 @@
 		"send": "Senden",
 		"error": {
 			"open": "Der Team-Chat konnte nicht geöffnet werden.",
-			"send": "Die Nachricht konnte nicht gesendet werden."
+			"send": "Die Nachricht konnte nicht gesendet werden.",
+			"switchOn": "Der Team-Chat konnte nicht eingeschaltet werden. Bitte versuchen Sie es erneut.",
+			"switchOff": "Der Team-Chat konnte nicht ausgeschaltet werden. Bitte versuchen Sie es erneut.",
+			"switchOnNotAllowed": "Der Team-Chat kann für diesen Fall nicht eingeschaltet werden, zum Beispiel weil der Fall an eine andere Beratungsstelle übergeben wurde."
+		},
+		"switchOn": {
+			"menu": "Team-Chat einschalten",
+			"menuHint": "Startet den Team-Chat zu dieser Anfrage. Ratsuchende sehen ihn nicht.",
+			"again": "Team-Chat wieder einschalten"
+		},
+		"switchOff": {
+			"menu": "Team-Chat ausschalten",
+			"menuHint": "Schließt den Team-Chat zu dieser Anfrage für alle. Der Verlauf bleibt lesbar.",
+			"confirm": {
+				"headline": "Team-Chat ausschalten?",
+				"copy": "Danach kann niemand aus dem Team mehr schreiben. Der Verlauf bleibt lesbar, und Sie können den Team-Chat wieder einschalten, solange die Anfrage offen ist.",
+				"confirm": "Ausschalten",
+				"cancel": "Abbrechen"
+			}
+		},
+		"closed": {
+			"title": "Team-Chat ausgeschaltet",
+			"text": "Der Team-Chat zu dieser Anfrage ist ausgeschaltet und nur noch lesbar. Schalten Sie ihn wieder ein, um weiterzuschreiben."
 		}
 	},
 	"inviteLink": {
@@ -6066,8 +6205,7 @@
 			"body": "Schön, dass Sie sich gemeldet haben. Ihre Nachricht ist bei uns angekommen."
 		},
 		"whoReadsAlong": {
-			"headline": "Wer Ihre Nachricht liest",
-			"body": "Ihre Nachricht lesen ausschließlich die Fachkräfte der zuständigen Beratungsstelle. Alle sind zur Verschwiegenheit verpflichtet."
+			"headline": "Wer Ihre Nachricht liest"
 		},
 		"responseDeadline": {
 			"headline": "Wann Sie eine Antwort erhalten",
@@ -6136,6 +6274,17 @@
 			"title": "Häufige Fragen",
 			"modalityNote": "Wie läuft die Beratung ab?",
 			"dataProtection": "Was passiert mit meinen Daten?"
+		},
+		"questions": {
+			"title": "Ein paar Fragen",
+			"send": "Antworten senden",
+			"required": "Bitte beantworten Sie diese Frage.",
+			"requiredMark": "Pflichtangabe",
+			"thanks": "Danke für Ihre Antworten.",
+			"choose": "Bitte wählen",
+			"other": "Etwas anderes",
+			"otherPlaceholder": "Was genau?",
+			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal."
 		}
 	},
 	"dpaSign": {
@@ -6359,6 +6508,307 @@
 				"done": {
 					"title": "Geschafft!",
 					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
+		},
+		"launcher": {
+			"eyebrow": "Hilfe",
+			"title": "Rundgänge",
+			"open": "Rundgänge öffnen",
+			"close": "Rundgänge schließen",
+			"manage": "Rundgänge verwalten"
+		},
+		"caseHandover": {
+			"title": "Fälle übergeben",
+			"summary": "Eine eigene Beratung an Kolleg:innen übergeben oder Zugriff auf deren Fälle anfragen.",
+			"step": {
+				"intro": {
+					"title": "Übergabe in zwei Richtungen",
+					"intro": "Neu: Fälle wechseln die Zuständigkeit direkt in der Plattform. Sie bieten eine eigene Beratung an oder fragen bei Kolleg:innen Zugriff auf einen Fall an. Der Rundgang zeigt beide Wege, ausgelöst wird dabei nichts."
+				},
+				"offer": {
+					"title": "Eigene Beratung übergeben",
+					"intro": "Über „+“ im Kopf einer geöffneten Beratung wählen Sie „Beratung übergeben“. Sie wählen eine berechtigte Kolleg:in und nennen einen Grund. Bis alle nötigen Zustimmungen vorliegen, bleiben Sie zuständig."
+				},
+				"search": {
+					"title": "Kolleg:in suchen",
+					"intro": "Suchen Sie hier unter „Personen“ nach einer Kolleg:in. Die Liste zeigt dann deren Fälle, die Sie übernehmen dürfen – abhängig von Ihrer Abteilung und Ihren Themen."
+				},
+				"requestAccess": {
+					"title": "Zugriff anfragen",
+					"intro": "Mit „Zugriff anfragen“ bitten Sie um einen Fall und nennen einen Grund. Über ▾ und „Mehrere Fälle auswählen“ fragen Sie mehrere Fälle auf einmal an."
+				},
+				"status": {
+					"title": "Stand verfolgen",
+					"intro": "Am Fall steht der Stand, etwa „Warten auf Freigabe“. Die Antwort der Kolleg:in und – falls die Richtlinie es verlangt – die Zustimmung der ratsuchenden Person sehen Sie im Zeitstrahl."
+				},
+				"done": {
+					"title": "Kurz gesagt",
+					"intro": "Eigene Fälle bieten Sie in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragen Sie über die Personensuche an. Den Stand finden Sie im Zeitstrahl."
+				}
+			}
+		},
+		"groupCircle": {
+			"title": "Gesprächskreis anlegen",
+			"summary": "Einen moderierten Gesprächskreis anlegen, teilen und starten.",
+			"step": {
+				"intro": {
+					"title": "Gesprächskreise",
+					"intro": "Ein Gesprächskreis ist eine anonyme, von Berater:innen moderierte Gruppe – einmalig oder regelmäßig. Der Rundgang zeigt, wo Sie ihn anlegen. Angelegt wird dabei nichts."
+				},
+				"create": {
+					"title": "Erstellen",
+					"intro": "Über „Erstellen“ in Ihrer Beratungsliste legen Sie neue Unterhaltungen an. Welche Formate Sie sehen, legen Träger und Beratungsstelle fest."
+				},
+				"format": {
+					"title": "Format „Gesprächskreis“",
+					"intro": "Unter „Gesprächsformat wählen“ steht der Gesprächskreis neben den anderen Formaten. Ist nur ein Format freigegeben, entfällt diese Auswahl."
+				},
+				"topic": {
+					"title": "Thema wählen",
+					"intro": "Zuerst wählen Sie „Thema / Fachbereich“. Danach öffnen sich die Einstellungen für den Gesprächskreis."
+				},
+				"settings": {
+					"title": "Einstellen, teilen, starten",
+					"intro": "In den Einstellungen legen Sie Termin, Wiederholungen, Medium und Sprache fest und fügen unter „Weitere Moderation“ Co-Moderator:innen hinzu. Danach teilen Sie den Einladungs-Link oder QR-Code. Teilnehmende warten im Warteraum, bis Sie mit „Chat starten“ beginnen und sie hereinlassen."
+				},
+				"done": {
+					"title": "Bereit",
+					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
+				}
+			}
+		},
+		"profile": {
+			"title": "Ihr Profil",
+			"summary": "Wo Profil, Abwesenheit, Benachrichtigungen, Sicherheit und Anzeige jetzt liegen.",
+			"step": {
+				"overview": {
+					"title": "Ihr Profil",
+					"intro": "Im Profil liegen Ihre Daten und Einstellungen, verteilt auf die Bereiche Allgemeines, Meine Aktivitäten, Einstellungen und Hilfe. Der Rundgang zeigt die wichtigsten Karten."
+				},
+				"public": {
+					"title": "Öffentliche Daten",
+					"intro": "Diese Angaben sehen Ratsuchende: Ihr Name, Ihre Sprachen und Ihre Beratungsstellen. Halten Sie sie aktuell."
+				},
+				"absence": {
+					"title": "Meine Abwesenheit",
+					"intro": "Hier tragen Sie Ihre Abwesenheit ein. Ratsuchende sehen dann Ihre Abwesenheitsnachricht."
+				},
+				"notifications": {
+					"title": "Benachrichtigungen",
+					"intro": "Hier legen Sie fest, worüber Sie per E-Mail und im Browser informiert werden."
+				},
+				"security": {
+					"title": "Sicherheit",
+					"intro": "Unter „Anmeldung & Konto“ ändern Sie Ihr Passwort und verwalten die Zwei-Faktor-Authentifizierung. Neu: die Wiederherstellung alter Nachrichten – richten Sie sie ein, damit Sie verschlüsselte Nachrichten auch auf einem neuen Gerät lesen können."
+				},
+				"display": {
+					"title": "Anzeige",
+					"intro": "Unter „Anzeige“ stellen Sie Effekte, den Zeitstrahl und die Sprache der Oberfläche ein."
+				},
+				"shortcuts": {
+					"title": "Tastaturkürzel",
+					"intro": "Neu: Viele Aktionen erreichen Sie per Tastatur. Hier finden Sie alle Kürzel."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Hier starten Sie jeden Rundgang erneut. Mit „Rundgang-Knopf anzeigen“ blenden Sie den Knopf „?“ unten rechts ein oder aus."
+				}
+			}
+		},
+		"calendar": {
+			"title": "Kalender",
+			"summary": "Termine, Sperrzeiten und Abwesenheiten eintragen, Arbeitszeiten festlegen, Kalender verbinden.",
+			"step": {
+				"nav": {
+					"title": "Meine Termine",
+					"intro": "Neu: Ihr Kalender ist Teil der Plattform. Hier sehen Sie alle Termine mit Ratsuchenden – und auf Wunsch die Ihrer Kolleg:innen."
+				},
+				"create": {
+					"title": "Neu eintragen",
+					"intro": "Über „Neu“ tragen Sie einen Termin, eine Sperrzeit oder eine Abwesenheit ein – drei Reiter in einem Dialog."
+				},
+				"viewSwitch": {
+					"title": "Ansicht",
+					"intro": "Wechseln Sie zwischen Tag, Woche, Monat und Liste. Die Liste zeigt außerdem Ihre Links ohne Termin."
+				},
+				"quickEntry": {
+					"title": "Schnell eintragen",
+					"intro": "Ein Eintrag ohne Dialog: Art und Person wählen, Tag und Beginn setzen oder eine freie Zeit antippen, dann „Eintragen“."
+				},
+				"workingHours": {
+					"title": "Arbeitszeit",
+					"intro": "Ihre Arbeitszeit bestimmt, wann Ratsuchende Termine buchen können. Mit „Ändern“ passen Sie sie an."
+				},
+				"settings": {
+					"title": "Kalender-Einstellungen",
+					"intro": "Unter ⋮ legen Sie Arbeitszeit und Sprechstunden fest, tragen Sperrzeiten mit Wiederholung und freie Tage ein und verbinden Outlook oder Google."
+				},
+				"links": {
+					"title": "Links ohne Termin",
+					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				}
+			}
+		},
+		"liveChat": {
+			"title": "Live-Chat",
+			"summary": "Wie anonyme Live-Chats ankommen, wie Sie sich verfügbar melden und einen Chat übernehmen.",
+			"step": {
+				"intro": {
+					"title": "Live-Chat: was anders ist",
+					"intro": "Live-Chats kommen ohne Registrierung über einen Link. Ratsuchende schreiben anonym und zu einem bestimmten Thema. Alle verfügbaren Beratenden des Themas teilen sich eine gemeinsame Warteschlange."
+				},
+				"availabilitySettings": {
+					"title": "Ihre Verfügbarkeit",
+					"intro": "Hier schalten Sie „Bin verfügbar“ ein oder aus. Nur wer verfügbar ist, bekommt Live-Chats angeboten. Auf Wunsch legen Sie den Schalter in die Menüleiste."
+				},
+				"availabilityToggle": {
+					"title": "Schalter in der Menüleiste",
+					"intro": "Mit „Live Chat über Menü Leiste aktivieren“ erscheint dieser Schalter. Ein Klick meldet Sie verfügbar oder nicht verfügbar — ohne die Einstellungen zu öffnen."
+				},
+				"queue": {
+					"title": "Die gemeinsame Warteschlange",
+					"intro": "Der Filter „Live-Chat“ zeigt alle wartenden Live-Chats. Ihre Kolleginnen und Kollegen sehen dieselbe Liste."
+				},
+				"accept": {
+					"title": "Chat starten",
+					"intro": "Mit „Chat starten“ übernehmen Sie den Chat. Angenommen werden kann nur der Chat, der vorne in der Warteschlange steht."
+				},
+				"done": {
+					"title": "Chat beenden",
+					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				}
+			}
+		},
+		"timeline": {
+			"title": "Zeitstrahl und Entwürfe",
+			"summary": "Wo Sie alle Ereignisse an einem Ort sehen und wo Ihre ungesendeten Nachrichten liegen.",
+			"step": {
+				"activityNav": {
+					"title": "Ihr Zeitstrahl",
+					"intro": "Unter „Zeitstrahl“ laufen die Ereignisse aus all Ihren Chats zusammen. Sie müssen nicht mehr jede Beratung einzeln öffnen, um zu sehen, was neu ist."
+				},
+				"timeline": {
+					"title": "Alles an einem Ort",
+					"intro": "Links die Liste der Ereignisse, rechts die Details zum gewählten Eintrag. Von dort springen Sie direkt in den passenden Chat."
+				},
+				"filters": {
+					"title": "Suchen und filtern",
+					"intro": "Suchen Sie im Zeitstrahl oder filtern Sie nach Art, zum Beispiel „Ungelesen“ oder „Erwähnungen“. Die Anzeige passen Sie über den Filter-Knopf links an."
+				},
+				"markAllRead": {
+					"title": "Alle als gelesen markieren",
+					"intro": "Ein Klick markiert alle Einträge im Zeitstrahl als gelesen. Die Nachrichten in Ihren Chats bleiben davon unberührt."
+				},
+				"draftsChip": {
+					"title": "Entwürfe in den Beratungen",
+					"intro": "Ungesendete Nachrichten gehen nicht verloren. Der Filter „Entwürfe“ zeigt die Beratungen, in denen noch ein Entwurf liegt."
+				},
+				"draftsCenter": {
+					"title": "Alle Entwürfe",
+					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffnen Sie einen Entwurf, um weiterzuschreiben, oder löschen Sie ihn."
+				}
+			}
+		},
+		"videoCall": {
+			"title": "Video-Call",
+			"summary": "Wie Sie aus einem Gespräch heraus anrufen und wartende Personen einlassen.",
+			"step": {
+				"intro": {
+					"title": "Anrufe im Gespräch",
+					"intro": "Video- und Audio-Calls starten Sie direkt in der Beratung, im Kopf des Gesprächs. Die ratsuchende Person bekommt den Anruf in ihrem Chat angezeigt."
+				},
+				"sessionCallButton": {
+					"title": "Anruf starten",
+					"intro": "Im Kopf eines geöffneten Gesprächs stehen „Video-Call starten“ und „Audio-Call starten“. Auf schmalen Bildschirmen finden Sie beide im Menü ⋮."
+				},
+				"groupCallButton": {
+					"title": "Anruf im Gruppenchat",
+					"intro": "Auch im Gruppenchat starten Sie den Anruf oben im Kopf des Chats."
+				},
+				"knock": {
+					"title": "Wartende Personen einlassen",
+					"intro": "Wer später dazukommt, klopft an und wartet. Im laufenden Anruf erscheint „Wartende Personen“: Mit „Einlassen“ holen Sie eine Person herein, mit „Ablehnen“ nicht, mit „Alle einlassen“ alle auf einmal."
+				},
+				"help": {
+					"title": "Hilfe zu Video-Calls",
+					"intro": "Unter „Hilfe“ → „Video-Call“ steht, welche Browser Video-Calls unterstützen. Den Anmelde-Link können Sie hier kopieren und an Ratsuchende weitergeben."
+				},
+				"done": {
+					"title": "Bereit für den ersten Anruf",
+					"intro": "Öffnen Sie ein Gespräch und starten Sie den Anruf, wenn es passt. Nach dem Anruf geht das Gespräch im Chat normal weiter."
+				}
+			}
+		},
+		"askerFirstSteps": {
+			"title": "Erste Schritte",
+			"summary": "Wo Sie Ihre Nachrichten, Termine und Ihr Profil finden.",
+			"step": {
+				"welcome": {
+					"title": "Willkommen!",
+					"intro": "Schön, dass Sie da sind. Dieser kurze Rundgang zeigt Ihnen, wo Sie alles Wichtige finden. Mit „Weiter“ geht es zum nächsten Schritt."
+				},
+				"sessions": {
+					"title": "Meine Beratungen",
+					"intro": "Hier finden Sie Ihre Gespräche mit der Beratung. Ein Klick auf ein Gespräch öffnet es."
+				},
+				"composer": {
+					"title": "Nachricht schreiben",
+					"intro": "Hier schreiben Sie Ihre Nachricht an die Beratung. Nehmen Sie sich ruhig Zeit. Die Antwort erscheint im selben Gespräch."
+				},
+				"appointments": {
+					"title": "Meine Termine",
+					"intro": "Hier finden Sie Ihre Termine mit der Beratung, zum Beispiel für ein Video-Gespräch."
+				},
+				"tools": {
+					"title": "Meine Tools",
+					"intro": "Hier finden Sie Hilfsmittel, die Ihre Beratungsstelle für Sie bereitstellt."
+				},
+				"profile": {
+					"title": "Profil",
+					"intro": "In Ihrem Profil ändern Sie Ihre Angaben und Einstellungen, zum Beispiel Passwort, Benachrichtigungen und Sprache."
+				},
+				"helpTours": {
+					"title": "Rundgänge",
+					"intro": "Unter Profil → Hilfe → Rundgänge können Sie jeden Rundgang noch einmal starten. Schneller geht es mit dem Knopf „?“ unten rechts."
+				}
+			}
+		},
+		"askerSettings": {
+			"title": "Einstellungen",
+			"summary": "Passwort, Ersatzschlüssel, Benachrichtigungen und Anzeige — kurz erklärt.",
+			"step": {
+				"intro": {
+					"title": "Ihre Einstellungen",
+					"intro": "Hier passen Sie die App an Ihre Wünsche an. Wir zeigen Ihnen die wichtigsten Punkte. Dabei wird nichts verändert."
+				},
+				"password": {
+					"title": "Passwort ändern",
+					"intro": "Hier können Sie Ihr Passwort ändern. Wählen Sie ein Passwort, das nur Sie kennen."
+				},
+				"twoFactor": {
+					"title": "Zwei-Faktor-Authentifizierung",
+					"intro": "Damit schützen Sie Ihre Anmeldung zusätzlich. Neben dem Passwort brauchen Sie dann einen Code, zum Beispiel aus einer App."
+				},
+				"recovery": {
+					"title": "Wiederherstellung alter Nachrichten",
+					"intro": "Ihre Nachrichten sind verschlüsselt. Mit einem Ersatzschlüssel können Sie sie auch auf einem neuen Gerät lesen. Bewahren Sie ihn gut auf."
+				},
+				"deleteAccount": {
+					"title": "Account löschen",
+					"intro": "Hier können Sie Ihren Account löschen, wenn Sie ihn nicht mehr brauchen. Vorher fragt die App noch einmal nach — ohne Ihre Bestätigung passiert nichts."
+				},
+				"notifications": {
+					"title": "Benachrichtigungen",
+					"intro": "Hier legen Sie fest, wie Sie von neuen Nachrichten erfahren, zum Beispiel per E-Mail."
+				},
+				"display": {
+					"title": "Anzeige",
+					"intro": "Hier ändern Sie, wie die App aussieht, zum Beispiel die Menüdarstellung oder die Sprache."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Jetzt kennen Sie Ihre Einstellungen. Sie finden sie jederzeit unter Profil → Einstellungen."
 				}
 			}
 		}
@@ -6664,6 +7114,7 @@
 			"waitingFor": "wartet seit {{count}} Min.",
 			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
+			"startAndAdmit": "Anruf starten und einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",
 			"position": "{{current}} von {{total}}",
@@ -6852,7 +7303,12 @@
 			"microphone": "Mikrofon",
 			"micOn": "Mikrofon an",
 			"micOff": "Mikrofon aus",
-			"micMeter": "Lautstärke Ihres Mikrofons"
+			"micMeter": "Lautstärke Ihres Mikrofons",
+			"cameraNotice": {
+				"permissionDenied": "Ihre Kamera ist für diese Seite blockiert. Erlauben Sie die Kamera in den Website-Einstellungen Ihres Browsers (Schloss-Symbol links neben der Adresse). Das Bild erscheint dann ohne Neuladen.",
+				"deviceBusy": "Ihre Kamera wird gerade von einem anderen Programm verwendet. Schließen Sie es und prüfen Sie dann erneut.",
+				"retry": "Kamera erneut prüfen"
+			}
 		},
 		"ready": {
 			"title": "Kamera und Mikrofon prüfen",
@@ -6988,6 +7444,48 @@
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 			"scheduledAt": "Datum und Uhrzeit",
 			"clearScheduledAt": "Entfernen"
+		},
+		"staffJoin": {
+			"kicker": "Direkteinladung",
+			"offer": {
+				"status": "Sie sind als Berater:in angemeldet",
+				"title": "Als Berater:in beitreten",
+				"text": "Sie treten dem Anruf mit Ihrem eigenen Konto bei und bleiben angemeldet. Die einladende Person lässt Sie herein. Den Chat dieses Termins sehen Sie dabei nicht.",
+				"join": "Als Berater:in beitreten"
+			},
+			"waiting": {
+				"status": "Warten auf Einlass",
+				"title": "Sie haben angeklopft",
+				"text": "Sobald Sie hereingelassen werden, startet der Anruf. Lassen Sie diese Seite offen."
+			},
+			"notStarted": {
+				"status": "Der Anruf hat noch nicht begonnen",
+				"title": "Der Anruf hat noch nicht begonnen",
+				"text": "Sobald der Anruf läuft, geht es hier weiter. Lassen Sie diese Seite offen."
+			},
+			"refused": {
+				"status": "Nicht hereingelassen",
+				"title": "Sie wurden nicht hereingelassen",
+				"text": "Die einladende Person hat Sie zu diesem Anruf nicht hereingelassen."
+			},
+			"forbidden": {
+				"status": "Beitreten nicht möglich",
+				"title": "Diesem Anruf können Sie nicht beitreten",
+				"text": "Der Link ist nicht mehr aktiv oder Sie wurden aus diesem Anruf entfernt."
+			},
+			"ended": {
+				"status": "Anruf beendet",
+				"title": "Der Anruf ist beendet",
+				"text": "Sie können diese Seite jetzt schließen."
+			},
+			"error": {
+				"status": "Beitreten hat nicht geklappt",
+				"title": "Beitreten hat nicht geklappt",
+				"text": "Bitte versuchen Sie es noch einmal."
+			},
+			"cancel": "Abbrechen",
+			"retry": "Erneut versuchen",
+			"openOwnSessions": "Zu meinen Beratungen"
 		}
 	},
 	"dashboard": {
@@ -7151,7 +7649,8 @@
 			"text": "Hier ist der neue Link zum Termin:",
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
-		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung."
+		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {
 		"bandLoading": "Wird geladen: {{names}}",
@@ -7236,7 +7735,8 @@
 			"tabs": {
 				"appointment": "Termin",
 				"blocker": "Sperrzeit",
-				"absence": "Abwesenheit"
+				"absence": "Abwesenheit",
+				"consultation": "Sprechzeit"
 			},
 			"withWhom": "Termin mit",
 			"withConversation": "Ratsuchende Person",
@@ -7719,7 +8219,50 @@
 			"minutes": "{{count}} Min.",
 			"invalid": "Das Ende muss nach dem Beginn liegen.",
 			"loadFailed": "Konnten nicht geladen werden. Erneut versuchen",
-			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag."
+			"overlaps": "Die Zeiten überschneiden sich mit einer weiteren Sprechstunde an diesem Tag.",
+			"band": "Sprechstunde",
+			"mode": "Art der Sprechzeit",
+			"modes": {
+				"once": "Einmalig",
+				"weekly": "Jede Woche"
+			},
+			"onceHint": "Geben Sie eine freie Zeit kurzfristig frei. Sie gilt nur an diesem Tag.",
+			"onceDescription": "Diese Zeit können Ratsuchende einmalig bei Ihnen buchen.",
+			"date": "Datum",
+			"from": "Von",
+			"to": "Bis",
+			"onceNotice": "Buchbar bis",
+			"onceNoticeHint": "So lange vor dem Beginn können Ratsuchende diese Zeit noch buchen.",
+			"onceNoticeNone": "Bis zum Beginn",
+			"onceNoticeMinutes": "{{count}} Min. vorher",
+			"onceNoticeHours": "{{count}} Std. vorher",
+			"onceNoticeHours_one": "{{count}} Std. vorher",
+			"overBlocker": "Diese Zeit liegt in einer Sperrzeit. Die Sprechzeit gibt sie trotzdem für Ratsuchende frei.",
+			"overBlockerConflict": "Diese Zeit liegt in einer Sperrzeit. Speichern Sie erneut, um sie trotzdem für Ratsuchende freizugeben.",
+			"onceInvalid": "Das Ende muss nach dem Beginn und in der Zukunft liegen.",
+			"onceTooLate": "Diese Zeit kann niemand mehr buchen: Die Buchungsfrist ist vorbei. Wählen Sie einen späteren Beginn oder „Buchbar bis“ kürzer.",
+			"onceTooShort": "Die Zeit ist kürzer als ein Termin ({{count}} Min.). Wählen Sie mindestens so viel Zeit.",
+			"onceSave": "Sprechzeit freigeben",
+			"addWindow": "Weiteres Zeitfenster am {{day}}",
+			"addWindowShort": "Zeitfenster",
+			"removeWindow": "Zeitfenster {{start}}–{{end}} am {{day}} entfernen",
+			"removeWindowShort": "Zeitfenster entfernen",
+			"menuItem": "Sprechzeit",
+			"menuHint": "Einmalig für Ratsuchende freigeben",
+			"bandOnce": "Sprechzeit einmalig",
+			"onceSaved": "Sprechzeit freigegeben",
+			"onceTooLong": "Eine einmalige Sprechzeit dauert höchstens 12 Stunden.",
+			"onceOverlap": "Diese Zeit überschneidet sich mit einer anderen einmaligen Sprechzeit.",
+			"onceLimit": "Sie haben schon {{count}} kommende einmalige Sprechzeiten. Ziehen Sie eine zurück, um eine neue freizugeben.",
+			"onceList": "Freigegebene einmalige Sprechzeiten",
+			"onceWithdraw": "Zurückziehen",
+			"onceWithdrawAsk": {
+				"title": "Sprechzeit zurückziehen?",
+				"description": "Ratsuchende können {{time}} dann nicht mehr buchen. Schon gebuchte Termine bleiben bestehen.",
+				"keep": "Behalten",
+				"confirm": "Zurückziehen"
+			},
+			"onceWithdrawn": "Sprechzeit zurückgezogen"
 		},
 		"appointmentRequest": {
 			"status": "Angefragt · wartet auf Sie",
@@ -7768,6 +8311,15 @@
 			"hint": "Termine von allen anderen warten, bis Sie sie annehmen.",
 			"save": "Speichern",
 			"saved": "Liste gespeichert."
+		},
+		"freeTimes": {
+			"title": "Freie Sprechzeiten",
+			"description": "Hier buchen Sie selbst einen Termin bei {{name}}.",
+			"counsellor": "Beratungsperson",
+			"medium": {
+				"video": "Video",
+				"phone": "Telefon"
+			}
 		}
 	},
 	"guestAccountMode": {
@@ -7842,6 +8394,8 @@
 			"confirm": "Wirklich entfernen?"
 		},
 		"replace": {
+			"notifyClient": "Ratsuchende über den Wechsel benachrichtigen",
+			"done": "Gewechselt: {{from}} → {{to}}. Im Supervisions-Chat steht ein Hinweis.",
 			"action": "Wechseln",
 			"labelFor": "{{name}} wechseln",
 			"title": "Wer soll {{name}} ablösen?",
@@ -7863,6 +8417,7 @@
 			"membersTitle": "Aktuelle Supervision",
 			"emptyMembers": "Dieser Fall hat noch keine Supervisor:in.",
 			"addTitle": "Supervisor:in hinzufügen",
+			"unknownName": "Supervisor:in",
 			"emptyCandidates": "An dieser Beratungsstelle ist sonst niemand als Supervisor:in markiert. Das legt der Admin der Beratungsstelle fest.",
 			"reasonLabel": "Grund für die Supervision",
 			"reasonPlaceholder": "Warum soll diese Person den Fall supervidieren?",
@@ -7900,5 +8455,40 @@
 		"archiveHint": "Verschieben Sie den Eintrag ins Archiv, damit er aus Ihrer Liste und den Aktivitäten verschwindet.",
 		"archived": "Dieser Eintrag ist im Archiv.",
 		"archiveFailed": "Archivieren hat nicht geklappt. Bitte versuchen Sie es erneut."
+	},
+	"journey": {
+		"question": {
+			"optional": "(optional)",
+			"missing": "Bitte beantworten Sie diese Frage.",
+			"textPlaceholder": "Ihre Antwort",
+			"other": "Etwas anderes",
+			"otherPlaceholder": "Was genau?",
+			"choose": "Bitte auswählen",
+			"multiHint": "Mehrere Antworten möglich"
+		},
+		"rating": {
+			"stars": "{{count}} von {{max}} Sternen",
+			"stars_one": "{{count}} von {{max}} Sternen",
+			"stars_other": "{{count}} von {{max}} Sternen",
+			"untouched": "noch nicht gewählt",
+			"moveHint": "Bewegen Sie den Regler auf Ihren Wert."
+		},
+		"chat": {
+			"subtitle": {
+				"flight": "Eine kurze Frage",
+				"arrival": "Ihre Rückmeldung"
+			},
+			"send": "Antworten senden",
+			"thanks": "Danke für Ihre Antworten!",
+			"failed": "Das hat nicht geklappt. Ihre Antworten sind noch da – bitte versuchen Sie es gleich noch einmal.",
+			"anonymous": "Ihre Antworten werden ohne Bezug zu Ihrer Beratung gespeichert."
+		},
+		"checkIn": {
+			"progress": "Frage {{current}} von {{total}}",
+			"back": "Vorige Frage",
+			"next": "Weiter",
+			"skip": "Überspringen",
+			"done": "Fertig – mit „Weiter“ geht es zum nächsten Schritt."
+		}
 	}
 }

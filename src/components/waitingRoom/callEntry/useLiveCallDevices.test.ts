@@ -163,6 +163,35 @@ describe('useLiveCallDevices', () => {
 		await waitFor(() => expect(result.current.stream).toBe(audioOnly));
 		expect(result.current.blocker).toBeUndefined();
 		expect(result.current.cameraMissing).toBe(true);
+		// Not a silent mic-only check: the dialog can say the camera is blocked.
+		expect(result.current.cameraBlocker).toBe('permissionDenied');
+	});
+
+	it('says the camera is busy or missing, and nothing once it works', async () => {
+		const audioOnly = fakeStream(['audio']);
+		const withCamera = fakeStream(['audio', 'video']);
+		let cameraError: string | null = 'NotReadableError';
+		const media = devicesFor((constraints) =>
+			constraints.video && cameraError
+				? Promise.reject(domError(cameraError))
+				: Promise.resolve(constraints.video ? withCamera : audioOnly)
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() =>
+			expect(result.current.cameraBlocker).toBe('deviceBusy')
+		);
+		cameraError = 'NotFoundError';
+		act(() => result.current.retry());
+		await waitFor(() =>
+			expect(result.current.cameraBlocker).toBe('noDevice')
+		);
+		cameraError = null;
+		act(() => result.current.retry());
+		await waitFor(() => expect(result.current.stream).toBe(withCamera));
+		expect(result.current.cameraBlocker).toBeUndefined();
+		expect(result.current.cameraMissing).toBe(false);
 	});
 
 	it('blocks as denied when the microphone is denied too', async () => {
@@ -238,6 +267,69 @@ describe('useLiveCallDevices', () => {
 		// The microphone keeps running: no new request, same stream.
 		expect(result.current.stream).toBe(stream);
 		expect(media.getUserMedia).toHaveBeenCalledTimes(1);
+	});
+
+	it('takes the camera once the person allows it in the browser, without a reload', async () => {
+		/*
+		 * Dev, 21 Nov (Frank): the camera was blocked for the site, so the
+		 * check ran with the microphone only: the preview stayed on the
+		 * animal while the meter moved. Allowing the camera in Chrome did
+		 * nothing: no event a webcam replug would send, and no switch left to
+		 * press. The permission's own change event has to ask again.
+		 */
+		const audioOnly = fakeStream(['audio']);
+		const withCamera = fakeStream(['audio', 'video']);
+		let cameraAllowed = false;
+		const media = devicesFor((constraints) =>
+			constraints.video && !cameraAllowed
+				? Promise.reject(domError('NotAllowedError'))
+				: Promise.resolve(constraints.video ? withCamera : audioOnly)
+		);
+		const changeListeners: (() => void)[] = [];
+		const cameraPermission = {
+			state: 'denied' as PermissionState,
+			addEventListener: (_: string, listener: () => void) =>
+				changeListeners.push(listener),
+			removeEventListener: vi.fn()
+		};
+		const permissions = {
+			query: vi.fn(() => Promise.resolve(cameraPermission))
+		} as unknown as Permissions;
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media, permissions)
+		);
+		await waitFor(() => expect(result.current.cameraMissing).toBe(true));
+		expect(result.current.stream).toBe(audioOnly);
+		await waitFor(() =>
+			expect(permissions.query).toHaveBeenCalledWith({ name: 'camera' })
+		);
+
+		cameraAllowed = true;
+		cameraPermission.state = 'granted';
+		await act(async () =>
+			changeListeners.forEach((listener) => listener())
+		);
+
+		await waitFor(() => expect(result.current.stream).toBe(withCamera));
+		expect(result.current.cameraMissing).toBe(false);
+	});
+
+	it('keeps working where the browser cannot report the camera permission', async () => {
+		const audioOnly = fakeStream(['audio']);
+		const media = devicesFor((constraints) =>
+			constraints.video
+				? Promise.reject(domError('NotAllowedError'))
+				: Promise.resolve(audioOnly)
+		);
+		const permissions = {
+			query: vi.fn(() => Promise.reject(new TypeError('camera')))
+		} as unknown as Permissions;
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media, permissions)
+		);
+		await waitFor(() => expect(result.current.cameraMissing).toBe(true));
+		expect(result.current.stream).toBe(audioOnly);
+		expect(result.current.blocker).toBeUndefined();
 	});
 
 	it('takes the camera back when a webcam is plugged in again', async () => {

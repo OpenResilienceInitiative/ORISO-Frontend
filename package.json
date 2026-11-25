@@ -15,7 +15,6 @@
 		"@draft-js-plugins/buttons": "^4.3.2",
 		"@draft-js-plugins/editor": "^4.1.3",
 		"@draft-js-plugins/emoji": "^4.6.5",
-		"@draft-js-plugins/linkify": "^4.2.1",
 		"@draft-js-plugins/static-toolbar": "^4.1.3",
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
@@ -34,8 +33,8 @@
 		"@opentelemetry/resources": "^2.9.0",
 		"@opentelemetry/sdk-metrics": "^2.9.0",
 		"@storybook/addon-designs": "^12.0.0",
-		"@storybook/addon-mcp": "10.6.7",
-		"@storybook/react-vite": "10.6.7",
+		"@storybook/addon-mcp": "11.0.0-beta.5",
+		"@storybook/react-vite": "11.0.0-beta.5",
 		"@tiptap/extension-color": "^3.20.1",
 		"@tiptap/extension-highlight": "^3.20.1",
 		"@tiptap/extension-link": "^3.20.1",
@@ -51,7 +50,7 @@
 		"@vector-im/compound-design-tokens": "^6.3.0",
 		"@vector-im/compound-web": "^8.2.5",
 		"@vitejs/plugin-react": "6.3.0",
-		"bfj": "^8.0.0",
+		"bfj": "^9.1.4",
 		"browserslist": "^4.22.2",
 		"classnames": "^2.5.1",
 		"clsx": "^1.2.1",
@@ -82,7 +81,7 @@
 		"jotai": "^2.7.0",
 		"js-autocomplete": "^1.0.4",
 		"livekit-client": "^2.16.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.18.1",
 		"lottie-react": "^2.4.1",
 		"markdown-draft-js": "^2.4.0",
 		"matrix-js-sdk": "^38.4.0",
@@ -103,7 +102,7 @@
 		"react-joyride": "^3.2.0",
 		"react-refresh": "^0.14.0",
 		"react-responsive": "^9.0.2",
-		"react-router-dom": "^7.18.0",
+		"react-router-dom": "^7.18.2",
 		"react-select": "4.3.1",
 		"react-switch": "^7.0.0",
 		"react-use-measure": "^2.1.1",
@@ -119,7 +118,7 @@
 		"url-loader": "4.1.1",
 		"use-constant": "^1.1.1",
 		"use-debounce": "^9.0.4",
-		"uuid": "^9.0.0",
+		"uuid": "^11.1.1",
 		"vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
 		"vite-plugin-svgr": "^5.2.0",
 		"web-vitals": "^3.3.2",
@@ -131,18 +130,19 @@
 		"@commitlint/cli": "^18.5.0",
 		"@commitlint/config-conventional": "^18.5.0",
 		"@cypress/react": "^7.0.3",
-		"@cypress/webpack-dev-server": "^3.5.1",
+		"@cypress/webpack-dev-server": "^6.2.0",
 		"@cypress/webpack-preprocessor": "^6.0.1",
 		"@dtsgenerator/replace-namespace": "^1.6.0",
 		"@playwright/test": "^1.58.2",
-		"@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-		"@storybook/addon-a11y": "10.6.7",
-		"@storybook/addon-docs": "10.6.7",
-		"@storybook/addon-vitest": "10.6.7",
-		"@storybook/react": "10.6.7",
+		"@pmmmwh/react-refresh-webpack-plugin": "^0.6.3",
+		"@storybook/addon-a11y": "11.0.0-beta.5",
+		"@storybook/addon-docs": "11.0.0-beta.5",
+		"@storybook/addon-vitest": "11.0.0-beta.5",
+		"@storybook/react": "11.0.0-beta.5",
 		"@svgr/webpack": "^8.0.1",
 		"@takuma-ru/auto-story-generator": "^0.4.0",
 		"@testing-library/dom": "10.4.1",
+		"@testing-library/jest-dom": "6.9.1",
 		"@testing-library/react": "16.3.0",
 		"@testing-library/user-event": "14.6.4",
 		"@types/draft-js": "0.11.11",
@@ -165,11 +165,11 @@
 		"case-sensitive-paths-webpack-plugin": "^2.4.0",
 		"chromatic": "^17.8.0",
 		"concurrently": "^8.2.2",
-		"copy-webpack-plugin": "^12.0.2",
+		"copy-webpack-plugin": "14.0.0",
 		"cross-env": "^7.0.3",
 		"css-loader": "^6.9.1",
-		"css-minimizer-webpack-plugin": "^6.0.0",
-		"cypress": "^13.6.3",
+		"css-minimizer-webpack-plugin": "8.0.0",
+		"cypress": "^15.18.0",
 		"cypress-file-upload": "^5.0.8",
 		"cz-conventional-changelog": "^3.3.0",
 		"dotenv": "^16.4.0",
@@ -186,11 +186,11 @@
 		"eslint-plugin-testing-library": "^6.2.0",
 		"eslint-webpack-plugin": "^4.0.1",
 		"file-loader": "^6.2.0",
-		"glob": "^11.0.3",
+		"glob": "14.0.6",
 		"html-webpack-plugin": "^5.6.0",
 		"husky": "^8.0.3",
 		"jsdom": "24.1.3",
-		"lint-staged": "^15.2.0",
+		"lint-staged": "15.2.10",
 		"mock-socket": "^9.3.1",
 		"nodemon": "^3.0.3",
 		"npm-run-all": "^4.1.5",
@@ -205,28 +205,28 @@
 		"prettier-eslint-cli": "^8.0.1",
 		"sass": "^1.70.0",
 		"sass-loader": "^14.0.0",
-		"serve": "^14.2.1",
+		"serve": "^14.2.8",
 		"standard-version": "^9.5.0",
-		"storybook": "10.6.7",
+		"storybook": "11.0.0-beta.5",
 		"style-loader": "^3.3.4",
 		"stylelint": "^15.11.0",
 		"stylelint-config-standard": "^34.0.0",
 		"stylelint-config-standard-scss": "^11.1.0",
 		"stylelint-no-unsupported-browser-features": "^7.0.0",
 		"stylelint-scss": "^5.3.2",
-		"terser-webpack-plugin": "^5.3.10",
+		"terser-webpack-plugin": "5.6.1",
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.3.3",
+		"typescript": "~5.9.3",
 		"vitest": "5.1.0",
 		"wait-on": "^7.2.0",
-		"webpack": "^5.89.0",
-		"webpack-dev-server": "^4.15.1",
-		"workbox-webpack-plugin": "^7.0.0",
+		"webpack": "5.104.1",
+		"webpack-dev-server": "^5.2.7",
+		"workbox-webpack-plugin": "7.4.1",
 		"vite-plus": "1.6.0",
 		"prettier": "^3.2.4",
 		"@vitest/browser": "5.1.0",
-		"eslint-plugin-storybook": "10.6.7",
+		"eslint-plugin-storybook": "11.0.0-beta.5",
 		"axe-core": "4.7.0",
 		"vitest-environment-oriso-jsdom": "file:scripts/vitest-environment-oriso-jsdom"
 	},
@@ -254,6 +254,7 @@
 		"lint": "npm run lint:scripts && npm run lint:style",
 		"lint:scripts": "eslint src --max-warnings=0 && tsc",
 		"lint:style": "stylelint src/**/*.scss",
+		"check:guest-prefix": "node --test scripts/contracts/check-guest-prefix.test.mjs && node scripts/contracts/check-guest-prefix.mjs",
 		"lint:style:fix": "stylelint --fix src/**/*.scss",
 		"cypress": "run-p cypress:*",
 		"cypress:start-cra": "NODE_ENV=development BROWSER=none PORT=9001 WDS_SOCKET_PORT=9001 CYPRESS_WS_URL=http://127.0.0.1:9002 REACT_APP_API_URL=http://127.0.0.1:9001 npm run dev",
@@ -284,6 +285,28 @@
 			"react-app",
 			"plugin:cypress/recommended"
 		],
+		"rules": {
+			"no-restricted-imports": [
+				"error",
+				{
+					"paths": [
+						{
+							"name": "antd",
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					],
+					"patterns": [
+						{
+							"group": [
+								"antd/*",
+								"@ant-design/*"
+							],
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					]
+				}
+			]
+		},
 		"overrides": [
 			{
 				"files": "*.spec.ts",
@@ -332,6 +355,45 @@
 					"testing-library/await-async-events": "error",
 					"testing-library/await-async-queries": "error",
 					"testing-library/await-async-utils": "error"
+				}
+			},
+			{
+				"files": [
+					"src/**/*.tsx"
+				],
+				"excludedFiles": [
+					"src/**/*.test.tsx",
+					"src/**/*.spec.tsx",
+					"src/**/*.stories.tsx",
+					"src/components/form/**",
+					"src/components/M3Checkbox/**",
+					"src/components/checkbox/**",
+					"src/components/radioButton/**",
+					"src/components/Switch/**",
+					"src/components/tagSelect/**",
+					"src/components/devToolbar/**"
+				],
+				"rules": {
+					"no-restricted-syntax": [
+						"error",
+						"WithStatement",
+						{
+							"selector": "JSXOpeningElement[name.name=/^(select|option|textarea)$/]",
+							"message": "Raw <select>/<option>/<textarea> is drawn by the browser and never matches the design. Use OrisoSelect / OrisoMultiSelect / OrisoTextarea from src/components/form/."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'][value.value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'] > JSXExpressionContainer > Literal[value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='NativeSelect']",
+							"message": "MUI NativeSelect opens the browser's own option list. Use OrisoSelect from src/components/form/."
+						}
+					]
 				}
 			}
 		],
@@ -382,9 +444,36 @@
 		"delay": 2500
 	},
 	"overrides": {
-		"brace-expansion@1": "^1.1.18",
+		"minimatch@9": "9.0.9",
+		"brace-expansion@1": "^1.1.21",
 		"vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
-		"vitest": "5.1.0"
+		"vitest": "5.1.0",
+		"immutable@3": "3.8.4",
+		"sockjs": {
+			"uuid": "11.1.1"
+		},
+		"@joshwooding/vite-plugin-react-docgen-typescript": {
+			"glob": "14.0.6"
+		},
+		"@takuma-ru/auto-story-generator": {
+			"glob": "14.0.6",
+			"minimatch": "11.0.9"
+		},
+		"@ts-morph/common": {
+			"minimatch": "11.0.9"
+		},
+		"@typescript-eslint/typescript-estree": {
+			"minimatch": "11.0.9"
+		},
+		"dtsgenerator": {
+			"glob": "14.0.6"
+		},
+		"prettier-eslint-cli": {
+			"glob": "14.0.6"
+		},
+		"workbox-build@7.4.1": {
+			"glob": "14.0.6"
+		}
 	},
 	"prettier": {
 		"trailingComma": "none",

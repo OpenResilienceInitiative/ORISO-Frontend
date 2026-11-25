@@ -40,8 +40,11 @@ import {
 	mockVisibilityMessageForViewer
 } from './MessageItemComponent.mocks';
 import {
+	MESSAGE_STORY_BACKGROUND,
 	desktop1440Globals,
 	mobileParameters,
+	phone320Globals,
+	tablet820Globals,
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
@@ -115,7 +118,7 @@ function MessageItemContextDecorator({
 									padding: compact
 										? '16px 12px'
 										: '24px 16px',
-									background: '#ffffff'
+									background: MESSAGE_STORY_BACKGROUND
 								}}
 							>
 								{children}
@@ -264,6 +267,55 @@ export const ClientIn1on1Incoming: Story = {
 		}),
 		...baseHandlers
 	}
+};
+
+/** The colour an element actually sits on: the first opaque ancestor fill. */
+const backdropOf = (element: Element): string => {
+	for (let node = element.parentElement; node; node = node.parentElement) {
+		const fill = getComputedStyle(node).backgroundColor;
+		if (fill && !/rgba\(.*,\s*0\)$/.test(fill) && fill !== 'transparent') {
+			return fill;
+		}
+	}
+	return getComputedStyle(document.body).backgroundColor;
+};
+
+/**
+ * Avatar ring contract (Frontend#1134). The 6 px ring around every message
+ * avatar is cut out of the bubble in the colour of the chat canvas, so it
+ * must follow light and dark. A fixed light ring (#ebe2e2 before) shows as a
+ * white halo on the dark canvas.
+ */
+const avatarRingPlay: Story['play'] = async ({ canvasElement }) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelector('.messageItem__avatar')
+		).not.toBeNull()
+	);
+	const avatar = canvasElement.querySelector(
+		'.messageItem__avatar'
+	) as HTMLElement;
+	const style = getComputedStyle(avatar);
+	// The shared chat avatar frame paints the ring with its own background
+	// through a transparent 6 px border (Frontend#2463).
+	await expect(style.borderTopWidth).toBe('6px');
+	await expect(style.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+	await expect(style.backgroundClip).toBe('border-box');
+	await expect(style.backgroundColor).toBe(backdropOf(avatar.parentElement!));
+};
+
+export const AvatarRingContractLight: Story = {
+	...ClientIn1on1Incoming,
+	name: 'Avatar ring contract · light',
+	globals: { scheme: 'light' },
+	play: avatarRingPlay
+};
+
+export const AvatarRingContractDark: Story = {
+	...ClientIn1on1Incoming,
+	name: 'Avatar ring contract · dark',
+	globals: { scheme: 'dark' },
+	play: avatarRingPlay
 };
 
 export const ClientIn1on1Outgoing: Story = {
@@ -1289,6 +1341,104 @@ export const KebabActiveState: Story = {
 	}
 };
 
+/** The six recent reactions and the more button remain visible in one line. */
+const checkQuickReactionRow = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	const trigger = canvasElement.querySelector(
+		'.messageItem__kebabButton'
+	) as HTMLElement;
+	expect(trigger).toBeTruthy();
+	await userEvent.click(trigger);
+	const row = await waitFor(() => {
+		const found = document.querySelector(
+			'.messageItem__actionMenuReactions'
+		) as HTMLElement;
+		expect(found).toBeTruthy();
+		expect(found.getBoundingClientRect().top).toBeGreaterThan(0);
+		return found;
+	});
+	const controls = [...row.querySelectorAll('button')];
+	expect(controls).toHaveLength(7);
+	const rowRect = row.getBoundingClientRect();
+	const menuRect = (
+		row.closest('.messageItem__actionMenu') as HTMLElement
+	).getBoundingClientRect();
+	expect(menuRect.left).toBeGreaterThanOrEqual(0);
+	expect(menuRect.right).toBeLessThanOrEqual(window.innerWidth);
+	const triggerRect = trigger.getBoundingClientRect();
+	expect(
+		menuRect.right <= triggerRect.left ||
+			menuRect.left >= triggerRect.right ||
+			menuRect.bottom <= triggerRect.top ||
+			menuRect.top >= triggerRect.bottom
+	).toBe(true);
+	const rects = controls.map((control) => control.getBoundingClientRect());
+	for (let index = 0; index < rects.length; index += 1) {
+		const rect = rects[index];
+		expect(Math.abs(rect.top - rects[0].top)).toBeLessThan(1);
+		expect(rect.width).toBeGreaterThanOrEqual(24);
+		expect(rect.height).toBeGreaterThanOrEqual(24);
+		expect(rect.left).toBeGreaterThanOrEqual(rowRect.left - 0.5);
+		expect(rect.right).toBeLessThanOrEqual(rowRect.right + 0.5);
+		if (index > 0)
+			expect(rect.left).toBeGreaterThanOrEqual(
+				rects[index - 1].right - 0.5
+			);
+	}
+	const more = row.querySelector(
+		'.messageItem__actionMenuReactionMore'
+	) as HTMLElement;
+	more.focus();
+	expect(document.activeElement).toBe(more);
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeTruthy()
+	);
+	await userEvent.click(more);
+	await waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="emoji-picker-popup"]')
+		).toBeNull()
+	);
+	// Leave nothing open: the next story's accessibility audit must not see
+	// this story's action menu or emoji picker.
+	await userEvent.keyboard('{Escape}');
+	await waitFor(() => {
+		expect(document.querySelector('.messageItem__actionMenu')).toBeNull();
+		expect(document.querySelector('.EmojiPickerReact')).toBeNull();
+	});
+};
+
+export const QuickReactionsDesktop: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row desktop',
+	globals: desktop1440Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsTablet: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row tablet',
+	globals: tablet820Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsMobile: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row mobile',
+	globals: phone390Globals,
+	play: checkQuickReactionRow
+};
+export const QuickReactionsNarrow: Story = {
+	...KebabActiveState,
+	name: 'Quick reactions — one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
+};
+
 /**
  * Same pins as `KebabActiveState`, but for the **outgoing** side: the kebab
  * lives in the right side column (`--right`) and the menu is positioned from
@@ -1389,7 +1539,27 @@ export const KebabActiveStateOutgoing: Story = {
 			expect(pickerRect.left).toBeGreaterThanOrEqual(0);
 			expect(pickerRect.right).toBeLessThanOrEqual(window.innerWidth);
 		});
+
+		// Close the third-party picker again before the accessibility audit:
+		// its search field carries `aria-controls="epr-search-id"`, which axe
+		// rejects. Whether the audit saw that field depended on how fast the
+		// picker had rendered (the dev run happens to miss it). The menu stays
+		// open, so its own markup is still audited.
+		more.click();
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-testid="emoji-picker-popup"]')
+			).toBeNull()
+		);
 	}
+};
+
+/** The outgoing trigger also remains accessible at the narrowest supported width. */
+export const QuickReactionsOutgoingNarrow: Story = {
+	...KebabActiveStateOutgoing,
+	name: 'Quick reactions — outgoing one row narrow',
+	globals: phone320Globals,
+	play: checkQuickReactionRow
 };
 
 /**
@@ -2433,7 +2603,22 @@ export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
 export const InitialAcceptanceDefault: Story = {
 	...InitialAcceptanceWithScopedPreference,
 	name: 'Initial acceptance — default chat notice',
-	play: undefined
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__avatar'
+			)!;
+			const bubble = canvasElement.querySelector<HTMLElement>(
+				'.carimatMessageFrame__bubble'
+			)!;
+			const avatarRect = avatar.getBoundingClientRect();
+			const bubbleRect = bubble.getBoundingClientRect();
+			expect(bubbleRect.left - avatarRect.left).toBeCloseTo(40, 0);
+			expect(bubbleRect.top - avatarRect.top).toBeLessThanOrEqual(44);
+			expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+			expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		});
+	}
 };
 export const InitialAcceptanceDefaultMobile: Story = {
 	...InitialAcceptanceDefault,
@@ -2569,6 +2754,12 @@ export const SupervisorFeedback: Story = {
 		expect(
 			canvasElement.querySelector('.messageItem__supervisionAvatar svg')
 		).toBeTruthy();
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__avatar--supervisor'
+		)!;
+		expect(avatar).not.toBeNull();
+		expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
 	}
 };
 

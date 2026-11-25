@@ -326,6 +326,9 @@ const storySessionSupervisors = ['bettina.b', 'kim', 'ali', 'jo'].map(
 	})
 );
 
+/* FE#2494: the own calendar; a story with a supervisor appointment fills it. */
+let storyCalendarEntries: unknown[] = [];
+
 const jsonResponse = (body: unknown) =>
 	new Response(JSON.stringify(body), {
 		status: 200,
@@ -349,6 +352,11 @@ const installHeaderFetchMocks = () => {
 		}
 		if (url.split('?')[0].endsWith('/service/users/consultants')) {
 			return jsonResponse([]);
+		}
+		// FE#2494: the header looks for an appointment with the supervisor
+		// in the own calendar.
+		if (url.split('?')[0].endsWith('/service/users/calendar/entries')) {
+			return jsonResponse(storyCalendarEntries);
 		}
 		return previousFetch(input, init);
 	};
@@ -854,6 +862,67 @@ export const GroupChatPhoneWithoutComposerKeepsBack: Story = {
 				canvasElement.querySelector('.sessionInfo__backButton')
 			).not.toBeNull()
 		);
+	}
+};
+
+/**
+ * D7 on the phone, 1-on-1: the header as `SessionItemComponent` mounts it.
+ * With a composer the composer's action bar leads with the back arrow, so the
+ * header drops its own and the avatar and name get the width. Without a
+ * composer (an enquiry, a supervisor's or co-access read-only view, a
+ * rejected or finished conversation) the header keeps the arrow — otherwise
+ * the phone has no way back to the list.
+ */
+const renderOneOnOnePhoneHeader = (
+	preset: ReturnType<typeof mockActiveConversation>,
+	hasComposer: boolean
+) => (
+	<StoryProviders session={preset.session} userData={storyUserData}>
+		<SessionHeaderComponent
+			bannedUsers={[]}
+			hideBackButton={hasComposer}
+			callsInMenu
+		/>
+	</StoryProviders>
+);
+
+export const OneOnOnePhoneComposerCarriesBack: Story = {
+	name: '1:1 header on the phone — no back arrow, the composer has it (D7)',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockActiveConversation(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).not.toBeNull()
+		);
+		await expect(
+			canvasElement.querySelector('.sessionInfo__backButton')
+		).toBeNull();
+		// The freed width goes to the name: it starts where the arrow was.
+		const row = canvasElement
+			.querySelector('.sessionInfo__headerWrapper')!
+			.getBoundingClientRect();
+		const first = canvasElement
+			.querySelector('.sessionInfo__username')!
+			.getBoundingClientRect();
+		await expect(first.left - row.left).toBeLessThan(1);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/** Control: an enquiry has no composer, so the header keeps its arrow. */
+export const OneOnOnePhoneWithoutComposerKeepsBack: Story = {
+	name: '1:1 header on the phone without a composer — back arrow stays',
+	globals: phone390Globals,
+	render: () => renderOneOnOnePhoneHeader(mockInquiry(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.sessionInfo__backButton')
+			).not.toBeNull()
+		);
+		await expectTitleClearOfActions(canvasElement);
 	}
 };
 
@@ -1468,6 +1537,19 @@ const openGroupMenu = async (canvasElement: HTMLElement) => {
 	return { menu: within(menu), trigger: trigger! };
 };
 
+/** Legal links sit in the folded "Einstellungen & Rechtliches" group. */
+const openLegalGroup = async (menu: ReturnType<typeof within>) => {
+	const toggle = menu.getByRole('button', {
+		name: /Einstellungen & Rechtliches/
+	});
+	if (toggle.getAttribute('aria-expanded') !== 'true') {
+		await userEvent.click(toggle);
+	}
+	await waitFor(() =>
+		expect(toggle).toHaveAttribute('aria-expanded', 'true')
+	);
+};
+
 const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
@@ -1475,6 +1557,7 @@ const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
@@ -1599,6 +1682,7 @@ const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
@@ -1675,10 +1759,12 @@ const expectAppointmentMenu =
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		const main = within(bar).getByRole('button', { name: label });
-		// 40px: the compact split button.
-		await expect(Math.round(main.getBoundingClientRect().height)).toBe(40);
-		// Inside the room the main part opens the appointment menu too.
+		// FE#2494: a pennant (30px) whose accessible name carries the date.
+		const main = within(bar).getByRole('button', {
+			name: new RegExp(label)
+		});
+		await expect(Math.round(main.getBoundingClientRect().height)).toBe(30);
+		// Inside the room the whole pennant opens the appointment menu.
 		await userEvent.click(main);
 		const menu = await waitFor(() => {
 			const found = document.querySelector<HTMLElement>(
@@ -1775,12 +1861,34 @@ const installAppointmentFetch = (items: unknown[]) => {
 	};
 };
 
-const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+const HeaderWithAppointments = ({
+	items,
+	calendar = [],
+	userData
+}: {
+	items: unknown[];
+	/** FE#2494: the own calendar, e.g. an appointment with the supervisor. */
+	calendar?: unknown[];
+	/** The viewer; the counsellor by default. */
+	userData?: typeof storyUserData;
+}) => {
 	// Installed during render: the slot fetches from a child effect.
-	const [restore] = React.useState(() => installAppointmentFetch(items));
+	const [restore] = React.useState(() => {
+		storyCalendarEntries = calendar;
+		return installAppointmentFetch(items);
+	});
 	React.useEffect(() => restore, [restore]);
-	return renderSessionHeader(mockActiveConversation());
+	return renderSessionHeader({ ...mockActiveConversation(), userData });
 };
+
+/* FE#2494 review: an anonymous guest of a conversation appointment. */
+const storyAnonymousUserData = {
+	...storyAskerUserData,
+	userName: 'gast-4401',
+	displayName: 'Gast 4401',
+	grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+	userRoles: ['ANONYMOUS']
+} as any;
 
 const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
 	const trigger = await waitFor(() => {
@@ -1822,6 +1930,23 @@ export const OneToOneAppointmentCreateInMenu: Story = {
 	}
 };
 
+/**
+ * FE#2494: ⋮ → "Termin anlegen" opens the appointment module as a popup over
+ * the chat room (the shared invitation dialog, variant `appointment`).
+ */
+export const OneToOneAppointmentCreatePopup: Story = {
+	name: '1:1 appointment — ⋮ "Termin anlegen" opens the popup (FE#2494)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		await waitFor(() => expect(row).toBeVisible());
+		await userEvent.click(row);
+		const dialog = await within(document.body).findByRole('dialog');
+		// The dialog fades in: wait until it is shown, not only mounted.
+		await waitFor(() => expect(dialog).toBeVisible(), { timeout: 5000 });
+	}
+};
+
 /** One appointment: the row shows only that appointment, no create button. */
 export const OneToOneAppointmentUpcoming: Story = {
 	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
@@ -1834,6 +1959,281 @@ export const OneToOneAppointmentUpcoming: Story = {
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+		// FE#2494: one pennant, hanging in the topic's row of the header.
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
+		await expect(bar.closest('.sessionInfo__metaInfo')).not.toBeNull();
+	}
+};
+
+/**
+ * FE#2494 review: the anonymous advice seeker keeps the appointment pennant
+ * now that it hangs in the topic's row, which registered users only get
+ * with the agency line and topic.
+ */
+export const OneToOneAppointmentAnonymousGuest: Story = {
+	name: '1:1 appointment — anonymous advice seeker sees the pennant (FE#2494)',
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			userData={storyAnonymousUserData}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(
+			() => {
+				const found = canvasElement.querySelector(
+					'[data-cy="room-next-appointment"]'
+				);
+				expect(found).not.toBeNull();
+				return found!;
+			},
+			{ timeout: 5000 }
+		);
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
+	}
+};
+
+/* FE#2494: the appointment with the supervisor, from the own calendar. */
+const makeSupervisorAppointment = () => {
+	const start = Date.now() + 2 * 24 * HOUR_MS;
+	return {
+		id: 'colleague-88',
+		type: 'APPOINTMENT',
+		start: new Date(start).toISOString(),
+		end: new Date(start + 0.75 * HOUR_MS).toISOString(),
+		ownerId: CONSULTANT_ID,
+		kind: 'PHONE',
+		colleagueId: storySessionSupervisors[0].supervisorConsultantId,
+		colleagueName: 'Bettina B.',
+		colleagueStatus: 'CONFIRMED',
+		chatId: 9901,
+		matrixRoomId: '!internal-9901:oriso.invalid'
+	};
+};
+
+/**
+ * Two appointments: with the advice seeker and with the supervisor. Two
+ * pennants hang beside the topic; an icon says who each is with.
+ */
+export const OneToOneAppointmentWithSupervisor: Story = {
+	name: '1:1 appointment — advice seeker and supervisor: two pennants (FE#2494)',
+	globals: desktop1440Globals,
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			calendar={[makeSupervisorAppointment()]}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const pennants = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.sessionInfo__metaInfo .appointmentPennant'
+			);
+			expect(found).toHaveLength(2);
+			return found;
+		});
+		await expect(pennants[1]).toHaveAccessibleName(/Supervision/);
+		await userEvent.click(pennants[1]);
+		const menu = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="timeline-entry-menu"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(within(menu).getByText('Termin absagen')).toBeVisible();
+		await expect(
+			within(menu).getByText('Im Kalender öffnen')
+		).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+	}
+};
+
+const inNarrowPaneAt200 = (header: React.ReactNode) => (
+	<div
+		data-oriso-personal-text-size="200"
+		style={
+			{
+				'maxInlineSize': 320,
+				'--oriso-personal-text-scale': 2
+			} as React.CSSProperties
+		}
+	>
+		{header}
+	</div>
+);
+
+const expectWholeHeaderText = async (canvasElement: HTMLElement) => {
+	const header = await within(canvasElement).findByRole('heading', {
+		level: 3
+	});
+	const panel = header.closest('.sessionInfo')!;
+	const bounds = panel.getBoundingClientRect();
+	for (const label of [
+		header,
+		...panel.querySelectorAll('.sessionInfo__metaInfo__content')
+	]) {
+		const range = document.createRange();
+		range.selectNodeContents(label);
+		const text = range.getBoundingClientRect();
+		await expect(text.left).toBeGreaterThanOrEqual(bounds.left - 0.5);
+		await expect(text.right).toBeLessThanOrEqual(bounds.right + 0.5);
+		await expect(getComputedStyle(label).textOverflow).toBe('clip');
+	}
+};
+
+export const SingleRoomHeaderAt200InNarrowPane: Story = {
+	name: 'Conversation details at 200% in a narrow pane',
+	globals: {
+		viewport: { value: 'phone320' },
+		scheme: 'dark',
+		contrast: 'high'
+	},
+	render: () =>
+		inNarrowPaneAt200(
+			renderSessionHeader(mockActiveConversationWithParticipants())
+		),
+	play: async ({ canvasElement }) => {
+		const heading = await within(canvasElement).findByRole('heading', {
+			level: 3
+		});
+		const panel = heading.closest('.sessionInfo')!;
+		const bounds = panel.getBoundingClientRect();
+		for (const label of [
+			heading,
+			...panel.querySelectorAll('.sessionInfo__metaInfo__content')
+		]) {
+			const rect = label.getBoundingClientRect();
+			const style = getComputedStyle(label);
+			await expect(label.getAttribute('title')).toBeTruthy();
+			await expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 0.5);
+			await expect(rect.right).toBeLessThanOrEqual(bounds.right + 0.5);
+			await expect(style.whiteSpace).toBe('nowrap');
+			await expect(style.textOverflow).toBe('ellipsis');
+			const singleLine = [
+				style.lineHeight,
+				style.paddingBlockStart,
+				style.paddingBlockEnd,
+				style.borderBlockStartWidth,
+				style.borderBlockEndWidth
+			].reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+			await expect(rect.height).toBeLessThanOrEqual(singleLine + 2);
+		}
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+export const GroupRoomHeaderAt200InNarrowPane: Story = {
+	name: 'Group heading at 200% in a narrow pane',
+	globals: {
+		viewport: { value: 'tablet820' },
+		scheme: 'dark',
+		contrast: 'high'
+	},
+	render: () => inNarrowPaneAt200(renderGroupHeader(mockGroupSessionSmall())),
+	play: async ({ canvasElement }) => expectWholeHeaderText(canvasElement)
+};
+
+/** A longer room name in the real group header; the wrapper models a resizable chat pane. */
+export const LongRoomTitleInResizablePane: Story = {
+	name: 'Long room title in a resizable pane',
+	globals: desktop1440Globals,
+	render: () => {
+		const preset = mockGroupSessionSmall();
+		preset.session.item.topic = 'Fallbesprechung Schulden · Team Moabit';
+		return (
+			<div
+				data-testid="title-fit-pane"
+				style={{ width: 1100, maxWidth: '100%' }}
+			>
+				{renderGroupHeader(preset)}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const pane = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="title-fit-pane"]'
+		)!;
+		const title = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="group-header-topic"]'
+		)!;
+		const text = title.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		const fontSize = () =>
+			Number.parseFloat(getComputedStyle(text).fontSize);
+		const expectSpaceBeforeCalls = () => {
+			const calls = canvasElement.querySelector<HTMLElement>(
+				'[data-cy="session-header-video-call-buttons"]'
+			)!;
+			expect(
+				calls.getBoundingClientRect().left -
+					title.getBoundingClientRect().right
+			).toBeGreaterThanOrEqual(7.5);
+		};
+		if (window.innerWidth < 900) {
+			pane.style.width = '660px';
+			await waitFor(() => expect(text.style.fontSize).not.toBe(''));
+			expect(fontSize()).toBeGreaterThanOrEqual(16);
+			expect(fontSize()).toBeLessThanOrEqual(18);
+			expect(title.title).toBe(title.textContent);
+			expectSpaceBeforeCalls();
+			return;
+		}
+		pane.style.maxWidth = 'none';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = 'none';
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '780px';
+		await waitFor(() => {
+			expect(fontSize()).toBeLessThan(22);
+			expect(fontSize()).toBeGreaterThan(16);
+			expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth + 1);
+			expectSpaceBeforeCalls();
+		});
+		pane.style.width = '550px';
+		await waitFor(() => {
+			expect(fontSize()).toBe(16);
+			expect(text.scrollWidth).toBeGreaterThan(text.clientWidth);
+			expect(getComputedStyle(text).textOverflow).toBe('ellipsis');
+		});
+		await expect(title.textContent).toBe(
+			'Fallbesprechung Schulden · Team Moabit'
+		);
+		await expect(title.getAttribute('title')).toBe(title.textContent);
+		pane.style.width = '1400px';
+		await waitFor(() => expect(fontSize()).toBe(22));
+		pane.style.width = '660px';
+		pane.style.maxWidth = '100%';
+		(pane.firstElementChild as HTMLElement).style.maxWidth = '';
+	}
+};
+
+/** The 1:1 title uses the same fitting behavior and retains the complete accessible name. */
+export const LongPersonTitle: Story = {
+	render: () => {
+		const preset = mockActiveConversationWithParticipants();
+		if (preset.session.user) {
+			preset.session.user.displayName =
+				'Eine sehr lange Gesprächsbezeichnung zur Familienberatung';
+		}
+		return renderSessionHeader(preset);
+	},
+	play: async ({ canvasElement }) => {
+		const heading = canvasElement.querySelector<HTMLElement>(
+			'.sessionInfo__username h3'
+		)!;
+		const visible = heading.querySelector<HTMLElement>(
+			'.fittedHeaderTitle__text'
+		)!;
+		await waitFor(() => expect(visible.style.fontSize).not.toBe(''));
+		expect(
+			Number.parseFloat(getComputedStyle(visible).fontSize)
+		).toBeGreaterThanOrEqual(16);
+		expect(heading.title).toBe(heading.textContent);
 	}
 };

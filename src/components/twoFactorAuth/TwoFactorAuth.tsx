@@ -98,7 +98,7 @@ export const TwoFactorAuth = () => {
 	};
 
 	return (
-		<div className="twoFactorAuth">
+		<div className="twoFactorAuth" data-tour-target="settings-2fa">
 			<div className="profile__content__title">
 				<div className="twoFactorAuth__head">
 					<Headline

@@ -41,6 +41,8 @@ interface StageOptions {
 	/** Tenant-level feature gate. */
 	supervision?: boolean;
 	progress?: ProgressFixture;
+	/** Render as an advice seeker instead of a counsellor (FE#2340). */
+	asker?: boolean;
 }
 
 const counsellor = (isWalkThroughEnabled: boolean) => ({
@@ -178,7 +180,15 @@ const renderStage = (options: StageOptions) => () => (
 					<UserDataContext.Provider
 						value={
 							{
-								userData: counsellor(ownSwitch),
+								userData: options.asker
+									? {
+											...counsellor(false),
+											userId: 'sb-asker',
+											grantedAuthorities: [
+												AUTHORITIES.ASKER_DEFAULT
+											]
+										}
+									: counsellor(ownSwitch),
 								setUserData: () => undefined,
 								reloadUserData: reload
 							} as never
@@ -228,9 +238,13 @@ const expectSwitchState = async (canvas: Canvas, on: boolean) => {
 	} else {
 		await expect(toggle).not.toBeChecked();
 	}
-	await expect(canvas.getByText(on ? 'An' : 'Aus')).toBeVisible();
-	await expect(canvas.getByText(on ? HINT_ON : HINT_OFF)).toBeVisible();
-	await expect(canvas.queryByText(on ? HINT_OFF : HINT_ON)).toBeNull();
+	// The "?" launcher switch beside it has its own An/Aus word.
+	const preference = within(
+		toggle.closest('[data-testid="enable-walkthrough"]') as HTMLElement
+	);
+	await expect(preference.getByText(on ? 'An' : 'Aus')).toBeVisible();
+	await expect(preference.getByText(on ? HINT_ON : HINT_OFF)).toBeVisible();
+	await expect(preference.queryByText(on ? HINT_OFF : HINT_ON)).toBeNull();
 };
 
 /** On a phone the app's navigation sits as a bar at the bottom edge. */
@@ -302,9 +316,10 @@ export const OffByDefault: Story = {
 		await expect(
 			await within(card).findByRole('heading', { name: 'Einführung' })
 		).toBeVisible();
+		// Topic tours are listed below the introduction again (FE#2340).
 		await expect(
-			canvas.queryByRole('heading', { name: 'Mail-Beratung' })
-		).toBeNull();
+			await canvas.findByRole('heading', { name: 'Mail-Beratung' })
+		).toBeVisible();
 		// The introduction stays available by hand while auto-start is off.
 		const startButtons = await canvas.findAllByRole('button', {
 			name: 'Starten'
@@ -444,8 +459,11 @@ export const PracticeCardsOn: Story = {
 			.getByRole('heading', { name: 'Meine Rundgänge' })
 			.closest('section')!;
 		const learning = within(card);
+		// The video-call tour (FE#2342) carries the same title as the
+		// Video-Call help card; pick the heading outside the tours card.
 		const videoCard = canvas
-			.getByRole('heading', { name: 'Video-Call' })
+			.getAllByRole('heading', { name: 'Video-Call' })
+			.find((heading) => !card.contains(heading))!
 			.closest('section')!;
 		await expect(card.getBoundingClientRect().left).toBeLessThan(
 			videoCard.getBoundingClientRect().left
@@ -457,9 +475,10 @@ export const PracticeCardsOn: Story = {
 		await expect(
 			await learning.findByRole('heading', { name: 'Einführung' })
 		).toBeVisible();
+		// Topic tours are listed below the introduction again (FE#2340).
 		await expect(
-			learning.queryByRole('heading', { name: 'Mail-Beratung' })
-		).toBeNull();
+			await learning.findByRole('heading', { name: 'Mail-Beratung' })
+		).toBeVisible();
 		await expect(
 			await learning.findAllByRole('button', { name: 'Übung starten' })
 		).toHaveLength(2);
@@ -518,8 +537,33 @@ export const PracticeSupervisionOff: Story = {
 				name: 'Übung: Supervision hinzufügen'
 			})
 		).toBeNull();
+		// Topic tours are listed below the introduction again (FE#2340).
 		await expect(
-			canvas.queryByRole('heading', { name: 'Mail-Beratung' })
+			await canvas.findByRole('heading', { name: 'Mail-Beratung' })
+		).toBeVisible();
+	}
+};
+
+/** FE#2340: advice seekers get the "?" switch and their own tours only. */
+export const AdviceSeeker: Story = {
+	name: 'Advice seeker · desktop',
+	...desktop,
+	render: renderStage({ asker: true }),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByRole('switch', {
+				name: 'Rundgang-Knopf anzeigen'
+			})
+		).toBeChecked();
+		await expect(
+			canvas.queryByRole('switch', { name: SWITCH_NAME })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('heading', { name: 'Einführung' })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: 'Übung starten' })
 		).toBeNull();
 	}
 };

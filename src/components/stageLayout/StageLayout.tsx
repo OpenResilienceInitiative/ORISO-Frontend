@@ -10,7 +10,7 @@ import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider
 import { useAppConfig } from '../../hooks/useAppConfig';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../legalLinks/LegalLinkButton';
-import { StageMobileHero } from './StageMobileHero';
+import { StageMobileHero, StageMobileHeroProps } from './StageMobileHero';
 import {
 	Box,
 	Button as MuiButton,
@@ -34,10 +34,13 @@ import {
 import { BuildIdentity, useBuildIdentityOwner } from '../app/BuildIdentity';
 
 interface StageLayoutProps {
+	mobileClaim?: string;
+	inert?: boolean;
 	className?: string;
 	children: ReactNode;
 	stage: ReactNode;
 	showLegalLinks?: boolean;
+	showBuildIdentity?: boolean;
 	/**
 	 * The department (agency × topic) whose documents the footer legal links
 	 * open. Absent on public pages, where the platform note applies because no
@@ -51,8 +54,7 @@ interface StageLayoutProps {
 	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
-	/** Mobile head presentation — `bar` is the slim 8a brand row. */
-	mobileHero?: 'hero' | 'bar';
+	mobileHero?: StageMobileHeroProps['variant'];
 	/**
 	 * Content at the start of the desktop header row, opposite the language
 	 * and login controls — the waiting area puts the group's topic and name
@@ -66,10 +68,12 @@ interface StageLayoutProps {
 }
 
 export const StageLayout = ({
+	inert,
 	className,
 	children,
 	stage,
 	showLegalLinks,
+	showBuildIdentity = true,
 	legalDepartment,
 	showLoginLink,
 	showRegistrationLink,
@@ -78,6 +82,7 @@ export const StageLayout = ({
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
+	mobileClaim,
 	headerStart,
 	renderHeaderAction
 }: StageLayoutProps) => {
@@ -100,12 +105,14 @@ export const StageLayout = ({
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 	const platformVersion = getPlatformVersion();
 	const identityOwner = useBuildIdentityOwner();
-	const showIdentity = Boolean(platformVersion || getBuildCommit());
+	const showIdentity =
+		showBuildIdentity && Boolean(platformVersion || getBuildCommit());
 
 	return (
-		<div className={clsx('stageLayout', className)}>
+		<div className={clsx('stageLayout', className)} inert={inert}>
 			<StageMobileHero
 				variant={mobileHero}
+				claim={mobileClaim}
 				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					<SlideOutPresence
@@ -122,7 +129,7 @@ export const StageLayout = ({
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
 							aria-label={translate('registration.login.label')}
-							sx={{ color: 'var(--m3-on-primary, #fff)' }}
+							sx={{ color: 'inherit' }}
 						>
 							<LoginDoorIcon color="inherit" />
 						</IconButton>
@@ -229,7 +236,8 @@ export const StageLayout = ({
 								'color': 'var(--m3-on-surface, #1b1b1c)',
 								'borderColor':
 									'var(--m3-outline-variant, #c4c7c8)',
-								'backgroundColor': 'rgba(255, 255, 255, 0.92)',
+								'backgroundColor':
+									'var(--m3-surface-container-lowest, #fff)',
 								'&:hover': {
 									color: 'var(--m3-on-secondary, #ffffff)',
 									borderColor: 'var(--m3-secondary, #4c555f)',

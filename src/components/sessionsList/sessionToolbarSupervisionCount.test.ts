@@ -235,3 +235,32 @@ describe('side-room unread uses the same source in the toolbar filter', () => {
 		).toBe(true);
 	});
 });
+
+describe('countUnreadSupervisedSessions — my own case under supervision (#2494 *5)', () => {
+	beforeEach(() => unreadRooms.clear());
+
+	const ownSupervised = {
+		...supervisedByOther,
+		sideRoomId: '!side-own:hs'
+	};
+
+	it('counts my own case when its supervision side room is unread', () => {
+		unreadRooms.add('!side-own:hs');
+		expect(
+			countUnreadSupervisedSessions(
+				[pair('!own:hs', ownSupervised, ME)],
+				ME
+			)
+		).toBe(1);
+	});
+
+	it('does not count my own case when only its main room is unread', () => {
+		unreadRooms.add('!own:hs');
+		expect(
+			countUnreadSupervisedSessions(
+				[pair('!own:hs', ownSupervised, ME)],
+				ME
+			)
+		).toBe(0);
+	});
+});

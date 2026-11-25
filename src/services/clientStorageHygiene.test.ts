@@ -140,7 +140,8 @@ describe('clientStorageHygiene (#1071)', () => {
 				'oriso.pendingRecoveryKey.',
 				'oriso.recoverySetupInFlight.',
 				'oriso.lastOpenSession.',
-				'oriso.feedbackMailHint.'
+				'oriso.feedbackMailHint.',
+				'oriso.sideChatIntro.'
 			]);
 		});
 

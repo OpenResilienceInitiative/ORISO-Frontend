@@ -5,11 +5,24 @@
 // BREAKPOINTS
 @import '~breakpoint-sass/stylesheets/breakpoint';
 
+// Keyboard focus ring contract (Frontend#1134, ADR-037): one themed ring for
+// light, dark and High contrast. `--m3-primary` reaches 7.7:1 (light) and
+// 10.9:1 (dark) on the page surface; the old `$focus-blue` reached 2.82:1 on
+// white and `--m3-primary-outline` 1.98:1 on the dark surface. Storybook:
+// Design Tokens/Focus ring contract.
+$focus-ring-width: 2px;
+$focus-ring-offset: 2px;
+$focus-ring-color: var(--oriso-focus-ring-color, var(--m3-primary, #a5000a));
+$focus-ring-on-fill-color: var(--m3-on-primary, #ffffff);
+
 // WP-06 Activity Timeline — shared list-item selection tokens + mixins (Slice 0b)
 @import './listItemSelection';
 
 // Pill entry of the appointment lists (Activity Timeline, counsellor calendar)
 @import './listEntryPill';
+
+// Fixed-height kit textarea (group-chat welcome and rule editors)
+@import './fixedTextareaBox';
 
 // Global topic tag colour tokens + mixins
 @import './topicTag';
@@ -17,8 +30,14 @@
 // Room-header call controls — one size for the chat header AND the side room
 @import './headerCallButtons';
 
+// Floating action button — one look for every FAB (channel switcher, tour launcher)
+@import './floatingActionButton';
+
 // Formatted message text — one look in the composer AND the message bubble
 @import './richTextContent';
+
+// Unread count pill — one look for every unread indicator in a session
+@import './unreadCountBadge';
 
 // FONTS
 $font-family-sans-serif: 'Inter Variable', arial, sans-serif;
@@ -106,7 +125,9 @@ $message-system: #8c878c;
 // every seed and keeps the branded tint.
 $message-incoming-bg: var(--m3-surface-container-high, #eae7e8);
 $message-outgoing-bg: var(--m3-primary-fixed, #ffdad5);
-$message-outgoing-text: var(--m3-on-surface, #1a1c1e);
+
+// The fixed light surface needs its own foreground in light and dark.
+$message-outgoing-text: var(--m3-on-primary-fixed, #410001);
 
 // FONT SIZES
 // TODO: delete headline styles when every headline uses <Headline/>
@@ -224,7 +245,7 @@ $drag-and-drop-area-border-radius: $grid-base-two;
 $enquiry-background: $background-light;
 $enquiry-circle-background: $background-lighter;
 $enquiry-input-border-radius: $grid-base-three;
-$focus-outline: 2px solid $focus-blue;
+$focus-outline: $focus-ring-width solid $focus-ring-color;
 $form-accordion-index-background-active: $primary;
 $form-accordion-index-border: 1px solid $secondary;
 $form-accordion-index-color-active: $white;

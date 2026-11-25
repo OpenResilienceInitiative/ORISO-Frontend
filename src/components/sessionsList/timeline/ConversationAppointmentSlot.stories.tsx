@@ -219,7 +219,7 @@ export const MoveConflict: Story = {
 		const body = within(document.body);
 		const bar = await waitFor(() => {
 			const found = canvasElement.querySelector<HTMLElement>(
-				'[data-cy="room-next-appointment"] .splitButton__main'
+				'[data-cy="room-next-appointment"] [data-cy="room-appointment-pennant"]'
 			);
 			expect(found).not.toBeNull();
 			return found!;
@@ -236,16 +236,17 @@ export const MoveConflict: Story = {
 		);
 		await waitFor(() => expect(move).toBeEnabled(), ready);
 		await userEvent.click(move);
-		await expect(
-			await within(dialog).findByRole('alert', {}, ready)
-		).toBeVisible();
+		await waitFor(
+			() => expect(within(dialog).getByRole('alert')).toBeVisible(),
+			ready
+		);
 	}
 };
 
 const openSlotMenu = async (canvasElement: HTMLElement) => {
 	const main = await waitFor(() => {
 		const found = canvasElement.querySelector<HTMLElement>(
-			'[data-cy="room-next-appointment"] .splitButton__main'
+			'[data-cy="room-next-appointment"] [data-cy="room-appointment-pennant"]'
 		);
 		expect(found).not.toBeNull();
 		return found!;

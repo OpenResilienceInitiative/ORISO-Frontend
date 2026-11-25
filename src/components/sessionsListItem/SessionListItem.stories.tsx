@@ -2,6 +2,7 @@ import * as React from 'react';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import de from '../../resources/i18n/de/common.json';
+import tr from '../../resources/i18n/tr/common.json';
 import i18n from '../../i18n';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
@@ -32,7 +33,11 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
-import { SessionListItemComponent } from './SessionListItemComponent';
+import {
+	SessionListItemComponent,
+	type SessionCardDatePlacement
+} from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
 import './sessionsListItem.styles.scss';
@@ -43,7 +48,7 @@ const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const listShell: React.CSSProperties = {
-	backgroundColor: '#eae7e8',
+	backgroundColor: 'var(--m3-surface-container-high, #eae7e8)',
 	maxWidth: 440,
 	margin: '0 auto',
 	padding: '4px 8px'
@@ -217,12 +222,14 @@ function RuntimeCard({
 	grouped = false,
 	isGroupStart = true,
 	isGroupEnd = true,
+	datePlacement = 'corner',
 	listType = SESSION_LIST_TYPES.MY_SESSION
 }: {
 	item: ListItemInterface;
 	userData?: any;
 	/** Which list the card sits in; enquiries carry no ⋮ menu. */
 	listType?: SESSION_LIST_TYPES;
+	datePlacement?: SessionCardDatePlacement;
 	index?: number;
 	isBeforeActive?: boolean;
 	isAfterActive?: boolean;
@@ -288,6 +295,7 @@ function RuntimeCard({
 											defaultLanguage="de"
 											handleKeyDownLisItemContent={() => {}}
 											index={index}
+											datePlacement={datePlacement}
 											isBeforeActive={isBeforeActive}
 											isAfterActive={isAfterActive}
 											grouped={grouped}
@@ -372,7 +380,6 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
-	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
 		router: {
@@ -425,6 +432,14 @@ export const RuntimeComponent: Story = {
 		const canvas = within(canvasElement);
 		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
 		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
+	}
+};
+
+export const ContrastWithTenantAccent: Story = {
+	...RuntimeComponent,
+	name: 'Kontrast mit hellem Trägerakzent',
+	parameters: {
+		orisoSeeds: { primary: '#a5000a', accent: '#ffd700', signal: '#db005b' }
 	}
 };
 
@@ -560,7 +575,10 @@ export const SupervisedByOthers: Story = {
 				'[data-testid="supervision-indicator"]'
 			);
 			expect(indicator).not.toBeNull();
-			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			// #2494 *5: a 32px round icon; the name shows on hover.
+			expect(indicator!.getAttribute('title')).toContain(
+				'Sabine Supervisor'
+			);
 			expect(
 				indicator!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
@@ -1085,7 +1103,7 @@ const expectCardLayout = async (
 		const menu = at('.sessionsListItem__menuIcon');
 		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
 
-		// 48 px avatar straight under the chip row, without its outline.
+		// 48 px avatar straight under the chip row, with the shared chat outline.
 		const avatar = at('.sessionsListItem__icon');
 		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
 		await expect(Math.round(avatar.top - box.top)).toBe(
@@ -1094,6 +1112,13 @@ const expectCardLayout = async (
 		await expect(Math.round(avatar.left - box.left)).toBe(
 			CARD_BORDER + CARD_INSET
 		);
+		const avatarFrame = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		await expect(getComputedStyle(avatarFrame, '::after').content).toBe(
+			'none'
+		);
+		await expect(getComputedStyle(avatarFrame).boxShadow).toContain('2px');
 		const circle = card.querySelector<HTMLElement>(
 			'[data-testid="user-avatar"] > div'
 		)!;
@@ -2399,8 +2424,13 @@ export const SupervisionRowLabel: Story = {
 				'[data-testid="supervision-modality"]'
 			);
 			expect(modality).not.toBeNull();
-			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
-			expect(modality!.querySelector('svg')).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since
+			// FE#2494 it is the same 32 px kind icon (a mask) as Mail.
+			expect(
+				modality!.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
+			).not.toBeNull();
 			// The mail label is gone for this viewer.
 			expect(
 				canvasElement.querySelector(
@@ -2554,7 +2584,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'
@@ -2867,4 +2897,350 @@ export const AskerLeavesGroupFromCardOnThePhone: Story = {
 	globals: { viewport: { value: 'phone390' } },
 	render: () => <AskerInRunningGroup />,
 	play: playAskerLeaveConfirmation
+};
+
+/** A long enquiry topic yields to the waiting time without losing its postcode. */
+export const EnquiryTopicAndWaiting: Story = {
+	name: 'Anfrage — langes Thema und Wartezeit',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				listType={SESSION_LIST_TYPES.ENQUIRY}
+				sessionOverrides={{
+					status: STATUS_ENQUIRY,
+					topic: longTopic,
+					postcode: 10551,
+					createDate: new Date(
+						Date.now() - 37.5 * 60 * 1000
+					).toISOString()
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const topic = part(row, '.sessionsListItem__topic');
+		const waiting = part(row, '.sessionsListItem__date--waiting');
+		const postcode = part(row, '.sessionsListItem__postcode');
+		const menu = part(row, '.sessionsListItem__menuIcon');
+		await expect(waiting).toBeVisible();
+		await expect(waiting.textContent).toMatch(/37/);
+		await expect(waiting.scrollWidth).toBeLessThanOrEqual(
+			waiting.clientWidth
+		);
+		await expect(getComputedStyle(topic).display).toBe('block');
+		await expect(getComputedStyle(topic).textOverflow).toBe('ellipsis');
+		await expect(topic.scrollWidth).toBeGreaterThan(topic.clientWidth);
+		// Leave enough content width for the ellipsis, even beside a long translation.
+		await expect(topic.clientWidth).toBeGreaterThan(32);
+		await expect(topic.getBoundingClientRect().right).toBeLessThanOrEqual(
+			postcode.getBoundingClientRect().left + 1
+		);
+		await expect(
+			postcode.getBoundingClientRect().right
+		).toBeLessThanOrEqual(waiting.getBoundingClientRect().left);
+		await expect(waiting.getBoundingClientRect().right).toBeLessThanOrEqual(
+			menu.getBoundingClientRect().left
+		);
+	}
+};
+
+const turkishEnquiry = createInstance();
+void turkishEnquiry.init({
+	lng: 'tr',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: { tr: { common: tr }, de: { common: de } }
+});
+
+/** Turkish and a narrow column preserve the complete waiting time too. */
+export const EnquiryTopicAndWaitingTurkish: Story = {
+	...EnquiryTopicAndWaiting,
+	name: 'Anfrage — langes Thema und Wartezeit auf Türkisch',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={turkishEnquiry}>
+				<RuntimeSessionListItem
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					sessionOverrides={{
+						status: STATUS_ENQUIRY,
+						topic: longTopic,
+						postcode: 10551,
+						createDate: new Date(
+							Date.now() - 37.5 * 60 * 1000
+						).toISOString()
+					}}
+				/>
+			</I18nextProvider>
+		);
+	}
+};
+
+/** A shorter waiting label gives the topic its unused space back. */
+export const EnquiryTopicGrowsWhenWaitIsShort: Story = {
+	name: 'Anfrage — Thema wächst bei kurzer Wartezeit',
+	globals: { viewport: { value: 'phone390' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				{[1.5, 37.5].map((minutes, index) => (
+					<RuntimeCard
+						key={minutes}
+						index={index}
+						listType={SESSION_LIST_TYPES.ENQUIRY}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: 4401 + index,
+								status: STATUS_ENQUIRY,
+								topic: longTopic,
+								postcode: 10551,
+								createDate: new Date(
+									Date.now() - minutes * 60 * 1000
+								).toISOString()
+							}
+						})}
+					/>
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [shortWait, longerWait] = await settledRows(canvasElement, 2);
+		await expect(
+			part(shortWait, '.sessionsListItem__date--waiting').textContent
+		).toMatch(/1/);
+		await expect(
+			part(longerWait, '.sessionsListItem__date--waiting').textContent
+		).toMatch(/37/);
+		await expect(
+			part(shortWait, '.sessionsListItem__topic').clientWidth
+		).toBeGreaterThan(
+			part(longerWait, '.sessionsListItem__topic').clientWidth
+		);
+	}
+};
+
+const longWaitingTranslation = createInstance();
+void longWaitingTranslation.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	initImmediate: false,
+	defaultNS: 'common',
+	resources: {
+		de: {
+			common: {
+				...de,
+				sessionList: {
+					...de.sessionList,
+					item: {
+						...de.sessionList.item,
+						waiting: {
+							...de.sessionList.item.waiting,
+							minutes:
+								'Die ratsuchende Person wartet seit {{count}} Minuten auf eine Beratung und die Anfrage ist noch offen'
+						}
+					}
+				}
+			}
+		}
+	}
+});
+
+/** A much longer locale string wraps rather than losing the waiting time. */
+export const EnquiryExtraLongWaitingTranslation: Story = {
+	...EnquiryTopicAndWaiting,
+	name: 'Anfrage — besonders lange Wartezeitübersetzung',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longWaitingTranslation}>
+				<RuntimeSessionListItem
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					sessionOverrides={{
+						status: STATUS_ENQUIRY,
+						topic: longTopic,
+						postcode: 10551,
+						createDate: new Date(
+							Date.now() - 37.5 * 60 * 1000
+						).toISOString()
+					}}
+				/>
+			</I18nextProvider>
+		);
+	}
+};
+
+/** A long waiting label on its own line wraps within the card. */
+export const EnquiryLongWaitOnOwnLine: Story = {
+	name: 'Anfrage — lange Wartezeit in eigener Zeile',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<I18nextProvider i18n={longWaitingTranslation}>
+				<div style={listShell} role="list" aria-label="Conversations">
+					<RuntimeCard
+						datePlacement="line"
+						listType={SESSION_LIST_TYPES.ENQUIRY}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								status: STATUS_ENQUIRY,
+								topic: longTopic,
+								postcode: 10551,
+								createDate: new Date(
+									Date.now() - 37.5 * 60 * 1000
+								).toISOString()
+							}
+						})}
+					/>
+				</div>
+			</I18nextProvider>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const wait = part(row, '.sessionsListItem__dateLine');
+		await expect(wait.textContent).toMatch(/37/);
+		await expect(wait).toBeVisible();
+		await expect(wait.scrollWidth).toBeLessThanOrEqual(wait.clientWidth);
+		await expect(wait.getBoundingClientRect().right).toBeLessThanOrEqual(
+			window.innerWidth
+		);
+	}
+};
+
+/** A truncated topic without postcode retains its full accessible name. */
+export const EnquiryTopicWithoutPostcode: Story = {
+	name: 'Anfrage — langes Thema ohne Postleitzahl',
+	globals: { viewport: { value: 'phone320' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				listType={SESSION_LIST_TYPES.ENQUIRY}
+				sessionOverrides={{
+					status: STATUS_ENQUIRY,
+					topic: longTopic,
+					postcode: 0,
+					createDate: new Date(
+						Date.now() - 37.5 * 60 * 1000
+					).toISOString()
+				}}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		const topic = part(row, '.sessionsListItem__topic');
+		const wait = part(row, '.sessionsListItem__date--waiting');
+		await expect(
+			row.querySelector('.sessionsListItem__postcode')
+		).toBeNull();
+		await expect(topic.textContent).toBe(longTopic.name);
+		await expect(topic).toHaveAttribute('title', longTopic.name);
+		await expect(topic.scrollWidth).toBeGreaterThan(topic.clientWidth);
+		await expect(getComputedStyle(topic).textOverflow).toBe('ellipsis');
+		await expect(wait).toBeVisible();
+		await expect(wait.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			topic.getBoundingClientRect().right
+		);
+	}
+};
+
+/** The explicit off setting continues to hide the date and waiting time. */
+export const EnquiryWaitingHiddenWhenOff: Story = {
+	name: 'Anfrage — Zeitangabe ausgeschaltet',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Conversations">
+				<RuntimeCard
+					datePlacement="off"
+					listType={SESSION_LIST_TYPES.ENQUIRY}
+					item={runtimeSessionItem({
+						sessionOverrides: {
+							status: STATUS_ENQUIRY,
+							topic: longTopic,
+							postcode: 10551,
+							createDate: new Date(
+								Date.now() - 37.5 * 60 * 1000
+							).toISOString()
+						}
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.querySelector('.sessionsListItem__date')).toBeNull();
+		await expect(
+			row.querySelector('.sessionsListItem__dateLine')
+		).toBeNull();
+		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+			longTopic.name
+		);
+	}
+};
+
+/** The compact group rail uses UserAvatar directly, rather than MessageAvatar. */
+export const GroupRailAvatarCustomTheme: Story = {
+	name: 'Gruppenleiste — Avatar im eigenen Theme',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div
+				style={
+					{
+						...listShell,
+						'--m3-outline-variant': '#314f69'
+					} as React.CSSProperties
+				}
+			>
+				<div role="tablist" aria-label="Conversations">
+					<SessionListRailProvider rail>
+						<RuntimeCard
+							item={runtimeGroupChat({
+								id: 5901,
+								name: 'Eine Person'
+							})}
+						/>
+					</SessionListRailProvider>
+				</div>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		const animal = avatar.querySelector<HTMLElement>(':scope > div')!;
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		const railFrame = avatar.closest<HTMLElement>(
+			'.sessionRailPill__avatar'
+		)!;
+		expect(getComputedStyle(railFrame).boxShadow).toContain('2px');
+		expect(getComputedStyle(animal).borderTopWidth).toBe('0px');
+		expect(getComputedStyle(animal).boxShadow).toBe('none');
+	}
 };

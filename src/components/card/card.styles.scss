@@ -6,7 +6,8 @@
 	&__header,
 	&__content,
 	&__footer {
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface, #1a1c1e);
 		border-radius: 4px;
 		margin-bottom: 3px;
 	}

@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useLayoutEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import useTenantTheming from '../../utils/useTenantTheming';
 import { Modal } from '../modal/Modal';
 import { Spinner } from '../spinner/Spinner';
@@ -9,7 +11,17 @@ import {
 } from './loginHandover';
 
 export const TenantThemingLoader = () => {
-	const isLoadingTheme = useTenantTheming();
+	const {
+		scheme,
+		preferences: { textSize, contrast }
+	} = usePersonalDisplay();
+	const location = useLocation();
+	const isLoadingTheme = useTenantTheming({
+		scheme,
+		textSize,
+		contrast,
+		location
+	});
 	// During a sign-in the login handover screen already covers everything;
 	// this white modal over it was the white flash between two red frames.
 	const isHandingOver = useLoginHandoverActive();

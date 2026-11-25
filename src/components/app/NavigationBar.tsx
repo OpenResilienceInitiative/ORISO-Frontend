@@ -1,10 +1,12 @@
 import { useDirectLinksAllowed } from '../directLinks/useDirectLinksAllowed';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import {
 	PropsWithChildren,
 	useCallback,
 	useContext,
 	useEffect,
+	useId,
 	useRef,
 	useState
 } from 'react';
@@ -27,7 +29,10 @@ import {
 	LocaleContext,
 	NotificationsContext
 } from '../../globalState';
-import { initNavigationHandler } from './navigationHandler';
+import { mobileListView } from './navigationHandler';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import './mobileNavigation.scss';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
 import { ReactComponent as LogoutIconFilled } from '../../resources/img/icons/logout_filled.svg';
 import clsx from 'clsx';
@@ -38,6 +43,7 @@ import { userHasBudibaseTools } from '../../api/apiGetTools';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { useResponsive } from '../../hooks/useResponsive';
+import { navTourTarget } from '../productTour/tourCatalogue';
 import {
 	MENUPLACEMENT_RIGHT,
 	MENUPLACEMENT_TOP
@@ -70,6 +76,7 @@ import {
 } from '../notifications/NewEnquiryNotice';
 
 export interface NavigationBarProps {
+	displayEntry?: React.ReactNode;
 	onLogout: any;
 	routerConfig: any;
 }
@@ -106,6 +113,7 @@ const getFigmaRailLabel = (to: string, label: string) => {
 };
 
 export const NavigationBar = ({
+	displayEntry,
 	onLogout,
 	routerConfig
 }: NavigationBarProps) => {
@@ -118,6 +126,13 @@ export const NavigationBar = ({
 		useContext(LocaleContext);
 	const { fromL } = useResponsive();
 	const [hasTools, setHasTools] = useState<boolean>(false);
+	const [moreOpen, setMoreOpen] = useState(false);
+	const [moreTarget, setMoreTarget] = useState<HTMLElement | null>(null);
+	const moreId = useId();
+
+	useEffect(() => {
+		if (fromL) setMoreOpen(false);
+	}, [fromL]);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -176,6 +191,7 @@ export const NavigationBar = ({
 			// button leads back into that conversation, not the empty queue.
 			const target = resolveLiveChatRailTarget({ nextActive, sessions });
 			if (target) {
+				setMoreOpen(false);
 				navigate(target);
 			}
 		} catch {
@@ -201,10 +217,6 @@ export const NavigationBar = ({
 	const [isLogoutSelected, setIsLogoutSelected] = useState(false);
 	const isLanguageHovered = hoveredNavItem === '__language__';
 	const isLogoutHovered = hoveredNavItem === '__logout__';
-
-	useEffect(() => {
-		initNavigationHandler();
-	}, []);
 
 	useEffect(() => {
 		if (!isConsultant) {
@@ -398,35 +410,49 @@ export const NavigationBar = ({
 		}
 	};
 
+	const isVisibleNavigationItem = (item: any) =>
+		(!item.requiresDirectInvite || directLinksAllowed) &&
+		(!item.condition ||
+			item.condition(userData, consultingTypes, sessions, hasTools));
+	const items = sessions
+		? routerConfig.navigation.filter(isVisibleNavigationItem)
+		: [];
+	const primaryItems = fromL
+		? items
+		: items
+				.filter((item) => item.to !== '/profile')
+				.slice(0, isConsultant ? 3 : 2);
+	const moreActive = items.some(
+		(item) =>
+			!primaryItems.includes(item) && location.pathname.includes(item.to)
+	);
+
 	return (
 		<div
 			className={clsx(
 				'navigation__wrapper',
+				displayEntry && 'navigation__wrapper--personalDisplay',
 				figmaConsultantNav && 'navigation__wrapper--figma-consultant'
 			)}
 		>
 			{/* One tab stop, arrow keys move between the items: the toolbar role
 			    tells assistive technology so (#1338). */}
 			<div
-				className="navigation__itemContainer"
-				role="toolbar"
-				aria-orientation="vertical"
+				className={
+					fromL
+						? 'navigation__itemContainer'
+						: 'navigation__mobileBar'
+				}
+				role={fromL ? 'toolbar' : 'navigation'}
+				aria-label={
+					fromL ? undefined : translate('navigation.mobileMenu')
+				}
+				aria-orientation={fromL ? 'vertical' : undefined}
 			>
 				<NavGroup className="navigation__item__top">
 					{sessions &&
 						routerConfig.navigation
-							.filter(
-								(item: any) =>
-									(!item.requiresDirectInvite ||
-										directLinksAllowed) &&
-									(!item.condition ||
-										item.condition(
-											userData,
-											consultingTypes,
-											sessions,
-											hasTools
-										))
-							)
+							.filter(isVisibleNavigationItem)
 							.map((item, index) => {
 								const Icon = item?.icon;
 								const IconHover = item?.iconHover;
@@ -545,9 +571,8 @@ export const NavigationBar = ({
 										/>
 									)
 								);
-								return (
+								const renderLink = (inMore = false) => (
 									<Link
-										key={index}
 										className={clsx(
 											'navigation__item',
 											pathToClassNameInWalkThrough(
@@ -565,11 +590,25 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
+										aria-current={
+											isActive ? 'page' : undefined
+										}
+										onClick={(event) => {
+											if (
+												event.button !== 0 ||
+												event.metaKey ||
+												event.ctrlKey ||
+												event.shiftKey ||
+												event.altKey
+											)
+												return;
+											mobileListView();
+											setMoreOpen(false);
+										}}
 										data-tour-target={
-											item.to ===
-											'/sessions/consultant/sessionPreview'
-												? 'nav-enquiries'
-												: undefined
+											inMore
+												? undefined
+												: navTourTarget(item.to)
 										}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
@@ -582,9 +621,10 @@ export const NavigationBar = ({
 										}
 										onBlur={() => setHoveredNavItem(null)}
 										onKeyDown={(e) =>
-											handleKeyDownMenu(e, index)
+											fromL && handleKeyDownMenu(e, index)
 										}
 										ref={(el) => {
+											if (!fromL) return;
 											if (el) {
 												ref_menu.current[index] = el;
 											} else {
@@ -596,7 +636,9 @@ export const NavigationBar = ({
 													);
 											}
 										}}
-										tabIndex={index === 0 ? 0 : -1}
+										tabIndex={
+											!fromL || index === 0 ? 0 : -1
+										}
 									>
 										{useFigmaSlot ? (
 											<div
@@ -643,9 +685,28 @@ export const NavigationBar = ({
 										)}
 									</Link>
 								);
+								const showInBar = primaryItems.includes(item);
+								const showInMore =
+									!showInBar ||
+									(isConsultant &&
+										(item.to === ENQUIRY_LIST_PATH ||
+											isChatNav));
+								return (
+									<React.Fragment key={item.to}>
+										{showInBar && renderLink()}
+										{moreTarget &&
+											showInMore &&
+											createPortal(
+												renderLink(true),
+												moreTarget,
+												item.to
+											)}
+									</React.Fragment>
+								);
 							})}
 				</NavGroup>
 				<NavGroup
+					target={fromL ? undefined : moreTarget}
 					className={clsx('navigation__item__bottom', {
 						'navigation__item__bottom--consultant':
 							hasUserAuthority(
@@ -773,7 +834,9 @@ export const NavigationBar = ({
 							ref={(el) => {
 								ref_local.current = el;
 							}}
-							onKeyDown={(e) => handleKeyDownMenu(e, null)}
+							onKeyDown={(e) =>
+								fromL && handleKeyDownMenu(e, null)
+							}
 							onMouseEnter={() =>
 								setHoveredNavItem('__language__')
 							}
@@ -789,20 +852,35 @@ export const NavigationBar = ({
 							{figmaConsultantNav ? (
 								<div
 									className={clsx(
-										'navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language',
-										isLanguageSelected &&
+										fromL
+											? 'navigation__icon-slot navigation__icon-slot--row navigation__icon-slot--language'
+											: 'navigationMoreDialog__language',
+										fromL &&
+											isLanguageSelected &&
 											'navigation__icon-slot--active'
 									)}
 								>
-									<div className="navigation__icon-slot__inner">
+									<div
+										className={
+											fromL
+												? 'navigation__icon-slot__inner'
+												: undefined
+										}
+									>
 										<LocaleSwitch
 											showIcon={true}
-											iconOnly={true}
+											iconOnly={fromL}
 											updateUserData
-											vertical
+											vertical={fromL}
 											iconSize={24}
-											label={translate(
-												'navigation.language'
+											label={stripLocalePrefix(
+												translate(
+													[
+														activeLocale,
+														activeLocale
+													],
+													{ ns: 'languages' }
+												)
 											)}
 											menuPlacement={
 												languageMenuPlacement
@@ -812,7 +890,8 @@ export const NavigationBar = ({
 											selectRef={(el) =>
 												(ref_select.current = el)
 											}
-											isInsideMenu={true}
+											isInsideMenu={fromL}
+											inlineMenu={!fromL}
 											onMenuOpen={() =>
 												setIsLanguageSelected(true)
 											}
@@ -843,10 +922,10 @@ export const NavigationBar = ({
 									selectRef={(el) =>
 										(ref_select.current = el)
 									}
-									isInsideMenu={true}
+									isInsideMenu={fromL}
 								/>
 							)}
-							{figmaConsultantNav && (
+							{figmaConsultantNav && fromL && (
 								<span className="navigation__title navigation__title--figma">
 									{stripLocalePrefix(
 										translate(
@@ -867,11 +946,18 @@ export const NavigationBar = ({
 							figmaConsultantNav && 'navigation__item--nav-logout'
 						)}
 						role="button"
-						tabIndex={-1}
+						tabIndex={fromL ? -1 : 0}
 						ref={(el) => {
 							ref_logout.current = el;
 						}}
-						onKeyDown={(e) => handleKeyDownMenu(e, null)}
+						onKeyDown={(e) => {
+							if (fromL) {
+								handleKeyDownMenu(e, null);
+							} else if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleLogout();
+							}
+						}}
 						onMouseEnter={() => setHoveredNavItem('__logout__')}
 						onMouseLeave={() => setHoveredNavItem(null)}
 						onFocus={() => {
@@ -941,16 +1027,55 @@ export const NavigationBar = ({
 						)}
 					</div>
 				</NavGroup>
+				{!fromL && displayEntry}
+				{!fromL && (
+					<button
+						type="button"
+						className="navigation__mobileMore"
+						aria-haspopup="dialog"
+						aria-expanded={moreOpen}
+						data-active={moreActive}
+						aria-controls={moreOpen ? moreId : undefined}
+						onClick={() => setMoreOpen(true)}
+					>
+						<span className="navigation__mobileMoreIcon">
+							<MoreHorizIcon />
+						</span>
+						<span>{translate('navigation.mobileMore')}</span>
+					</button>
+				)}
 			</div>
+			{fromL && displayEntry}
+			{!fromL && (
+				<M3Dialog
+					id={moreId}
+					open={moreOpen}
+					title={translate('navigation.mobileMore')}
+					closeLabel={translate('app.close')}
+					onClose={() => setMoreOpen(false)}
+					className="appNavigationSheet navigationMoreDialog"
+					motion="bottom-sheet"
+					showDivider={false}
+				>
+					<nav
+						ref={setMoreTarget}
+						className="navigationMoreDialog__items"
+						aria-label={translate('navigation.mobileMenu')}
+					/>
+				</M3Dialog>
+			)}
 		</div>
 	);
 };
 
 const NavGroup = ({
 	children,
-	className
-}: PropsWithChildren<{ className: string }>) => {
-	return <div className={className}>{children}</div>;
+	className,
+	target
+}: PropsWithChildren<{ className: string; target?: HTMLElement | null }>) => {
+	const group = <div className={className}>{children}</div>;
+	if (target === undefined) return group;
+	return target ? createPortal(group, target) : null;
 };
 
 const NavigationUnreadIndicator = ({

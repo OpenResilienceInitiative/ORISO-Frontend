@@ -87,6 +87,58 @@ describe('useSelectionVoiceRecorder', () => {
 		unmount();
 	});
 
+	it('hands back the live microphone for the level dots', async () => {
+		const { result } = renderHook(() => useSelectionVoiceRecorder());
+		let stream: unknown;
+		await act(async () => {
+			stream = await result.current.recorder!.start();
+		});
+		expect(stream).toEqual(
+			expect.objectContaining({ getTracks: expect.any(Function) })
+		);
+	});
+
+	it('closes a microphone that opens after the reply was cancelled', async () => {
+		let grant: (stream: unknown) => void = () => undefined;
+		(
+			navigator.mediaDevices.getUserMedia as ReturnType<typeof vi.fn>
+		).mockReturnValueOnce(
+			new Promise((resolve) => {
+				grant = resolve;
+			})
+		);
+		const { result, unmount } = renderHook(() =>
+			useSelectionVoiceRecorder()
+		);
+		const starting = result.current.recorder!.start();
+		unmount();
+		grant({ getTracks: () => [{ stop: stopTrack }] });
+
+		await expect(starting).rejects.toThrow('Recording cancelled');
+		expect(stopTrack).toHaveBeenCalledTimes(1);
+	});
+
+	it('a take cancelled while it stops does not block the next one (#2505)', async () => {
+		// The browser holds the last event back: stop() stays pending.
+		const realStop = FakeMediaRecorder.prototype.stop;
+		FakeMediaRecorder.prototype.stop = function (this: FakeMediaRecorder) {
+			this.state = 'inactive';
+		};
+		const { result } = renderHook(() => useSelectionVoiceRecorder());
+		await act(() => result.current.recorder!.start());
+		const first = result.current.recorder!.stop();
+		act(() => result.current.recorder!.cancel());
+		await expect(first).rejects.toThrow('Recording cancelled');
+
+		FakeMediaRecorder.prototype.stop = realStop;
+		await act(() => result.current.recorder!.start());
+		let take: { src: string; durationSec: number } | undefined;
+		await act(async () => {
+			take = await result.current.recorder!.stop();
+		});
+		expect(take).toEqual({ src: 'blob:take', durationSec: 1 });
+	});
+
 	it('offers no microphone where the browser cannot record', () => {
 		vi.stubGlobal('MediaRecorder', undefined);
 		const { result } = renderHook(() => useSelectionVoiceRecorder());

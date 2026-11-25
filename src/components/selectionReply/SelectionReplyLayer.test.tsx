@@ -54,19 +54,21 @@ const renderLayer = (
 	recorder: {
 		start: () => Promise<void>;
 		stop: () => Promise<{ src: string; durationSec: number }>;
+		pause?: () => void;
+		resume?: () => void;
 		cancel: () => void;
 	},
 	extra: Partial<React.ComponentProps<typeof SelectionReplyLayer>> = {}
 ) =>
 	render(
 		<SelectionReplyLayer
-			{...extra}
 			authorFor={() => 'Anna'}
 			onAddToComposer={() => {}}
 			onSendNow={() => {}}
 			recorder={recorder}
 			initialSelection={selection()}
 			initialMode="toolbar"
+			{...extra}
 		>
 			<div data-message-id="$1">
 				<div className="messageItem__message">
@@ -191,13 +193,20 @@ describe('SelectionReplyLayer voice recording', () => {
 		renderLayer(recorder);
 		startVoiceFromToolbar();
 		await act(async () => {});
-		const input = screen.getByLabelText(
-			'message.selectionReply.inputLabel'
-		) as HTMLInputElement;
-		expect(input.disabled).toBe(true);
+		// FE#2494 (Frank, 24 Nov): the take plays in its own second row; the
+		// text field stays, so text can go with the voice note.
+		expect(
+			screen.getByLabelText('message.selectionReply.inputLabel')
+		).toHaveProperty(
+			'placeholder',
+			'message.selectionReply.placeholderWithVoice'
+		);
 		fireEvent.click(screen.getByLabelText('app.stop'));
 		await act(async () => stop.reject(new Error('broken')));
 		expect(screen.getByRole('alert')).toBeTruthy();
+		const input = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
 		expect(input.disabled).toBe(false);
 	});
 });
@@ -472,5 +481,262 @@ describe('SelectionReplyLayer selection bar on scroll', () => {
 		});
 
 		expect(bar()).toBeNull();
+	});
+});
+
+describe('SelectionReplyLayer voice: stack and send stop the take (FE#2494)', () => {
+	afterEach(cleanup);
+
+	it('Stack while recording stops the take first and stacks it', async () => {
+		const take = { src: 'blob:take', durationSec: 3 };
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(async () => take),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		// Pause, not Stop: the same button pauses and records on.
+		fireEvent.click(screen.getByLabelText('voice.recording.pause'));
+		expect(recorder.pause).toHaveBeenCalledTimes(1);
+		fireEvent.click(screen.getByLabelText('voice.recording.resume'));
+		expect(recorder.resume).toHaveBeenCalledTimes(1);
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		await act(async () => {});
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).toHaveBeenCalledWith(
+			expect.objectContaining({ voice: take })
+		);
+	});
+});
+
+describe('SelectionReplyLayer review fixes (#2505)', () => {
+	afterEach(cleanup);
+
+	it('a failed stop while sending keeps the typed text and sends nothing', async () => {
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(async () => {
+				throw new Error('broken');
+			}),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onSendNow = vi.fn();
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onSendNow, onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		const input = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
+		fireEvent.change(input, { target: { value: 'Dazu noch:' } });
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		await act(async () => {});
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).not.toHaveBeenCalled();
+		expect(onSendNow).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert')).toBeTruthy();
+		expect(
+			(
+				screen.getByLabelText(
+					'message.selectionReply.inputLabel'
+				) as HTMLTextAreaElement
+			).value
+		).toBe('Dazu noch:');
+	});
+
+	it('without a right to write here, only the side-room entries are offered', () => {
+		renderLayer(
+			{
+				start: vi.fn(async () => {}),
+				stop: vi.fn(),
+				cancel: vi.fn()
+			},
+			{
+				canReplyHere: false,
+				onReplyInSideRoom: {
+					supervision: { onCollect: vi.fn(), onSend: vi.fn() }
+				}
+			}
+		);
+		expect(
+			screen.queryByLabelText('message.selectionReply.reply')
+		).toBeNull();
+		expect(
+			screen.queryByLabelText('message.selectionReply.replyVoice')
+		).toBeNull();
+		expect(
+			screen.getAllByLabelText(
+				'message.selectionReply.replyInSupervision'
+			).length
+		).toBeGreaterThan(0);
+	});
+});
+
+describe('SelectionReplyLayer keeps a side-chat answer when the side chat closed (FE#2494 review)', () => {
+	afterEach(cleanup);
+
+	it('never falls back to this chat', () => {
+		const onAddToComposer = vi.fn();
+		const onSendNow = vi.fn();
+		renderLayer(
+			{
+				start: async () => {},
+				stop: async () => ({ src: 'blob:x', durationSec: 1 }),
+				cancel: () => {}
+			},
+			{
+				onAddToComposer,
+				onSendNow,
+				// Team-Chat closed: its handler is gone, the target stays.
+				onReplyInSideRoom: {},
+				initialTarget: 'team',
+				initialMode: 'popover'
+			}
+		);
+		const field = screen.getByLabelText(
+			'message.selectionReply.inputLabel'
+		) as HTMLTextAreaElement;
+		fireEvent.change(field, { target: { value: 'Nur fürs Team' } });
+		fireEvent.click(
+			screen.getByLabelText('message.selectionReply.addToComposer')
+		);
+		fireEvent.keyDown(field, { key: 'Enter', metaKey: true });
+		expect(onAddToComposer).not.toHaveBeenCalled();
+		expect(onSendNow).not.toHaveBeenCalled();
+		expect(
+			(
+				screen.getByLabelText(
+					'message.selectionReply.inputLabel'
+				) as HTMLTextAreaElement
+			).value
+		).toBe('Nur fürs Team');
+	});
+});
+
+describe('SelectionReplyLayer: side chat closes while the take stops (#2505)', () => {
+	afterEach(cleanup);
+
+	it.each(['collect', 'send'] as const)(
+		'%s: sends to no room and keeps the text and the finished take',
+		async (action) => {
+			const stop = deferred<{ src: string; durationSec: number }>();
+			const recorder = {
+				start: vi.fn(async () => {}),
+				stop: vi.fn(() => stop.promise),
+				pause: vi.fn(),
+				resume: vi.fn(),
+				cancel: vi.fn()
+			};
+			const team = { onCollect: vi.fn(), onSend: vi.fn() };
+			const onAddToComposer = vi.fn();
+			const onSendNow = vi.fn();
+			const props = {
+				onAddToComposer,
+				onSendNow,
+				initialTarget: 'team' as const,
+				initialMode: 'popover' as const
+			};
+			const view = renderLayer(recorder, {
+				...props,
+				onReplyInSideRoom: { team }
+			});
+			fireEvent.click(
+				screen.getAllByLabelText('message.selectionReply.replyVoice')[0]
+			);
+			await act(async () => {});
+			fireEvent.change(
+				screen.getByLabelText('message.selectionReply.inputLabel'),
+				{ target: { value: 'Nur fürs Team' } }
+			);
+			if (action === 'collect') {
+				fireEvent.click(
+					screen.getByLabelText(
+						'message.selectionReply.addToComposer'
+					)
+				);
+			} else {
+				fireEvent.keyDown(
+					screen.getByLabelText('message.selectionReply.inputLabel'),
+					{ key: 'Enter', metaKey: true }
+				);
+			}
+			expect(recorder.stop).toHaveBeenCalledTimes(1);
+
+			// Team-Chat closes while the take is still being finished.
+			view.rerender(
+				<SelectionReplyLayer
+					authorFor={() => 'Anna'}
+					recorder={recorder}
+					initialSelection={selection()}
+					{...props}
+					onReplyInSideRoom={{}}
+				>
+					<div data-message-id="$1">
+						<div className="messageItem__message">
+							<p data-testid="body">Ich wohne in Freiburg.</p>
+						</div>
+					</div>
+				</SelectionReplyLayer>
+			);
+			await act(async () =>
+				stop.resolve({ src: 'blob:t', durationSec: 2 })
+			);
+
+			expect(team.onCollect).not.toHaveBeenCalled();
+			expect(team.onSend).not.toHaveBeenCalled();
+			expect(onAddToComposer).not.toHaveBeenCalled();
+			expect(onSendNow).not.toHaveBeenCalled();
+			expect(
+				(
+					screen.getByLabelText(
+						'message.selectionReply.inputLabel'
+					) as HTMLTextAreaElement
+				).value
+			).toBe('Nur fürs Team');
+			// The finished take is kept for review, not thrown away.
+			expect(recorder.cancel).not.toHaveBeenCalled();
+			expect(
+				screen.getByLabelText('voice.recording.preview')
+			).toBeTruthy();
+		}
+	);
+});
+
+describe('SelectionReplyLayer: one delivery per take (#2505)', () => {
+	afterEach(cleanup);
+
+	it('a second Stack while the take stops neither stops twice nor delivers twice', async () => {
+		const stop = deferred<{ src: string; durationSec: number }>();
+		const recorder = {
+			start: vi.fn(async () => {}),
+			stop: vi.fn(() => stop.promise),
+			pause: vi.fn(),
+			resume: vi.fn(),
+			cancel: vi.fn()
+		};
+		const onAddToComposer = vi.fn();
+		renderLayer(recorder, { onAddToComposer });
+		startVoiceFromToolbar();
+		await act(async () => {});
+		const stack = screen.getByLabelText(
+			'message.selectionReply.addToComposer'
+		);
+		fireEvent.click(stack);
+		fireEvent.click(stack);
+		await act(async () => stop.resolve({ src: 'blob:t', durationSec: 2 }));
+
+		expect(recorder.stop).toHaveBeenCalledTimes(1);
+		expect(onAddToComposer).toHaveBeenCalledTimes(1);
 	});
 });

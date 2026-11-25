@@ -35,6 +35,7 @@ import {
 } from 'react-router-dom';
 import { Box } from '../box/Box';
 import { ProfileCardList } from './ProfileCardList';
+import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import { useResponsive } from '../../hooks/useResponsive';
 import {
 	isLinkMenuComponent,
@@ -78,6 +79,7 @@ export const Profile = () => {
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
+	const { available: personalDisplayAvailable } = usePersonalDisplay();
 	// #1193 Job 4: the profile shows the same animal other participants see in
 	// the chat, which is derived from the Matrix user id when the client is up.
 	const ownAvatarUserId = useOwnAvatarUserId();
@@ -134,7 +136,10 @@ export const Profile = () => {
 	}, []);
 
 	useEffect(() => {
-		scrollContainer.current.scrollTo(0, 0);
+		const container = scrollContainer.current;
+		container?.scrollTo(0, 0);
+		// On desktop the first child is the scrolling region.
+		container?.firstElementChild?.scrollTo(0, 0);
 	}, [location]);
 
 	useEffect(() => {
@@ -144,7 +149,8 @@ export const Profile = () => {
 				tenant,
 				selectableLocales,
 				isFirstVisit,
-				directLinksAllowed
+				directLinksAllowed,
+				personalDisplayAvailable
 			)
 				.filter((tab) =>
 					solveTabConditions(tab, userData, consultingTypes ?? [])
@@ -180,7 +186,10 @@ export const Profile = () => {
 											externalLink: element.externalLink
 										}
 									: {
-											component: <element.component />
+											component: <element.component />,
+											// Position in the unfiltered tab keeps the key stable
+											// when conditions hide other entries (#2518).
+											key: `${tab.url}-${tab.elements.indexOf(element)}`
 										}
 							)
 					})
@@ -194,7 +203,8 @@ export const Profile = () => {
 		selectableLocales,
 		tenant,
 		isFirstVisit,
-		directLinksAllowed
+		directLinksAllowed,
+		personalDisplayAvailable
 	]);
 
 	const [subpage, setSubpage] = useState(undefined);
@@ -278,11 +288,7 @@ export const Profile = () => {
 	};
 
 	return (
-		<div
-			className="profile__wrapper"
-			data-tour-target="profile-overview"
-			ref={scrollContainer}
-		>
+		<div className="profile__wrapper" data-tour-target="profile-overview">
 			<div className="profile__header">
 				<div className="profile__header__wrapper flex flex--jc-sb flex-l--fd-column flex-xl--fd-row">
 					<div
@@ -304,12 +310,7 @@ export const Profile = () => {
 										avatarDisplayName={
 											userData.displayName ||
 											(isConsultant
-												? [
-														userData.firstName,
-														userData.lastName
-													]
-														.filter(Boolean)
-														.join(' ')
+												? ''
 												: userData.userName)
 										}
 										userId={ownAvatarUserId}
@@ -343,7 +344,8 @@ export const Profile = () => {
 									tenant,
 									selectableLocales,
 									isFirstVisit,
-									directLinksAllowed
+									directLinksAllowed,
+									personalDisplayAvailable
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -406,7 +408,7 @@ export const Profile = () => {
 					</div>
 				</div>
 			</div>
-			<div className="profile__innerWrapper">
+			<div className="profile__innerWrapper" ref={scrollContainer}>
 				<div>
 					<Routes>
 						{fromL
@@ -416,7 +418,8 @@ export const Profile = () => {
 									tenant,
 									selectableLocales,
 									isFirstVisit,
-									directLinksAllowed
+									directLinksAllowed,
+									personalDisplayAvailable
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -475,7 +478,8 @@ export const Profile = () => {
 									tenant,
 									selectableLocales,
 									isFirstVisit,
-									directLinksAllowed
+									directLinksAllowed,
+									personalDisplayAvailable
 								)
 									.filter((tab) =>
 										solveTabConditions(
@@ -505,7 +509,8 @@ export const Profile = () => {
 								tenant,
 								selectableLocales,
 								isFirstVisit,
-								directLinksAllowed
+								directLinksAllowed,
+								personalDisplayAvailable
 							)
 								.filter((tab) =>
 									solveTabConditions(
@@ -576,7 +581,8 @@ export const Profile = () => {
 											tenant,
 											selectableLocales,
 											isFirstVisit,
-											directLinksAllowed
+											directLinksAllowed,
+											personalDisplayAvailable
 										)[0].url
 									}`}
 									replace
