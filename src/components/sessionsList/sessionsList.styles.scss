@@ -1384,7 +1384,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		gap: 6px;
 		min-height: 56px;
 		padding: 4px 8px;
-		border-bottom: 1px solid #747878;
+		border-bottom: 1px solid var(--m3-outline, #747878);
 	}
 
 	&__searchModalIconButton {
@@ -1409,7 +1409,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__searchModalQueryInput {
 		font-size: 28px;
 		line-height: 40px;
-		color: #1b1b1c;
+		color: var(--m3-on-surface, #1b1b1c);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1446,7 +1446,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		cursor: pointer;
 		border-bottom: 3px solid transparent;
@@ -1520,7 +1520,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		width: 100%;
 		min-height: 72px;
 		border: none;
-		border-bottom: 1px solid #d8d6d6;
+		border-bottom: 1px solid var(--m3-outline-variant, #d8d6d6);
 		background: transparent;
 		padding: 8px 16px;
 		display: flex;
@@ -1553,7 +1553,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__personName {
 		font-size: 16px;
 		line-height: 24px;
-		color: #1b1b1c;
+		color: var(--m3-on-surface, #1b1b1c);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1562,7 +1562,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__personSubtitle {
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1646,7 +1646,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 18px 16px;
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	/* FE#1152: why a colleague may be missing, or why none could be loaded. */
@@ -1654,7 +1654,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 12px 16px;
 		font-size: 12px;
 		line-height: 16px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		border-top: 1px solid #d8d6d6;
 
 		/* Stays in view when the list is long and the menu scrolls. */
