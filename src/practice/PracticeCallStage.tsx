@@ -179,6 +179,8 @@ export const PracticeCallStageView = ({
 			userId: MIA_ID,
 			username: miaName,
 			displayName: miaName,
+			// Her initials come from the name without "(Übung)".
+			avatarDisplayName: miaName.replace(/\s*\([^)]*\)\s*$/, ''),
 			choice: { kind: 'initials' as const }
 		}),
 		[miaName]

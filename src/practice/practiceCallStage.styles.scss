@@ -84,33 +84,34 @@
 		align-items: center;
 		gap: 16px;
 	}
+}
 
-	&__control {
-		width: 56px;
-		height: 56px;
-		border-radius: 50%;
-		background: var(--m3-surface-container-lowest, #fff);
-		color: var(--m3-on-surface, #1c1b1f);
-		transition: background-color var(--call-motion, 250ms);
+/* Under the layer, so MUI's own ButtonBase reset does not win the tie. */
+.practice-call-layer .practice-call-stage__control {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-on-surface, #1c1b1f);
+	transition: background-color var(--call-motion, 250ms);
 
-		svg {
-			width: 24px;
-			height: 24px;
-		}
+	svg {
+		width: 24px;
+		height: 24px;
+	}
 
-		svg path {
-			fill: currentColor;
-		}
+	svg path {
+		fill: currentColor;
+	}
 
-		&:focus-visible {
-			outline: 3px solid var(--m3-primary, #a5000a);
-			outline-offset: 3px;
-		}
+	&:focus-visible {
+		outline: 3px solid var(--m3-primary, #a5000a);
+		outline-offset: 3px;
+	}
 
-		&--off {
-			background: var(--m3-secondary-container, #646d78);
-			color: #fbf4d3;
-		}
+	&--off {
+		background: var(--m3-secondary-container, #646d78);
+		color: #fbf4d3;
 	}
 }
 
