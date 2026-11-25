@@ -4795,7 +4795,6 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
-				"directLinks": "ቀጥታዊ ሊንክታት",
 				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
@@ -4820,9 +4819,10 @@
 				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
-				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
-				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
-				"directLinkChat": "ቀጥታዊ ሊንክ"
+				"directLinkVideo": "ቪድዮ",
+				"directLinkAudio": "ድምጺ",
+				"directLinkChat": "ቻት",
+				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
