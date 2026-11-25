@@ -72,6 +72,14 @@ export const callEntryCopy = {
 	missingMicrophone: 'Mikrofon',
 	allSet: 'Alles bereit',
 	joining: 'Sie werden verbunden …',
+	/* FE#2542: the wait for the counsellor, on this page. */
+	waiting: {
+		label: 'Sie werden gleich hereingelassen',
+		status: 'Angeklopft – Ihre Beratung sieht, dass Sie warten.',
+		stop: 'Nicht mehr warten'
+	},
+	turnedDown:
+		'Sie wurden nicht hereingelassen. Sie können noch einmal anklopfen.',
 	blocker: {
 		permissionDenied: {
 			title: 'Ihr Browser hat das Mikrofon gesperrt',
