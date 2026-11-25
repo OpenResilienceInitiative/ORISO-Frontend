@@ -38,7 +38,6 @@ import {
 	CALENDAR_TOUR_VERSION,
 	consultantCalendarTour
 } from '../components/productTour/tours/calendarTour';
-import { consultantSupervisionTour } from '../components/productTour/tours/supervisionTour';
 import { resolveSupervisionCallFeatureGates } from '../components/call/callFeatureGates';
 
 const resolveKey = (bundle: object, key: string): unknown =>
@@ -232,17 +231,17 @@ describe('practiceSupervisionTour (FE#2545, Supervision)', () => {
 	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
 	const de = (key: string) => resolveKey(deTranslations, key) as string;
 
-	it('is the topic tour "Supervision" under the old card id and version, without a card', () => {
+	it('is the topic tour "Supervision" under the old card id, version 2, practice only', () => {
 		expect(tour.id).toBe('consultant-practice-supervision');
-		expect(tour.id).toBe(consultantSupervisionTour.id);
-		// Version 1, as the old card: who completed it keeps "completed".
-		expect(tour.version).toBe(1);
-		expect(tour.version).toBe(consultantSupervisionTour.version);
-		expect(tour.titleKey).toBe(consultantSupervisionTour.titleKey);
+		// Version 2 (PO, 25 Nov): new for everyone, also who completed the
+		// old card (version 1).
+		expect(tour.version).toBe(2);
+		expect(tour.titleKey).toBe('tour.supervision.title');
 		expect(de(tour.titleKey)).toBe('Supervision');
 		expect(practiceTours).not.toContain(tour);
 		expect(practiceHostedTours).toContain(tour);
-		expect(frontendTours).toContain(consultantSupervisionTour);
+		// No watch-only explanation under the same id any more.
+		expect(frontendTours.map((t) => t.id)).not.toContain(tour.id);
 	});
 
 	it('is a guided flow: not dismissible, a missing required control stops it', () => {
@@ -324,7 +323,6 @@ describe('practiceSupervisionTour (FE#2545, Supervision)', () => {
 		const off = { flags: { featureSupervisionEnabled: false } };
 		expect(tour.when).toEqual({ flag: 'featureSupervisionEnabled' });
 		expect(resolveTourSteps(tour, off)).toEqual([]);
-		expect(resolveTourSteps(consultantSupervisionTour, off)).toEqual([]);
 		expect(isPracticeTourAvailable(tour, {})).toBe(true);
 	});
 
@@ -373,10 +371,7 @@ describe('practiceSupervisionTour (FE#2545, Supervision)', () => {
 
 describe('practice Supervision tour copy', () => {
 	const tour = practiceSupervisionTour;
-	const both = [
-		['practice', tour],
-		['explanation', consultantSupervisionTour]
-	] as const;
+	const both = [['practice', tour]] as const;
 
 	it.each(both)(
 		'%s: ships every key natively in every full locale',

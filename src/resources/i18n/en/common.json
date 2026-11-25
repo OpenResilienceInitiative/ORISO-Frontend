@@ -6504,17 +6504,6 @@
 					"title": "Well done!",
 					"intro": "You now know the main paths of supervision. Use the button below to end the practice."
 				}
-			},
-			"explain": {
-				"intro": "Your administrator sets up a fixed supervisor for you in the Admin area. They join automatically when you accept a request.",
-				"chat": "The round supervision icon in the row opens a chat only between you and your supervisor. Under their supervised cases, they see the case just as you do.",
-				"change": "With “+” (“Manage Supervisors”) and “Replace” you replace your supervisor. The supervision chat stays.",
-				"calls": "Your organisation can allow audio and video calls in the supervision chat, even where they are off with advice seekers. The administration decides this.",
-				"appointment": "In the supervision chat, ⋮ offers “Book an appointment with the supervisor”. There you choose video or phone.",
-				"done": {
-					"title": "Well done!",
-					"intro": "You now know the main paths of supervision."
-				}
 			}
 		},
 		"groupCircle": {

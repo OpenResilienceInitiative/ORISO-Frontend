@@ -16,7 +16,6 @@ import {
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
 import { CALENDAR_TOUR_VERSION } from '../components/productTour/tours/calendarTour';
 import {
-	consultantSupervisionTour,
 	SUPERVISION_CALLS_ALLOWED,
 	SUPERVISION_ON,
 	SUPERVISION_TOUR_VERSION
@@ -122,19 +121,21 @@ const sup = (key: string) => ({
  * (Robin answers from the script), swaps Robin for Kim (Übung) with the real
  * "Supervisor verwalten" dialog and, where a supervision chat allows a call,
  * books an appointment with the supervisor. Every write is answered in
- * memory; nobody is notified.
+ * memory; nobody real is notified. After the swap the side room shows the
+ * server's swap notice, built locally by the practice world.
  *
- * Same id and version (1) as the old card "Übung: Supervision hinzufügen",
- * so a counsellor who completed that card keeps "completed"; it no longer has
- * a card and runs from Help → Rundgänge like the other topic tours.
+ * The old card's id, version 2 (PO, 25 Nov): new for everyone, also who
+ * completed the old card. It has no card and no explanation rendering; it
+ * runs only as practice from Help → Rundgänge, where its card shows a hint
+ * below the practice width and is hidden without one-on-one supervision.
  */
 export const practiceSupervisionTour: TourDefinition = {
 	id: PRACTICE_SUPERVISION_TOUR_ID,
 	version: SUPERVISION_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
-	titleKey: consultantSupervisionTour.titleKey,
-	summaryKey: consultantSupervisionTour.summaryKey,
+	titleKey: 'tour.supervision.title',
+	summaryKey: 'tour.supervision.summary',
 	dismissible: false,
 	requiredTargetPolicy: 'stop',
 	when: SUPERVISION_ON,

@@ -1148,6 +1148,14 @@ const walkTheSupervisionTour = async ({
 	await toTheAcceptedSupervisionCase();
 	await findAndWriteToTheSupervisor();
 	await replaceRobinWithKim();
+	// The server's swap notice, drawn by the real message chrome (#2494 *6).
+	await waitFor(() => {
+		const panel = document.querySelector<HTMLElement>(
+			'[data-tour-target="supervision-panel"]'
+		);
+		expect(panel).not.toBeNull();
+		within(panel!).getByText('message.supervisionChangedTitle');
+	}, SLOW);
 
 	// 10: calls in the supervision chat, explained; Next (no Back).
 	await expectStep(9);
@@ -1620,31 +1628,38 @@ describe('practice flows on the real app shell', () => {
 		await walkTheSupervisionTour({ appointment: false });
 	}, 120000);
 
-	it('Supervision below its practice width (1199px): the explanation tour runs on the real page, also after widening', async () => {
+	it('Supervision below its practice width (1199px): no tour runs and the request is cleared, also after widening', async () => {
 		const app = renderApp({ width: 1199 });
 		await app.request(SUPERVISION);
-		await expectStep(0);
+		await waitFor(
+			() => expect(app.store.get(tourLaunchRequestAtom)).toBeNull(),
+			SLOW
+		);
+		expect(joyride).toBeNull();
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
-		expect(joyride!.steps.map(({ target }) => target)).not.toContain(
-			'[data-tour-target="enquiry-accept-button"]'
-		);
 
 		app.resize(1200);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(joyride).toBeNull();
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 		expect(progressWrites()).toEqual([]);
 	});
 
-	it('Supervision without one-on-one supervision: the explanation tour runs instead of an empty practice', async () => {
+	it('Supervision without one-on-one supervision: no tour runs, never an empty practice', async () => {
 		const app = renderApp({
 			tenantFlags: { featureSupervisionOneOnOneChatsEnabled: false }
 		});
 		await app.request(SUPERVISION);
-		await expectStep(0);
+		await waitFor(
+			() => expect(app.store.get(tourLaunchRequestAtom)).toBeNull(),
+			SLOW
+		);
+		expect(joyride).toBeNull();
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
+		expect(progressWrites()).toEqual([]);
 	});
 
 	it('Supervision launches as practice at its real breakpoint (1200px)', async () => {

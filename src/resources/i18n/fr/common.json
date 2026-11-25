@@ -6589,17 +6589,6 @@
 					"title": "Bravo !",
 					"intro": "Vous connaissez maintenant les principaux chemins de la supervision. Le bouton ci-dessous termine l’exercice."
 				}
-			},
-			"explain": {
-				"intro": "Votre administration vous attribue un·e superviseur·e fixe dans l’espace d’administration. Il ou elle est ajouté·e automatiquement quand vous acceptez une demande.",
-				"chat": "L’icône de supervision ronde dans la ligne ouvre un chat uniquement entre vous et votre superviseur·e. Dans ses cas supervisés, il ou elle voit le cas comme vous.",
-				"change": "Avec « + » (« Gérer les superviseurs ») et « Remplacer », vous remplacez votre superviseur·e. Le chat de supervision est conservé.",
-				"calls": "Votre organisme peut autoriser les appels audio et vidéo dans le chat de supervision, même s’ils sont désactivés avec les personnes qui demandent conseil. L’administration en décide.",
-				"appointment": "Dans le chat de supervision, ⋮ propose « Prendre rendez-vous avec le ou la superviseur·e ». Vous y choisissez vidéo ou téléphone.",
-				"done": {
-					"title": "Bravo !",
-					"intro": "Vous connaissez maintenant les principaux chemins de la supervision."
-				}
 			}
 		},
 		"groupCircle": {

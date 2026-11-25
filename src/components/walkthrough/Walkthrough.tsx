@@ -26,7 +26,10 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import { isPracticeCardTourId } from '../../practice/practiceTourIds';
+import {
+	isPracticeCardTourId,
+	isPracticeTourId
+} from '../../practice/practiceTourIds';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
@@ -61,7 +64,8 @@ export const Walkthrough = () => {
 	// A practice tour is hosted only by deliberate request, and only where
 	// the practice area is open to this counsellor; the auto-run
 	// below stays hard-wired to the intro tour. A topic tour with a practice
-	// rendering (FE#2545) runs it there and its explanation tour elsewhere.
+	// rendering runs it there; one that exists only as practice (Supervision,
+	// FE#2545) runs nothing elsewhere.
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
@@ -72,7 +76,7 @@ export const Walkthrough = () => {
 						tour.id === launchRequest.tourId &&
 						// A topic tour whose practice this tenant cannot offer
 						// (Supervision without one-on-one supervision, FE#2545)
-						// runs its explanation instead of an empty practice.
+						// never runs as an empty practice.
 						isPracticeTourOffered(tour, { ...tenantSettings })
 				)
 			: undefined;
@@ -107,8 +111,15 @@ export const Walkthrough = () => {
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
+	// A tour that exists only as practice (the cards, and Supervision since
+	// FE#2545 dropped its explanation) has nothing to run outside it.
+	const practiceOnlyRequest =
+		!!launchRequest &&
+		isPracticeTourId(launchRequest.tourId) &&
+		!frontendTours.some((tour) => tour.id === launchRequest.tourId);
 	const unavailablePracticeRequest =
 		lostPracticeRun ||
+		(practiceOnlyRequest && !practiceCandidate) ||
 		(!!launchRequest &&
 			isPracticeCardTourId(launchRequest.tourId) &&
 			!practiceOpenFor(launchRequest.tourId));

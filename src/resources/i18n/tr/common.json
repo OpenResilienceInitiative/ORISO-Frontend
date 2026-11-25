@@ -6589,17 +6589,6 @@
 					"title": "Tebrikler!",
 					"intro": "Artık süpervizyonun temel yollarını biliyorsunuz. Aşağıdaki düğmeyle alıştırmayı bitirirsiniz."
 				}
-			},
-			"explain": {
-				"intro": "Yönetiminiz Yönetim alanında size sabit bir süpervizör atar. Bir talebi kabul ettiğinizde otomatik olarak eklenir.",
-				"chat": "Satırdaki yuvarlak süpervizyon simgesi yalnızca sizinle süpervizörünüz arasında bir sohbet açar. Süpervizörünüz kendi süpervize ettiği vakalarda vakayı sizinle aynı şekilde görür.",
-				"change": "“+” (“Süpervizörleri Yönet”) ve “Değiştir” ile süpervizörünüzü değiştirirsiniz. Süpervizyon sohbeti korunur.",
-				"calls": "Kurumunuz, danışanlarla kapalı olsa bile süpervizyon sohbetinde sesli ve görüntülü aramalara izin verebilir. Buna yönetim karar verir.",
-				"appointment": "Süpervizyon sohbetinde ⋮ altında “Süpervizörle randevu al” bulunur. Orada video veya telefonu seçersiniz.",
-				"done": {
-					"title": "Tebrikler!",
-					"intro": "Artık süpervizyonun temel yollarını biliyorsunuz."
-				}
 			}
 		},
 		"groupCircle": {

@@ -86,11 +86,13 @@ the Supervision tour with absent controls, and `tourEngine.test.ts` covers a dis
 
 **Window size.** F1 starts in the real controls' `fromL` layout; the
 Supervision tour needs `fromXL`, where the real supervisor plus is
-interactive. Narrower, Help starts its explanation tour instead. Resizing a
+interactive. Narrower, its Help card shows the window hint and cannot start
+(there is no explanation tour). Resizing a
 practice run below its range ends it, so widening the window requires another
 deliberate Start. The phone hint and F1's existing range are preserved.
 Proof: `PracticeOverviewSection.test.tsx` checks F1 at 1024;
-`PracticeFlow.integration.test.tsx` checks the Supervision boundary at
+`HelpToursSection.test.tsx` checks the Supervision card hint at 1199 and
+390; `PracticeFlow.integration.test.tsx` checks the Supervision boundary at
 1199/1200.
 
 **Restart.** The banner asks the tour host for a new run of the same tour. The
@@ -179,24 +181,31 @@ Calendar`.
 
 **Supervision in practice (FE#2545).** The Supervision topic tour (Help →
 Rundgänge → "Supervision") runs under the id of the old card F2,
-`consultant-practice-supervision`, and its version 1: a counsellor who
-completed "Übung: Supervision hinzufügen" keeps "completed", and no new id
-needs the UserService allowlist. There is no practice card any more; below
-`fromXL`, or where one-on-one supervision is off, the explanation tour
-(`tours/supervisionTour.ts`) runs on the real page under the same id. The
+`consultant-practice-supervision`, so no new id needs the UserService
+allowlist, at version 2 (PO, 25 Nov): it shows as new for everyone, also
+for counsellors who completed "Übung: Supervision hinzufügen". It exists
+only as practice: no practice card and no explanation tour.
+`TourOverviewSection` adds its card after "Fälle übergeben" where the
+practice area is open and the tenant can offer it; below `fromXL` the card
+shows `practice.cards.windowHint` (phone: `phoneHint`) instead of a start,
+and where supervision or one-on-one supervision is off the card is hidden.
+A stale launch request for it is cleared and runs nothing. The
 practice start `supervision` is the open enquiry; its accept attaches the
 standing supervisor Robin (Übung), as the server does for a standing
 assignment, and the side room stays closed until the counsellor opens it
 from the row icon. The counsellor finds the case by the "Supervision" chip,
 writes in the side room (Robin answers from the script), swaps Robin for
 Kim (Übung) with the real "Supervisor verwalten" dialog (`PUT
-…/supervisors/{id}`, answered in memory, the "notify the advice seeker"
-choice goes nowhere, no MSC4268 key share) and, where a supervision chat
+…/supervisors/{id}`, answered in memory, no notification to anyone, no
+MSC4268 key share) and, where a supervision chat
 allows a call (`resolveSupervisionCallFeatureGates`, the step's `anyOf`
 condition), books a phone or video appointment with the supervisor from the
 panel ⋮ (`POST /calendar/colleague-appointments` in memory; the notice goes
-to the practice side room). No allowlist entry was added. Known limit: the
-real server posts a swap notice into the side room; the practice does not.
+to the practice side room). No allowlist entry was added. After the swap
+the practice world posts the server's swap notice into the practice side
+room, locally in FakeMatrix: the same `[SYSTEM_NOTIFICATION]` payload type
+`SUPERVISOR_REPLACED` with names and reason, drawn by the real message
+chrome (`supervisorReplacedNotice.ts`, "Supervision gewechselt").
 Proof: the Supervision tests in `FakeRestBackend.test.ts`,
 `practiceWorld.test.ts`, `practiceTours.test.ts`, the two Supervision runs
 in `PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow

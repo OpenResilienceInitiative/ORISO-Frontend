@@ -47,6 +47,7 @@ interface HelpScenario {
 	platformTours?: boolean;
 	authorities?: string[];
 	supervision?: boolean;
+	oneOnOne?: boolean;
 }
 let savedPreference = false;
 
@@ -56,7 +57,8 @@ const renderHelp = ({
 	practiceArea = true,
 	platformTours = true,
 	authorities = [AUTHORITIES.CONSULTANT_DEFAULT],
-	supervision = true
+	supervision = true,
+	oneOnOne = true
 }: HelpScenario = {}) => {
 	const store = createStore();
 	const settings = {
@@ -102,7 +104,9 @@ const renderHelp = ({
 										tenant: {
 											settings: {
 												featureSupervisionEnabled:
-													supervision
+													supervision,
+												featureSupervisionOneOnOneChatsEnabled:
+													oneOnOne
 											}
 										}
 									} as never
@@ -281,6 +285,10 @@ describe('Help learning card', () => {
 		expect(
 			screen.queryByRole('heading', { name: 'Übungsbereich' })
 		).toBeNull();
+		// Supervision exists only as practice (FE#2545).
+		expect(
+			screen.queryByRole('heading', { name: 'Supervision' })
+		).toBeNull();
 	});
 
 	it('starts the introduction and each exercise by hand with auto-start off', async () => {
@@ -322,21 +330,33 @@ describe('Help learning card', () => {
 		).toBe(true);
 	});
 
-	it('hides supervision when the tenant switched it off', async () => {
-		renderHelp({ supervision: false });
-		await screen.findByRole('button', { name: 'Übung starten' });
-		expect(
-			screen.queryByRole('heading', { name: 'Supervision' })
-		).toBeNull();
-	});
+	it.each([{ supervision: false }, { oneOnOne: false }])(
+		'hides the Supervision card where the tenant cannot offer its practice: %j',
+		async (scenario) => {
+			renderHelp(scenario);
+			await screen.findByRole('button', { name: 'Übung starten' });
+			expect(
+				screen.queryByRole('heading', { name: 'Supervision' })
+			).toBeNull();
+		}
+	);
 
 	it.each([
-		{ width: 1199, acceptDisabled: false },
-		{ width: 1200, acceptDisabled: false },
-		{ width: 390, acceptDisabled: true }
+		{
+			width: 1199,
+			acceptDisabled: false,
+			supervisionHint:
+				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
+		},
+		{ width: 1200, acceptDisabled: false, supervisionHint: null },
+		{
+			width: 390,
+			acceptDisabled: true,
+			supervisionHint: 'Bitte üben Sie am Computer.'
+		}
 	])(
 		'preserves the practice viewport gates at $width px',
-		async ({ width, acceptDisabled }) => {
+		async ({ width, acceptDisabled, supervisionHint }) => {
 			renderHelp({ width });
 			await screen.findAllByRole('button', { name: 'Übung starten' });
 			const disabled = (name: string) =>
@@ -346,8 +366,21 @@ describe('Help learning card', () => {
 					).getByRole('button') as HTMLButtonElement
 				).disabled;
 			expect(disabled('Übung: Anfrage annehmen')).toBe(acceptDisabled);
-			// The Supervision topic tour is not a card: below its practice
-			// width it runs as an explanation (FE#2545).
+			// FE#2545: the Supervision topic tour exists only as practice;
+			// below its width its card shows the hint and cannot start.
+			const supervision = screen
+				.getByRole('heading', { name: 'Supervision' })
+				.closest('li')!;
+			expect(disabled('Supervision')).toBe(supervisionHint !== null);
+			if (supervisionHint) {
+				expect(
+					within(supervision).getByText(supervisionHint)
+				).toBeTruthy();
+			} else {
+				expect(
+					supervision.querySelector('.tourOverview__hint')
+				).toBeNull();
+			}
 			expect(
 				screen.queryByRole('heading', {
 					name: 'Übung: Supervision hinzufügen'

@@ -2830,16 +2830,6 @@
 				"done": {
 					"intro": "Du kennst jetzt die wichtigsten Wege der Supervision. Mit der Schaltfläche unten beendest du die Übung."
 				}
-			},
-			"explain": {
-				"intro": "Deine Administration richtet im Admin-Bereich eine feste Supervisor:in für dich ein. Sie kommt beim Annehmen einer Anfrage automatisch dazu.",
-				"chat": "Das runde Supervisions-Symbol in der Zeile öffnet einen Chat nur zwischen dir und deiner Supervisor:in. Unter ihren supervidierten Fällen sieht sie den Fall genauso wie du.",
-				"change": "Über „+“ („Supervisor verwalten“) und „Wechseln“ ersetzt du deine Supervisor:in. Der Supervisions-Chat bleibt erhalten.",
-				"calls": "Dein Träger kann im Supervisions-Chat Audio- und Videoanrufe erlauben, auch wenn sie mit Ratsuchenden ausgeschaltet sind. Das legt die Administration fest.",
-				"appointment": "Im Supervisions-Chat findest du unter ⋮ „Termin mit Supervisor:in vereinbaren“. Dort wählst du Video oder Telefon.",
-				"done": {
-					"intro": "Du kennst jetzt die wichtigsten Wege der Supervision."
-				}
 			}
 		},
 		"groupCircle": {
