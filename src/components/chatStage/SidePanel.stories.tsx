@@ -866,7 +866,7 @@ export const SupervisorReplaced: Story = {
 		const text = notes[0].textContent ?? '';
 		await expect(text).toContain('Supervision gewechselt');
 		await expect(text).toContain(
-			`${SUPERVISOR_NAME} supervidiert diesen Chat jetzt anstelle von ${PREVIOUS_SUPERVISOR_NAME}.`
+			`${SUPERVISOR_NAME} supervidiert diesen Chat jetzt anstelle von ${PREVIOUS_SUPERVISOR_NAME}`
 		);
 		await expect(text).toContain(
 			'Grund: Clara C. ist ab Dezember in Elternzeit.'
