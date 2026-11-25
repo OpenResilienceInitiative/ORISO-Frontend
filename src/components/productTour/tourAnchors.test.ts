@@ -293,6 +293,30 @@ const anchorContract: Array<{
 	{
 		anchor: 'settings-display',
 		sourceFile: '../features/menu-effects/MenuEffectsSettings.tsx'
+	},
+	// FE#2545: the Supervision topic tour.
+	{
+		anchor: 'sessions-supervision-chip',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
+		expected: /tourTarget: 'sessions-supervision-chip'/
+	},
+	{
+		anchor: 'session-supervision-indicator',
+		sourceFile: 'sessionsListItem/SupervisionIconButton.tsx'
+	},
+	{
+		anchor: 'supervision-panel-menu',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /menuTourTarget="supervision-panel-menu"/
+	},
+	{
+		anchor: 'supervision-book-appointment',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /'tourTarget': 'supervision-book-appointment'/
+	},
+	{
+		anchor: 'supervision-appointment-dialog',
+		sourceFile: 'supervisionPanel/SupervisorAppointmentDialog.tsx'
 	}
 ];
 
@@ -313,6 +337,16 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'displayFilter/FilterChip.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		// The Supervision ⋮ and its rows (FE#2545).
+		sourceFile: 'chatStage/PanelCallActions.tsx',
+		expected:
+			/data-tour-target=\{menuTourTarget\}[\s\S]*data-tour-target=\{item\.tourTarget\}/
+	},
+	{
+		sourceFile: 'm3Dialog/M3Dialog.tsx',
+		expected: /'data-tour-target': tourTarget/
 	},
 	{
 		// The toolbar binds each chip's configured anchor to the shared chip.

@@ -68,7 +68,12 @@ export const Walkthrough = () => {
 	const practiceCandidate =
 		launchRequest && practiceOpenFor(launchRequest.tourId)
 			? practiceHostedTours.find(
-					(tour) => tour.id === launchRequest.tourId
+					(tour) =>
+						tour.id === launchRequest.tourId &&
+						// A topic tour whose practice this tenant cannot offer
+						// (Supervision without one-on-one supervision, FE#2545)
+						// runs its explanation instead of an empty practice.
+						isPracticeTourOffered(tour, { ...tenantSettings })
 				)
 			: undefined;
 	// The rendering (practice or explanation) is chosen once per launch

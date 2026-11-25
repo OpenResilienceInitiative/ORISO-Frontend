@@ -11,7 +11,10 @@ import {
 	type PracticeCaseState,
 	type PracticeStart
 } from '../fixtures/practiceScenario';
-import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
+import {
+	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+	type PracticePerson
+} from '../fixtures/practiceCast';
 import {
 	isPracticeId,
 	isPracticeRoomId,
@@ -41,6 +44,7 @@ import type { InternalChatColleague } from '../../components/conversationCreate/
 import type {
 	BlockerCreateDTO,
 	CalendarColleaguesDTO,
+	ColleagueAppointmentCreateDTO,
 	CalendarConsultationHoursDTO,
 	CalendarConsultationOnceDTO,
 	CalendarEntryDTO,
@@ -70,6 +74,20 @@ export interface FakeRestHooks {
 	onBlockerCreated?: (blockerId: string) => void;
 	/** The Sprechstunden were saved with automatic confirmation on. */
 	onAutoAcceptOn?: () => void;
+	/**
+	 * The Supervision tour (FE#2545): the accept attached the practice
+	 * standing supervisor, as the real accept does (#2386).
+	 */
+	onStandingSupervisorAssigned?: (
+		supervisor: UserService.Schemas.SessionSupervisorResponseDTO
+	) => void;
+	/** "Wechseln" in "Supervisor verwalten": one supervisor took over. */
+	onSupervisorReplaced?: (
+		from: UserService.Schemas.SessionSupervisorResponseDTO,
+		to: UserService.Schemas.SessionSupervisorResponseDTO
+	) => void;
+	/** "Termin mit Supervisor:in vereinbaren" was saved. */
+	onSupervisorAppointmentBooked?: (entry: CalendarEntryDTO) => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -342,6 +360,125 @@ export const createFakeRestBackend = ({
 	const isCase = (id: string) =>
 		Number(id) === practiceCase.session.id && isPracticeId(id);
 
+	/* ---------------- Supervision of the practice case ---------------- */
+
+	/** The practice people who may supervise; nobody real is ever one. */
+	const practiceSupervisors = (): PracticePerson[] => [
+		script.cast.supervisor,
+		script.cast.secondSupervisor
+	];
+	const supervisorPerson = (consultantId: unknown) =>
+		practiceSupervisors().find((person) => person.id === consultantId);
+
+	const supervisorFor = (
+		person: PracticePerson,
+		notes: string | null
+	): UserService.Schemas.SessionSupervisorResponseDTO => ({
+		id: -++supervisorSeq,
+		sessionId: practiceCase.session.id,
+		supervisorConsultantId: person.id,
+		supervisorUsername: person.username,
+		supervisorMatrixUserId: person.matrixUserId,
+		addedByConsultantId: counsellor.userId,
+		addedDate: new Date(now()).toISOString(),
+		// ADR-008: one side room per case, whoever supervises it.
+		matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
+		notes
+	});
+
+	/**
+	 * The supervisors and the list marker (ADR-008) the session list reads:
+	 * the "Supervision" chip and the round icon of the row.
+	 */
+	const setSupervisors = (
+		supervisors: UserService.Schemas.SessionSupervisorResponseDTO[]
+	) => {
+		const people = supervisors
+			.map((s) => supervisorPerson(s.supervisorConsultantId))
+			.filter((person): person is PracticePerson => !!person);
+		const { supervision: _marker, ...session } = practiceCase.session;
+		practiceCase = {
+			...practiceCase,
+			supervisors,
+			session: people.length
+				? {
+						...session,
+						supervision: {
+							supervisedByMe: false,
+							supervisorConsultantIds: people.map((p) => p.id),
+							supervisorDisplayNames: people.map(
+								(p) => p.displayName
+							)
+						}
+					}
+				: session
+		};
+	};
+
+	/**
+	 * "Wechseln" (#2494 *6): one server step that keeps the side room. Only
+	 * the other practice supervisor can take over; nobody is notified, the
+	 * advice seeker included, whatever `notifyClient` says.
+	 */
+	const replaceSupervisor = (
+		supervisorId: string,
+		body: Record<string, unknown> | null
+	) => {
+		const from = practiceCase.supervisors.find(
+			(s) => s.id === Number(supervisorId)
+		);
+		const person = supervisorPerson(body?.supervisorConsultantId);
+		if (
+			!from ||
+			!person ||
+			practiceCase.supervisors.some(
+				(s) => s.supervisorConsultantId === person.id
+			)
+		) {
+			return noContent();
+		}
+		const to = supervisorFor(
+			person,
+			typeof body?.notes === 'string' ? body.notes : null
+		);
+		setSupervisors(
+			practiceCase.supervisors.map((s) => (s === from ? to : s))
+		);
+		hooks.onSupervisorReplaced?.(from, to);
+		return ok(to);
+	};
+
+	/**
+	 * "Termin mit Supervisor:in vereinbaren" (FE#2494): with a supervisor of
+	 * the practice case only. No private chat of the two exists in practice,
+	 * so the entry names none and the dialog's notice goes to the supervision
+	 * room alone. Nothing reaches a real calendar.
+	 */
+	const bookWithSupervisor = (body: ColleagueAppointmentCreateDTO | null) => {
+		const person = practiceCase.supervisors.some(
+			(s) => s.supervisorConsultantId === body?.colleagueId
+		)
+			? supervisorPerson(body?.colleagueId)
+			: undefined;
+		if (!person || !body?.start || !body.end) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('appointment'),
+			type: 'APPOINTMENT',
+			start: body.start,
+			end: body.end,
+			ownerId: counsellor.userId,
+			kind: body.kind ?? 'VIDEO',
+			title: person.displayName,
+			movable: false,
+			colleagueId: person.id,
+			colleagueName: person.displayName,
+			colleagueStatus: 'PENDING'
+		};
+		calendar = [...calendar, entry];
+		hooks.onSupervisorAppointmentBooked?.(entry);
+		return ok(entry);
+	};
+
 	/** Registered (F1) or live chat (FE#2545): the same accept, in memory. */
 	const accept = (id: string) => {
 		if (!isCase(id)) return null;
@@ -360,7 +497,16 @@ export const createFakeRestBackend = ({
 					status: 'ARCHIVED'
 				}
 			};
+			// The Supervision tour: the server attaches the counsellor's
+			// standing supervisor inside the accept (#2386). In practice that
+			// is Robin, set up "beforehand" by nobody: it is an exercise.
+			const standing =
+				start === 'supervision' && !practiceCase.supervisors.length
+					? supervisorFor(script.cast.supervisor, null)
+					: null;
+			if (standing) setSupervisors([standing]);
 			hooks.onEnquiryAccepted?.(practiceCase.session.id);
+			if (standing) hooks.onStandingSupervisorAssigned?.(standing);
 		}
 		return noContent();
 	};
@@ -387,8 +533,11 @@ export const createFakeRestBackend = ({
 		}
 	});
 
+	/** With the advice seeker; one with the supervisor has a colleague. */
 	const appointments = () =>
-		calendar.filter((entry) => entry.type === 'APPOINTMENT');
+		calendar.filter(
+			(entry) => entry.type === 'APPOINTMENT' && !entry.colleagueId
+		);
 
 	/** Entries that overlap [from, to); without a range, all of them. */
 	const entriesIn = (url: URL) => {
@@ -512,7 +661,9 @@ export const createFakeRestBackend = ({
 			handle: ({ url }) => ok(entriesIn(url))
 		},
 		{
-			// No practice colleagues: their calendars and auto-accept stay out.
+			// Only the supervisors of the practice case (the Supervision
+			// tour's appointment, FE#2545); otherwise no colleagues, so their
+			// calendars and auto-accept stay out.
 			method: 'GET',
 			path: calendarPath('/colleagues'),
 			viewWide: true,
@@ -520,8 +671,23 @@ export const createFakeRestBackend = ({
 				ok({
 					visibilityScope: 'AGENCY',
 					showAskerUsernames: false,
-					colleagues: []
+					colleagues: practiceCase.supervisors
+						.map((s) => supervisorPerson(s.supervisorConsultantId))
+						.filter((person): person is PracticePerson => !!person)
+						.map((person) => ({
+							id: person.id,
+							displayName: person.displayName,
+							agencyName: script.names.agency,
+							relation: 'SAME_AGENCY' as const,
+							internalChat: true
+						}))
 				} satisfies CalendarColleaguesDTO)
+		},
+		{
+			method: 'POST',
+			path: calendarPath('/colleague-appointments'),
+			viewWide: true,
+			handle: async ({ body }) => bookWithSupervisor(await body())
 		},
 		{
 			method: 'GET',
@@ -957,33 +1123,35 @@ export const createFakeRestBackend = ({
 			handle: async (request, [, id]) => {
 				if (!isCase(id)) return null;
 				const body = await request.body();
+				const person = supervisorPerson(body?.supervisorConsultantId);
 				if (
-					body?.supervisorConsultantId !== script.cast.supervisor.id
+					!person ||
+					practiceCase.supervisors.some(
+						(s) => s.supervisorConsultantId === person.id
+					)
 				) {
-					// Only the practice supervisor exists here; nothing else is added.
+					// Only the practice supervisors exist here; nothing else is added.
 					return noContent();
 				}
-				const supervisor: UserService.Schemas.SessionSupervisorResponseDTO =
-					{
-						id: -++supervisorSeq,
-						sessionId: practiceCase.session.id,
-						supervisorConsultantId: script.cast.supervisor.id,
-						supervisorUsername: script.cast.supervisor.username,
-						supervisorMatrixUserId:
-							script.cast.supervisor.matrixUserId,
-						addedByConsultantId: counsellor.userId,
-						addedDate: new Date(now()).toISOString(),
-						matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
-						notes:
-							typeof body.notes === 'string' ? body.notes : null
-					};
-				practiceCase = {
-					...practiceCase,
-					supervisors: [...practiceCase.supervisors, supervisor]
-				};
+				const supervisor = supervisorFor(
+					person,
+					typeof body.notes === 'string' ? body.notes : null
+				);
+				setSupervisors([...practiceCase.supervisors, supervisor]);
 				hooks.onSupervisorAdded?.(supervisor);
 				return ok(supervisor);
 			}
+		},
+		{
+			method: 'PUT',
+			path: at(
+				endpoints.sessionBase,
+				`/${PRACTICE_ID_SEGMENT}/supervisors/${PRACTICE_ID_SEGMENT}`
+			),
+			handle: async (request, [, id, supervisorId]) =>
+				isCase(id)
+					? replaceSupervisor(supervisorId, await request.body())
+					: null
 		},
 		{
 			method: 'GET',
@@ -991,17 +1159,17 @@ export const createFakeRestBackend = ({
 			handle: ({ url }) =>
 				Number(url.searchParams.get('agencyId')) === PRACTICE_AGENCY_ID
 					? ok(
-							[script.cast.colleague, script.cast.supervisor].map(
-								(person) => ({
-									consultantId: person.id,
-									firstName: person.firstName,
-									lastName: person.lastName,
-									displayName: person.displayName,
-									username: person.username,
-									isSupervisor:
-										person.id === script.cast.supervisor.id
-								})
-							) satisfies UserService.Schemas.ConsultantResponseDTO[]
+							[
+								script.cast.colleague,
+								...practiceSupervisors()
+							].map((person) => ({
+								consultantId: person.id,
+								firstName: person.firstName,
+								lastName: person.lastName,
+								displayName: person.displayName,
+								username: person.username,
+								isSupervisor: !!supervisorPerson(person.id)
+							})) satisfies UserService.Schemas.ConsultantResponseDTO[]
 						)
 					: null
 		},

@@ -30,6 +30,7 @@ export const SupervisionIconButton = ({
 			type="button"
 			className="teamDiscussionBadge teamDiscussionBadge--supervision"
 			data-testid="supervision-indicator"
+			data-tour-target="session-supervision-indicator"
 			title={label}
 			aria-label={label}
 			aria-disabled={!onOpen || undefined}

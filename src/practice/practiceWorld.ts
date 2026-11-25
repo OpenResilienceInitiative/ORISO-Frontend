@@ -15,7 +15,11 @@ import {
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
 import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import { PRACTICE_MAIN_ROOM_ID, PRACTICE_TEAM_ROOM_ID } from './practiceIds';
+import {
+	PRACTICE_MAIN_ROOM_ID,
+	PRACTICE_SUPERVISION_ROOM_ID,
+	PRACTICE_TEAM_ROOM_ID
+} from './practiceIds';
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {
@@ -51,6 +55,8 @@ export const createPracticeWorld = ({
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
 	let supervisorAnswered = false;
+	/** The Supervision tour: Robin answers the counsellor's first message. */
+	let supervisionAnswered = false;
 
 	const play = (reaction: ScriptReaction | null) => {
 		if (reaction) {
@@ -75,6 +81,29 @@ export const createPracticeWorld = ({
 			}
 			if (roomId === PRACTICE_TEAM_ROOM_ID) {
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.teamMessageSent);
+				return;
+			}
+			if (roomId === PRACTICE_SUPERVISION_ROOM_ID) {
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisionMessageSent);
+				if (supervisionAnswered || supervisorAnswered) return;
+				supervisionAnswered = true;
+				const reaction = script.reactionFor({
+					type: 'counsellor-supervision-message'
+				});
+				// The reply comes from whoever supervises the case now.
+				const supervisor = rest
+					.getCase()
+					.supervisors.find((s) => s.supervisorMatrixUserId);
+				queueMicrotask(() =>
+					play(
+						reaction && supervisor?.supervisorMatrixUserId
+							? {
+									...reaction,
+									sender: supervisor.supervisorMatrixUserId
+								}
+							: reaction
+					)
+				);
 				return;
 			}
 			if (
@@ -129,7 +158,28 @@ export const createPracticeWorld = ({
 			onBlockerCreated: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarBlockerCreated),
 			onAutoAcceptOn: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn)
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn),
+			onSupervisorReplaced: (from, to) => {
+				const person = [
+					script.cast.supervisor,
+					script.cast.secondSupervisor
+				].find(({ id }) => id === to.supervisorConsultantId);
+				if (from.supervisorMatrixUserId && person) {
+					matrix.replaceMember(
+						PRACTICE_SUPERVISION_ROOM_ID,
+						from.supervisorMatrixUserId,
+						{
+							userId: person.matrixUserId,
+							displayName: person.displayName
+						}
+					);
+				}
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorReplaced);
+			},
+			onSupervisorAppointmentBooked: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.supervisorAppointmentBooked
+				)
 		}
 	});
 

@@ -22,7 +22,7 @@ const flush = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 
 const worldIn = (
 	locale: PracticeScriptLocale = 'de',
-	start: 'enquiry' | 'acceptedCase' = 'enquiry'
+	start: 'enquiry' | 'acceptedCase' | 'supervision' = 'enquiry'
 ) =>
 	createPracticeWorld({
 		counsellor: practiceCounsellorFixture(),
@@ -432,11 +432,123 @@ describe('practice world tour events', () => {
 	});
 });
 
+describe('practice world: the Supervision tour (FE#2545)', () => {
+	const supervisionWorld = async () => {
+		const world = worldIn('de', 'supervision');
+		await accept(world);
+		return world;
+	};
+	const supervisionBodies = (world: PracticeWorld, sender: string) =>
+		bodiesFrom(world, PRACTICE_SUPERVISION_ROOM_ID, sender);
+	const replace = (world: PracticeWorld) => {
+		const [current] = world.rest.getCase().supervisors;
+		return world.rest.handle(
+			send(
+				`${endpoints.sessionBase}/${PRACTICE_ENQUIRY_SESSION_ID}/supervisors/${current.id}`,
+				'PUT',
+				{
+					supervisorConsultantId:
+						world.script.cast.secondSupervisor.id,
+					notes: 'Vertretung',
+					notifyClient: true
+				}
+			)
+		);
+	};
+
+	it('attaches Robin on accept without a message: nothing opens the side room by itself', async () => {
+		const counts = watch();
+		const world = await supervisionWorld();
+
+		expect(world.rest.getCase().supervisors).toHaveLength(1);
+		expect(
+			world.matrix.getRoomMessages(PRACTICE_SUPERVISION_ROOM_ID)
+		).toEqual([]);
+		expect(counts[PRACTICE_TOUR_EVENTS.enquiryAccepted]).toBe(1);
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisorAdded]).toBe(0);
+	});
+
+	it("emits supervision-message-sent for the counsellor's message and lets Robin answer once", async () => {
+		const world = await supervisionWorld();
+		const counts = watch();
+		const robin = world.script.cast.supervisor.matrixUserId;
+
+		await world.matrix.sendMessage(PRACTICE_SUPERVISION_ROOM_ID, 'Hallo');
+		await flush();
+		await world.matrix.sendMessage(PRACTICE_SUPERVISION_ROOM_ID, 'Noch');
+		await flush();
+
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisionMessageSent]).toBe(2);
+		expect(counts[PRACTICE_TOUR_EVENTS.messageSent]).toBe(0);
+		expect(supervisionBodies(world, robin)).toEqual([
+			world.script.texts.supervisorReply
+		]);
+		// Never in the case room.
+		expect(bodiesFrom(world, PRACTICE_MAIN_ROOM_ID, robin)).toEqual([]);
+	});
+
+	it('does not count a system notice in the side room (the appointment card) as writing', async () => {
+		const world = await supervisionWorld();
+		const counts = watch();
+
+		await world.matrix.sendMessage(
+			PRACTICE_SUPERVISION_ROOM_ID,
+			`${SYSTEM_NOTIFICATION_PREFIX}{"kind":"created"}`
+		);
+		await flush();
+
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisionMessageSent]).toBe(0);
+		expect(
+			supervisionBodies(world, world.script.cast.supervisor.matrixUserId)
+		).toEqual([]);
+	});
+
+	it('swaps Robin for Kim in the side room on "Wechseln" and emits supervisor-replaced once', async () => {
+		const world = await supervisionWorld();
+		const counts = watch();
+
+		await replace(world);
+
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisorReplaced]).toBe(1);
+		const room = world.matrix.getRoom(PRACTICE_SUPERVISION_ROOM_ID)!;
+		expect(
+			room.getMember(world.script.cast.secondSupervisor.matrixUserId)
+				?.name
+		).toBe(world.script.cast.secondSupervisor.displayName);
+		expect(
+			room.getMember(world.script.cast.supervisor.matrixUserId)
+		).toBeNull();
+		// Nobody is told anything: no message in any room.
+		expect(
+			world.matrix.getRoomMessages(PRACTICE_SUPERVISION_ROOM_ID)
+		).toEqual([]);
+	});
+
+	it('emits supervisor-appointment-booked once the appointment is saved', async () => {
+		const world = await supervisionWorld();
+		const counts = watch();
+
+		await world.rest.handle(
+			send(`${endpoints.calendarBase}/colleague-appointments`, 'POST', {
+				colleagueId: world.script.cast.supervisor.id,
+				start: '2026-11-26T09:00:00.000Z',
+				end: '2026-11-26T10:00:00.000Z',
+				kind: 'VIDEO'
+			})
+		);
+
+		expect(counts[PRACTICE_TOUR_EVENTS.supervisorAppointmentBooked]).toBe(
+			1
+		);
+	});
+});
+
 describe('practice world ids', () => {
-	it.each(['enquiry', 'acceptedCase'] as const)(
+	it.each(['enquiry', 'acceptedCase', 'supervision'] as const)(
 		"are all practice ids (%s), apart from the counsellor's own identity",
 		async (start) => {
 			const world = worldIn('de', start);
+			await accept(world);
 			await addSupervisor(world);
 			const { session, user, supervisors } = world.rest.getCase();
 			const cast = Object.values(world.script.cast);

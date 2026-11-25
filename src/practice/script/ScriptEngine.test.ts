@@ -57,6 +57,23 @@ describe('ScriptEngine', () => {
 		});
 	});
 
+	it("answers the counsellor's message in the supervision room the same way (FE#2545)", () => {
+		const script = createTestScript('de');
+
+		expect(
+			script.reactionFor({ type: 'counsellor-supervision-message' })
+		).toEqual(script.reactionFor(supervisorAdded));
+	});
+
+	it('casts a second practice supervisor to swap to (FE#2545)', () => {
+		const script = createTestScript('de');
+
+		expect(script.cast.secondSupervisor.displayName).toBe('Kim (Übung)');
+		expect(script.cast.secondSupervisor.matrixUserId).not.toBe(
+			script.cast.supervisor.matrixUserId
+		);
+	});
+
 	it('hands out the approved German texts and cast names verbatim', () => {
 		const script = createTestScript('de');
 

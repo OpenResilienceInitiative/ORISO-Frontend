@@ -12,7 +12,7 @@ import { frontendTours } from '../components/productTour/tourDefinitions';
 import { resolveTourSteps } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
-	practiceAcceptedSessionRoute,
+	PRACTICE_ENQUIRIES_ROUTE,
 	PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
 	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
 } from './practiceRoutes';
@@ -38,6 +38,8 @@ import {
 	CALENDAR_TOUR_VERSION,
 	consultantCalendarTour
 } from '../components/productTour/tours/calendarTour';
+import { consultantSupervisionTour } from '../components/productTour/tours/supervisionTour';
+import { resolveSupervisionCallFeatureGates } from '../components/call/callFeatureGates';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
@@ -67,9 +69,13 @@ const stepIds = (steps: Array<{ id: string }>) => steps.map((s) => s.id);
 const TEAM_OFF = { flags: { featureTeamDiscussionEnabled: false } };
 
 describe('practiceTours registry', () => {
-	it('holds the two practice cards, and every hosted tour under an id the guard allows', () => {
+	it('holds the one practice card, and every hosted tour under an id the guard allows', () => {
 		expect(practiceTours.map((t) => t.id)).toEqual([
 			...PRACTICE_CARD_TOUR_IDS
+		]);
+		// FE#2545: Supervision is a topic tour in Help → Rundgänge now.
+		expect([...PRACTICE_CARD_TOUR_IDS]).toEqual([
+			'consultant-practice-accept'
 		]);
 		expect(practiceHostedTours.map((t) => t.id)).toEqual([
 			...PRACTICE_TOUR_IDS
@@ -221,112 +227,228 @@ describe('practiceAcceptTour (flow F1)', () => {
 	});
 });
 
-describe('practiceSupervisionTour (flow F2)', () => {
-	const [first] = practiceSupervisionTour.steps;
-	const last =
-		practiceSupervisionTour.steps[practiceSupervisionTour.steps.length - 1];
+describe('practiceSupervisionTour (FE#2545, Supervision)', () => {
+	const tour = practiceSupervisionTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+	const de = (key: string) => resolveKey(deTranslations, key) as string;
 
-	it('opens on the supervisor "+" inside the accepted practice case', () => {
-		expect(first.target).toBe('session-supervisor-add');
-		expect(first.route).toBe(practiceAcceptedSessionRoute());
+	it('is the topic tour "Supervision" under the old card id and version, without a card', () => {
+		expect(tour.id).toBe('consultant-practice-supervision');
+		expect(tour.id).toBe(consultantSupervisionTour.id);
+		// Version 1, as the old card: who completed it keeps "completed".
+		expect(tour.version).toBe(1);
+		expect(tour.version).toBe(consultantSupervisionTour.version);
+		expect(tour.titleKey).toBe(consultantSupervisionTour.titleKey);
+		expect(de(tour.titleKey)).toBe('Supervision');
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+		expect(frontendTours).toContain(consultantSupervisionTour);
 	});
 
-	it('waits for the confirmed add, not for the click on the "+"', () => {
-		// The real picker dialog covers the tooltip, so the
-		// first step explains the whole add and lets the confirm advance it.
-		expect(first.advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.supervisorAdded
-		});
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
 	});
 
-	it('ends on a centered final step', () => {
-		expect(last.target).toBe('');
-		expect(last.placement).toBe('center');
-		expect(last.advanceOn).toBeUndefined();
-	});
-
-	it('walks the four steps', () => {
-		expect(stepIds(resolveTourSteps(practiceSupervisionTour))).toEqual([
-			'add-supervisor',
-			'supervisor-reply',
-			'standing-assignment',
-			'done'
+	it('walks the product owner story in order (2026-11-25)', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['open-enquiry', 'enquiry-list-item'],
+			['accept', 'enquiry-accept-button'],
+			['assigned', ''],
+			['find', 'sessions-supervision-chip'],
+			['open-panel', 'session-supervision-indicator'],
+			['write', 'supervision-panel'],
+			['same-access', 'supervision-panel'],
+			['change', 'session-supervisor-add'],
+			['calls', ''],
+			['appointment', 'supervision-panel-menu'],
+			['done', '']
 		]);
 	});
 
-	it('points the reply step at the supervision side panel and offers no Back after the add', () => {
-		const reply = practiceSupervisionTour.steps[1];
-		expect(reply.target).toBe('supervision-panel');
-		expect(reply.placement).toBe('left');
-		expect(reply.hideBack).toBe(true);
-		expect(reply.advanceOn).toBeUndefined();
+	it('starts on the practice enquiry and acts with the real controls', () => {
+		expect(step('open-enquiry').route).toBe(PRACTICE_ENQUIRIES_ROUTE);
+		expect(step('open-enquiry').advanceOn).toEqual({ type: 'click' });
+		expect(step('accept').advanceOn).toEqual({ type: 'click' });
+		expect(step('open-panel').advanceOn).toEqual({ type: 'click' });
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn?.type === 'event')
+				.map((s) => [s.id, (s.advanceOn as { name: string }).name])
+		).toEqual([
+			['write', PRACTICE_TOUR_EVENTS.supervisionMessageSent],
+			['change', PRACTICE_TOUR_EVENTS.supervisorReplaced],
+			['appointment', PRACTICE_TOUR_EVENTS.supervisorAppointmentBooked]
+		]);
 	});
 
-	it('is read-only after the add: replies and the standing assignment advance with Next', () => {
-		practiceSupervisionTour.steps.slice(1, 3).forEach((step) => {
-			expect(step.advanceOn).toBeUndefined();
-		});
+	it('offers no Back where the step before cannot be undone', () => {
+		expect(step('assigned').hideBack).toBe(true);
+		expect(step('same-access').hideBack).toBe(true);
+		expect(step('calls').hideBack).toBe(true);
 	});
 
-	it('is unavailable (no steps) when the Träger switched supervision off, available when unset', () => {
+	it('shows the chip step only where the chip is (optional), everything else is required', () => {
+		expect(tour.steps.filter((s) => s.optional).map((s) => s.id)).toEqual([
+			'find'
+		]);
+	});
+
+	it('quotes the real labels: "Supervision", "Supervisor verwalten", the booking entry', () => {
+		expect(de(step('find').contentKey)).toMatch(/„Supervision“/);
+		expect(de(step('change').contentKey)).toMatch(/„Supervisor verwalten“/);
+		expect(de(step('change').contentKey)).toMatch(/„Wechseln“/);
+		expect(de(step('appointment').contentKey)).toMatch(
+			/„Termin mit Supervisor:in vereinbaren“/
+		);
+		// The labels themselves, so the copy cannot drift from them.
+		expect(de('sessionHeader.supervisor.modal.title')).toBe(
+			'Supervisor verwalten'
+		);
+		expect(de('managePeople.replace.action')).toBe('Wechseln');
+		expect(de('supervision.panel.bookAppointment')).toBe(
+			'Termin mit Supervisor:in vereinbaren'
+		);
+		expect(de('sessionList.toolbar.chips.supervision')).toBe('Supervision');
+	});
+
+	it('names the standing supervisor and the Admin panel in the intro, as text only', () => {
+		const intro = de(step('intro').contentKey);
+		expect(intro).toMatch(/Übung/);
+		expect(intro).toMatch(/Admin/);
+		expect(intro).not.toMatch(/https?:/);
+	});
+
+	it('is unavailable (no steps) when the Träger switched supervision off', () => {
 		const off = { flags: { featureSupervisionEnabled: false } };
-		expect(practiceSupervisionTour.when).toEqual({
-			flag: 'featureSupervisionEnabled'
-		});
-		expect(resolveTourSteps(practiceSupervisionTour, off)).toEqual([]);
-		expect(
-			isPracticeTourAvailable(practiceSupervisionTour, off.flags)
-		).toBe(false);
-		expect(isPracticeTourAvailable(practiceSupervisionTour, {})).toBe(true);
-		expect(isPracticeTourAvailable(practiceSupervisionTour)).toBe(true);
-		expect(
-			isPracticeTourAvailable(practiceSupervisionTour, {
-				featureSupervisionEnabled: true
-			})
-		).toBe(true);
+		expect(tour.when).toEqual({ flag: 'featureSupervisionEnabled' });
+		expect(resolveTourSteps(tour, off)).toEqual([]);
+		expect(resolveTourSteps(consultantSupervisionTour, off)).toEqual([]);
+		expect(isPracticeTourAvailable(tour, {})).toBe(true);
 	});
 
-	it('does not depend on the team-discussion flag', () => {
-		expect(
-			stepIds(resolveTourSteps(practiceSupervisionTour, TEAM_OFF))
-		).toHaveLength(4);
-	});
+	const SUPERVISION_CALL_FLAGS = [
+		'featureCallsEnabled',
+		'featureAudioCallsEnabled',
+		'featureAudioCallsSupervisionChatsEnabled',
+		'featureVideoCallsEnabled',
+		'featureVideoCallsSupervisionChatsEnabled'
+	] as const;
+	const everyCombination = SUPERVISION_CALL_FLAGS.reduce<
+		Array<Record<string, boolean>>
+	>(
+		(combinations, flag) =>
+			combinations.flatMap((flags) => [
+				{ ...flags, [flag]: true },
+				{ ...flags, [flag]: false }
+			]),
+		[{}]
+	);
 
-	it('tells the learner up front to click, choose and confirm', () => {
-		const intro = resolveKey(deTranslations, first.contentKey) as string;
-		expect(intro).toMatch(/„\+“/);
-		expect(intro).toMatch(/bestätigen/);
-	});
-
-	// The add dialog refuses to confirm without a reason (reasonError); the
-	// words are those of its reason field in each language.
-	it.each([
-		['de', deTranslations, /Grund/],
-		['de@informal', deInformalTranslations, /Grund/],
-		['en', enTranslations, /reason/],
-		['fr', frTranslations, /motif/],
-		['ru', ruTranslations, /причин/],
-		['ti', tiTranslations, /ምኽንያት/],
-		['tr', trTranslations, /neden/]
-	] as const)(
-		'asks for the short reason the add dialog requires (%s)',
-		(_locale, bundle, reasonWord) => {
-			expect(resolveKey(bundle, first.contentKey) as string).toMatch(
-				reasonWord
+	it.each(everyCombination.map((flags) => [JSON.stringify(flags), flags]))(
+		'books the appointment exactly where the supervision chat allows a call: %s',
+		(_name, flags) => {
+			const gates = resolveSupervisionCallFeatureGates(flags);
+			const ids = stepIds(resolveTourSteps(tour, { flags }));
+			expect(ids.includes('appointment')).toBe(
+				gates.audio || gates.video
 			);
+			expect(ids).toHaveLength(gates.audio || gates.video ? 12 : 11);
 		}
 	);
 
-	it('keeps the retired picker step out of every locale', () => {
+	it('keeps the one-on-one call keys out of the gate', () => {
+		const ids = stepIds(
+			resolveTourSteps(tour, {
+				flags: {
+					featureAudioCallsOneOnOneChatsEnabled: false,
+					featureVideoCallsOneOnOneChatsEnabled: false
+				}
+			})
+		);
+		expect(ids).toContain('appointment');
+	});
+});
+
+describe('practice Supervision tour copy', () => {
+	const tour = practiceSupervisionTour;
+	const both = [
+		['practice', tour],
+		['explanation', consultantSupervisionTour]
+	] as const;
+
+	it.each(both)(
+		'%s: ships every key natively in every full locale',
+		(_name, t) => {
+			bundledLocales
+				.filter(([locale]) => locale !== 'de@informal')
+				.forEach(([locale, bundle]) => {
+					keysOf(t).forEach((key) => {
+						expect(
+							typeof resolveKey(bundle, key),
+							`missing ${locale} key ${key}`
+						).toBe('string');
+					});
+				});
+		}
+	);
+
+	it.each(both)(
+		'%s: keeps the informal overlay sparse and complete where de says Sie',
+		(_name, t) => {
+			keysOf(t).forEach((key) => {
+				const de = resolveKey(deTranslations, key) as string;
+				const informal = resolveKey(deInformalTranslations, key);
+				if (informal !== undefined) {
+					expect(informal, `${key} duplicates de`).not.toBe(de);
+				}
+				if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+					expect(
+						typeof informal,
+						`${key} is formal in de but has no du-form`
+					).toBe('string');
+				}
+			});
+		}
+	);
+
+	it('keeps practice step intros short (two sentences at most)', () => {
 		bundledLocales.forEach(([locale, bundle]) => {
-			expect(
-				resolveKey(
-					bundle,
-					'tour.practiceSupervision.step.pickSupervisor'
-				),
-				`${locale} still carries pickSupervisor`
-			).toBeUndefined();
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				const sentences = text
+					.split(/(?<=[.!?。።])\s+/)
+					.filter(Boolean);
+				expect(
+					sentences.length,
+					`${locale} ${s.contentKey} has ${sentences.length} sentences`
+				).toBeLessThanOrEqual(2);
+			});
+		});
+	});
+
+	it('says up front that this practice is invented and nothing is sent', () => {
+		expect(
+			resolveKey(deTranslations, tour.steps[0].contentKey) as string
+		).toMatch(/Übung.*erfunden.*nichts wird gesendet oder gespeichert/);
+	});
+
+	it('retires the old card copy in every locale', () => {
+		bundledLocales.forEach(([locale, bundle]) => {
+			[
+				'tour.practiceSupervision.step.addSupervisor',
+				'tour.practiceSupervision.step.supervisorReply',
+				'tour.practiceSupervision.step.standingAssignment',
+				'tour.practiceSupervision.step.pickSupervisor',
+				'practice.cards.summary.supervision'
+			].forEach((key) =>
+				expect(
+					resolveKey(bundle, key),
+					`${locale} still carries ${key}`
+				).toBeUndefined()
+			);
 		});
 	});
 });

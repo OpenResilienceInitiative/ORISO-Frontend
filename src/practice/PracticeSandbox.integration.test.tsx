@@ -178,6 +178,9 @@ const expectTourEvents = (expected: Partial<Record<string, number>>) =>
 		[PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled]: 0,
 		[PRACTICE_TOUR_EVENTS.calendarBlockerCreated]: 0,
 		[PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn]: 0,
+		[PRACTICE_TOUR_EVENTS.supervisionMessageSent]: 0,
+		[PRACTICE_TOUR_EVENTS.supervisorReplaced]: 0,
+		[PRACTICE_TOUR_EVENTS.supervisorAppointmentBooked]: 0,
 		...expected
 	});
 
@@ -709,8 +712,11 @@ describe('practice sandbox on the real session containers', () => {
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
-	it('supervision in practice mode: the reply shows in the side thread without reopening the case, the side room offers no call and nothing needs blocking', async () => {
-		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+	it('supervision in practice mode: the reply shows in the side thread without reopening the case, the side room offers no call (only the practice booking) and nothing needs blocking', async () => {
+		// An accepted case under another practice tour (Kalender): the
+		// Supervision tour itself keeps the side room closed until the row
+		// icon opens it (FE#2545), so the auto-open is proven here.
+		enterPracticeMode({ tourId: 'consultant-calendar' });
 		try {
 			const view = renderPractice('acceptedCase', { underGuard: true });
 
@@ -733,9 +739,22 @@ describe('practice sandbox on the real session containers', () => {
 					'[data-tour-target="supervision-panel"]'
 				)
 			).not.toBeNull();
+			// No call: only the ⋮ with the practice booking (FE#2545).
 			expect(
-				view.container.querySelector('[data-cy="panel-call-actions"]')
+				view.container
+					.querySelector('[data-cy="panel-call-actions"]')
+					?.getAttribute('data-placement')
+			).toBe('menu');
+			expect(
+				view.container.querySelector(
+					'[data-cy^="panel-call-"][data-cy$="video"], [data-cy^="panel-call-"][data-cy$="audio"]'
+				)
 			).toBeNull();
+			expect(
+				view.container.querySelector(
+					'[data-tour-target="supervision-panel-menu"]'
+				)
+			).not.toBeNull();
 			expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
 			cleanup();
 			await act(

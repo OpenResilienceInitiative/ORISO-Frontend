@@ -476,12 +476,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		// the header, the dialog and practice belong to the case on screen.
 		const isOriginOnScreen =
 			activeSupervisorSessionIdRef.current === sessionId;
+		const isPracticeOrigin =
+			isPracticeId(sessionId) || isPracticeRoomId(origin.matrixRoomId);
 		// The practice tour's next step points at the supervision panel, which
-		// the open dialog would cover; real cases keep the dialog open.
+		// the open dialog would cover; real cases keep the dialog open. The
+		// Supervision tour (FE#2545) goes on to the panel ⋮ after a swap too.
 		if (
 			isOriginOnScreen &&
-			change.kind === 'added' &&
-			(isPracticeId(sessionId) || isPracticeRoomId(origin.matrixRoomId))
+			(change.kind === 'added' || change.kind === 'replaced') &&
+			isPracticeOrigin
 		) {
 			setIsSupervisorModalOpen(false);
 		}
@@ -502,11 +505,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			// #2494 *6: the server posts the swap notice into the supervision
 			// side room; the case chat gets nothing. The new supervisor
 			// continues that room, so hand them its history keys (MSC4268).
-			void shareSupervisionHistory(
-				matrixClientService?.getClient?.(),
-				change.sideRoomId,
-				change.supervisorMatrixUserId
-			);
+			// Practice has no keys and nobody real to send them to.
+			if (!isPracticeOrigin)
+				void shareSupervisionHistory(
+					matrixClientService?.getClient?.(),
+					change.sideRoomId,
+					change.supervisorMatrixUserId
+				);
 		} else {
 			void postSupervisorSystemMessage(
 				origin,

@@ -20,7 +20,9 @@ export type ScriptTranslate = (key: string, options: { lng: string }) => string;
 /** Things the counsellor did. Never time, never what was typed. */
 export type ScriptAction =
 	| { type: 'counsellor-first-reply'; roomId: string }
-	| { type: 'supervisor-added' };
+	| { type: 'supervisor-added' }
+	/** FE#2545: the counsellor's first message in the supervision chat. */
+	| { type: 'counsellor-supervision-message' };
 
 export interface ScriptReaction {
 	roomId: string;
@@ -92,7 +94,11 @@ export const createScriptEngine = ({
 	const cast = {
 		asker: person('asker', t('practiceScript.cast.asker')),
 		colleague: person('colleague', t('practiceScript.cast.colleague')),
-		supervisor: person('supervisor', t('practiceScript.cast.supervisor'))
+		supervisor: person('supervisor', t('practiceScript.cast.supervisor')),
+		secondSupervisor: person(
+			'secondSupervisor',
+			t('practiceScript.cast.secondSupervisor')
+		)
 	};
 	const texts: ScriptTexts = {
 		askerFirstMessage: t('practiceScript.asker.firstMessage'),
@@ -128,6 +134,7 @@ export const createScriptEngine = ({
 							}
 						: null;
 				case 'supervisor-added':
+				case 'counsellor-supervision-message':
 					return {
 						roomId: PRACTICE_SUPERVISION_ROOM_ID,
 						sender: cast.supervisor.matrixUserId,

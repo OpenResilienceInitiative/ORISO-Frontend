@@ -23,7 +23,11 @@ describe('practice tour events', () => {
 			calendarAppointmentCancelled:
 				'practice:calendar-appointment-cancelled',
 			calendarBlockerCreated: 'practice:calendar-blocker-created',
-			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on'
+			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+			supervisionMessageSent: 'practice:supervision-message-sent',
+			supervisorReplaced: 'practice:supervisor-replaced',
+			supervisorAppointmentBooked:
+				'practice:supervisor-appointment-booked'
 		});
 	});
 

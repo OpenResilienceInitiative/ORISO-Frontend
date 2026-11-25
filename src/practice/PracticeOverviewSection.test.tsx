@@ -170,63 +170,21 @@ describe('PracticeOverviewSection', () => {
 		expect(container.innerHTML).toBe('');
 	});
 
-	describe('Supervision card', () => {
-		it('is offered while the tenant never switched the feature off', async () => {
-			renderSection({ tenant: {} });
+	describe('Supervision (FE#2545)', () => {
+		it.each([{}, null, { featureSupervisionEnabled: false }])(
+			'has no practice card any more: it is the topic tour in Rundgänge (tenant %j)',
+			async (tenant) => {
+				renderSection({ tenant });
 
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
-
-		it('is offered without any tenant data (unset means on)', async () => {
-			renderSection({ tenant: null });
-
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
-
-		it('is hidden, not greyed, when the tenant switched Supervision off', async () => {
-			renderSection({ tenant: { featureSupervisionEnabled: false } });
-
-			expect(
-				await screen.findByRole('heading', {
+				const accept = await screen.findByRole('heading', {
 					name: 'Übung: Anfrage annehmen'
-				})
-			).toBeTruthy();
-			expect(
-				screen.queryByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeNull();
-			expect(screen.queryByText(/Supervisor:in hinzuzufügen/)).toBeNull();
-		});
-
-		it('follows the tenant switch while the page is open', async () => {
-			const { rerenderWith } = renderSection({ tenant: {} });
-			await screen.findByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			});
-
-			rerenderWith({ tenant: { featureSupervisionEnabled: false } });
-			expect(
-				screen.queryByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeNull();
-
-			rerenderWith({ tenant: { featureSupervisionEnabled: true } });
-			expect(
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).toBeTruthy();
-		});
+				});
+				expect(
+					accept.closest('ul')!.querySelectorAll(':scope > li')
+				).toHaveLength(1);
+				expect(screen.queryByText(/Supervisor/)).toBeNull();
+			}
+		);
 	});
 
 	describe('on a phone', () => {
@@ -251,36 +209,11 @@ describe('PracticeOverviewSection', () => {
 		});
 	});
 
-	it.each([1199, 1200])(
-		'matches the supervision picker boundary at %ipx',
-		async (width) => {
-			const { store } = renderSection({ width });
-			const supervision = (
-				await screen.findByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
-			).closest('li')!;
-			const start = within(supervision).getByRole('button', {
-				name: 'Übung starten'
-			}) as HTMLButtonElement;
-			expect(start.disabled).toBe(width < 1200);
-			fireEvent.click(start);
-			expect(store.get(tourLaunchRequestAtom)?.tourId).toBe(
-				width < 1200 ? undefined : 'consultant-practice-supervision'
-			);
-		}
-	);
-
-	it('offers F1 at 1024px and explains why F2 needs a wider window', async () => {
+	it('offers F1 at 1024px', async () => {
 		renderSection({ width: 1024 });
 		const accept = (
 			await screen.findByRole('heading', {
 				name: 'Übung: Anfrage annehmen'
-			})
-		).closest('li')!;
-		const supervision = (
-			await screen.findByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
 			})
 		).closest('li')!;
 		expect(
@@ -290,10 +223,5 @@ describe('PracticeOverviewSection', () => {
 				}) as HTMLButtonElement
 			).disabled
 		).toBe(false);
-		expect(
-			within(supervision).getByText(
-				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
-			)
-		).toBeTruthy();
 	});
 });

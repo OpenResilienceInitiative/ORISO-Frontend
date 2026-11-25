@@ -173,9 +173,10 @@ describe('Help learning card', () => {
 			/>
 		);
 		await screen.findAllByRole('button', { name: 'Übung starten' });
+		// F1 only: Supervision is a topic tour since FE#2545.
 		expect(
 			screen.getAllByText(/Alle Personen und Inhalte sind erfunden\./)
-		).toHaveLength(2);
+		).toHaveLength(1);
 		cleanup();
 		renderHelp();
 		await screen.findAllByRole('button', { name: 'Übung starten' });
@@ -204,7 +205,11 @@ describe('Help learning card', () => {
 		).toBeTruthy();
 		expect(
 			content.getAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(2);
+		).toHaveLength(1);
+		// FE#2545: Supervision is a topic tour, no "Übung:" card any more.
+		expect(
+			content.getByRole('heading', { name: 'Supervision' })
+		).toBeTruthy();
 		// The introduction plus every topic tour of the role, one row each;
 		// the topic packages add more rows, so only the floor is fixed here.
 		expect(
@@ -288,11 +293,7 @@ describe('Help learning card', () => {
 				'Übung starten',
 				'consultant-practice-accept'
 			],
-			[
-				'Übung: Supervision hinzufügen',
-				'Übung starten',
-				'consultant-practice-supervision'
-			]
+			['Supervision', 'Starten', 'consultant-practice-supervision']
 		]) {
 			const tile = screen
 				.getByRole('heading', { name: heading })
@@ -325,19 +326,17 @@ describe('Help learning card', () => {
 		renderHelp({ supervision: false });
 		await screen.findByRole('button', { name: 'Übung starten' });
 		expect(
-			screen.queryByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			})
+			screen.queryByRole('heading', { name: 'Supervision' })
 		).toBeNull();
 	});
 
 	it.each([
-		{ width: 1199, acceptDisabled: false, supervisionDisabled: true },
-		{ width: 1200, acceptDisabled: false, supervisionDisabled: false },
-		{ width: 390, acceptDisabled: true, supervisionDisabled: true }
+		{ width: 1199, acceptDisabled: false },
+		{ width: 1200, acceptDisabled: false },
+		{ width: 390, acceptDisabled: true }
 	])(
 		'preserves the practice viewport gates at $width px',
-		async ({ width, acceptDisabled, supervisionDisabled }) => {
+		async ({ width, acceptDisabled }) => {
 			renderHelp({ width });
 			await screen.findAllByRole('button', { name: 'Übung starten' });
 			const disabled = (name: string) =>
@@ -347,9 +346,13 @@ describe('Help learning card', () => {
 					).getByRole('button') as HTMLButtonElement
 				).disabled;
 			expect(disabled('Übung: Anfrage annehmen')).toBe(acceptDisabled);
-			expect(disabled('Übung: Supervision hinzufügen')).toBe(
-				supervisionDisabled
-			);
+			// The Supervision topic tour is not a card: below its practice
+			// width it runs as an explanation (FE#2545).
+			expect(
+				screen.queryByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
+			).toBeNull();
 		}
 	);
 

@@ -300,6 +300,8 @@ import { anonymousGateKeys } from './anonymousGateStorage';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 import {
+	getPracticeSnapshot,
+	PRACTICE_SUPERVISION_TOUR_ID,
 	usePracticeActive,
 	usePracticeSupervisorsRevision
 } from '../../practice';
@@ -2658,7 +2660,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
 		}
-		if (decision.open) {
+		// Practice (FE#2545): the Supervision tour teaches opening the side
+		// room from the list row; the standing supervisor the accept brings
+		// must not open it by itself (the replace would also race the
+		// accept's redirect). A new supervisor message still opens it below.
+		const keepClosedForPractice =
+			isPracticing &&
+			decision.open?.kind === 'supervision' &&
+			getPracticeSnapshot().session?.tourId ===
+				PRACTICE_SUPERVISION_TOUR_ID;
+		if (decision.open && !keepClosedForPractice) {
 			setChannelRoute(decision.open, 'replace');
 		}
 	}, [
@@ -3193,9 +3204,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// the Supervision ⋮ (the calendar's colleague appointment as a popup).
 	// The supervisor side has nobody fixed to book: no entry there.
 	// Id and name from the same supervisor (`pickAppointmentSupervisor`).
+	// In practice too (FE#2545, Supervision tour): the fake backend answers
+	// the booking and the notice stays in the practice room.
 	const appointmentSupervisor = useMemo(
 		() =>
-			isSupervisor || isPracticing || !isConsultantUser
+			isSupervisor || !isConsultantUser
 				? undefined
 				: pickAppointmentSupervisor(
 						sessionSupervisors,
@@ -3204,7 +3217,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					),
 		[
 			isSupervisor,
-			isPracticing,
 			isConsultantUser,
 			sessionSupervisors,
 			userData?.userId,
@@ -3222,7 +3234,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					'icon': <CalendarPlusIcon aria-hidden />,
 					'title': translate('supervision.panel.bookAppointment'),
 					'onClick': () => setBookingSupervisor(true),
-					'data-cy': 'panel-menu-book-appointment'
+					'data-cy': 'panel-menu-book-appointment',
+					'tourTarget': 'supervision-book-appointment'
 				}
 			]
 		: [];
@@ -5094,6 +5107,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								<>
 									<PanelCallActions
 										menuItems={supervisionMenuItems}
+										menuTourTarget="supervision-panel-menu"
 										onStartCall={startSupervisionCall}
 										audioEnabled={
 											mayCallInSideRoom &&

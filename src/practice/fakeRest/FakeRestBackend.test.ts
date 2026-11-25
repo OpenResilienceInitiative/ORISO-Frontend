@@ -176,6 +176,11 @@ describe('FakeRestBackend', () => {
 			expect.objectContaining({
 				consultantId: script.cast.supervisor.id,
 				displayName: script.cast.supervisor.displayName
+			}),
+			// The one the Supervision tour switches to (FE#2545).
+			expect.objectContaining({
+				consultantId: script.cast.secondSupervisor.id,
+				displayName: script.cast.secondSupervisor.displayName
 			})
 		]);
 		expect(
@@ -778,5 +783,261 @@ describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
 				await backend.handle(new Request(`${calendar}/entries?${week}`))
 			)
 		).toEqual([]);
+	});
+});
+
+describe('FakeRestBackend: the Supervision topic tour (FE#2545)', () => {
+	const supervisorsUrl = `${endpoints.sessionBase}/${ID}/supervisors`;
+	const colleagues = `${endpoints.calendarBase}/colleagues`;
+	const meetings = `${endpoints.calendarBase}/colleague-appointments`;
+	const slot = {
+		start: '2026-11-26T09:00:00.000Z',
+		end: '2026-11-26T10:00:00.000Z'
+	};
+	const acceptCase = (backend: ReturnType<typeof backendFor>) =>
+		backend.handle(send(`${endpoints.sessionBase}/new/${ID}`, 'PUT'));
+	const supervisorsOf = async (backend: ReturnType<typeof backendFor>) =>
+		json(await backend.handle(new Request(supervisorsUrl)));
+
+	it('starts on the open enquiry, without a supervisor', async () => {
+		const backend = backendFor({ start: 'supervision' });
+
+		expect(backend.getCase().session.status).toBe(1);
+		expect(await supervisorsOf(backend)).toEqual([]);
+		const feed = await json(
+			await backend.handle(new Request(registeredFeed))
+		);
+		expect(feed.sessions[0].session.supervision).toBeUndefined();
+	});
+
+	it('attaches the practice standing supervisor on accept, like the real accept does', async () => {
+		const onStandingSupervisorAssigned = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onStandingSupervisorAssigned }
+		});
+
+		await acceptCase(backend);
+
+		const supervisors = await supervisorsOf(backend);
+		expect(supervisors).toEqual([
+			expect.objectContaining({
+				sessionId: ID,
+				supervisorConsultantId: script.cast.supervisor.id,
+				supervisorMatrixUserId: script.cast.supervisor.matrixUserId,
+				matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID
+			})
+		]);
+		expect(supervisors[0].id).toBeLessThan(0);
+		expect(onStandingSupervisorAssigned).toHaveBeenCalledOnce();
+		// The list row carries the supervision marker (chip and row icon).
+		const mine = await json(await backend.handle(new Request(mySessions)));
+		expect(mine.sessions[0].session.supervision).toEqual({
+			supervisedByMe: false,
+			supervisorConsultantIds: [script.cast.supervisor.id],
+			supervisorDisplayNames: [script.cast.supervisor.displayName]
+		});
+		// A second accept attaches nobody twice.
+		await acceptCase(backend);
+		expect(await supervisorsOf(backend)).toHaveLength(1);
+		expect(onStandingSupervisorAssigned).toHaveBeenCalledOnce();
+	});
+
+	it('attaches nobody on accept in the other flows', async () => {
+		const backend = backendFor({ start: 'enquiry' });
+		await acceptCase(backend);
+		expect(await supervisorsOf(backend)).toEqual([]);
+	});
+
+	it('offers the second practice supervisor and replaces the first in memory, in the same side room', async () => {
+		const onSupervisorReplaced = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorReplaced }
+		});
+		await acceptCase(backend);
+		const [robin] = await supervisorsOf(backend);
+
+		const directory = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.agencyConsultants}?agencyId=${PRACTICE_AGENCY_ID}`
+				)
+			)
+		);
+		expect(
+			directory
+				.filter((consultant: any) => consultant.isSupervisor)
+				.map((consultant: any) => consultant.consultantId)
+		).toEqual([script.cast.supervisor.id, script.cast.secondSupervisor.id]);
+
+		const replaced = await json(
+			await backend.handle(
+				send(`${supervisorsUrl}/${robin.id}`, 'PUT', {
+					supervisorConsultantId: script.cast.secondSupervisor.id,
+					notes: 'Urlaubsvertretung',
+					notifyClient: true
+				})
+			)
+		);
+
+		expect(replaced).toMatchObject({
+			supervisorConsultantId: script.cast.secondSupervisor.id,
+			supervisorMatrixUserId: script.cast.secondSupervisor.matrixUserId,
+			matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
+			notes: 'Urlaubsvertretung'
+		});
+		expect(replaced.id).toBeLessThan(0);
+		expect(await supervisorsOf(backend)).toEqual([replaced]);
+		expect(onSupervisorReplaced).toHaveBeenCalledWith(robin, replaced);
+		const mine = await json(await backend.handle(new Request(mySessions)));
+		expect(
+			mine.sessions[0].session.supervision.supervisorDisplayNames
+		).toEqual([script.cast.secondSupervisor.displayName]);
+	});
+
+	it('replaces nobody with a person who is not a practice supervisor, and passes real ids on', async () => {
+		const onSupervisorReplaced = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorReplaced }
+		});
+		await acceptCase(backend);
+		const [robin] = await supervisorsOf(backend);
+
+		expect(
+			(
+				await backend.handle(
+					send(`${supervisorsUrl}/${robin.id}`, 'PUT', {
+						supervisorConsultantId: 'a-real-consultant'
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(
+			await backend.handle(
+				send(`${endpoints.sessionBase}/4711/supervisors/1`, 'PUT', {
+					supervisorConsultantId: script.cast.secondSupervisor.id
+				})
+			)
+		).toBeNull();
+		expect(await supervisorsOf(backend)).toEqual([robin]);
+		expect(onSupervisorReplaced).not.toHaveBeenCalled();
+	});
+
+	it('names the case supervisors as the calendar reach, nobody before', async () => {
+		const backend = backendFor({ start: 'supervision' });
+		expect(
+			(await json(await backend.handle(new Request(colleagues))))
+				.colleagues
+		).toEqual([]);
+
+		await acceptCase(backend);
+
+		expect(
+			(await json(await backend.handle(new Request(colleagues))))
+				.colleagues
+		).toEqual([
+			{
+				id: script.cast.supervisor.id,
+				displayName: script.cast.supervisor.displayName,
+				agencyName: script.names.agency,
+				relation: 'SAME_AGENCY',
+				internalChat: true
+			}
+		]);
+	});
+
+	it('books an appointment with the case supervisor in memory, without an internal chat, and tells the run', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		const entry = await json(
+			await backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'PHONE'
+				})
+			)
+		);
+
+		expect(entry).toMatchObject({
+			type: 'APPOINTMENT',
+			...slot,
+			kind: 'PHONE',
+			colleagueId: script.cast.supervisor.id,
+			colleagueName: script.cast.supervisor.displayName,
+			colleagueStatus: 'PENDING'
+		});
+		expect(entry.id).toMatch(/^practice-/);
+		// No private chat of the two: the notice goes to the supervision room only.
+		expect(entry.chatId ?? null).toBeNull();
+		expect(entry.matrixRoomId ?? null).toBeNull();
+		expect(onSupervisorAppointmentBooked).toHaveBeenCalledWith(entry);
+		const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.calendarBase}/entries?${week}`)
+				)
+			)
+		).toEqual([entry]);
+		// Not an appointment with the advice seeker.
+		expect(
+			await json(
+				await backend.handle(
+					new Request(endpoints.upcomingAppointments)
+				)
+			)
+		).toEqual([]);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(endpoints.sessionAppointments(ID))
+				)
+			)
+		).toEqual([]);
+	});
+
+	it('books nothing with somebody who does not supervise the practice case', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		expect(
+			(
+				await backend.handle(
+					send(meetings, 'POST', {
+						colleagueId: 'a-real-colleague',
+						...slot,
+						kind: 'VIDEO'
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(onSupervisorAppointmentBooked).not.toHaveBeenCalled();
+	});
+
+	it('starts without supervisor and appointment again on reset', async () => {
+		const backend = backendFor({ start: 'supervision' });
+		await acceptCase(backend);
+		await backend.handle(
+			send(meetings, 'POST', {
+				colleagueId: script.cast.supervisor.id,
+				...slot,
+				kind: 'VIDEO'
+			})
+		);
+		backend.reset();
+		expect(await supervisorsOf(backend)).toEqual([]);
+		expect(backend.getCase().session.status).toBe(1);
 	});
 });

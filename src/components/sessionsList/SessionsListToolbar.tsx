@@ -284,7 +284,9 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'supervision',
 		labelKey: 'sessionList.toolbar.chips.supervision',
 		Icon: SupervisionFilterIcon,
-		dataCy: 'sessions-list-chip-supervision'
+		dataCy: 'sessions-list-chip-supervision',
+		// FE#2545: the Supervision topic tour shows where supervised cases are.
+		tourTarget: 'sessions-supervision-chip'
 	},
 	{
 		id: 'groups',

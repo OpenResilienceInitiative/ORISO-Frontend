@@ -1,6 +1,7 @@
 import { tourAvailability } from './tourCatalogue';
 import { consultantCalendarTour } from './tours/calendarTour';
 import { consultantCaseHandoverTour } from './tours/caseHandoverTour';
+import { consultantSupervisionTour } from './tours/supervisionTour';
 import {
 	consultantGroupCircleTour,
 	isGroupCircleTourAvailable
@@ -141,6 +142,7 @@ export const consultantMailCounsellingTour: TourDefinition = {
  */
 export const frontendTopicTours: TourDefinition[] = [
 	consultantCaseHandoverTour,
+	consultantSupervisionTour,
 	consultantCalendarTour,
 	consultantGroupCircleTour,
 	consultantProfileTour,

@@ -30,7 +30,15 @@ export const PRACTICE_TOUR_EVENTS = {
 	/** A Sperrzeit was entered. */
 	calendarBlockerCreated: 'practice:calendar-blocker-created',
 	/** The Sprechstunden were saved with automatic confirmation on. */
-	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on'
+	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+	/** The Supervision tour (FE#2545): the counsellor wrote in the
+	 * supervision chat (not a system notice). */
+	supervisionMessageSent: 'practice:supervision-message-sent',
+	/** "Wechseln" in "Supervisor verwalten": another practice supervisor
+	 * took over. */
+	supervisorReplaced: 'practice:supervisor-replaced',
+	/** "Termin mit Supervisor:in vereinbaren" was saved in memory. */
+	supervisorAppointmentBooked: 'practice:supervisor-appointment-booked'
 } as const;
 
 export type PracticeTourEventName =
