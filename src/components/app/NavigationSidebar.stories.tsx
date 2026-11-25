@@ -54,7 +54,7 @@ function RuntimeNavigationRail({
 			tenantSettings={tenantSettings}
 			onLogout={() => setLogoutClicked(true)}
 			displayEntry={
-				role === 'asker' && layout === 'mobile' ? (
+				role === 'asker' ? (
 					<PersonalDisplayControls
 						preferences={displayPreferences}
 						onChange={setDisplayPreferences}
@@ -612,4 +612,56 @@ export const RuntimeConsultantRailNoOpenEnquiries: Story = {
 			)
 		).toBeNull();
 	}
+};
+
+/**
+ * P0 2026-11-25 ("Anzeige-Button ist futsch"): the asker's "Anzeige" entry
+ * below "Abmelden" follows the rail item recipe — icon slot above the label,
+ * both inside the panel — instead of an outlined pill with a spilling label.
+ */
+const expectDisplayEntryInRail = async (canvasElement: HTMLElement) => {
+	const entry = await waitFor(() => {
+		const button = canvasElement.querySelector<HTMLElement>(
+			'.navigation__wrapper > .personalDisplayEntry--navigation button'
+		);
+		expect(button).not.toBeNull();
+		return button as HTMLElement;
+	});
+	const rail = canvasElement
+		.querySelector('.navigation__wrapper')!
+		.getBoundingClientRect();
+	const icon = entry
+		.querySelector('.personalDisplayEntry__icon')!
+		.getBoundingClientRect();
+	const label = entry
+		.querySelector('.personalDisplayEntry__label')!
+		.getBoundingClientRect();
+	const logoutSlot = canvasElement
+		.querySelector('.navigation__icon-slot--logout')!
+		.getBoundingClientRect();
+
+	await expect(getComputedStyle(entry).borderTopWidth).toBe('0px');
+	await expect(Math.round(icon.width)).toBe(Math.round(logoutSlot.width));
+	await expect(Math.round(icon.left)).toBe(Math.round(logoutSlot.left));
+	await expect(label.top).toBeGreaterThanOrEqual(icon.bottom);
+	await expect(icon.left).toBeGreaterThanOrEqual(rail.left);
+	await expect(icon.right).toBeLessThanOrEqual(rail.right);
+	await expect(label.bottom).toBeLessThanOrEqual(rail.bottom);
+};
+
+export const RuntimeAskerRailDisplayEntry: Story = {
+	name: 'Runtime asker rail — Anzeige entry inside the panel',
+	args: { role: 'asker', layout: 'desktop' },
+	parameters: {
+		router: { initialPath: '/sessions/user/view/session/123' }
+	},
+	play: async ({ canvasElement }) => {
+		await expectDisplayEntryInRail(canvasElement);
+	}
+};
+
+export const RuntimeAskerRailDisplayEntryDark: Story = {
+	...RuntimeAskerRailDisplayEntry,
+	name: 'Runtime asker rail — Anzeige entry inside the panel, dark',
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } }
 };
