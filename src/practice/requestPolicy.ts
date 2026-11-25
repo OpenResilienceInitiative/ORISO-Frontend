@@ -3,13 +3,18 @@
  * `NetworkGuard` and the Playwright proof (`assertNoPracticeWrites`). Keep it
  * free of app imports: the Playwright run loads this file outside the app.
  *
- * Default-deny: only GET/HEAD/OPTIONS pass; of everything else exactly two
- * requests are allowed: the progress write of the running tour and the
- * identity-provider token refresh. Anything unparseable or unreadable fails
- * closed.
+ * Default-deny: only GET/HEAD/OPTIONS pass; of everything else exactly three
+ * requests are allowed: the progress write of the running tour, the
+ * identity-provider token refresh and the real live-chat availability
+ * heartbeat (Frank, 2026-11-25, FE#2545: a counsellor who is really available
+ * stays in the real queue while practising). Anything unparseable or
+ * unreadable fails closed.
  */
 
-export type AllowlistEntry = 'tutorial-progress' | 'token-refresh';
+export type AllowlistEntry =
+	| 'tutorial-progress'
+	| 'token-refresh'
+	| 'livechat-heartbeat';
 
 export type BlockReason = 'default-deny' | 'body-rejected' | 'unparseable-url';
 
@@ -20,6 +25,12 @@ export interface RequestPolicyConfig {
 	tutorialProgressUrl: string;
 	/** Absolute URL of the identity provider's token endpoint. */
 	tokenRefreshUrl: string;
+	/**
+	 * Absolute URL of `POST …/availability/heartbeat`. It only renews a lease
+	 * the counsellor already holds for real; it never switches anyone on.
+	 * Absent = not allowed (e.g. the Playwright proof).
+	 */
+	liveChatHeartbeatUrl?: string;
 }
 
 export interface PolicyRequest {
@@ -93,6 +104,13 @@ export const findAllowlistCandidate = (
 	if (upper === 'POST' && isEndpoint(parsed, config.tokenRefreshUrl)) {
 		return 'token-refresh';
 	}
+	if (
+		upper === 'POST' &&
+		config.liveChatHeartbeatUrl !== undefined &&
+		isEndpoint(parsed, config.liveChatHeartbeatUrl)
+	) {
+		return 'livechat-heartbeat';
+	}
 	return null;
 };
 
@@ -145,6 +163,10 @@ export const bodyMatchesAllowlistEntry = (
 		bodyText.length > MAX_ALLOWLISTED_BODY_LENGTH
 	) {
 		return false;
+	}
+	if (entry === 'livechat-heartbeat') {
+		// The app sends the heartbeat without a body; anything else is not it.
+		return bodyText === '';
 	}
 	return entry === 'tutorial-progress'
 		? isTutorialProgressBody(bodyText, config)
