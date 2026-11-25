@@ -5549,12 +5549,13 @@
 				"not_started": "Not started",
 				"in_progress": "In progress",
 				"completed": "Completed",
-				"skipped": "Skipped"
+				"skipped": "Skipped",
+				"completedOn": "Completed on {{date}}"
 			},
 			"action": {
 				"start": "Start",
 				"continue": "Continue",
-				"restart": "Restart"
+				"restart": "Start again"
 			}
 		},
 		"step": {
@@ -5611,7 +5612,8 @@
 			"hint": {
 				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
 				"off": "Off: the “?” button is hidden. You can still find your tours here."
-			}
+			},
+			"autoHide": "The “?” button hides itself while a conversation is open, a tour is running or the call bar is showing."
 		}
 	},
 	"anonymousChat": {
@@ -6441,7 +6443,13 @@
 			"title": "Tours",
 			"open": "Open tours",
 			"close": "Close tours",
-			"manage": "Manage tours"
+			"manage": "Manage tours",
+			"hide": "Hide help button",
+			"hideConfirm": "Hide?",
+			"hideWhere": "Show it again under Help → Tours",
+			"resetPosition": "Reset position",
+			"dragHint": "Drag to move",
+			"moveHint": "Drag or press Alt + arrow keys to move"
 		},
 		"caseHandover": {
 			"title": "Handing over cases",

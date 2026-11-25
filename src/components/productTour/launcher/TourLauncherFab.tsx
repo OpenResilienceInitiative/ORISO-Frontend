@@ -24,6 +24,7 @@ import {
 	type TourLauncherProgress
 } from './TourLauncherMenu';
 import { useTourLauncherVisible } from './tourLauncherPreference';
+import { useTourLauncherPosition } from './tourLauncherPosition';
 
 export const HELP_TOURS_PATH = '/profile/hilfe/rundgaenge';
 
@@ -61,7 +62,10 @@ export const TourLauncherFab = () => {
 	const navigate = useNavigate();
 	const activeTourId = useAtomValue(activeTourIdAtom);
 	const requestTourLaunch = useSetAtom(tourLaunchRequestAtom);
-	const [userWantsLauncher] = useTourLauncherVisible(userData?.userId);
+	const [userWantsLauncher, setUserWantsLauncher] = useTourLauncherVisible(
+		userData?.userId
+	);
+	const [position, setPosition] = useTourLauncherPosition(userData?.userId);
 	const otherSurfaces = useFloatingSurfaces().filter(
 		(id) => id !== 'tour-launcher'
 	).length;
@@ -120,6 +124,10 @@ export const TourLauncherFab = () => {
 			onOpen={refreshProgress}
 			onStartTour={startTour}
 			onManage={() => navigate(HELP_TOURS_PATH)}
+			position={position}
+			onMove={setPosition}
+			// Shown again under Profil → Hilfe → Rundgänge (the switch).
+			onHide={() => setUserWantsLauncher(false)}
 		/>
 	);
 };

@@ -6,6 +6,7 @@ import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import type { TourAudience, TourDefinition, TourStatus } from './types';
+import { TourStatusLabel } from './TourStatusLabel';
 import './productTour.styles.scss';
 
 export type TourStartMode = 'start' | 'continue' | 'restart';
@@ -17,7 +18,11 @@ export interface TourOverviewCarouselProps {
 	loadProgress: () => Promise<
 		Pick<
 			ITutorialProgressItem,
-			'tourId' | 'tourVersion' | 'status' | 'currentStepId'
+			| 'tourId'
+			| 'tourVersion'
+			| 'status'
+			| 'currentStepId'
+			| 'completedAt'
 		>[]
 	>;
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
@@ -64,7 +69,11 @@ export const TourOverviewCarousel = ({
 	const [progress, setProgress] = useState<
 		Pick<
 			ITutorialProgressItem,
-			'tourId' | 'tourVersion' | 'status' | 'currentStepId'
+			| 'tourId'
+			| 'tourVersion'
+			| 'status'
+			| 'currentStepId'
+			| 'completedAt'
 		>[]
 	>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -95,11 +104,11 @@ export const TourOverviewCarousel = ({
 			tour.surface === 'frontend' && tour.audiences.includes(audience)
 	);
 
-	const statusFor = (tour: TourDefinition): TourStatus =>
+	const progressFor = (tour: TourDefinition) =>
 		progress.find(
 			(item) =>
 				item.tourId === tour.id && item.tourVersion === tour.version
-		)?.status ?? 'not_started';
+		);
 
 	if (isLoading) {
 		return null;
@@ -133,7 +142,9 @@ export const TourOverviewCarousel = ({
 					aria-label={translate('walkthrough.overview.title')}
 				>
 					{eligibleTours.map((tour) => {
-						const status = statusFor(tour);
+						const item = progressFor(tour);
+						const status: TourStatus =
+							item?.status ?? 'not_started';
 						const mode = actionForStatus(status);
 						return (
 							<li
@@ -143,9 +154,10 @@ export const TourOverviewCarousel = ({
 								<span
 									className={`tourOverview__status tourOverview__status--${status}`}
 								>
-									{translate(
-										`walkthrough.overview.status.${status}`
-									)}
+									<TourStatusLabel
+										status={status}
+										completedAt={item?.completedAt}
+									/>
 								</span>
 								<h3 className="tourOverview__cardTitle">
 									{translate(tour.titleKey)}

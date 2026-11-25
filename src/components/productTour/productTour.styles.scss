@@ -230,3 +230,18 @@
 		}
 	}
 }
+
+// A completed tour: check mark + "Abgeschlossen am …" (FE#2545), in the
+// launcher menu and on the Help → Rundgänge cards. Colour follows the text.
+.tourStatusLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+
+	&__icon {
+		flex: none;
+		width: 16px;
+		height: 16px;
+		fill: currentcolor;
+	}
+}

@@ -5584,12 +5584,13 @@
 				"not_started": "Başlatılmadı",
 				"in_progress": "Devam ediyor",
 				"completed": "Tamamlandı",
-				"skipped": "Atlandı"
+				"skipped": "Atlandı",
+				"completedOn": "{{date}} tarihinde tamamlandı"
 			},
 			"action": {
 				"start": "Başlat",
 				"continue": "Devam et",
-				"restart": "Yeniden başlat"
+				"restart": "Tekrar başlat"
 			}
 		},
 		"step": {
@@ -5646,7 +5647,8 @@
 			"hint": {
 				"on": "Açık: sağ alttaki „?“ düğmesi turlarınızı açar. Bir görüşme açıkken gizlenir.",
 				"off": "Kapalı: „?“ düğmesi gizli. Turlarınızı yine burada bulabilirsiniz."
-			}
+			},
+			"autoHide": "„?“ düğmesi bir görüşme açıkken, bir tur sürerken veya arama çubuğu görünürken kendiliğinden gizlenir."
 		}
 	},
 	"consultingTypes": {
@@ -6526,7 +6528,13 @@
 			"title": "Turlar",
 			"open": "Turları aç",
 			"close": "Turları kapat",
-			"manage": "Turları yönet"
+			"manage": "Turları yönet",
+			"hide": "Yardım düğmesini gizle",
+			"hideConfirm": "Gizlensin mi?",
+			"hideWhere": "Yardım → Turlar altında yeniden gösterebilirsiniz",
+			"resetPosition": "Konumu sıfırla",
+			"dragHint": "Taşımak için sürükleyin",
+			"moveHint": "Taşımak için sürükleyin veya Alt + ok tuşlarına basın"
 		},
 		"caseHandover": {
 			"title": "Vakaları devretmek",

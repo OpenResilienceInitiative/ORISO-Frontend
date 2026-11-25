@@ -40,7 +40,31 @@ $tour-launcher-footer-clearance: 40px;
 	}
 
 	&__card {
-		max-height: min(520px, calc(100vh - 160px));
+		max-height: var(
+			--tourLauncher-menu-space,
+			min(520px, calc(100vh - 160px))
+		);
+	}
+
+	// Moved by the user (FE#2545): the inline style sets the edges; the card
+	// opens toward the free side, away from the edge the button sits at.
+	&--left {
+		align-items: flex-start;
+
+		.tourLauncher__menu {
+			right: auto;
+			left: 0;
+		}
+	}
+
+	&--top .tourLauncher__menu {
+		top: calc(100% + 4px);
+		bottom: auto;
+	}
+
+	&--moved .tourLauncher__card {
+		display: flex;
+		flex-direction: column;
 	}
 
 	&__list {
@@ -52,6 +76,52 @@ $tour-launcher-footer-clearance: 40px;
 
 	&__fab {
 		@include floating-action-button;
+
+		// The FAB is its own drag handle (mouse, touch, pen).
+		touch-action: none;
+	}
+
+	&--dragging &__fab {
+		cursor: grabbing;
+	}
+
+	// Grip dots on the leading edge, on hover and keyboard focus.
+	&__grip {
+		position: absolute;
+		top: 50%;
+		left: 6px;
+		width: 6px;
+		height: 14px;
+		translate: 0 -50%;
+		background-image: radial-gradient(
+			circle,
+			currentcolor 1px,
+			transparent 1.5px
+		);
+		background-size: 4px 4px;
+		opacity: 0;
+		cursor: grab;
+	}
+
+	&__fab:hover &__grip,
+	&__fab:focus-visible &__grip,
+	&--dragging &__grip {
+		opacity: 0.72;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		&__grip {
+			transition: opacity 120ms ease;
+		}
+
+		// A keyboard step or a reset glides; a drag follows the pointer.
+		&.tourLauncher--moved:not(.tourLauncher--dragging) {
+			transition:
+				left 120ms ease,
+				right 120ms ease,
+				top 120ms ease,
+				bottom 120ms ease;
+		}
 	}
 
 	&__fabIcon {
