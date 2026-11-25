@@ -139,7 +139,7 @@ const hkdf = (purpose: string, userId: string): HkdfParams => ({
 	info: domain(purpose, userId)
 });
 
-const importSeed = async (value: Uint8Array, usage: KeyUsage) => {
+const importSeed = async (value: Uint8Array<ArrayBuffer>, usage: KeyUsage) => {
 	try {
 		return await crypto.subtle.importKey('raw', value, 'HKDF', false, [
 			usage
@@ -149,7 +149,7 @@ const importSeed = async (value: Uint8Array, usage: KeyUsage) => {
 	}
 };
 
-const toBytes = (encoded: string): Uint8Array => {
+const toBytes = (encoded: string): Uint8Array<ArrayBuffer> => {
 	const value = Uint8Array.from(decodeBase64(encoded));
 	if (encodeUnpaddedBase64Url(value) !== encoded)
 		throw new Error('Invalid draft encoding');
@@ -212,7 +212,10 @@ const makeCryptography = (session: DraftSession): DraftCryptography => {
 			throw new Error('Draft encryption is locked');
 		return session.keys;
 	};
-	const envelopeParams = (scope: string, iv: Uint8Array): AesGcmParams => {
+	const envelopeParams = (
+		scope: string,
+		iv: Uint8Array<ArrayBuffer>
+	): AesGcmParams => {
 		if (!isOpaqueDraftScope(scope)) throw new Error('Invalid draft scope');
 		return {
 			name: 'AES-GCM',

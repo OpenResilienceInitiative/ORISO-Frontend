@@ -247,6 +247,18 @@ export const useConsultationHoursForm = ({
 				new Date(e.end) > onceStart
 		);
 
+	const timesWrong =
+		onceInvalid ||
+		onceTooShort ||
+		onceTooLate ||
+		onceTooLong ||
+		onceOverlaps;
+	const timesErrorRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (timesWrong)
+			timesErrorRef.current?.scrollIntoView?.({ block: 'nearest' });
+	}, [timesWrong]);
+
 	const modeSwitch = onSaveOneOff && (
 		<div
 			className="calendarNewEntry__tabs"
@@ -298,7 +310,7 @@ export const useConsultationHoursForm = ({
 						ampm={false}
 						value={once.start}
 						onChange={(start) => setOnce((o) => ({ ...o, start }))}
-						error={onceInvalid}
+						error={timesWrong}
 						disabled={saving}
 						cancelLabel={t('app.cancel')}
 						id="consultation-once-start"
@@ -308,13 +320,49 @@ export const useConsultationHoursForm = ({
 						ampm={false}
 						value={once.end}
 						onChange={(end) => setOnce((o) => ({ ...o, end }))}
-						error={onceInvalid}
+						error={timesWrong}
 						disabled={saving}
 						cancelLabel={t('app.cancel')}
 						id="consultation-once-end"
 					/>
 				</div>
 			</div>
+			{/* Said right under the times they are about, so the message
+			    stays in view on a short screen (Dev test, 24 Nov 2026). */}
+			{timesWrong && (
+				<div
+					ref={timesErrorRef}
+					className="calendarConsultation__onceErrors"
+				>
+					{onceInvalid && (
+						<p className="calendarDialog__error" role="alert">
+							{t('calendar.consultationHours.onceInvalid')}
+						</p>
+					)}
+					{onceTooShort && (
+						<p className="calendarDialog__error" role="alert">
+							{t('calendar.consultationHours.onceTooShort', {
+								count: hours.slotMinutes
+							})}
+						</p>
+					)}
+					{onceTooLate && (
+						<p className="calendarDialog__error" role="alert">
+							{t('calendar.consultationHours.onceTooLate')}
+						</p>
+					)}
+					{onceTooLong && (
+						<p className="calendarDialog__error" role="alert">
+							{t('calendar.consultationHours.onceTooLong')}
+						</p>
+					)}
+					{onceOverlaps && (
+						<p className="calendarDialog__error" role="alert">
+							{t('calendar.consultationHours.onceOverlap')}
+						</p>
+					)}
+				</div>
+			)}
 			<div className="calendarHours__select">
 				<OrisoSelect
 					label={t('calendar.consultationHours.onceNotice')}
@@ -348,33 +396,6 @@ export const useConsultationHoursForm = ({
 					data-testid="consultation-once-over-blocker"
 				>
 					{t('calendar.consultationHours.overBlocker')}
-				</p>
-			)}
-			{onceInvalid && (
-				<p className="calendarDialog__error" role="alert">
-					{t('calendar.consultationHours.onceInvalid')}
-				</p>
-			)}
-			{onceTooShort && (
-				<p className="calendarDialog__error" role="alert">
-					{t('calendar.consultationHours.onceTooShort', {
-						count: hours.slotMinutes
-					})}
-				</p>
-			)}
-			{onceTooLate && (
-				<p className="calendarDialog__error" role="alert">
-					{t('calendar.consultationHours.onceTooLate')}
-				</p>
-			)}
-			{onceTooLong && (
-				<p className="calendarDialog__error" role="alert">
-					{t('calendar.consultationHours.onceTooLong')}
-				</p>
-			)}
-			{onceOverlaps && (
-				<p className="calendarDialog__error" role="alert">
-					{t('calendar.consultationHours.onceOverlap')}
 				</p>
 			)}
 			{onceLimitReached && (

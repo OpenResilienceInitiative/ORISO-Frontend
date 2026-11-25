@@ -87,9 +87,18 @@ export const usePassageReplies = ({
 			return;
 		}
 		keyRef.current = conversationKey;
+		// Dropped answers never come back, so their takes are released
+		// through the recorder that owns them (it may be shared with the
+		// main chat and outlive this queue). Rows in flight already left
+		// `pending` and settle on their own.
+		pendingRef.current.forEach((row) => {
+			if (row.voice) {
+				releaseVoice?.(row.voice.src);
+			}
+		});
 		setPending([]);
 		carriedTextRef.current = '';
-	}, [conversationKey]);
+	}, [conversationKey, releaseVoice]);
 
 	const dispatch = useCallback(
 		async (rows: Collected[], typedText: string) => {
@@ -113,6 +122,12 @@ export const usePassageReplies = ({
 				if (keyRef.current === key) {
 					setPending((current) => [...rows, ...current]);
 					carriedTextRef.current = text;
+				} else {
+					// The conversation changed meanwhile: these rows never
+					// come back, so their takes are released now.
+					rows.forEach(
+						(row) => row.voice && releaseVoice?.(row.voice.src)
+					);
 				}
 				onSendFailed?.(error);
 			} finally {

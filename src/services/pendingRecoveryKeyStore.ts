@@ -82,7 +82,7 @@ const canSeal = (): boolean =>
 
 const toBase64 = (bytes: ArrayBuffer | Uint8Array): string =>
 	btoa(String.fromCharCode(...new Uint8Array(bytes)));
-const fromBase64 = (text: string): Uint8Array =>
+const fromBase64 = (text: string): Uint8Array<ArrayBuffer> =>
 	Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
 const aad = (userId: string) => new TextEncoder().encode(userId);
 

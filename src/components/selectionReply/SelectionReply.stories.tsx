@@ -40,7 +40,8 @@ import { focusSessionChromeOnPointerDown } from '../session/focusSessionChrome';
 import { mockE2eeParams } from '../message/MessageItemComponent.mocks';
 import type { MessageItem } from '../message/MessageItemComponent';
 import type { StackParticipant } from '../message/participantStack';
-import { phone390Globals } from '../message/messageStoryShell';
+import { phone320Globals, phone390Globals } from '../message/messageStoryShell';
+import { a11yExcept } from '../../../.storybook/a11yExceptions';
 import { createSilentWavUrl } from '../voicePlayer/__storybook__/silentAudio';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { ChatStageProviders } from '../chatStage/__storybook__/ChatStageProviders';
@@ -616,7 +617,7 @@ export const Toolbar: Story = {
 			{ timeout: 3000 }
 		);
 		const buttons = within(bar).getAllByRole('button');
-		await expect(buttons[0]).toHaveTextContent('Antworten');
+		await expect(buttons[0]).toHaveTextContent('Hier antworten');
 		await expect(buttons[buttons.length - 1]).toHaveAccessibleName(
 			'Thread'
 		);
@@ -746,6 +747,72 @@ export const PhonePopover: Story = {
 	globals: phone390Globals,
 	args: {
 		preset: { eventId: '$m5', text: SLEEP_PASSAGE, mode: 'popover' }
+	}
+};
+
+/**
+ * Smallest phone, recording: the level dots give way instead of pushing the
+ * row out of the answer field, and the newest level (right) stays visible.
+ */
+export const PhonePopoverRecording320: Story = {
+	name: 'Telefon 320 — Sprachnachricht, Aufnahme läuft',
+	globals: phone320Globals,
+	parameters: {
+		// The close glyph is 20 px, its touch area 44 px (`::before`, inset
+		// -12 px). axe does not count the pseudo-element, and at 320 px the
+		// popover sits next to a message's ⋮ button.
+		a11y: a11yExcept({ 'target-size': ['.selectionReply__close'] })
+	},
+	args: {
+		preset: {
+			eventId: '$m5',
+			text: SLEEP_PASSAGE,
+			mode: 'popover',
+			voice: { mode: 'recording', durationSec: 7 }
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const popover = await waitForElement(
+			() =>
+				canvasElement.querySelector<HTMLElement>(
+					'.selectionReply__popover'
+				),
+			'answer field'
+		);
+		const strip = await waitForElement(
+			() =>
+				popover.querySelector<HTMLElement>(
+					'[data-testid="voice-level-dots"]'
+				),
+			'level dots'
+		);
+		const box = popover.getBoundingClientRect();
+		// Nothing in the answer field sticks out on the right; the dots
+		// themselves may be clipped by their strip.
+		for (const element of Array.from(
+			popover.querySelectorAll<HTMLElement>('*')
+		)) {
+			if (!strip.contains(element) || element === strip) {
+				await expect(
+					element.getBoundingClientRect().right
+				).toBeLessThanOrEqual(box.right + 0.5);
+			}
+		}
+		const stripBox = strip.getBoundingClientRect();
+		// The recorder pill keeps the stop button, dots and clock inside.
+		const pill = strip.closest<HTMLElement>('.voicePlayer')!;
+		await expect(pill.scrollWidth).toBeLessThanOrEqual(pill.clientWidth);
+		await expect(stripBox.right).toBeLessThanOrEqual(
+			pill.getBoundingClientRect().right + 0.5
+		);
+		await expect(stripBox.width).toBeGreaterThan(0);
+		// The newest level (rightmost dot) stays inside the visible strip.
+		const dots = strip.querySelectorAll<HTMLElement>(
+			'.voiceLevelDots__dot'
+		);
+		const newest = dots[dots.length - 1].getBoundingClientRect();
+		await expect(newest.left).toBeGreaterThanOrEqual(stripBox.left - 0.5);
+		await expect(newest.right).toBeLessThanOrEqual(stripBox.right + 0.5);
 	}
 };
 
@@ -924,9 +991,7 @@ export const FourAnswersLongMessage: Story = {
 };
 
 const pressAnswer = (bar: HTMLElement) =>
-	within(bar)
-		.getByRole('button', { name: /Antworten/ })
-		.click();
+	within(bar).getByRole('button', { name: 'Hier antworten' }).click();
 
 const pressVoice = (bar: HTMLElement) =>
 	within(bar)

@@ -32,6 +32,7 @@ import { OrisoCalendar } from '../form/OrisoCalendar';
 import { OrisoDatePicker } from '../form/OrisoDatePicker';
 import { OrisoSelect } from '../form/OrisoSelect';
 import { OrisoTimePicker } from '../form/OrisoTimePicker';
+import { OrisoTextField } from '../form/OrisoTextField';
 import { M3Dialog, type M3DialogAction } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import { appointmentSlotError } from '../sessionsList/timeline/conversationAppointments';
@@ -50,7 +51,10 @@ import {
 	type InvitationPreset,
 	type InvitationSlot
 } from './invitationModel';
-import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
+import {
+	DIRECT_LINK_NAME_MAX,
+	type DirectLinkMedium
+} from '../conversationCreate/directLink/directLink';
 import { ValidityStepper } from './ValidityStepper';
 import '../conversationCreate/directLink/directLink.styles.scss';
 import './directInvitation.styles.scss';
@@ -163,6 +167,18 @@ export interface InvitationFormProps {
 	icon?: React.ReactNode;
 	/** Test ids the door's own tests rely on. */
 	testIds?: { root?: string; submit?: string };
+	/**
+	 * #2494 *1: what the "Chat erstellen" card asks before a new link (topic,
+	 * optional name), so a door outside "Gespräche" (the calendar) creates
+	 * the Direkteinladung in this one popup. The topic choice shows only
+	 * with more than one topic; the value carries `linkDetails`.
+	 */
+	linkDetails?: {
+		topics: { value: string; label: string }[];
+		/** The topics could not load: say so and offer a retry in place. */
+		loadFailed?: boolean;
+		onRetry?: () => void;
+	};
 }
 
 export interface InvitationDialogProps extends InvitationFormProps {
@@ -224,7 +240,8 @@ export const useInvitationForm = ({
 	now,
 	description,
 	icon,
-	testIds = {}
+	testIds = {},
+	linkDetails
 }: InvitationFormProps): InvitationForm => {
 	const { t } = useTranslation();
 	const id = useId();
@@ -277,8 +294,14 @@ export const useInvitationForm = ({
 	});
 	const [formError, setFormError] = useState<{
 		text: string;
-		field?: 'conversation';
+		field?: 'conversation' | 'topic';
 	}>();
+	const [pickedTopic, setPickedTopic] = useState('');
+	const [linkName, setLinkName] = useState('');
+	const detailTopics = linkDetails?.topics ?? [];
+	const topic =
+		detailTopics.length === 1 ? detailTopics[0].value : pickedTopic;
+	const topicLabel = detailTopics.find((o) => o.value === topic)?.label;
 
 	const newPerson = conversation === NEW_PERSON;
 	/* The backend refuses a link whose medium is not allowed, after the
@@ -338,6 +361,23 @@ export const useInvitationForm = ({
 			});
 			return;
 		}
+		if (linkDetails && !topic) {
+			setFormError({
+				text: t('directLink.card.topicLabel'),
+				field: 'topic'
+			});
+			return;
+		}
+		/* #2494 *1 review: the Direkteinladung takes the Art's medium. An Art
+		   whose medium is not allowed is refused here, never swapped for
+		   another medium the counsellor did not choose. */
+		if (newPerson && kindMediumOff) {
+			setFormError({
+				text: t(`${KEYS}.inviteOthersMediumOff`),
+				field: 'conversation'
+			});
+			return;
+		}
 		setFormError(undefined);
 		if (newPerson && appointment) {
 			conversations?.onInviteNewPerson?.({
@@ -358,6 +398,16 @@ export const useInvitationForm = ({
 				: null,
 			...(withKind ? { kind } : {}),
 			...(conversations ? { sessionId: Number(conversation) } : {}),
+			...(linkDetails
+				? {
+						linkDetails: {
+							topic,
+							...(linkName.trim()
+								? { name: linkName.trim() }
+								: {})
+						}
+					}
+				: {}),
 			...(mode === 'edit'
 				? {
 						changed: {
@@ -427,6 +477,50 @@ export const useInvitationForm = ({
 
 	const fields = (
 		<div className="invitationDialog__fields">
+			{linkDetails && (
+				<section
+					className="invitationDialog__details"
+					data-section="details"
+				>
+					{linkDetails.loadFailed && (
+						<p className="invitationDialog__error" role="alert">
+							{t('groupChat.loadError.topics')}{' '}
+							{linkDetails.onRetry && (
+								<button
+									type="button"
+									onClick={linkDetails.onRetry}
+								>
+									{t('groupChat.loadError.retry')}
+								</button>
+							)}
+						</p>
+					)}
+					{detailTopics.length > 1 && (
+						<OrisoSelect
+							label={t('directLink.card.topicLabel')}
+							value={topic}
+							options={detailTopics}
+							onChange={(event) =>
+								setPickedTopic(String(event.target.value))
+							}
+							error={formError?.field === 'topic'}
+							fullWidth
+						/>
+					)}
+					<OrisoTextField
+						id={`${id}-name`}
+						label={t('directLink.card.name')}
+						placeholder={topicLabel}
+						value={linkName}
+						onChange={(event) => setLinkName(event.target.value)}
+						helperText={t('directLink.card.nameHint')}
+						inputProps={{ maxLength: DIRECT_LINK_NAME_MAX }}
+						InputLabelProps={{ shrink: true }}
+						size="small"
+						fullWidth
+					/>
+				</section>
+			)}
 			{conversations && (
 				<section data-section="conversation">
 					<OrisoSelect

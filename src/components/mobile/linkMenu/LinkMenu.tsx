@@ -8,6 +8,8 @@ import './link_menu.styles';
 
 export type LinkMenuComponentType = {
 	component: ReactNode;
+	/** Stable React key; entries can appear and disappear by condition. */
+	key?: string;
 };
 
 export type LinkMenuItemType = {
@@ -48,11 +50,14 @@ export const isLinkMenuItem = (
 export const LinkMenu = ({ items, className }: LinkMenuProps) => {
 	return (
 		<div className={`link_menu ${className}`}>
-			{items.map((item) =>
+			{items.map((item, index) =>
 				isLinkMenuGroup(item) ? (
 					<LinkMenuGroup item={item} key={item.title} />
 				) : isLinkMenuComponent(item) ? (
-					<LinkMenuComponent item={item} />
+					<LinkMenuComponent
+						item={item}
+						key={item.key ?? `component-${index}`}
+					/>
 				) : (
 					<LinkMenuItem item={item} key={item.title} />
 				)
@@ -65,9 +70,12 @@ const LinkMenuGroup = ({ item }: { item: LinkMenuGroupType }) => {
 	return (
 		<div className="link_menu__group">
 			<div className="title">{item.title}</div>
-			{item.items.map((i) =>
+			{item.items.map((i, index) =>
 				isLinkMenuComponent(i) ? (
-					<LinkMenuComponent item={i} />
+					<LinkMenuComponent
+						item={i}
+						key={i.key ?? `${item.title}-component-${index}`}
+					/>
 				) : (
 					<LinkMenuItem item={i} key={item.title + i.title} />
 				)

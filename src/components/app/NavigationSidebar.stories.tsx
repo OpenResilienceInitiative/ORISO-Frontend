@@ -309,11 +309,7 @@ export const RuntimeConsultantMobile: Story = {
 		role: 'consultant',
 		layout: 'mobile'
 	},
-	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		}
-	},
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	play: async ({ canvasElement }) => {
 		const itemContainer = canvasElement.querySelector(
 			'.navigation__itemContainer'
@@ -366,11 +362,7 @@ export const RuntimeConsultantMobileWithoutLiveChatPreference: Story = {
 		layout: 'mobile',
 		liveChatViaSidebar: false
 	},
-	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		}
-	},
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	play: async ({ canvasElement }) => {
 		await expect(
 			canvasElement.querySelector('.navigation__item--nav-logout')
@@ -386,10 +378,8 @@ export const RuntimeAskerMobile: Story = {
 		role: 'asker',
 		layout: 'mobile'
 	},
+	globals: { viewport: { value: 'mobile1', isRotated: false } },
 	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		},
 		router: {
 			initialPath: '/sessions/user/view/session/123'
 		}

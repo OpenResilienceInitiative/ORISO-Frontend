@@ -326,6 +326,9 @@ const storySessionSupervisors = ['bettina.b', 'kim', 'ali', 'jo'].map(
 	})
 );
 
+/* FE#2494: the own calendar; a story with a supervisor appointment fills it. */
+let storyCalendarEntries: unknown[] = [];
+
 const jsonResponse = (body: unknown) =>
 	new Response(JSON.stringify(body), {
 		status: 200,
@@ -349,6 +352,11 @@ const installHeaderFetchMocks = () => {
 		}
 		if (url.split('?')[0].endsWith('/service/users/consultants')) {
 			return jsonResponse([]);
+		}
+		// FE#2494: the header looks for an appointment with the supervisor
+		// in the own calendar.
+		if (url.split('?')[0].endsWith('/service/users/calendar/entries')) {
+			return jsonResponse(storyCalendarEntries);
 		}
 		return previousFetch(input, init);
 	};
@@ -1529,6 +1537,19 @@ const openGroupMenu = async (canvasElement: HTMLElement) => {
 	return { menu: within(menu), trigger: trigger! };
 };
 
+/** Legal links sit in the folded "Einstellungen & Rechtliches" group. */
+const openLegalGroup = async (menu: ReturnType<typeof within>) => {
+	const toggle = menu.getByRole('button', {
+		name: /Einstellungen & Rechtliches/
+	});
+	if (toggle.getAttribute('aria-expanded') !== 'true') {
+		await userEvent.click(toggle);
+	}
+	await waitFor(() =>
+		expect(toggle).toHaveAttribute('aria-expanded', 'true')
+	);
+};
+
 const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
@@ -1536,6 +1557,7 @@ const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
 	await expect(
 		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
@@ -1660,6 +1682,7 @@ const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
 	await expect(
 		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
 	).toBeVisible();
+	await openLegalGroup(menu);
 	await expect(
 		menu.getByRole('button', { name: /Datenschutzerklärung/ })
 	).toBeVisible();
@@ -1736,10 +1759,12 @@ const expectAppointmentMenu =
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		const main = within(bar).getByRole('button', { name: label });
-		// 40px: the compact split button.
-		await expect(Math.round(main.getBoundingClientRect().height)).toBe(40);
-		// Inside the room the main part opens the appointment menu too.
+		// FE#2494: a pennant (30px) whose accessible name carries the date.
+		const main = within(bar).getByRole('button', {
+			name: new RegExp(label)
+		});
+		await expect(Math.round(main.getBoundingClientRect().height)).toBe(30);
+		// Inside the room the whole pennant opens the appointment menu.
 		await userEvent.click(main);
 		const menu = await waitFor(() => {
 			const found = document.querySelector<HTMLElement>(
@@ -1836,12 +1861,34 @@ const installAppointmentFetch = (items: unknown[]) => {
 	};
 };
 
-const HeaderWithAppointments = ({ items }: { items: unknown[] }) => {
+const HeaderWithAppointments = ({
+	items,
+	calendar = [],
+	userData
+}: {
+	items: unknown[];
+	/** FE#2494: the own calendar, e.g. an appointment with the supervisor. */
+	calendar?: unknown[];
+	/** The viewer; the counsellor by default. */
+	userData?: typeof storyUserData;
+}) => {
 	// Installed during render: the slot fetches from a child effect.
-	const [restore] = React.useState(() => installAppointmentFetch(items));
+	const [restore] = React.useState(() => {
+		storyCalendarEntries = calendar;
+		return installAppointmentFetch(items);
+	});
 	React.useEffect(() => restore, [restore]);
-	return renderSessionHeader(mockActiveConversation());
+	return renderSessionHeader({ ...mockActiveConversation(), userData });
 };
+
+/* FE#2494 review: an anonymous guest of a conversation appointment. */
+const storyAnonymousUserData = {
+	...storyAskerUserData,
+	userName: 'gast-4401',
+	displayName: 'Gast 4401',
+	grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+	userRoles: ['ANONYMOUS']
+} as any;
 
 const openMenuAndFindCreate = async (canvasElement: HTMLElement) => {
 	const trigger = await waitFor(() => {
@@ -1883,6 +1930,23 @@ export const OneToOneAppointmentCreateInMenu: Story = {
 	}
 };
 
+/**
+ * FE#2494: ⋮ → "Termin anlegen" opens the appointment module as a popup over
+ * the chat room (the shared invitation dialog, variant `appointment`).
+ */
+export const OneToOneAppointmentCreatePopup: Story = {
+	name: '1:1 appointment — ⋮ "Termin anlegen" opens the popup (FE#2494)',
+	render: () => <HeaderWithAppointments items={[]} />,
+	play: async ({ canvasElement }) => {
+		const row = await openMenuAndFindCreate(canvasElement);
+		await waitFor(() => expect(row).toBeVisible());
+		await userEvent.click(row);
+		const dialog = await within(document.body).findByRole('dialog');
+		// The dialog fades in: wait until it is shown, not only mounted.
+		await waitFor(() => expect(dialog).toBeVisible(), { timeout: 5000 });
+	}
+};
+
 /** One appointment: the row shows only that appointment, no create button. */
 export const OneToOneAppointmentUpcoming: Story = {
 	name: '1:1 appointment — upcoming, no create button beside it (FE#1960)',
@@ -1895,7 +1959,97 @@ export const OneToOneAppointmentUpcoming: Story = {
 			expect(found).not.toBeNull();
 			return found!;
 		});
-		await expect(bar.querySelectorAll('.splitButton')).toHaveLength(1);
+		// FE#2494: one pennant, hanging in the topic's row of the header.
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
+		await expect(bar.closest('.sessionInfo__metaInfo')).not.toBeNull();
+	}
+};
+
+/**
+ * FE#2494 review: the anonymous advice seeker keeps the appointment pennant
+ * now that it hangs in the topic's row, which registered users only get
+ * with the agency line and topic.
+ */
+export const OneToOneAppointmentAnonymousGuest: Story = {
+	name: '1:1 appointment — anonymous advice seeker sees the pennant (FE#2494)',
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			userData={storyAnonymousUserData}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const bar = await waitFor(
+			() => {
+				const found = canvasElement.querySelector(
+					'[data-cy="room-next-appointment"]'
+				);
+				expect(found).not.toBeNull();
+				return found!;
+			},
+			{ timeout: 5000 }
+		);
+		await expect(bar.querySelectorAll('.appointmentPennant')).toHaveLength(
+			1
+		);
+	}
+};
+
+/* FE#2494: the appointment with the supervisor, from the own calendar. */
+const makeSupervisorAppointment = () => {
+	const start = Date.now() + 2 * 24 * HOUR_MS;
+	return {
+		id: 'colleague-88',
+		type: 'APPOINTMENT',
+		start: new Date(start).toISOString(),
+		end: new Date(start + 0.75 * HOUR_MS).toISOString(),
+		ownerId: CONSULTANT_ID,
+		kind: 'PHONE',
+		colleagueId: storySessionSupervisors[0].supervisorConsultantId,
+		colleagueName: 'Bettina B.',
+		colleagueStatus: 'CONFIRMED',
+		chatId: 9901,
+		matrixRoomId: '!internal-9901:oriso.invalid'
+	};
+};
+
+/**
+ * Two appointments: with the advice seeker and with the supervisor. Two
+ * pennants hang beside the topic; an icon says who each is with.
+ */
+export const OneToOneAppointmentWithSupervisor: Story = {
+	name: '1:1 appointment — advice seeker and supervisor: two pennants (FE#2494)',
+	globals: desktop1440Globals,
+	render: () => (
+		<HeaderWithAppointments
+			items={[makeStoryAppointment()]}
+			calendar={[makeSupervisorAppointment()]}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const pennants = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.sessionInfo__metaInfo .appointmentPennant'
+			);
+			expect(found).toHaveLength(2);
+			return found;
+		});
+		await expect(pennants[1]).toHaveAccessibleName(/Supervision/);
+		await userEvent.click(pennants[1]);
+		const menu = await waitFor(() => {
+			const found = document.querySelector<HTMLElement>(
+				'[data-cy="timeline-entry-menu"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		});
+		await expect(within(menu).getByText('Termin absagen')).toBeVisible();
+		await expect(
+			within(menu).getByText('Im Kalender öffnen')
+		).toBeVisible();
+		await userEvent.keyboard('{Escape}');
 	}
 };
 

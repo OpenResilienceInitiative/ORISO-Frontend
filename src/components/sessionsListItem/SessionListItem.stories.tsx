@@ -567,7 +567,10 @@ export const SupervisedByOthers: Story = {
 				'[data-testid="supervision-indicator"]'
 			);
 			expect(indicator).not.toBeNull();
-			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			// #2494 *5: a 32px round icon; the name shows on hover.
+			expect(indicator!.getAttribute('title')).toContain(
+				'Sabine Supervisor'
+			);
 			expect(
 				indicator!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
@@ -2413,8 +2416,13 @@ export const SupervisionRowLabel: Story = {
 				'[data-testid="supervision-modality"]'
 			);
 			expect(modality).not.toBeNull();
-			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
-			expect(modality!.querySelector('svg')).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since
+			// FE#2494 it is the same 32 px kind icon (a mask) as Mail.
+			expect(
+				modality!.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
+			).not.toBeNull();
 			// The mail label is gone for this viewer.
 			expect(
 				canvasElement.querySelector(
@@ -2568,7 +2576,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'

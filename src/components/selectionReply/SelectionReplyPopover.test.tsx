@@ -72,7 +72,7 @@ describe('SelectionReplyPopover keyboard', () => {
 	it('Escape closes from anywhere in the dialog', () => {
 		const { onClose } = renderPopover();
 		fireEvent.keyDown(
-			screen.getByLabelText('message.selectionReply.replyVoice'),
+			screen.getByLabelText('message.selectionReply.cancel'),
 			{ key: 'Escape' }
 		);
 		expect(onClose).toHaveBeenCalledTimes(1);

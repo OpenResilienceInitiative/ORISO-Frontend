@@ -25,7 +25,7 @@ vi.mock('../../api/apiTeamDiscussion', () => ({
 }));
 
 const SESSION_ID = 4711;
-const discussion = (status: 'OPEN' | 'CLOSED') => ({
+const discussion = (status: 'OPEN' | 'CLOSED' | 'ARCHIVED') => ({
 	matrixRoomId: '!team:example.org',
 	status,
 	archiveDate: null,
@@ -85,5 +85,19 @@ describe('TeamDiscussionBadge refresh (FE#2491)', () => {
 			invalidateTeamDiscussionCache(SESSION_ID + 1);
 		});
 		expect(apiGetTeamDiscussion).toHaveBeenCalledTimes(1);
+	});
+
+	it('is not shown for an archived team chat (FE#2494: OPEN only)', async () => {
+		vi.mocked(apiGetTeamDiscussion).mockResolvedValue(
+			discussion('ARCHIVED') as any
+		);
+		render(
+			<TeamDiscussionBadge sessionId={SESSION_ID} onOpen={() => {}} />
+		);
+		await waitFor(() =>
+			expect(apiGetTeamDiscussion).toHaveBeenCalledTimes(1)
+		);
+		await act(async () => {});
+		expect(screen.queryByRole('button')).toBeNull();
 	});
 });

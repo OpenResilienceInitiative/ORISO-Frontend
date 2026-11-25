@@ -118,10 +118,7 @@ export const Desktop: Story = {};
 
 /** 390x844 — the two columns stack, every label stays fully readable. */
 export const Mobile: Story = {
-	parameters: {
-		...meta.parameters,
-		viewport: { defaultViewport: 'mobile1' }
-	}
+	globals: { viewport: { value: 'mobile1', isRotated: false } }
 };
 
 /** Confirmed receipt: deterministic server date and signer details, safe demo identity. */

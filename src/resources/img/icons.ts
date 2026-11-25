@@ -51,7 +51,7 @@ export { ReactComponent as SendIcon } from '../../resources/img/icons/paper-plan
 export { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
 export { ReactComponent as SpeechBubbleIcon } from '../../resources/img/icons/speech-bubble.svg';
 export { ReactComponent as SpeechBubblePlusIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
-export { ReactComponent as SpeechBubbleTeamIcon } from '../../resources/img/icons/speech-bubble-team.svg';
+export { ReactComponent as SpeechBubbleTeamIcon } from '../../resources/img/icons/team-chat-3p.svg';
 export { ReactComponent as StopGroupChatIcon } from '../../resources/img/icons/x.svg';
 export { ReactComponent as ValidIcon } from '../../resources/img/icons/checkmark.svg';
 export { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
