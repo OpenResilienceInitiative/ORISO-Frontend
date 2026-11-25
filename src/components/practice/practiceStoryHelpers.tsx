@@ -5,7 +5,7 @@ import {
 	enterPracticeMode,
 	exitPracticeMode
 } from '../../practice/practiceMode';
-import { PRACTICE_ACCEPT_TOUR_ID } from '../../practice/practiceTourIds';
+import { PRACTICE_INTRO_TOUR_ID } from '../../practice/practiceTourIds';
 
 type ProgressFixture = Pick<
 	ITutorialProgressItem,
@@ -13,7 +13,7 @@ type ProgressFixture = Pick<
 >[];
 
 /**
- * Serves the progress read of the practice cards, like the tour list does on
+ * Serves the progress read of the tour cards, like the tour list does on
  * Dev. Installed in a layout effect: it runs before the cards' passive-effect
  * fetch, and the cleanup restores `fetch` even when React abandons a render.
  */
@@ -57,7 +57,7 @@ export const ScopedProgressFetch = ({
  * never outlive the story.
  */
 export const InPracticeMode = ({
-	tourId = PRACTICE_ACCEPT_TOUR_ID,
+	tourId = PRACTICE_INTRO_TOUR_ID,
 	children
 }: {
 	tourId?: string;

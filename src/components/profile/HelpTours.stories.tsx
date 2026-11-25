@@ -446,13 +446,13 @@ export const PhoneOn: Story = {
 };
 
 export const PracticeCardsOn: Story = {
-	name: 'Practice cards on, personal switch off · desktop',
+	name: 'Practice area on, personal switch off · desktop',
 	...desktop,
 	parameters: {
 		...desktop.parameters,
 		docs: {
 			description: {
-				story: 'With the release flag `enablePracticeArea` on, the practice flows (#1622) join the introduction inside the same outer My tours card, marked "Übung". Start works with the personal switch off.'
+				story: 'With the release flag `enablePracticeArea` on, the practice runs from the tour cards themselves (FE#2545): the Einführung starts as practice with a practice enquiry, Supervision exists only as practice. There are no separate "Übung:" cards any more. Start works with the personal switch off.'
 			}
 		}
 	},
@@ -483,17 +483,23 @@ export const PracticeCardsOn: Story = {
 		await expect(
 			await learning.findByRole('heading', { name: 'Mail-Beratung' })
 		).toBeVisible();
+		// FE#2545: no practice cards; the Einführung starts from its card.
 		await expect(
-			await learning.findAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(1);
+			learning.queryByRole('button', { name: 'Übung starten' })
+		).toBeNull();
 		await expect(
-			await learning.findByRole('heading', { name: 'Übungsbereich' })
-		).toBeVisible();
-		for (const button of await canvas.findAllByRole('button', {
-			name: 'Übung starten'
-		})) {
-			await expect(button).toBeEnabled();
-		}
+			learning.queryByRole('heading', { name: 'Übungsbereich' })
+		).toBeNull();
+		await expect(
+			learning.queryByRole('heading', { name: /^Übung:/ })
+		).toBeNull();
+		await expect(
+			within(
+				learning
+					.getByRole('heading', { name: 'Einführung' })
+					.closest('li')!
+			).getByRole('button', { name: 'Starten' })
+		).toBeEnabled();
 		// FE#2545: Supervision exists only as practice; on the desktop it
 		// starts from its topic card.
 		const supervision = learning
@@ -508,7 +514,7 @@ export const PracticeCardsOn: Story = {
 };
 
 export const PracticeCardsPhone: Story = {
-	name: 'Practice cards on · phone 390',
+	name: 'Practice area on · phone 390',
 	...phone('/profile/hilfe/rundgaenge'),
 	render: renderStage({ practiceArea: true }),
 	play: async ({ canvas, canvasElement }) => {
@@ -520,11 +526,18 @@ export const PracticeCardsPhone: Story = {
 			within(card).getByRole('switch', { name: SWITCH_NAME })
 		).toBeInTheDocument();
 		await expect(within(card).getByText(SWITCH_NAME)).toBeVisible();
+		// FE#2545: no practice cards; the Einführung still starts on a phone
+		// (its watch-only rendering runs there).
 		await expect(
-			await within(card).findAllByRole('button', {
-				name: 'Übung starten'
-			})
-		).toHaveLength(1);
+			within(card).queryByRole('button', { name: 'Übung starten' })
+		).toBeNull();
+		await expect(
+			within(
+				within(card)
+					.getByRole('heading', { name: 'Einführung' })
+					.closest('li')!
+			).getByRole('button', { name: 'Starten' })
+		).toBeEnabled();
 		// FE#2545: Supervision is a topic tour of the list, not a card, and
 		// exists only as practice: below its width, a hint and no start.
 		const supervision = within(card)
@@ -543,13 +556,6 @@ export const PracticeCardsPhone: Story = {
 				)
 			).toBeVisible();
 		}
-		if (window.innerWidth < 900) {
-			for (const button of within(card).getAllByRole('button', {
-				name: 'Übung starten'
-			})) {
-				await expect(button).toBeDisabled();
-			}
-		}
 		await expectBottomNavigation(canvasElement);
 	}
 };
@@ -560,9 +566,7 @@ export const PracticeSupervisionOff: Story = {
 	render: renderStage({ practiceArea: true, supervision: false }),
 	play: async ({ canvas }) => {
 		await expect(
-			await canvas.findByRole('heading', {
-				name: 'Übung: Anfrage annehmen'
-			})
+			await canvas.findByRole('heading', { name: 'Einführung' })
 		).toBeVisible();
 		await expect(
 			canvas.queryByRole('heading', { name: 'Supervision' })
@@ -588,9 +592,7 @@ export const PracticeSupervisionOneOnOneOff: Story = {
 	render: renderStage({ practiceArea: true, oneOnOne: false }),
 	play: async ({ canvas }) => {
 		await expect(
-			await canvas.findByRole('heading', {
-				name: 'Übung: Anfrage annehmen'
-			})
+			await canvas.findByRole('heading', { name: 'Einführung' })
 		).toBeVisible();
 		await expect(
 			canvas.queryByRole('heading', { name: 'Supervision' })

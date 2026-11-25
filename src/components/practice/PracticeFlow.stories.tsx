@@ -367,7 +367,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The practice area end to end (#1622): the real Help page, practice cards, tour host, banner, navigation, header, session views and calendar, wired as in `Routing.tsx`. Practice runs on the in-memory world. Every request that reaches the page is recorded; only the tutorial progress is answered, everything else fails like an unreachable backend.'
+					'The practice area end to end (#1622): the real Help page and its tour cards, tour host, banner, navigation, header, session views and calendar, wired as in `Routing.tsx`. Practice runs on the in-memory world. Every request that reaches the page is recorded; only the tutorial progress is answered, everything else fails like an unreachable backend.'
 			}
 		}
 	},
@@ -468,154 +468,12 @@ const expectExited = async (
 		SLOW
 	);
 	await expect(
-		await canvas.findByRole(
-			'heading',
-			{ name: 'Übung: Anfrage annehmen' },
-			SLOW
-		)
+		await canvas.findByRole('heading', { name: 'Einführung' }, SLOW)
 	).toBeVisible();
 	await expect(
 		screen.queryByRole('status', { name: 'Übungsmodus' })
 	).toBeNull();
 	await expectIsolated(storageBefore, terminalStatus);
-};
-
-const acceptAnEnquiry: NonNullable<Story['play']> = async ({
-	canvas,
-	step,
-	args
-}) => {
-	// FE#2491: the team chat lives in "Weitere Funktionen"; the tour has no
-	// team steps whatever the flag says.
-	const of = 6;
-	const storageBefore = storageSnapshot();
-	await step('Start the exercise from its Help card', async () => {
-		const card = (
-			await canvas.findByRole(
-				'heading',
-				{ name: 'Übung: Anfrage annehmen' },
-				SLOW
-			)
-		).closest('li')!;
-		await userEvent.click(
-			within(card).getByRole('button', { name: 'Übung starten' })
-		);
-	});
-
-	await step('1: Find the enquiry navigation', async () => {
-		await expectStep(1, of);
-		await expect(getPracticeSnapshot().status).toBe('active');
-		await expect(canvas.queryByLabelText('Klassisches Design')).toBeNull();
-		await next();
-	});
-	await step('2: Open the practice enquiry in the real list', async () => {
-		await expectStep(2, of);
-		await userEvent.click(await target('enquiry-list-item'));
-	});
-
-	const acceptAt = 3;
-	await step(`${acceptAt}: Accept the enquiry`, async () => {
-		await expectStep(acceptAt, of);
-		await expect(
-			document.querySelector('[data-cy="enquiry-open-team"]')
-		).toBeNull();
-		await userEvent.click(await target('enquiry-accept-button'));
-	});
-	await step(
-		`${acceptAt + 1}: Read the first answer explanation`,
-		async () => {
-			await expectStep(acceptAt + 1, of);
-			await next();
-		}
-	);
-	await step(
-		`${acceptAt + 2}: Send a reply and receive Sam's answer`,
-		async () => {
-			await expectStep(acceptAt + 2, of);
-			await target('session-composer');
-			await sendReply(
-				document.querySelector<HTMLElement>('.chatStage__mainPane')!,
-				'Hallo Sam, schön, dass Sie sich melden.'
-			);
-			await waitFor(
-				() =>
-					expect(
-						document.querySelector('.chatStage__mainPane')
-							?.textContent
-					).toContain('Vielen Dank für Ihre Antwort'),
-				SLOW
-			);
-		}
-	);
-	await step(
-		`${of}: Finish and return to Help without outbound writes`,
-		async () => {
-			await expectStep(of, of);
-			await expect(getPracticeNetworkGuard()?.blockedRequests).toEqual(
-				[]
-			);
-			await next('Fertig');
-			await expectExited(canvas, storageBefore);
-		}
-	);
-};
-
-export const AcceptAnEnquiry: Story = {
-	name: 'Accept an enquiry · desktop',
-	parameters: {
-		docs: {
-			description: {
-				story: 'Starts "Übung: Anfrage annehmen" from its card with Team-Besprechung disabled and walks six steps with the real controls. Nothing but the allowlisted tutorial progress write leaves the page, the browser storage is unchanged, and the page returns to Help.'
-			}
-		}
-	},
-	play: acceptAnEnquiry
-};
-
-export const AcceptAnEnquiryWithTeamDiscussion: Story = {
-	name: 'Accept an enquiry with team discussion · desktop',
-	args: { teamDiscussion: true },
-	parameters: {
-		docs: {
-			description: {
-				story: 'With the team chat enabled the exercise walks the same six steps (FE#2491: the team chat is switched on in "Weitere Funktionen", there is no team button beside "Annehmen" for the tour to point at). Completion returns to Help with no practice writes outside the page.'
-			}
-		}
-	},
-	play: acceptAnEnquiry
-};
-
-export const CancelAnExercise: Story = {
-	name: 'End resets an interrupted exercise · desktop',
-	play: async ({ canvas }) => {
-		const storageBefore = storageSnapshot();
-		const card = (
-			await canvas.findByRole(
-				'heading',
-				{ name: 'Übung: Anfrage annehmen' },
-				SLOW
-			)
-		).closest('li')!;
-		await userEvent.click(
-			within(card).getByRole('button', { name: 'Übung starten' })
-		);
-		await expectStep(1, 6);
-		await next();
-		await expectStep(2, 6);
-		await userEvent.click(
-			screen.getByRole('button', { name: 'Übung beenden' })
-		);
-		await expectExited(canvas, storageBefore, 'not_started');
-		const restored = canvas
-			.getByRole('heading', { name: 'Übung: Anfrage annehmen' })
-			.closest('li')!;
-		await expect(
-			within(restored).getByText('Nicht gestartet')
-		).toBeVisible();
-		await expect(
-			requestLog.filter(({ method }) => method === 'PUT').at(-1)?.status
-		).toBe('not_started');
-	}
 };
 
 /**
@@ -637,6 +495,225 @@ const clickWhereVisible = async (control: HTMLElement, name: string) => {
 		).toBe(true);
 	}, SLOW);
 	await userEvent.click(control);
+};
+
+/** The tooltip's own button, hit-tested like every other control. */
+const nextWhereVisible = async (label = 'Weiter') =>
+	clickWhereVisible(
+		within(await tooltip()).getByRole('button', { name: label }),
+		`tooltip · ${label}`
+	);
+
+/** Help → Rundgänge → "Einführung": its tour card, no practice card. */
+const startIntroductionFromHelp = async (canvas: ReturnType<typeof within>) => {
+	const card = (
+		await canvas.findByRole('heading', { name: 'Einführung' }, SLOW)
+	).closest('li')!;
+	await clickWhereVisible(
+		within(card).getByRole('button', { name: 'Starten' }),
+		'Einführung · Starten'
+	);
+};
+
+/** Types into the visible composer and sends, both hit-tested first. */
+const sendReplyWhereVisible = async (scope: HTMLElement, text: string) => {
+	const editor = await waitFor(() => {
+		const field = scope.querySelector<HTMLElement>(
+			'.ProseMirror[contenteditable="true"]'
+		);
+		expect(field).not.toBeNull();
+		return field!;
+	}, SLOW);
+	await clickWhereVisible(editor, 'composer');
+	await userEvent.keyboard(text);
+	const send = await waitFor(() => {
+		const button = within(scope).getByRole('button', {
+			name: 'Nachricht senden'
+		});
+		expect(button).toBeEnabled();
+		return button;
+	}, SLOW);
+	await clickWhereVisible(send, 'Nachricht senden');
+	await waitFor(() => expect(editor.textContent?.trim()).toBe(''), SLOW);
+};
+
+const introduction: NonNullable<Story['play']> = async ({ canvas, step }) => {
+	// FE#2545: the Einführung absorbed "Übung: Anfrage annehmen"; the team
+	// chat lives in "Weitere Funktionen" (FE#2491), so no team steps.
+	const of = 9;
+	const storageBefore = storageSnapshot();
+	await step('Start the Einführung from its Help card', async () => {
+		await startIntroductionFromHelp(canvas);
+	});
+
+	await step('1: Welcome, in practice', async () => {
+		await expectStep(1, of);
+		await expect(getPracticeSnapshot().status).toBe('active');
+		await expect(canvas.queryByLabelText('Klassisches Design')).toBeNull();
+		await nextWhereVisible();
+	});
+	await step(
+		'2: The real Anfragen list holds the practice enquiry only',
+		async () => {
+			await expectStep(2, of);
+			await target('consultant-enquiries-list');
+			await waitFor(
+				() =>
+					expect(
+						document.querySelectorAll(
+							'[data-cy="session-list-item"]'
+						)
+					).toHaveLength(1),
+				SLOW
+			);
+			await nextWhereVisible();
+		}
+	);
+	await step('3: Open the practice enquiry and read it', async () => {
+		await expectStep(3, of);
+		await clickWhereVisible(
+			await target('enquiry-list-item'),
+			'practice enquiry'
+		);
+	});
+	await step('4: Accept it with the real "Anfrage annehmen"', async () => {
+		await expectStep(4, of);
+		await expect(
+			document.querySelector('[data-cy="enquiry-open-team"]')
+		).toBeNull();
+		await clickWhereVisible(
+			await target('enquiry-accept-button'),
+			'Anfrage annehmen'
+		);
+	});
+	await step('5: Write and send a first reply', async () => {
+		await expectStep(5, of);
+		await expect(within(await tooltip()).queryByText('Zurück')).toBeNull();
+		await target('session-composer');
+		await sendReplyWhereVisible(
+			document.querySelector<HTMLElement>('.chatStage__mainPane')!,
+			'Hallo Sam, schön, dass Sie sich melden.'
+		);
+	});
+	await step("6: Sam's answer is in the conversation", async () => {
+		await expectStep(6, of);
+		await waitFor(
+			() =>
+				expect(
+					document.querySelector('.chatStage__mainPane')?.textContent
+				).toContain('Vielen Dank für Ihre Antwort'),
+			SLOW
+		);
+		await nextWhereVisible();
+	});
+	await step(
+		'7: "Meine Beratungen" holds the accepted practice case',
+		async () => {
+			await expectStep(7, of);
+			await waitFor(
+				async () =>
+					expect(
+						await target('consultant-sessions-list')
+					).toHaveTextContent('Sam Muster (Übung)'),
+				SLOW
+			);
+			await nextWhereVisible();
+		}
+	);
+	await step(
+		'8: The real "Archiv" chip, on the practice archive',
+		async () => {
+			await expectStep(8, of);
+			await expect(await target('sessions-archive-tab')).toBeVisible();
+			await nextWhereVisible();
+		}
+	);
+	await step(
+		`${of}: Finish and return to Help without outbound writes`,
+		async () => {
+			await expectStep(of, of);
+			await expect(getPracticeNetworkGuard()?.blockedRequests).toEqual(
+				[]
+			);
+			await nextWhereVisible('Fertig');
+			await expectExited(canvas, storageBefore);
+		}
+	);
+};
+
+export const Introduction: Story = {
+	name: 'Einführung with a practice enquiry · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'FE#2545: the Einführung, started from its card in Help → Rundgänge, as a first look around while a practice enquiry is handled: the Anfragen list, the enquiry opened and accepted with the real controls, a first reply (Sam answers from the script), "Meine Beratungen" and "Archiv". Every control is hit-tested before its click; only the completed progress is written, the browser storage is unchanged, and the page returns to Help. It replaces the card "Übung: Anfrage annehmen".'
+			}
+		}
+	},
+	play: introduction
+};
+
+export const IntroductionWithTeamDiscussion: Story = {
+	name: 'Einführung with team discussion · desktop',
+	args: { teamDiscussion: true },
+	parameters: {
+		docs: {
+			description: {
+				story: 'With the team chat enabled the Einführung walks the same nine steps (FE#2491: the team chat is switched on in "Weitere Funktionen"; there is no team button beside "Annehmen" for the tour to point at).'
+			}
+		}
+	},
+	play: introduction
+};
+
+export const IntroductionEnded: Story = {
+	name: 'End resets an interrupted Einführung · desktop',
+	play: async ({ canvas }) => {
+		const storageBefore = storageSnapshot();
+		await startIntroductionFromHelp(canvas);
+		await expectStep(1, 9);
+		await nextWhereVisible();
+		await expectStep(2, 9);
+		await clickWhereVisible(
+			screen.getByRole('button', { name: 'Übung beenden' }),
+			'Übung beenden'
+		);
+		await expectExited(canvas, storageBefore, 'not_started');
+		const restored = canvas
+			.getByRole('heading', { name: 'Einführung' })
+			.closest('li')!;
+		await expect(
+			within(restored).getByText('Nicht gestartet')
+		).toBeVisible();
+		await expect(
+			requestLog.filter(({ method }) => method === 'PUT').at(-1)?.status
+		).toBe('not_started');
+	}
+};
+
+export const IntroductionOnPhone: Story = {
+	name: 'Einführung on a phone: the watch-only fallback · phone 390',
+	globals: { viewport: { value: 'phone390', isRotated: false } },
+	parameters: {
+		docs: {
+			description: {
+				story: 'FE#2545: where the practice cannot run (here a phone; also a window below 900 px or the practice area off) the Einführung card still starts, and the watch-only Einführung runs on the real page: no practice mode, no banner.'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		const card = (
+			await canvas.findByRole('heading', { name: 'Einführung' }, SLOW)
+		).closest('li')!;
+		const start = within(card).getByRole('button', { name: 'Starten' });
+		await expect(start).toBeEnabled();
+		await clickWhereVisible(start, 'Einführung · Starten');
+		await expectStep(1, 5);
+		await expect(getPracticeSnapshot().status).toBe('inactive');
+		await expect(
+			screen.queryByRole('status', { name: 'Übungsmodus' })
+		).toBeNull();
+	}
 };
 
 const supervisionPanel = () =>
