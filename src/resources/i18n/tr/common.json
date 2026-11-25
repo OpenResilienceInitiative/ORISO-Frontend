@@ -4323,7 +4323,7 @@
 			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
 			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
 			"extend": "Erişimi uzat",
-			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
+			"teamNotice": "Ekip danışmanlığı: Bu vakayı okuyorsunuz. Bu vakada yalnızca {{name}} mesaj yazar."
 		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
@@ -4781,7 +4781,7 @@
 				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
 				"removeFilters": "Filtreleri kaldır",
 				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru",
-				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
+				"teamPeopleHint": "Ekip danışmanlığı: Danışma merkezinizden bir meslektaş seçin ve vakalarını görmek ve takip etmek için Enter'a basın."
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

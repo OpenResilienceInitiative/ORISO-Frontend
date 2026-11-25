@@ -4,6 +4,7 @@ import {
 	isCaseHandoverAccessControlled,
 	isTeamCounsellingReader,
 	offersCaseHandoverIn,
+	peopleSearchHintKeys,
 	isCaseHandoverCandidate,
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -52,14 +53,50 @@ const consultantUser = {
 };
 
 describe('caseHandoverHelpers', () => {
-	it('offers no case handover in a Teamberatung case', () => {
+	it('offers no case handover in a team case of a centre in Teamberatung', () => {
+		const centres = [
+			{ id: 1, teamAgency: true },
+			{ id: 2, teamAgency: false }
+		];
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 1 } },
+				centres
+			)
+		).toBe(false);
+		// The centre has switched to case handover: the owner may hand over again.
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: true, agencyId: 2 } },
+				centres
+			)
+		).toBe(true);
+		// Unknown centre: offered, the server decides.
 		expect(offersCaseHandoverIn({ item: { isTeamSession: true } })).toBe(
-			false
-		);
-		expect(offersCaseHandoverIn({ item: { isTeamSession: false } })).toBe(
 			true
 		);
+		expect(
+			offersCaseHandoverIn(
+				{ item: { isTeamSession: false, agencyId: 1 } },
+				centres
+			)
+		).toBe(true);
 		expect(offersCaseHandoverIn({ item: {} })).toBe(true);
+	});
+
+	it('picks the people search hint from the counsellor centres', () => {
+		const handover = 'sessionList.toolbar.search.handoverPeopleHint';
+		const team = 'sessionList.toolbar.search.teamPeopleHint';
+		expect(peopleSearchHintKeys([{ id: 1, teamAgency: true }])).toEqual([
+			team
+		]);
+		expect(peopleSearchHintKeys([{ id: 2, teamAgency: false }])).toEqual([
+			handover
+		]);
+		expect(
+			peopleSearchHintKeys([{ id: 1, teamAgency: true }, { id: 2 }])
+		).toEqual([handover, team]);
+		expect(peopleSearchHintKeys(undefined)).toEqual([handover]);
 	});
 
 	it('makes a colleague a reader in an accepted team case, never the owner', () => {

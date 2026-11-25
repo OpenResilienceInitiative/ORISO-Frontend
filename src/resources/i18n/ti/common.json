@@ -4297,7 +4297,7 @@
 			"notice": "ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
 			"noticeUntil": "ክሳብ {{until}} ንምንባብ ጥራይ ፍቓድ፦ ነዚ ምኽሪ ክትከታተሉ ትኽእሉ ኢኹም፡ ግን መልእኽቲ ክትሰዱ ኣይትኽእሉን።",
 			"extend": "ፍቓድ ኣናውሕ",
-			"teamNotice": "Team counselling: you are following this case. Only {{name}} writes messages in it."
+			"teamNotice": "ናይ ጉጅለ ምኽሪ፦ ነዚ ጉዳይ ተንብቡ ኣለኹም። ኣብዚ ጉዳይ መልእኽቲ ዝጽሕፍ {{name}} ጥራይ እዩ።"
 		},
 		"standingPreference": {
 			"label": "ቅድሚ ተወሳኺ መእተዊ ምሃብ ኩሉ ግዜ ሕተቱ",
@@ -4755,7 +4755,7 @@
 				"filteredOutAll": "ምድላይኩምን መጻረዪታትኩምን ንኹሉ ምኽርታት ይሓብእዎ ኣለዉ።",
 				"removeFilters": "መጻረዪታት ኣልግስ",
 				"removeFiltersKeepSearch": "መጻረዪታት ኣልግስ፣ ምድላይ ሓዝ",
-				"teamPeopleHint": "Team counselling: pick a colleague of your counselling centre and press Enter to see their cases and follow them."
+				"teamPeopleHint": "ናይ ጉጅለ ምኽሪ፦ ካብ ማእከል ምኽሪኹም ሓደ መሳርሕቲ ምረጹ እሞ Enter ጠውቑ፣ ጉዳያቶም ንምርኣይን ንምክትታልን።"
 			},
 			"menu": {
 				"ariaLabel": "ዝርዝር ኣማራጺታት"

@@ -71,7 +71,10 @@ export const AskerInfoContent = () => {
 							showLegacyAssignment={isEnquiryAssignAvailable}
 							handoverEnabled={
 								isOwnerHandoverAvailable &&
-								offersCaseHandoverIn(activeSession)
+								offersCaseHandoverIn(
+									activeSession,
+									userData?.agencies
+								)
 							}
 						/>
 					</div>

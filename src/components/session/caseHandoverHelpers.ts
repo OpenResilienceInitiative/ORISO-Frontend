@@ -31,6 +31,7 @@ interface CaseHandoverSessionInput {
 		supervision?: SupervisionMarker | null;
 		/** Teamberatung (FE#2494 *4): colleagues read, only the owner writes. */
 		isTeamSession?: boolean;
+		agencyId?: number;
 	};
 	consultant?: {
 		id?: string | number;
@@ -114,13 +115,47 @@ export const isTeamCounsellingReader = (
 	Boolean(input.activeSession?.item?.isTeamSession) &&
 	isCaseHandoverAccessControlled(input);
 
+/** A counsellor's centre; `teamAgency` follows the centre's current case sharing choice. */
+export interface CaseSharingCentreInput {
+	id?: number;
+	teamAgency?: boolean;
+}
+
 /**
- * FE#2494 *4: a Teamberatung centre has no case handover, so "Beratung
- * übergeben" is not offered in its cases (header "+", session menu, profile).
+ * FE#2494 *4: a centre in Teamberatung has no case handover, so "Beratung
+ * übergeben" is not offered in its team cases (header "+", session menu,
+ * profile). The assigned counsellor keeps it everywhere else: in a case
+ * handover centre, and in an older team case whose centre has since switched
+ * to case handover. An unknown centre keeps it; the server decides.
  */
 export const offersCaseHandoverIn = (
-	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined
-): boolean => !activeSession?.item?.isTeamSession;
+	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined,
+	centres?: readonly CaseSharingCentreInput[] | null
+): boolean => {
+	const item = activeSession?.item;
+	if (!item?.isTeamSession) {
+		return true;
+	}
+	const centre = centres?.find((candidate) => candidate.id === item.agencyId);
+	return centre?.teamAgency !== true;
+};
+
+/**
+ * The people search hint for the counsellor's centres: Teamberatung, case
+ * handover, or both for a counsellor in both kinds of centre.
+ */
+export const peopleSearchHintKeys = (
+	centres?: readonly CaseSharingCentreInput[] | null
+): string[] => {
+	const list = centres ?? [];
+	const team = list.some((centre) => centre.teamAgency === true);
+	const handover =
+		list.length === 0 || list.some((centre) => !centre.teamAgency);
+	return [
+		...(handover ? ['sessionList.toolbar.search.handoverPeopleHint'] : []),
+		...(team ? ['sessionList.toolbar.search.teamPeopleHint'] : [])
+	];
+};
 
 export const isCaseHandoverPending = (status?: string | null): boolean =>
 	Boolean(status && CASE_HANDOVER_PENDING_STATUSES.includes(status));
