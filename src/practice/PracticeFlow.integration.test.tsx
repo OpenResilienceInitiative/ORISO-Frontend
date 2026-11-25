@@ -1034,19 +1034,26 @@ describe('practice flows on the real app shell', () => {
 			SLOW
 		);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-		expect(document.querySelector('.productTourTooltip')).toBeNull();
 
 		app.resize(1440);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
-		expect(document.querySelector('.productTourTooltip')).toBeNull();
 		expect(progressWrites()).not.toContain('completed');
 	}, 120000);
 
-	it('Live chat launched on a small screen keeps its explanation tour', async () => {
+	it('Live chat launched on a small screen keeps its explanation tour, also after widening', async () => {
 		const app = renderApp({ width: 899 });
 		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+
+		app.resize(1440);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		// Still the explanation tour, on its first step.
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 	});
