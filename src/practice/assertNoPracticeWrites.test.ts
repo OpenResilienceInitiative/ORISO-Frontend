@@ -183,3 +183,53 @@ describe('assertNoPracticeWrites (what the browser really sent)', () => {
 		]);
 	});
 });
+
+describe('assertNoPracticeWrites: the live-chat heartbeat (FE#2545)', () => {
+	const HEARTBEAT_URL = `${USER_SERVICE}/service/conversations/consultants/availability/heartbeat`;
+	const AVAILABILITY_URL = `${USER_SERVICE}/service/conversations/consultants/availability`;
+	const withHeartbeat = { ...config, liveChatHeartbeatUrl: HEARTBEAT_URL };
+
+	it('passes for a bodyless heartbeat POST as Playwright records it (postData null)', () => {
+		expect(
+			findPracticeWrites(
+				[
+					{ method: 'POST', url: HEARTBEAT_URL, postData: null },
+					{ method: 'POST', url: HEARTBEAT_URL }
+				],
+				withHeartbeat
+			)
+		).toEqual([]);
+	});
+
+	it('still fails for the heartbeat when the run does not allow it', () => {
+		expect(
+			findPracticeWrites(
+				[{ method: 'POST', url: HEARTBEAT_URL, postData: null }],
+				config
+			)
+		).toEqual([
+			{ method: 'POST', url: HEARTBEAT_URL, reason: 'default-deny' }
+		]);
+	});
+
+	it('fails for a heartbeat with a body and for any availability change', () => {
+		expect(
+			findPracticeWrites(
+				[
+					{ method: 'POST', url: HEARTBEAT_URL, postData: '{"x":1}' },
+					{
+						method: 'PUT',
+						url: AVAILABILITY_URL,
+						postData: '{"available":true}'
+					},
+					{ method: 'PUT', url: HEARTBEAT_URL, postData: null }
+				],
+				withHeartbeat
+			).map((violation) => `${violation.method} ${violation.reason}`)
+		).toEqual([
+			'POST body-rejected',
+			'PUT default-deny',
+			'PUT default-deny'
+		]);
+	});
+});

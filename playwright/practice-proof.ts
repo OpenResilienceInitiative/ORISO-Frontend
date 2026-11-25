@@ -3,8 +3,10 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
 	assertNoPracticeWrites,
+	recordedBodyText,
 	type RecordedNetworkRequest
 } from '../src/practice/assertNoPracticeWrites';
+import { LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY } from '../src/utils/liveChatAvailabilityStorage';
 import { isPracticeId } from '../src/practice/practiceIds';
 import {
 	classifyRequest,
@@ -168,7 +170,7 @@ export const assertRunLeftNothing = (
 				{
 					method: request.method,
 					url: request.url,
-					bodyText: request.postData ?? undefined
+					bodyText: recordedBodyText(request, config)
 				},
 				config
 			).verdict === 'allow';
@@ -251,6 +253,15 @@ export const snapshotStorage = (page: Page): Promise<StorageSnapshot> =>
 		};
 	});
 
+/**
+ * localStorage keys that the allowed live-chat heartbeat may write during a
+ * run: its acknowledgement time. Only added or changed is accepted; a removed
+ * key would mean the availability itself changed, which stays a failure.
+ */
+export const HEARTBEAT_STORAGE_KEYS: readonly string[] = [
+	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY
+];
+
 /** Added, removed and changed keys by name; values (tokens!) are never printed. */
 export const diffStorage = (
 	before: StorageSnapshot,
@@ -260,6 +271,13 @@ export const diffStorage = (
 	(['local', 'session'] as const).forEach((area) => {
 		const name = area === 'local' ? 'localStorage' : 'sessionStorage';
 		Object.keys({ ...before[area], ...after[area] }).forEach((key) => {
+			const heartbeatWrite =
+				area === 'local' &&
+				HEARTBEAT_STORAGE_KEYS.includes(key) &&
+				key in after[area];
+			if (heartbeatWrite) {
+				return;
+			}
 			if (!(key in before[area])) {
 				lines.push(`${name}: added "${key}"`);
 			} else if (!(key in after[area])) {
