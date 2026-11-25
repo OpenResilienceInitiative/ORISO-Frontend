@@ -84,6 +84,10 @@ $cc-motion-easing: var(
 		letter-spacing: 0.5px;
 		line-height: 24px;
 		margin: 0;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	/* Figma "Chatroom Actions": 24px stack inside a 128px side inset. */

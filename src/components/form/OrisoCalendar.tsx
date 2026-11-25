@@ -62,7 +62,7 @@ const dayCellSx = {
 	},
 	'&.orisoCalendarDay--selected, &.orisoCalendarDay--selected:hover': {
 		backgroundColor: orisoDateTimeColors.primary,
-		color: orisoDateTimeColors.onPrimary
+		color: orisoDateTimeColors.onPrimarySelected
 	},
 	'&.Mui-disabled': {
 		color: orisoDateTimeColors.disabledText
@@ -75,7 +75,7 @@ const dayCellSx = {
 	 */
 	'&.orisoCalendarDay--selected.Mui-disabled': {
 		backgroundColor: orisoDateTimeColors.primary,
-		color: orisoDateTimeColors.onPrimary
+		color: orisoDateTimeColors.onPrimarySelected
 	},
 	'&.Mui-focusVisible': {
 		outline: `3px solid ${orisoDateTimeColors.focus}`,

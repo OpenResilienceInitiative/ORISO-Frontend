@@ -88,6 +88,10 @@
 
 	&:hover:not(:disabled) {
 		background: #e6e2e3;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	&:active:not(:disabled) {
@@ -97,6 +101,10 @@
 	&:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+
+	html[data-oriso-personal-scheme='dark'] & {
+		background: var(--m3-surface-container-low, #1b1b1c);
 	}
 }
 

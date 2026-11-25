@@ -348,6 +348,10 @@ $overlay-illustration-height-large: 100%;
 				align-self: center;
 			}
 		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	.headline--1 {

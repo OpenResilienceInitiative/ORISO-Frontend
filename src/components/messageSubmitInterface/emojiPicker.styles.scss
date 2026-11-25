@@ -152,6 +152,10 @@ $emoji-popover-height: 433px;
 	}
 	.emoji__selectPopover__entry--focused {
 		background-color: #efefef;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 	.emoji__selectPopover__entryIcon {
 		width: 1.5em;
@@ -227,9 +231,17 @@ $emoji-popover-height: 433px;
 	}
 	.emoji__suggestionsEntry:active {
 		background-color: #cce7ff;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-high, #2a2a2b);
+		}
 	}
 	.emoji__suggestionsEntry--focused {
 		background-color: #e6f3ff;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-high, #2a2a2b);
+		}
 	}
 	.emoji__suggestionsEntry__text {
 		display: inline-block;

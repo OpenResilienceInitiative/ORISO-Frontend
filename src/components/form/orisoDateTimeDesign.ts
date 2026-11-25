@@ -7,10 +7,14 @@ import { orisoInputColors } from './orisoInputDesign';
  */
 export const orisoDateTimeColors = {
 	...orisoInputColors,
-	// Theme roles, not literals: the light hex values stayed light in dark
-	// mode and left light numbers on a light dial (P0 dark mode, 2026-11-25).
-	primaryContainer: 'var(--m3-primary-container, #ffdad7)',
-	onPrimaryContainer: 'var(--m3-on-primary-container, #410004)',
+	// Light keeps the pale-pink field with dark ink (the literal fallback);
+	// the dark scheme sets the `--oriso-picker-*` pair in
+	// `mui-variables-mapping.scss` (P0 dark mode, 2026-11-25).
+	primaryContainer: 'var(--oriso-picker-active-surface, #ffdad7)',
+	onPrimaryContainer: 'var(--oriso-picker-active-ink, #410004)',
+	// Ink on the selected calendar day (`primary` fill).
+	onPrimarySelected:
+		'var(--oriso-picker-selected-ink, var(--m3-on-primary-container, #ffe2de))',
 	surfaceContainerHighest: 'var(--m3-surface-container-highest, #e5e2e2)',
 	scrim: 'rgba(27, 27, 28, 0.32)',
 	// M3 disabled text: on-surface at 38 %, so it follows the scheme.

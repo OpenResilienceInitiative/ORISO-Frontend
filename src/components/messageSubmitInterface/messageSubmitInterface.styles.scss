@@ -670,7 +670,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-weight: 600;
 			cursor: pointer;
 			background: var(--m3-surface-container-lowest, #fff);
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(--m3-primary-container, #cc1e1c);
+
+			// Dark: `primary-container` is a deep red on a near-black surface.
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+			}
 			box-shadow: 0 0 0 1px
 				color-mix(
 					in srgb,
@@ -1328,6 +1333,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorSectionChevron:hover {
 			color: #2f3743;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		&__audienceSelectorSectionChevronIcon {
@@ -1343,6 +1352,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorSectionSelectAll:hover {
 			color: #2f3743;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		&__audienceSelectorSectionBody {
@@ -1391,6 +1404,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorPill:hover {
 			background: #f5f7fb;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				background: var(--m3-surface-container-low, #1b1b1c);
+			}
 		}
 
 		&__audienceSelectorPill--selected {

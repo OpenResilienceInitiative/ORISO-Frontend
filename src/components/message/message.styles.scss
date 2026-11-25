@@ -443,6 +443,10 @@ $message-avatar-overlap: -19px;
 		box-sizing: border-box;
 		position: relative;
 		z-index: 9500;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	&__visibilityChip--active {
@@ -721,6 +725,10 @@ $message-avatar-overlap: -19px;
 		justify-content: center;
 		flex-shrink: 0;
 		z-index: 5;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	// Bot avatar (reused Carimat robot from the live-chat onboarding).
@@ -950,6 +958,14 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__highlight[data-color='#b2f2bb'] {
 			background-color: #b2f2bb;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				background: color-mix(
+					in srgb,
+					var(--m3-success, #0a882f) 22%,
+					var(--m3-surface, #131314)
+				);
+			}
 		}
 
 		.messageItem__highlight[data-color='#b3e5fc'] {
@@ -1254,6 +1270,10 @@ $message-avatar-overlap: -19px;
 		font-size: 14px;
 		line-height: 1.4;
 		color: #5a5a5a;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&--feedback {
@@ -1265,6 +1285,10 @@ $message-avatar-overlap: -19px;
 	&--right {
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		.messageItem__visibleOnly {
@@ -1611,6 +1635,10 @@ $message-avatar-overlap: -19px;
 		&:hover {
 			color: #c0392b;
 			text-decoration: none;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-error, #ffb4ab);
+			}
 		}
 
 		&:focus {

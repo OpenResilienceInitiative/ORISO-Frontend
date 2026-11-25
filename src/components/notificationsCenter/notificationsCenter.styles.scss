@@ -644,6 +644,10 @@
 				fill: currentcolor;
 			}
 		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&__detailTitle {
@@ -652,6 +656,10 @@
 		line-height: 36px;
 		font-weight: 500;
 		color: #1b1b1c;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	&__detailText {
@@ -661,6 +669,10 @@
 		color: #444748;
 		max-width: 640px;
 		text-align: left;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&__detailTimestamp {
@@ -781,6 +793,10 @@
 	&__emptyDetail {
 		padding: 24px;
 		color: #6b7280;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 }
 

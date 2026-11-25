@@ -24,6 +24,10 @@
 	color: #6b7280;
 	font-size: 16px;
 	line-height: 1.2;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface-variant, #c4c7c8);
+	}
 }
 
 .draftsCenter__content {
@@ -47,6 +51,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		background: var(--m3-surface-container-low, #1b1b1c);
+	}
 }
 
 .draftsCenter__detail--embeddedChat {
@@ -69,6 +77,10 @@
 
 .draftsCenter__listItem--active {
 	background: #fff6f7;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		background: var(--m3-surface-container-low, #1b1b1c);
+	}
 }
 
 .draftsCenter__listItemTagRow {
@@ -98,12 +110,20 @@
 .draftsCenter__listItemTitle {
 	font-weight: 600;
 	color: #222;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
 }
 
 .draftsCenter__listItemTime {
 	color: #6b7280;
 	font-size: 12px;
 	white-space: nowrap;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface-variant, #c4c7c8);
+	}
 }
 
 .draftsCenter__listItemText {
@@ -116,6 +136,10 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface-variant, #c4c7c8);
+	}
 }
 
 .draftsCenter__threadTag {
@@ -227,6 +251,10 @@
 .draftsCenter__empty {
 	padding: 24px;
 	color: #6b7280;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface-variant, #c4c7c8);
+	}
 }
 
 @media (width <= 1200px) {

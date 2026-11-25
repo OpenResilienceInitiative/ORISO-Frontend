@@ -1612,6 +1612,10 @@ $cal-page-gap: 12px;
 		border: 1px dashed var(--m3-outline, #747878);
 		background: var(--m3-surface-container-low, #f6f3f3);
 	}
+
+	html[data-oriso-personal-scheme='dark'] & {
+		background: var(--m3-surface-container-low, #1b1b1c);
+	}
 }
 
 // Who it is with: the avatar in the person's tone (calendarAvatar.ts) with
@@ -2210,10 +2214,16 @@ $cal-page-gap: 12px;
 	align-items: center;
 	gap: 6px;
 	padding: 4px 11px;
-	border: 1px solid var(--m3-on-secondary-fixed-variant, #3f4852);
+	border: 1px solid var(--m3-secondary, #4c555f);
 	border-radius: 999px;
 	background: var(--m3-secondary-fixed, #dae3f0);
-	color: var(--m3-on-secondary-fixed-variant, #3f4852);
+	color: var(--m3-secondary, #4c555f);
+
+	// Dark: `secondary` turns pale while the `-fixed` fill stays pale.
+	html[data-oriso-personal-scheme='dark'] & {
+		border-color: var(--m3-on-secondary-fixed-variant, #3f4852);
+		color: var(--m3-on-secondary-fixed-variant, #3f4852);
+	}
 	font: inherit;
 	font-size: 12.5px;
 	font-weight: 500;
@@ -3450,6 +3460,7 @@ $cal-new-pill-hover: #4b4f51;
 	display: inline-flex;
 	align-items: center;
 	white-space: nowrap;
+
 	/* The M3 checkbox brings its own 40px state layer; pull it to the row edge. */
 	margin-inline-start: -11px;
 }
@@ -3786,6 +3797,7 @@ $cal-new-pill-hover: #4b4f51;
 	gap: 2px;
 	max-width: 100%;
 	box-sizing: border-box;
+
 	// Four tabs on a 390 px phone (FE#2494 *2b): words stay whole, the
 	// row scrolls sideways if it must.
 	overflow-x: auto;
@@ -4237,6 +4249,7 @@ $cal-new-pill-hover: #4b4f51;
 	min-width: 0;
 	min-height: 0;
 	overflow: auto;
+
 	// The same card as the stage, so both take the same width.
 	padding: 14px 18px;
 	border: 1.5px solid $cal-stage-border;

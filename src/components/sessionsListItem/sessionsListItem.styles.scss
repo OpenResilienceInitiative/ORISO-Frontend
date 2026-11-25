@@ -211,6 +211,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			--session-preview-color: var(--black, #1e1e1e);
 			border: $list-item-active-menu-border-width solid
 				$session-light-border !important;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				background: var(--m3-surface-container-low, #1b1b1c) !important;
+			}
 		}
 
 		.sessionsListItem__content:hover,
@@ -1207,6 +1211,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			color: var(--m3-secondary, #4b515a);
 			line-height: 20px;
 			letter-spacing: 0;
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
 		}
 	}
 

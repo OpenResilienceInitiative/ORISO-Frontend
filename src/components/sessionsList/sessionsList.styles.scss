@@ -879,9 +879,12 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	// Figma filter pill contract: inactive icon-only pills, expanded active pill.
 	$toolbar-chip-bg: var(--m3-surface-container-lowest, #ffffff);
 	$toolbar-chip-fg: var(--m3-secondary, #4c555f);
-	$toolbar-chip-border-rest: var(--m3-outline-variant, #e1e6ee);
-	$toolbar-chip-hover-bg: var(--m3-surface-container, #eef1f6);
-	$toolbar-chip-hover-border: var(--m3-outline, #d1d8e6);
+
+	// Light keeps the blue-tinted Figma values; dark sets the roles in
+	// `mui-variables-mapping.scss`.
+	$toolbar-chip-border-rest: var(--oriso-toolbar-chip-border, #e1e6ee);
+	$toolbar-chip-hover-bg: var(--oriso-toolbar-chip-hover-bg, #eef1f6);
+	$toolbar-chip-hover-border: var(--oriso-toolbar-chip-hover-border, #d1d8e6);
 	$toolbar-chip-selected-bg: #410001;
 	$toolbar-chip-selected-fg: #ffffff;
 

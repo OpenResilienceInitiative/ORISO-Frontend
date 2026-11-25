@@ -70,6 +70,10 @@
 	font-weight: 600;
 	line-height: 30px;
 	color: #1c1b1f;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
 }
 
 .leaveQueueDialog__body {
