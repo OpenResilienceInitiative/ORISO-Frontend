@@ -1,9 +1,15 @@
-/** Flow F1: accept an enquiry and answer it. */
-export const PRACTICE_ACCEPT_TOUR_ID = 'consultant-practice-accept';
+/**
+ * FE#2545: the Einführung. Where practice can run it is a first look around
+ * the workspace while a practice enquiry is opened, accepted and answered
+ * (it absorbed the old card F1 "Übung: Anfrage annehmen",
+ * `consultant-practice-accept`); elsewhere, and for the auto-start, the
+ * watch-only Einführung runs under the same id.
+ */
+export const PRACTICE_INTRO_TOUR_ID = 'consultant-walkthrough';
 /**
  * FE#2545: the Supervision topic tour. The id of the old card F2 ("Übung:
- * Supervision hinzufügen"), already on the UserService allowlist, kept so old
- * completions count; it has no card any more and runs from Help → Rundgänge.
+ * Supervision hinzufügen"), already on the UserService allowlist; version 2
+ * shows it as new. It has no card any more and runs from Help → Rundgänge.
  */
 export const PRACTICE_SUPERVISION_TOUR_ID = 'consultant-practice-supervision';
 /**
@@ -26,9 +32,6 @@ export const PRACTICE_GROUP_CIRCLE_TOUR_ID = 'consultant-group-circle';
  */
 export const PRACTICE_CALENDAR_TOUR_ID = 'consultant-calendar';
 
-/** The flows with a practice card of their own (Help → Meine Rundgänge). */
-export const PRACTICE_CARD_TOUR_IDS = [PRACTICE_ACCEPT_TOUR_ID] as const;
-
 /**
  * The only tour ids the network guard may ever allow a progress write for.
  * Each must also be on the UserService allowlist `tutorial.tours.frontend` in
@@ -36,7 +39,7 @@ export const PRACTICE_CARD_TOUR_IDS = [PRACTICE_ACCEPT_TOUR_ID] as const;
  * The topic tours below already are (`TutorialProgressService`).
  */
 export const PRACTICE_TOUR_IDS = [
-	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_INTRO_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
@@ -44,13 +47,7 @@ export const PRACTICE_TOUR_IDS = [
 ] as const;
 
 export type PracticeTourId = (typeof PRACTICE_TOUR_IDS)[number];
-export type PracticeCardTourId = (typeof PRACTICE_CARD_TOUR_IDS)[number];
 
 export const isPracticeTourId = (id: unknown): id is PracticeTourId =>
 	typeof id === 'string' &&
 	(PRACTICE_TOUR_IDS as readonly string[]).includes(id);
-
-/** A flow that is started only from its own practice card. */
-export const isPracticeCardTourId = (id: unknown): id is PracticeCardTourId =>
-	typeof id === 'string' &&
-	(PRACTICE_CARD_TOUR_IDS as readonly string[]).includes(id);

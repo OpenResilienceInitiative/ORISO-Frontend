@@ -34,7 +34,7 @@ import {
 import { PracticeSurface } from './PracticeSurface';
 import { createPracticeTestI18n } from './script/scriptTestSupport';
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 
 /** "practice world" inside the sandbox, "real app" outside. */

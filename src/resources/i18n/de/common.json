@@ -5665,6 +5665,46 @@
 				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
 				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
 			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Einführung",
+					"intro": "Willkommen! In dieser Übung lernen Sie Ihren Arbeitsbereich an einer erfundenen Anfrage kennen, nichts wird gesendet oder gespeichert."
+				},
+				"enquiries": {
+					"title": "Anfragen",
+					"intro": "Hier stehen alle offenen Anfragen, die noch niemand angenommen hat, und Ihr ganzes Team sieht diese Liste. Die ältesten stehen oben, damit die zuerst eingegangenen nicht warten."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf und lesen Sie, worum es geht."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und Ihr Team sieht sie nicht mehr in der Liste."
+				},
+				"reply": {
+					"title": "Erste Antwort schreiben",
+					"intro": "Die Anfrage gehört jetzt Ihnen: Oben sehen Sie die automatische Erstantwort und die erste Nachricht. Schreiben Sie eine kurze Antwort und senden Sie sie ab."
+				},
+				"answered": {
+					"title": "Die Antwort ist da",
+					"intro": "Die ratsuchende Person hat Ihnen geantwortet. So geht die Beratung im Chat weiter."
+				},
+				"mySessions": {
+					"title": "Meine Beratungen",
+					"intro": "Hier finden Sie alle Anfragen, die Sie angenommen haben, jetzt auch die Übungsanfrage. Der zuletzt bearbeitete Verlauf steht oben."
+				},
+				"archive": {
+					"title": "Archiv",
+					"intro": "Ruhende Unterhaltungen können Sie archivieren: Sie werden nicht gelöscht, sondern stehen unter „Archiv“. Schreibt jemand wieder, kommt die Unterhaltung zurück in Ihre Liste."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie haben eine Anfrage angenommen und beantwortet. Weitere Rundgänge finden Sie im Profil unter „Hilfe“, mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
 		}
 	},
 	"banner": {
@@ -6449,44 +6489,6 @@
 				"archive": {
 					"title": "Archiv",
 					"intro": "Abgeschlossene Beratungen verschieben Sie wie bisher ins Archiv — es liegt jetzt in diesem Tab."
-				}
-			}
-		},
-		"practiceAccept": {
-			"title": "Übung: Anfrage annehmen",
-			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"navEnquiries": {
-					"title": "Anfragen öffnen",
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen finden Sie hier unter „Anfragen“."
-				},
-				"openEnquiry": {
-					"title": "Anfrage öffnen",
-					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
-				},
-				"openTeam": {
-					"title": "Team-Chat öffnen",
-					"intro": "Bei Ihnen ist der Team-Chat aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Team-Chat öffnen“."
-				},
-				"teamReply": {
-					"title": "Im Team antworten",
-					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird der Team-Chat geschlossen."
-				},
-				"accept": {
-					"title": "Anfrage annehmen",
-					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für Ihr Team nicht mehr in der Liste."
-				},
-				"firstAnswer": {
-					"title": "Erstantwort und erste Nachricht",
-					"intro": "Die Anfrage gehört jetzt Ihnen. Im Chat sehen Sie die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
-				},
-				"reply": {
-					"title": "Erste Antwort schreiben",
-					"intro": "Schreiben Sie der ratsuchenden Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
-				},
-				"done": {
-					"title": "Geschafft!",
-					"intro": "Gut gemacht: Sie haben eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
 		},
@@ -7314,19 +7316,8 @@
 			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Eine Anfrage annehmen und eine erste Antwort schreiben."
-			},
-			"title": "Übungsbereich",
-			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
-			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
-			"badge": "Übung",
 			"phoneHint": "Bitte üben Sie am Computer.",
-			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung.",
-			"action": {
-				"start": "Übung starten",
-				"restart": "Noch einmal üben"
-			}
+			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung."
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."

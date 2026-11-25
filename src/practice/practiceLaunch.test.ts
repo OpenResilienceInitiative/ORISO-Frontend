@@ -8,13 +8,9 @@ describe('nextPracticeLaunchRequest', () => {
 		vi.spyOn(Date, 'now').mockReturnValue(5000);
 
 		expect(
-			nextPracticeLaunchRequest(
-				'consultant-practice-accept',
-				'start',
-				null
-			)
+			nextPracticeLaunchRequest('consultant-walkthrough', 'start', null)
 		).toEqual({
-			tourId: 'consultant-practice-accept',
+			tourId: 'consultant-walkthrough',
 			mode: 'start',
 			requestedAt: 5000
 		});
@@ -24,10 +20,10 @@ describe('nextPracticeLaunchRequest', () => {
 		vi.spyOn(Date, 'now').mockReturnValue(5000);
 
 		const request = nextPracticeLaunchRequest(
-			'consultant-practice-accept',
+			'consultant-walkthrough',
 			'restart',
 			{
-				tourId: 'consultant-practice-accept',
+				tourId: 'consultant-walkthrough',
 				mode: 'start',
 				requestedAt: 5000
 			}

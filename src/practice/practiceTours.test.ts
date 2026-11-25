@@ -8,7 +8,10 @@ import frTranslations from '../resources/i18n/fr/common.json';
 import ruTranslations from '../resources/i18n/ru/common.json';
 import tiTranslations from '../resources/i18n/ti/common.json';
 import trTranslations from '../resources/i18n/tr/common.json';
-import { frontendTours } from '../components/productTour/tourDefinitions';
+import {
+	consultantWalkthroughTour,
+	frontendTours
+} from '../components/productTour/tourDefinitions';
 import { resolveTourSteps } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
@@ -18,16 +21,15 @@ import {
 } from './practiceRoutes';
 import { LIVE_CHAT_QUEUE_PATH } from '../components/app/liveChatRailTarget';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
-import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
+import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
-	practiceAcceptTour,
 	practiceCalendarTour,
 	practiceGroupCircleTour,
 	practiceHostedTours,
+	practiceIntroTour,
 	practiceLiveChatTour,
-	practiceSupervisionTour,
-	practiceTours
+	practiceSupervisionTour
 } from './practiceTours';
 import {
 	consultantGroupCircleTour,
@@ -53,10 +55,6 @@ const bundledLocales: Array<[string, object]> = [
 	['tr', trTranslations]
 ];
 
-const resolvesWithFallback = (bundle: object, key: string): boolean =>
-	typeof resolveKey(bundle, key) === 'string' ||
-	typeof resolveKey(deTranslations, key) === 'string';
-
 const keysOf = (tour: TourDefinition): string[] => [
 	tour.titleKey,
 	tour.summaryKey,
@@ -67,43 +65,31 @@ const stepIds = (steps: Array<{ id: string }>) => steps.map((s) => s.id);
 
 const TEAM_OFF = { flags: { featureTeamDiscussionEnabled: false } };
 
-describe('practiceTours registry', () => {
-	it('holds the one practice card, and every hosted tour under an id the guard allows', () => {
-		expect(practiceTours.map((t) => t.id)).toEqual([
-			...PRACTICE_CARD_TOUR_IDS
-		]);
-		// FE#2545: Supervision is a topic tour in Help → Rundgänge now.
-		expect([...PRACTICE_CARD_TOUR_IDS]).toEqual([
-			'consultant-practice-accept'
-		]);
+describe('practice tours registry', () => {
+	it('hosts every practice tour under an id the guard allows, and has no practice cards any more', () => {
 		expect(practiceHostedTours.map((t) => t.id)).toEqual([
 			...PRACTICE_TOUR_IDS
 		]);
-		expect(practiceAcceptTour.id).toBe('consultant-practice-accept');
+		// FE#2545: the Einführung absorbed the card "Übung: Anfrage annehmen";
+		// the old card id is no practice tour any more.
+		expect(PRACTICE_TOUR_IDS).not.toContain('consultant-practice-accept');
+		expect(practiceIntroTour.id).toBe('consultant-walkthrough');
 		expect(practiceSupervisionTour.id).toBe(
 			'consultant-practice-supervision'
 		);
 	});
 
-	it('stays out of frontendTours, which the Help list and its test pin', () => {
-		const frontendIds = frontendTours.map((t) => t.id);
-		practiceTours.forEach((tour) => {
-			expect(frontendIds).not.toContain(tour.id);
-			expect(frontendTours).not.toContain(tour);
-		});
-	});
-
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s is a v1 consultant tour that ESC and overlay clicks cannot skip',
+	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
+		'%s is a consultant tour that ESC and overlay clicks cannot skip',
 		(_id, tour) => {
-			expect(tour.version).toBe(1);
 			expect(tour.surface).toBe('frontend');
 			expect(tour.audiences).toEqual(['consultant']);
 			expect(tour.dismissible).toBe(false);
+			expect(tour.requiredTargetPolicy).toBe('stop');
 		}
 	);
 
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
+	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s has unique step ids and kebab-case targets',
 		(_id, tour) => {
 			const ids = stepIds(tour.steps);
@@ -117,112 +103,183 @@ describe('practiceTours registry', () => {
 	);
 });
 
-describe('practiceAcceptTour (flow F1)', () => {
-	const [first] = practiceAcceptTour.steps;
-	const last = practiceAcceptTour.steps[practiceAcceptTour.steps.length - 1];
+describe('practiceIntroTour (FE#2545, Einführung with a practice enquiry)', () => {
+	const tour = practiceIntroTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+	const de = (key: string) => resolveKey(deTranslations, key) as string;
 
-	it('opens on the Anfragen nav icon with a plain Next', () => {
-		expect(first.target).toBe('nav-enquiries');
-		expect(first.advanceOn).toBeUndefined();
-		expect(first.route).toBeUndefined();
+	it('is the Einführung: same id and version as its watch-only fallback, version 2 so it shows as new', () => {
+		expect(tour.id).toBe(consultantWalkthroughTour.id);
+		// Version 2 (PO: reworked tours show as new): a completion of the
+		// watch-only Einführung (version 1) does not count.
+		expect(tour.version).toBe(2);
+		expect(consultantWalkthroughTour.version).toBe(2);
+		expect(tour.titleKey).toBe(consultantWalkthroughTour.titleKey);
+		expect(tour.summaryKey).toBe(consultantWalkthroughTour.summaryKey);
+		expect(de(tour.titleKey)).toBe('Einführung');
+		expect(practiceHostedTours).toContain(tour);
+		// The watch-only Einführung stays in the Help list and the auto-run.
+		expect(frontendTours).toContain(consultantWalkthroughTour);
+		expect(frontendTours).not.toContain(tour);
 	});
 
-	it('ends on a centered thank-you step', () => {
-		expect(last.target).toBe('');
-		expect(last.placement).toBe('center');
-		expect(last.advanceOn).toBeUndefined();
-		expect(last.when).toBeUndefined();
-	});
-
-	it('walks the full variant in the spec order', () => {
-		expect(stepIds(resolveTourSteps(practiceAcceptTour))).toEqual([
-			'nav-enquiries',
-			'open-enquiry',
-			'accept',
-			'first-answer',
-			'reply',
-			'done'
+	it('keeps the watch-only Einführung as it was, apart from the version', () => {
+		expect(
+			consultantWalkthroughTour.steps.map((s) => [s.id, s.target])
+		).toEqual([
+			['intro', ''],
+			['enquiries', 'consultant-enquiries-list'],
+			['my-sessions', 'consultant-sessions-list'],
+			['archive', 'sessions-archive-tab'],
+			['profile', 'profile-overview']
 		]);
 	});
 
-	it('walks the same six steps when the Träger switched the team chat off (FE#2491: no team steps)', () => {
-		const steps = resolveTourSteps(practiceAcceptTour, TEAM_OFF);
-		expect(stepIds(steps)).toEqual([
-			'nav-enquiries',
-			'open-enquiry',
-			'accept',
-			'first-answer',
-			'reply',
-			'done'
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+		expect(tour.when).toBeUndefined();
+		expect(tour.steps.filter((s) => s.when)).toEqual([]);
+		expect(tour.steps.filter((s) => s.optional)).toEqual([]);
+	});
+
+	it('tells one story: the lists, the practice enquiry opened, accepted and answered, the answer, then the lists again', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['enquiries', 'consultant-enquiries-list'],
+			['open-enquiry', 'enquiry-list-item'],
+			['accept', 'enquiry-accept-button'],
+			['reply', 'session-composer'],
+			['answered', ''],
+			['my-sessions', 'consultant-sessions-list'],
+			['archive', 'sessions-archive-tab'],
+			['done', '']
+		]);
+		expect(stepIds(resolveTourSteps(tour))).toEqual(stepIds(tour.steps));
+		expect(stepIds(resolveTourSteps(tour, TEAM_OFF))).toEqual(
+			stepIds(tour.steps)
+		);
+	});
+
+	it('advances on the learner action: click, click, the sent reply', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			['open-enquiry', { type: 'click' }],
+			['accept', { type: 'click' }],
+			['reply', { type: 'event', name: PRACTICE_TOUR_EVENTS.messageSent }]
 		]);
 	});
 
-	it('does not depend on the team-chat flag any more', () => {
-		const full = stepIds(resolveTourSteps(practiceAcceptTour));
-		expect(
-			stepIds(resolveTourSteps(practiceAcceptTour, { flags: {} }))
-		).toEqual(full);
-		expect(
-			stepIds(
-				resolveTourSteps(practiceAcceptTour, {
-					flags: { featureTeamDiscussionEnabled: true }
-				})
-			)
-		).toEqual(full);
+	it('shows the lists on their own routes, the practice enquiries first', () => {
+		expect(step('enquiries').route).toBe(PRACTICE_ENQUIRIES_ROUTE);
+		expect(step('open-enquiry').route).toBe(PRACTICE_ENQUIRIES_ROUTE);
+		expect(step('my-sessions').route).toBe(
+			'/sessions/consultant/sessionView'
+		);
+		expect(step('archive').route).toBe(
+			'/sessions/consultant/sessionView?sessionListTab=archive'
+		);
+		// The same routes and anchors as the watch-only Einführung.
+		const watchOnly = Object.fromEntries(
+			consultantWalkthroughTour.steps.map((s) => [s.id, s])
+		);
+		expect(step('enquiries').target).toBe(watchOnly.enquiries.target);
+		expect(step('my-sessions').route).toBe(watchOnly['my-sessions'].route);
+		expect(step('archive').route).toBe(watchOnly.archive.route);
 	});
 
-	it('is available whatever the supervision flag says', () => {
+	it('offers no Back where the step before cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'reply',
+			'answered',
+			'my-sessions'
+		]);
+	});
+
+	it('is offered whatever the Träger flags say', () => {
+		expect(isPracticeTourAvailable(tour, {})).toBe(true);
 		expect(
-			isPracticeTourAvailable(practiceAcceptTour, {
-				featureSupervisionEnabled: false
+			isPracticeTourAvailable(tour, {
+				featureSupervisionEnabled: false,
+				featureTeamDiscussionEnabled: false
 			})
 		).toBe(true);
-		expect(
-			isPracticeTourAvailable(practiceAcceptTour, TEAM_OFF.flags)
-		).toBe(true);
 	});
 
-	it('advances on the learner action: click, click, click, event, event', () => {
-		const byId = Object.fromEntries(
-			practiceAcceptTour.steps.map((s) => [s.id, s])
+	it('says up front that this is an exercise, invented, and nothing is sent', () => {
+		expect(de(step('intro').contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
 		);
-		expect(byId['open-enquiry'].advanceOn).toEqual({ type: 'click' });
-		expect(byId.accept.advanceOn).toEqual({ type: 'click' });
-		expect(byId.reply.advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.messageSent
+	});
+
+	it('quotes the real labels "Anfrage annehmen", "Meine Beratungen" and "Archiv"', () => {
+		expect(de(step('accept').contentKey)).toMatch(/„Anfrage annehmen“/);
+		expect(de(step('accept').contentKey)).toMatch(/„Meine Beratungen“/);
+		expect(de(step('archive').contentKey)).toMatch(/„Archiv“/);
+		expect(de('enquiry.acceptButton.known')).toBe('Anfrage annehmen');
+		expect(de('sessionList.view.archive.tab')).toBe('Archiv');
+		expect(de('navigation.consultant.sessions.large')).toBe(
+			'Meine Beratungen'
+		);
+	});
+
+	it('ships its copy natively in every full locale, a sparse du-form overlay and two sentences at most', () => {
+		bundledLocales.forEach(([locale, bundle]) => {
+			keysOf(tour).forEach((key) => {
+				if (locale !== 'de@informal') {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				}
+			});
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				expect(
+					text.split(/(?<=[.!?。።])\s+/).filter(Boolean).length,
+					`${locale} ${s.contentKey}`
+				).toBeLessThanOrEqual(2);
+			});
 		});
-		expect(byId['first-answer'].advanceOn).toBeUndefined();
+		keysOf(tour).forEach((key) => {
+			const formal = de(key);
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(formal);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(formal)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
 	});
 
-	it('anchors the steps on the practice anchors and the composer', () => {
-		expect(
-			practiceAcceptTour.steps.map((s) => s.target).filter(Boolean)
-		).toEqual([
-			'nav-enquiries',
-			'enquiry-list-item',
-			'enquiry-accept-button',
-			'session-composer'
-		]);
-	});
-
-	it('goes back to the enquiries list for the card step', () => {
-		const byId = Object.fromEntries(
-			practiceAcceptTour.steps.map((s) => [s.id, s])
-		);
-		expect(byId['open-enquiry'].route).toBe(
-			'/sessions/consultant/sessionPreview'
-		);
-	});
-
-	it('offers no Back on the step after the accept, which cannot be undone', () => {
-		const hidden = practiceAcceptTour.steps.filter((s) => s.hideBack);
-		expect(stepIds(hidden)).toEqual(['first-answer']);
-	});
-
-	it('gates no step on the team-chat flag (FE#2491: the team chat lives in the menu)', () => {
-		expect(practiceAcceptTour.steps.filter((s) => s.when)).toEqual([]);
-		expect(practiceAcceptTour.when).toBeUndefined();
+	it('retires the card "Übung: Anfrage annehmen" and its copy in every locale', () => {
+		bundledLocales.forEach(([locale, bundle]) => {
+			[
+				'tour.practiceAccept',
+				'practice.cards.summary',
+				'practice.cards.title',
+				'practice.cards.subtitle',
+				'practice.cards.empty',
+				'practice.cards.badge',
+				'practice.cards.action'
+			].forEach((key) =>
+				expect(
+					resolveKey(bundle, key),
+					`${locale} still carries ${key}`
+				).toBeUndefined()
+			);
+		});
+		// The narrow-window hints stay: the Supervision card shows them.
+		expect(de('practice.cards.windowHint')).toBeTruthy();
+		expect(de('practice.cards.phoneHint')).toBeTruthy();
 	});
 });
 
@@ -238,7 +295,6 @@ describe('practiceSupervisionTour (FE#2545, Supervision)', () => {
 		expect(tour.version).toBe(2);
 		expect(tour.titleKey).toBe('tour.supervision.title');
 		expect(de(tour.titleKey)).toBe('Supervision');
-		expect(practiceTours).not.toContain(tour);
 		expect(practiceHostedTours).toContain(tour);
 		// No watch-only explanation under the same id any more.
 		expect(frontendTours.map((t) => t.id)).not.toContain(tour.id);
@@ -456,7 +512,6 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 		expect(tour.id).toBe(consultantGroupCircleTour.id);
 		expect(tour.version).toBe(GROUP_CIRCLE_TOUR_VERSION);
 		expect(tour.version).toBe(consultantGroupCircleTour.version);
-		expect(practiceTours).not.toContain(tour);
 		expect(practiceHostedTours).toContain(tour);
 		expect(tour.when).toEqual(consultantGroupCircleTour.when);
 	});
@@ -588,7 +643,6 @@ describe('practiceCalendarTour (FE#2545, Kalender)', () => {
 		expect(tour.id).toBe(consultantCalendarTour.id);
 		expect(tour.version).toBe(CALENDAR_TOUR_VERSION);
 		expect(tour.version).toBe(consultantCalendarTour.version);
-		expect(practiceTours).not.toContain(tour);
 		expect(practiceHostedTours).toContain(tour);
 	});
 
@@ -860,94 +914,6 @@ describe('practice tour wiring', () => {
 						(step.advanceOn as { name: string }).name
 					);
 				});
-		}
-	);
-});
-
-describe('practice tour copy', () => {
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s resolves every key in every bundled locale (incl. fallback)',
-		(_id, tour) => {
-			bundledLocales.forEach(([locale, bundle]) => {
-				keysOf(tour).forEach((key) => {
-					expect(
-						resolvesWithFallback(bundle, key),
-						`key ${key} unresolvable for ${locale}`
-					).toBe(true);
-				});
-			});
-		}
-	);
-
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s ships its copy natively in every full locale',
-		(_id, tour) => {
-			// de@informal is a sparse overlay by contract (#1101): only values
-			// that differ from `de`.
-			bundledLocales
-				.filter(([locale]) => locale !== 'de@informal')
-				.forEach(([locale, bundle]) => {
-					keysOf(tour).forEach((key) => {
-						expect(
-							typeof resolveKey(bundle, key),
-							`missing ${locale} key ${key}`
-						).toBe('string');
-					});
-				});
-		}
-	);
-
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s keeps the informal overlay sparse and complete where de says Sie',
-		(_id, tour) => {
-			keysOf(tour).forEach((key) => {
-				const de = resolveKey(deTranslations, key) as string;
-				expect(typeof de, `missing de key ${key}`).toBe('string');
-				const informal = resolveKey(deInformalTranslations, key);
-				if (informal !== undefined) {
-					expect(informal, `${key} duplicates de`).not.toBe(de);
-				}
-				if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
-					expect(
-						typeof informal,
-						`${key} is formal in de but has no du-form`
-					).toBe('string');
-				}
-			});
-		}
-	);
-
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s names itself an exercise and says up front that nothing is real',
-		(_id, tour) => {
-			const de = (key: string) =>
-				resolveKey(deTranslations, key) as string;
-			expect(de(tour.titleKey)).toMatch(/Übung/);
-			expect(de(tour.summaryKey)).toMatch(/erfunden/);
-			expect(de(tour.steps[0].contentKey)).toMatch(
-				/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
-			);
-		}
-	);
-
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
-		'%s keeps step intros short (two sentences at most)',
-		(_id, tour) => {
-			bundledLocales.forEach(([locale, bundle]) => {
-				tour.steps.forEach((step) => {
-					const text = resolveKey(bundle, step.contentKey);
-					if (typeof text !== 'string') {
-						return;
-					}
-					const sentences = text
-						.split(/(?<=[.!?。።])\s+/)
-						.filter(Boolean);
-					expect(
-						sentences.length,
-						`${locale} ${step.contentKey} has ${sentences.length} sentences`
-					).toBeLessThanOrEqual(2);
-				});
-			});
 		}
 	);
 });

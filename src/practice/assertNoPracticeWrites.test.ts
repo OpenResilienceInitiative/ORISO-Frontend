@@ -10,7 +10,7 @@ const TUTORIAL_PROGRESS_URL = `${USER_SERVICE}/service/users/tutorials/progress`
 const TOKEN_URL =
 	'https://auth.oriso.test/auth/realms/online-beratung/protocol/openid-connect/token';
 const MATRIX = 'https://matrix.oriso.test/_matrix/client/v3';
-const TOUR_ID = 'consultant-practice-accept';
+const TOUR_ID = 'consultant-walkthrough';
 
 const config = {
 	allowedTourIds: [TOUR_ID],
@@ -112,7 +112,10 @@ describe('assertNoPracticeWrites (what the browser really sent)', () => {
 
 	it('fails for the progress of another tour, and for a body that was not captured', () => {
 		expect(
-			findPracticeWrites([progress('consultant-walkthrough')], config)
+			findPracticeWrites(
+				[progress('consultant-mail-counselling')],
+				config
+			)
 		).toEqual([
 			{
 				method: 'PUT',

@@ -5,7 +5,7 @@ import {
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
-import { practiceAcceptTour, practiceSupervisionTour } from '../practiceTours';
+import { practiceIntroTour, practiceSupervisionTour } from '../practiceTours';
 import {
 	createScriptEngine,
 	PRACTICE_SCRIPT_VERSION,
@@ -201,10 +201,10 @@ describe('ScriptEngine', () => {
 			PRACTICE_SCRIPT_VERSION
 		);
 		// A script change bumps the tour versions: move them together.
-		expect(practiceAcceptTour.version).toBe(PRACTICE_SCRIPT_VERSION);
-		// FE#2545: Supervision went to version 2 on its own (PO, 25 Nov), so
-		// it shows as new to who completed the old card; the script did not
-		// change.
+		// FE#2545: the Einführung (which absorbed F1) and Supervision went to
+		// version 2 on their own (PO: reworked tours show as new); the script
+		// did not change.
+		expect(practiceIntroTour.version).toBe(PRACTICE_SCRIPT_VERSION + 1);
 		expect(practiceSupervisionTour.version).toBe(
 			PRACTICE_SCRIPT_VERSION + 1
 		);

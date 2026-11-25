@@ -29,8 +29,6 @@ import {
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 import { ProfileCardList } from './ProfileCardList';
 import { profileRoutesHelp } from './profileHelp.routes';
-import { PracticeCards } from '../../practice/PracticeCards';
-import { practiceTours } from '../../practice/practiceTours';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', async () => {
@@ -153,7 +151,7 @@ afterEach(() => {
 describe('Help learning card', () => {
 	it('presents the learning actions before Video-Call in the Help reading order', async () => {
 		renderHelp({ allHelp: true });
-		await screen.findAllByRole('button', { name: 'Übung starten' });
+		await screen.findByRole('heading', { name: 'Einführung' });
 		const cards = screen.getAllByTestId('profile-card');
 		expect(cards).toHaveLength(2);
 		expect(
@@ -167,37 +165,24 @@ describe('Help learning card', () => {
 		).toBeTruthy();
 	});
 
-	it('keeps standalone fictional-data summaries and short Help summaries separate', async () => {
-		render(
-			<PracticeCards
-				tours={practiceTours}
-				isPhone={false}
-				loadProgress={async () => []}
-				onStartTour={() => {}}
-			/>
-		);
-		await screen.findAllByRole('button', { name: 'Übung starten' });
-		// F1 only: Supervision is a topic tour since FE#2545.
-		expect(
-			screen.getAllByText(/Alle Personen und Inhalte sind erfunden\./)
-		).toHaveLength(1);
-		cleanup();
+	it('has no separate practice cards any more: the Einführung absorbed the last one (FE#2545)', async () => {
 		renderHelp();
-		await screen.findAllByRole('button', { name: 'Übung starten' });
+		await screen.findByRole('heading', { name: 'Einführung' });
 		expect(
-			screen.getByText(
-				'Eine Anfrage annehmen und eine erste Antwort schreiben.'
-			)
-		).toBeTruthy();
-		expect(
-			screen.queryByText(/Alle Personen und Inhalte sind erfunden\./)
+			screen.queryByRole('heading', { name: 'Übungsbereich' })
 		).toBeNull();
-		expect(screen.getByText(/an einem erfundenen Fall/)).toBeTruthy();
+		expect(screen.queryByRole('heading', { name: /^Übung:/ })).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'Übung starten' })
+		).toBeNull();
+		expect(
+			screen.queryByRole('list', { name: 'practice.cards.title' })
+		).toBeNull();
 	});
 
 	it('keeps manual learning actions with the auto-start control in one card', async () => {
 		renderHelp();
-		await screen.findAllByRole('button', { name: 'Übung starten' });
+		await screen.findByRole('heading', { name: 'Einführung' });
 		const card = screen
 			.getByRole('heading', { name: 'Meine Rundgänge' })
 			.closest('section')!;
@@ -207,10 +192,11 @@ describe('Help learning card', () => {
 				name: 'Einführung automatisch starten'
 			})
 		).toBeTruthy();
+		// FE#2545: no "Übung:" card any more; the practice runs from the
+		// tour cards (Einführung, Supervision, …).
 		expect(
-			content.getAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(1);
-		// FE#2545: Supervision is a topic tour, no "Übung:" card any more.
+			content.queryByRole('button', { name: 'Übung starten' })
+		).toBeNull();
 		expect(
 			content.getByRole('heading', { name: 'Supervision' })
 		).toBeTruthy();
@@ -293,14 +279,9 @@ describe('Help learning card', () => {
 
 	it('starts the introduction and each exercise by hand with auto-start off', async () => {
 		const { store } = renderHelp();
-		await screen.findAllByRole('button', { name: 'Übung starten' });
+		await screen.findByRole('heading', { name: 'Einführung' });
 		for (const [heading, action, id] of [
 			['Einführung', 'Starten', 'consultant-walkthrough'],
-			[
-				'Übung: Anfrage annehmen',
-				'Übung starten',
-				'consultant-practice-accept'
-			],
 			['Supervision', 'Starten', 'consultant-practice-supervision']
 		]) {
 			const tile = screen
@@ -316,7 +297,7 @@ describe('Help learning card', () => {
 
 	it('saves the subordinate auto-start preference while manual options stay available', async () => {
 		renderHelp();
-		await screen.findAllByRole('button', { name: 'Übung starten' });
+		await screen.findByRole('heading', { name: 'Einführung' });
 		const toggle = screen.getByRole('switch', {
 			name: 'Einführung automatisch starten'
 		}) as HTMLInputElement;
@@ -325,7 +306,7 @@ describe('Help learning card', () => {
 		expect(screen.getByText(/^An: Der Einführungsrundgang/)).toBeTruthy();
 		expect(
 			screen
-				.getAllByRole('button', { name: 'Übung starten' })
+				.getAllByRole('button', { name: 'Starten' })
 				.every((button) => !(button as HTMLButtonElement).disabled)
 		).toBe(true);
 	});
@@ -334,7 +315,7 @@ describe('Help learning card', () => {
 		'hides the Supervision card where the tenant cannot offer its practice: %j',
 		async (scenario) => {
 			renderHelp(scenario);
-			await screen.findByRole('button', { name: 'Übung starten' });
+			await screen.findByRole('heading', { name: 'Einführung' });
 			expect(
 				screen.queryByRole('heading', { name: 'Supervision' })
 			).toBeNull();
@@ -344,28 +325,34 @@ describe('Help learning card', () => {
 	it.each([
 		{
 			width: 1199,
-			acceptDisabled: false,
 			supervisionHint:
 				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
 		},
-		{ width: 1200, acceptDisabled: false, supervisionHint: null },
+		{ width: 1200, supervisionHint: null },
 		{
 			width: 390,
-			acceptDisabled: true,
 			supervisionHint: 'Bitte üben Sie am Computer.'
 		}
 	])(
 		'preserves the practice viewport gates at $width px',
-		async ({ width, acceptDisabled, supervisionHint }) => {
+		async ({ width, supervisionHint }) => {
 			renderHelp({ width });
-			await screen.findAllByRole('button', { name: 'Übung starten' });
+			await screen.findByRole('heading', { name: 'Einführung' });
 			const disabled = (name: string) =>
 				(
 					within(
 						screen.getByRole('heading', { name }).closest('li')!
 					).getByRole('button') as HTMLButtonElement
 				).disabled;
-			expect(disabled('Übung: Anfrage annehmen')).toBe(acceptDisabled);
+			// FE#2545: the Einführung always starts: where its practice
+			// cannot run, its watch-only rendering does. No hint on it.
+			expect(disabled('Einführung')).toBe(false);
+			expect(
+				screen
+					.getByRole('heading', { name: 'Einführung' })
+					.closest('li')!
+					.querySelector('.tourOverview__hint')
+			).toBeNull();
 			// FE#2545: the Supervision topic tour exists only as practice;
 			// below its width its card shows the hint and cannot start.
 			const supervision = screen
@@ -382,9 +369,7 @@ describe('Help learning card', () => {
 				).toBeNull();
 			}
 			expect(
-				screen.queryByRole('heading', {
-					name: 'Übung: Supervision hinzufügen'
-				})
+				screen.queryByRole('heading', { name: /^Übung:/ })
 			).toBeNull();
 		}
 	);

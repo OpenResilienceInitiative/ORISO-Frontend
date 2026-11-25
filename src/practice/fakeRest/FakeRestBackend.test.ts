@@ -72,6 +72,26 @@ describe('FakeRestBackend', () => {
 		);
 	});
 
+	it('answers the deleted-asker placeholders of "Meine Beratungen" and "Archiv" with none (FE#2545)', async () => {
+		const backend = backendFor();
+
+		for (const url of [
+			endpoints.consultantDeletedAskerSessions,
+			`${endpoints.consultantDeletedAskerSessions}?archived=true`
+		]) {
+			expect(await json(await backend.handle(new Request(url)))).toEqual(
+				[]
+			);
+		}
+		// The archive of the list is the practice archive: empty.
+		const archive = await backend.handle(
+			new Request(
+				`${endpoints.myMessagesBase}archive?count=15&filter=all&offset=0`
+			)
+		);
+		expect(archive?.status).toBe(204);
+	});
+
 	it('passes real ids and unknown endpoints on instead of answering them', async () => {
 		const backend = backendFor();
 

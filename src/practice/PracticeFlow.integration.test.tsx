@@ -67,8 +67,12 @@ import { MatrixClientService } from '../services/matrixClientService';
 import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
-import { PracticeOverviewSection } from './PracticeOverviewSection';
-import { practiceTours } from './practiceTours';
+import { TourOverviewSection } from '../components/productTour/TourOverviewSection';
+import {
+	consultantWalkthroughTour,
+	frontendTours
+} from '../components/productTour/tourDefinitions';
+import { practiceHostedTours } from './practiceTours';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
@@ -139,7 +143,8 @@ vi.mock('react-joyride', async () => {
 	};
 });
 
-const ACCEPT = 'consultant-practice-accept';
+/** The Einführung: practice where it can run, watch-only elsewhere (FE#2545). */
+const INTRO = 'consultant-walkthrough';
 const SUPERVISION = 'consultant-practice-supervision';
 const LIVE_CHAT = 'consultant-live-chat';
 const GROUP_CIRCLE = 'consultant-group-circle';
@@ -168,6 +173,8 @@ interface NetworkCall {
 	url: string;
 	/** The tutorial progress status a PUT writes. */
 	status?: string;
+	/** Sent while practice mode was on (the guard and the fake were in place). */
+	practising?: boolean;
 }
 const network: NetworkCall[] = [];
 const networkFetch = vi.fn(
@@ -180,7 +187,12 @@ const networkFetch = vi.fn(
 			typeof body === 'string' && body
 				? JSON.parse(body).status
 				: undefined;
-		network.push({ method, url, status });
+		network.push({
+			method,
+			url,
+			status,
+			practising: getPracticeSnapshot().status !== 'inactive'
+		});
 		// A real read the create entry needs: the Beratungsstelle's own
 		// settings, without policies, so the Träger's flags decide.
 		const agencyIds =
@@ -267,7 +279,9 @@ const renderApp = ({
 	twoAgencies = false,
 	liveChatViaSidebar = false,
 	/** More tenant flags, e.g. calls switched off. */
-	tenantFlags = {} as Record<string, boolean>
+	tenantFlags = {} as Record<string, boolean>,
+	/** The counsellor's own auto-start switch for the Einführung. */
+	walkThroughEnabled = false
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -288,11 +302,15 @@ const renderApp = ({
 		}),
 		...tenantFlags
 	};
+	const baseUser = {
+		...counsellor,
+		isWalkThroughEnabled: walkThroughEnabled
+	};
 	const userData = groupCircle
 		? {
-				...counsellor,
+				...baseUser,
 				grantedAuthorities: [
-					...counsellor.grantedAuthorities,
+					...baseUser.grantedAuthorities,
 					'AUTHORIZATION_CREATE_NEW_CHAT'
 				],
 				agencies: twoAgencies
@@ -302,7 +320,7 @@ const renderApp = ({
 						]
 					: counsellor.agencies
 			}
-		: counsellor;
+		: baseUser;
 	// Replace, not merge: one test's flags must not leak into the next.
 	replaceTenantSettings(flags as any);
 	const store = createStore();
@@ -409,7 +427,7 @@ const renderApp = ({
 										path="*"
 										element={
 											<div data-testid="help-page">
-												<PracticeOverviewSection />
+												<TourOverviewSection />
 											</div>
 										}
 									/>
@@ -425,9 +443,9 @@ const renderApp = ({
 		wrapper: strictMode ? React.StrictMode : undefined
 	});
 	const resize = (viewportWidth: number) => view.rerender(app(viewportWidth));
-	/** Starts a flow from its real card on the Help page. */
+	/** Starts a tour from its real card in Help → Rundgänge. */
 	const start = async (tourId: string) => {
-		const title = practiceTours.find(
+		const title = [...frontendTours, ...practiceHostedTours].find(
 			(tour) => tour.id === tourId
 		)!.titleKey;
 		const card = (
@@ -435,7 +453,7 @@ const renderApp = ({
 		).closest('li')!;
 		fireEvent.click(
 			within(card).getByRole('button', {
-				name: 'practice.cards.action.start'
+				name: 'walkthrough.overview.action.start'
 			})
 		);
 	};
@@ -679,21 +697,33 @@ const expectRealAvailabilityUntouched = (before: unknown) => {
 	expect(liveChatStorage()).toEqual(before);
 };
 
-/** The enquiry steps of F1 up to the open enquiry: 1 and 2 in both variants. */
+/**
+ * The Einführung (FE#2545) up to the open practice enquiry: the intro, the
+ * Anfragen list, then a click on the practice enquiry.
+ */
 const openThePracticeEnquiry = async () => {
-	// 1: the Anfragen icon in the real navigation bar; Next.
+	// 1: welcome, in practice; Next.
 	await expectStep(0);
 	expect(getPracticeSnapshot().status).toBe('active');
 	expect(uiVersionSwitch()).toBeNull();
 	pressNext(0);
 
-	// 2: the practice enquiry, the only row of the real list; click it.
+	// 2: the real Anfragen list holds the practice enquiry only; Next.
 	await expectStep(1);
 	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
-	expect(
-		document.querySelectorAll('[data-cy="session-list-item"]')
-	).toHaveLength(1);
-	const listItemSelector = joyride!.steps[1].target;
+	await waitFor(
+		() =>
+			expect(
+				document.querySelectorAll('[data-cy="session-list-item"]')
+			).toHaveLength(1),
+		SLOW
+	);
+	pressNext(1);
+
+	// 3: the practice enquiry, the only row of the real list; click it.
+	await expectStep(2);
+	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
+	const listItemSelector = joyride!.steps[2].target;
 	// Restart remounts the sandbox list. A row captured before that swap is
 	// detached, and fireEvent on it never reaches the tour's document listener.
 	await waitFor(() => {
@@ -707,10 +737,10 @@ const openThePracticeEnquiry = async () => {
 	});
 };
 
-/** F1 from the accept step on; `at` is the accept step's index. */
-const acceptAndAnswer = async (at: number) => {
-	// The real accept button; click it.
-	const accept = await expectStep(at);
+/** The Einführung from the accept (step 4) to the archive (step 8). */
+const acceptAnswerAndLookAround = async () => {
+	// 4: the real accept button; click it.
+	const accept = await expectStep(3);
 	await afterWorldEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted, async () => {
 		fireEvent.click(accept!);
 	});
@@ -719,8 +749,9 @@ const acceptAndAnswer = async (at: number) => {
 		SLOW
 	);
 
-	// The Erstantwort and the asker's message; Next.
-	await expectStep(at + 1);
+	// 5: the Erstantwort and the asker's message above the composer; the
+	// reply is answered by the script.
+	await expectStep(4);
 	await waitFor(
 		() =>
 			expect(textOf('.chatStage__mainPane')).toContain(
@@ -728,16 +759,15 @@ const acceptAndAnswer = async (at: number) => {
 			),
 		SLOW
 	);
-	pressNext(at + 1);
-
-	// The composer; the reply is answered by the script.
-	await expectStep(at + 2);
 	// No attachments while practising, not even by drag and drop.
 	expect(document.querySelector('.dragAndDropArea')).toBeNull();
 	const reply = 'Hallo Sam, schön, dass Sie sich melden.';
 	await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
 		typeAndSend(() => document.querySelector('.chatStage__mainPane'), reply)
 	);
+
+	// 6: the answer is there, in the conversation; Next.
+	await expectStep(5);
 	await waitFor(
 		() =>
 			expect(textOf('.chatStage__mainPane')).toContain(
@@ -745,6 +775,26 @@ const acceptAndAnswer = async (at: number) => {
 			),
 		SLOW
 	);
+	pressNext(5);
+
+	// 7: "Meine Beratungen" now holds the accepted practice case; Next.
+	const sessions = await expectStep(6);
+	expect(route()).toBe('/sessions/consultant/sessionView');
+	await waitFor(
+		() =>
+			expect(sessions!.textContent).toContain(
+				SCRIPT.cast.asker.displayName
+			),
+		SLOW
+	);
+	pressNext(6);
+
+	// 8: the real "Archiv" chip, on the practice archive (empty); Next.
+	await expectStep(7);
+	expect(route()).toBe(
+		'/sessions/consultant/sessionView?sessionListTab=archive'
+	);
+	pressNext(7);
 };
 
 /** The last step: completion is written, practice ends, back to Help. */
@@ -1204,26 +1254,158 @@ describe('practice flows on the real app shell', () => {
 	});
 
 	it.each([true, false])(
-		'F1 (team chat %s): six steps, no team button anchor, the same real actions (FE#2491)',
+		'Einführung (FE#2545, team chat %s): from its Help card, the lists, the practice enquiry opened, accepted and answered, the answer, Meine Beratungen and Archiv, then only the completion was written',
 		async (teamDiscussion) => {
 			const app = renderApp({ teamDiscussion });
-			await app.start(ACCEPT);
+			await app.start(INTRO);
 			await openThePracticeEnquiry();
-			expect(joyride!.steps).toHaveLength(6);
-
-			// 3-5: accept straight away, Erstantwort, reply. The team chat
-			// lives in "Weitere Funktionen" now; no button beside "Annehmen".
-			await expectStep(2);
+			expect(joyride!.steps).toHaveLength(9);
+			expect(getPracticeSnapshot().session?.tourId).toBe(INTRO);
+			// The team chat lives in "Weitere Funktionen" (FE#2491): no team
+			// button beside "Annehmen".
+			await expectStep(3);
 			expect(
 				document.querySelector('[data-cy="enquiry-open-team"]')
 			).toBeNull();
-			await acceptAndAnswer(2);
+			await acceptAnswerAndLookAround();
 
-			// 6: done.
-			await finish(5);
+			// 9: done; the completion is the one write.
+			await finish(8);
+			expect(
+				network
+					.filter(({ method }) => method === 'PUT')
+					.every(({ url }) => url.includes(TUTORIAL_PROGRESS))
+			).toBe(true);
+			// No real list read reached the network while practising.
+			expect(
+				network.filter(
+					({ url, practising }) =>
+						practising &&
+						/\/users\/sessions\/consultants|\/conversations\/consultants\/(enquiries|mymessages)\//.test(
+							url
+						)
+				)
+			).toEqual([]);
 		},
 		120000
 	);
+
+	it.each([
+		{ name: 'without the practice area', practiceArea: false, width: 1440 },
+		{ name: 'in a narrow window (899px)', practiceArea: true, width: 899 },
+		{ name: 'on a phone (390px)', practiceArea: true, width: 390 }
+	])(
+		'Einführung $name: the watch-only Einführung runs on the real page instead, never practice',
+		async ({ practiceArea, width }) => {
+			const app = renderApp({ practiceArea, width });
+			await app.request(INTRO);
+			await expectStep(0);
+			expect(joyride!.steps).toHaveLength(
+				consultantWalkthroughTour.steps.length
+			);
+			expect(joyride!.steps.map(({ target }) => target)).not.toContain(
+				'[data-tour-target="enquiry-accept-button"]'
+			);
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(getPracticeNetworkGuard()).toBeFalsy();
+			expect(screen.queryByTestId('practice-banner')).toBeNull();
+			// The request is kept: it is a run, not a cleared practice launch.
+			expect(app.store.get(tourLaunchRequestAtom)?.tourId).toBe(INTRO);
+
+			// Its second step shows the real Anfragen list.
+			pressNext(0);
+			await expectStep(1);
+			expect(route()).toBe('/sessions/consultant/sessionPreview');
+			expect(getPracticeSnapshot().status).toBe('inactive');
+
+			// Widening the window does not swap in the practice mid-run.
+			app.resize(1440);
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+			await expectStep(1);
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(progressWrites()).not.toContain('completed');
+		},
+		120000
+	);
+
+	it('Einführung at 1199px (below the Supervision width) still runs as practice: its controls need fromL only', async () => {
+		const app = renderApp({ width: 1199 });
+		await app.start(INTRO);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(joyride!.steps).toHaveLength(9);
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+	});
+
+	it.each([
+		{ width: 1440, device: 'desktop' },
+		{ width: 390, device: 'phone' }
+	])(
+		'auto-start after login ($device): the watch-only Einführung, never practice mode, also where practice could run',
+		async ({ width }) => {
+			renderApp({ width, walkThroughEnabled: true });
+			await expectStep(0);
+			expect(joyride!.steps).toHaveLength(
+				consultantWalkthroughTour.steps.length
+			);
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(getPracticeNetworkGuard()).toBeFalsy();
+			expect(screen.queryByTestId('practice-banner')).toBeNull();
+		}
+	);
+
+	it('no auto-start with the switch off; Help starts the practice Einführung by hand', async () => {
+		const app = renderApp({ walkThroughEnabled: false });
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(joyride).toBeNull();
+		await app.start(INTRO);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+	});
+
+	it('Einführung: narrowing the window below fromL ends the practice run, and widening does not restart it', async () => {
+		const app = renderApp({ width: 1440 });
+		await app.start(INTRO);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+
+		app.resize(899);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		app.resize(1440);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		expect(progressWrites()).not.toContain('completed');
+	}, 120000);
+
+	it('a stale launch of the retired card "Übung: Anfrage annehmen" reaches nothing', async () => {
+		const app = renderApp();
+		await app.request('consultant-practice-accept');
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(joyride).toBeNull();
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+		expectNothingLeftThePracticeWorld();
+	});
 
 	it('Live chat (FE#2545): availability is switched on in practice only, then a practice live chat waits, is started with the real button and answered', async () => {
 		const app = renderApp();
@@ -1766,16 +1948,16 @@ describe('practice flows on the real app shell', () => {
 
 	it('banner Restart mid-flow: same guard, fresh case with the accept available again, tour back at step 1', async () => {
 		const app = renderApp({ teamDiscussion: false });
-		await app.start(ACCEPT);
+		await app.start(INTRO);
 		await openThePracticeEnquiry();
-		const accept = await expectStep(2);
+		const accept = await expectStep(3);
 		await afterWorldEvent(
 			PRACTICE_TOUR_EVENTS.enquiryAccepted,
 			async () => {
 				fireEvent.click(accept!);
 			}
 		);
-		await expectStep(3);
+		await expectStep(4);
 		const guard = getPracticeNetworkGuard();
 
 		fireEvent.click(
@@ -1787,7 +1969,7 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBe(guard);
 		// The accepted case is an open enquiry again.
 		await openThePracticeEnquiry();
-		await expectStep(2);
+		await expectStep(3);
 
 		fireEvent.click(
 			banner().getByRole('button', { name: 'practice.banner.end' })
@@ -1802,9 +1984,9 @@ describe('practice flows on the real app shell', () => {
 
 	it('banner End mid-flow: the real page comes back where practice started, and the run is not marked done', async () => {
 		const app = renderApp();
-		await app.start(ACCEPT);
+		await app.start(INTRO);
 		await openThePracticeEnquiry();
-		await expectStep(2);
+		await expectStep(3);
 
 		fireEvent.click(
 			banner().getByRole('button', { name: 'practice.banner.end' })
@@ -1826,19 +2008,16 @@ describe('practice flows on the real app shell', () => {
 		expect(window.fetch).toBe(networkFetch);
 		expectNothingLeftThePracticeWorld();
 	}, 120000);
-	it('release flag off: no card, no registry lookup, no sandbox, and a stray launch request reaches nothing', async () => {
-		const lookup = vi.spyOn(practiceTours, 'find');
+	it('release flag off: no practice registry lookup, no sandbox; the Einführung started from Help runs watch-only', async () => {
+		const lookup = vi.spyOn(practiceHostedTours, 'find');
 		const app = renderApp({ practiceArea: false });
-		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
-		expect(
-			screen.queryByRole('list', { name: 'practice.cards.title' })
-		).toBeNull();
-
-		app.request(ACCEPT);
-		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		await app.start(INTRO);
+		await expectStep(0);
 
 		expect(lookup).not.toHaveBeenCalled();
-		expect(joyride).toBeNull();
+		expect(joyride!.steps).toHaveLength(
+			consultantWalkthroughTour.steps.length
+		);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeNull();
 		expect(window.fetch).toBe(networkFetch);

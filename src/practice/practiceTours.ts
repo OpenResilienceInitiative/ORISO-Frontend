@@ -7,12 +7,16 @@ import {
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
-	PRACTICE_ACCEPT_TOUR_ID,
 	PRACTICE_CALENDAR_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	PRACTICE_INTRO_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
+import {
+	consultantWalkthroughTour,
+	INTRO_TOUR_VERSION
+} from '../components/productTour/tourDefinitions';
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
 import { CALENDAR_TOUR_VERSION } from '../components/productTour/tours/calendarTour';
 import {
@@ -27,34 +31,53 @@ import {
 } from '../components/productTour/tours/groupCircleTour';
 
 /*
- * The practice flows, a registry of their own: `frontendTours` feeds the
- * normal Help list and the auto-run, and a practice tour must start only from
- * its own card. Both are `dismissible: false`, so ESC or an overlay click can
- * never mark the exercise skipped.
+ * The practice renderings, a registry of their own: `frontendTours` feeds the
+ * normal Help list and the auto-run, and a practice rendering runs only on a
+ * deliberate start where the practice area is open. All are
+ * `dismissible: false`, so ESC or an overlay click can never mark one skipped.
  */
 
+/** The counsellor's own conversations: "Erstellen", circles, the chips. */
+const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
+
+/** Practice step copy of the Einführung. */
+const intro = (key: string) => ({
+	titleKey: `walkthrough.practice.step.${key}.title`,
+	contentKey: `walkthrough.practice.step.${key}.intro`
+});
+
 /**
- * Flow F1. FE#2491 (Frank, 23 Nov): the team chat has no button of its own
- * any more — it is switched on in "Weitere Funktionen", like supervision.
- * A step inside the menu flyout cannot be pointed at reliably, so the two
- * team steps (open the team chat, reply in it) left this flow; it has 6.
+ * FE#2545: the Einführung as a practice flow. A first look around the
+ * counsellor workspace while a first practice enquiry is handled: the
+ * Anfragen list, the practice enquiry opened and accepted with the real
+ * controls, a first reply in the conversation (the practice advice seeker
+ * answers from the script), then "Meine Beratungen" and "Archiv" as the
+ * watch-only Einführung explains them. It absorbed the old card F1 "Übung:
+ * Anfrage annehmen" (its practice start, accept and script).
+ *
+ * Same id and version as the watch-only Einführung
+ * (`consultantWalkthroughTour`, version 2), so Help shows one status. That
+ * one stays the auto-start after login and runs wherever this cannot: a
+ * phone, a window below the real accept controls' `fromL` layout, or the
+ * practice area off.
  */
-export const practiceAcceptTour: TourDefinition = {
-	id: PRACTICE_ACCEPT_TOUR_ID,
-	version: 1,
+export const practiceIntroTour: TourDefinition = {
+	id: PRACTICE_INTRO_TOUR_ID,
+	version: INTRO_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
-	titleKey: 'tour.practiceAccept.title',
-	summaryKey: 'tour.practiceAccept.summary',
+	titleKey: consultantWalkthroughTour.titleKey,
+	summaryKey: consultantWalkthroughTour.summaryKey,
 	dismissible: false,
 	requiredTargetPolicy: 'stop',
 	steps: [
+		{ id: 'intro', target: '', placement: 'center', ...intro('intro') },
 		{
-			id: 'nav-enquiries',
-			target: 'nav-enquiries',
+			id: 'enquiries',
+			route: PRACTICE_ENQUIRIES_ROUTE,
+			target: 'consultant-enquiries-list',
 			placement: 'right',
-			titleKey: 'tour.practiceAccept.step.navEnquiries.title',
-			contentKey: 'tour.practiceAccept.step.navEnquiries.intro'
+			...intro('enquiries')
 		},
 		{
 			id: 'open-enquiry',
@@ -62,50 +85,55 @@ export const practiceAcceptTour: TourDefinition = {
 			target: 'enquiry-list-item',
 			placement: 'right',
 			advanceOn: { type: 'click' },
-			titleKey: 'tour.practiceAccept.step.openEnquiry.title',
-			contentKey: 'tour.practiceAccept.step.openEnquiry.intro'
+			...intro('openEnquiry')
 		},
 		{
 			id: 'accept',
 			target: 'enquiry-accept-button',
 			placement: 'top',
 			advanceOn: { type: 'click' },
-			titleKey: 'tour.practiceAccept.step.accept.title',
-			contentKey: 'tour.practiceAccept.step.accept.intro'
-		},
-		{
-			id: 'first-answer',
-			// The accept cannot be undone: Back would land on a screen that no
-			// longer exists (the enquiry is now an accepted case).
-			hideBack: true,
-			target: '',
-			placement: 'center',
-			titleKey: 'tour.practiceAccept.step.firstAnswer.title',
-			contentKey: 'tour.practiceAccept.step.firstAnswer.intro'
+			...intro('accept')
 		},
 		{
 			id: 'reply',
+			// The accept cannot be undone: Back would land on an enquiry that
+			// no longer exists (it is an accepted case now).
+			hideBack: true,
 			target: 'session-composer',
 			placement: 'top',
 			advanceOn: {
 				type: 'event',
 				name: PRACTICE_TOUR_EVENTS.messageSent
 			},
-			titleKey: 'tour.practiceAccept.step.reply.title',
-			contentKey: 'tour.practiceAccept.step.reply.intro'
+			...intro('reply')
 		},
 		{
-			id: 'done',
+			id: 'answered',
+			// The reply is sent; Back would wait for it again.
+			hideBack: true,
 			target: '',
 			placement: 'center',
-			titleKey: 'tour.practiceAccept.step.done.title',
-			contentKey: 'tour.practiceAccept.step.done.intro'
-		}
+			...intro('answered')
+		},
+		{
+			id: 'my-sessions',
+			// Back would return to a conversation the step left.
+			hideBack: true,
+			route: MY_SESSIONS_ROUTE,
+			target: 'consultant-sessions-list',
+			placement: 'right',
+			...intro('mySessions')
+		},
+		{
+			id: 'archive',
+			route: `${MY_SESSIONS_ROUTE}?sessionListTab=archive`,
+			target: 'sessions-archive-tab',
+			placement: 'bottom',
+			...intro('archive')
+		},
+		{ id: 'done', target: '', placement: 'center', ...intro('done') }
 	]
 };
-
-/** The counsellor's own conversations: "Erstellen", circles, the chips. */
-const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
 
 /** Practice step copy of the Supervision topic tour. */
 const sup = (key: string) => ({
@@ -234,9 +262,6 @@ export const practiceSupervisionTour: TourDefinition = {
 		{ id: 'done', target: '', placement: 'center', ...sup('done') }
 	]
 };
-
-/** The flows with a practice card (Help → Meine Rundgänge): F1 only. */
-export const practiceTours: TourDefinition[] = [practiceAcceptTour];
 
 /**
  * FE#2545: the Live-Chat topic tour as a practice flow. A practice live chat
@@ -566,12 +591,12 @@ export const practiceCalendarTour: TourDefinition = {
 };
 
 /**
- * Every tour the practice world can host: the card flows and the topic tours
+ * Every tour the practice world can host: the Einführung and the topic tours
  * that run as practice where it is open. The tour host, the banner and the
- * host hooks read this list; the practice cards read `practiceTours` only.
+ * host hooks read this list. There are no practice cards any more (FE#2545).
  */
 export const practiceHostedTours: TourDefinition[] = [
-	...practiceTours,
+	practiceIntroTour,
 	practiceSupervisionTour,
 	practiceLiveChatTour,
 	practiceGroupCircleTour,

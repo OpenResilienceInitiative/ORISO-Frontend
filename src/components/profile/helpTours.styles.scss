@@ -24,13 +24,6 @@
 		font-weight: $font-weight-bold;
 	}
 
-	&__practiceTitle {
-		margin: 0 0 $grid-base;
-		font-size: $font-size-h5;
-		font-weight: $font-weight-bold;
-		color: var(--m3-on-surface, $primary);
-	}
-
 	.tourOverview__list {
 		margin-top: 0;
 	}

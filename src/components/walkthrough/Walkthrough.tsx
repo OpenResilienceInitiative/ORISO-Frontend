@@ -26,10 +26,7 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import {
-	isPracticeCardTourId,
-	isPracticeTourId
-} from '../../practice/practiceTourIds';
+import { isPracticeTourId } from '../../practice/practiceTourIds';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
@@ -61,11 +58,13 @@ export const Walkthrough = () => {
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
 
 	const tenantSettings = useTenant()?.settings;
-	// A practice tour is hosted only by deliberate request, and only where
-	// the practice area is open to this counsellor; the auto-run
-	// below stays hard-wired to the intro tour. A topic tour with a practice
-	// rendering runs it there; one that exists only as practice (Supervision,
-	// FE#2545) runs nothing elsewhere.
+	// A practice rendering is hosted only by deliberate request, and only
+	// where the practice area is open to this counsellor and the window fits;
+	// the auto-run below stays hard-wired to the watch-only Einführung, so
+	// practice mode never starts on its own (first-login dialogs keep their
+	// writes). A tour with a practice rendering (the Einführung and topic
+	// tours, FE#2545) runs its watch-only rendering elsewhere; one that exists
+	// only as practice (Supervision) runs nothing elsewhere.
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
@@ -111,18 +110,14 @@ export const Walkthrough = () => {
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
-	// A tour that exists only as practice (the cards, and Supervision since
-	// FE#2545 dropped its explanation) has nothing to run outside it.
+	// A tour that exists only as practice (Supervision since FE#2545 dropped
+	// its explanation) has nothing to run outside it.
 	const practiceOnlyRequest =
 		!!launchRequest &&
 		isPracticeTourId(launchRequest.tourId) &&
 		!frontendTours.some((tour) => tour.id === launchRequest.tourId);
 	const unavailablePracticeRequest =
-		lostPracticeRun ||
-		(practiceOnlyRequest && !practiceCandidate) ||
-		(!!launchRequest &&
-			isPracticeCardTourId(launchRequest.tourId) &&
-			!practiceOpenFor(launchRequest.tourId));
+		lostPracticeRun || (practiceOnlyRequest && !practiceCandidate);
 	useEffect(() => {
 		if (unavailablePracticeRequest) {
 			// Resizing may end an active practice run. Widening the window

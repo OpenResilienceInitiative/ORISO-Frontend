@@ -44,7 +44,7 @@ describe('session expiry during practice', () => {
 		const service = new MatrixClientService();
 		const logout = vi.spyOn(service, 'logout');
 		setMatrixClientServiceRef(service);
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		enterPracticeMode({ tourId: 'consultant-walkthrough' });
 		const view = render(
 			<PracticeSandbox
 				counsellor={practiceCounsellorFixture()}

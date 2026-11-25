@@ -35,7 +35,8 @@ const resolvesWithFallback = (bundle: object, key: string): boolean =>
 describe('consultantWalkthroughTour', () => {
 	it('migrates the five legacy walkthrough steps in order', () => {
 		expect(consultantWalkthroughTour.id).toBe('consultant-walkthrough');
-		expect(consultantWalkthroughTour.version).toBe(1);
+		// FE#2545: version 2, with the practice Einführung (shows as new).
+		expect(consultantWalkthroughTour.version).toBe(2);
 		expect(consultantWalkthroughTour.surface).toBe('frontend');
 		expect(consultantWalkthroughTour.audiences).toEqual(['consultant']);
 		expect(consultantWalkthroughTour.steps).toHaveLength(5);

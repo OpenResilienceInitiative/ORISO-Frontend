@@ -355,7 +355,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 			['practice mode is on', 'practice', false]
 		])('%s', (_gate, setup, callsDisabled) => {
 			if (setup === 'practice')
-				enterPracticeMode({ tourId: 'consultant-practice-accept' });
+				enterPracticeMode({ tourId: 'consultant-walkthrough' });
 
 			openConversation(setup === 'practice' ? {} : setup);
 
@@ -519,7 +519,7 @@ describe('SessionMenu takes up a start request (FE#1050)', () => {
 				['practice mode is on', 'practice']
 			])('%s', (_gate, setup) => {
 				if (setup === 'practice')
-					enterPracticeMode({ tourId: 'consultant-practice-accept' });
+					enterPracticeMode({ tourId: 'consultant-walkthrough' });
 
 				openConversation(
 					setup === 'practice' ? {} : setup,

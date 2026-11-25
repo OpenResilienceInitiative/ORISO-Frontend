@@ -2061,6 +2061,37 @@
 				"on": "An: Der Knopf „?“ unten rechts öffnet deine Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
 				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Deine Rundgänge findest du weiterhin hier."
 			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"intro": "Willkommen! In dieser Übung lernst du deinen Arbeitsbereich an einer erfundenen Anfrage kennen, nichts wird gesendet oder gespeichert."
+				},
+				"enquiries": {
+					"intro": "Hier stehen alle offenen Anfragen, die noch niemand angenommen hat, und dein ganzes Team sieht diese Liste. Die ältesten stehen oben, damit die zuerst eingegangenen nicht warten."
+				},
+				"openEnquiry": {
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf und lies, worum es geht."
+				},
+				"accept": {
+					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und dein Team sieht sie nicht mehr in der Liste."
+				},
+				"reply": {
+					"intro": "Die Anfrage gehört jetzt dir: Oben siehst du die automatische Erstantwort und die erste Nachricht. Schreibe eine kurze Antwort und sende sie ab."
+				},
+				"answered": {
+					"intro": "Die ratsuchende Person hat dir geantwortet. So geht die Beratung im Chat weiter."
+				},
+				"mySessions": {
+					"intro": "Hier findest du alle Anfragen, die du angenommen hast, jetzt auch die Übungsanfrage. Der zuletzt bearbeitete Verlauf steht oben."
+				},
+				"archive": {
+					"intro": "Ruhende Unterhaltungen kannst du archivieren: Sie werden nicht gelöscht, sondern stehen unter „Archiv“. Schreibt jemand wieder, kommt die Unterhaltung zurück in deine Liste."
+				},
+				"done": {
+					"intro": "Du hast eine Anfrage angenommen und beantwortet. Weitere Rundgänge findest du im Profil unter „Hilfe“, mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
 		}
 	},
 	"anonymousChat": {
@@ -2740,35 +2771,6 @@
 				}
 			}
 		},
-		"practiceAccept": {
-			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"navEnquiries": {
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
-				},
-				"openEnquiry": {
-					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
-				},
-				"openTeam": {
-					"intro": "Bei dir ist der Team-Chat aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Team-Chat öffnen“."
-				},
-				"teamReply": {
-					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird der Team-Chat geschlossen."
-				},
-				"accept": {
-					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
-				},
-				"firstAnswer": {
-					"intro": "Die Anfrage gehört jetzt dir. Im Chat siehst du die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
-				},
-				"reply": {
-					"intro": "Schreibe der ratsuchenden Person eine kurze Antwort und sende sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
-				},
-				"done": {
-					"intro": "Gut gemacht: Du hast eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beendest du die Übung."
-				}
-			}
-		},
 		"caseHandover": {
 			"step": {
 				"intro": {
@@ -3196,11 +3198,6 @@
 	},
 	"practice": {
 		"cards": {
-			"summary": {
-				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben."
-			},
-			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
-			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
 			"phoneHint": "Bitte übe am Computer.",
 			"windowHint": "Bitte vergrößere dein Browserfenster für diese Übung."
 		},

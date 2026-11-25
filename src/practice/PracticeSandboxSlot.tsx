@@ -20,7 +20,7 @@ import {
  * a conversation of the counsellor's own); the Supervision tour on the open
  * enquiry whose accept attaches the standing supervisor; the Live-Chat tour
  * on a waiting live chat, the Gesprächskreis tour before its circle exists,
- * F1 on the open enquiry.
+ * the Einführung (it absorbed F1) on the open enquiry.
  */
 const startOf = (tourId: string | null): PracticeStart => {
 	if (tourId === PRACTICE_CALENDAR_TOUR_ID) return 'acceptedCase';

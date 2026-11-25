@@ -59,7 +59,7 @@ describe('registerPracticeTourHostHooks', () => {
 			expect(getTourHostHooks(id)?.setup).toBeTypeOf('function');
 			expect(getTourHostHooks(id)?.teardown).toBeTypeOf('function');
 		});
-		expect(getTourHostHooks('consultant-walkthrough')).toBeUndefined();
+		expect(getTourHostHooks('consultant-mail-counselling')).toBeUndefined();
 
 		unregister();
 		PRACTICE_TOUR_IDS.forEach((id) =>
@@ -92,7 +92,7 @@ describe('registerPracticeTourHostHooks', () => {
 		enterMock.fail = true;
 
 		expect(() =>
-			getTourHostHooks('consultant-practice-accept')!.setup!()
+			getTourHostHooks('consultant-walkthrough')!.setup!()
 		).toThrow('guard could not be installed');
 
 		const [note] = appSnackbarStack.getSnapshot();
@@ -105,7 +105,7 @@ describe('registerPracticeTourHostHooks', () => {
 		const unregister = registerPracticeTourHostHooks();
 		enterMock.fail = true;
 		try {
-			getTourHostHooks('consultant-practice-accept')!.setup!();
+			getTourHostHooks('consultant-walkthrough')!.setup!();
 		} catch {
 			// expected: the tour must not start
 		}
@@ -123,13 +123,13 @@ describe('registerPracticeTourHostHooks', () => {
 		const unregister = registerPracticeTourHostHooks();
 		enterMock.fail = true;
 		try {
-			getTourHostHooks('consultant-practice-accept')!.setup!();
+			getTourHostHooks('consultant-walkthrough')!.setup!();
 		} catch {
 			// expected
 		}
 
 		expect(() =>
-			getTourHostHooks('consultant-practice-accept')!.teardown!()
+			getTourHostHooks('consultant-walkthrough')!.teardown!()
 		).not.toThrow();
 		expect(isPracticeMode()).toBe(false);
 		unregister();
@@ -139,10 +139,10 @@ describe('registerPracticeTourHostHooks', () => {
 describe('PracticeHostHooks', () => {
 	it('registers while mounted and unregisters on unmount', () => {
 		const { unmount } = render(<PracticeHostHooks />);
-		expect(getTourHostHooks('consultant-practice-accept')).toBeDefined();
+		expect(getTourHostHooks('consultant-walkthrough')).toBeDefined();
 
 		act(() => unmount());
 
-		expect(getTourHostHooks('consultant-practice-accept')).toBeUndefined();
+		expect(getTourHostHooks('consultant-walkthrough')).toBeUndefined();
 	});
 });

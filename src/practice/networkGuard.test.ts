@@ -18,7 +18,7 @@ const USER_SERVICE = 'https://api.test.local';
 const TUTORIAL_PROGRESS_URL = `${USER_SERVICE}/service/users/tutorials/progress`;
 const TOKEN_URL =
 	'https://auth.test.local/auth/realms/online-beratung/protocol/openid-connect/token';
-const TOUR_ID = 'consultant-practice-accept';
+const TOUR_ID = 'consultant-walkthrough';
 const HEARTBEAT_URL = `${USER_SERVICE}/service/conversations/consultants/availability/heartbeat`;
 
 const baseOptions = () => ({
@@ -201,7 +201,7 @@ describe('NetworkGuard (default-deny for every non-GET request)', () => {
 		it.each([
 			[
 				'another tour id',
-				progressBody({ tourId: 'consultant-walkthrough' })
+				progressBody({ tourId: 'consultant-mail-counselling' })
 			],
 			[
 				'a tour id that only starts like it',
@@ -211,7 +211,7 @@ describe('NetworkGuard (default-deny for every non-GET request)', () => {
 			['a non-string tour id', progressBody({ tourId: [TOUR_ID] })],
 			['the admin surface', progressBody({ surface: 'admin' })],
 			['no surface', progressBody({ surface: undefined })],
-			['a body that is not JSON', 'tourId=consultant-practice-accept'],
+			['a body that is not JSON', 'tourId=consultant-walkthrough'],
 			['a JSON array', JSON.stringify([{ tourId: TOUR_ID }])],
 			['JSON null', 'null'],
 			['an empty body', ''],
@@ -286,7 +286,7 @@ describe('NetworkGuard (default-deny for every non-GET request)', () => {
 			guard.install();
 			const wrongTour = new Request(TUTORIAL_PROGRESS_URL, {
 				method: 'PUT',
-				body: progressBody({ tourId: 'consultant-walkthrough' })
+				body: progressBody({ tourId: 'consultant-mail-counselling' })
 			});
 			const consumed = new Request(TUTORIAL_PROGRESS_URL, {
 				method: 'PUT',

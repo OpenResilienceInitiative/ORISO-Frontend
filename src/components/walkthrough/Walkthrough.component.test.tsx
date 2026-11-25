@@ -61,7 +61,8 @@ vi.mock('../../hooks/useAppConfig', () => ({
 const renderWalkthrough = (
 	userDataOver: Record<string, any> = {},
 	launchRequest: any = null,
-	tenantSettings?: Record<string, any>
+	tenantSettings?: Record<string, any>,
+	width = 1440
 ) => {
 	const reloadUserData = vi.fn();
 	const userData = {
@@ -72,7 +73,7 @@ const renderWalkthrough = (
 	const store = createStore();
 	store.set(tourLaunchRequestAtom, launchRequest);
 	const utils = render(
-		<ResponsiveContext.Provider value={{ width: 1440 }}>
+		<ResponsiveContext.Provider value={{ width }}>
 			<Provider store={store}>
 				<UserDataContext.Provider
 					value={{ userData, reloadUserData } as any}
@@ -190,7 +191,7 @@ describe('Walkthrough', () => {
 		).mockResolvedValueOnce([
 			{
 				tourId: 'consultant-walkthrough',
-				tourVersion: 1,
+				tourVersion: 2,
 				surface: 'frontend',
 				status: 'completed'
 			}
@@ -212,7 +213,7 @@ describe('Walkthrough', () => {
 			).mockResolvedValueOnce([
 				{
 					tourId: 'consultant-walkthrough',
-					tourVersion: 1,
+					tourVersion: 2,
 					surface: 'frontend',
 					status: status as 'completed' | 'skipped'
 				}
@@ -265,7 +266,7 @@ describe('Walkthrough', () => {
 			versionedTourProgressRepository.saveProgress
 		).toHaveBeenCalledWith({
 			tourId: 'consultant-walkthrough',
-			tourVersion: 1,
+			tourVersion: 2,
 			status: 'in_progress',
 			currentStepId: 'enquiries'
 		});
@@ -298,7 +299,7 @@ describe('Walkthrough', () => {
 			versionedTourProgressRepository.saveProgress
 		).toHaveBeenCalledWith({
 			tourId: 'consultant-walkthrough',
-			tourVersion: 1,
+			tourVersion: 2,
 			status: 'in_progress'
 		});
 	});
@@ -438,7 +439,7 @@ describe('Walkthrough', () => {
 
 		await adapterProps.onTerminalStatus({
 			tourId: 'consultant-walkthrough',
-			tourVersion: 1,
+			tourVersion: 2,
 			status: 'skipped'
 		});
 
@@ -618,7 +619,7 @@ describe('Walkthrough', () => {
 			grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
 		};
 		const accept = (requestedAt = 40) => ({
-			tourId: 'consultant-practice-accept',
+			tourId: 'consultant-walkthrough',
 			mode: 'start',
 			requestedAt
 		});
@@ -633,18 +634,34 @@ describe('Walkthrough', () => {
 				accept()
 			);
 
-			expect(adapterProps.tour.id).toBe('consultant-practice-accept');
+			expect(adapterProps.tour.id).toBe('consultant-walkthrough');
 			expect(adapterProps.active).toBe(true);
 			expect(adapterProps.tour.dismissible).toBe(false);
 		});
 
-		it('ignores a practice request while the release flag is off', () => {
+		const supervision = (requestedAt = 44) => ({
+			tourId: 'consultant-practice-supervision',
+			mode: 'start',
+			requestedAt
+		});
+
+		it('ignores a practice-only request while the release flag is off', () => {
 			const { queryByTestId } = renderWalkthrough(
+				{ ...consultant, isWalkThroughEnabled: false },
+				supervision()
+			);
+
+			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('runs the watch-only Einführung, never its practice, while the release flag is off', () => {
+			renderWalkthrough(
 				{ ...consultant, isWalkThroughEnabled: false },
 				accept()
 			);
 
-			expect(queryByTestId('product-tour-adapter')).toBeNull();
+			expect(adapterProps.tour.steps).toHaveLength(5);
+			expect(adapterProps.onBeforeStart).toBeUndefined();
 		});
 
 		it('ignores a practice request while the master switch is off', () => {
@@ -659,10 +676,23 @@ describe('Walkthrough', () => {
 			practiceOn();
 			const { queryByTestId } = renderWalkthrough(
 				{ grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
-				accept()
+				supervision()
 			);
 
 			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('never hands the Einführung practice to anybody but a counsellor', () => {
+			practiceOn();
+			renderWalkthrough(
+				{ grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+				accept()
+			);
+
+			expect(adapterProps?.tour.steps ?? []).not.toContainEqual(
+				expect.objectContaining({ id: 'open-enquiry' })
+			);
+			expect(adapterProps?.onBeforeStart).toBeUndefined();
 		});
 
 		it('ignores a Supervision request when the Träger switched Supervision off', () => {
@@ -680,13 +710,63 @@ describe('Walkthrough', () => {
 			expect(queryByTestId('product-tour-adapter')).toBeNull();
 		});
 
-		it('never auto-runs a practice tour, whatever the flags say', async () => {
+		it('never auto-runs a practice tour, whatever the flags say: the auto-start is the watch-only Einführung', async () => {
 			practiceOn();
 			renderWalkthrough({ ...consultant, isWalkThroughEnabled: true });
 
 			await waitFor(() => expect(adapterProps).not.toBeNull());
 			expect(adapterProps.tour.id).toBe('consultant-walkthrough');
+			expect(adapterProps.tour.version).toBe(2);
+			// The watch-only rendering: no practice steps, no practice hooks.
+			expect(adapterProps.tour.dismissible).toBeUndefined();
+			expect(
+				adapterProps.tour.steps.map((s: { id: string }) => s.id)
+			).toEqual([
+				'intro',
+				'enquiries',
+				'my-sessions',
+				'archive',
+				'profile'
+			]);
+			expect(adapterProps.onBeforeStart).toBeUndefined();
 		});
+
+		it('auto-starts the Einführung again for who completed version 1 (shows as new)', async () => {
+			vi.mocked(
+				versionedTourProgressRepository.getProgress
+			).mockResolvedValueOnce([
+				{
+					tourId: 'consultant-walkthrough',
+					tourVersion: 1,
+					status: 'completed'
+				} as never
+			]);
+			renderWalkthrough({ ...consultant, isWalkThroughEnabled: true });
+
+			await waitFor(() => expect(adapterProps).not.toBeNull());
+			expect(adapterProps.tour.version).toBe(2);
+		});
+
+		it.each([
+			{ name: 'the practice area is off', practice: false },
+			{ name: 'the window is narrower than the practice', practice: true }
+		])(
+			'runs the watch-only Einführung on a deliberate start where $name',
+			({ practice }) => {
+				if (practice) practiceOn();
+				renderWalkthrough(
+					consultant,
+					accept(),
+					undefined,
+					practice ? 899 : 1440
+				);
+
+				expect(adapterProps.tour.id).toBe('consultant-walkthrough');
+				expect(adapterProps.tour.steps).toHaveLength(5);
+				expect(adapterProps.tour.dismissible).toBeUndefined();
+				expect(adapterProps.onBeforeStart).toBeUndefined();
+			}
+		);
 
 		it('hands the adapter the steps of this tenant, so the count matches what the user walks', () => {
 			practiceOn();
@@ -697,11 +777,14 @@ describe('Walkthrough', () => {
 			expect(
 				adapterProps.tour.steps.map((s: { id: string }) => s.id)
 			).toEqual([
-				'nav-enquiries',
+				'intro',
+				'enquiries',
 				'open-enquiry',
 				'accept',
-				'first-answer',
 				'reply',
+				'answered',
+				'my-sessions',
+				'archive',
 				'done'
 			]);
 		});
@@ -713,9 +796,9 @@ describe('Walkthrough', () => {
 			});
 			await waitFor(() =>
 				expect(store.get(practiceTourProgressAtom)).toEqual({
-					tourId: 'consultant-practice-accept',
+					tourId: 'consultant-walkthrough',
 					stepIndex: 0,
-					stepCount: 6
+					stepCount: 9
 				})
 			);
 
@@ -729,9 +812,9 @@ describe('Walkthrough', () => {
 			);
 
 			expect(store.get(practiceTourProgressAtom)).toEqual({
-				tourId: 'consultant-practice-accept',
-				stepIndex: 5,
-				stepCount: 6
+				tourId: 'consultant-walkthrough',
+				stepIndex: 8,
+				stepCount: 9
 			});
 		});
 
@@ -762,11 +845,11 @@ describe('Walkthrough', () => {
 			practiceOn();
 			const { store } = renderWalkthrough(consultant, accept());
 
-			adapterProps.onEvent('step_completed', { id: 'nav-enquiries' });
+			adapterProps.onEvent('step_completed', { id: 'enquiries' });
 			await act(() =>
 				adapterProps.onTerminalStatus({
-					tourId: 'consultant-practice-accept',
-					tourVersion: 1,
+					tourId: 'consultant-walkthrough',
+					tourVersion: 2,
 					status: 'completed'
 				})
 			);
@@ -774,16 +857,16 @@ describe('Walkthrough', () => {
 			expect(
 				versionedTourProgressRepository.saveProgress
 			).toHaveBeenCalledWith({
-				tourId: 'consultant-practice-accept',
-				tourVersion: 1,
+				tourId: 'consultant-walkthrough',
+				tourVersion: 2,
 				status: 'in_progress',
-				currentStepId: 'nav-enquiries'
+				currentStepId: 'enquiries'
 			});
 			expect(
 				versionedTourProgressRepository.saveProgress
 			).toHaveBeenCalledWith(
 				expect.objectContaining({
-					tourId: 'consultant-practice-accept',
+					tourId: 'consultant-walkthrough',
 					status: 'completed'
 				})
 			);
@@ -799,7 +882,7 @@ describe('Walkthrough', () => {
 
 					await adapterProps.onBeforeStart();
 					expect(getPracticeSnapshot().session?.tourId).toBe(
-						'consultant-practice-accept'
+						'consultant-walkthrough'
 					);
 
 					adapterProps.onEnd();

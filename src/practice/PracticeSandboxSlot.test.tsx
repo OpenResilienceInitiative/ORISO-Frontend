@@ -21,7 +21,7 @@ import { enterPracticeMode, exitPracticeMode } from './practiceMode';
 import type { PracticeWorld } from './practiceWorld';
 import { createPracticeTestI18n } from './script/scriptTestSupport';
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const SUPERVISION = 'consultant-practice-supervision';
 const counsellor = practiceCounsellorFixture();
 let world: PracticeWorld | null = null;

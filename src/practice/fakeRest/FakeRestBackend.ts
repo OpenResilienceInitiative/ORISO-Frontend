@@ -884,6 +884,15 @@ export const createFakeRestBackend = ({
 			handle: () => noContent()
 		},
 		{
+			// FE#2545: the placeholders of deleted advice seekers in "Meine
+			// Beratungen" and "Archiv" (with `?archived=true`). The practice
+			// world has none; the real ones stay out of the practice lists.
+			method: 'GET',
+			path: at(endpoints.consultantDeletedAskerSessions),
+			viewWide: true,
+			handle: () => ok([])
+		},
+		{
 			method: 'GET',
 			path: at(endpoints.sessionRooms, `/${PRACTICE_ID_SEGMENT}`),
 			handle: (_request, [, id]) => (isCase(id) ? ok(roomList()) : null)

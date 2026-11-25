@@ -5613,6 +5613,46 @@
 				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
 				"off": "Off: the “?” button is hidden. You can still find your tours here."
 			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Introduction",
+					"intro": "Welcome! In this practice you get to know your workspace with an invented request; nothing is sent or saved."
+				},
+				"enquiries": {
+					"title": "Requests",
+					"intro": "Here are all open requests that nobody has accepted yet, and your whole team sees this list. The oldest are at the top, so the first ones in do not wait."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it and read what it is about."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”: the request moves to “My consultations” and your team no longer sees it in the list."
+				},
+				"reply": {
+					"title": "Write your first reply",
+					"intro": "The request is yours now: at the top you see the automatic first response and the first message. Write a short reply and send it."
+				},
+				"answered": {
+					"title": "The answer is here",
+					"intro": "The advice seeker has answered you. This is how the counselling goes on in the chat."
+				},
+				"mySessions": {
+					"title": "My consultations",
+					"intro": "Here you find every request you have accepted, now including the practice request. The conversation worked on last is at the top."
+				},
+				"archive": {
+					"title": "Archive",
+					"intro": "You can archive quiet conversations: they are not deleted but kept under “Archive”. When someone writes again, the conversation comes back to your list."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You accepted a request and replied to it. You find more tours in your profile under “Help”; the button below ends the practice."
+				}
+			}
 		}
 	},
 	"anonymousChat": {
@@ -6374,44 +6414,6 @@
 				"archive": {
 					"title": "Archive",
 					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
-				}
-			}
-		},
-		"practiceAccept": {
-			"title": "Practice: Accept a request",
-			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
-			"step": {
-				"navEnquiries": {
-					"title": "Open the requests",
-					"intro": "This is practice: all people are invented, and nothing is sent or saved. You will find new requests here under “Requests”."
-				},
-				"openEnquiry": {
-					"title": "Open the request",
-					"intro": "A practice request is waiting in the list. Click it to open it."
-				},
-				"openTeam": {
-					"title": "Open the team chat",
-					"intro": "The team chat is switched on for you: use it to check with your team before you accept. Click “Open team chat”."
-				},
-				"teamReply": {
-					"title": "Reply in the team",
-					"intro": "Read the message from your team and write a reply. When you accept the request, the team chat is closed."
-				},
-				"accept": {
-					"title": "Accept the request",
-					"intro": "Click “Accept request”: the request moves to “My consultations” and disappears from your team’s list."
-				},
-				"firstAnswer": {
-					"title": "First response and first message",
-					"intro": "The request is now yours. In the chat you can see the automatic first response and the advice seeker’s first message."
-				},
-				"reply": {
-					"title": "Write your first reply",
-					"intro": "Write the advice seeker a short reply and send it. It stays in the practice and is not saved anywhere."
-				},
-				"done": {
-					"title": "Well done!",
-					"intro": "Well done: you accepted a request and replied to it. Use the button below to end the practice."
 				}
 			}
 		},
@@ -7239,19 +7241,8 @@
 			"moveHandle": "Move banner (arrow keys)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Accept an enquiry and write a first reply."
-			},
-			"title": "Practice area",
-			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
-			"empty": "There are currently no practice flows available for you.",
-			"badge": "Practice",
 			"phoneHint": "Please practise on a computer.",
-			"windowHint": "Please widen your browser window for this exercise.",
-			"action": {
-				"start": "Start practice",
-				"restart": "Practise again"
-			}
+			"windowHint": "Please widen your browser window for this exercise."
 		},
 		"error": {
 			"start": "The practice could not be started. Please try again."

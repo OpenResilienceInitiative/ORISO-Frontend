@@ -5648,6 +5648,46 @@
 				"on": "Açık: sağ alttaki „?“ düğmesi turlarınızı açar. Bir görüşme açıkken gizlenir.",
 				"off": "Kapalı: „?“ düğmesi gizli. Turlarınızı yine burada bulabilirsiniz."
 			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Tanıtım",
+					"intro": "Hoş geldiniz! Bu alıştırmada çalışma alanınızı uydurma bir talep üzerinde tanıyorsunuz; hiçbir şey gönderilmez veya kaydedilmez."
+				},
+				"enquiries": {
+					"title": "Talepler",
+					"intro": "Burada henüz kimsenin kabul etmediği tüm açık talepler bulunur ve bu listeyi tüm ekibiniz görür. İlk gelenler beklemesin diye en eskiler en üsttedir."
+				},
+				"openEnquiry": {
+					"title": "Talebi aç",
+					"intro": "Listede bir alıştırma talebi bekliyor. Üzerine tıklayın ve ne hakkında olduğunu okuyun."
+				},
+				"accept": {
+					"title": "Talebi kabul et",
+					"intro": "“Talebi kabul et” düğmesine tıklayın: Talep “Danışmanlıklarım” bölümüne geçer ve ekibiniz onu artık listede görmez."
+				},
+				"reply": {
+					"title": "İlk yanıtı yaz",
+					"intro": "Talep artık sizin: Üstte otomatik ilk yanıtı ve ilk mesajı görürsünüz. Kısa bir yanıt yazıp gönderin."
+				},
+				"answered": {
+					"title": "Yanıt geldi",
+					"intro": "Danışan kişi size yanıt verdi. Danışmanlık sohbette böyle devam eder."
+				},
+				"mySessions": {
+					"title": "Danışmanlıklarım",
+					"intro": "Burada kabul ettiğiniz tüm talepler, artık alıştırma talebi de bulunur. En son üzerinde çalışılan görüşme en üsttedir."
+				},
+				"archive": {
+					"title": "Arşiv",
+					"intro": "Sessiz görüşmeleri arşivleyebilirsiniz: Silinmezler, “Arşiv” altında durur. Biri yeniden yazarsa görüşme listenize geri döner."
+				},
+				"done": {
+					"title": "Başardınız!",
+					"intro": "Bir talebi kabul edip yanıtladınız. Diğer turları profilinizde “Yardım” altında bulabilirsiniz; aşağıdaki düğme alıştırmayı bitirir."
+				}
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6459,44 +6499,6 @@
 				"archive": {
 					"title": "Arşiv",
 					"intro": "Tamamlanan danışmanlıklar eskisi gibi arşive taşınır — arşiv artık bu sekmede."
-				}
-			}
-		},
-		"practiceAccept": {
-			"title": "Alıştırma: Talebi kabul etme",
-			"summary": "Korumalı alıştırma alanında bir talebi kabul etmeyi ve ilk yanıtı yazmayı deneyin. Tüm kişiler ve içerikler kurgusaldır.",
-			"step": {
-				"navEnquiries": {
-					"title": "Talepleri açın",
-					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Yeni talepleri burada, “Talepler” altında bulursunuz."
-				},
-				"openEnquiry": {
-					"title": "Talebi açın",
-					"intro": "Listede sizi bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
-				},
-				"openTeam": {
-					"title": "Ekip sohbetini açın",
-					"intro": "Ekip sohbeti sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip sohbetini aç” düğmesine tıklayın."
-				},
-				"teamReply": {
-					"title": "Ekibe yanıt verin",
-					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip sohbeti kapanır."
-				},
-				"accept": {
-					"title": "Talebi kabul edin",
-					"intro": "“Sorguyu kabul et” düğmesine tıklayın: talep danışmanlıklarınıza geçer ve ekibinizin listesinden kalkar."
-				},
-				"firstAnswer": {
-					"title": "İlk yanıt ve ilk mesaj",
-					"intro": "Talep artık sizin. Sohbette otomatik ilk yanıtı ve danışanın ilk mesajını görürsünüz."
-				},
-				"reply": {
-					"title": "İlk yanıtınızı yazın",
-					"intro": "Danışana kısa bir yanıt yazıp gönderin. Yanıt alıştırmada kalır ve hiçbir yere kaydedilmez."
-				},
-				"done": {
-					"title": "Tebrikler!",
-					"intro": "Güzel iş: bir talebi kabul ettiniz ve yanıtladınız. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
 				}
 			}
 		},
@@ -7324,19 +7326,8 @@
 			"moveHandle": "Bildirimi taşı (ok tuşları)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın."
-			},
-			"title": "Alıştırma alanı",
-			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",
-			"empty": "Şu anda sizin için alıştırma yok.",
-			"badge": "Alıştırma",
 			"phoneHint": "Lütfen bilgisayarda alıştırma yapın.",
-			"windowHint": "Bu alıştırma için lütfen tarayıcı pencerenizi genişletin.",
-			"action": {
-				"start": "Alıştırmayı başlat",
-				"restart": "Yeniden alıştırma yap"
-			}
+			"windowHint": "Bu alıştırma için lütfen tarayıcı pencerenizi genişletin."
 		},
 		"error": {
 			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."

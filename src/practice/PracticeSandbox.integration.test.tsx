@@ -635,7 +635,7 @@ describe('practice sandbox on the real session containers', () => {
 	}, 60000);
 
 	it('F1 under the real network guard: nothing needs blocking and the layers unwind in order', async () => {
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		enterPracticeMode({ tourId: 'consultant-walkthrough' });
 		const guardedFetch = window.fetch;
 		try {
 			const view = renderPractice('enquiry', { underGuard: true });

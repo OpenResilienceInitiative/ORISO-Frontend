@@ -49,10 +49,6 @@ vi.mock('./LiveChatAvailability', stub('LiveChatAvailability'));
 vi.mock('./EnableWalkthrough', stub('EnableWalkthrough'));
 vi.mock('../timelineSettings/TimelineSettings', stub('TimelineSettings'));
 vi.mock('../productTour/TourOverviewSection', stub('TourOverviewSection'));
-vi.mock(
-	'../../practice/PracticeOverviewSection',
-	stub('PracticeOverviewSection')
-);
 vi.mock('./OverviewMobile/Bookings', stub('OverviewBookings'));
 vi.mock('./OverviewMobile/Sessions', stub('OverviewSessions'));
 vi.mock('./AdditionalEnquiry/AdditionalEnquiry', stub('AdditionalEnquiry'));

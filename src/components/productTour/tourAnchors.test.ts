@@ -259,6 +259,23 @@ const anchorContract: Array<{
 		anchor: 'profile-overview',
 		sourceFile: 'profile/Profile.tsx'
 	},
+	// The Einführung, watch-only and as practice (FE#2545): the Anfragen and
+	// "Meine Beratungen" lists and the real "Archiv" chip.
+	{
+		anchor: 'consultant-enquiries-list',
+		sourceFile: 'sessionsList/SessionsList.tsx',
+		expected:
+			/type === SESSION_LIST_TYPES\.ENQUIRY\s*\?\s*'consultant-enquiries-list'/
+	},
+	{
+		anchor: 'consultant-sessions-list',
+		sourceFile: 'sessionsList/SessionsList.tsx',
+		expected: /:\s*'consultant-sessions-list'/
+	},
+	{
+		anchor: 'sessions-archive-tab',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx'
+	},
 	// Settings cards: anchored inside each card's own component, so the
 	// card shell stays untouched. The three notification variants share one
 	// anchor; only one of them renders the first match.

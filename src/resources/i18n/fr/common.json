@@ -5648,6 +5648,46 @@
 				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
 				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
 			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Visite d’introduction",
+					"intro": "Bienvenue ! Dans cet exercice, vous découvrez votre espace de travail avec une demande inventée ; rien n’est envoyé ni enregistré."
+				},
+				"enquiries": {
+					"title": "Demandes",
+					"intro": "Vous trouvez ici toutes les demandes ouvertes que personne n’a encore acceptées, et toute votre équipe voit cette liste. Les plus anciennes sont en haut, pour que les premières arrivées n’attendent pas."
+				},
+				"openEnquiry": {
+					"title": "Ouvrir la demande",
+					"intro": "Une demande d’exercice attend dans la liste. Cliquez dessus et lisez de quoi il s’agit."
+				},
+				"accept": {
+					"title": "Accepter la demande",
+					"intro": "Cliquez sur « Accepter la demande » : la demande passe dans « Mes consultations » et votre équipe ne la voit plus dans la liste."
+				},
+				"reply": {
+					"title": "Écrire la première réponse",
+					"intro": "La demande est à vous maintenant : en haut, vous voyez la première réponse automatique et le premier message. Écrivez une courte réponse et envoyez-la."
+				},
+				"answered": {
+					"title": "La réponse est arrivée",
+					"intro": "La personne qui demande conseil vous a répondu. C’est ainsi que la consultation se poursuit dans le chat."
+				},
+				"mySessions": {
+					"title": "Mes consultations",
+					"intro": "Vous trouvez ici toutes les demandes que vous avez acceptées, désormais aussi la demande d’exercice. La conversation traitée en dernier est en haut."
+				},
+				"archive": {
+					"title": "Archives",
+					"intro": "Vous pouvez archiver les conversations inactives : elles ne sont pas supprimées, mais rangées dans « Archives ». Si quelqu’un écrit à nouveau, la conversation revient dans votre liste."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Vous avez accepté une demande et y avez répondu. D’autres visites se trouvent dans votre profil sous « Aide » ; le bouton ci-dessous termine l’exercice."
+				}
+			}
 		}
 	},
 	"consultingTypes": {
@@ -6459,44 +6499,6 @@
 				"archive": {
 					"title": "Archives",
 					"intro": "Les consultations terminées sont déplacées vers les archives comme avant — elles se trouvent désormais dans cet onglet."
-				}
-			}
-		},
-		"practiceAccept": {
-			"title": "Exercice : accepter une demande",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
-			"step": {
-				"navEnquiries": {
-					"title": "Ouvrir les demandes",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous trouverez ici, sous « Demandes », les nouvelles demandes."
-				},
-				"openEnquiry": {
-					"title": "Ouvrir la demande",
-					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
-				},
-				"openTeam": {
-					"title": "Ouvrir le chat d’équipe",
-					"intro": "Le chat d’équipe est activé chez vous : il permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir le chat d’équipe »."
-				},
-				"teamReply": {
-					"title": "Répondre à l’équipe",
-					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, le chat d’équipe se ferme."
-				},
-				"accept": {
-					"title": "Accepter la demande",
-					"intro": "Cliquez sur « Accepter la demande » : elle passe dans « Mes consultations » et disparaît de la liste de votre équipe."
-				},
-				"firstAnswer": {
-					"title": "Première réponse et premier message",
-					"intro": "La demande est maintenant la vôtre. Dans le chat, vous voyez la première réponse automatique et le premier message de la personne qui cherche conseil."
-				},
-				"reply": {
-					"title": "Écrire votre première réponse",
-					"intro": "Écrivez une courte réponse à cette personne et envoyez-la. Elle reste dans l’exercice et n’est enregistrée nulle part."
-				},
-				"done": {
-					"title": "Bravo !",
-					"intro": "Bien joué : vous avez accepté une demande et y avez répondu. Terminez l’exercice avec le bouton ci-dessous."
 				}
 			}
 		},
@@ -7324,19 +7326,8 @@
 			"moveHandle": "Déplacer le bandeau (flèches du clavier)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Accepter une demande et rédiger une première réponse."
-			},
-			"title": "Espace d'exercice",
-			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
-			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",
-			"badge": "Exercice",
 			"phoneHint": "Merci de vous exercer sur un ordinateur.",
-			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice.",
-			"action": {
-				"start": "Commencer l'exercice",
-				"restart": "S'exercer à nouveau"
-			}
+			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice."
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
