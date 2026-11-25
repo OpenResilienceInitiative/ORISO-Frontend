@@ -1,14 +1,7 @@
 // @vitest-environment oriso-jsdom
 
 import * as React from 'react';
-import {
-	act,
-	cleanup,
-	fireEvent,
-	render,
-	screen,
-	waitFor
-} from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -27,10 +20,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { Login } from './Login';
 
-import { apiGetUserData } from '../../api';
-import { redirectToApp } from '../registration/autoLogin';
 import { setAppConfig } from '../../utils/appConfig';
-import { UserDataInterface } from '../../globalState/interfaces';
 
 const stageLayoutProps = vi.hoisted(() => ({ registrationUrl: '' }));
 
