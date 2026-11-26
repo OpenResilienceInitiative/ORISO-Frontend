@@ -3,10 +3,6 @@
 	"specs": [
 		"cypress/e2e/matrix-call-room-privacy.cy.ts",
 		"cypress/e2e/matrix-live-event-bridge.cy.ts",
-		"cypress/e2e/matrix-send-message-privacy.cy.ts",
-		"cypress/e2e/session-list-figma-regression.cy.ts",
-		"cypress/e2e/session-toolbar-filters.cy.ts",
-		"cypress/e2e/sessions.cy.ts",
-		"cypress/e2e/tokens.cy.ts"
+		"cypress/e2e/matrix-send-message-privacy.cy.ts"
 	]
 }

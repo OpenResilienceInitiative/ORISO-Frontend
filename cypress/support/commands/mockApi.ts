@@ -124,6 +124,25 @@ const mockAppShellDefaults = () => {
 		});
 	});
 	cy.intercept('POST', '**/service/error-reports*', { statusCode: 204 });
+	// Case handover (#2447 era): own sessions are not under a handover, so the
+	// list must not render them as locked.
+	cy.intercept('GET', '**/service/users/case-handover/candidates*', {
+		sessions: [],
+		offset: 0,
+		count: 0,
+		total: 0
+	});
+	cy.intercept('GET', '**/service/users/sessions/*/case-handover', (req) => {
+		const sessionId = Number(
+			new URL(req.url).pathname.split('/').slice(-2, -1)[0]
+		);
+		req.reply({
+			sessionId,
+			status: 'NOT_REQUESTED',
+			canViewContent: true,
+			ownershipRevision: 1
+		});
+	});
 	// The app boots without its Matrix conversation service.
 	cy.intercept('GET', '**/service/matrix/me/token*', { statusCode: 503 });
 };
@@ -177,9 +196,12 @@ Cypress.Commands.add('mockApi', () => {
 	});
 
 	cy.fixture('service.users.sessions.room.json').then((session) => {
-		const rooms = defaultReturns['sessionRooms'];
-		rooms.body.sessions.push(session);
-		overrides['sessionRooms'] = rooms;
+		// Copy instead of pushing into defaultReturns: the push leaked one
+		// more fixture session into every following test of a spec.
+		overrides['sessionRooms'] = {
+			...defaultReturns['sessionRooms'],
+			body: { sessions: [session] }
+		};
 	});
 
 	cy.fixture('service.agency.consultants.json').then((agencyConsultants) => {
@@ -264,4 +286,6 @@ export const USER_CONSULTANT = 'consultant';
 export interface LoginArgs {
 	userId?: typeof USER_ASKER | typeof USER_CONSULTANT;
 	auth?: { expires_in: number; refresh_expires_in: number };
+	/** Set when `cy.clock()` is installed: tick the app's timers while logging in. */
+	tickTimers?: boolean;
 }
