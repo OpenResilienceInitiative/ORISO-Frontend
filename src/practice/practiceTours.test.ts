@@ -566,6 +566,12 @@ describe('practiceCalendarTour (FE#2545, Kalender)', () => {
 		]);
 	});
 
+	it('offers no Back after the cancellation, which cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'blocker'
+		]);
+	});
+
 	it('works on "Meine Termine" throughout', () => {
 		tour.steps
 			.filter((s) => s.target)

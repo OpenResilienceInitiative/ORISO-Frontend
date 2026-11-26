@@ -579,6 +579,7 @@ export const createFakeRestBackend = ({
 			method: 'PUT',
 			path: calendarPath('/consultation-hours'),
 			viewWide: true,
+			practiceOnlyWrite: true,
 			handle: async ({ body }) => {
 				const next = (await body()) as CalendarConsultationHoursDTO;
 				if (!next || !Array.isArray(next.windows)) return noContent();
@@ -628,6 +629,7 @@ export const createFakeRestBackend = ({
 			method: 'POST',
 			path: calendarPath('/blockers'),
 			viewWide: true,
+			practiceOnlyWrite: true,
 			handle: async ({ body }) => createBlocker(await body())
 		},
 		{

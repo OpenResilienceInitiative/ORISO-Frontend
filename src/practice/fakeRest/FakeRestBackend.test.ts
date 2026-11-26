@@ -681,6 +681,27 @@ describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
 		expect(await read(endpoints.upcomingAppointments)).toEqual([]);
 	});
 
+	it('blocks the calendar settings and Sperrzeit saves while practice drains instead of passing them on', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				windows: [],
+				autoAccept: true
+			}),
+			send(`${calendar}/blockers`, 'POST', {
+				startTime: slot.startTime,
+				endTime: slot.endTime
+			})
+		]) {
+			await expect(
+				backend.handle(request, undefined, {
+					practiceAddressedOnly: true
+				})
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		}
+		expect(backend.served).toHaveLength(0);
+	});
+
 	it('enters, moves and cancels an appointment of the practice conversation, and tells the run', async () => {
 		const onAppointmentCreated = vi.fn();
 		const onAppointmentCancelled = vi.fn();

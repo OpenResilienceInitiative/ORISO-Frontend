@@ -471,7 +471,9 @@ export const practiceCalendarTour: TourDefinition = {
 			contentKey: 'tour.calendar.step.practiceCancel.intro'
 		},
 		{
+			// After the cancellation, which cannot be undone: no Back.
 			id: 'blocker',
+			hideBack: true,
 			route: CALENDAR_ROUTE,
 			target: 'calendar-create',
 			placement: 'bottom',
