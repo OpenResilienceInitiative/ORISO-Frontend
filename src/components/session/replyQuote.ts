@@ -73,9 +73,12 @@ export const buildEditContext = (message: QuotableMessage): EditContext => {
 	]
 		.filter(Boolean)
 		.join(' ');
-	return {
+	const context: EditContext = {
 		eventId: message._id || '',
-		text: transportMarkupToComposerHtml(message.message),
-		...(transportPrefix ? { transportPrefix } : {})
+		text: transportMarkupToComposerHtml(message.message)
 	};
+	if (transportPrefix) {
+		context.transportPrefix = transportPrefix;
+	}
+	return context;
 };

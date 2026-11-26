@@ -176,6 +176,7 @@ export const ComposerSelectionFormatMenu = ({
 		<div
 			className="composerFormatMenu__toolbar"
 			role="toolbar"
+			tabIndex={-1}
 			aria-label={t('message.submit.toolbar.selectionFormats')}
 			onMouseDown={(event) => event.preventDefault()}
 			onKeyDown={(event) => {
@@ -272,10 +273,15 @@ export const SlashFormatList = React.forwardRef<
 	);
 
 	return (
+		// The slash menu is the popup of an ARIA combobox: focus stays in the editor,
+		// which points at the option via aria-activedescendant. A native <select> or
+		// <option> cannot be that popup, so the roles are kept on purpose.
 		<div
 			id={listId}
 			className="composerFormatMenu__list"
+			// eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- combobox popup, see above
 			role="listbox"
+			tabIndex={-1}
 			aria-label={label}
 			onMouseDown={(event) => event.preventDefault()}
 		>
@@ -287,6 +293,7 @@ export const SlashFormatList = React.forwardRef<
 						key={format.id}
 						id={`${listId}-${index}`}
 						ref={selected ? selectedOption : undefined}
+						// eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- combobox option, see the listbox
 						role="option"
 						type="button"
 						tabIndex={-1}

@@ -84,6 +84,8 @@ export const createSlashFormatExtension = (
 										'composerFormatMenu composerFormatMenu--slash'
 								});
 								unmount = props.mount(
+									// SAFETY: ReactRenderer creates its element with
+									// document.createElement('div'), so it is an HTMLElement.
 									list.element as HTMLElement
 								);
 							},
