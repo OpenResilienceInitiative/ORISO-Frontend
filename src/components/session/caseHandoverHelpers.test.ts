@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { STATUS_ENQUIRY, STATUS_ACTIVE } from '../../globalState/interfaces';
 import {
+	caseHandoverExplanationLevel,
+	caseHandoverExplanationToSend,
+	isCaseHandoverRequestComplete,
 	isCaseHandoverAccessControlled,
 	isTeamCounsellingReader,
 	offersCaseHandoverIn,
@@ -365,5 +368,41 @@ describe('caseHandoverHelpers', () => {
 		expect(isCaseHandoverDenied('DENIED')).toBe(true);
 		expect(isCaseHandoverDenied('CLIENT_CONSENT_DECLINED')).toBe(true);
 		expect(isCaseHandoverDenied('NOT_REQUESTED')).toBe(false);
+	});
+});
+
+describe('explanation level helpers (FE#2040)', () => {
+	it('reads absent or unknown levels as OFF', () => {
+		expect(caseHandoverExplanationLevel(undefined)).toBe('OFF');
+		expect(caseHandoverExplanationLevel({})).toBe('OFF');
+		expect(
+			caseHandoverExplanationLevel({
+				explanationLevel: 'SOMETHING' as never
+			})
+		).toBe('OFF');
+	});
+
+	it('requires text only for REQUIRED', () => {
+		expect(isCaseHandoverRequestComplete(undefined, 'text')).toBe(false);
+		expect(isCaseHandoverRequestComplete({}, '')).toBe(true);
+		expect(
+			isCaseHandoverRequestComplete({ explanationLevel: 'OPTIONAL' }, '')
+		).toBe(true);
+		expect(
+			isCaseHandoverRequestComplete({ explanationLevel: 'REQUIRED' }, ' ')
+		).toBe(false);
+		expect(
+			isCaseHandoverRequestComplete({ explanationLevel: 'REQUIRED' }, 'x')
+		).toBe(true);
+	});
+
+	it('sends no text for OFF and trimmed text otherwise', () => {
+		expect(caseHandoverExplanationToSend({}, 'typed')).toBe('');
+		expect(
+			caseHandoverExplanationToSend(
+				{ explanationLevel: 'OPTIONAL' },
+				' typed '
+			)
+		).toBe('typed');
 	});
 });

@@ -125,6 +125,8 @@
 		"whatwg-fetch": "^3.6.20"
 	},
 	"devDependencies": {
+		"@oxlint/plugins": "1.93.0",
+		"oxlint": "1.93.0",
 		"@babel/core": "^7.23.7",
 		"@babel/eslint-parser": "^7.23.3",
 		"@commitlint/cli": "^18.5.0",
@@ -252,7 +254,10 @@
 		"test:build": "cross-env NODE_ENV=production FAST_REFRESH=false BROWSER=none PORT=9001 CYPRESS_WS_URL=http://127.0.0.1:9002 REACT_APP_API_URL=http://127.0.0.1:9001 concurrently --kill-others --success first \"npm run start\" \"wait-on http://127.0.0.1:9001 && cypress run\"",
 		"release": "standard-version",
 		"lint": "npm run lint:scripts && npm run lint:style",
-		"lint:scripts": "eslint src --max-warnings=0 && tsc",
+		"lint:scripts": "eslint src --max-warnings=0 && tsc && npm run test:oxlint-ratchet && npm run lint:oxlint",
+		"lint:oxlint": "node scripts/oxlint-ratchet.mjs",
+		"lint:oxlint:update": "node scripts/oxlint-ratchet.mjs --update",
+		"test:oxlint-ratchet": "node --test scripts/oxlint-ratchet.node-test.mjs",
 		"lint:style": "stylelint src/**/*.scss",
 		"check:guest-prefix": "node --test scripts/contracts/check-guest-prefix.test.mjs && node scripts/contracts/check-guest-prefix.mjs",
 		"lint:style:fix": "stylelint --fix src/**/*.scss",
@@ -277,6 +282,9 @@
 		"emails:keycloak": "node scripts/run-vite-script.mjs src/emails/scripts/buildKeycloakTheme.mts",
 		"emails:mailservice": "node scripts/run-vite-script.mjs src/emails/scripts/buildMailServiceTemplates.mts",
 		"test:enquiry-team": "cross-env REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser chrome --spec cypress/e2e/enquiry-team-panel.cy.ts --config retries=0,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\"",
+		"test:e2e:login-fold": "playwright test playwright/login-fold.smoke.spec.ts",
+		"test:e2e:cypress": "cross-env CYPRESS_QUARANTINE=exclude REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser electron --config retries=1,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\"",
+		"test:e2e:cypress:quarantine": "cross-env CYPRESS_QUARANTINE=only REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser electron --config screenshotsFolder=cypress/screenshots-quarantine,videosFolder=cypress/videos-quarantine,retries=1,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\"",
 		"emails:sync": "node scripts/run-vite-script.mjs src/emails/scripts/syncEmailTranslations.mts",
 		"test:verification-controls": "node scripts/verify-storybook-gate.mjs"
 	},

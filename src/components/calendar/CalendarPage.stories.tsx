@@ -1088,14 +1088,31 @@ export const ColleaguesBandClick: Story = {
 const MONDAY_BAND = `${new Date(2026, 10, 16, 11).getTime()}-${new Date(2026, 10, 16, 12).getTime()}`;
 const TEAM = ['kaya', 'demir', 'hoffmann', 'nowak'];
 /** A band by its stretch, and a point on it no entry or grip covers. */
-const bandByKey = (root: HTMLElement, key: string) =>
-	waitFor(() => {
-		const band = root.querySelector<HTMLElement>(`[data-band="${key}"]`);
-		expect(band).toBeTruthy();
-		const point = pointOnBand(band!);
-		expect(point).toBeTruthy();
-		return { band: band!, point: point! };
-	});
+const bandByKey = (root: HTMLElement, key: string) => {
+	let previousTop: number | undefined;
+	let stableSamples = 0;
+	return waitFor(
+		() => {
+			const band = root.querySelector<HTMLElement>(
+				`[data-band="${key}"]`
+			);
+			expect(band).toBeTruthy();
+			const point = pointOnBand(band!);
+			expect(point).toBeTruthy();
+			const top = band!.getBoundingClientRect().top;
+			stableSamples =
+				previousTop !== undefined && Math.abs(previousTop - top) < 0.5
+					? stableSamples + 1
+					: 0;
+			previousTop = top;
+			// FullCalendar applies its initial 08:00 scroll after rendering. Do
+			// not retain coordinates from before that scroll and click a later band.
+			expect(stableSamples).toBeGreaterThanOrEqual(2);
+			return { band: band!, point: point! };
+		},
+		{ interval: 50 }
+	);
+};
 
 export const ColleaguesBandCard: Story = {
 	name: 'Colleagues shown — a click on a band: who is busy, in the left column (Frank *16.2)',
@@ -1109,13 +1126,17 @@ export const ColleaguesBandCard: Story = {
 		});
 		const inCard = within(card);
 		// Who is busy with what, and who is free.
+		// The people fill in once the colleagues' calendars are in; wait
+		// for them instead of reading the first render.
 		await expect(
-			inCard.getByTestId('calendar-band-person-kaya').textContent
+			(await inCard.findByTestId('calendar-band-person-kaya')).textContent
 		).toContain('Video · 11:00–12:00');
 		await expect(
-			inCard.getByTestId('calendar-band-person-nowak').textContent
+			(await inCard.findByTestId('calendar-band-person-nowak'))
+				.textContent
 		).toContain('Telefon · 11:00–12:00');
-		const free = inCard.getByTestId('calendar-band-free').textContent;
+		const free = (await inCard.findByTestId('calendar-band-free'))
+			.textContent;
 		await expect(free).toContain('E. Demir');
 		await expect(free).toContain('K. Hoffmann');
 		// The band is outlined; the list waits under the card, out of reach;
@@ -1197,7 +1218,7 @@ export const ColleaguesBandCardActions: Story = {
 		// form the calendar already has.
 		await userEvent.click(
 			within(
-				within(card).getByTestId('calendar-band-person-kaya')
+				await within(card).findByTestId('calendar-band-person-kaya')
 			).getByRole('button', { name: /Verschiebung vorschlagen/ })
 		);
 		await findCy('calendar-menu-entry');
@@ -1225,7 +1246,7 @@ export const ColleaguesBandCardFullscreen: Story = {
 		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
 		const menu = within(await findCy('calendar-menu-band'));
 		await expect(
-			menu.getByTestId('calendar-band-person-kaya')
+			await menu.findByTestId('calendar-band-person-kaya')
 		).toBeTruthy();
 		await expect(
 			menu.queryByRole('button', { name: 'Zurück zur Liste' })
@@ -1242,10 +1263,10 @@ export const ColleaguesBandCardPhone: Story = {
 		await clickAt((await bandByKey(canvasElement, MONDAY_BAND)).point);
 		const menu = within(await findCy('calendar-menu-band'));
 		await expect(
-			menu.getByTestId('calendar-band-person-nowak')
+			await menu.findByTestId('calendar-band-person-nowak')
 		).toBeTruthy();
 		await expect(
-			menu.getByTestId('calendar-band-free').textContent
+			(await menu.findByTestId('calendar-band-free')).textContent
 		).toContain('E. Demir');
 	}
 };

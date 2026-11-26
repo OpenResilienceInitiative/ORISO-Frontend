@@ -3379,9 +3379,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "ከም CSV ኣውርድ",
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
+				"hintMonth": "ንነፍሲ ወከፍ ሰሙን ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintWeek": "ንነፍሲ ወከፍ መዓልቲ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintYear": "ንነፍሲ ወከፍ ወርሒ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
 				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
 				"total": "ጠቕላላ"
 			},
@@ -3398,7 +3402,20 @@
 				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "ዝተሰረዙ",
+				"numberOfChatAppointments": "ቻት",
+				"numberOfOnsiteAppointments": "ብኣካል",
+				"numberOfPhoneAppointments": "ተሌፎን",
+				"numberOfVideoAppointments": "ቪድዮ"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "እዚ ወርሒ",
+					"currentWeek": "እዚ ሰሙን",
+					"lastMonth": "ዝሓለፈ ወርሒ",
+					"lastWeek": "ዝሓለፈ ሰሙን"
+				},
 				"currentMonth": "ናይ ሕጂ ወርሒ",
 				"currentWeek": "ናይ ሕጂ ሰሙን",
 				"currentYear": "ናይ ሕጂ ዓመት",
@@ -3410,7 +3427,17 @@
 				"lastMonth": "ዝሓለፈ ወርሒ",
 				"lastWeek": "ዝሓለፈ ሰሙን",
 				"lastYear": "ዝሓለፈ ዓመት",
-				"prefix": "ቁጽርታትኩም"
+				"offsetLabel": "እዋን",
+				"prefix": "ቁጽርታትኩም",
+				"unitLabel": "ኣሃዱ ግዜ",
+				"unitMonth": "ወርሒ",
+				"unitWeek": "ሰሙን",
+				"unitYear": "ዓመት"
+			},
+			"state": {
+				"empty": "ኣብዚ እዋን ገና ቁጽርታት የለን።",
+				"error": "ቁጽርታት ሕጂ ክጽዓኑ ኣይከኣሉን።",
+				"retry": "እንደገና ፈትን"
 			},
 			"title": "ስታቲስቲክስ ናተይ"
 		},
@@ -4176,7 +4203,8 @@
 			"selectCase": "ጉዳይ ምረጽ",
 			"selectedCount": "{{count}} ተመሪጹ",
 			"start": "ብዙሓት ጉዳያት ምረጽ",
-			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት"
+			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት",
+			"clearSelection": "ምርጫ ኣልግስ"
 		},
 		"consent": {
 			"title": "ሓደ ኣማኻሪ ናብዚ ዝርርብ ተበጻሕነት ይሓትት ኣሎ",
@@ -4223,7 +4251,9 @@
 			"required": "ምኽንያት ምረጹ እሞ መብርሂ ወስኹ።"
 		},
 		"explanation": {
-			"placeholder": "መብርሂ ጽሓፉ"
+			"placeholder": "መብርሂ ጽሓፉ",
+			"optional": "መግለጺ (ኣማራጺ)",
+			"required": "መግለጺ (ግዴታ)"
 		},
 		"eyebrow": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
 		"hidden": {
@@ -4795,7 +4825,6 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
-				"directLinks": "ቀጥታዊ ሊንክታት",
 				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
@@ -4820,9 +4849,11 @@
 				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
-				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
-				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
-				"directLinkChat": "ቀጥታዊ ሊንክ"
+				"directLinkVideo": "ቪድዮ",
+				"directLinkAudio": "ድምጺ",
+				"directLinkChat": "ቻት",
+				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}",
+				"agencyLink": "ብሊንክ ማእከል ምኽሪ"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
@@ -7481,18 +7512,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "ሓፈሻዊ ርእይቶኻ",
-		"stats": {
-			"title": "ምኽሪ",
-			"period": "ዝሓለፉ 30 መዓልታት",
-			"assigned": "ሓደሽቲ",
-			"active": "ንጡፋት",
-			"archived": "ዝተዓቀቡ",
-			"sentMessages": "ዝተላእኩ መልእኽትታት"
-		},
-		"circles": {
-			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"assignedCounsellors": "ጉጅለ ኣማኸርቲ፡ {{count}}"
+		"quiet": {
+			"active": "ንጡፍ",
+			"assigned": "ሓደስቲ ዝተቐበልኩምዎም (30 መዓልቲ)"
 		}
 	},
 	"temporaryAccount": {
@@ -7501,6 +7523,7 @@
 			"title": "ምስ ናይ ጋሻ ሕሳብ ሓቢሩ ይድምሰስ"
 		},
 		"deletedGuest": "ጋሻ (ተደምሲሱ)",
+		"signedOutNotice": "ናይ ጋሻ ሕሳብኩም ድሕሪ እቲ ዝርርብ ተደምሲሱ እዩ፣ ስለዚ ወጺእኩም ኣለኹም። ንሓድሽ ዝርርብ፡ ነቲ ናይ ምኽሪ ኣገልግሎትኩም ሊንክ ደጊምኩም ክፈትዎ።",
 		"chip": {
 			"guest": "ናይ ጋሻ ሕሳብ"
 		},
@@ -7565,7 +7588,12 @@
 			},
 			"linkFailedTitle": "ናይ መላግቦ ሊንክ ኣይተፈጥረን",
 			"linkFailedAfterAppointment": "እቲ ቆጸራ ተዓቂቡ፣ ናይ መላግቦ ሊንክ ግን ኣይተፈጥረን። በጃኹም እንደገና ፈትኑ።",
-			"appointmentSaved": "እቲ ቆጸራ ተዓቂቡ።"
+			"appointmentSaved": "እቲ ቆጸራ ተዓቂቡ።",
+			"openLink": {
+				"action": "ናብ መዕደሚ ሊንክ ቀጽል",
+				"hint": "ብዘይ ዕለት ክፉት መዕደሚ ሊንክ ይፍጠር፦ ዝኸፈቶ ነፍሲ ወከፍ ሰብ ናቱ ዝርርብ ይረክብ። እቲ ሊንክ ክሳብ ዝድምስስዎ ይሰርሕ። ኣብ ዝቕጽል ስጉምቲ ኣርእስትን ስምን ትመርጹ።",
+				"mediumOff": "ነዚ ዓይነት ቀጥታዊ ዕድመ ኣይተፈቕደን። ካልእ ዓይነት ምረጹ።"
+			}
 		},
 		"overview": {
 			"title": "ቆጸራታትን ናይ ቀጥታ መላግቦታትን",
@@ -7642,6 +7670,7 @@
 			"validUntil": "እቲ ሓድሽ ሊንክ ናይቲ ቆጸራ ክሳብ {{date}} ይሰርሕ፦"
 		},
 		"fromCalendar": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}። ኣርእስትን መራኸቢን ምረጹ፣ ድሕሪኡ ናይ ቀጥታ መላግቦ ፍጠሩ።",
+		"fromCalendarOpenLink": "ካብ ካሌንደር፦ ብዘይ ዕለት ክፉት መዕደሚ ሊንክ።",
 		"fromCalendarPopup": "ካብ ካላንደር ዝመጸ ቆጸራ፦ {{range}}"
 	},
 	"calendar": {

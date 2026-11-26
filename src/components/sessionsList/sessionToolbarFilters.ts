@@ -20,8 +20,6 @@ export type SessionToolbarChipFilter =
 	| 'unread'
 	| 'drafts'
 	| 'nearby'
-	// FE#1952: conversations that came in through a counsellor direct link.
-	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
@@ -43,14 +41,15 @@ export const normalizeSessionToolbarChip = (
 		case 'neu':
 		case 'unread':
 			return 'unread';
+		// FE#2546: the own Direkteinladungen chip is gone; a saved or linked
+		// ?chip=directLinks opens Mail, where these conversations now are.
 		case 'oneToOne':
 		case 'chats':
 		case 'nearby':
+		case 'directLinks':
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
-		case 'directLinks':
-			return 'directLinks';
 		case 'other':
 			return 'other';
 		case 'liveChat':
@@ -79,10 +78,13 @@ export const isInternalGroupChatSession = (
 ): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
 
 /**
- * FE#1952 (Frank, 2026-10-30): a conversation that came in through a
- * counsellor direct link has its own "Direktlinks" chip and leaves "Mail".
- * Same reading as the row's label (`getDirectLinkMedium`): agency counselling
- * with a direct-link medium.
+ * A conversation that came in through a Direkteinladung: agency counselling
+ * with a direct-link medium (`getDirectLinkMedium`, the row's channel tag).
+ *
+ * FE#2546 (Frank, 2026-11-25): such a conversation is a Mail-Beratung case.
+ * It stays under the "Mail" chip and is classified `oneToOne`; only the row
+ * names the channel (Video / Audio / Chat). This revokes the decision of
+ * 2026-10-30 (FE#1952) that gave it its own "Direktlinks" chip.
  */
 export const isDirectLinkSession = (raw: ListItemInterface): boolean =>
 	getDirectLinkMedium(raw) !== undefined;
@@ -160,10 +162,6 @@ export const classifySession = (
 		String(raw.consultant.id) !== String(currentUserId || '')
 	) {
 		return 'supervision';
-	}
-	// FE#1952: a 1:1 conversation that came in through a direct link.
-	if (isDirectLinkSession(raw)) {
-		return 'directLinks';
 	}
 	return 'oneToOne';
 };
@@ -323,14 +321,6 @@ export function sessionMatchesToolbar(
 		return false;
 	}
 	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
-		return false;
-	}
-	// FE#1952: direct-link conversations have their own chip, not "Mail".
-	const isDirectLink = isDirectLinkSession(raw);
-	if (effectiveChip === 'nearby' && isDirectLink) {
-		return false;
-	}
-	if (effectiveChip === 'directLinks' && !isDirectLink) {
 		return false;
 	}
 

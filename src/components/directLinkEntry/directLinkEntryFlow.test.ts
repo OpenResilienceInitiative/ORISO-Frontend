@@ -8,6 +8,7 @@ import {
 	directLinkReturnPath,
 	loginPathForDirectLink,
 	CANCEL_KNOCK_WAIT_MS,
+	DirectLinkNotAdmittedError,
 	openDirectLinkConversation,
 	readPendingKnock
 } from './directLinkEntryFlow';
@@ -304,5 +305,94 @@ describe('directLinkCallsAllowed (#2012)', () => {
 			new Promise(() => undefined)
 		);
 		expect(await directLinkCallsAllowed(link, 20)).toBe(true);
+	});
+});
+
+describe('openDirectLinkConversation waiting on the link page (FE#2542)', () => {
+	const knocking = (knockStatus: string) =>
+		vi.fn().mockResolvedValue({
+			sessionId: 9,
+			matrixRoomId: '!room:oriso',
+			medium: 'VIDEO',
+			admission: 'KNOCK',
+			created: true,
+			knockId: 21,
+			knockStatus
+		});
+	const entryMedia = () => ({
+		media: { audio_enabled: true, video_enabled: false },
+		cameraSwitch: false,
+		selection: { microphone: 'mic-2' }
+	});
+
+	it('enters the app only once the counsellor let the person in', async () => {
+		const redirect = vi.fn();
+		let letIn: (outcome: 'admitted') => void = () => undefined;
+		const opening = openDirectLinkConversation('tok', {
+			start: knocking('PENDING'),
+			redirect,
+			waitForAdmission: () =>
+				new Promise((resolve) => {
+					letIn = resolve;
+				}),
+			entryMedia
+		});
+		await vi.waitFor(() => expect(readPendingKnock()).not.toBeNull());
+		expect(redirect).not.toHaveBeenCalled();
+		letIn('admitted');
+		await opening;
+		expect(redirect).toHaveBeenCalledWith(9);
+		// The app opens the call at once and takes the page's switches.
+		expect(readPendingKnock()).toMatchObject({
+			knockId: 21,
+			status: 'ADMITTED',
+			admittedOnEntry: true,
+			entryMedia: entryMedia()
+		});
+	});
+
+	it.each(['declined', 'cancelled'] as const)(
+		'stays on the link page when the knock was %s',
+		async (outcome) => {
+			const redirect = vi.fn();
+			const opening = openDirectLinkConversation('tok', {
+				start: knocking('PENDING'),
+				redirect,
+				waitForAdmission: () => Promise.resolve(outcome)
+			});
+			await expect(opening).rejects.toBeInstanceOf(
+				DirectLinkNotAdmittedError
+			);
+			await expect(opening).rejects.toMatchObject({ outcome });
+			expect(redirect).not.toHaveBeenCalled();
+			expect(readPendingKnock()).toBeNull();
+		}
+	);
+
+	it('does not wait for a person who was let in before', async () => {
+		const redirect = vi.fn();
+		const waitForAdmission = vi.fn();
+		await openDirectLinkConversation('tok', {
+			start: knocking('ADMITTED'),
+			redirect,
+			waitForAdmission
+		});
+		expect(waitForAdmission).not.toHaveBeenCalled();
+		expect(redirect).toHaveBeenCalledWith(9);
+		expect(readPendingKnock()).toMatchObject({ admittedOnEntry: true });
+	});
+
+	it('does not wait when the person chose the chat first', async () => {
+		const waitForAdmission = vi.fn();
+		const redirect = vi.fn();
+		await openDirectLinkConversation('tok', {
+			start: knocking('PENDING'),
+			redirect,
+			cancelKnock: vi.fn().mockResolvedValue(undefined),
+			chatFirst: true,
+			waitForAdmission
+		});
+		expect(waitForAdmission).not.toHaveBeenCalled();
+		expect(redirect).toHaveBeenCalledWith(9);
 	});
 });

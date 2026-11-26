@@ -145,21 +145,22 @@ export const ReasonOnShortPhone: Story = {
 	globals: { viewport: { value: 'phone390Short' } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const next = canvas.getByRole('button', {
-			name: /Weiter|Next|Continuer/
+		// FE#2040: reason and (optional) explanation share one screen.
+		const send = canvas.getByRole('button', {
+			name: /Zugriff anfragen|Request access|Demander l'accès/
 		});
-		await expect(next).toBeDisabled();
+		await expect(send).toBeDisabled();
 		await userEvent.click(
 			canvas.getByRole('radio', {
 				name: /Rat erbeten|Advice requested|Conseil demandé/
 			})
 		);
-		await expect(next).toBeEnabled();
-		await userEvent.click(next);
+		await expect(send).toBeEnabled();
 		await expect(canvas.getByRole('textbox')).toBeVisible();
 	}
 };
 export const DescriptionOnShortPhone: Story = {
+	// 'describe' preselects "Advice requested", whose explanation is optional (FE#2040).
 	args: { initialStep: 'describe', frameHeight: 420 },
 	globals: { viewport: { value: 'phone390Short' } }
 };

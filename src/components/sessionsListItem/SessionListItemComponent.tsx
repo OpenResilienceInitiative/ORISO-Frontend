@@ -11,7 +11,8 @@ import { getSessionRailMarks } from '../sessionsList/sessionRailState';
 import { getModality, Modality } from '../session/getModality';
 import {
 	directLinkLabelKey,
-	getDirectLinkMedium
+	getDirectLinkMedium,
+	type DirectLinkMedium
 } from '../session/directLinkOrigin';
 import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
 import {
@@ -130,6 +131,11 @@ import { logout } from '../logout/logout';
 import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import {
+	AGENCY_LINK_LABEL_KEY,
+	showsAgencyLinkLabel
+} from '../sessionsList/agencyLinkLabel';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { TopicTag } from '../topicTag/TopicTag';
 import { UpcomingAppointmentClock } from './UpcomingAppointmentClock';
@@ -256,6 +262,11 @@ export const SessionListItemComponent = ({
 	datePlacement = 'corner'
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
+	/** FE#2546: "Direkteinladung · Video", the one name of the channel. */
+	const directInvitationVia = (medium: DirectLinkMedium) =>
+		translate('sessionList.item.sessionType.directInvitationVia', {
+			medium: translate(directLinkLabelKey(medium))
+		});
 	const location = useLocation();
 	// WP-06 Slice 0b: route-derived single source of truth for the active item
 	// (replaces the per-component rid/sessionId comparison below).
@@ -291,6 +302,7 @@ export const SessionListItemComponent = ({
 
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const tenant = useTenant();
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -1252,9 +1264,9 @@ export const SessionListItemComponent = ({
 							'sessionList.toolbar.chips.supervision'
 						),
 						mail: translate('sessionList.toolbar.chips.nearby'),
-						videoCall: translate(directLinkLabelKey('VIDEO')),
-						audioCall: translate(directLinkLabelKey('AUDIO')),
-						directLink: translate(directLinkLabelKey('CHAT')),
+						videoCall: directInvitationVia('VIDEO'),
+						audioCall: directInvitationVia('AUDIO'),
+						directLink: directInvitationVia('CHAT'),
 						appointment:
 							upcomingAppointment ||
 							translate('sessionList.timeline.upcoming'),
@@ -1552,9 +1564,18 @@ export const SessionListItemComponent = ({
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
 	const modality = getModality(activeSession);
-	// FE#1952: a conversation opened through a direct link names its medium
-	// where every other agency-counselling conversation says "Mail".
+	// FE#2546 (Frank, 2026-11-25): a conversation opened through a
+	// Direkteinladung is Mail-Beratung; the card says "Mail" and adds the
+	// channel (Video / Audio / Chat) as a tag.
 	const directLinkMedium = getDirectLinkMedium(activeSession);
+	// FE#1870: an Erstanfrage from the agency link says so, unless the Träger
+	// switched the label off.
+	const agencyLinkLabel =
+		!isAsker &&
+		!!activeSession?.isEnquiry &&
+		modality === Modality.AGENCY_COUNSELLING &&
+		!directLinkMedium &&
+		showsAgencyLinkLabel(activeSession.item, tenant?.settings);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
@@ -2081,49 +2102,64 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{modality === Modality.AGENCY_COUNSELLING &&
-										directLinkMedium && (
-											<div
-												className={clsx(
-													'sessionsListItem__consultingTypeIcon',
-													'sessionsListItem__consultingTypeIcon--directLink'
+									{modality ===
+										Modality.AGENCY_COUNSELLING && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--nearby'
+											)}
+										>
+											<ConsultingKindIcon
+												src={mailConversationIcon}
+												hoverSrc={
+													mailConversationHoverIcon
+												}
+											/>
+											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+												{translate(
+													'sessionList.toolbar.chips.nearby'
 												)}
-												data-medium={directLinkMedium}
-											>
-												<DirectLinkGlyph
-													medium={directLinkMedium}
-													className="sessionsListItem__consultingTypeIcon--directLinkIcon"
-												/>
-												<span className="sessionsListItem__consultingTypeIcon--directLinkLabel">
-													{translate(
-														directLinkLabelKey(
-															directLinkMedium
-														)
-													)}
-												</span>
-											</div>
-										)}
-									{modality === Modality.AGENCY_COUNSELLING &&
-										!directLinkMedium && (
-											<div
-												className={clsx(
-													'sessionsListItem__consultingTypeIcon',
-													'sessionsListItem__consultingTypeIcon--nearby'
-												)}
-											>
-												<ConsultingKindIcon
-													src={mailConversationIcon}
-													hoverSrc={
-														mailConversationHoverIcon
+											</span>
+											{directLinkMedium && (
+												<span
+													className="sessionsListItem__channelTag"
+													role="img"
+													data-medium={
+														directLinkMedium
 													}
-												/>
-												<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-													{translate(
-														'sessionList.toolbar.chips.nearby'
+													title={directInvitationVia(
+														directLinkMedium
 													)}
+													aria-label={directInvitationVia(
+														directLinkMedium
+													)}
+												>
+													<DirectLinkGlyph
+														medium={
+															directLinkMedium
+														}
+														className="sessionsListItem__channelTagIcon"
+													/>
+													<span aria-hidden="true">
+														{translate(
+															directLinkLabelKey(
+																directLinkMedium
+															)
+														)}
+													</span>
 												</span>
-											</div>
-										)}
+											)}
+										</div>
+									)}
+									{agencyLinkLabel && (
+										<span
+											className="sessionsListItem__agencyLinkLabel"
+											data-testid="agency-link-label"
+										>
+											{translate(AGENCY_LINK_LABEL_KEY)}
+										</span>
+									)}
 									{modality === Modality.INTERNAL_GROUP && (
 										<div
 											className={clsx(
