@@ -4696,9 +4696,10 @@
 				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
-				"directLinkVideo": "Video call",
-				"directLinkAudio": "Audio call",
-				"directLinkChat": "Direct invitation"
+				"directLinkVideo": "Video",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Direct invitation · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "waiting {{count}} min",
@@ -4804,7 +4805,6 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
-				"directLinks": "Direct invitations",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",

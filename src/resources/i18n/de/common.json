@@ -4750,9 +4750,10 @@
 				"selfHelp": "Kreis",
 				"internal": "Interna",
 				"team": "Team Beratung",
-				"directLinkVideo": "Videoanruf",
-				"directLinkAudio": "Audioanruf",
-				"directLinkChat": "Direkteinladung"
+				"directLinkVideo": "Video",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Direkteinladung · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",
@@ -4855,7 +4856,6 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
-				"directLinks": "Direkteinladungen",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",

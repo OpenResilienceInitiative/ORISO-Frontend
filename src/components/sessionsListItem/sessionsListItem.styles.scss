@@ -158,13 +158,13 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		// The master icons are grey already; the black-to-red filter above belongs
-		// to the older modality glyphs. FE#1952: like Mail, a direct link keeps the
-		// primary colour when active; the glyph is an svg, so the override must
-		// outrank the `svg` filter above.
+		// to the older modality glyphs. FE#2546: the channel tag's glyph keeps the
+		// tag's colour when active; it is an svg, so the override must outrank
+		// the `svg` filter above.
 		.sessionsListItem__consultingTypeIcon
 			.sessionsListItem__consultingTypeIcon--kindIcon,
 		.sessionsListItem__consultingTypeIcon
-			svg.sessionsListItem__consultingTypeIcon--directLinkIcon {
+			svg.sessionsListItem__channelTagIcon {
 			filter: none;
 		}
 	}
@@ -1021,6 +1021,34 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 	}
 
+	// FE#2546 (Frank, 2026-11-25): a Direkteinladung is a channel of
+	// Mail-Beratung. The card keeps "Mail" and names the channel in a quiet
+	// tag beside it: the medium's glyph and one word (Video / Audio / Chat).
+	&__channelTag {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background-color: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-secondary, #4c555f);
+		font-family: $font-family-sans-serif;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		white-space: nowrap;
+	}
+
+	&__consultingTypeIcon svg.sessionsListItem__channelTagIcon {
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
+
+		* {
+			fill: currentcolor;
+		}
+	}
+
 	&__consultingTypeIcon {
 		margin-left: auto;
 		display: flex;
@@ -1052,6 +1080,120 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&--supervision,
 		&--liveChat,
 		&--nearby,
+		&--internal,
+		&--selfHelp {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+		}
+
+		&--supervision,
+		&--liveChat,
+		&--internal,
+		&--selfHelp {
+			height: 38px;
+		}
+
+		/* #1306: the supervisor's row reads "Supervision" where the
+		   consulting type would be. Same shape as --liveChat (icon + word,
+		   kept inside the card), with one difference: the label TRUNCATES.
+		   "Supervision" fits, but a longer translation must not push the
+		   date out of the card — the description stays on `title`. */
+		&--supervision {
+			min-width: 0;
+			align-items: center;
+
+			svg {
+				width: $icon-size-small;
+				height: $icon-size-small;
+				flex-shrink: 0;
+
+				* {
+					fill: var(--m3-secondary, $secondary);
+				}
+			}
+		}
+
+		&--supervisionLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 500;
+			color: var(--m3-secondary, #4c555f);
+			line-height: 20px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 11ch;
+		}
+
+		&--liveChat {
+			// Centre icon and word on each other (FE#2182), as --nearby and
+			// --directLink do; the base rule's `end` hangs them from a shared
+			// bottom edge, so the 19 px glyph sat off the 20 px label line.
+			align-items: center;
+
+			/* Stay inside the card — the base rule pushes the icon 12px
+			   past its grid cell, which would clip the wider "Live Chat"
+			   label under the __content overflow: hidden. */
+			white-space: nowrap;
+
+			/* Undo the parent .sessionsListItem__consultingTypeIcon svg
+			   rule that forces icon-size-small and a red $secondary fill
+			   on every child svg. */
+			svg {
+				width: 22px !important;
+				height: 19px !important;
+				flex-shrink: 0;
+
+				* {
+					fill: var(--m3-secondary, #4b515a) !important;
+				}
+			}
+		}
+
+		&--liveChatLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 600;
+			color: var(--m3-secondary, #4b515a);
+			line-height: 20px;
+			letter-spacing: 0;
+		}
+
+		&--nearby {
+			white-space: nowrap;
+
+			// Centre icon and word on each other; the base rule's `end` hangs them
+			// from a shared bottom edge.
+			align-items: center;
+		}
+
+		// The assets have a grey fill baked in, so they are worn as a mask coloured here.
+		&--kindIcon {
+			width: 32px !important;
+			height: 32px !important;
+			flex-shrink: 0;
+			display: block;
+			background-color: var(--m3-secondary, #4c555f);
+			mask-image: var(--kind-icon-url);
+			mask-size: contain;
+			mask-position: center;
+			mask-repeat: no-repeat;
+			-webkit-mask-image: var(--kind-icon-url);
+			-webkit-mask-size: contain;
+			-webkit-mask-position: center;
+			-webkit-mask-repeat: no-repeat;
+		}
+
+		&--nearbyLabel {
+			font-family: $font-family-sans-serif;
+			font-size: 14px;
+			font-weight: 500;
+			color: var(--m3-secondary, #4c555f);
+			line-height: 20px;
+			letter-spacing: 0;
+		}
+
 		&--internal,
 		&--selfHelp {
 			margin-right: 0;

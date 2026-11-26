@@ -4821,7 +4821,6 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
-				"directLinks": "Invitations directes",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4846,9 +4845,10 @@
 				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
-				"directLinkVideo": "Appel vidéo",
-				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Invitation directe"
+				"directLinkVideo": "Vidéo",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Invitation directe · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",

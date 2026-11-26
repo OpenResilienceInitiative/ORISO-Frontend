@@ -4828,7 +4828,6 @@
 				"unread": "Непрочитанные",
 				"drafts": "Черновики",
 				"nearby": "Mail",
-				"directLinks": "Прямые приглашения",
 				"other": "Прочее",
 				"create": "Создать",
 				"group": "Фильтры",
@@ -4853,9 +4852,10 @@
 				"selfHelp": "Круг",
 				"internal": "Внутреннее",
 				"team": "Командная консультация",
-				"directLinkVideo": "Видеозвонок",
-				"directLinkAudio": "Аудиозвонок",
-				"directLinkChat": "Прямое приглашение"
+				"directLinkVideo": "Видео",
+				"directLinkAudio": "Аудио",
+				"directLinkChat": "Чат",
+				"directInvitationVia": "Прямое приглашение · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "ждёт {{count}} мин.",
