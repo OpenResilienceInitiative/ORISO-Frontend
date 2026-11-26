@@ -153,10 +153,29 @@ export const createPracticeWorld = ({
 		hooks: {
 			onEnquiryAccepted: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted),
-			onSupervisorAdded: () => {
+			onSupervisorAdded: (added) => {
+				const person = [
+					script.cast.supervisor,
+					script.cast.secondSupervisor
+				].find(({ id }) => id === added.supervisorConsultantId);
+				// Robin is seeded for the standing-supervisor flow; anyone
+				// added by hand (Kim) joins the side room too.
+				if (person) {
+					matrix.addMember(PRACTICE_SUPERVISION_ROOM_ID, {
+						userId: person.matrixUserId,
+						displayName: person.displayName
+					});
+				}
 				if (!supervisorAnswered) {
 					supervisorAnswered = true;
-					play(script.reactionFor({ type: 'supervisor-added' }));
+					const reaction = script.reactionFor({
+						type: 'supervisor-added'
+					});
+					play(
+						reaction && person
+							? { ...reaction, sender: person.matrixUserId }
+							: reaction
+					);
 				}
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
 			},

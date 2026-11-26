@@ -267,6 +267,24 @@ describe('practice world script', () => {
 		).toEqual([]);
 	});
 
+	it('puts a manually added Kim into the side room, keeps Robin there and lets Kim answer', async () => {
+		const world = await acceptedWorld();
+		const { supervisor: robin, secondSupervisor: kim } = world.script.cast;
+
+		await addSupervisor(world, kim.id);
+
+		const room = world.matrix.getRoom(PRACTICE_SUPERVISION_ROOM_ID)!;
+		expect(room.getMember(kim.matrixUserId)?.name).toBe(kim.displayName);
+		// The seeded standing supervisor stays for the Supervision tour.
+		expect(room.getMember(robin.matrixUserId)).not.toBeNull();
+		expect(
+			bodiesFrom(world, PRACTICE_SUPERVISION_ROOM_ID, kim.matrixUserId)
+		).toEqual([world.script.texts.supervisorReply]);
+		expect(
+			bodiesFrom(world, PRACTICE_SUPERVISION_ROOM_ID, robin.matrixUserId)
+		).toEqual([]);
+	});
+
 	it('does not let the supervisor reply to the add of anybody else', async () => {
 		const world = await acceptedWorld();
 
