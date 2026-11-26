@@ -8,7 +8,7 @@ import type { CaseHandoverReason } from '../../../api/apiCaseHandover';
 
 // The four neutral codes UserService serves (#1536), with one explanation level
 // each as in FE#2040's test plan: planned absence REQUIRED, advice OPTIONAL, rest OFF.
-const reasons: CaseHandoverReason[] = [
+export const curtainReasons: CaseHandoverReason[] = [
 	{
 		code: 'PLANNED_ABSENCE',
 		label: 'Planned absence',
@@ -74,7 +74,7 @@ export function CurtainPlayground({
 		<CaseHandoverCurtainView
 			step={step}
 			topicLabel={topicLabel}
-			reasons={noReasons || failed ? [] : reasons}
+			reasons={noReasons || failed ? [] : curtainReasons}
 			reasonsUnavailable={noReasons}
 			reasonsLoadFailed={failed}
 			onRetryReasons={() => setFailed(false)}

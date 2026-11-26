@@ -4168,7 +4168,8 @@
 			"selectCase": "Select case",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
-			"title": "Batch access request"
+			"title": "Batch access request",
+			"clearSelection": "Clear selection"
 		},
 		"consent": {
 			"sender": "Carimat",

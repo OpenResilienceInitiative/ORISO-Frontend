@@ -4222,7 +4222,8 @@
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
-			"title": "Mehrfach-Zugriffsanfrage"
+			"title": "Mehrfach-Zugriffsanfrage",
+			"clearSelection": "Auswahl aufheben"
 		},
 		"consent": {
 			"sender": "Carimat",

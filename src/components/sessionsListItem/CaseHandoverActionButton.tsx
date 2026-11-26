@@ -22,8 +22,9 @@ import './sessionsListItem.styles';
  * - Batch (FE#1725): the main segment is the shared M3 checkbox "Select
  *   case" — outlined while unselected, filled primary once selected. Granted
  *   or pending cases show their status pill and cannot be selected. The
- *   chevron offers "Confirm selection" / "Deselect and close"; the list's
- *   bulk bar is the primary way forward.
+ *   chevron offers "Confirm selection" / "Deselect and close". FE#2040: the
+ *   select button spans the card row, and selecting a case loads the reason
+ *   step into the right pane (no bulk bar).
  *
  * The open (active) case is marked by the card, never by this button.
  */
@@ -247,6 +248,7 @@ export const CaseHandoverActionButton = ({
 			className={clsx(
 				'sessionsListItem__handoverAction',
 				isStatusPill && 'sessionsListItem__handoverAction--status',
+				isSelection && 'sessionsListItem__handoverAction--select',
 				isStatusPill &&
 					state === 'accessDenied' &&
 					'sessionsListItem__handoverAction--denied'

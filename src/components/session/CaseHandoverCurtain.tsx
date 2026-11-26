@@ -92,6 +92,12 @@ export interface CaseHandoverCurtainViewProps {
 	/** The viewer is the counsellor a takeover moved this case away from. */
 	canReclaim?: boolean;
 	onReclaim?: () => void;
+	/**
+	 * Multi-case request in the right pane (FE#2040): how many cases the list
+	 * selection holds, and how to clear it. Replaces the former bottom bar.
+	 */
+	selectionCount?: number;
+	onClearSelection?: () => void;
 }
 
 /** Presentational curtain (stories render this directly). */
@@ -113,7 +119,9 @@ export const CaseHandoverCurtainView = ({
 	onExplanationChange,
 	onSubmit,
 	canReclaim = false,
-	onReclaim
+	onReclaim,
+	selectionCount,
+	onClearSelection
 }: CaseHandoverCurtainViewProps) => {
 	const { t: translate } = useTranslation();
 	const selectedReason = useMemo(
@@ -140,8 +148,27 @@ export const CaseHandoverCurtainView = ({
 								<IconEyeOff />
 							</span>
 							<h2 className="caseHandoverCurtain__headerTitle">
-								{translate('caseHandover.hidden.title')}
+								{selectionCount !== undefined
+									? translate(
+											'caseHandover.batch.selectedCount',
+											{
+												count: selectionCount
+											}
+										)
+									: translate('caseHandover.hidden.title')}
 							</h2>
+							{onClearSelection && (
+								<button
+									type="button"
+									className="caseHandoverCurtain__clearSelection"
+									onClick={onClearSelection}
+									data-cy="case-handover-clear-selection"
+								>
+									{translate(
+										'caseHandover.batch.clearSelection'
+									)}
+								</button>
+							)}
 						</div>
 						{topicLabel && (
 							<div className="sessionInfo__metaInfo">

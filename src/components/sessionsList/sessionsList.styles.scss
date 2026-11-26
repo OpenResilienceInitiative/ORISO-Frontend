@@ -1705,3 +1705,39 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		margin: 0;
 	}
 }
+
+// FE#2040: the multi-case request is loaded into the existing detail pane,
+// like an appointment. The slot stays empty (and hidden) until at least one
+// case is selected; while filled it covers the routed detail beside it.
+.contentWrapper__caseHandoverSlot {
+	display: none;
+
+	&:not(:empty) {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-height: 0;
+		height: 100%;
+		overflow: auto;
+	}
+
+	&:not(:empty) ~ * {
+		display: none !important;
+	}
+}
+
+.sessionsList__caseHandoverPane {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+
+	&:focus {
+		outline: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: -2px;
+	}
+}

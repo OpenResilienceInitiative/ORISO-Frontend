@@ -4176,7 +4176,8 @@
 			"selectCase": "ጉዳይ ምረጽ",
 			"selectedCount": "{{count}} ተመሪጹ",
 			"start": "ብዙሓት ጉዳያት ምረጽ",
-			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት"
+			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት",
+			"clearSelection": "ምርጫ ኣልግስ"
 		},
 		"consent": {
 			"title": "ሓደ ኣማኻሪ ናብዚ ዝርርብ ተበጻሕነት ይሓትት ኣሎ",
@@ -4223,7 +4224,9 @@
 			"required": "ምኽንያት ምረጹ እሞ መብርሂ ወስኹ።"
 		},
 		"explanation": {
-			"placeholder": "መብርሂ ጽሓፉ"
+			"placeholder": "መብርሂ ጽሓፉ",
+			"optional": "መግለጺ (ኣማራጺ)",
+			"required": "መግለጺ (ግዴታ)"
 		},
 		"eyebrow": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
 		"hidden": {
