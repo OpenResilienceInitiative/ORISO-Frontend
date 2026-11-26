@@ -50,7 +50,7 @@ $overlay-illustration-height-large: 100%;
 		width: 100vw;
 		height: 100%;
 		margin: auto;
-		background: $white;
+		background: var(--m3-surface-container-lowest, #ffffff);
 
 		@include breakpoint($fromLarge) {
 			background: none;
@@ -67,7 +67,7 @@ $overlay-illustration-height-large: 100%;
 		width: 100vw;
 		height: auto;
 		max-width: none;
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 4px;
 		text-align: $overlay-text-align;
 		margin: auto;
@@ -242,7 +242,7 @@ $overlay-illustration-height-large: 100%;
 			$size: $overlay-illustration-size-from-large + $grid-base * 2;
 
 			display: inline-block;
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			margin-top: calc($size * -1 / 2 - $grid-base-six);
 			width: $size;
 			height: $size;
@@ -305,7 +305,7 @@ $overlay-illustration-height-large: 100%;
 
 		// Full-bleed illustration, not a disc — no ring.
 		&--large {
-			background-color: #fff;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			border-color: transparent;
 			height: $overlay-illustration-height-large;
 			width: $overlay-illustration-width-large;
@@ -347,6 +347,10 @@ $overlay-illustration-height-large: 100%;
 				height: $overlay-illustration-height-large;
 				align-self: center;
 			}
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
 		}
 	}
 

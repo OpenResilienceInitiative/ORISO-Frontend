@@ -2897,6 +2897,18 @@
 				},
 				"done": {
 					"intro": "Ist das Gespräch vorbei, beendest du es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Live-Chats kommen ohne Registrierung über einen Link, die Person schreibt anonym. Gleich wartet ein Übungs-Live-Chat auf dich."
+				},
+				"openRequest": {
+					"intro": "In der Liste wartet ein Live-Chat einer anonymen ratsuchenden Person. Klick darauf, um ihn zu öffnen."
+				},
+				"reply": {
+					"intro": "Der Chat läuft. Schreib der Person eine kurze Antwort und schick sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"practiceAvailability": {
+					"intro": "Nur wer verfügbar ist, bekommt Live-Chats angeboten. Schalte „Bin verfügbar“ hier oder in der Menüleiste ein – in der Übung bleibt dein echter Status unverändert."
 				}
 			}
 		},
@@ -3262,9 +3274,6 @@
 			}
 		}
 	},
-	"dashboard": {
-		"title": "Dein Überblick"
-	},
 	"temporaryAccount": {
 		"keepDialog": {
 			"title": "Sollen deine Nachrichten bleiben?",
@@ -3293,7 +3302,11 @@
 			},
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
 			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender.",
-			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen."
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen.",
+			"openLink": {
+				"hint": "Ohne Termin entsteht ein offener Einladungslink: Jede Person, die ihn öffnet, bekommt ein eigenes Gespräch. Der Link gilt, bis du ihn löschst. Im nächsten Schritt wählst du Thema und Namen.",
+				"mediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art."
+			}
 		},
 		"overview": {
 			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",

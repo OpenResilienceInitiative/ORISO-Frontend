@@ -29,7 +29,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Access-control curtain in the conversation pane ("Information hidden until request is approved"). Wizard: intro → **Please select a reason** (radio list with keyboard shortcuts; digits 1–n select) → **Please describe the reason** (free text) → request. Consent-requiring reasons show the client-consent hint. Pending / consent-pending / denied are terminal curtain states. Replaces the legacy CaseHandoverGate.'
+					'Access-control curtain in the conversation pane ("Information hidden until request is approved"). Wizard: intro → **Please select a reason** (radio list with keyboard shortcuts; digits 1–n select) with the explanation on the same screen when the reason asks for one (off / optional / required per reason, FE#2040) → request. Consent-requiring reasons show the client-consent hint. Pending / consent-pending / denied are terminal curtain states. Replaces the legacy CaseHandoverGate.'
 			}
 		}
 	}
@@ -62,14 +62,53 @@ export const ConsentReasonSelected: Story = {
 	)
 };
 
+/** FE#2040, level REQUIRED: the text field is required, sending waits for text. */
 export const DescribeReason: Story = {
 	render: () => (
 		<CurtainPlayground
-			initialStep="describe"
+			initialStep="reason"
 			initialReasonCode="PLANNED_ABSENCE"
 			initialExplanation="My colleague is away this week, so I will take care of this client."
 		/>
 	)
+};
+
+/** FE#2040, level OFF (the default): no text field, the reason alone is enough. */
+export const ExplanationOff: Story = {
+	render: () => (
+		<CurtainPlayground
+			initialStep="reason"
+			initialReasonCode="UNPLANNED_ABSENCE"
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.queryByRole('textbox')).toBeNull();
+		await expect(
+			canvas.getByRole('button', {
+				name: /Request access|Zugriff anfragen/i
+			})
+		).toBeEnabled();
+	}
+};
+
+/** FE#2040, level OPTIONAL: the text field is labelled optional and may stay empty. */
+export const ExplanationOptional: Story = {
+	render: () => (
+		<CurtainPlayground
+			initialStep="reason"
+			initialReasonCode="ADVICE_REQUESTED"
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByRole('textbox')).toBeVisible();
+		await expect(
+			canvas.getByRole('button', {
+				name: /Request access|Zugriff anfragen/i
+			})
+		).toBeEnabled();
+	}
 };
 
 export const AwaitingApproval: Story = {
@@ -125,7 +164,7 @@ export const ReasonsLoadFailed: Story = {
 	}
 };
 
-/** Full wizard walk: intro → reason (radio) → describe → submit → pending. */
+/** Full wizard walk: intro → reason with required text on one screen → submit → pending. */
 export const WizardWalkthrough: Story = {
 	render: () => <CurtainPlayground />,
 	play: async ({ canvasElement }) => {
@@ -140,8 +179,10 @@ export const WizardWalkthrough: Story = {
 		});
 		await userEvent.click(reason);
 		await expect(reason).toHaveAttribute('aria-checked', 'true');
-		const next = canvas.getByRole('button', { name: /Next|Weiter/i });
-		await userEvent.click(next);
+		const send = canvas.getByRole('button', {
+			name: /Request access|Zugriff anfragen/i
+		});
+		await expect(send).toBeDisabled();
 		const textarea = await canvas.findByRole('textbox');
 		await userEvent.type(textarea, 'Covering while my colleague is away.');
 		await userEvent.click(

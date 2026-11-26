@@ -38,10 +38,12 @@ const keysOf = (tour: TourDefinition) => [
  */
 export const itKeepsTheTourContract = (
 	tour: TourDefinition,
-	audience: TourDefinition['audiences'][number]
+	audience: TourDefinition['audiences'][number],
+	/** A tour whose content changed counts as new (FE#2545: Live-Chat is 2). */
+	version = 1
 ) => {
-	it(`${tour.id}: is a version-1 frontend tour for ${audience}`, () => {
-		expect(tour.version).toBe(1);
+	it(`${tour.id}: is a version-${version} frontend tour for ${audience}`, () => {
+		expect(tour.version).toBe(version);
 		expect(tour.surface).toBe('frontend');
 		expect(tour.audiences).toEqual([audience]);
 	});

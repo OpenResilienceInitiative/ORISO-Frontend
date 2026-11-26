@@ -133,7 +133,15 @@ describe('Session list Figma regression', () => {
 			.and(($option) => {
 				const style = getComputedStyle($option[0]);
 				expect(style.backgroundColor).to.eq('rgb(231, 239, 252)');
-				expect(style.outlineColor).to.eq('rgba(204, 30, 28, 0.42)');
+				// The focus ring follows the theme primary (--m3-primary token
+				// contract, 59b8354b3), so resolve the same expression here.
+				const probe = $option[0].ownerDocument.createElement('span');
+				probe.style.outlineColor =
+					'color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent)';
+				$option[0].appendChild(probe);
+				const expectedOutline = getComputedStyle(probe).outlineColor;
+				probe.remove();
+				expect(style.outlineColor).to.eq(expectedOutline);
 				expect(style.outlineWidth).to.eq('2px');
 			});
 		cy.location('pathname').should(
@@ -141,6 +149,10 @@ describe('Session list Figma regression', () => {
 			'/sessions/consultant/sessionView'
 		);
 
+		// Click outside: the veil (MenuBackdrop) closes the menu on mousedown.
+		// A real click lands after React removed the veil; Cypress fires
+		// mousedown and click in one task, so press the veil first.
+		cy.get('.orisoMenuBackdrop').trigger('mousedown', 'topLeft');
 		cy.get('body').click(0, 0);
 		cy.get('.sessionsListItem__dropdown').should('not.exist');
 		cy.get('@menuButton').should('have.attr', 'aria-expanded', 'false');

@@ -66,12 +66,12 @@ const FAB_FALLBACK_SIZE = 56;
 const MENU_GAP = 4;
 const MENU_MAX_HEIGHT = 520;
 
-const ARROW_STEPS: Record<string, [number, number]> = {
-	ArrowLeft: [-TOUR_LAUNCHER_KEYBOARD_STEP, 0],
-	ArrowRight: [TOUR_LAUNCHER_KEYBOARD_STEP, 0],
-	ArrowUp: [0, -TOUR_LAUNCHER_KEYBOARD_STEP],
-	ArrowDown: [0, TOUR_LAUNCHER_KEYBOARD_STEP]
-};
+const ARROW_STEPS = new Map<string, readonly [number, number]>([
+	['ArrowLeft', [-TOUR_LAUNCHER_KEYBOARD_STEP, 0]],
+	['ArrowRight', [TOUR_LAUNCHER_KEYBOARD_STEP, 0]],
+	['ArrowUp', [0, -TOUR_LAUNCHER_KEYBOARD_STEP]],
+	['ArrowDown', [0, TOUR_LAUNCHER_KEYBOARD_STEP]]
+]);
 
 const progressOf = (tour: TourDefinition, progress: TourLauncherProgress[]) =>
 	progress.find(
@@ -111,6 +111,8 @@ const placementStyle = (
 		[position.h === 'left' ? 'right' : 'left']: 'auto',
 		[position.v]: `${position.y}px`,
 		[position.v === 'top' ? 'bottom' : 'top']: 'auto',
+		// SAFETY: a CSS custom property name; React passes it through to
+		// `style.setProperty`, which accepts any `--` name.
 		['--tourLauncher-menu-space' as string]: `${Math.min(
 			MENU_MAX_HEIGHT,
 			menuSpace
@@ -153,6 +155,18 @@ export const TourLauncherMenu = ({
 	const [viewport, setViewport] = useState<TourLauncherBox>(viewportBox);
 	const rootRef = useRef<HTMLDivElement | null>(null);
 	const fabRef = useRef<HTMLButtonElement | null>(null);
+	// The FAB's measured size, kept in state so render never reads the ref.
+	const [size, setSize] = useState<TourLauncherBox>(() => sizeOf(null));
+	const attachFab = useCallback((node: HTMLButtonElement | null) => {
+		fabRef.current = node;
+		if (!node) return;
+		const next = sizeOf(node);
+		setSize((current) =>
+			current.width === next.width && current.height === next.height
+				? current
+				: next
+		);
+	}, []);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const listRef = useRef<HTMLUListElement | null>(null);
 	const dragRef = useRef<DragState | null>(null);
@@ -173,7 +187,10 @@ export const TourLauncherMenu = ({
 	// Clamp to the viewport on resize: the button is never off-screen.
 	useEffect(() => {
 		if (!movable) return undefined;
-		const onResize = () => setViewport(viewportBox());
+		const onResize = () => {
+			setViewport(viewportBox());
+			if (fabRef.current) setSize(sizeOf(fabRef.current));
+		};
 		window.addEventListener('resize', onResize);
 		return () => window.removeEventListener('resize', onResize);
 	}, [movable]);
@@ -185,6 +202,7 @@ export const TourLauncherMenu = ({
 			?.querySelector<HTMLElement>('[role="menuitem"]')
 			?.focus();
 		const onPointerDown = (event: PointerEvent) => {
+			// SAFETY: pointer events on the document always target a Node.
 			if (!rootRef.current?.contains(event.target as Node)) close();
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -199,7 +217,6 @@ export const TourLauncherMenu = ({
 	}, [open, close, closeAndRefocus]);
 
 	const shown = draft ?? position;
-	const size = sizeOf(fabRef.current);
 	const placed = shown
 		? clampTourLauncherPosition(shown, viewport, size)
 		: null;
@@ -296,7 +313,7 @@ export const TourLauncherMenu = ({
 	};
 
 	const onFabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-		const step = ARROW_STEPS[event.key];
+		const step = ARROW_STEPS.get(event.key);
 		if (!movable || !event.altKey || !step) return;
 		event.preventDefault();
 		const rect = event.currentTarget.getBoundingClientRect();
@@ -469,7 +486,7 @@ export const TourLauncherMenu = ({
 				</div>
 			)}
 			<button
-				ref={fabRef}
+				ref={attachFab}
 				type="button"
 				className="tourLauncher__fab"
 				data-cy="tour-launcher-fab"

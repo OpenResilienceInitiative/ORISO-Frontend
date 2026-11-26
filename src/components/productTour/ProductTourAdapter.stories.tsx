@@ -186,6 +186,35 @@ export const PlacementBottom: Story = {
 	)
 };
 
+/**
+ * Dark: the black scrim hardly darkens a near-black UI, so the spotlight
+ * cutout carries a primary ring there (light keeps it invisible).
+ */
+export const SpotlightRingDark: Story = {
+	...PlacementBottom,
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async () => {
+		await waitFor(() => {
+			const ring = document.querySelector('.productTour__spotlightRing');
+			expect(ring).not.toBeNull();
+			expect(getComputedStyle(ring as Element).stroke).not.toBe('none');
+		});
+	}
+};
+
+/** Light: the ring path exists but draws nothing, as before. */
+export const SpotlightRingLight: Story = {
+	...PlacementBottom,
+	globals: { scheme: 'light' },
+	play: async () => {
+		await waitFor(() => {
+			const ring = document.querySelector('.productTour__spotlightRing');
+			expect(ring).not.toBeNull();
+			expect(getComputedStyle(ring as Element).stroke).toBe('none');
+		});
+	}
+};
+
 export const PlacementLeft: Story = {
 	render: () => (
 		<TourPlayground tour={demoTour([anchoredStep('left')])}>

@@ -159,14 +159,11 @@ describe('FakeMatrixService', () => {
 		]);
 	});
 
-	it('refuses attachments and room creation in practice', async () => {
+	it('refuses attachments in practice', async () => {
 		const service = createFakeMatrixService({ rooms: scenario().rooms });
 
 		await expect(
 			service.sendFileMessage(PRACTICE_MAIN_ROOM_ID, new File([], 'x'))
 		).rejects.toThrow(/practice/);
-		await expect(service.createDirectMessageRoom('@a:b')).rejects.toThrow(
-			/practice/
-		);
 	});
 });

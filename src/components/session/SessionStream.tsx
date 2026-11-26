@@ -759,6 +759,13 @@ export const SessionStream = ({
 			.catch(() => setMessagesItem({ messages: [] }))
 			.finally(() => setLoading(false));
 	}, [fetchSessionMessagesRef, setSessionRead]);
+	// FE#2545: the gate effect below must re-run for a new session or gate,
+	// not for a new loader identity. A rerun clears the loaded history and
+	// reloads only behind a gate, so an accepted live chat lost its messages.
+	const loadAfterCaseHandoverGrantedRef = useRef(
+		loadAfterCaseHandoverGranted
+	);
+	loadAfterCaseHandoverGrantedRef.current = loadAfterCaseHandoverGranted;
 	const handleCaseHandoverStatusChange = useCallback(
 		(nextStatus: CaseHandoverStatus) => setCaseHandoverStatus(nextStatus),
 		[]
@@ -791,7 +798,7 @@ export const SessionStream = ({
 					clientConsentRequired: false,
 					auditOutcome: 'AUTHORIZED_SUPERVISOR'
 				});
-				void loadAfterCaseHandoverGranted();
+				void loadAfterCaseHandoverGrantedRef.current();
 			}
 			setCaseHandoverStatusLoading(false);
 			return () => {
@@ -819,7 +826,7 @@ export const SessionStream = ({
 				}
 				setCaseHandoverStatus(nextStatus);
 				if (nextStatus.canViewContent) {
-					loadAfterCaseHandoverGranted();
+					loadAfterCaseHandoverGrantedRef.current();
 				} else {
 					setLoading(false);
 				}
@@ -850,8 +857,7 @@ export const SessionStream = ({
 		activeSession.item?.id,
 		caseHandoverCurtainNeeded,
 		caseHandoverGateNeeded,
-		hasSupervisionAccess,
-		loadAfterCaseHandoverGranted
+		hasSupervisionAccess
 	]);
 
 	// #200: co-access ends at `expiresAt` and the backend then denies, but an

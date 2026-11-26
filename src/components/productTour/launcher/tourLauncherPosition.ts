@@ -90,11 +90,13 @@ const listeners = new Set<() => void>();
 const memory = new Map<string, string | null>();
 
 const isEdge = <T extends string>(value: unknown, edges: T[]): value is T =>
+	// SAFETY: `includes` only compares; a non-member value returns false.
 	edges.includes(value as T);
 
 const parse = (raw: string | null): TourLauncherPosition | null => {
 	if (!raw) return null;
 	try {
+		// SAFETY: every field is checked below before the value is used.
 		const value = JSON.parse(raw) as Partial<TourLauncherPosition>;
 		if (
 			isEdge(value?.h, ['left', 'right']) &&

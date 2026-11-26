@@ -5,7 +5,7 @@ import { formatChatMessageDateDivider } from '../../utils/dateHelpers';
 import type { TourStatus } from './types';
 import './productTour.styles.scss';
 
-type Translate = (key: string, options?: Record<string, unknown>) => string;
+type Translate = (key: string, options?: { date: string }) => string;
 
 /**
  * The status words of a tour (FE#2545): a completed tour says when —

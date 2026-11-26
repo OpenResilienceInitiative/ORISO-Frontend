@@ -107,6 +107,14 @@
 			width: 100%;
 			height: 100%;
 		}
+
+		// The topic SVGs ship a fixed light-scheme grey (`#4C555F`). That is
+		// `secondary` in light, so the role keeps light as it was and turns
+		// pale in dark, where the fixed grey vanished on the bubble.
+		svg path[fill='#4C555F'],
+		svg path[fill='#4c555f'] {
+			fill: var(--m3-secondary, #4c555f);
+		}
 	}
 
 	.carimatMessageFrame__bubble {

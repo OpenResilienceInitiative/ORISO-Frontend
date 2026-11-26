@@ -60,6 +60,18 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('./useCaseHandoverBatch', () => ({
 	useCaseHandoverBatch: vi.fn(() => batchState)
 }));
+// The wizard's reasons hook reads the module directly, not through '../../api'.
+vi.mock('../../api/apiCaseHandover', async (importOriginal) => ({
+	...(await importOriginal<object>()),
+	apiGetCaseHandoverReasons: vi.fn().mockResolvedValue([
+		{
+			code: 'OTHER_EMERGENCY',
+			label: 'Emergency',
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
+		}
+	])
+}));
 vi.mock('../../api', () => ({
 	apiGetAskerSessionList: vi
 		.fn()
@@ -69,7 +81,8 @@ vi.mock('../../api', () => ({
 		{
 			code: 'OTHER_EMERGENCY',
 			label: 'Emergency',
-			clientConsentRequired: false
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
 		}
 	]),
 	apiGetConsultantSessionList: vi
@@ -184,10 +197,12 @@ vi.mock('../session/CaseHandoverCurtain', () => ({
 				reason
 			</button>
 			<button onClick={props.onNext}>next</button>
+			{props.reasons.length > 0 && <span>reasons-loaded</span>}
 			<button onClick={() => props.onExplanationChange('Cover')}>
 				explanation
 			</button>
 			<button onClick={props.onSubmit}>submit-batch</button>
+			<button onClick={props.onClearSelection}>clear-selection</button>
 		</div>
 	)
 }));
@@ -213,6 +228,9 @@ vi.mock('../sessionsListItem/SessionListItemComponent', () => ({
 				</button>
 				<button onClick={props.onCaseHandoverBatchConfirm}>
 					review-batch
+				</button>
+				<button onClick={props.onCaseHandoverBatchClose}>
+					deselect-and-close
 				</button>
 				<SessionRowId />
 			</div>
@@ -363,8 +381,8 @@ describe('SessionsList case handover batch seam', () => {
 		fireEvent.click(screen.getAllByText('select-1')[0]);
 		fireEvent.click(screen.getAllByText('select-2')[0]);
 		fireEvent.click(screen.getAllByText('review-batch')[0]);
+		await screen.findByText('reasons-loaded');
 		fireEvent.click(await screen.findByText('reason'));
-		fireEvent.click(screen.getByText('next'));
 		fireEvent.click(screen.getByText('explanation'));
 		fireEvent.click(screen.getByText('submit-batch'));
 
@@ -388,6 +406,30 @@ describe('SessionsList case handover batch seam', () => {
 		);
 		expect(screen.getAllByTestId('selected-0')[0].textContent).toBe(
 			'false'
+		);
+	});
+	it('keeps the selection and pane while a batch request is in flight', async () => {
+		const view = renderList();
+		await screen.findAllByText('start-batch');
+		fireEvent.click(screen.getAllByText('start-batch')[0]);
+		fireEvent.click(screen.getAllByText('select-1')[0]);
+		await screen.findByTestId('batch-review');
+
+		batchState.submitting = true;
+		view.rerender(<ListTree />);
+		fireEvent.click(screen.getByText('clear-selection'));
+		fireEvent.click(screen.getAllByText('deselect-and-close')[0]);
+
+		expect(batchState.close).not.toHaveBeenCalled();
+		expect(screen.getByTestId('batch-review')).toBeTruthy();
+		expect(screen.getAllByTestId('selected-0')[0].textContent).toBe('true');
+
+		batchState.submitting = false;
+		view.rerender(<ListTree />);
+		fireEvent.click(screen.getByText('clear-selection'));
+		expect(batchState.close).toHaveBeenCalledTimes(1);
+		await waitFor(() =>
+			expect(screen.queryByTestId('batch-review')).toBeNull()
 		);
 	});
 });
