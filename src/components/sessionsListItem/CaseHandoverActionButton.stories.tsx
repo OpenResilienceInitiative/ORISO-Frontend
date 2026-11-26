@@ -13,6 +13,7 @@ import {
 } from '../storybookDesignLinks';
 import { CaseHandoverBulkBar } from '../sessionsList/CaseHandoverBulkBar';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
+import { paintedContrast } from '../designTokens/textContrastContract';
 import './sessionsListItem.styles.scss';
 
 const labels: CaseHandoverActionLabels = {
@@ -153,6 +154,23 @@ export const BatchSelectChecked: Story = {
 		await expect(
 			getComputedStyle(mainSegment(canvasElement)).backgroundColor
 		).toBe(PRIMARY_RGB);
+	}
+};
+
+/**
+ * Dark, hovered: the primary hover fill is the dark-red container, so the
+ * label must switch to the container's own ink (on dev it stayed deep red,
+ * about 1.3:1).
+ */
+export const BatchSelectCheckedDarkHover: Story = {
+	...staticStory('requestAccess', { batchMode: true, selected: true }),
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async ({ canvasElement }) => {
+		const segment = mainSegment(canvasElement);
+		await userEvent.hover(segment);
+		await waitFor(() =>
+			expect(paintedContrast(segment)).toBeGreaterThanOrEqual(4.5)
+		);
 	}
 };
 

@@ -10,16 +10,23 @@
  * - "Weitere Personen per Link einladen" where "Direkteinladung erlauben"
  *   allows it, as in the 1:1;
  * - overlaps with own entries are named, and the action says "Trotzdem
- *   anlegen".
+ *   anlegen";
+ * - FE#2510 *2: the date is optional. "Mit Termin" off hands the Art to
+ *   "Chat erstellen", which creates the open invitation link (no date,
+ *   valid until deleted).
  */
 import * as React from 'react';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
-import { useInvitationForm } from '../directInvitation/InvitationDialog';
+import {
+	useInvitationForm,
+	type InvitationDialogInitial
+} from '../directInvitation/InvitationDialog';
 import type {
 	InvitationDialogValue,
-	InvitationPreset
+	InvitationPreset,
+	OpenLinkPreset
 } from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type { AppointmentFormProps, DialogForm } from './dialogForm';
@@ -30,6 +37,11 @@ import {
 	type AppointmentDraft
 } from './calendarModel';
 import { useEntryLabel, useRangeFormat } from './useEntryLabel';
+import {
+	readNewEntryWithDate,
+	writeNewEntryWithDate
+} from './calendarPreferences';
+import { isPracticeMode } from '../../practice/practiceMode';
 
 const DEFAULT_HOUR = 10;
 
@@ -40,6 +52,8 @@ export interface CalendarInvitationFormProps extends AppointmentFormProps {
 	inviteMedia?: readonly DirectLinkMedium[];
 	/** "Neue Person per Direkteinladung …": open "Chat erstellen" with this slot. */
 	onInviteNewPerson?: (preset: InvitationPreset) => void;
+	/** "Mit Termin" off: open "Chat erstellen" for the open link with this Art. */
+	onCreateOpenLink?: (preset: OpenLinkPreset) => void;
 }
 
 /** The form's value as the calendar's draft (with the link, if any). */
@@ -70,7 +84,8 @@ export const useCalendarInvitationForm = ({
 	onClose,
 	allowGuestInvite = false,
 	inviteMedia,
-	onInviteNewPerson
+	onInviteNewPerson,
+	onCreateOpenLink
 }: CalendarInvitationFormProps): DialogForm => {
 	const { t } = useTranslation();
 	const format = useRangeFormat();
@@ -88,9 +103,15 @@ export const useCalendarInvitationForm = ({
 				.toDate();
 	const end = timedSlot?.end ?? dayjs(start).add(1, 'hour').toDate();
 
+	const initial: InvitationDialogInitial = { start, end };
+	if (slot?.kind) initial.kind = slot.kind;
+	// FE#2510 *2: the "Mit Termin" setting last used (Frank).
+	if (onCreateOpenLink)
+		initial.withAppointment = readNewEntryWithDate(ownerId);
+
 	const form = useInvitationForm({
 		variant: 'appointment',
-		initial: { start, end, ...(slot?.kind ? { kind: slot.kind } : {}) },
+		initial,
 		known: { slot: Boolean(timedSlot), kind: Boolean(slot?.kind) },
 		withKind: true,
 		conversations: {
@@ -138,7 +159,12 @@ export const useCalendarInvitationForm = ({
 			const draft = draftFromInvitation(value);
 			if (draft) onSave(draft);
 		},
-		onClose
+		onClose,
+		onOpenLink: onCreateOpenLink,
+		onWithAppointmentUsed: (withDate) => {
+			// A practice run leaves no trace in this browser.
+			if (!isPracticeMode()) writeNewEntryWithDate(ownerId, withDate);
+		}
 	});
 
 	return {

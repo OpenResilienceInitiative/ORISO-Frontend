@@ -9,6 +9,10 @@ import { logout } from '../components/logout/logout';
 import { removeAllCookies } from '../components/sessionCookie/accessSessionCookie';
 import { removeTokenExpiryFromLocalStorage } from '../components/sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../utils/appConfig';
+import {
+	TEMPORARY_ACCOUNT_DELETED_REASON,
+	loginUrlWithTemporaryAccountDeletedNotice
+} from '../components/login/temporaryAccountDeletedNotice';
 import { RequestLog } from '../utils/requestCollector';
 import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 import { traceHeaders } from '../utils/observability/traceparent';
@@ -55,7 +59,9 @@ export const X_REASON = {
 	USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC:
 		'USER_ALREADY_REGISTERED_WITH_AGENCY_AND_TOPIC',
 	/** 409 on a case-handover decision: the case owner changed after the request was created. */
-	CASE_OWNER_CHANGED: 'CASE_OWNER_CHANGED'
+	CASE_OWNER_CHANGED: 'CASE_OWNER_CHANGED',
+	/** 401: the guest account of a direct link was deleted after the conversation. */
+	TEMPORARY_ACCOUNT_DELETED: TEMPORARY_ACCOUNT_DELETED_REASON
 };
 
 export const FETCH_SUCCESS = {
@@ -260,6 +266,23 @@ export const fetchData = ({
 						FETCH_ERRORS.USER_BANNED_FROM_CHAT
 				) {
 					reject(new Error(FETCH_ERRORS.USER_BANNED_FROM_CHAT));
+				} else if (
+					response.status === 401 &&
+					!isStaleAuthRetry &&
+					!(isPublicAuthRoute() && recoverOnPublicAuthRoute) &&
+					response.headers?.get(FETCH_ERRORS.X_REASON) ===
+						X_REASON.TEMPORARY_ACCOUNT_DELETED
+				) {
+					// The guest account behind this session was deleted after
+					// the conversation. Whatever the caller handles itself, the
+					// session is over: sign out and let the login page say why.
+					logout(
+						true,
+						loginUrlWithTemporaryAccountDeletedNotice(
+							appConfig.urls.toLogin
+						)
+					);
+					reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
 				} else if (responseHandling) {
 					if (
 						response.status === 400 &&

@@ -57,7 +57,11 @@ import type {
 	SessionAppointment,
 	SessionAppointmentSlot
 } from '../../api/apiSessionAppointments';
-import type { DirectLinkDTO } from '../../api/apiDirectLinks';
+import type {
+	DirectLinkDTO,
+	SessionDirectInvitationBody
+} from '../../api/apiDirectLinks';
+import type { AddSupervisorRequest } from '../../api/apiAddSessionSupervisor';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -303,6 +307,8 @@ export const createFakeRestBackend = ({
 			...(caseListed(status, anonymous) ? [listItem()] : []),
 			...(status === STATUS_ACTIVE && circle ? [circleItem()] : [])
 		];
+		// SAFETY: a practice fixture; the list renderer reads only the fields
+		// set here, and the items come from listItem() / circleItem().
 		return sessions.length
 			? ok({
 					sessions,
@@ -331,6 +337,8 @@ export const createFakeRestBackend = ({
 		);
 		const topic = createPracticeTopic(script.names.topic);
 		const createdAt = new Date(now()).toISOString();
+		// SAFETY: an in-memory practice circle; every field the circle views
+		// read is set below, the rest stays at the DTO's optional default.
 		circle = {
 			id: PRACTICE_CIRCLE_CHAT_ID,
 			matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
@@ -350,6 +358,8 @@ export const createFakeRestBackend = ({
 			groupChatRulesTranslations: settings?.groupChatRulesTranslations,
 			consultingType: practiceCase.session.consultingType,
 			assignedAgencies: [
+				// SAFETY: the practice agency; it carries every field the circle
+				// settings and the agency chip read.
 				{
 					id: PRACTICE_AGENCY_ID,
 					name: script.names.agency,
@@ -391,7 +401,7 @@ export const createFakeRestBackend = ({
 		script.cast.supervisor,
 		script.cast.secondSupervisor
 	];
-	const supervisorPerson = (consultantId: unknown) =>
+	const supervisorPerson = (consultantId: string | undefined) =>
 		practiceSupervisors().find((person) => person.id === consultantId);
 
 	const supervisorFor = (
@@ -417,9 +427,10 @@ export const createFakeRestBackend = ({
 	const setSupervisors = (
 		supervisors: UserService.Schemas.SessionSupervisorResponseDTO[]
 	) => {
-		const people = supervisors
-			.map((s) => supervisorPerson(s.supervisorConsultantId))
-			.filter((person): person is PracticePerson => !!person);
+		const people = supervisors.flatMap((s) => {
+			const person = supervisorPerson(s.supervisorConsultantId);
+			return person ? [person] : [];
+		});
 		const { supervision: _marker, ...session } = practiceCase.session;
 		practiceCase = {
 			...practiceCase,
@@ -446,7 +457,11 @@ export const createFakeRestBackend = ({
 	 */
 	const replaceSupervisor = (
 		supervisorId: string,
-		body: Record<string, unknown> | null
+		body:
+			| (Pick<AddSupervisorRequest, 'supervisorConsultantId'> & {
+					notes?: string | null;
+			  })
+			| null
 	) => {
 		const from = practiceCase.supervisors.find(
 			(s) => s.id === Number(supervisorId)
@@ -461,10 +476,7 @@ export const createFakeRestBackend = ({
 		) {
 			return noContent();
 		}
-		const to = supervisorFor(
-			person,
-			typeof body?.notes === 'string' ? body.notes : null
-		);
+		const to = supervisorFor(person, body?.notes ?? null);
 		setSupervisors(
 			practiceCase.supervisors.map((s) => (s === from ? to : s))
 		);
@@ -568,8 +580,8 @@ export const createFakeRestBackend = ({
 	 * supervisor's (FE#2545), which the enquiry routes must not move, cancel
 	 * or invite to.
 	 */
-	const enquiryAppointment = (id: unknown) =>
-		typeof id === 'string' && isPracticeId(id)
+	const enquiryAppointment = (id: string | undefined) =>
+		id !== undefined && isPracticeId(id)
 			? appointments().find(
 					(entry) =>
 						entry.id === id &&
@@ -627,15 +639,12 @@ export const createFakeRestBackend = ({
 	 * "Weitere Personen per Link einladen": the link exists in memory only
 	 * and points at a reserved host, so a copied practice link leads nowhere.
 	 */
-	const createInvitation = (body: Record<string, unknown> | null) => {
+	const createInvitation = (body: SessionDirectInvitationBody | null) => {
 		const appointment = enquiryAppointment(body?.appointmentId);
 		if (!appointment) return noContent();
 		const id = calendarId('invitation');
-		const medium = typeof body?.medium === 'string' ? body.medium : 'VIDEO';
-		const validity =
-			typeof body?.validityAfterEndMinutes === 'number'
-				? body.validityAfterEndMinutes
-				: 1440;
+		const medium = body?.medium ?? 'VIDEO';
+		const validity = body?.validityAfterEndMinutes ?? 1440;
 		hooks.onInvitationCreated?.(appointment.id);
 		return ok({
 			id: calendarSeq,
@@ -661,10 +670,7 @@ export const createFakeRestBackend = ({
 				Date.parse(appointment.end) + validity * 60_000
 			).toISOString(),
 			expired: false,
-			accessMode:
-				typeof body?.accessMode === 'string'
-					? (body.accessMode as DirectLinkDTO['accessMode'])
-					: 'BOTH',
+			accessMode: body?.accessMode ?? 'BOTH',
 			knock: body?.knock !== false,
 			sessionId: practiceCase.session.id,
 			joinsExistingSession: true
@@ -763,6 +769,8 @@ export const createFakeRestBackend = ({
 			viewWide: true,
 			practiceOnlyWrite: true,
 			handle: async ({ body }) => {
+				// SAFETY: the practice consultation-hours editor sends this DTO;
+				// the windows check below rejects anything else.
 				const next = (await body()) as CalendarConsultationHoursDTO;
 				if (!next || !Array.isArray(next.windows)) return noContent();
 				const wasOn = consultationHours.autoAccept;
@@ -852,6 +860,8 @@ export const createFakeRestBackend = ({
 			),
 			handle: async ({ body }, [, id, appointmentId]) => {
 				if (!isCase(id)) return null;
+				// SAFETY: only the practice reschedule dialog posts here, with
+				// a slot it built itself; moveEntry ignores a missing one.
 				const slot = (await body()) as SessionAppointmentSlot | null;
 				const moved = moveEntry(
 					appointmentId,
@@ -882,7 +892,13 @@ export const createFakeRestBackend = ({
 			method: 'POST',
 			path: atSession(endpoints.sessionDirectInvitations),
 			handle: async ({ body }, [, id]) =>
-				isCase(id) ? createInvitation(await body()) : null
+				isCase(id)
+					? createInvitation(
+							// SAFETY: the practice invite dialog posts a
+							// SessionDirectInvitationBody; unknown ids find no appointment.
+							(await body()) as SessionDirectInvitationBody | null
+						)
+					: null
 		},
 		{
 			// "Links ohne Termin": the practice world has none.

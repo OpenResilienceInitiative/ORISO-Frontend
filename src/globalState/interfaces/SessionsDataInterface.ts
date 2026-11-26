@@ -88,6 +88,11 @@ export interface SessionItemInterface {
 	 * `components/call/callRoomName.ts`.
 	 */
 	directLinkName?: string;
+	/**
+	 * FE#1870: the person registered through the agency link (`?aid=`),
+	 * `SessionDTO.viaAgencyLink`. Only the channel, no personal data.
+	 */
+	viaAgencyLink?: boolean;
 	agencyId: number;
 	askerMatrixUserId: string;
 	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */

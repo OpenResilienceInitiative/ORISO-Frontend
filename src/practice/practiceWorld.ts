@@ -20,7 +20,10 @@ import {
 } from './practiceTourEvents';
 import { getPracticeSnapshot } from './practiceMode';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import { SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED } from '../components/message/supervisorReplacedNotice';
+import {
+	SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED,
+	type SupervisorReplacedNotice
+} from '../components/message/supervisorReplacedNotice';
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
@@ -33,19 +36,29 @@ import {
  * with the server's German fallback. The app words it in the reader's
  * language (`supervisorReplacedNotice.ts`). Built locally; nothing is sent.
  */
+/** What the server posts (`parseSupervisorReplacedNotice` reads it). */
+interface SupervisorReplacedPayload extends SupervisorReplacedNotice {
+	type: typeof SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED;
+	title: string;
+	description: string;
+}
+
 const supervisorReplacedNoticeBody = (
 	previousName: string,
 	newName: string,
 	reason?: string | null
-) =>
-	`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
+) => {
+	const notice: SupervisorReplacedPayload = {
 		type: SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED,
 		previousName,
 		newName,
-		...(reason?.trim() ? { reason: reason.trim() } : {}),
 		title: 'Supervision gewechselt',
 		description: `${newName} supervidiert diesen Chat jetzt anstelle von ${previousName}.`
-	})}`;
+	};
+	const trimmedReason = reason?.trim();
+	if (trimmedReason) notice.reason = trimmedReason;
+	return `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify(notice)}`;
+};
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {

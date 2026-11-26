@@ -3388,9 +3388,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Download as CSV",
 					"label": "Download Excel file"
 				},
 				"filename": "Statistics online consulting",
+				"hintMonth": "One row per week plus a total row. Also opens in Excel.",
+				"hintWeek": "One row per day plus a total row. Also opens in Excel.",
+				"hintYear": "One row per month plus a total row. Also opens in Excel.",
 				"title": "You can download your statistics for your selected consulting period here:",
 				"total": "Total"
 			},
@@ -3407,7 +3411,20 @@
 				"period": "Period",
 				"videoCallDuration": "Duration of video calls in minutes:seconds"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Cancelled",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "On site",
+				"numberOfPhoneAppointments": "Phone",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "This month",
+					"currentWeek": "This week",
+					"lastMonth": "Last month",
+					"lastWeek": "Last week"
+				},
 				"currentMonth": "this month",
 				"currentWeek": "this week",
 				"currentYear": "this year",
@@ -3419,7 +3436,17 @@
 				"lastMonth": "last month",
 				"lastWeek": "last week",
 				"lastYear": "last year",
-				"prefix": "Your numbers for"
+				"offsetLabel": "Period",
+				"prefix": "Your numbers for",
+				"unitLabel": "Time unit",
+				"unitMonth": "Month",
+				"unitWeek": "Week",
+				"unitYear": "Year"
+			},
+			"state": {
+				"empty": "There are no figures for this period yet.",
+				"error": "The figures could not be loaded right now.",
+				"retry": "Try again"
 			},
 			"title": "My statistics"
 		},
@@ -4164,12 +4191,13 @@
 		"batch": {
 			"cancel": "Close selection",
 			"confirm": "Request selected",
-			"required": "Select at least one case, one reason, and an explanation.",
+			"required": "Select at least one case and a reason, and add an explanation where it is required.",
 			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
 			"selectCase": "Select case",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
-			"title": "Batch access request"
+			"title": "Batch access request",
+			"clearSelection": "Clear selection"
 		},
 		"consent": {
 			"sender": "Carimat",
@@ -4213,10 +4241,12 @@
 		"error": {
 			"failed": "The access request could not be sent.",
 			"forbidden": "You are not eligible to request access to this case.",
-			"required": "Select a reason and add an explanation."
+			"required": "Select a reason. This reason requires an explanation."
 		},
 		"explanation": {
-			"placeholder": "Describe the reason"
+			"placeholder": "Describe the reason",
+			"optional": "Explanation (optional)",
+			"required": "Explanation (required)"
 		},
 		"eyebrow": "Information hidden until request is approved",
 		"hidden": {
@@ -4697,9 +4727,11 @@
 				"selfHelp": "Circle",
 				"internal": "Internal",
 				"team": "Team counselling",
-				"directLinkVideo": "Video call",
-				"directLinkAudio": "Audio call",
-				"directLinkChat": "Direct invitation"
+				"directLinkVideo": "Video",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Direct invitation · {{medium}}",
+				"agencyLink": "via counselling centre link"
 			},
 			"waiting": {
 				"minutes": "waiting {{count}} min",
@@ -4805,7 +4837,6 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
-				"directLinks": "Direct invitations",
 				"other": "More",
 				"create": "Create",
 				"group": "Filters",
@@ -7150,6 +7181,7 @@
 			"waitingFor": "waiting for {{count}} min",
 			"justArrived": "just arrived",
 			"admit": "Let in",
+			"startAndAdmit": "Start call and let in",
 			"decline": "Decline",
 			"admitAll": "Let everyone in",
 			"position": "{{current}} of {{total}}",
@@ -7517,18 +7549,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Your overview",
-		"stats": {
-			"title": "Counselling",
-			"period": "Last 30 days",
-			"assigned": "Newly taken on",
+		"quiet": {
 			"active": "Active",
-			"archived": "Archived",
-			"sentMessages": "Messages sent"
-		},
-		"circles": {
-			"title": "Upcoming self-help circles",
-			"assignedCounsellors": "Counselling team: {{count}}"
+			"assigned": "Newly taken on (30 days)"
 		}
 	},
 	"temporaryAccount": {
@@ -7537,6 +7560,7 @@
 			"title": "Deleted together with the guest account"
 		},
 		"deletedGuest": "Guest (deleted)",
+		"signedOutNotice": "Your guest account was deleted after the conversation, so you have been signed out. For another conversation, please open the link from your counselling service again.",
 		"chip": {
 			"guest": "Guest account"
 		},
@@ -7601,7 +7625,12 @@
 			},
 			"linkFailedTitle": "Invitation link not created",
 			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
-			"appointmentSaved": "The appointment is saved."
+			"appointmentSaved": "The appointment is saved.",
+			"openLink": {
+				"action": "Continue to invitation link",
+				"hint": "Without a date you create an open invitation link: everyone who opens it gets their own conversation. The link stays valid until you delete it. Next you choose its topic and name.",
+				"mediumOff": "Direct invitations are not enabled for this type. Choose another type."
+			}
 		},
 		"overview": {
 			"title": "Appointments & direct invitations",
@@ -7678,6 +7707,7 @@
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
 		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarOpenLink": "From the calendar: open invitation link without a date.",
 		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {

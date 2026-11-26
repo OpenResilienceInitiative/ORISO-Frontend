@@ -1,6 +1,10 @@
 // @vitest-environment oriso-jsdom
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { redirectToErrorPage, ERROR_TYPES } from './errorHandling';
+import {
+	getErrorCaseForStatus,
+	redirectToErrorPage,
+	ERROR_TYPES
+} from './errorHandling';
 import { apiPostError } from '../../api/apiPostError';
 
 vi.mock('../../api/apiPostError', () => ({
@@ -50,4 +54,23 @@ describe('redirectToErrorPage', () => {
 			expect(window.location.pathname).toBe('/invite/token/U25');
 		}
 	);
+});
+
+describe('getErrorCaseForStatus', () => {
+	it.each([500, 502, 503, 504])(
+		'shows the server error page for a %i, not "page not found"',
+		(status) => {
+			expect(getErrorCaseForStatus(status)).toBe(ERROR_TYPES.SERVER);
+		}
+	);
+
+	it.each([
+		[401, ERROR_TYPES.UNAUTHORIZED],
+		[403, ERROR_TYPES.FORBIDDEN],
+		[404, ERROR_TYPES.NOT_FOUND],
+		[400, ERROR_TYPES.SERVER],
+		[409, ERROR_TYPES.SERVER]
+	])('keeps the page for a %i', (status, page) => {
+		expect(getErrorCaseForStatus(status)).toBe(page);
+	});
 });

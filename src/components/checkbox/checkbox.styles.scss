@@ -22,7 +22,7 @@ $checkbox-size: 24px;
 	&__icon__container {
 		display: inline-block;
 		position: relative;
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		width: $checkbox-size;
 		height: $checkbox-size;
 		border-radius: $checkbox-border-radius;

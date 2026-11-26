@@ -25,7 +25,7 @@ import { practiceSupervisionTour } from '../../practice/practiceTours';
 const withPracticeOnlyTopicTours = (
 	tours: TourDefinition[],
 	practiceOpen: boolean,
-	flags: Record<string, unknown>
+	flags: Parameters<typeof isPracticeTourOffered>[1]
 ): TourDefinition[] => {
 	if (
 		!practiceOpen ||

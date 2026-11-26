@@ -154,11 +154,15 @@ export const Walkthrough = () => {
 	const inviteMedia = useDirectLinksAvailability(resolvesInviteMedia);
 	const [inviteMediaSeenFor, setInviteMediaSeenFor] =
 		useState<typeof launchRequest>(null);
-	useEffect(() => {
-		if (resolvesInviteMedia && inviteMedia.ready) {
-			setInviteMediaSeenFor(launchRequest);
-		}
-	}, [resolvesInviteMedia, inviteMedia.ready, launchRequest]);
+	// Remembered during render (React's "adjust state on prop change"), so
+	// the run does not wait one extra commit for an effect.
+	if (
+		resolvesInviteMedia &&
+		inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest
+	) {
+		setInviteMediaSeenFor(launchRequest);
+	}
 	const awaitsInviteMedia =
 		resolvesInviteMedia &&
 		!inviteMedia.ready &&
@@ -331,7 +335,7 @@ export const Walkthrough = () => {
 				setLaunchRequest(null);
 			}
 		},
-		[setLaunchRequest]
+		[setLaunchRequest, setAutoRunState]
 	);
 
 	if (!settings.enableWalkthrough || !runTour || !runTour.steps.length) {

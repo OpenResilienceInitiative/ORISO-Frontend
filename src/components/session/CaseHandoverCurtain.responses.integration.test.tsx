@@ -61,9 +61,6 @@ const submitThroughWizard = async () => {
 		})
 	);
 	fireEvent.click(await screen.findByRole('radio'));
-	fireEvent.click(
-		screen.getByRole('button', { name: 'caseHandover.curtain.next' })
-	);
 	fireEvent.change(screen.getByRole('textbox'), {
 		target: { value: 'Planned absence cover' }
 	});
@@ -95,7 +92,8 @@ describe('real curtain to real API response integration', () => {
 									{
 										code: 'COUNSELLOR_IS_ILL',
 										label: 'Planned absence',
-										clientConsentRequired: false
+										clientConsentRequired: false,
+										explanationLevel: 'OPTIONAL'
 									}
 								]
 							: next

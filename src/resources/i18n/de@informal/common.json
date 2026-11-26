@@ -3346,9 +3346,6 @@
 			}
 		}
 	},
-	"dashboard": {
-		"title": "Dein Überblick"
-	},
 	"temporaryAccount": {
 		"keepDialog": {
 			"title": "Sollen deine Nachrichten bleiben?",
@@ -3377,7 +3374,11 @@
 			},
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuche es erneut.",
 			"withAppointmentHint": "Alle, die den Link öffnen, treffen sich in einem gemeinsamen Gespräch. Der Termin steht auch in deinem Kalender.",
-			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen."
+			"inviteOthersMediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art, um weitere Personen einzuladen.",
+			"openLink": {
+				"hint": "Ohne Termin entsteht ein offener Einladungslink: Jede Person, die ihn öffnet, bekommt ein eigenes Gespräch. Der Link gilt, bis du ihn löschst. Im nächsten Schritt wählst du Thema und Namen.",
+				"mediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wähle eine andere Art."
+			}
 		},
 		"overview": {
 			"emptyText": "Erstelle eine Direkteinladung – mit oder ohne Termin. Sie erscheint danach hier.",

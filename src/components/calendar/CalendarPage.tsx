@@ -175,7 +175,10 @@ import { initialsOf } from './CalendarEntryPeek';
 import { avatarToneClass } from './calendarAvatar';
 import { useCreatedFlash } from './useCreatedFlash';
 import { HoverScrollArrows } from '../hoverScrollArrows/HoverScrollArrows';
-import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type {
+	InvitationPreset,
+	OpenLinkPreset
+} from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import { NewEntryDialog } from './NewEntryDialog';
 import { AutoAcceptDialog } from './AutoAcceptDialog';
@@ -342,6 +345,11 @@ export interface CalendarPageProps {
 	 * conversation yet; the page hands the slot to "Chat erstellen".
 	 */
 	onInviteNewPerson?: (preset: InvitationPreset) => void;
+	/**
+	 * FE#2510 *2: "Termin" with "Mit Termin" off — the open invitation link
+	 * without a date; the page hands the Art to "Chat erstellen".
+	 */
+	onCreateOpenLink?: (preset: OpenLinkPreset) => void;
 	/**
 	 * The snackbar offers to undo by moving it back. `false`, or a promise
 	 * that rejects or resolves to `false`, refuses the move and puts the
@@ -626,6 +634,7 @@ export const CalendarPage = ({
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
+	onCreateOpenLink,
 	onMove,
 	onCancelAppointment,
 	onAnswerMeeting,
@@ -3471,6 +3480,13 @@ export const CalendarPage = ({
 						((preset) => {
 							setDialog(null);
 							onInviteNewPerson(preset);
+						})
+					}
+					onCreateOpenLink={
+						onCreateOpenLink &&
+						((preset) => {
+							setDialog(null);
+							onCreateOpenLink(preset);
 						})
 					}
 					onSaveBlocker={(drafts) =>

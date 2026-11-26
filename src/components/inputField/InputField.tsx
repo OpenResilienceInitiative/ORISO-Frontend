@@ -8,6 +8,12 @@ import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/ey
 import './inputField.styles';
 import { useTranslation } from 'react-i18next';
 
+// Light keeps the old 65 % black; dark takes the quiet on-surface ink (a
+// presentation `color` attribute cannot read a CSS variable, a style can).
+const PASSWORD_TOGGLE_INK = {
+	color: 'var(--oriso-text-low, rgba(0, 0, 0, 0.65))'
+};
+
 export type InputFieldLabelState = 'valid' | 'invalid';
 
 // TODO: clean up interface
@@ -155,14 +161,14 @@ export const InputField = (props: InputFieldProps) => {
 											title={translate(
 												'login.password.hide'
 											)}
-											color={'rgba(0, 0, 0, 0.65)'}
+											style={PASSWORD_TOGGLE_INK}
 										/>
 									) : (
 										<ShowPasswordIcon
 											title={translate(
 												'login.password.show'
 											)}
-											color={'rgba(0, 0, 0, 0.65)'}
+											style={PASSWORD_TOGGLE_INK}
 										/>
 									)}
 								</IconButton>
