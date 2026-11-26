@@ -7,11 +7,19 @@ import { orisoInputColors } from './orisoInputDesign';
  */
 export const orisoDateTimeColors = {
 	...orisoInputColors,
-	primaryContainer: '#ffdad7',
-	onPrimaryContainer: '#410004',
-	surfaceContainerHighest: '#e5e2e2',
+	// Light keeps the pale-pink field with dark ink (the literal fallback);
+	// the dark scheme sets the `--oriso-picker-*` pair in
+	// `mui-variables-mapping.scss` (P0 dark mode, 2026-11-25).
+	primaryContainer: 'var(--oriso-picker-active-surface, #ffdad7)',
+	onPrimaryContainer: 'var(--oriso-picker-active-ink, #410004)',
+	// Ink on the selected calendar day (`primary` fill).
+	onPrimarySelected:
+		'var(--oriso-picker-selected-ink, var(--m3-on-primary-container, #ffe2de))',
+	surfaceContainerHighest: 'var(--m3-surface-container-highest, #e5e2e2)',
 	scrim: 'rgba(27, 27, 28, 0.32)',
-	disabledText: 'rgba(27, 27, 28, 0.38)'
+	// M3 disabled text: on-surface at 38 %, so it follows the scheme.
+	disabledText:
+		'color-mix(in srgb, var(--m3-on-surface, #1b1b1c) 38%, transparent)'
 } as const;
 
 export const orisoPickerTypography = {

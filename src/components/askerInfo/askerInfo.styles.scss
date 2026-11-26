@@ -48,7 +48,7 @@ $profile-footer-justify-content: center !default;
 		   mistake (ORISO-Frontend#1192). */
 		@include breakpoint($fromLarge) {
 			width: auto;
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			border: 1px solid $profileCardBorderColor;
 			border-radius: $profileCardRadius;
 			padding: $profileCardPadding;

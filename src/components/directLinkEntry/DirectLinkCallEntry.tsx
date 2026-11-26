@@ -18,9 +18,20 @@ import {
 	CallDeviceControls,
 	CallModality
 } from '../waitingRoom/callEntry/callEntryTypes';
-import { isInactiveDirectLinkError } from '../../api/apiDirectLinks';
+import {
+	apiCancelOwnCallKnock,
+	apiGetOwnCallKnock,
+	isInactiveDirectLinkError
+} from '../../api/apiDirectLinks';
 import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
-import { openDirectLinkConversation } from './directLinkEntryFlow';
+import {
+	DirectLinkNotAdmittedError,
+	EntryMedia,
+	openDirectLinkConversation,
+	OpenDirectLinkDeps,
+	PendingKnock
+} from './directLinkEntryFlow';
+import { waitForKnockAdmission } from './waitForKnockAdmission';
 import { directLinkRegistration } from './directLinkRegistration';
 import { asksDirectLinkPostcode } from './directLinkPostcode';
 import { apiGetConsentText } from '../../api/apiGetConsentText';
@@ -40,7 +51,11 @@ import { hasActiveAuthSession } from '../auth/auth';
 import { isAskerDisplayNameTypingAllowed } from '../../utils/askerAccountPolicy';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { avatarIdOfFile } from '../../utils/avatarChoice';
-import type { DeviceChoice } from '../call/prejoin/callPrejoin';
+import {
+	chosenDeviceLabel,
+	joinMediaFrom,
+	type DeviceChoice
+} from '../call/prejoin/callPrejoin';
 import {
 	entryGuestAccountMode,
 	withChosenAccount
@@ -51,11 +66,21 @@ const AuthenticatedApp = lazyWithReload(loadAuthenticatedApp);
 /** How long entry waits for the chosen animal to be stored (FE#2209). */
 const AVATAR_SAVE_WAIT_MS = 5_000;
 
+/** FE#2542: what the link page adds so the wait happens on it. */
+export type EntryWait = Pick<
+	OpenDirectLinkDeps,
+	'waitForAdmission' | 'entryMedia'
+>;
+
 export interface DirectLinkCallEntryDeps {
 	/** Creates the account and signs in. */
 	register: (account: CallEntryAccount) => Promise<void>;
 	/** Opens the conversation and enters the app (a document load). */
-	open: (token: string) => Promise<unknown>;
+	open: (token: string, wait?: EntryWait) => Promise<unknown>;
+	/** The wait on this page asks for the knock's answer (FE#2542). */
+	getKnock: typeof apiGetOwnCallKnock;
+	cancelKnock: typeof apiCancelOwnCallKnock;
+	knockPollMs?: number;
 	/** Stores the animal picked on this page on the new account (FE#2209). */
 	saveAvatar: (avatarId: string) => Promise<unknown>;
 	mediaDevices?: MediaDevices;
@@ -154,6 +179,66 @@ const DirectLinkCallEntryForm = ({
 	const latestDevices = useRef({ controls, live });
 	latestDevices.current = { controls, live };
 	const [joining, setJoining] = useState(false);
+	/*
+	 * FE#2542: a link with knocking waits here, on the page the person already
+	 * knows, until the counsellor lets them in. The app, and with it the knock
+	 * dialog, used to open first: a second window with the same switches.
+	 */
+	const knocks =
+		context.linkKind !== 'CALL' &&
+		(context.admission === 'KNOCK' || context.knock === true);
+	const [waiting, setWaiting] = useState(false);
+	/* The account made on this page exists from then on: a second "Beitreten"
+	   (turned down, or no longer waiting) must not register again. */
+	const [registered, setRegistered] = useState(false);
+	const hasAccount = signedIn || registered;
+	const [notLetIn, setNotLetIn] = useState<'declined' | 'ended' | null>(null);
+	const wait = useRef<{ knockId: number; stop: AbortController } | null>(
+		null
+	);
+	useEffect(() => () => wait.current?.stop.abort(), []);
+	const getKnock = deps.getKnock ?? apiGetOwnCallKnock;
+	const cancelKnock = deps.cancelKnock ?? apiCancelOwnCallKnock;
+	const waitForAdmission = (knock: PendingKnock) => {
+		const stop = new AbortController();
+		wait.current = { knockId: knock.knockId, stop };
+		setWaiting(true);
+		return waitForKnockAdmission(knock.knockId, {
+			getKnock,
+			signal: stop.signal,
+			...(deps.knockPollMs ? { pollMs: deps.knockPollMs } : {})
+		});
+	};
+	const stopWaiting = () => {
+		const current = wait.current;
+		if (!current) return;
+		current.stop.abort();
+		/* Best effort: the server ends an abandoned knock itself. */
+		void cancelKnock(current.knockId).catch(() => undefined);
+	};
+	/* The switches as they are when the person is let in, not at the click. */
+	const entryMedia = (): EntryMedia => {
+		const { controls: now, live: found } = latestDevices.current;
+		return {
+			media: joinMediaFrom({
+				modality,
+				micOn: now.micOn,
+				cameraOn: now.cameraOn,
+				cameraAvailable: !found.cameraMissing,
+				blocker: found.blocker,
+				microphoneLabel: chosenDeviceLabel(
+					found.devices?.microphone ?? [],
+					now.selection.microphone
+				),
+				cameraLabel: chosenDeviceLabel(
+					found.devices?.camera ?? [],
+					now.selection.camera
+				)
+			}),
+			...(modality === 'video' ? { cameraSwitch: now.cameraOn } : {}),
+			selection: now.selection
+		};
+	};
 	/* UserService#1662: the link's mode decides which account a new guest
 	   gets. Under GUEST_CHOOSES the guest picks, starting without an account
 	   (the Gesprächskreis entry's 0a); the context then reads as that choice
@@ -214,7 +299,9 @@ const DirectLinkCallEntryForm = ({
 				tenant as never
 			));
 	const open =
-		deps.open ?? ((value: string) => openDirectLinkConversation(value));
+		deps.open ??
+		((value: string, entryWait?: EntryWait) =>
+			openDirectLinkConversation(value, entryWait));
 	const saveAvatar =
 		deps.saveAvatar ??
 		((avatarId: string) => apiPatchUserData({ avatarId }));
@@ -249,8 +336,9 @@ const DirectLinkCallEntryForm = ({
 	// Not memoised: `register` reads the current locale and tenant.
 	const handleJoin = async (account: CallEntryAccount) => {
 		setJoining(true);
+		setNotLetIn(null);
 		try {
-			if (!signedIn) {
+			if (!hasAccount) {
 				// Registration resets auth cookies. Never replace a session that
 				// was opened in another tab while the consent room was on screen.
 				if (isSharedCall && hasActiveAuthSession()) {
@@ -258,6 +346,7 @@ const DirectLinkCallEntryForm = ({
 					return false;
 				}
 				await register(account);
+				setRegistered(true);
 				await keepChosenAvatar(account);
 			}
 			if (isSharedCall) {
@@ -268,10 +357,28 @@ const DirectLinkCallEntryForm = ({
 					blocker: current.live.blocker,
 					devices: current.live.devices
 				});
-			} else await open(token);
+			} else await open(token, { waitForAdmission, entryMedia });
 			return true;
 		} catch (error) {
 			setJoining(false);
+			setWaiting(false);
+			const knockId = wait.current?.knockId;
+			wait.current = null;
+			/* Turned down or no longer waiting: the person stays here, and the
+			   page says which; nothing failed. */
+			if (error instanceof DirectLinkNotAdmittedError) {
+				if (error.outcome === 'ended' && knockId !== undefined) {
+					/* Best effort: nobody should be asked to let in a person
+					   who stopped waiting. */
+					void cancelKnock(knockId).catch(() => undefined);
+				}
+				setNotLetIn(
+					error.outcome === 'declined' || error.outcome === 'ended'
+						? error.outcome
+						: null
+				);
+				return false;
+			}
 			const status = isSharedCall
 				? (error as Response | undefined)?.status
 				: undefined;
@@ -307,9 +414,14 @@ const DirectLinkCallEntryForm = ({
 			onBlockerAction={live.retry}
 			onDeviceStateChange={setControls}
 			joining={joining}
-			closing={isSharedCall ? null : 'call'}
+			/* No curtain over a wait: the person watches this page until let in. */
+			closing={isSharedCall || knocks ? null : 'call'}
+			waiting={waiting}
+			onStopWaiting={stopWaiting}
+			turnedDown={notLetIn === 'declined'}
+			waitEnded={notLetIn === 'ended'}
 			consent={{ html: isSharedCall ? consent.html : '', department }}
-			signedIn={signedIn}
+			signedIn={hasAccount}
 			loginLink={
 				isSharedCall && !signedIn ? (
 					<a href={loginPathForDirectLink(token)}>
