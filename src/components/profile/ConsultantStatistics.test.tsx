@@ -4,6 +4,7 @@ import * as React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ConsultantStatistics } from './ConsultantStatistics';
+import { formatToDDMMYYYY } from '../../utils/dateHelpers';
 
 const apiGetConsultantStatisticsMock = vi.fn();
 
@@ -14,7 +15,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../api', () => ({
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' },
+	FETCH_ERRORS: {
+		CATCH_ALL_EXCEPT_UNAUTHORIZED: 'CATCH_ALL_EXCEPT_UNAUTHORIZED'
+	},
 	apiGetConsultantStatistics: (...args: unknown[]) =>
 		apiGetConsultantStatisticsMock(...args)
 }));
@@ -46,13 +49,15 @@ describe('ConsultantStatistics', () => {
 		expect(screen.getByText('3')).toBeDefined();
 	});
 
-	it('catches errors itself so a failed request never opens the error page', () => {
+	it('catches errors itself but leaves a 401 to the session handling', () => {
 		apiGetConsultantStatisticsMock.mockReturnValue(new Promise(() => {}));
 
 		render(<ConsultantStatistics />);
 
 		expect(apiGetConsultantStatisticsMock).toHaveBeenLastCalledWith(
-			expect.objectContaining({ responseHandling: ['CATCH_ALL'] })
+			expect.objectContaining({
+				responseHandling: ['CATCH_ALL_EXCEPT_UNAUTHORIZED']
+			})
 		);
 	});
 
@@ -154,6 +159,67 @@ describe('ConsultantStatistics', () => {
 		expect(
 			await screen.findByText('profile.statistics.state.empty')
 		).toBeDefined();
+	});
+
+	it('does not say "no figures" when only cancelled appointments exist', async () => {
+		const loadStatistics = vi.fn().mockResolvedValue({
+			startDate: '2026-07-01',
+			endDate: '2026-07-31',
+			numberOfAssignedSessions: 0,
+			numberOfActiveSessions: 0,
+			numberOfSentMessages: 0,
+			numberOfAppointments: 0,
+			numberOfCancelledAppointments: 5
+		});
+
+		render(<ConsultantStatistics loadStatistics={loadStatistics} />);
+
+		await waitFor(() => {
+			expect(screen.getByText('5')).toBeDefined();
+		});
+		expect(screen.queryByText('profile.statistics.state.empty')).toBeNull();
+	});
+
+	it('shows the requested dates while a new period loads', async () => {
+		const loadStatistics = vi
+			.fn()
+			.mockResolvedValueOnce({
+				startDate: '2026-07-01',
+				endDate: '2026-07-31',
+				numberOfAssignedSessions: 1,
+				numberOfActiveSessions: 1,
+				numberOfSentMessages: 1
+			})
+			.mockReturnValue(new Promise(() => {}));
+
+		const { container } = render(
+			<ConsultantStatistics loadStatistics={loadStatistics} />
+		);
+		await waitFor(() =>
+			expect(
+				container.querySelector('.statistics__range')?.textContent
+			).toContain(
+				formatToDDMMYYYY(new Date('2026-07-01T12:00:00').valueOf())
+			)
+		);
+
+		screen
+			.getByRole('button', { name: 'profile.statistics.period.unitYear' })
+			.click();
+
+		await waitFor(() =>
+			expect(
+				container.querySelector('.statistics__range')?.textContent
+			).not.toContain(
+				formatToDDMMYYYY(new Date('2026-07-01T12:00:00').valueOf())
+			)
+		);
+		const { startDate } = loadStatistics.mock.lastCall[0];
+		expect(
+			container.querySelector('.statistics__range')?.textContent
+		).toContain(
+			formatToDDMMYYYY(new Date(`${startDate}T12:00:00`).valueOf())
+		);
 	});
 
 	it('asks for the year split into months when Jahr is chosen', async () => {

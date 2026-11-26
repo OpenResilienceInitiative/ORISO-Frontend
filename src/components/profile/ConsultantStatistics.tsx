@@ -39,13 +39,14 @@ interface ConsultantStatisticsProps {
 }
 
 /**
- * The real endpoint, with errors caught here: a failed request shows the
- * retry notice in the card instead of leaving for the error page.
+ * The real endpoint. Errors are caught here, so a failed request shows the
+ * retry notice in the card instead of leaving for the error page; a 401 still
+ * takes the normal session handling (logout), never an endless retry.
  */
 const loadOwnStatistics: LoadStatistics = (request) =>
 	apiGetConsultantStatistics({
 		...request,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
 	});
 
 type Unit = 'Week' | 'Month' | 'Year';
@@ -194,7 +195,8 @@ export const ConsultantStatistics = ({
 	};
 
 	const requested = datesForPeriod(statisticsPeriod);
-	const range = statistics ?? requested;
+	// While a new period loads, show the requested dates, not the last answer's.
+	const range = loadState === 'ready' && statistics ? statistics : requested;
 	const periodDisplay = `${formatToDDMMYYYY(dayjs(range.startDate).valueOf())} – ${formatToDDMMYYYY(dayjs(range.endDate).valueOf())}`;
 
 	const csvHeaders = csvColumns.map((key) => ({
@@ -217,7 +219,13 @@ export const ConsultantStatistics = ({
 		Number(statistics?.[key] ?? 0);
 	const shown = (key: keyof ConsultantStatisticsDTO) =>
 		ready ? figure(key) : '–';
-	const empty = ready && figureKeys.every((key) => figure(key) === 0);
+	const empty =
+		ready &&
+		[
+			...figureKeys,
+			...appointmentKinds,
+			'numberOfCancelledAppointments' as const
+		].every((key) => figure(key) === 0);
 
 	const tile = (
 		icon: React.ReactNode,
