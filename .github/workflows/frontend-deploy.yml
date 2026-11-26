@@ -49,6 +49,7 @@ on:
                 options:
                     - frontend
                     - storybook
+                    - predev-status
 
 permissions:
     contents: read
@@ -114,6 +115,47 @@ jobs:
                       kubectl get pods -n caritas -l app=frontend \
                         -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.status.containerStatuses[0].image}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}' \
                         || echo "(could not read the frontend pods; the deploy script result above still stands)"
+
+    # Pre-Dev is the experimental lane (ORISO-Helm#679, ORISO-Frontend#2579): the agent working
+    # on it reads the server's state here instead of logging in. Read only; prints no values
+    # files, secrets or environment, only names, versions and images.
+    predev-status:
+        name: Pre-Dev status
+        if: ${{ github.event.inputs.component == 'predev-status' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        environment:
+            name: pre-development
+            url: https://predev.oriso.org
+        steps:
+            - name: Refuse anything but Pre-Dev
+              env:
+                  TARGET: ${{ github.event.inputs.environment }}
+              run: |
+                  [ "$TARGET" = "pre-dev" ] || { echo "::error::predev-status only runs against pre-dev"; exit 1; }
+            - name: Read the server state
+              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              with:
+                  host: ${{ secrets.DEPLOY_SSH_HOST }}
+                  username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
+                  key: ${{ secrets.DEPLOY_SSH_KEY }}
+                  port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+                  fingerprint: ${{ secrets.DEPLOY_SSH_FINGERPRINT }}
+                  command_timeout: 5m
+                  script: |
+                      set -u
+                      echo "== tools"; for t in helm kubectl docker git node openssl; do printf '%s: ' $t; command -v $t || echo missing; done
+                      echo "== disk"; df -h / | tail -1
+                      echo "== script folders (names only)"; ls -1 /root/predev-deploy-script /root/deploy-script 2>&1
+                      echo "== helm releases"; helm list -A 2>&1
+                      echo "== namespaces"; kubectl get ns --no-headers -o custom-columns=NAME:.metadata.name 2>&1
+                      echo "== workloads in caritas (image, ready)"
+                      kubectl get deploy,statefulset -n caritas --no-headers -o custom-columns='NAME:.metadata.name,IMAGE:.spec.template.spec.containers[0].image,PULL:.spec.template.spec.containers[0].imagePullPolicy,READY:.status.readyReplicas' 2>&1
+                      echo "== chart checkouts on the server"
+                      for c in $(find /root /opt /srv /home -maxdepth 4 -name Chart.yaml -path '*elm*' 2>/dev/null | head -5); do
+                        d=$(dirname "$c"); echo "-- $d"; (cd "$d" && git rev-parse --abbrev-ref HEAD 2>/dev/null; git log -1 --format='%h %cd %s' --date=short 2>/dev/null; git status --porcelain 2>/dev/null | head -5; ls -1 *.yaml 2>/dev/null)
+                      done
+                      echo "== addon namespace"; kubectl get all -n addons 2>&1 | head -20
 
     # Dev only: the chart-managed Storybooks (ORISO-Helm templates/storybook,
     # runbooks/dev-storybook.md) run oriso-storybook images with pullPolicy Always,
