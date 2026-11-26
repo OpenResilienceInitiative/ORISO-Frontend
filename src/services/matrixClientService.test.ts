@@ -1416,8 +1416,7 @@ describe('MatrixClientService', () => {
 					event: failedEcho
 				})
 			),
-			cancelPendingEvent,
-			getRoom: () => null
+			cancelPendingEvent
 		});
 		const service = new MatrixClientService();
 		setClient(service, client);
@@ -1754,6 +1753,36 @@ describe('MatrixClientService', () => {
 		await expect(
 			service.sendMessage('!room:example.org', 'Hello after accept')
 		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(sendMessage).not.toHaveBeenCalled();
+	});
+
+	// Same wait for attachments: until the room is synced the SDK cannot
+	// encrypt the event, so nothing is uploaded or sent before that (FE#2572).
+	it('does not upload or send a file before the joined room reaches the client store', async () => {
+		const uploadContent = vi.fn();
+		const sendMessage = vi.fn();
+		const service = new MatrixClientService();
+		(
+			service as unknown as {
+				sendRoomWaitOptions: { waitMs: number; pollIntervalMs: number };
+			}
+		).sendRoomWaitOptions = { waitMs: 30, pollIntervalMs: 10 };
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom: vi
+				.fn()
+				.mockResolvedValue({ roomId: '!room:example.org' }),
+			uploadContent,
+			sendMessage
+		});
+
+		await expect(
+			service.sendFileMessage(
+				'!room:example.org',
+				new File(['note'], 'note.txt', { type: 'text/plain' })
+			)
+		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(uploadContent).not.toHaveBeenCalled();
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
 
