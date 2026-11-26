@@ -3410,9 +3410,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Скачать CSV",
 					"label": "Скачать файл Excel"
 				},
 				"filename": "Статистика онлайн-консультирования",
+				"hintMonth": "Одна строка на неделю и строка итогов. Открывается и в Excel.",
+				"hintWeek": "Одна строка на день и строка итогов. Открывается и в Excel.",
+				"hintYear": "Одна строка на месяц и строка итогов. Открывается и в Excel.",
 				"title": "Здесь вы можете скачать статистику за выбранный вами период консультирования:",
 				"total": "Итого"
 			},
@@ -3429,7 +3433,20 @@
 				"period": "Период",
 				"videoCallDuration": "Продолжительность видеозвонков в минутах:секундах"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Отменено",
+				"numberOfChatAppointments": "Чат",
+				"numberOfOnsiteAppointments": "Очно",
+				"numberOfPhoneAppointments": "Телефон",
+				"numberOfVideoAppointments": "Видео"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Этот месяц",
+					"currentWeek": "Эта неделя",
+					"lastMonth": "Прошлый месяц",
+					"lastWeek": "Прошлая неделя"
+				},
 				"currentMonth": "текущий месяц",
 				"currentWeek": "текущая неделя",
 				"currentYear": "текущий год",
@@ -3441,7 +3458,17 @@
 				"lastMonth": "последний месяц",
 				"lastWeek": "прошлая неделя",
 				"lastYear": "прошлый год",
-				"prefix": "Ваши цифры для"
+				"offsetLabel": "Период",
+				"prefix": "Ваши цифры для",
+				"unitLabel": "Единица времени",
+				"unitMonth": "Месяц",
+				"unitWeek": "Неделя",
+				"unitYear": "Год"
+			},
+			"state": {
+				"empty": "За этот период данных пока нет.",
+				"error": "Сейчас не удалось загрузить данные.",
+				"retry": "Повторить"
 			},
 			"title": "Моя статистика"
 		},

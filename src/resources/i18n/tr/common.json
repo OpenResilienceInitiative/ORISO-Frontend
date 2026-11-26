@@ -3405,9 +3405,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "CSV olarak indir",
 					"label": "Excel dosyasını indirin"
 				},
 				"filename": "Çevrimiçi danışmanlık istatistikleri",
+				"hintMonth": "Her hafta için bir satır ve bir toplam satırı. Excel ile de açılır.",
+				"hintWeek": "Her gün için bir satır ve bir toplam satırı. Excel ile de açılır.",
+				"hintYear": "Her ay için bir satır ve bir toplam satırı. Excel ile de açılır.",
 				"title": "Seçtiğiniz danışmanlık dönemi için istatistiklerinizi buradan indirebilirsiniz:",
 				"total": "Toplam"
 			},
@@ -3424,7 +3428,20 @@
 				"period": "Dönem",
 				"videoCallDuration": "Dakika:saniye cinsinden görüntülü arama süresi"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "İptal edilen",
+				"numberOfChatAppointments": "Sohbet",
+				"numberOfOnsiteAppointments": "Yüz yüze",
+				"numberOfPhoneAppointments": "Telefon",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Bu ay",
+					"currentWeek": "Bu hafta",
+					"lastMonth": "Geçen ay",
+					"lastWeek": "Geçen hafta"
+				},
 				"currentMonth": "geçerli ay",
 				"currentWeek": "bu hafta",
 				"currentYear": "cari yıl",
@@ -3436,7 +3453,17 @@
 				"lastMonth": "geçen ay",
 				"lastWeek": "geçen hafta",
 				"lastYear": "geçen yıl",
-				"prefix": "Sizin rakamlarınız"
+				"offsetLabel": "Dönem",
+				"prefix": "Sizin rakamlarınız",
+				"unitLabel": "Zaman birimi",
+				"unitMonth": "Ay",
+				"unitWeek": "Hafta",
+				"unitYear": "Yıl"
+			},
+			"state": {
+				"empty": "Bu dönem için henüz rakam yok.",
+				"error": "Rakamlar şu anda yüklenemedi.",
+				"retry": "Tekrar dene"
 			},
 			"title": "Benim istatistiklerim"
 		},
