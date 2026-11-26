@@ -22,6 +22,20 @@ const FLAG: Record<DirectLinkMedium, DirectInviteFlag> = {
 
 type Settings = Partial<Record<DirectInviteFlag, boolean | null>>;
 
+/**
+ * The flags as effective values for the given media, e.g. to resolve a
+ * tour's conditions against what the counsellor may really hand out.
+ */
+export const directInviteFlagsFor = (
+	media: readonly DirectLinkMedium[]
+): Record<DirectInviteFlag, boolean> =>
+	Object.fromEntries(
+		DIRECT_LINK_MEDIA.map((medium) => [
+			FLAG[medium],
+			media.includes(medium)
+		])
+	) as Record<DirectInviteFlag, boolean>;
+
 export const getDirectLinkMedia = (
 	tenant: { settings?: Settings | null } | null | undefined,
 	agencies: AgencyFormatSource[] = []

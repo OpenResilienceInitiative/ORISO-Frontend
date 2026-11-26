@@ -1,7 +1,13 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { UserDataContext, useTenant } from '../../globalState';
+import { useMediaQuery } from 'react-responsive';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext,
+	useTenant
+} from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
@@ -26,7 +32,13 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import { isPracticeCardTourId } from '../../practice/practiceTourIds';
+import {
+	isPracticeCardTourId,
+	PRACTICE_CALENDAR_TOUR_ID
+} from '../../practice/practiceTourIds';
+import { COMPACT_MAX_WIDTH } from '../calendar/calendarViews';
+import { useDirectLinksAvailability } from '../directLinks/useDirectLinksAllowed';
+import { directInviteFlagsFor } from '../conversationCreate/directLink/directLinkAvailability';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
@@ -52,7 +64,13 @@ const isCurrentVersionFinished = (
  */
 export const Walkthrough = () => {
 	const settings = useAppConfig();
-	const viewport = useResponsive();
+	const viewport = {
+		...useResponsive(),
+		// The calendar's own breakpoint: compact up to and including it.
+		beyondCompactCalendar: useMediaQuery({
+			minWidth: COMPACT_MAX_WIDTH + 1
+		})
+	};
 	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
@@ -97,8 +115,28 @@ export const Walkthrough = () => {
 	const practiceTour = choosesPractice ? practiceCandidate : undefined;
 	const lostPracticeRun =
 		!!launchRequest && choosesPractice && !practiceCandidate;
+	// The Kalender tour's Terminlink step follows what the calendar offers:
+	// the media "Direkteinladung erlauben" leaves this counsellor, agency
+	// restrictions included (`useDirectLinkMedia` in `CalendarPageWired`).
+	// The run waits for that answer once per launch request; a later refresh
+	// (the calendar's own) does not interrupt it.
+	const resolvesInviteMedia =
+		launchRequest?.tourId === PRACTICE_CALENDAR_TOUR_ID &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const inviteMedia = useDirectLinksAvailability(resolvesInviteMedia);
+	const [inviteMediaSeenFor, setInviteMediaSeenFor] =
+		useState<typeof launchRequest>(null);
+	useEffect(() => {
+		if (resolvesInviteMedia && inviteMedia.ready) {
+			setInviteMediaSeenFor(launchRequest);
+		}
+	}, [resolvesInviteMedia, inviteMedia.ready, launchRequest]);
+	const awaitsInviteMedia =
+		resolvesInviteMedia &&
+		!inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest;
 	const requestedTour =
-		launchRequest && !lostPracticeRun
+		launchRequest && !lostPracticeRun && !awaitsInviteMedia
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
@@ -185,7 +223,11 @@ export const Walkthrough = () => {
 					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
 						: resolveTourSteps(activeTour, {
-								flags: { ...tenantSettings }
+								flags: {
+									...tenantSettings,
+									...(resolvesInviteMedia &&
+										directInviteFlagsFor(inviteMedia.media))
+								}
 							})
 			}
 		};
