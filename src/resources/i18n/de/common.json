@@ -4217,7 +4217,7 @@
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
-			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
+			"required": "Wählen Sie mindestens einen Fall und einen Grund; ist die Begründung Pflicht, ergänzen Sie sie.",
 			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
@@ -4266,10 +4266,12 @@
 		"error": {
 			"failed": "Die Zugriffsanfrage konnte nicht gesendet werden.",
 			"forbidden": "Sie dürfen für diesen Fall keinen Zugriff anfragen.",
-			"required": "Wählen Sie einen Grund und ergänzen Sie eine Begründung."
+			"required": "Wählen Sie einen Grund. Für diesen Grund ist eine Begründung Pflicht."
 		},
 		"explanation": {
-			"placeholder": "Begründung beschreiben"
+			"placeholder": "Begründung beschreiben",
+			"optional": "Begründung (optional)",
+			"required": "Begründung (Pflicht)"
 		},
 		"eyebrow": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 		"hidden": {

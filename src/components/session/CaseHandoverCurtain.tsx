@@ -21,8 +21,11 @@ import { ActiveSessionContext } from '../../globalState/provider/ActiveSessionPr
 import { CaseHandoverReasonList } from '../caseHandover/CaseHandoverReasonList';
 import { OrisoTextarea } from '../form/OrisoTextarea';
 import {
+	caseHandoverExplanationLevel,
+	caseHandoverExplanationToSend,
 	isCaseHandoverDenied,
-	isCaseHandoverPending
+	isCaseHandoverPending,
+	isCaseHandoverRequestComplete
 } from './caseHandoverHelpers';
 import { ReactComponent as CaseHandoverIcon } from '../../resources/img/icons/case-handover/case-handover-wizard.svg';
 import { ReactComponent as TutorialIcon } from '../../resources/img/icons/case-handover/tutorial.svg';
@@ -49,7 +52,9 @@ import {
  * Case Handover", Screens 01–03, Sections 02–03). Replaces CaseHandoverGate.
  *
  * Wizard: intro ("How can I see the inquiry here?") → select reason (radio
- * list with keyboard shortcuts) → describe reason (free text) → request.
+ * list with keyboard shortcuts) and, when the reason's explanation level is
+ * OPTIONAL or REQUIRED, the explanation on the same screen → request (FE#2040).
+ * `describe` is kept as an alias of `reason` for retained operations.
  * Pending / client-consent / denied states render as terminal curtain states.
  */
 
@@ -119,6 +124,8 @@ export const CaseHandoverCurtainView = ({
 	const reasonsFailed = step === 'reason' && reasonsLoadFailed;
 	const noReasons =
 		step === 'reason' && (reasonsUnavailable || reasonsLoadFailed);
+	const explanationLevel = caseHandoverExplanationLevel(selectedReason);
+	const isRequestStep = step === 'reason' || step === 'describe';
 
 	return (
 		<div className="caseHandoverCurtain" data-cy="case-handover-curtain">
@@ -214,7 +221,7 @@ export const CaseHandoverCurtainView = ({
 								</>
 							)}
 
-							{(step === 'reason' || step === 'describe') && (
+							{isRequestStep && (
 								<>
 									<div className="caseHandoverCurtain__hero">
 										<CaseHandoverIcon
@@ -222,23 +229,15 @@ export const CaseHandoverCurtainView = ({
 											aria-hidden
 										/>
 										<h3 className="caseHandoverCurtain__title">
-											{step === 'reason'
-												? translate(
-														'caseHandover.curtain.reason.title'
-													)
-												: translate(
-														'caseHandover.curtain.describe.title'
-													)}
+											{translate(
+												'caseHandover.curtain.reason.title'
+											)}
 										</h3>
 									</div>
 									<p className="caseHandoverCurtain__copy">
-										{step === 'reason'
-											? translate(
-													'caseHandover.curtain.reason.subtitle'
-												)
-											: translate(
-													'caseHandover.curtain.describe.subtitle'
-												)}
+										{translate(
+											'caseHandover.curtain.reason.subtitle'
+										)}
 									</p>
 									{reasonsFailed && (
 										<div
@@ -283,29 +282,37 @@ export const CaseHandoverCurtainView = ({
 									<CaseHandoverReasonList
 										reasons={reasons}
 										reasonCode={reasonCode}
-										interactive={step === 'reason'}
+										interactive={!isSubmitting}
 										onReasonSelect={onReasonSelect}
 									/>
-									{step === 'describe' && (
-										<OrisoTextarea
-											className="caseHandoverCurtain__explanation"
-											value={explanation}
-											onChange={(event) =>
-												onExplanationChange(
-													event.target.value
-												)
-											}
-											placeholder={translate(
-												'caseHandover.explanation.placeholder'
-											)}
-											minRows={4}
-											fullWidth
-											inputProps={{
-												'data-cy':
-													'case-handover-curtain-explanation'
-											}}
-										/>
-									)}
+									{selectedReason &&
+										explanationLevel !== 'OFF' && (
+											<OrisoTextarea
+												className="caseHandoverCurtain__explanation"
+												value={explanation}
+												onChange={(event) =>
+													onExplanationChange(
+														event.target.value
+													)
+												}
+												placeholder={translate(
+													explanationLevel ===
+														'REQUIRED'
+														? 'caseHandover.explanation.required'
+														: 'caseHandover.explanation.optional'
+												)}
+												required={
+													explanationLevel ===
+													'REQUIRED'
+												}
+												minRows={4}
+												fullWidth
+												inputProps={{
+													'data-cy':
+														'case-handover-curtain-explanation'
+												}}
+											/>
+										)}
 									{error && (
 										<p
 											className="caseHandoverCurtain__error"
@@ -354,40 +361,29 @@ export const CaseHandoverCurtainView = ({
 						</div>
 					</ScrollableSectionBody>
 					<ScrollableSectionFooter>
-						{(step === 'reason' || step === 'describe') &&
-							!noReasons && (
-								<SideScrollerFooter
-									variant="wizard"
-									back={{
-										label: translate(
-											'caseHandover.curtain.back'
-										),
-										onClick: onBack,
-										disabled: step === 'reason',
-										dataCy: 'case-handover-curtain-back'
-									}}
-									next={{
-										label:
-											step === 'reason'
-												? translate(
-														'caseHandover.curtain.next'
-													)
-												: translate(
-														'caseHandover.submit'
-													),
-										onClick:
-											step === 'reason'
-												? onNext
-												: onSubmit,
-										disabled:
-											step === 'reason'
-												? !selectedReason
-												: !explanation.trim() ||
-													isSubmitting,
-										dataCy: 'case-handover-curtain-next'
-									}}
-								/>
-							)}
+						{isRequestStep && !noReasons && (
+							<SideScrollerFooter
+								variant="wizard"
+								back={{
+									label: translate(
+										'caseHandover.curtain.back'
+									),
+									onClick: onBack,
+									disabled: true,
+									dataCy: 'case-handover-curtain-back'
+								}}
+								next={{
+									label: translate('caseHandover.submit'),
+									onClick: onSubmit,
+									disabled:
+										!isCaseHandoverRequestComplete(
+											selectedReason,
+											explanation
+										) || isSubmitting,
+									dataCy: 'case-handover-curtain-next'
+								}}
+							/>
+						)}
 					</ScrollableSectionFooter>
 				</ScrollableSection>
 			</div>
@@ -443,7 +439,7 @@ export const CaseHandoverCurtain = ({
 			sessionId,
 			kind: 'PULL'
 		});
-		setStep(retained ? 'describe' : 'intro');
+		setStep(retained ? 'reason' : 'intro');
 		setReasonCode(retained?.reasonCode || '');
 		setExplanation(retained?.explanation || '');
 		setError('');
@@ -529,10 +525,16 @@ export const CaseHandoverCurtain = ({
 	};
 
 	const handleSubmit = () => {
-		if (!reasonCode || !explanation.trim() || isSubmitting) {
+		const selectedReason = reasons.find((item) => item.code === reasonCode);
+		if (isSubmitting) return;
+		if (!isCaseHandoverRequestComplete(selectedReason, explanation)) {
 			setError(translate('caseHandover.error.required'));
 			return;
 		}
+		const explanationToSend = caseHandoverExplanationToSend(
+			selectedReason,
+			explanation
+		);
 		if (typeof status?.ownershipRevision !== 'number') {
 			setError(translate('caseHandover.error.failed'));
 			return;
@@ -547,7 +549,7 @@ export const CaseHandoverCurtain = ({
 			kind: 'PULL',
 			expectedOwnershipRevision: status.ownershipRevision,
 			reasonCode,
-			explanation
+			explanation: explanationToSend
 		});
 		activeRequestRef.current = requestIdentity;
 		const isCurrentRequest = () =>
@@ -556,7 +558,7 @@ export const CaseHandoverCurtain = ({
 		apiRequestCaseHandoverAccess(
 			requestSessionId,
 			reasonCode,
-			explanation,
+			explanationToSend,
 			operation.expectedOwnershipRevision,
 			operation.operationId
 		)
@@ -620,7 +622,7 @@ export const CaseHandoverCurtain = ({
 			onRetryReasons={retryReasons}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
-			onNext={() => setStep('describe')}
+			onNext={handleSubmit}
 			onReasonSelect={setReasonCode}
 			onExplanationChange={setExplanation}
 			onSubmit={handleSubmit}

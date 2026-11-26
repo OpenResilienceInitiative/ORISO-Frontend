@@ -53,7 +53,11 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
-import { peopleSearchHintKeys } from '../session/caseHandoverHelpers';
+import {
+	caseHandoverExplanationToSend,
+	isCaseHandoverRequestComplete,
+	peopleSearchHintKeys
+} from '../session/caseHandoverHelpers';
 import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
@@ -2310,10 +2314,15 @@ export const SessionsList = ({
 		}
 	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
 	const handleSubmitCaseHandoverBatch = useCallback(async () => {
+		const selectedReason = caseHandoverReasons.reasons.find(
+			(reason) => reason.code === caseHandoverReasonCode
+		);
 		if (
 			caseHandoverSelectedIds.length === 0 ||
-			!caseHandoverReasonCode ||
-			!caseHandoverExplanation.trim()
+			!isCaseHandoverRequestComplete(
+				selectedReason,
+				caseHandoverExplanation
+			)
 		) {
 			setCaseHandoverBatchSummary(
 				translate('caseHandover.batch.required')
@@ -2325,7 +2334,10 @@ export const SessionsList = ({
 			await caseHandoverBatch.submit(
 				caseHandoverSelectedIds,
 				caseHandoverReasonCode,
-				caseHandoverExplanation
+				caseHandoverExplanationToSend(
+					selectedReason,
+					caseHandoverExplanation
+				)
 			);
 		} finally {
 			invalidateCaseHandoverRowStatuses(caseHandoverSelectedIds);
@@ -2334,6 +2346,7 @@ export const SessionsList = ({
 		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
+		caseHandoverReasons.reasons,
 		caseHandoverSelectedIds,
 		invalidateCaseHandoverRowStatuses,
 		translate
@@ -3285,9 +3298,7 @@ export const SessionsList = ({
 									onBack={() =>
 										setCaseHandoverWizardStep('reason')
 									}
-									onNext={() =>
-										setCaseHandoverWizardStep('describe')
-									}
+									onNext={handleSubmitCaseHandoverBatch}
 									onReasonSelect={setCaseHandoverReasonCode}
 									onExplanationChange={
 										setCaseHandoverExplanation

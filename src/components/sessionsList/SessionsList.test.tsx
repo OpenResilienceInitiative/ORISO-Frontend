@@ -60,6 +60,18 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('./useCaseHandoverBatch', () => ({
 	useCaseHandoverBatch: vi.fn(() => batchState)
 }));
+// The wizard's reasons hook reads the module directly, not through '../../api'.
+vi.mock('../../api/apiCaseHandover', async (importOriginal) => ({
+	...(await importOriginal<object>()),
+	apiGetCaseHandoverReasons: vi.fn().mockResolvedValue([
+		{
+			code: 'OTHER_EMERGENCY',
+			label: 'Emergency',
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
+		}
+	])
+}));
 vi.mock('../../api', () => ({
 	apiGetAskerSessionList: vi
 		.fn()
@@ -69,7 +81,8 @@ vi.mock('../../api', () => ({
 		{
 			code: 'OTHER_EMERGENCY',
 			label: 'Emergency',
-			clientConsentRequired: false
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
 		}
 	]),
 	apiGetConsultantSessionList: vi
@@ -184,6 +197,7 @@ vi.mock('../session/CaseHandoverCurtain', () => ({
 				reason
 			</button>
 			<button onClick={props.onNext}>next</button>
+			{props.reasons.length > 0 && <span>reasons-loaded</span>}
 			<button onClick={() => props.onExplanationChange('Cover')}>
 				explanation
 			</button>
@@ -363,8 +377,8 @@ describe('SessionsList case handover batch seam', () => {
 		fireEvent.click(screen.getAllByText('select-1')[0]);
 		fireEvent.click(screen.getAllByText('select-2')[0]);
 		fireEvent.click(screen.getAllByText('review-batch')[0]);
+		await screen.findByText('reasons-loaded');
 		fireEvent.click(await screen.findByText('reason'));
-		fireEvent.click(screen.getByText('next'));
 		fireEvent.click(screen.getByText('explanation'));
 		fireEvent.click(screen.getByText('submit-batch'));
 

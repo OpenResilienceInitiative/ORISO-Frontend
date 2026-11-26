@@ -329,7 +329,8 @@ beforeEach(() => {
 		{
 			code: 'ABSENCE',
 			label: 'Planned absence',
-			clientConsentRequired: false
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
 		}
 	]);
 });
@@ -2354,11 +2355,6 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 			name: 'caseHandover.batch.title'
 		});
 		fireEvent.click(await within(wizard).findByRole('radio'));
-		fireEvent.click(
-			within(wizard).getByRole('button', {
-				name: 'caseHandover.curtain.next'
-			})
-		);
 		fireEvent.change(within(wizard).getByRole('textbox'), {
 			target: { value: 'Covering a planned absence' }
 		});
