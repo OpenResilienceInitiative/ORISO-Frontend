@@ -35,7 +35,7 @@ const meta = {
 		progress: [
 			{
 				tourId: consultantWalkthroughTour.id,
-				tourVersion: 1,
+				tourVersion: consultantWalkthroughTour.version,
 				status: 'completed'
 			},
 			{
