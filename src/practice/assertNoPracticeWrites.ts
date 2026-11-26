@@ -17,15 +17,18 @@ import {
 export interface RecordedNetworkRequest {
 	method: string;
 	url: string;
-	/** Playwright `request.postData()`; null/undefined = not captured. */
+	/**
+	 * Playwright `request.postData()`: `null` = the request had no body;
+	 * omitted (`undefined`) = the body was not captured.
+	 */
 	postData?: string | null;
 }
 
 /**
  * The body the runtime guard saw for a recorded request. Playwright reports
- * "no body" as null, which otherwise reads as "not captured". Only the
- * heartbeat, whose allowlist entry requires an empty body, is read as empty;
- * every other missing body stays uncaptured and is rejected.
+ * "no body" as null. Only the heartbeat, whose allowlist entry requires an
+ * empty body, reads that as empty; every other null, and any body that was
+ * not captured at all (omitted), stays `undefined` and is rejected.
  */
 export const recordedBodyText = (
 	request: RecordedNetworkRequest,
@@ -33,6 +36,9 @@ export const recordedBodyText = (
 ): string | undefined => {
 	if (typeof request.postData === 'string') {
 		return request.postData;
+	}
+	if (request.postData !== null) {
+		return undefined;
 	}
 	return findAllowlistCandidate(request.method, request.url, config) ===
 		'livechat-heartbeat'

@@ -15,6 +15,7 @@ import {
 } from '../practiceIds';
 import { createTestScript } from '../script/scriptTestSupport';
 import { PracticeBlockedRequestError } from '../networkGuard';
+import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
 const script = createTestScript('de');
@@ -557,6 +558,89 @@ describe('FakeRestBackend: the practice Gesprächskreis (FE#2545)', () => {
 			await backend.handle(new Request(`${endpoints.chatRoom}/4711`))
 		).toBeNull();
 	});
+
+	it('keeps the co-moderator the counsellor picked, in the circle and in its members', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		const colleague = script.cast.colleague;
+		await backend.handle(
+			send(`${endpoints.groupChatBase}v2/new`, 'POST', {
+				...circlePayload,
+				// An id outside the practice cast is never invented into it.
+				consultantIds: [colleague.id, 'real-consultant-4711']
+			})
+		);
+
+		const list = await json(await backend.handle(new Request(mySessions)));
+		expect(list.sessions[0].chat.moderators).toEqual([
+			PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+			colleague.matrixUserId
+		]);
+		const members = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}/members`
+				)
+			)
+		);
+		expect(
+			members.members.map((m: { userId: string }) => m.userId)
+		).toEqual([practiceCounsellorFixture().userId, colleague.id]);
+		expect(members.members[1]).toMatchObject({
+			displayName: colleague.displayName,
+			role: 'CONSULTANT'
+		});
+	});
+
+	it('answers a batched room lookup with both the practice case and the circle', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+		const caseRoom = backend.getCase().session.matrixRoomId;
+
+		const both = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.sessionRooms}?${new URLSearchParams({
+						'roomIds[]': [caseRoom, PRACTICE_CIRCLE_ROOM_ID].join(
+							','
+						)
+					})}`
+				)
+			)
+		);
+
+		expect(
+			both.sessions.map(
+				(item: { session?: { id: number }; chat?: { id: number } }) =>
+					item.chat?.id ?? item.session?.id
+			)
+		).toEqual([backend.getCase().session.id, PRACTICE_CIRCLE_CHAT_ID]);
+	});
+
+	it('refuses the create outside the Gesprächskreis start, where no circle room exists', async () => {
+		const onCircleCreated = vi.fn();
+		const backend = backendFor({ hooks: { onCircleCreated } });
+
+		await expect(create(backend)).rejects.toBeInstanceOf(
+			PracticeBlockedRequestError
+		);
+		expect(onCircleCreated).not.toHaveBeenCalled();
+		expect((await backend.handle(new Request(mySessions)))?.status).toBe(
+			204
+		);
+	});
+
+	it('blocks the create while practice drains instead of passing it on', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+
+		await expect(
+			backend.handle(
+				send(`${endpoints.groupChatBase}v2/new`, 'POST', circlePayload),
+				undefined,
+				{ practiceAddressedOnly: true }
+			)
+		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		expect(backend.served).toHaveLength(0);
+	});
 });
 
 describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
@@ -600,6 +684,27 @@ describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
 		});
 		expect(await read(endpoints.directLinks)).toEqual([]);
 		expect(await read(endpoints.upcomingAppointments)).toEqual([]);
+	});
+
+	it('blocks the calendar settings and Sperrzeit saves while practice drains instead of passing them on', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				windows: [],
+				autoAccept: true
+			}),
+			send(`${calendar}/blockers`, 'POST', {
+				startTime: slot.startTime,
+				endTime: slot.endTime
+			})
+		]) {
+			await expect(
+				backend.handle(request, undefined, {
+					practiceAddressedOnly: true
+				})
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		}
+		expect(backend.served).toHaveLength(0);
 	});
 
 	it('enters, moves and cancels an appointment of the practice conversation, and tells the run', async () => {
