@@ -3405,9 +3405,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Télécharger en CSV",
 					"label": "Télécharger le fichier Excel"
 				},
 				"filename": "Statistiques de la consultation en ligne",
+				"hintMonth": "Une ligne par semaine et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintWeek": "Une ligne par jour et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintYear": "Une ligne par mois et une ligne de total. S’ouvre aussi dans Excel.",
 				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
 				"total": "Ensemble"
 			},
@@ -3424,7 +3428,20 @@
 				"period": "Période",
 				"videoCallDuration": "Durée des appels vidéo en minutes:secondes"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Annulés",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "Sur place",
+				"numberOfPhoneAppointments": "Téléphone",
+				"numberOfVideoAppointments": "Vidéo"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Ce mois-ci",
+					"currentWeek": "Cette semaine",
+					"lastMonth": "Le mois dernier",
+					"lastWeek": "La semaine dernière"
+				},
 				"currentMonth": "mois en cours",
 				"currentWeek": "semaine en cours",
 				"currentYear": "année en cours",
@@ -3436,7 +3453,17 @@
 				"lastMonth": "dernier mois",
 				"lastWeek": "semaine dernière",
 				"lastYear": "l'année dernière",
-				"prefix": "Vos chiffres du"
+				"offsetLabel": "Période",
+				"prefix": "Vos chiffres du",
+				"unitLabel": "Unité de temps",
+				"unitMonth": "Mois",
+				"unitWeek": "Semaine",
+				"unitYear": "Année"
+			},
+			"state": {
+				"empty": "Il n'y a pas encore de chiffres pour cette période.",
+				"error": "Les chiffres n'ont pas pu être chargés pour le moment.",
+				"retry": "Réessayer"
 			},
 			"title": "Mes statistiques"
 		},
@@ -4821,7 +4848,6 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
-				"directLinks": "Invitations directes",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4846,9 +4872,10 @@
 				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
-				"directLinkVideo": "Appel vidéo",
-				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Invitation directe",
+				"directLinkVideo": "Vidéo",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Invitation directe · {{medium}}",
 				"agencyLink": "via le lien du centre de conseil"
 			},
 			"waiting": {
@@ -7535,6 +7562,7 @@
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
+		"signedOutNotice": "Votre compte invité a été supprimé après l'entretien. Vous avez donc été déconnecté. Pour un nouvel entretien, veuillez rouvrir le lien de votre service de conseil.",
 		"chip": {
 			"guest": "Compte invité"
 		},

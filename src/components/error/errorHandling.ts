@@ -18,7 +18,10 @@ export const getErrorCaseForStatus = (status: number) => {
 		return ERROR_TYPES.UNAUTHORIZED;
 	} else if (status === 403) {
 		return ERROR_TYPES.FORBIDDEN;
-	} else if (status === 400 || status === 409 || status === 500) {
+	} else if (status === 400 || status === 409 || status >= 500) {
+		/* Every server-side failure, not only a plain 500: a 503 from a
+		   service that is briefly down used to show "page not found", which
+		   sent the person looking for a wrong address (Dev, 25 Nov 2026). */
 		return ERROR_TYPES.SERVER;
 	} else {
 		return ERROR_TYPES.NOT_FOUND;

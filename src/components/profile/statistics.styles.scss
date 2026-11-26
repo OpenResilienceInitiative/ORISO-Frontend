@@ -1,87 +1,225 @@
+// ORISO-Frontend#2558: "Meine Statistik" in the card layout ("Karten v2"):
+// no box in the box, calm tiles on the lowest surface, numbers in on-surface
+// (colour only where it carries meaning), one column on the phone.
 .statistics {
-	&__periodSelect {
-		margin-bottom: 18px;
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
 
-		@include breakpoint($fromMedium) {
-			display: flex;
-		}
-
-		> p {
-			margin: auto 0;
-		}
-
-		.select__wrapper {
-			max-width: #{$max-input-width + $grid-base-three + $grid-base-three};
-			margin: 0;
-			padding: 0;
-
-			@include breakpoint($fromMedium) {
-				padding: 0 $grid-base-three;
-			}
-		}
+	&__period {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	&__visuals__wrapper {
+	&__segmented {
+		display: flex;
+		width: 100%;
+	}
+
+	&__range {
+		margin: 0;
+		font-size: 14px;
+		line-height: 20px;
+		text-align: center;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__tiles {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-		align-items: start;
-		gap: $grid-base-three;
-		margin: $grid-base-four 0 0;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 12px;
 	}
 
-	&__breakdown {
-		list-style: none;
-		margin: $grid-base 0 0;
+	&__tile {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+		min-width: 0;
+		padding: 16px;
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface, #1b1b1c);
+
+		&--wide {
+			grid-column: 1 / -1;
+		}
+	}
+
+	&__tileIcon {
+		display: flex;
+		color: var(--m3-secondary, #4d5660);
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
+	&__tileValue {
+		font-size: 32px;
+		line-height: 40px;
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__tileLabel {
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--m3-on-surface-variant, #444748);
+		overflow-wrap: anywhere;
+	}
+
+	&__kinds {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		width: 100%;
+		margin: 8px 0 0;
 		padding: 0;
+		list-style: none;
+
+		li {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 32px;
+			padding: 0 12px;
+			border-radius: 8px;
+			border: 1px solid var(--m3-outline-variant, #c4c7c8);
+			font-size: 14px;
+			line-height: 20px;
+		}
+
+		strong {
+			font-weight: 600;
+			font-variant-numeric: tabular-nums;
+		}
+
+		&--cancelled {
+			border-style: dashed !important;
+			color: var(--m3-on-surface-variant, #444748);
+		}
+	}
+
+	&__notice {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 4px 12px;
+		margin: 0;
+		padding: 12px 16px;
+		border-radius: 12px;
+		background: var(--m3-surface-container, #f0edee);
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: 14px;
 		line-height: 20px;
 		text-align: center;
 	}
 
-	&__visualization {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
+	&__textButton {
+		min-height: 40px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: 20px;
+		background: transparent;
+		color: var(--m3-primary, #a5000a);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
 
-		span {
-			display: flex;
-			align-items: center;
-
-			svg {
-				flex-shrink: 0;
-				width: 35px;
-				height: 35px;
-				fill: $statistics-highlight-color;
-			}
-
-			p {
-				color: $statistics-highlight-color;
-				margin: 0 0 0 $grid-base;
-				font-weight: $font-weight-medium;
-				font-size: 30px;
-				line-height: 38px;
-			}
+		&:hover {
+			background: var(--m3-hover-layer, #f9eff0);
 		}
 
-		> p,
-		> .text {
-			font-weight: $font-weight-medium;
-			text-align: center;
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
 		}
 	}
 
 	&__download {
-		> p {
-			margin-bottom: 12px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__downloadButton {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 0 24px 0 16px;
+		border-radius: 20px;
+		background: var(--m3-secondary-container, #656e79);
+		color: var(--m3-on-secondary-container, #e6effb);
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		text-decoration: none;
+
+		&:hover,
+		&:focus-visible {
+			color: var(--m3-on-secondary-container, #e6effb);
+			text-decoration: none;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 		}
 
-		a {
-			color: $statistics-highlight-color;
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
 
-			> svg {
-				margin-right: $grid-base;
-			}
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	&__hint {
+		margin: 0;
+		font-size: 13px;
+		line-height: 18px;
+		text-align: center;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+// Narrow card (phone, or a narrow column): the three small tiles become rows
+// (icon, label, number on the right) instead of squeezed columns.
+@container (max-width: 439px) {
+	.statistics__tiles {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 8px;
+	}
+
+	.statistics__tile:not(.statistics__tile--wide) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		column-gap: 12px;
+		padding: 12px 16px;
+
+		.statistics__tileIcon {
+			grid-column: 1;
+			grid-row: 1;
+		}
+
+		.statistics__tileLabel {
+			grid-column: 2;
+			grid-row: 1;
+			font-size: 14px;
+		}
+
+		.statistics__tileValue {
+			grid-column: 3;
+			grid-row: 1;
+			font-size: 24px;
+			line-height: 32px;
 		}
 	}
 }

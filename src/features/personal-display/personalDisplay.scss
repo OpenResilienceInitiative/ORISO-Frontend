@@ -21,6 +21,71 @@
 	}
 }
 
+// Desktop rail (#P0 2026-11-25, "Anzeige-Button ist futsch"): the entry sits
+// below "Abmelden" outside the item list, so it gets the rail item recipe
+// itself: 48 px icon slot above an 11 px label, inside the panel. Without it
+// the tertiary button kept its 44 px outlined pill and the label spilled out.
+.navigation__wrapper > .personalDisplayEntry--navigation.button__wrapper {
+	align-self: center;
+	margin: 0 0 1rem;
+
+	button {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		inline-size: 72px;
+		min-block-size: 0;
+		block-size: auto;
+		padding: 0;
+		border: 0;
+		border-radius: 12px;
+		background: transparent;
+		color: var(--m3-on-surface-variant, #444748);
+		font: inherit;
+		box-shadow: none;
+
+		&:hover,
+		&:active,
+		&[aria-expanded='true'] {
+			border: 0;
+			background: transparent;
+			color: var(--m3-on-surface, #1b1b1c);
+		}
+
+		&:hover .personalDisplayEntry__icon,
+		&[aria-expanded='true'] .personalDisplayEntry__icon {
+			background: var(--m3-secondary-container, #dce3ec);
+			color: var(--m3-on-secondary-container, #151f29);
+		}
+
+		&:focus-visible {
+			@include control-focus-ring(-2px);
+		}
+	}
+
+	.personalDisplayEntry__icon {
+		display: grid;
+		place-items: center;
+		inline-size: 48px;
+		block-size: 48px;
+		border-radius: 12px;
+		background: var(--m3-surface-container-highest, #e5e2e2);
+		color: inherit;
+	}
+
+	.personalDisplayEntry__label {
+		max-inline-size: 72px;
+		overflow: hidden;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
 // The conversation gets the same entry when the narrow detail view hides
 // the navigation. Keep it out of the visible and keyboard layouts otherwise.
 .personalDisplayEntry--conversation.button__wrapper {
@@ -34,7 +99,8 @@
 		inline-size: 44px;
 		block-size: 44px;
 		padding: 0;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		border-radius: 50%;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-on-surface, #1b1b1c);
