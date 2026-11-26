@@ -13,6 +13,8 @@ export interface PracticeTourProgress {
 	stepIndex: number;
 	/** The resolved step count of this run (variants applied). */
 	stepCount: number;
+	/** Id of the step on screen; unset until the run shows one. */
+	stepId?: string;
 }
 
 /** What the banner shows as "Step i of N"; null while no practice run mounts. */
@@ -22,6 +24,15 @@ export const practiceTourProgressAtom = atom(
 
 export const usePracticeTourProgress = (): PracticeTourProgress | null =>
 	useAtomValue(practiceTourProgressAtom);
+
+/** Whether the practice run of `tourId` is on its step `stepId`. */
+export const usePracticeTourAtStep = (
+	tourId: string,
+	stepId: string
+): boolean => {
+	const progress = usePracticeTourProgress();
+	return progress?.tourId === tourId && progress.stepId === stepId;
+};
 
 /**
  * For the tour host: call the returned function from the adapter's `onEvent`.
@@ -43,14 +54,27 @@ export const usePracticeTourProgressReporter = (
 		setProgress({
 			tourId: tour.id,
 			stepIndex: 0,
-			stepCount: tour.steps.length
+			stepCount: tour.steps.length,
+			stepId: tour.steps[0].id
 		});
 		return () => setProgress(null);
 	}, [isPractice, setProgress, tour]);
 
 	return useCallback(
 		(event: TourEvent, step?: TourStep) => {
-			if (event !== 'step_viewed' || !tour || !isPractice || !step) {
+			if (!tour || !isPractice || !step) {
+				return;
+			}
+			if (event === 'step_completed') {
+				// Left by Next: no step is on screen until the next one shows.
+				setProgress((progress) =>
+					progress?.tourId === tour.id && progress.stepId === step.id
+						? { ...progress, stepId: undefined }
+						: progress
+				);
+				return;
+			}
+			if (event !== 'step_viewed') {
 				return;
 			}
 			const stepIndex = tour.steps.findIndex(
@@ -60,7 +84,8 @@ export const usePracticeTourProgressReporter = (
 				setProgress({
 					tourId: tour.id,
 					stepIndex,
-					stepCount: tour.steps.length
+					stepCount: tour.steps.length,
+					stepId: step.id
 				});
 			}
 		},

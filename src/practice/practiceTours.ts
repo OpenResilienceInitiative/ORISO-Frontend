@@ -1,5 +1,5 @@
 import { isTourAvailable } from '../components/productTour/tourEngine';
-import type { TourDefinition } from '../components/productTour/types';
+import type { TourDefinition, TourStep } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
 	PRACTICE_ENQUIRIES_ROUTE,
@@ -10,6 +10,7 @@ import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
@@ -272,6 +273,13 @@ const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
  * the explanation tour it replaces where practice is open; no card of its
  * own.
  */
+/** The practice call needs calls and group video calls switched on. */
+const CIRCLE_CALL_WHEN: TourStep['when'] = [
+	{ flag: 'featureCallsEnabled' },
+	{ flag: 'featureVideoCallsEnabled' },
+	{ flag: 'featureVideoCallsGroupChatsEnabled' }
+];
+
 export const practiceGroupCircleTour: TourDefinition = {
 	id: PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	version: GROUP_CIRCLE_TOUR_VERSION,
@@ -324,8 +332,10 @@ export const practiceGroupCircleTour: TourDefinition = {
 		{
 			// The counsellor fills what "Erstellen" needs, e.g. the
 			// Beratungsstelle when she works for several: the card is the
-			// spotlight, so its fields and their menus stay usable.
-			id: 'configure',
+			// spotlight, so its fields and their menus stay usable. Its
+			// "Erstellen" is held until `settings`, which waits for the
+			// create: a create here would leave the card and stop the run.
+			id: PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
 			target: 'groupchat-circle-settings',
 			placement: 'right',
 			interactive: true,
@@ -369,8 +379,14 @@ export const practiceGroupCircleTour: TourDefinition = {
 		},
 		{
 			// The circle is running: no way back to the waiting room.
+			// The practice circle meets by video and its agency has no
+			// settings of its own, so the start opens the stage exactly when
+			// these tenant flags are not off (`GroupChatHeader`,
+			// `JoinGroupChatView`). Without them the stage steps are dropped
+			// and the tour ends at `done` instead of stopping the run.
 			id: 'stage',
 			hideBack: true,
+			when: CIRCLE_CALL_WHEN,
 			target: PRACTICE_CALL_TARGETS.stage,
 			placement: 'center',
 			titleKey: 'tour.groupCircle.step.practiceStage.title',
@@ -378,6 +394,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 		},
 		{
 			id: 'mute',
+			when: CIRCLE_CALL_WHEN,
 			target: PRACTICE_CALL_TARGETS.mute,
 			placement: 'top',
 			advanceOn: { type: 'click' },
@@ -386,6 +403,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 		},
 		{
 			id: 'camera',
+			when: CIRCLE_CALL_WHEN,
 			target: PRACTICE_CALL_TARGETS.camera,
 			placement: 'top',
 			advanceOn: { type: 'click' },
@@ -394,6 +412,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 		},
 		{
 			id: 'minimise',
+			when: CIRCLE_CALL_WHEN,
 			target: PRACTICE_CALL_TARGETS.minimise,
 			placement: 'top',
 			advanceOn: { type: 'click' },
@@ -403,6 +422,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 		{
 			// Back would point at the stage, which the dock replaced.
 			id: 'expand',
+			when: CIRCLE_CALL_WHEN,
 			hideBack: true,
 			target: PRACTICE_CALL_TARGETS.expand,
 			placement: 'top',
@@ -412,6 +432,7 @@ export const practiceGroupCircleTour: TourDefinition = {
 		},
 		{
 			id: 'leave',
+			when: CIRCLE_CALL_WHEN,
 			hideBack: true,
 			target: PRACTICE_CALL_TARGETS.leave,
 			placement: 'top',

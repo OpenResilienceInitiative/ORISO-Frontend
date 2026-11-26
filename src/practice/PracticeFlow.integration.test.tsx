@@ -796,6 +796,17 @@ const createOpenStartAndCall = async (
 	// The settings card: what "Erstellen" needs is filled in there, inside
 	// the spotlight; then Next.
 	const card = await expectStep(configureIndex);
+	// What Joyride reports when it shows the tooltip (the mock does not):
+	// the run's progress then names this step.
+	act(() => {
+		joyride!.onEvent({
+			action: 'update',
+			index: configureIndex,
+			lifecycle: 'tooltip',
+			status: 'running',
+			type: 'tooltip'
+		});
+	});
 	expect(joyride!.steps[configureIndex]).toMatchObject({
 		disableFocusTrap: true
 	});
@@ -816,6 +827,15 @@ const createOpenStartAndCall = async (
 		fireEvent.mouseDown(within(card!).getByRole('combobox'));
 		fireEvent.click(await screen.findByRole('option', { name: agency }));
 	}
+	// "Erstellen" sits in the card, but waits for its own step: a create
+	// here would leave the settings and stop the run at the next step.
+	const createInCard = document.querySelector<HTMLButtonElement>(
+		'[data-tour-target="groupchat-circle-create"]'
+	)!;
+	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+	expect(createInCard.disabled).toBe(true);
+	fireEvent.click(createInCard);
+	await expectStep(configureIndex);
 	pressNext(configureIndex);
 
 	// The real "Erstellen" of the settings; the circle is made in memory.

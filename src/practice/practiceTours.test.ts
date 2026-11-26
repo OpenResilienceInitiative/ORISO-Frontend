@@ -426,6 +426,45 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 		]);
 	});
 
+	const STAGE_STEP_IDS = [
+		'stage',
+		'mute',
+		'camera',
+		'minimise',
+		'expand',
+		'leave'
+	] as const;
+
+	it.each([
+		'featureCallsEnabled',
+		'featureVideoCallsEnabled',
+		'featureVideoCallsGroupChatsEnabled'
+	])(
+		'drops the call stage steps where %s is off: the start then opens no practice call',
+		(flag) => {
+			const ids = resolveTourSteps(tour, {
+				flags: { [flag]: false }
+			}).map((s) => s.id);
+			for (const id of STAGE_STEP_IDS) expect(ids).not.toContain(id);
+			expect(ids.slice(-2)).toEqual(['start', 'done']);
+		}
+	);
+
+	it('keeps the call stage steps while video calls in group chats are on or unset', () => {
+		expect(resolveTourSteps(tour, { flags: {} }).map((s) => s.id)).toEqual(
+			expect.arrayContaining([...STAGE_STEP_IDS])
+		);
+		expect(
+			resolveTourSteps(tour, {
+				flags: {
+					featureCallsEnabled: true,
+					featureVideoCallsEnabled: true,
+					featureVideoCallsGroupChatsEnabled: true
+				}
+			}).map((s) => s.id)
+		).toEqual(expect.arrayContaining([...STAGE_STEP_IDS]));
+	});
+
 	it('starts in the counsellor sessions, where "Erstellen" lives', () => {
 		expect(step('create').route).toBe('/sessions/consultant/sessionView');
 		expect(step('open-circle').route).toBe(
