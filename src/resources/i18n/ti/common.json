@@ -3379,9 +3379,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "ከም CSV ኣውርድ",
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
+				"hintMonth": "ንነፍሲ ወከፍ ሰሙን ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintWeek": "ንነፍሲ ወከፍ መዓልቲ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintYear": "ንነፍሲ ወከፍ ወርሒ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
 				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
 				"total": "ጠቕላላ"
 			},
@@ -3398,7 +3402,20 @@
 				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "ዝተሰረዙ",
+				"numberOfChatAppointments": "ቻት",
+				"numberOfOnsiteAppointments": "ብኣካል",
+				"numberOfPhoneAppointments": "ተሌፎን",
+				"numberOfVideoAppointments": "ቪድዮ"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "እዚ ወርሒ",
+					"currentWeek": "እዚ ሰሙን",
+					"lastMonth": "ዝሓለፈ ወርሒ",
+					"lastWeek": "ዝሓለፈ ሰሙን"
+				},
 				"currentMonth": "ናይ ሕጂ ወርሒ",
 				"currentWeek": "ናይ ሕጂ ሰሙን",
 				"currentYear": "ናይ ሕጂ ዓመት",
@@ -3410,7 +3427,17 @@
 				"lastMonth": "ዝሓለፈ ወርሒ",
 				"lastWeek": "ዝሓለፈ ሰሙን",
 				"lastYear": "ዝሓለፈ ዓመት",
-				"prefix": "ቁጽርታትኩም"
+				"offsetLabel": "እዋን",
+				"prefix": "ቁጽርታትኩም",
+				"unitLabel": "ኣሃዱ ግዜ",
+				"unitMonth": "ወርሒ",
+				"unitWeek": "ሰሙን",
+				"unitYear": "ዓመት"
+			},
+			"state": {
+				"empty": "ኣብዚ እዋን ገና ቁጽርታት የለን።",
+				"error": "ቁጽርታት ሕጂ ክጽዓኑ ኣይከኣሉን።",
+				"retry": "እንደገና ፈትን"
 			},
 			"title": "ስታቲስቲክስ ናተይ"
 		},

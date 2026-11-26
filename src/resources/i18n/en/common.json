@@ -3388,9 +3388,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Download as CSV",
 					"label": "Download Excel file"
 				},
 				"filename": "Statistics online consulting",
+				"hintMonth": "One row per week plus a total row. Also opens in Excel.",
+				"hintWeek": "One row per day plus a total row. Also opens in Excel.",
+				"hintYear": "One row per month plus a total row. Also opens in Excel.",
 				"title": "You can download your statistics for your selected consulting period here:",
 				"total": "Total"
 			},
@@ -3407,7 +3411,20 @@
 				"period": "Period",
 				"videoCallDuration": "Duration of video calls in minutes:seconds"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Cancelled",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "On site",
+				"numberOfPhoneAppointments": "Phone",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "This month",
+					"currentWeek": "This week",
+					"lastMonth": "Last month",
+					"lastWeek": "Last week"
+				},
 				"currentMonth": "this month",
 				"currentWeek": "this week",
 				"currentYear": "this year",
@@ -3419,7 +3436,17 @@
 				"lastMonth": "last month",
 				"lastWeek": "last week",
 				"lastYear": "last year",
-				"prefix": "Your numbers for"
+				"offsetLabel": "Period",
+				"prefix": "Your numbers for",
+				"unitLabel": "Time unit",
+				"unitMonth": "Month",
+				"unitWeek": "Week",
+				"unitYear": "Year"
+			},
+			"state": {
+				"empty": "There are no figures for this period yet.",
+				"error": "The figures could not be loaded right now.",
+				"retry": "Try again"
 			},
 			"title": "My statistics"
 		},
