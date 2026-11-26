@@ -9,6 +9,8 @@
 # testing
 /coverage
 /cypress/screenshots
+/cypress/screenshots-quarantine
+/cypress/videos-quarantine
 /cypress/videos
 /playwright-report
 /test-results
