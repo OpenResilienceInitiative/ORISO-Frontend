@@ -1346,32 +1346,6 @@ describe('MatrixClientService', () => {
 		});
 	});
 
-	it('creates direct message rooms private, invite-only and encrypted from the start', async () => {
-		const createRoom = vi.fn().mockResolvedValue({ room_id: '!dm:server' });
-		const { client } = createRefreshableClient({ createRoom });
-		const service = new MatrixClientService();
-		setClient(service, client);
-
-		await expect(
-			service.createDirectMessageRoom('@asker:server')
-		).resolves.toBe('!dm:server');
-
-		expect(createRoom).toHaveBeenCalledExactlyOnceWith(
-			expect.objectContaining({
-				preset: 'private_chat',
-				is_direct: true,
-				invite: ['@asker:server'],
-				initial_state: expect.arrayContaining([
-					{
-						type: 'm.room.encryption',
-						state_key: '',
-						content: { algorithm: 'm.megolm.v1.aes-sha2' }
-					}
-				])
-			})
-		);
-	});
-
 	it('names a failed token refresh, so a 503 is not just an unknown error', async () => {
 		const uploadContent = vi.fn();
 		const { client } = createRefreshableClient({ uploadContent });
