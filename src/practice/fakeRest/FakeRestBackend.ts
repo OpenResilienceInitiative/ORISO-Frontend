@@ -29,6 +29,8 @@ import {
 	PRACTICE_TOPIC_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import { PracticeBlockedRequestError } from '../networkGuard';
+import { isSafeMethod, redactUrl } from '../requestPolicy';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -100,7 +102,11 @@ export interface FakeRestBackendOptions {
 }
 
 export interface HandleOptions {
-	/** Answer only requests addressed to a practice id or room. */
+	/**
+	 * Answer only requests addressed to a practice id or room. A view-wide
+	 * practice write then rejects with `PracticeBlockedRequestError` instead
+	 * of reaching the real backend.
+	 */
 	practiceAddressedOnly?: boolean;
 }
 
@@ -539,6 +545,20 @@ export const createFakeRestBackend = ({
 			(entry) => entry.type === 'APPOINTMENT' && !entry.colleagueId
 		);
 
+	/**
+	 * One appointment with the advice seeker of the practice case; never the
+	 * supervisor's (FE#2545), which the enquiry routes must not move, cancel
+	 * or invite to.
+	 */
+	const enquiryAppointment = (id: unknown) =>
+		typeof id === 'string' && isPracticeId(id)
+			? appointments().find(
+					(entry) =>
+						entry.id === id &&
+						entry.sessionId === practiceCase.session.id
+				)
+			: undefined;
+
 	/** Entries that overlap [from, to); without a range, all of them. */
 	const entriesIn = (url: URL) => {
 		const from = Date.parse(url.searchParams.get('from') || '');
@@ -574,7 +594,11 @@ export const createFakeRestBackend = ({
 		start?: string,
 		end?: string
 	) => {
-		if (!isCalendarEntry(id, type) || !start || !end) return null;
+		const known =
+			type === 'APPOINTMENT'
+				? !!enquiryAppointment(id)
+				: isCalendarEntry(id, type);
+		if (!known || !start || !end) return null;
 		calendar = calendar.map((entry) =>
 			entry.id === id ? { ...entry, start, end } : entry
 		);
@@ -586,10 +610,7 @@ export const createFakeRestBackend = ({
 	 * and points at a reserved host, so a copied practice link leads nowhere.
 	 */
 	const createInvitation = (body: Record<string, unknown> | null) => {
-		const appointment = calendar.find(
-			(entry) =>
-				entry.type === 'APPOINTMENT' && entry.id === body?.appointmentId
-		);
+		const appointment = enquiryAppointment(body?.appointmentId);
 		if (!appointment) return noContent();
 		const id = calendarId('invitation');
 		const medium = typeof body?.medium === 'string' ? body.medium : 'VIDEO';
@@ -828,12 +849,10 @@ export const createFakeRestBackend = ({
 				`/${PRACTICE_STRING_SEGMENT}/cancel`
 			),
 			handle: (_request, [, id, appointmentId]) => {
-				if (
-					!isCase(id) ||
-					!isCalendarEntry(appointmentId, 'APPOINTMENT')
-				)
-					return null;
-				const entry = calendar.find((e) => e.id === appointmentId)!;
+				const entry = isCase(id)
+					? enquiryAppointment(appointmentId)
+					: undefined;
+				if (!entry) return null;
 				calendar = calendar.filter((e) => e.id !== appointmentId);
 				hooks.onAppointmentCancelled?.(appointmentId);
 				return ok({ ...asAppointment(entry), status: 'CANCELLED' });
@@ -1300,14 +1319,26 @@ export const createFakeRestBackend = ({
 			const request = parseRequest(input, init);
 			for (const route of routes) {
 				if (route.method !== request.method) continue;
+				const match = request.url.pathname.match(route.path);
+				if (!match) continue;
 				if (
 					route.viewWide &&
 					options.practiceAddressedOnly &&
 					!route.duringDrain?.(request)
-				)
+				) {
+					// A view-wide practice write carries no practice id, so
+					// forwarding it would reach the real backend. A route with
+					// `duringDrain` already decides which requests are its own.
+					if (!route.duringDrain && !isSafeMethod(request.method)) {
+						throw new PracticeBlockedRequestError({
+							method: request.method,
+							url: redactUrl(request.url.href),
+							channel: 'fetch',
+							reason: 'default-deny'
+						});
+					}
 					continue;
-				const match = request.url.pathname.match(route.path);
-				if (!match) continue;
+				}
 				const response = await route.handle(request, match);
 				if (response) {
 					served.push({

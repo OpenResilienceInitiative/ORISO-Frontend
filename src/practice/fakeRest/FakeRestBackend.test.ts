@@ -14,6 +14,7 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
 import { createTestScript } from '../script/scriptTestSupport';
+import { PracticeBlockedRequestError } from '../networkGuard';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
 const script = createTestScript('de');
@@ -1024,6 +1025,87 @@ describe('FakeRestBackend: the Supervision topic tour (FE#2545)', () => {
 			)?.status
 		).toBe(204);
 		expect(onSupervisorAppointmentBooked).not.toHaveBeenCalled();
+	});
+
+	it('keeps the supervisor appointment out of the enquiry appointment writes', async () => {
+		const onAppointmentCancelled = vi.fn();
+		const onInvitationCreated = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onAppointmentCancelled, onInvitationCreated }
+		});
+		await acceptCase(backend);
+		const robins = await json(
+			await backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'VIDEO'
+				})
+			)
+		);
+		const enquiryAppointments = endpoints.sessionAppointments(ID);
+
+		expect(
+			await backend.handle(
+				send(`${enquiryAppointments}/${robins.id}`, 'PUT', {
+					startTime: '2026-11-27T09:00:00.000Z',
+					endTime: '2026-11-27T10:00:00.000Z'
+				})
+			)
+		).toBeNull();
+		expect(
+			await backend.handle(
+				send(`${enquiryAppointments}/${robins.id}/cancel`, 'POST')
+			)
+		).toBeNull();
+		expect(
+			(
+				await backend.handle(
+					send(endpoints.sessionDirectInvitations(ID), 'POST', {
+						appointmentId: robins.id
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(onAppointmentCancelled).not.toHaveBeenCalled();
+		expect(onInvitationCreated).not.toHaveBeenCalled();
+		const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.calendarBase}/entries?${week}`)
+				)
+			)
+		).toEqual([robins]);
+	});
+
+	it('blocks the supervisor appointment POST while the practice drains, so it never reaches the real backend', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		await expect(
+			backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'VIDEO'
+				}),
+				undefined,
+				{ practiceAddressedOnly: true }
+			)
+		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		expect(onSupervisorAppointmentBooked).not.toHaveBeenCalled();
+		// Reads that are not the practice's still go to the real backend.
+		expect(
+			await backend.handle(new Request(colleagues), undefined, {
+				practiceAddressedOnly: true
+			})
+		).toBeNull();
 	});
 
 	it('starts without supervisor and appointment again on reset', async () => {
