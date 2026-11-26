@@ -2769,23 +2769,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"addSupervisor": {
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."
-				},
-				"supervisorReply": {
-					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."
-				},
-				"standingAssignment": {
-					"intro": "Hat deine Administration dir eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür musst du nichts tun."
-				},
-				"done": {
-					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
-				}
-			}
-		},
 		"caseHandover": {
 			"step": {
 				"intro": {
@@ -2805,6 +2788,36 @@
 				},
 				"done": {
 					"intro": "Eigene Fälle bietest du in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragst du über die Personensuche an. Den Stand findest du im Zeitstrahl."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du bietest deine Beratung Alex an und fragst Zugriff auf einen Fall von Alex an."
+				},
+				"practiceSupervisor": {
+					"intro": "Klicke auf „+“ und dann auf „Supervisor verwalten“. Wähle Robin aus, nenne kurz den Grund und bestätige."
+				},
+				"practiceSupervisorReply": {
+					"intro": "Robin hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei, die ratsuchende Person sieht sie nicht."
+				},
+				"practiceOffer": {
+					"intro": "Klicke auf „+“ und dann auf „Beratung übergeben“. Wähle Alex und einen Grund aus und klicke auf „Übergabe anbieten“."
+				},
+				"practiceOfferPending": {
+					"intro": "Jetzt entscheidet Alex, bis dahin bleibst du zuständig, und mit „Angebot zurückziehen“ nimmst du es zurück. Schließe das Fenster mit „Schließen“ und gehe weiter."
+				},
+				"practiceSearch": {
+					"intro": "Gib hier „Alex“ ein und bestätige mit dem Haken ✓ oder der Eingabetaste. Die Liste zeigt dann den Fall von Alex, auf den du Zugriff anfragen darfst."
+				},
+				"practiceRequestAccess": {
+					"intro": "Klicke beim Fall von Alex auf „Zugriff anfragen“. Der Fall öffnet sich, sein Inhalt bleibt aber verborgen."
+				},
+				"practiceRequest": {
+					"intro": "Klicke auf „Schritt für Schritt zeigen“, wähle einen Grund und klicke auf „Weiter“. Beschreibe den Grund kurz und klicke auf „Zugriff anfragen“."
+				},
+				"practiceStatus": {
+					"intro": "Am Fall steht jetzt „Warten auf Freigabe“, bis Alex entscheidet. Wie Alex auf dein Angebot und deine Anfrage antwortet, siehst du im Zeitstrahl."
+				},
+				"practiceDone": {
+					"intro": "Du hast deine Beratung angeboten und Zugriff auf einen Fall angefragt. Mit der Schaltfläche unten beendest du die Übung."
 				}
 			}
 		},
@@ -2824,6 +2837,33 @@
 				},
 				"done": {
 					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du legst einen Übungs-Gesprächskreis an und startest ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klick in deiner Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wähl unter „Thema / Fachbereich“ das Übungsthema und klick dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"intro": "Klick auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"intro": "Dein Übungskreis steht jetzt in deiner Beratungsliste. Klick darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"intro": "Teilnehmende warten hier, bis du beginnst. Klick auf „Video-Call starten“."
+				},
+				"practiceCall": {
+					"intro": "Im echten Gesprächskreis startest du hier den Video-Call. Klick darauf: In der Übung siehst du nur, was passiert, ohne Kamera und Mikrofon."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Du hast einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilst du vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"intro": "Wähl die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keins gesetzt ist, das Thema. Prüf Datum, Uhrzeit und Dauer. Für die Übung kannst du den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},
@@ -2876,6 +2916,27 @@
 				},
 				"links": {
 					"intro": "Deine Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du trägst Termine, einen Terminlink und eine Sperrzeit ein und schaltest die automatische Bestätigung ein."
+				},
+				"practiceAppointment": {
+					"intro": "Klicke auf „Neu“, wähle unter „Beratung“ die erfundene ratsuchende Person und klicke auf „Anlegen“. „Weitere Personen per Link einladen“ bleibt diesmal aus."
+				},
+				"practiceInvitation": {
+					"intro": "Öffne noch einmal „Neu“, wähle dieselbe Person, schalte „Weitere Personen per Link einladen“ ein und klicke auf „Anlegen“. Der Link, den du danach siehst, ist ein Übungslink und führt nirgendwohin."
+				},
+				"practiceCancel": {
+					"intro": "Unter „Als Nächstes“ stehen deine neuen Termine. Klicke einen an, wähle „Absagen“ und bestätige."
+				},
+				"practiceBlocker": {
+					"intro": "In einer Sperrzeit kann niemand bei dir buchen. Öffne „Neu“, wechsle zum Reiter „Sperrzeit“ und klicke auf „Eintragen“."
+				},
+				"practiceAutoAccept": {
+					"intro": "Öffne ⋮ und dort „Sprechstunden“, schalte „Buchungen automatisch bestätigen“ ein und klicke auf „Sprechstunden speichern“. Dann sind Buchungen in deinen Sprechstunden sofort fest."
+				},
+				"practiceDone": {
+					"intro": "Du hast Termine und einen Terminlink angelegt, einen Termin abgesagt, eine Sperrzeit eingetragen und Buchungen automatisch bestätigt. Im echten Kalender erfährt die ratsuchende Person von jedem Termin im Chat."
 				}
 			}
 		},
@@ -3125,8 +3186,7 @@
 	"practice": {
 		"cards": {
 			"summary": {
-				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
-				"supervision": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen."
+				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben."
 			},
 			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
 			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
@@ -3135,6 +3195,9 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."
+		},
+		"callStart": {
+			"description": "Hier startet jetzt der Video-Call für deinen Gesprächskreis. In der Übung ohne Kamera und Mikrofon."
 		}
 	},
 	"counselling": {

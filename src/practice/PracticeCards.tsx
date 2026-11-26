@@ -19,15 +19,13 @@ import { canStartPracticeTourInViewport } from './practiceViewport';
 import {
 	isPracticeCardTourId,
 	PRACTICE_ACCEPT_TOUR_ID,
-	PRACTICE_SUPERVISION_TOUR_ID,
 	type PracticeCardTourId
 } from './practiceTourIds';
 
 // Compact Help copy relies on the shared fictional-case caption above it.
 // Standalone cards retain the complete safety description from the registry.
 const helpSummaryKeys: Record<PracticeCardTourId, string> = {
-	[PRACTICE_ACCEPT_TOUR_ID]: 'practice.cards.summary.accept',
-	[PRACTICE_SUPERVISION_TOUR_ID]: 'practice.cards.summary.supervision'
+	[PRACTICE_ACCEPT_TOUR_ID]: 'practice.cards.summary.accept'
 };
 
 type ProgressItem = Pick<
@@ -40,7 +38,7 @@ export interface PracticeCardsProps {
 	tours: TourDefinition[];
 	/** Phone viewport: practice is desktop only, so Start is off and a hint shows. */
 	isPhone: boolean;
-	/** The supervision plus is only interactive in the wide desktop layout. */
+	/** Some flows need the wide desktop layout (`canStartPracticeTourInViewport`). */
 	isWideDesktop?: boolean;
 	loadProgress: () => Promise<ProgressItem[]>;
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;

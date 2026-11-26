@@ -5,6 +5,20 @@ import type { TourDefinition } from '../types';
 type FormatTenant = Parameters<typeof getConversationFormatAvailability>[0];
 
 /**
+ * Version 2 (FE#2545): where the practice area is open the tour runs as a
+ * practice flow (`practiceGroupCircleTour`) under this id and version, so the
+ * Help list shows one status for both renderings.
+ */
+export const GROUP_CIRCLE_TOUR_VERSION = 2;
+
+/**
+ * Tour event (`emitTourEvent`) of the circle settings screen: it opened for
+ * a new circle. The practice flow waits for it after the topic was picked;
+ * the screen has no route of its own to wait for.
+ */
+export const GROUP_CIRCLE_SETTINGS_OPENED = 'group-circle:settings-opened';
+
+/**
  * The tour is offered exactly when the create flow offers the circle
  * format: `featureSelfHelpGroupsEnabled ?? featureGroupChatV2Enabled ===
  * true` (unset = OFF), refined by the counsellor's agencies. Agency
@@ -33,7 +47,7 @@ export const isGroupCircleTourAvailable = ({
  */
 export const consultantGroupCircleTour: TourDefinition = {
 	id: 'consultant-group-circle',
-	version: 1,
+	version: GROUP_CIRCLE_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
 	titleKey: 'tour.groupCircle.title',

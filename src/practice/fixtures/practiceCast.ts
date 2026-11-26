@@ -1,6 +1,10 @@
 import { practiceUserId } from '../practiceIds';
 
-export type PracticePersonKey = 'asker' | 'colleague' | 'supervisor';
+export type PracticePersonKey =
+	| 'asker'
+	| 'colleague'
+	| 'supervisor'
+	| 'colleagueClient';
 
 /** What never changes between runs and languages. */
 export interface PracticePersonIdentity {
@@ -41,6 +45,13 @@ export const PRACTICE_CAST = {
 		username: 'robin-uebung',
 		firstName: 'Robin',
 		matrixUserId: practiceUserId('supervisor')
+	},
+	/** The advice seeker of the colleague's case ("Fälle übergeben", FE#2545). */
+	colleagueClient: {
+		id: 'practice-colleague-client',
+		username: 'kim-uebung',
+		firstName: 'Kim',
+		matrixUserId: practiceUserId('colleague-client')
 	}
 } as const satisfies Record<PracticePersonKey, PracticePersonIdentity>;
 

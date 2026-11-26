@@ -108,7 +108,7 @@ describe('practice tour progress', () => {
 		const { store } = setup(undefined);
 
 		store.set(practiceTourProgressAtom, {
-			tourId: 'consultant-practice-supervision',
+			tourId: 'consultant-case-handover',
 			stepIndex: 1,
 			stepCount: 5
 		});

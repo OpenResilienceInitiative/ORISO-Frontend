@@ -49,6 +49,8 @@ interface HelpScenario {
 	supervision?: boolean;
 }
 let savedPreference = false;
+/** The signed-in user's saved tour progress, as the server returns it. */
+let savedProgress: unknown[] = [];
 
 const renderHelp = ({
 	allHelp = false,
@@ -127,6 +129,7 @@ const renderHelp = ({
 
 beforeEach(() => {
 	savedPreference = false;
+	savedProgress = [];
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async (input: Request) => {
@@ -135,6 +138,11 @@ beforeEach(() => {
 					await input.text()
 				).walkThroughEnabled;
 				return new Response('{}', { status: 200 });
+			}
+			if (input.url.includes('/tutorials/progress')) {
+				return new Response(JSON.stringify(savedProgress), {
+					status: 200
+				});
 			}
 			return new Response('[]', { status: 200 });
 		})
@@ -175,7 +183,7 @@ describe('Help learning card', () => {
 		await screen.findAllByRole('button', { name: 'Übung starten' });
 		expect(
 			screen.getAllByText(/Alle Personen und Inhalte sind erfunden\./)
-		).toHaveLength(2);
+		).toHaveLength(1);
 		cleanup();
 		renderHelp();
 		await screen.findAllByRole('button', { name: 'Übung starten' });
@@ -202,9 +210,14 @@ describe('Help learning card', () => {
 				name: 'Einführung automatisch starten'
 			})
 		).toBeTruthy();
+		// One practice card: "Supervisor hinzufügen" is part of the topic
+		// tour "Fälle übergeben" now (FE#2545).
 		expect(
 			content.getAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(2);
+		).toHaveLength(1);
+		expect(
+			content.getByRole('heading', { name: 'Fälle übergeben' })
+		).toBeTruthy();
 		// The introduction plus every topic tour of the role, one row each;
 		// the topic packages add more rows, so only the floor is fixed here.
 		expect(
@@ -288,11 +301,7 @@ describe('Help learning card', () => {
 				'Übung starten',
 				'consultant-practice-accept'
 			],
-			[
-				'Übung: Supervision hinzufügen',
-				'Übung starten',
-				'consultant-practice-supervision'
-			]
+			['Fälle übergeben', 'Starten', 'consultant-case-handover']
 		]) {
 			const tile = screen
 				.getByRole('heading', { name: heading })
@@ -321,23 +330,49 @@ describe('Help learning card', () => {
 		).toBe(true);
 	});
 
-	it('hides supervision when the tenant switched it off', async () => {
-		renderHelp({ supervision: false });
-		await screen.findByRole('button', { name: 'Übung starten' });
+	it.each([true, false])(
+		'lists no Supervision card whether supervision is on (%s) or off: "Fälle übergeben" holds it',
+		async (supervision) => {
+			renderHelp({ supervision });
+			await screen.findByRole('button', { name: 'Übung starten' });
+			expect(
+				screen.queryByRole('heading', { name: /Supervision/ })
+			).toBeNull();
+			expect(
+				screen.getByRole('heading', { name: 'Fälle übergeben' })
+			).toBeTruthy();
+		}
+	);
+
+	it('keeps a completed former Supervision card as a completed "Fälle übergeben"', async () => {
+		savedProgress = [
+			{
+				tourId: 'consultant-practice-supervision',
+				tourVersion: 1,
+				surface: 'frontend',
+				status: 'completed'
+			}
+		];
+		renderHelp();
+		await screen.findAllByRole('button', { name: 'Übung starten' });
+		const tile = screen
+			.getByRole('heading', { name: 'Fälle übergeben' })
+			.closest('li')!;
+		await waitFor(() =>
+			expect(within(tile).getByText('Abgeschlossen')).toBeTruthy()
+		);
 		expect(
-			screen.queryByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			})
-		).toBeNull();
+			within(tile).getByRole('button', { name: 'Neu starten' })
+		).toBeTruthy();
 	});
 
 	it.each([
-		{ width: 1199, acceptDisabled: false, supervisionDisabled: true },
-		{ width: 1200, acceptDisabled: false, supervisionDisabled: false },
-		{ width: 390, acceptDisabled: true, supervisionDisabled: true }
+		{ width: 1199, acceptDisabled: false },
+		{ width: 1200, acceptDisabled: false },
+		{ width: 390, acceptDisabled: true }
 	])(
 		'preserves the practice viewport gates at $width px',
-		async ({ width, acceptDisabled, supervisionDisabled }) => {
+		async ({ width, acceptDisabled }) => {
 			renderHelp({ width });
 			await screen.findAllByRole('button', { name: 'Übung starten' });
 			const disabled = (name: string) =>
@@ -347,9 +382,6 @@ describe('Help learning card', () => {
 					).getByRole('button') as HTMLButtonElement
 				).disabled;
 			expect(disabled('Übung: Anfrage annehmen')).toBe(acceptDisabled);
-			expect(disabled('Übung: Supervision hinzufügen')).toBe(
-				supervisionDisabled
-			);
 		}
 	);
 

@@ -82,15 +82,15 @@ A missing required control interrupts the run without a terminal progress
 write; it cannot fall through to the explanations and record completion.
 Regular tours keep their existing missing-target skip policy. Proof:
 `ProductTourAdapter.component.test.tsx` records the progress HTTP boundary for
-F2 with absent controls, and `tourEngine.test.ts` covers a disappearing target.
+the supervisor steps of "Fälle übergeben" with absent controls, and `tourEngine.test.ts` covers a disappearing target.
 
-**Window size.** F1 starts in the real controls' `fromL` layout; F2 needs
-`fromXL`, where the real supervisor plus is interactive. A narrower F2 card
-explains that the browser window needs widening, and the tour host rejects a
-stale launch request too. Resizing below the supported range discards that
+**Window size.** F1 starts in the real controls' `fromL` layout; the
+practice "Fälle übergeben" needs `fromXL`, where the real supervisor plus is
+interactive. Below it the Help tile runs the explanation tour, and the tour
+host rejects a stale practice launch request too. Resizing below the supported range discards that
 request, so widening the window requires another deliberate Start. The phone
 hint and F1's existing range are preserved.
-Proof: `PracticeOverviewSection.test.tsx` checks 1199/1200 and F1 at 1024;
+Proof: `PracticeOverviewSection.test.tsx` checks F1 at 1024, 1199 and 1200;
 `PracticeFlow.integration.test.tsx` checks the actual host boundary.
 
 **Restart.** The banner asks the tour host for a new run of the same tour. The
@@ -112,7 +112,8 @@ case views get the fake Matrix service, the practice sessions store, topics and
 notifications. Its `fetch` patch is page-wide, so the shell's requests for
 practice endpoints are answered from memory too. The shell around it stays on
 the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks F1 (both
-variants) and F2 through the real navigation bar, header, banner and tour host.
+variants) and "Fälle übergeben" through the real navigation bar, header,
+banner and tour host.
 
 **Permanent controls.** The banner uses a page-level portal and the theme's
 tooltip layer, above the supervisor dialog's modal layer. The picker and banner
@@ -148,7 +149,94 @@ The heartbeat and the loss/DPA notices keep the real state. Proof:
 `PracticeFlow.integration.test.tsx` (no availability PUT or heartbeat POST, no
 `oriso_liveChat*` storage write, real state shown again after the exit).
 
-Decided (Frank, 2026-11-25, FE#2545): the real heartbeat is allowlisted, so a
+**Group-call start in practice (FE#2545, D3).** The Gesprächskreis practice
+tour creates, opens and starts a circle in the fake backend, then asks the
+counsellor to use the real call button. `GroupChatHeader`'s call handler asks
+`isPracticeMode()` first and calls `simulatePracticeCallStart` instead: no
+`getUserMedia`, no `callManager`, no request. `PracticeCallStartDialog`
+(mounted by the sandbox, an `M3Dialog`) says what the real button does and
+closes with one button; the tour advances on `practice:circle-call-started`.
+Proof: `practiceCallStart.test.tsx`, `GroupChatHeader/practiceCallGuard.test.tsx`
+and the two Gesprächskreis runs in `PracticeFlow.integration.test.tsx`.
+
+**Kalender in practice (FE#2545).** The Kalender topic tour runs on the
+real "Meine Termine" with the accepted practice case as the counsellor's
+one conversation. The counsellor enters an appointment, a second one with
+"Weitere Personen per Link einladen" (the Terminlink points at the reserved
+host `practice.invalid`), cancels one from "Als Nächstes", enters a
+Sperrzeit and switches "Buchungen automatisch bestätigen" on in the
+Sprechstunden. The fake backend answers every read of the page (entries,
+proposals, colleagues (none), auto-accept, sync, Sprechstunden and one-offs,
+working hours, direct links, upcoming appointments) and keeps every write in
+memory; the appointment notices go to the practice room. No allowlist entry
+was added. Real reads that stay real: the counsellor's own agency settings
+(`/service/agencies/<ids>`, they decide "Direkteinladung erlauben" and are
+cached page-wide) and static assets. Known limit: the navigation's proposal
+count takes the practice calendar's count (0) and keeps it after the exit
+until its next load (at most a minute). Proof: the calendar tests in
+`FakeRestBackend.test.ts`, the Kalender run in
+`PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
+Calendar`.
+
+**Fälle übergeben in practice (FE#2545).** The topic tour
+`consultant-case-handover` (version 2) runs as a practice flow where the
+practice area is open and the window is `fromXL`; otherwise its explanation
+tour runs, as before. It starts in the accepted practice case. The counsellor
+adds Robin through "+" → "Supervisor verwalten" (only where the Träger has
+supervision and its one-on-one chats; otherwise those two steps drop out),
+offers the case to Alex through "+" → "Beratung übergeben" (a colleague, a
+reason, "Übergabe anbieten"; the state dialog shows "Angebot zurückziehen"),
+types "Alex" into the real search of the sessions list and confirms it with
+✓ or Enter, clicks "Zugriff anfragen" on Alex's case and sends the request through the case curtain
+(reason, text, "Zugriff anfragen"). Practice conversations get the same "+"
+menu as real ones now (`SessionHeaderComponent`, `canHandOverHere`). The fake
+backend answers the handover search (`/service/users/case-handover/candidates`),
+the reasons, the case status, recipients, the offer, its withdrawal and the
+access request in memory; the colleague's case (`-3`, room `!practice-5`)
+opens by id and by room. No allowlist entry was added.
+
+- **Folded card.** Frank's decision: the former practice card "Supervisor
+  hinzufügen" (`consultant-practice-supervision`, F2) is part of this tour; it
+  is no card any more and no longer an allowed progress id. Its
+  "standing assignment" explanation step was dropped (the handover steps
+  cover who stays responsible). Old completion: `withFoldedPracticeProgress`
+  (in `versionedTourProgressRepository.getProgress`) reads a completed
+  `consultant-practice-supervision` record as a completed current
+  `consultant-case-handover`, unless that record is already completed or
+  skipped. It is read-only: nothing is written and the old record stays.
+- **Bug fixed.** Before, the handover search and the reasons were not
+  practice-addressed: while practising they went to the real network, and
+  real colleagues' takeable cases could show in the practice list. Both are
+  answered in memory now.
+- **Bug fixed.** The real handover hook remembers each offer and request in a
+  module-level store (`caseHandoverOperationStore`) to retry it and to show a
+  pending offer again. Practice ids are fixed, so a practice offer showed as
+  pending in the next run. `practiceMode` forgets every practice operation on
+  enter, restart and exit (`clearCaseHandoverSessionOperations`).
+
+- **Covered controls (Dev click-through).** (1) The search menu lies over
+  the list while it is open, so "Zugriff anfragen" was under it. The search
+  step now waits for `practice:colleague-case-listed`: the practice world
+  hears the toolbar's tour events `sessions:search-opened` /
+  `sessions:search-closed` (`SessionsListToolbar`, emitted for every
+  close with a name or person; nobody listens outside a tour) and emits it
+  once the menu is closed and the last name search found the colleague's
+  case, in either order. (2) The curtain is as tall as the window, so
+  `placement: 'auto'` fell back to a centred tooltip: Joyride then draws no
+  spotlight and its overlay covered the wizard. The request step is placed
+  `left`. The story `Hand over cases` clicks steps 6 to 8 only where
+  `document.elementFromPoint` hits the control itself.
+- **Known limit.** The compact "Zugriff anfragen" button of a session card
+  is truncated to "Zugriff an…" (Chromium, 1440 px: label 111 px in an 80
+  px box), in practice and in real use; its accessible name is complete,
+  and the tour quotes the full label.
+
+Proof: the "Fälle übergeben" tests in `FakeRestBackend.test.ts`,
+`practiceFoldedProgress.test.ts`, `practiceMode.test.ts`, the three runs in
+`PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
+Hand over cases`.
+
+, so a
 counsellor who is really live-chat available stays in the real queue while
 practising. Open decisions (Frank): a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
@@ -189,8 +277,9 @@ the card click to the end of the practice:
    snapshot before the start (differences are reported as key names, never values);
 4. the real Anfragen list afterwards holds no practice id or name.
 
-Runs: F1 to the end, F1 ended half way from the banner, F2 to the end (skipped
-with a message when the tenant has no supervision). F1 has eight steps with the
+Runs: F1 to the end, F1 ended half way from the banner, "Fälle übergeben" to
+the end from its topic tour tile (skipped with a message when the tile is not
+offered; ten steps with supervision, eight without, reported as a variant). F1 has eight steps with the
 Träger's Team-Besprechung and six without; the run reports which variant the
 tenant has, so the other one needs a tenant with the other setting. The run marks
 the account's practice tours as completed (the one allowed write): use a test

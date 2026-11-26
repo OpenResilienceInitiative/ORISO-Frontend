@@ -13,7 +13,33 @@ export const PRACTICE_TOUR_EVENTS = {
 	liveChatAvailable: 'practice:live-chat-available',
 	/** Emitted on the accept; no step waits for it yet (the accept step
 	 * advances on its click). Kept as the contract for one that will. */
-	enquiryAccepted: 'practice:enquiry-accepted'
+	enquiryAccepted: 'practice:enquiry-accepted',
+	/** The practice Gesprächskreis was created (FE#2545). */
+	circleCreated: 'practice:circle-created',
+	/** The practice Gesprächskreis was started by its moderator (FE#2545). */
+	circleStarted: 'practice:circle-started',
+	/** A call button was used in practice: a simulated start, no call (D3). */
+	circleCallStarted: 'practice:circle-call-started',
+	/** The practice calendar (FE#2545): an appointment with the practice
+	 * advice seeker was entered. */
+	calendarAppointmentCreated: 'practice:calendar-appointment-created',
+	/** A Terminlink ("Weitere Personen per Link einladen") was made. */
+	calendarInvitationCreated: 'practice:calendar-invitation-created',
+	/** A practice appointment was cancelled. */
+	calendarAppointmentCancelled: 'practice:calendar-appointment-cancelled',
+	/** A Sperrzeit was entered. */
+	calendarBlockerCreated: 'practice:calendar-blocker-created',
+	/** The Sprechstunden were saved with automatic confirmation on. */
+	calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+	/** "Fälle übergeben" (FE#2545): the own case was offered to Alex. */
+	caseHandoverOffered: 'practice:case-handover-offered',
+	/**
+	 * The sessions search closed on a list with the colleague's case: found
+	 * by name, and the search menu no longer covers it.
+	 */
+	colleagueCaseListed: 'practice:colleague-case-listed',
+	/** Access to the colleague's case was requested. */
+	caseHandoverRequested: 'practice:case-handover-requested'
 } as const;
 
 export type PracticeTourEventName =

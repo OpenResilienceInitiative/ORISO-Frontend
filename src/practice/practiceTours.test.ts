@@ -9,7 +9,10 @@ import ruTranslations from '../resources/i18n/ru/common.json';
 import tiTranslations from '../resources/i18n/ti/common.json';
 import trTranslations from '../resources/i18n/tr/common.json';
 import { frontendTours } from '../components/productTour/tourDefinitions';
-import { resolveTourSteps } from '../components/productTour/tourEngine';
+import {
+	effectivePlacement,
+	resolveTourSteps
+} from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
@@ -22,11 +25,26 @@ import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
 	practiceAcceptTour,
+	practiceCalendarTour,
+	practiceGroupCircleTour,
 	practiceHostedTours,
+	practiceCaseHandoverTour,
 	practiceLiveChatTour,
-	practiceSupervisionTour,
 	practiceTours
 } from './practiceTours';
+import {
+	consultantGroupCircleTour,
+	GROUP_CIRCLE_SETTINGS_OPENED,
+	GROUP_CIRCLE_TOUR_VERSION
+} from '../components/productTour/tours/groupCircleTour';
+import {
+	CASE_HANDOVER_TOUR_VERSION,
+	consultantCaseHandoverTour
+} from '../components/productTour/tours/caseHandoverTour';
+import {
+	CALENDAR_TOUR_VERSION,
+	consultantCalendarTour
+} from '../components/productTour/tours/calendarTour';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
@@ -56,7 +74,7 @@ const stepIds = (steps: Array<{ id: string }>) => steps.map((s) => s.id);
 const TEAM_OFF = { flags: { featureTeamDiscussionEnabled: false } };
 
 describe('practiceTours registry', () => {
-	it('holds the two practice cards, and every hosted tour under an id the guard allows', () => {
+	it('holds the one practice card, and every hosted tour under an id the guard allows', () => {
 		expect(practiceTours.map((t) => t.id)).toEqual([
 			...PRACTICE_CARD_TOUR_IDS
 		]);
@@ -64,7 +82,11 @@ describe('practiceTours registry', () => {
 			...PRACTICE_TOUR_IDS
 		]);
 		expect(practiceAcceptTour.id).toBe('consultant-practice-accept');
-		expect(practiceSupervisionTour.id).toBe(
+		// FE#2545: "Supervisor hinzufügen" is a part of "Fälle übergeben".
+		expect(practiceTours.map((t) => t.id)).not.toContain(
+			'consultant-practice-supervision'
+		);
+		expect(practiceHostedTours.map((t) => t.id)).not.toContain(
 			'consultant-practice-supervision'
 		);
 	});
@@ -210,112 +232,514 @@ describe('practiceAcceptTour (flow F1)', () => {
 	});
 });
 
-describe('practiceSupervisionTour (flow F2)', () => {
-	const [first] = practiceSupervisionTour.steps;
-	const last =
-		practiceSupervisionTour.steps[practiceSupervisionTour.steps.length - 1];
+describe('practiceCaseHandoverTour (FE#2545, Fälle übergeben, with the former F2)', () => {
+	const tour = practiceCaseHandoverTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+	const de = (key: string) => resolveKey(deTranslations, key) as string;
+	const SUPERVISION_FLAGS = {
+		featureSupervisionEnabled: true,
+		featureSupervisionOneOnOneChatsEnabled: true
+	};
 
-	it('opens on the supervisor "+" inside the accepted practice case', () => {
-		expect(first.target).toBe('session-supervisor-add');
-		expect(first.route).toBe(practiceAcceptedSessionRoute());
+	it('runs under the explanation tour id and version, without a card', () => {
+		expect(tour.id).toBe(consultantCaseHandoverTour.id);
+		expect(tour.version).toBe(CASE_HANDOVER_TOUR_VERSION);
+		expect(tour.version).toBe(2);
+		expect(tour.version).toBe(consultantCaseHandoverTour.version);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+		expect(tour.titleKey).toBe(consultantCaseHandoverTour.titleKey);
 	});
 
-	it('waits for the confirmed add, not for the click on the "+"', () => {
-		// The real picker dialog covers the tooltip, so the
-		// first step explains the whole add and lets the confirm advance it.
-		expect(first.advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.supervisorAdded
-		});
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+		expect(tour.steps.filter((s) => s.optional)).toEqual([]);
 	});
 
-	it('ends on a centered final step', () => {
-		expect(last.target).toBe('');
-		expect(last.placement).toBe('center');
-		expect(last.advanceOn).toBeUndefined();
-	});
-
-	it('walks the four steps', () => {
-		expect(stepIds(resolveTourSteps(practiceSupervisionTour))).toEqual([
-			'add-supervisor',
-			'supervisor-reply',
-			'standing-assignment',
-			'done'
+	it('adds a supervisor, offers the case, finds a colleague case, requests access, then shows the status', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['add-supervisor', 'session-supervisor-add'],
+			['supervisor-reply', 'supervision-panel'],
+			['offer', 'session-supervisor-add'],
+			['offer-pending', ''],
+			['search', 'sessions-search'],
+			['request-access', 'case-handover-request-access'],
+			['request', 'case-handover-curtain'],
+			['status', 'nav-activity'],
+			['done', '']
 		]);
 	});
 
-	it('points the reply step at the supervision side panel and offers no Back after the add', () => {
-		const reply = practiceSupervisionTour.steps[1];
-		expect(reply.target).toBe('supervision-panel');
-		expect(reply.placement).toBe('left');
-		expect(reply.hideBack).toBe(true);
-		expect(reply.advanceOn).toBeUndefined();
-	});
-
-	it('is read-only after the add: replies and the standing assignment advance with Next', () => {
-		practiceSupervisionTour.steps.slice(1, 3).forEach((step) => {
-			expect(step.advanceOn).toBeUndefined();
-		});
-	});
-
-	it('is unavailable (no steps) when the Träger switched supervision off, available when unset', () => {
-		const off = { flags: { featureSupervisionEnabled: false } };
-		expect(practiceSupervisionTour.when).toEqual({
-			flag: 'featureSupervisionEnabled'
-		});
-		expect(resolveTourSteps(practiceSupervisionTour, off)).toEqual([]);
+	it('waits for each fake result, and for the click on "Zugriff anfragen"', () => {
 		expect(
-			isPracticeTourAvailable(practiceSupervisionTour, off.flags)
-		).toBe(false);
-		expect(isPracticeTourAvailable(practiceSupervisionTour, {})).toBe(true);
-		expect(isPracticeTourAvailable(practiceSupervisionTour)).toBe(true);
-		expect(
-			isPracticeTourAvailable(practiceSupervisionTour, {
-				featureSupervisionEnabled: true
-			})
-		).toBe(true);
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			[
+				'add-supervisor',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.supervisorAdded }
+			],
+			[
+				'offer',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.caseHandoverOffered
+				}
+			],
+			[
+				'search',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.colleagueCaseListed
+				}
+			],
+			['request-access', { type: 'click' }],
+			[
+				'request',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.caseHandoverRequested
+				}
+			]
+		]);
 	});
 
-	it('does not depend on the team-discussion flag', () => {
-		expect(
-			stepIds(resolveTourSteps(practiceSupervisionTour, TEAM_OFF))
-		).toHaveLength(4);
+	it('opens the "+" steps inside the accepted practice case and searches in the sessions list', () => {
+		expect(step('add-supervisor').route).toBe(
+			practiceAcceptedSessionRoute()
+		);
+		expect(step('offer').route).toBe(practiceAcceptedSessionRoute());
+		expect(step('search').route).toBe('/sessions/consultant/sessionView');
 	});
 
-	it('tells the learner up front to click, choose and confirm', () => {
-		const intro = resolveKey(deTranslations, first.contentKey) as string;
-		expect(intro).toMatch(/„\+“/);
-		expect(intro).toMatch(/bestätigen/);
-	});
-
-	// The add dialog refuses to confirm without a reason (reasonError); the
-	// words are those of its reason field in each language.
 	it.each([
-		['de', deTranslations, /Grund/],
-		['de@informal', deInformalTranslations, /Grund/],
-		['en', enTranslations, /reason/],
-		['fr', frTranslations, /motif/],
-		['ru', ruTranslations, /причин/],
-		['ti', tiTranslations, /ምኽንያት/],
-		['tr', trTranslations, /neden/]
-	] as const)(
-		'asks for the short reason the add dialog requires (%s)',
-		(_locale, bundle, reasonWord) => {
-			expect(resolveKey(bundle, first.contentKey) as string).toMatch(
-				reasonWord
-			);
+		[1200, 800],
+		[1440, 900],
+		[1920, 1080]
+	])(
+		'keeps the curtain spotlighted at %ix%i: a tall pane gets the tooltip beside it, not centred over it',
+		(width, height) => {
+			// The session pane: right of the list column, full height.
+			const curtain = { width: width * 0.62, height: height - 64 };
+			expect(
+				effectivePlacement(step('request').placement, curtain, {
+					width,
+					height
+				})
+			).toBe('left');
 		}
 	);
 
-	it('keeps the retired picker step out of every locale', () => {
+	it('keeps the search field and the curtain wizard usable under the spotlight', () => {
+		expect(step('search').interactive).toBe(true);
+		expect(step('request').interactive).toBe(true);
+	});
+
+	it('offers no Back after an action that cannot be undone', () => {
+		expect(stepIds(tour.steps.filter((s) => s.hideBack))).toEqual([
+			'supervisor-reply',
+			'offer-pending',
+			'request',
+			'status'
+		]);
+	});
+
+	it('points the reply step at the supervision side panel', () => {
+		expect(step('supervisor-reply').placement).toBe('left');
+		expect(step('supervisor-reply').advanceOn).toBeUndefined();
+	});
+
+	it('walks all ten steps when supervision and its one-on-one chats are on (unset counts as on)', () => {
+		const all = stepIds(tour.steps);
+		expect(stepIds(resolveTourSteps(tour))).toEqual(all);
+		expect(
+			stepIds(resolveTourSteps(tour, { flags: SUPERVISION_FLAGS }))
+		).toEqual(all);
+		expect(stepIds(resolveTourSteps(tour, TEAM_OFF))).toEqual(all);
+	});
+
+	it.each([
+		{ featureSupervisionEnabled: false },
+		{ featureSupervisionOneOnOneChatsEnabled: false }
+	])('drops the two supervisor steps where the Träger switched %o', (off) => {
+		expect(
+			stepIds(
+				resolveTourSteps(tour, {
+					flags: { ...SUPERVISION_FLAGS, ...off }
+				})
+			)
+		).toEqual([
+			'intro',
+			'offer',
+			'offer-pending',
+			'search',
+			'request-access',
+			'request',
+			'status',
+			'done'
+		]);
+		expect(isPracticeTourAvailable(tour, off)).toBe(true);
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it.each([
+		['add-supervisor', ['sessionHeader.supervisor.modal.title']],
+		[
+			'offer',
+			['caseHandover.offer.open', 'supervisorDialog.confirm.handover']
+		],
+		['offer-pending', ['caseHandover.offer.withdraw']],
+		['request-access', ['caseHandover.list.requestAccess']],
+		['request', ['caseHandover.curtain.intro.cta', 'caseHandover.submit']],
+		['status', ['caseHandover.list.awaitingApproval']]
+	])('%s quotes the real labels in German', (id, labelKeys) => {
+		const text = de(step(id).contentKey);
+		labelKeys.forEach((key) => expect(text).toContain(`„${de(key)}“`));
+	});
+
+	// The search menu lies over the list until it is confirmed (Dev, FE#2545).
+	it('asks to confirm the search, so the menu stops covering the case', () => {
+		expect(de(step('search').contentKey)).toMatch(/✓.*Eingabetaste/);
+	});
+
+	// The add dialog refuses to confirm without a reason (reasonError).
+	it('asks for the short reason the add dialog requires', () => {
+		expect(de(step('add-supervisor').contentKey)).toMatch(/Grund/);
+	});
+
+	it('ships its copy in every full locale, two sentences at most, and a du-form wherever de says Sie', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		bundledLocales.forEach(([locale, bundle]) =>
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				expect(
+					text.split(/(?<=[.!?。።])\s+/).filter(Boolean).length,
+					`${locale} ${s.contentKey}`
+				).toBeLessThanOrEqual(2);
+			})
+		);
+		keysOf(tour).forEach((key) => {
+			const deText = de(key);
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(deText);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(deText)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
+	});
+
+	it('drops the retired F2 copy from every locale', () => {
 		bundledLocales.forEach(([locale, bundle]) => {
 			expect(
-				resolveKey(
-					bundle,
-					'tour.practiceSupervision.step.pickSupervisor'
-				),
-				`${locale} still carries pickSupervisor`
+				resolveKey(bundle, 'tour.practiceSupervision'),
+				`${locale} still carries tour.practiceSupervision`
 			).toBeUndefined();
+		});
+	});
+});
+
+describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
+	const tour = practiceGroupCircleTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+
+	it('runs under the explanation tour id and version, without a card', () => {
+		expect(tour.id).toBe(consultantGroupCircleTour.id);
+		expect(tour.version).toBe(GROUP_CIRCLE_TOUR_VERSION);
+		expect(tour.version).toBe(consultantGroupCircleTour.version);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+		expect(tour.when).toEqual(consultantGroupCircleTour.when);
+	});
+
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+	});
+
+	it('creates, opens and starts a circle, then shows the call button', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['create', 'groupchat-create-button'],
+			['format', 'groupchat-format-circle'],
+			['topic', 'groupchat-topic-picker'],
+			['configure', 'groupchat-circle-settings'],
+			['settings', 'groupchat-circle-create'],
+			['open-circle', 'groupchat-list-item'],
+			['start', 'groupchat-start-button'],
+			['call', 'groupchat-call-button'],
+			['done', '']
+		]);
+	});
+
+	it('advances on the learner action: click, event, event, click, event, event', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			['create', { type: 'click' }],
+			['topic', { type: 'event', name: GROUP_CIRCLE_SETTINGS_OPENED }],
+			[
+				'settings',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCreated }
+			],
+			['open-circle', { type: 'click' }],
+			[
+				'start',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleStarted }
+			],
+			[
+				'call',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCallStarted }
+			]
+		]);
+	});
+
+	it('goes on when the call button was used: the simulated start, no call (D3)', () => {
+		expect(step('call').target).toBe('groupchat-call-button');
+		expect(step('call').advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.circleCallStarted
+		});
+	});
+
+	it('lets the counsellor fill the settings card before "Erstellen", and go back to it', () => {
+		const configure = step('configure');
+		expect(configure.advanceOn).toBeUndefined();
+		expect(configure.interactive).toBe(true);
+		expect(configure.optional).toBeFalsy();
+		// "Erstellen" stays disabled without a Beratungsstelle: Back must
+		// bring the counsellor to the card again.
+		expect(step('settings').hideBack).toBeFalsy();
+		const ids = tour.steps.map((s) => s.id);
+		expect(ids.indexOf('configure') + 1).toBe(ids.indexOf('settings'));
+	});
+
+	it('keeps the format card and topic picker optional, like the explanation tour', () => {
+		expect(tour.steps.filter((s) => s.optional).map((s) => s.id)).toEqual([
+			'format',
+			'topic'
+		]);
+	});
+
+	it('offers no Back after an action that cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'open-circle',
+			'call'
+		]);
+	});
+
+	it('starts in the counsellor sessions, where "Erstellen" lives', () => {
+		expect(step('create').route).toBe('/sessions/consultant/sessionView');
+		expect(step('open-circle').route).toBe(
+			'/sessions/consultant/sessionView'
+		);
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it('ships its copy in every full locale and a sparse du-form overlay', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		keysOf(tour).forEach((key) => {
+			const de = resolveKey(deTranslations, key) as string;
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(de);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
+	});
+});
+
+describe('practiceCalendarTour (FE#2545, Kalender)', () => {
+	const tour = practiceCalendarTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+
+	it('runs under the explanation tour id and version, without a card', () => {
+		expect(tour.id).toBe(consultantCalendarTour.id);
+		expect(tour.version).toBe(CALENDAR_TOUR_VERSION);
+		expect(tour.version).toBe(consultantCalendarTour.version);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+	});
+
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+	});
+
+	it('enters an appointment and a Terminlink, cancels one, enters a Sperrzeit and switches automatic confirmation on', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['appointment', 'calendar-create'],
+			['invitation', 'calendar-create'],
+			['cancel', 'calendar-upcoming'],
+			['blocker', 'calendar-create'],
+			['auto-accept', 'calendar-settings'],
+			['done', '']
+		]);
+	});
+
+	it('waits for each saved result in the practice world, never for a click on the button', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			[
+				'appointment',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+				}
+			],
+			[
+				'invitation',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+				}
+			],
+			[
+				'cancel',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+				}
+			],
+			[
+				'blocker',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarBlockerCreated
+				}
+			],
+			[
+				'auto-accept',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn
+				}
+			]
+		]);
+	});
+
+	it('works on "Meine Termine" throughout', () => {
+		tour.steps
+			.filter((s) => s.target)
+			.forEach((s) => expect(s.route).toBe('/booking/events'));
+	});
+
+	it('drops the Terminlink step where the Träger switched video invitations off', () => {
+		const ids = (flags: Record<string, unknown>) =>
+			stepIds(resolveTourSteps(tour, { flags }));
+		expect(ids({})).toContain('invitation');
+		expect(ids({ featureDirectInviteVideoEnabled: false })).toEqual([
+			'intro',
+			'appointment',
+			'cancel',
+			'blocker',
+			'auto-accept',
+			'done'
+		]);
+		expect(step('appointment').when).toBeUndefined();
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it('names the real controls in its German copy', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(step('invitation').contentKey)).toContain(
+			resolveKey(deTranslations, 'directInvitation.dialog.inviteOthers')
+		);
+		expect(de(step('cancel').contentKey)).toContain(
+			resolveKey(deTranslations, 'calendar.upcoming')
+		);
+		expect(de(step('auto-accept').contentKey)).toContain(
+			resolveKey(deTranslations, 'calendar.consultationHours.autoAccept')
+		);
+	});
+
+	it('ships its copy in every full locale, two sentences at most, and a sparse du-form overlay', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		bundledLocales.forEach(([locale, bundle]) =>
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				expect(
+					text.split(/(?<=[.!?。።])\s+/).filter(Boolean).length,
+					`${locale} ${s.contentKey}`
+				).toBeLessThanOrEqual(2);
+			})
+		);
+		keysOf(tour).forEach((key) => {
+			const de = resolveKey(deTranslations, key) as string;
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(de);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
 		});
 	});
 });
@@ -437,7 +861,11 @@ describe('practice tour wiring', () => {
 	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s: every event step waits for a named practice event',
 		(_id, tour) => {
-			const known = Object.values(PRACTICE_TOUR_EVENTS) as string[];
+			const known = [
+				...Object.values(PRACTICE_TOUR_EVENTS),
+				// Emitted by the circle settings themselves (FE#2545).
+				GROUP_CIRCLE_SETTINGS_OPENED
+			] as string[];
 			tour.steps
 				.filter((s) => s.advanceOn?.type === 'event')
 				.forEach((step) => {

@@ -22,7 +22,7 @@ import { exitPracticeMode, isPracticeMode } from './practiceMode';
 import { PracticeProvider, usePractice } from './PracticeProvider';
 
 const ACCEPT = 'consultant-practice-accept';
-const SUPERVISION = 'consultant-practice-supervision';
+const HANDOVER = 'consultant-case-handover';
 
 const Probe = ({ tourId = ACCEPT }: { tourId?: string }) => {
 	const practice = usePractice();
@@ -250,13 +250,13 @@ describe('PracticeProvider and usePractice', () => {
 			const { unmount } = render(
 				<StrictMode>
 					<PracticeProvider>
-						<Probe tourId={SUPERVISION} />
+						<Probe tourId={HANDOVER} />
 					</PracticeProvider>
 				</StrictMode>
 			);
 
 			click('enter');
-			expect(text('tour')).toBe(SUPERVISION);
+			expect(text('tour')).toBe(HANDOVER);
 			click('exit');
 			click('enter');
 			await drained();

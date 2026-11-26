@@ -6,6 +6,16 @@ import {
 } from './networkGuard';
 import { runPracticeRestartHandlers } from './practiceRestart';
 import { isPracticeTourId } from './practiceTourIds';
+import { isPracticeId } from './practiceIds';
+import { clearCaseHandoverSessionOperations } from '../components/caseHandover/caseHandoverOperationStore';
+
+/**
+ * The real handover hook keeps a module-level record of each offer and
+ * request (to retry and to show a pending offer again). Practice cases have
+ * fixed fictional ids, so every new run and every exit forgets them.
+ */
+const forgetPracticeHandoverOperations = () =>
+	clearCaseHandoverSessionOperations(isPracticeId);
 
 /**
  * The practice mode state, in memory only: nothing
@@ -132,6 +142,7 @@ export const enterPracticeMode = ({
 	epoch += 1;
 	closing = null;
 	notifyHoldListeners();
+	forgetPracticeHandoverOperations();
 	publish({
 		status: 'active',
 		session: { tourId, variant, runId: ++lastRunId }
@@ -146,6 +157,7 @@ export const restartPracticeMode = (): void => {
 	if (snapshot.status !== 'active') {
 		return;
 	}
+	forgetPracticeHandoverOperations();
 	publish({
 		status: 'active',
 		session: { ...snapshot.session, runId: ++lastRunId }
@@ -168,6 +180,7 @@ export const exitPracticeMode = (): void => {
 			}
 		});
 	} finally {
+		forgetPracticeHandoverOperations();
 		guard?.uninstall();
 		guard = null;
 		publish(INACTIVE);

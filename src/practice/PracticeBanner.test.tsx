@@ -184,7 +184,7 @@ describe('PracticeBanner', () => {
 
 		act(() =>
 			store.set(practiceTourProgressAtom, {
-				tourId: 'consultant-practice-supervision',
+				tourId: 'consultant-case-handover',
 				stepIndex: 0,
 				stepCount: 4
 			})

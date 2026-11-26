@@ -22,7 +22,7 @@ import type { PracticeWorld } from './practiceWorld';
 import { createPracticeTestI18n } from './script/scriptTestSupport';
 
 const ACCEPT = 'consultant-practice-accept';
-const SUPERVISION = 'consultant-practice-supervision';
+const HANDOVER = 'consultant-case-handover';
 const counsellor = practiceCounsellorFixture();
 let world: PracticeWorld | null = null;
 const WorldProbe = () => {
@@ -79,8 +79,8 @@ describe('PracticeSandboxSlot', () => {
 		);
 	});
 
-	it('starts the Supervision tour on the already accepted case', () => {
-		renderSlot(SUPERVISION);
+	it('starts "Fälle übergeben" (with the former Supervision flow) on the already accepted case', () => {
+		renderSlot(HANDOVER);
 
 		expect(world?.start).toBe('acceptedCase');
 		expect(world?.rest.getCase().session.status).toBe(2);

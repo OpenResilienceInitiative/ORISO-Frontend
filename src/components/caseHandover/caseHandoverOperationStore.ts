@@ -119,6 +119,19 @@ export const clearCaseHandoverActorOperations = (actorId: string) => {
 	}
 };
 
+/**
+ * Drops every retained operation of the sessions the predicate names. The
+ * practice area (FE#2545) clears its fictional cases with it, so an offer made
+ * while practising never shows as pending in a later run.
+ */
+export const clearCaseHandoverSessionOperations = (
+	isSession: (sessionId: number) => boolean
+) => {
+	for (const [key, operation] of operations) {
+		if (isSession(operation.sessionId)) operations.delete(key);
+	}
+};
+
 export const activateCaseHandoverActor = (actorId: string) => {
 	if (activeActorId && activeActorId !== actorId) {
 		clearCaseHandoverActorOperations(activeActorId);

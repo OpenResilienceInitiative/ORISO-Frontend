@@ -8,13 +8,25 @@ describe('practice tour events', () => {
 		unsubscribers.splice(0).forEach((off) => off());
 	});
 
-	it('names the five events the flows wait for', () => {
+	it('names the events the flows wait for', () => {
 		expect(PRACTICE_TOUR_EVENTS).toEqual({
 			teamMessageSent: 'practice:team-message-sent',
 			messageSent: 'practice:message-sent',
 			supervisorAdded: 'practice:supervisor-added',
 			enquiryAccepted: 'practice:enquiry-accepted',
-			liveChatAvailable: 'practice:live-chat-available'
+			circleCreated: 'practice:circle-created',
+			circleStarted: 'practice:circle-started',
+			circleCallStarted: 'practice:circle-call-started',
+			liveChatAvailable: 'practice:live-chat-available',
+			calendarAppointmentCreated: 'practice:calendar-appointment-created',
+			calendarInvitationCreated: 'practice:calendar-invitation-created',
+			calendarAppointmentCancelled:
+				'practice:calendar-appointment-cancelled',
+			calendarBlockerCreated: 'practice:calendar-blocker-created',
+			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+			caseHandoverOffered: 'practice:case-handover-offered',
+			colleagueCaseListed: 'practice:colleague-case-listed',
+			caseHandoverRequested: 'practice:case-handover-requested'
 		});
 	});
 

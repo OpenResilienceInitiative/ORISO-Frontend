@@ -481,7 +481,7 @@ export const PracticeCardsOn: Story = {
 		).toBeVisible();
 		await expect(
 			await learning.findAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(2);
+		).toHaveLength(1);
 		await expect(
 			await learning.findByRole('heading', { name: 'Übungsbereich' })
 		).toBeVisible();
@@ -510,7 +510,7 @@ export const PracticeCardsPhone: Story = {
 			await within(card).findAllByRole('button', {
 				name: 'Übung starten'
 			})
-		).toHaveLength(2);
+		).toHaveLength(1);
 		if (window.innerWidth < 900) {
 			for (const button of within(card).getAllByRole('button', {
 				name: 'Übung starten'
@@ -524,6 +524,8 @@ export const PracticeCardsPhone: Story = {
 
 export const PracticeSupervisionOff: Story = {
 	name: 'One learning card, supervision disabled by tenant',
+	// FE#2545: there is one practice card whatever the supervision flag says;
+	// "Supervisor hinzufügen" is part of the topic tour "Fälle übergeben".
 	...desktop,
 	render: renderStage({ practiceArea: true, supervision: false }),
 	play: async ({ canvas }) => {
@@ -533,9 +535,7 @@ export const PracticeSupervisionOff: Story = {
 			})
 		).toBeVisible();
 		await expect(
-			canvas.queryByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			})
+			canvas.queryByRole('heading', { name: /Supervision/ })
 		).toBeNull();
 		// Topic tours are listed below the introduction again (FE#2340).
 		await expect(

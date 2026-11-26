@@ -6,7 +6,7 @@ import {
 	banner,
 	diffStorage,
 	driveAcceptFlow,
-	driveSupervisionFlow,
+	driveCaseHandoverFlow,
 	endFromBanner,
 	exactText,
 	expectRealEnquiriesFree,
@@ -17,6 +17,8 @@ import {
 	recordTraffic,
 	snapshotStorage,
 	startButton,
+	tourTile,
+	tourTileButton,
 	type FlowRun
 } from './practice-proof';
 
@@ -55,11 +57,18 @@ import {
  *  - after the practice, the real Anfragen list holds no practice id or name.
  * Flow F1 runs with the Team-Besprechung steps when the tenant has them
  * switched on, and without otherwise: the variant is reported as an annotation.
- * Flow F2 is skipped, with a message, when the tenant has no supervision.
+ * "Fälle übergeben" (FE#2545) starts from its topic tour tile; the former
+ * card "Supervisor hinzufügen" is part of it. Its supervisor steps run where
+ * the tenant has supervision (reported as an annotation); the run is skipped,
+ * with a message, when the tile is not offered.
  */
 const storageState = process.env.ORISO_TOUR_STORAGE_STATE;
 
-const [ACCEPT_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
+const [ACCEPT_TOUR_ID] = PRACTICE_TOUR_IDS;
+const CASE_HANDOVER_TOUR_ID = 'consultant-case-handover';
+if (!PRACTICE_TOUR_IDS.includes(CASE_HANDOVER_TOUR_ID)) {
+	throw new Error('"Fälle übergeben" is no practice tour any more');
+}
 
 const policyConfig = (tourId: string): RequestPolicyConfig => {
 	const base =
@@ -127,6 +136,8 @@ interface Flow {
 	drive: (page: Page, run: string) => Promise<FlowRun>;
 	/** Offered only where the Träger switched the feature on. */
 	optional?: boolean;
+	/** A topic tour tile of the Help list instead of a practice card. */
+	fromTourTile?: boolean;
 }
 
 const ACCEPT_FLOW: Flow = {
@@ -136,12 +147,13 @@ const ACCEPT_FLOW: Flow = {
 	drive: driveAcceptFlow
 };
 
-const SUPERVISION_FLOW: Flow = {
-	name: 'F2 add a supervisor',
-	tourId: SUPERVISION_TOUR_ID,
-	titleKey: 'tour.practiceSupervision.title',
-	drive: driveSupervisionFlow,
-	optional: true
+const CASE_HANDOVER_FLOW: Flow = {
+	name: 'Fälle übergeben (with "add a supervisor", formerly F2)',
+	tourId: CASE_HANDOVER_TOUR_ID,
+	titleKey: 'tour.caseHandover.title',
+	drive: driveCaseHandoverFlow,
+	optional: true,
+	fromTourTile: true
 };
 
 /** The page is where practice started: the Help page with its practice cards. */
@@ -176,7 +188,9 @@ const provePracticeRun = async (
 	await expect(practiceCard(page, ACCEPT_FLOW.titleKey)).toBeVisible({
 		timeout: 30_000
 	});
-	const card = practiceCard(page, flow.titleKey);
+	const card = flow.fromTourTile
+		? tourTile(page, flow.titleKey)
+		: practiceCard(page, flow.titleKey);
 	if (flow.optional) {
 		test.skip(
 			(await card.count()) === 0,
@@ -190,7 +204,9 @@ const provePracticeRun = async (
 	// The run window starts at the click on the card: what the app sent before
 	// is ordinary real-mode traffic.
 	const from = traffic.mark();
-	await startButton(card).click();
+	await (
+		flow.fromTourTile ? tourTileButton(card) : startButton(card)
+	).click();
 	await expect(banner(page)).toBeVisible({ timeout: 30_000 });
 	const walked = await walk(run);
 	// The banner goes when the practice starts to close, while the guard is
@@ -203,6 +219,14 @@ const provePracticeRun = async (
 			description: walked.withTeam
 				? 'with the Team-Besprechung steps (8 steps)'
 				: 'without the Team-Besprechung steps (6 steps)'
+		});
+	}
+	if (walked.withSupervision !== undefined) {
+		test.info().annotations.push({
+			type: 'variant',
+			description: walked.withSupervision
+				? 'with the supervisor steps (10 steps)'
+				: 'without the supervisor steps (8 steps)'
 		});
 	}
 
@@ -239,7 +263,7 @@ test.describe('practice network guard (T2)', () => {
 	// One account, one practice at a time.
 	test.describe.configure({ mode: 'default' });
 
-	for (const flow of [ACCEPT_FLOW, SUPERVISION_FLOW]) {
+	for (const flow of [ACCEPT_FLOW, CASE_HANDOVER_FLOW]) {
 		test(`${flow.name}: walked to the end, nothing leaves the page and nothing stays behind`, async ({
 			page
 		}) => {

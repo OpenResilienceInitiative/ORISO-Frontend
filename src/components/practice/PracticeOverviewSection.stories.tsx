@@ -102,7 +102,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The practice cards wired like the app (#1622): shown to counsellors while the platform master switch and the release flag `enablePracticeArea` are on (default off), whatever their personal tutorial switch says. Supervision is hidden when the Träger switched it off.'
+					'The practice cards wired like the app (#1622): shown to counsellors while the platform master switch and the release flag `enablePracticeArea` are on (default off), whatever their personal tutorial switch says. One card since FE#2545: "Supervisor hinzufügen" is practised inside the topic tour "Fälle übergeben".'
 			}
 		}
 	},
@@ -120,7 +120,7 @@ type Story = StoryObj<typeof meta>;
 export const SwitchOffStillStarts: Story = {
 	name: 'Personal tutorial switch off · desktop',
 	play: async ({ canvas }) => {
-		await expect(await canvas.findAllByRole('listitem')).toHaveLength(2);
+		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
 		for (const button of canvas.getAllByRole('button', {
 			name: 'Übung starten'
 		})) {
@@ -130,7 +130,7 @@ export const SwitchOffStillStarts: Story = {
 };
 
 export const SupervisionOff: Story = {
-	name: 'Supervision switched off · desktop',
+	name: 'Supervision switched off: still the one card · desktop',
 	args: { supervisionEnabled: false },
 	play: async ({ canvas }) => {
 		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);

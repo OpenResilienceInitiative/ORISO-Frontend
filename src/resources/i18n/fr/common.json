@@ -3597,7 +3597,8 @@
 		"cast": {
 			"asker": "Sam Muster (exercice)",
 			"colleague": "Alex (exercice)",
-			"supervisor": "Robin (exercice)"
+			"supervisor": "Robin (exercice)",
+			"colleagueClient": "Kim (exercice)"
 		},
 		"asker": {
 			"firstMessage": "Bonjour, j’ai une question générale sur votre offre. Comment se déroule un accompagnement chez vous, et sous quel délai puis-je espérer une réponse ? Merci d’avance.",
@@ -6530,28 +6531,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Exercice : ajouter un·e superviseur·e",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
-			"step": {
-				"addSupervisor": {
-					"title": "Ajouter un·e superviseur·e",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + », choisissez le ou la superviseur·e, indiquez brièvement le motif et confirmez."
-				},
-				"supervisorReply": {
-					"title": "Réponse du ou de la superviseur·e",
-					"intro": "Votre superviseur·e a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
-				},
-				"standingAssignment": {
-					"title": "Attribution fixe",
-					"intro": "Si votre administration vous a attribué un·e superviseur·e fixe, il ou elle est ajouté·e automatiquement quand vous acceptez une demande. Vous n’avez rien à faire."
-				},
-				"done": {
-					"title": "Bravo !",
-					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Aide",
 			"title": "Visites guidées",
@@ -6586,6 +6565,42 @@
 				"done": {
 					"title": "En bref",
 					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				},
+				"practiceIntro": {
+					"title": "S’exercer au transfert de dossiers",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous proposez votre consultation à Alex et demandez l’accès à un dossier d’Alex."
+				},
+				"practiceSupervisor": {
+					"title": "Ajouter un·e superviseur·e",
+					"intro": "Cliquez sur « + », puis sur « Gérer les superviseurs ». Choisissez Robin, indiquez brièvement la raison et confirmez."
+				},
+				"practiceSupervisorReply": {
+					"title": "Réponse du ou de la superviseur·e",
+					"intro": "Robin a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
+				},
+				"practiceOffer": {
+					"intro": "Cliquez sur « + », puis sur « Transférer la consultation ». Choisissez Alex et une raison, puis cliquez sur « Envoyer la proposition »."
+				},
+				"practiceOfferPending": {
+					"title": "Proposition envoyée",
+					"intro": "Alex décide maintenant, d’ici là vous restez responsable, et « Retirer l’offre » annule la proposition. Fermez la fenêtre avec « Fermer » et continuez."
+				},
+				"practiceSearch": {
+					"intro": "Saisissez « Alex » ici et validez avec la coche ✓ ou la touche Entrée. La liste affiche alors le dossier d’Alex auquel vous pouvez demander l’accès."
+				},
+				"practiceRequestAccess": {
+					"intro": "Cliquez sur « Demander l'accès » pour le dossier d’Alex. Le dossier s’ouvre, mais son contenu reste masqué."
+				},
+				"practiceRequest": {
+					"title": "Indiquer une raison",
+					"intro": "Cliquez sur « Montrer étape par étape », choisissez une raison et cliquez sur « Continuer ». Décrivez brièvement la raison et cliquez sur « Demander l'accès »."
+				},
+				"practiceStatus": {
+					"intro": "Le dossier affiche maintenant « En attente d'autorisation » jusqu’à la décision d’Alex. Les réponses d’Alex à votre proposition et à votre demande apparaissent dans la chronologie."
+				},
+				"practiceDone": {
+					"title": "Bravo !",
+					"intro": "Vous avez proposé votre consultation et demandé l’accès à un dossier. Le bouton ci-dessous termine l’exercice."
 				}
 			}
 		},
@@ -6616,6 +6631,38 @@
 				"done": {
 					"title": "Prêt",
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Vous créez un cercle de parole d'exercice et le démarrez."
+				},
+				"practiceCreate": {
+					"intro": "Cliquez sur « Créer » dans votre liste de consultations pour lancer une nouvelle conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
+				},
+				"practiceSettings": {
+					"title": "Créer le cercle",
+					"intro": "Cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+				},
+				"practiceOpen": {
+					"title": "Ouvrir le cercle",
+					"intro": "Votre cercle d'exercice figure maintenant dans votre liste de consultations. Cliquez dessus pour l'ouvrir."
+				},
+				"practiceStart": {
+					"title": "Démarrer le cercle",
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo »."
+				},
+				"practiceCall": {
+					"title": "Appel vidéo",
+					"intro": "Dans un vrai cercle, vous démarrez ici l'appel vidéo. Cliquez dessus : dans l'exercice, vous voyez seulement ce qui se passe, sans caméra ni micro."
+				},
+				"practiceDone": {
+					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+				},
+				"practiceConfigure": {
+					"title": "Centre de conseil et date",
+					"intro": "Choisissez le centre de conseil pour lequel le cercle a lieu et, s'il n'y en a pas encore, le thème. Vérifiez la date, l'heure et la durée. Pour l'exercice, vous pouvez laisser le reste tel quel. Puis « Continuer »."
 				}
 			}
 		},
@@ -6688,6 +6735,34 @@
 				"links": {
 					"title": "Liens sans rendez-vous",
 					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				},
+				"practiceIntro": {
+					"title": "S’exercer au calendrier",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous ajoutez des rendez-vous, un lien de rendez-vous et une plage bloquée, puis activez la confirmation automatique."
+				},
+				"practiceAppointment": {
+					"title": "Ajouter un rendez-vous",
+					"intro": "Cliquez sur « Nouveau », choisissez la personne fictive sous « Consultation » et cliquez sur « Créer ». Laissez « Inviter d’autres personnes par lien » désactivé cette fois."
+				},
+				"practiceInvitation": {
+					"title": "Créer un lien de rendez-vous",
+					"intro": "Rouvrez « Nouveau », choisissez la même personne, activez « Inviter d’autres personnes par lien » et cliquez sur « Créer ». Le lien affiché ensuite est un lien d’exercice et ne mène nulle part."
+				},
+				"practiceCancel": {
+					"title": "Annuler un rendez-vous",
+					"intro": "Vos nouveaux rendez-vous figurent sous « À venir ». Cliquez sur l’un d’eux, choisissez « Annuler le rendez-vous » et confirmez."
+				},
+				"practiceBlocker": {
+					"title": "Ajouter une plage bloquée",
+					"intro": "Pendant une plage bloquée, personne ne peut réserver chez vous. Ouvrez « Nouveau », passez à l’onglet « Plage bloquée » et cliquez sur « Bloquer »."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirmer automatiquement",
+					"intro": "Ouvrez ⋮, puis « Heures de consultation », activez « Confirmer les réservations automatiquement » et cliquez sur « Enregistrer les heures de consultation ». Les réservations dans vos heures de consultation sont alors fermes tout de suite."
+				},
+				"practiceDone": {
+					"title": "Terminé",
+					"intro": "Vous avez ajouté des rendez-vous et un lien de rendez-vous, annulé un rendez-vous, ajouté une plage bloquée et confirmé les réservations automatiquement. Dans le vrai calendrier, la personne est informée de chaque rendez-vous dans le chat."
 				}
 			}
 		},
@@ -7264,8 +7339,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Accepter une demande et rédiger une première réponse.",
-				"supervision": "Choisir une personne de supervision et l’ajouter à un entretien."
+				"accept": "Accepter une demande et rédiger une première réponse."
 			},
 			"title": "Espace d'exercice",
 			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
@@ -7280,6 +7354,11 @@
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
+		},
+		"callStart": {
+			"title": "Appel vidéo (exercice)",
+			"description": "C'est ici que démarre l'appel vidéo de votre cercle. Dans l'exercice, sans caméra ni micro.",
+			"close": "Compris"
 		}
 	},
 	"counselling": {

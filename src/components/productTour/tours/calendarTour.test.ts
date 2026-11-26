@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { consultantCalendarTour } from './calendarTour';
+import { CALENDAR_TOUR_VERSION, consultantCalendarTour } from './calendarTour';
 import { itKeepsTheTourContract } from './tourDefinitionContract.testkit';
 
 describe('consultant-calendar', () => {
-	itKeepsTheTourContract(consultantCalendarTour, 'consultant');
+	itKeepsTheTourContract(
+		consultantCalendarTour,
+		'consultant',
+		CALENDAR_TOUR_VERSION
+	);
+
+	it('is version 2: the practice rendering (FE#2545) shares id and version', () => {
+		expect(CALENDAR_TOUR_VERSION).toBe(2);
+	});
 
 	const steps = consultantCalendarTour.steps;
 

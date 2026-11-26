@@ -35,6 +35,8 @@ export interface RegistrationFooterAction {
 	title?: string;
 	/** Overrides the generated `data-testid`. */
 	testId?: string;
+	/** Product-tour anchor (`data-tour-target`) around the action; inert. */
+	tourTarget?: string;
 	/**
 	 * A quiet alternative above the primary action, using only its label width.
 	 */
@@ -275,7 +277,10 @@ export const RegistrationFooter = ({
 						</Button>
 					)}
 					{primary && (
-						<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+						<Box
+							sx={{ flex: '1 1 0', minWidth: 0 }}
+							data-tour-target={primary.tourTarget}
+						>
 							<HandoverGateButton
 								state={
 									primary.busy

@@ -1,11 +1,13 @@
 import type { UserDataInterface } from '../../globalState/interfaces';
 import {
 	STATUS_ACTIVE,
-	STATUS_ENQUIRY
+	STATUS_ENQUIRY,
+	type GroupChatItemInterface
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	counsellorAsSessionConsultant,
 	createPracticeScenario,
+	createPracticeTopic,
 	type PracticeCaseState,
 	type PracticeStart
 } from '../fixtures/practiceScenario';
@@ -13,10 +15,18 @@ import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 import {
 	isPracticeId,
 	isPracticeRoomId,
+	practiceStringId,
 	PRACTICE_AGENCY_ID,
+	PRACTICE_MATRIX_SERVER,
+	PRACTICE_CIRCLE_CHAT_ID,
+	PRACTICE_CIRCLE_ROOM_ID,
+	PRACTICE_COLLEAGUE_ROOM_ID,
+	PRACTICE_COLLEAGUE_SESSION_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
-	PRACTICE_TEAM_ROOM_ID
+	PRACTICE_TEAM_ROOM_ID,
+	PRACTICE_TOPIC_ID,
+	practiceNumericId
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
@@ -28,12 +38,55 @@ import type {
 	IUserDraftFeedResponse,
 	IUserDraftItem
 } from '../../api/apiUserDrafts';
+import type { groupChatSettings } from '../../api/apiGroupChatSettings';
+import { GROUP_CHAT_API } from '../../api/apiPutGroupChat';
+import type { InternalChatColleague } from '../../components/conversationCreate/internal/loadInternalChatColleagues';
+import type {
+	BlockerCreateDTO,
+	CalendarColleaguesDTO,
+	CalendarConsultationHoursDTO,
+	CalendarConsultationOnceDTO,
+	CalendarEntryDTO,
+	CalendarSyncDTO,
+	CalendarWorkingHoursDTO
+} from '../../api/apiCalendar';
+import type {
+	SessionAppointment,
+	SessionAppointmentSlot
+} from '../../api/apiSessionAppointments';
+import type { DirectLinkDTO } from '../../api/apiDirectLinks';
+import type {
+	CaseHandoverReason,
+	CaseHandoverRecipient,
+	CaseHandoverStatus
+} from '../../api/apiCaseHandover';
+import { CASE_HANDOVER_REASON_CODES } from '../../components/caseHandover/caseHandoverReasons';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
 	onSupervisorAdded?: (
 		supervisor: UserService.Schemas.SessionSupervisorResponseDTO
 	) => void;
+	/** The practice Gesprächskreis was created (FE#2545). */
+	onCircleCreated?: (chatId: number) => void;
+	/** Its moderator started it (FE#2545). */
+	onCircleStarted?: (chatId: number) => void;
+	/** The practice calendar (FE#2545): an appointment was entered. */
+	onAppointmentCreated?: (appointmentId: string) => void;
+	/** A Terminlink was made for an appointment. */
+	onInvitationCreated?: (appointmentId: string) => void;
+	onAppointmentCancelled?: (appointmentId: string) => void;
+	onBlockerCreated?: (blockerId: string) => void;
+	/** The Sprechstunden were saved with automatic confirmation on. */
+	onAutoAcceptOn?: () => void;
+	/** "Fälle übergeben" (FE#2545): the own case was offered to a colleague. */
+	onCaseHandoverOffered?: (requestId: number) => void;
+	/** A search by name found the colleague's case that can be requested. */
+	onColleagueCaseFound?: () => void;
+	/** A search by name found no practice case. */
+	onColleagueCaseMissed?: () => void;
+	/** Access to the colleague's case was requested. */
+	onCaseHandoverRequested?: (requestId: number) => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -117,16 +170,22 @@ const pathOf = (endpoint: string) =>
 const at = (endpoint: string, suffix = '') =>
 	new RegExp(`^${escapeRegExp(pathOf(endpoint))}${suffix}$`);
 
-/** An endpoint that takes a session id, which must be a practice id. */
-const atSession = (endpoint: (sessionId: number) => string) => {
+/**
+ * An endpoint that takes a session id, which must be a practice id, plus an
+ * optional regex suffix.
+ */
+const atSession = (endpoint: (sessionId: number) => string, suffix = '') => {
 	const marker = String(Number.MAX_SAFE_INTEGER);
 	const [before, after] = pathOf(endpoint(Number.MAX_SAFE_INTEGER)).split(
 		marker
 	);
 	return new RegExp(
-		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}$`
+		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}${suffix}$`
 	);
 };
+
+/** A practice string id (`practice-…`) as a path segment. */
+const PRACTICE_STRING_SEGMENT = '(practice-[A-Za-z0-9._-]+)';
 
 const parseRequest = (
 	input: RequestInfo | URL,
@@ -167,6 +226,19 @@ export const createFakeRestBackend = ({
 	let practiceCase: PracticeCaseState;
 	let drafts: Map<string, IUserDraftItem>;
 	let supervisorSeq: number;
+	/** The Gesprächskreis the counsellor created in this run (FE#2545). */
+	let circle: GroupChatItemInterface | null;
+	/** The practice calendar (FE#2545): own appointments and Sperrzeiten. */
+	let calendar: CalendarEntryDTO[];
+	let consultationHours: Required<CalendarConsultationHoursDTO>;
+	let calendarSeq: number;
+	/**
+	 * "Fälle übergeben" (FE#2545): the offer of the own case and the request
+	 * for the colleague's case, in memory only.
+	 */
+	let offer: CaseHandoverStatus | null;
+	let accessRequest: CaseHandoverStatus | null;
+	let handoverSeq: number;
 	const served: ServedRequest[] = [];
 
 	const reset = () => {
@@ -178,6 +250,20 @@ export const createFakeRestBackend = ({
 		}).practiceCase;
 		drafts = new Map();
 		supervisorSeq = 0;
+		circle = null;
+		calendar = [];
+		// Bookable Tuesday mornings, confirmed by hand: the flow switches
+		// automatic confirmation on.
+		consultationHours = {
+			windows: [{ weekday: 2, start: '10:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 1,
+			slotMinutes: 60
+		};
+		calendarSeq = 0;
+		offer = null;
+		accessRequest = null;
+		handoverSeq = 0;
 		served.length = 0;
 	};
 	reset();
@@ -192,17 +278,88 @@ export const createFakeRestBackend = ({
 	const isLiveChat = () =>
 		practiceCase.session.registrationType === 'ANONYMOUS';
 
-	const sessionList = (status: number, anonymous = false) =>
+	const caseListed = (status: number, anonymous: boolean) =>
 		practiceCase.session.status === status &&
 		// Waiting live chats come from their own queue endpoint.
-		(status !== STATUS_ENQUIRY || isLiveChat() === anonymous)
+		(status !== STATUS_ENQUIRY || isLiveChat() === anonymous);
+
+	/**
+	 * A created circle sits in the counsellor's own sessions (FE#2545); the
+	 * list shows a not-yet-joined circle only to its owner.
+	 */
+	const circleItem = () => ({
+		chat: circle!,
+		consultant: counsellorAsSessionConsultant(counsellor)
+	});
+
+	const sessionList = (status: number, anonymous = false) => {
+		const sessions: unknown[] = [
+			...(caseListed(status, anonymous) ? [listItem()] : []),
+			...(status === STATUS_ACTIVE && circle ? [circleItem()] : [])
+		];
+		return sessions.length
 			? ok({
-					sessions: [listItem()],
+					sessions,
 					offset: 0,
-					count: 1,
-					total: 1
-				} satisfies UserService.Schemas.ConsultantSessionListResponseDTO)
+					count: sessions.length,
+					total: sessions.length
+				} as UserService.Schemas.ConsultantSessionListResponseDTO)
 			: noContent();
+	};
+
+	const isCircle = (id: string) =>
+		!!circle && Number(id) === circle.id && isPracticeId(id);
+
+	/**
+	 * "Erstellen" in the circle settings: the circle exists in memory only. It
+	 * keeps what the counsellor set, except the medium: the practice circle
+	 * meets by video, so the flow can show the moderator's video start. No
+	 * invite token: the share dialog would offer a link that leads nowhere.
+	 */
+	const createCircle = (settings: Partial<groupChatSettings> | null) => {
+		const topic = createPracticeTopic(script.names.topic);
+		const createdAt = new Date(now()).toISOString();
+		circle = {
+			id: PRACTICE_CIRCLE_CHAT_ID,
+			matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
+			conversationType: 'SELF_HELP',
+			topic: settings?.topic || topic.name,
+			startDate: settings?.startDate || createdAt.slice(0, 10),
+			startTime: settings?.startTime || createdAt.slice(11, 16),
+			duration: settings?.duration ?? 60,
+			repetitive: settings?.repetitive ?? true,
+			repeatCount: settings?.repeatCount ?? 1,
+			chatInterval: settings?.chatInterval ?? 'WEEKLY',
+			modality: 'VIDEO',
+			timezone: settings?.timezone,
+			hintMessage: settings?.hintMessage ?? '',
+			sourceLanguage: settings?.sourceLanguage,
+			hintMessageTranslations: settings?.hintMessageTranslations,
+			groupChatRulesTranslations: settings?.groupChatRulesTranslations,
+			consultingType: practiceCase.session.consultingType,
+			assignedAgencies: [
+				{
+					id: PRACTICE_AGENCY_ID,
+					name: script.names.agency,
+					postcode: '00000',
+					city: '',
+					description: '',
+					teamAgency: true,
+					offline: false,
+					consultingType: practiceCase.session.consultingType
+				} as AgencyService.Schemas.AgencyResponseDTO
+			],
+			moderators: [PRACTICE_COUNSELLOR_MATRIX_USER_ID],
+			active: false,
+			subscribed: false,
+			messagesRead: true,
+			messageDate: Math.floor(now() / 1000),
+			lastMessage: '',
+			createdAt
+		} as GroupChatItemInterface;
+		hooks.onCircleCreated?.(circle.id);
+		return ok({ matrixRoomId: circle.matrixRoomId });
+	};
 
 	const roomList = () =>
 		({
@@ -235,7 +392,593 @@ export const createFakeRestBackend = ({
 		return noContent();
 	};
 
+	/* ------------- "Fälle übergeben" (FE#2545) ------------- */
+
+	/**
+	 * A colleague's accepted case in the practice agency: the counsellor may
+	 * request access to it. It never joins her own list; only the search
+	 * (the candidate endpoint) and a direct open find it.
+	 */
+	const colleagueItem = () => {
+		const { colleague, colleagueClient } = script.cast;
+		const topic = createPracticeTopic(script.names.topic);
+		const ts = now() - 2 * 60 * 60_000;
+		return {
+			session: {
+				...practiceCase.session,
+				id: PRACTICE_COLLEAGUE_SESSION_ID,
+				status: STATUS_ACTIVE,
+				conversationType: 'AGENCY_COUNSELLING',
+				registrationType: 'REGISTERED',
+				matrixRoomId: PRACTICE_COLLEAGUE_ROOM_ID,
+				askerMatrixUserId: colleagueClient.matrixUserId,
+				consultantMatrixUserId: colleague.matrixUserId,
+				messageDate: Math.floor(ts / 1000),
+				createDate: new Date(ts).toISOString(),
+				topic: {
+					id: topic.id,
+					name: topic.name,
+					description: topic.description
+				}
+			},
+			user: {
+				id: colleagueClient.id,
+				username: colleagueClient.username,
+				displayName: colleagueClient.displayName
+			},
+			consultant: {
+				id: colleague.id,
+				firstName: colleague.firstName,
+				lastName: colleague.lastName,
+				username: colleague.username,
+				displayName: colleague.displayName
+			},
+			latestMessage: new Date(ts),
+			caseHandoverStatus: {
+				status: accessRequest?.status ?? 'NOT_REQUESTED',
+				canViewContent: false,
+				hasRequest: Boolean(accessRequest)
+			}
+		};
+	};
+
+	const isColleagueCase = (id: string) =>
+		Number(id) === PRACTICE_COLLEAGUE_SESSION_ID && isPracticeId(id);
+
+	/** What a search finds: the colleague or her client by name, or the id. */
+	const findsColleagueCase = (query: string) => {
+		const needle = query.trim().toLowerCase();
+		if (!needle) return true;
+		if (needle === String(PRACTICE_COLLEAGUE_SESSION_ID)) return true;
+		const { colleague, colleagueClient } = script.cast;
+		return [
+			colleague.displayName,
+			colleague.username,
+			colleague.firstName,
+			colleagueClient.displayName,
+			colleagueClient.username
+		].some((name) => name.toLowerCase().includes(needle));
+	};
+
+	const candidates = (url: URL) => {
+		const query = (url.searchParams.get('query') || '').trim();
+		const found =
+			url.searchParams.get('archived') !== 'true' &&
+			findsColleagueCase(query);
+		// A name the counsellor searched for, not the roster or a direct open.
+		if (query && !isPracticeId(query)) {
+			if (found) hooks.onColleagueCaseFound?.();
+			else hooks.onColleagueCaseMissed?.();
+		}
+		const sessions = found ? [colleagueItem()] : [];
+		return ok({
+			sessions,
+			offset: 0,
+			count: sessions.length,
+			total: sessions.length
+		});
+	};
+
+	/** The four neutral reasons; their labels come from the catalogue. */
+	const handoverReasons = (): CaseHandoverReason[] =>
+		CASE_HANDOVER_REASON_CODES.map((code) => ({
+			code,
+			label: code,
+			clientConsent: 'NONE',
+			clientConsentRequired: false,
+			accessAllowed: true
+		}));
+
+	const handoverStatus = (
+		sessionId: number,
+		fields: Partial<CaseHandoverStatus>
+	): CaseHandoverStatus => ({
+		sessionId,
+		status: 'NOT_REQUESTED',
+		canViewContent: false,
+		clientConsentRequired: false,
+		ownershipRevision: 1,
+		...fields
+	});
+
+	/** The case's status, for its owner or for the requesting colleague. */
+	const statusOf = (id: string): CaseHandoverStatus | null => {
+		if (isCase(id)) {
+			return handoverStatus(practiceCase.session.id, {
+				canViewContent: true,
+				openOffer: offer
+			});
+		}
+		if (isColleagueCase(id)) {
+			return (
+				accessRequest ??
+				handoverStatus(PRACTICE_COLLEAGUE_SESSION_ID, {})
+			);
+		}
+		return null;
+	};
+
+	/** "Übergabe anbieten": Alex is asked; the case stays with the counsellor. */
+	const offerCase = (body: Record<string, unknown> | null) => {
+		if (
+			practiceCase.session.status !== STATUS_ACTIVE ||
+			body?.targetConsultantId !== script.cast.colleague.id ||
+			typeof body?.reasonCode !== 'string'
+		) {
+			// Only the practice colleague exists here; nothing else is offered.
+			return noContent();
+		}
+		offer = handoverStatus(practiceCase.session.id, {
+			requestId: practiceNumericId(++handoverSeq),
+			status: 'PENDING_RECIPIENT_ACCEPTANCE',
+			canViewContent: true,
+			direction: 'PUSH',
+			initiatorConsultantId: counsellor.userId,
+			recipientConsultantId: script.cast.colleague.id,
+			reasonCode: body.reasonCode,
+			accessType: 'TAKEOVER',
+			createdAt: new Date(now()).toISOString()
+		});
+		hooks.onCaseHandoverOffered?.(offer.requestId!);
+		return ok(offer);
+	};
+
+	/** "Zugriff anfragen" on the colleague's case: Alex has to answer. */
+	const requestAccess = (body: Record<string, unknown> | null) => {
+		if (
+			typeof body?.reasonCode !== 'string' ||
+			typeof body?.explanation !== 'string' ||
+			!body.explanation.trim()
+		) {
+			return noContent();
+		}
+		if (!accessRequest) {
+			accessRequest = handoverStatus(PRACTICE_COLLEAGUE_SESSION_ID, {
+				requestId: practiceNumericId(++handoverSeq),
+				status: 'PENDING',
+				direction: 'PULL',
+				initiatorConsultantId: counsellor.userId,
+				recipientConsultantId: script.cast.colleague.id,
+				reasonCode: body.reasonCode,
+				accessType: 'TAKEOVER',
+				createdAt: new Date(now()).toISOString()
+			});
+			hooks.onCaseHandoverRequested?.(accessRequest.requestId!);
+		}
+		return ok(accessRequest);
+	};
+
+	const caseHandoverPath = (suffix = '') =>
+		at(
+			endpoints.sessionBase,
+			`/${PRACTICE_ID_SEGMENT}/case-handover${suffix}`
+		);
+
+	/* ---------------- The practice calendar (FE#2545) ---------------- */
+
+	const calendarId = (kind: 'appointment' | 'blocker' | 'invitation') =>
+		practiceStringId(kind, ++calendarSeq);
+
+	const isCalendarEntry = (id: string, type: CalendarEntryDTO['type']) =>
+		isPracticeId(id) &&
+		calendar.some((entry) => entry.id === id && entry.type === type);
+
+	const asAppointment = (entry: CalendarEntryDTO): SessionAppointment => ({
+		id: entry.id,
+		sessionId: practiceCase.session.id,
+		startTime: entry.start,
+		endTime: entry.end,
+		status: 'SCHEDULED',
+		kind: entry.kind,
+		counterpart: {
+			username: practiceCase.user.username,
+			displayName: practiceCase.user.displayName
+		}
+	});
+
+	const appointments = () =>
+		calendar.filter((entry) => entry.type === 'APPOINTMENT');
+
+	/** Entries that overlap [from, to); without a range, all of them. */
+	const entriesIn = (url: URL) => {
+		const from = Date.parse(url.searchParams.get('from') || '');
+		const to = Date.parse(url.searchParams.get('to') || '');
+		return calendar.filter(
+			(entry) =>
+				(Number.isNaN(to) || Date.parse(entry.start) < to) &&
+				(Number.isNaN(from) || Date.parse(entry.end) > from)
+		);
+	};
+
+	const createAppointment = (slot: SessionAppointmentSlot | null) => {
+		if (!slot?.startTime || !slot.endTime) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('appointment'),
+			type: 'APPOINTMENT',
+			start: slot.startTime,
+			end: slot.endTime,
+			ownerId: counsellor.userId,
+			kind: slot.kind ?? 'VIDEO',
+			title: practiceCase.user.username,
+			sessionId: practiceCase.session.id,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onAppointmentCreated?.(entry.id);
+		return ok(asAppointment(entry));
+	};
+
+	const moveEntry = (
+		id: string,
+		type: CalendarEntryDTO['type'],
+		start?: string,
+		end?: string
+	) => {
+		if (!isCalendarEntry(id, type) || !start || !end) return null;
+		calendar = calendar.map((entry) =>
+			entry.id === id ? { ...entry, start, end } : entry
+		);
+		return calendar.find((entry) => entry.id === id)!;
+	};
+
+	/**
+	 * "Weitere Personen per Link einladen": the link exists in memory only
+	 * and points at a reserved host, so a copied practice link leads nowhere.
+	 */
+	const createInvitation = (body: Record<string, unknown> | null) => {
+		const appointment = calendar.find(
+			(entry) =>
+				entry.type === 'APPOINTMENT' && entry.id === body?.appointmentId
+		);
+		if (!appointment) return noContent();
+		const id = calendarId('invitation');
+		const medium = typeof body?.medium === 'string' ? body.medium : 'VIDEO';
+		const validity =
+			typeof body?.validityAfterEndMinutes === 'number'
+				? body.validityAfterEndMinutes
+				: 1440;
+		hooks.onInvitationCreated?.(appointment.id);
+		return ok({
+			id: calendarSeq,
+			token: id,
+			url: `https://${PRACTICE_MATRIX_SERVER}/${id}`,
+			name: null,
+			topicId: PRACTICE_TOPIC_ID,
+			topicName: script.names.topic,
+			agencyId: PRACTICE_AGENCY_ID,
+			medium,
+			temporary: true,
+			active: true,
+			admission: body?.knock === false ? 'DIRECT' : 'KNOCK',
+			createDate: new Date(now()).toISOString(),
+			appointment: {
+				id: appointment.id,
+				startTime: appointment.start,
+				endTime: appointment.end,
+				status: 'SCHEDULED'
+			},
+			validityAfterEndMinutes: validity,
+			expiresAt: new Date(
+				Date.parse(appointment.end) + validity * 60_000
+			).toISOString(),
+			expired: false,
+			accessMode:
+				typeof body?.accessMode === 'string'
+					? (body.accessMode as DirectLinkDTO['accessMode'])
+					: 'BOTH',
+			knock: body?.knock !== false,
+			sessionId: practiceCase.session.id,
+			joinsExistingSession: true
+		} satisfies DirectLinkDTO);
+	};
+
+	const createBlocker = (body: BlockerCreateDTO | null) => {
+		if (!body?.start || !body.end) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('blocker'),
+			type: 'BLOCKER',
+			start: body.start,
+			end: body.end,
+			ownerId: counsellor.userId,
+			allDay: body.allDay === true,
+			title: body.note || null,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onBlockerCreated?.(entry.id);
+		return ok([entry]);
+	};
+
+	const calendarPath = (suffix: string) => at(endpoints.calendarBase, suffix);
+
 	const routes: Route[] = [
+		// "Fälle übergeben" (FE#2545). The search would list real colleagues'
+		// cases, so it is answered here too; every write stays in memory.
+		{
+			method: 'GET',
+			path: at(endpoints.caseHandoverCandidates),
+			viewWide: true,
+			handle: ({ url }) => candidates(url)
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.caseHandoverReasons),
+			viewWide: true,
+			handle: () => ok(handoverReasons())
+		},
+		{
+			method: 'GET',
+			path: caseHandoverPath(),
+			handle: (_request, [, id]) => {
+				const status = statusOf(id);
+				return status ? ok(status) : null;
+			}
+		},
+		{
+			method: 'POST',
+			path: caseHandoverPath(),
+			handle: async ({ body }, [, id]) =>
+				isColleagueCase(id) ? requestAccess(await body()) : null
+		},
+		{
+			// The colleagues the own case may be offered to: Alex only.
+			method: 'GET',
+			path: caseHandoverPath('/recipients'),
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? ok([
+							{
+								consultantId: script.cast.colleague.id,
+								displayName: script.cast.colleague.displayName
+							}
+						] satisfies CaseHandoverRecipient[])
+					: null
+		},
+		{
+			method: 'POST',
+			path: caseHandoverPath('/offers'),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? offerCase(await body()) : null
+		},
+		{
+			method: 'GET',
+			path: caseHandoverPath(`/${PRACTICE_ID_SEGMENT}`),
+			handle: (_request, [, id, requestId]) => {
+				const known = [offer, accessRequest].find(
+					(status) =>
+						status &&
+						String(status.sessionId) === id &&
+						String(status.requestId) === requestId
+				);
+				return known ? ok(known) : null;
+			}
+		},
+		{
+			// "Zurückziehen" while Alex has not answered yet.
+			method: 'POST',
+			path: caseHandoverPath(`/${PRACTICE_ID_SEGMENT}/withdraw`),
+			handle: (_request, [, id, requestId]) => {
+				if (!isCase(id) || String(offer?.requestId) !== requestId) {
+					return null;
+				}
+				const withdrawn: CaseHandoverStatus = {
+					...offer!,
+					status: 'WITHDRAWN'
+				};
+				offer = null;
+				return ok(withdrawn);
+			}
+		},
+		// The practice calendar (FE#2545). Its reads would show the real
+		// calendar, links and colleagues; its writes stay in memory.
+		{
+			method: 'GET',
+			path: calendarPath('/entries'),
+			viewWide: true,
+			handle: ({ url }) => ok(entriesIn(url))
+		},
+		{
+			// No practice colleagues: their calendars and auto-accept stay out.
+			method: 'GET',
+			path: calendarPath('/colleagues'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					visibilityScope: 'AGENCY',
+					showAskerUsernames: false,
+					colleagues: []
+				} satisfies CalendarColleaguesDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/colleagues/[^/]+/entries'),
+			viewWide: true,
+			handle: () => ok([])
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/auto-accept'),
+			viewWide: true,
+			handle: () => ok({ colleagueIds: [] })
+		},
+		{
+			// No feed and no import: the practice calendar is not synced.
+			method: 'GET',
+			path: calendarPath('/sync'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					feedUrl: '',
+					importConfigured: false
+				} satisfies CalendarSyncDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			handle: () => ok(consultationHours)
+		},
+		{
+			method: 'PUT',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			handle: async ({ body }) => {
+				const next = (await body()) as CalendarConsultationHoursDTO;
+				if (!next || !Array.isArray(next.windows)) return noContent();
+				const wasOn = consultationHours.autoAccept;
+				consultationHours = {
+					windows: next.windows,
+					autoAccept: next.autoAccept ?? consultationHours.autoAccept,
+					noticeDays: next.noticeDays ?? consultationHours.noticeDays,
+					slotMinutes:
+						next.slotMinutes ?? consultationHours.slotMinutes
+				};
+				if (consultationHours.autoAccept && !wasOn) {
+					hooks.onAutoAcceptOn?.();
+				}
+				return ok(consultationHours);
+			}
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours/once'),
+			viewWide: true,
+			handle: () => ok([] satisfies CalendarConsultationOnceDTO[])
+		},
+		{
+			// Monday to Friday, nine to five.
+			method: 'GET',
+			path: calendarPath('/working-hours'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					windows: [1, 2, 3, 4, 5].map((weekday) => ({
+						weekday,
+						start: '09:00',
+						end: '17:00'
+					})),
+					holidayRegion: null,
+					exceptions: []
+				} satisfies CalendarWorkingHoursDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/proposals'),
+			viewWide: true,
+			handle: () => ok({ sent: [], received: [] })
+		},
+		{
+			method: 'POST',
+			path: calendarPath('/blockers'),
+			viewWide: true,
+			handle: async ({ body }) => createBlocker(await body())
+		},
+		{
+			method: 'PUT',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: async ({ body }, [, id]) => {
+				const slot = await body();
+				const moved = moveEntry(id, 'BLOCKER', slot?.start, slot?.end);
+				return moved ? ok([moved]) : null;
+			}
+		},
+		{
+			method: 'DELETE',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: (_request, [, id]) => {
+				if (!isCalendarEntry(id, 'BLOCKER')) return null;
+				calendar = calendar.filter((entry) => entry.id !== id);
+				return noContent();
+			}
+		},
+		{
+			method: 'GET',
+			path: atSession(endpoints.sessionAppointments),
+			handle: (_request, [, id]) =>
+				isCase(id) ? ok(appointments().map(asAppointment)) : null
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionAppointments),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? createAppointment(await body()) : null
+		},
+		{
+			method: 'PUT',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}`
+			),
+			handle: async ({ body }, [, id, appointmentId]) => {
+				if (!isCase(id)) return null;
+				const slot = (await body()) as SessionAppointmentSlot | null;
+				const moved = moveEntry(
+					appointmentId,
+					'APPOINTMENT',
+					slot?.startTime,
+					slot?.endTime
+				);
+				return moved ? ok(asAppointment(moved)) : null;
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}/cancel`
+			),
+			handle: (_request, [, id, appointmentId]) => {
+				if (
+					!isCase(id) ||
+					!isCalendarEntry(appointmentId, 'APPOINTMENT')
+				)
+					return null;
+				const entry = calendar.find((e) => e.id === appointmentId)!;
+				calendar = calendar.filter((e) => e.id !== appointmentId);
+				hooks.onAppointmentCancelled?.(appointmentId);
+				return ok({ ...asAppointment(entry), status: 'CANCELLED' });
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionDirectInvitations),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? createInvitation(await body()) : null
+		},
+		{
+			// "Links ohne Termin": the practice world has none.
+			method: 'GET',
+			path: at(endpoints.directLinks),
+			viewWide: true,
+			handle: () => ok([] satisfies DirectLinkDTO[])
+		},
+		{
+			// The session list's "next appointments": the practice ones only.
+			method: 'GET',
+			path: at(endpoints.upcomingAppointments),
+			viewWide: true,
+			handle: () => ok(appointments().map(asAppointment))
+		},
 		{
 			method: 'GET',
 			path: at(endpoints.consultantEnquiriesBase, 'registered'),
@@ -263,7 +1006,12 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: at(endpoints.sessionRooms, `/${PRACTICE_ID_SEGMENT}`),
-			handle: (_request, [, id]) => (isCase(id) ? ok(roomList()) : null)
+			handle: (_request, [, id]) =>
+				isCase(id)
+					? ok(roomList())
+					: isColleagueCase(id)
+						? ok({ sessions: [colleagueItem()] })
+						: null
 		},
 		{
 			method: 'GET',
@@ -275,9 +1023,137 @@ export const createFakeRestBackend = ({
 				if (!roomIds.length || !roomIds.every(isPracticeRoomId)) {
 					return null;
 				}
+				if (circle && roomIds.includes(circle.matrixRoomId)) {
+					return ok({ sessions: [circleItem()] });
+				}
+				if (roomIds.includes(PRACTICE_COLLEAGUE_ROOM_ID)) {
+					return ok({ sessions: [colleagueItem()] });
+				}
 				return roomIds.includes(practiceCase.session.matrixRoomId)
 					? ok(roomList())
 					: noContent();
+			}
+		},
+		// The Gesprächskreis flow (FE#2545): topics and co-moderators of the
+		// create screen, the create itself, and the circle's own reads.
+		{
+			method: 'GET',
+			path: at(endpoints.agencyTopics),
+			viewWide: true,
+			handle: () => {
+				const topic = createPracticeTopic(script.names.topic);
+				return ok([
+					{ id: topic.id, name: topic.name }
+				] satisfies AgencyService.Schemas.AgencyTopicsDTO[]);
+			}
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.chatSeriesBase, 'consultants'),
+			viewWide: true,
+			handle: () =>
+				ok(
+					[script.cast.colleague].map((person) => ({
+						consultantId: person.id,
+						firstName: person.firstName,
+						lastName: person.lastName,
+						displayName: person.displayName,
+						username: person.username
+					}))
+				)
+		},
+		{
+			// The create screen's colleague picker: practice colleagues only.
+			method: 'GET',
+			path: at(endpoints.internalSubsetChat, '/recipients'),
+			viewWide: true,
+			handle: () =>
+				ok(
+					[script.cast.colleague].map((person) => ({
+						consultantId: person.id,
+						displayName: person.displayName,
+						agencies: [
+							{
+								id: PRACTICE_AGENCY_ID,
+								name: script.names.agency
+							}
+						]
+					})) satisfies InternalChatColleague[]
+				)
+		},
+		{
+			method: 'POST',
+			path: at(
+				endpoints.groupChatBase,
+				`(?:${escapeRegExp(GROUP_CHAT_API.CREATEV2)}|${escapeRegExp(GROUP_CHAT_API.CREATE)})`
+			),
+			viewWide: true,
+			handle: async ({ body }) => createCircle(await body())
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.chatRoom, `/${PRACTICE_ID_SEGMENT}`),
+			handle: (_request, [, id]) =>
+				isCircle(id) ? ok({ sessions: [circleItem()] }) : null
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.groupChatBase, PRACTICE_ID_SEGMENT),
+			handle: (_request, [, id]) =>
+				isCircle(id)
+					? ok({
+							id: circle!.id,
+							active: circle!.active,
+							matrixRoomId: circle!.matrixRoomId,
+							bannedUsers: []
+						})
+					: null
+		},
+		{
+			// The circle's moderator, read by its card and waiting room.
+			method: 'GET',
+			path: at(endpoints.groupChatBase, `${PRACTICE_ID_SEGMENT}/members`),
+			handle: (_request, [, id]) =>
+				isCircle(id)
+					? ok({
+							members: [
+								{
+									userId: counsellor.userId,
+									username: counsellor.userName,
+									displayName:
+										counsellorAsSessionConsultant(
+											counsellor
+										).displayName,
+									role: 'CONSULTANT'
+								}
+							]
+						} satisfies UserService.Schemas.ChatMembersResponseDTO)
+					: null
+		},
+		{
+			// A single meeting: no series dates.
+			method: 'GET',
+			path: at(
+				endpoints.chatSeriesBase,
+				`${PRACTICE_ID_SEGMENT}/occurrences`
+			),
+			handle: (_request, [, id]) => (isCircle(id) ? ok([]) : null)
+		},
+		{
+			// "Video-Call starten" in the waiting room: the circle opens and
+			// its moderator is in. No call starts; the flow only shows its button.
+			method: 'PUT',
+			path: at(
+				endpoints.groupChatBase,
+				`${PRACTICE_ID_SEGMENT}${escapeRegExp(GROUP_CHAT_API.START)}`
+			),
+			handle: (_request, [, id]) => {
+				if (!isCircle(id)) return null;
+				if (!circle!.active) {
+					circle = { ...circle!, active: true, subscribed: true };
+					hooks.onCircleStarted?.(circle.id);
+				}
+				return noContent();
 			}
 		},
 		{
@@ -362,7 +1238,9 @@ export const createFakeRestBackend = ({
 					? ok(
 							practiceCase.supervisors satisfies UserService.Schemas.SessionSupervisorResponseDTO[]
 						)
-					: null
+					: isCircle(id)
+						? ok([])
+						: null
 		},
 		{
 			method: 'POST',

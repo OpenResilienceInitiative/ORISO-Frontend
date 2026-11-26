@@ -1407,6 +1407,11 @@ export const SessionListItemComponent = ({
 					data-group-id={activeSession.rid ? activeSession.rid : ''}
 					data-cy="session-list-item"
 					data-search-keep-open
+					// The first group row: the circle of the practice flow
+					// (FE#2545); harmless on a real list.
+					data-tour-target={
+						index === 0 ? 'groupchat-list-item' : undefined
+					}
 				>
 					<div
 						className={clsx(

@@ -42,13 +42,15 @@ type Story = StoryObj<typeof meta>;
 export const NotStarted: Story = {
 	name: 'Not started · desktop',
 	play: async ({ canvas, args }) => {
+		// One card since FE#2545: "Supervisor hinzufügen" is a part of the
+		// tour "Fälle übergeben", practised from its own tile.
 		const cards = await canvas.findAllByRole('listitem');
-		await expect(cards).toHaveLength(2);
-		// Every card says it is practice.
-		await expect(canvas.getAllByText('Übung')).toHaveLength(2);
+		await expect(cards).toHaveLength(1);
+		await expect(canvas.getAllByText('Übung')).toHaveLength(1);
+		await expect(canvas.queryByText(/Supervision/)).toBeNull();
 
 		await userEvent.click(
-			canvas.getAllByRole('button', { name: 'Übung starten' })[0]
+			canvas.getByRole('button', { name: 'Übung starten' })
 		);
 		await expect(args.onStartTour).toHaveBeenCalledWith(
 			practiceTours[0],
@@ -57,8 +59,8 @@ export const NotStarted: Story = {
 	}
 };
 
-export const CompletedAndInterrupted: Story = {
-	name: 'Completed and interrupted · desktop',
+export const Completed: Story = {
+	name: 'Completed · desktop',
 	args: {
 		loadProgress: () =>
 			Promise.resolve<Progress>([
@@ -66,11 +68,6 @@ export const CompletedAndInterrupted: Story = {
 					tourId: 'consultant-practice-accept',
 					tourVersion: 1,
 					status: 'completed'
-				},
-				{
-					tourId: 'consultant-practice-supervision',
-					tourVersion: 1,
-					status: 'in_progress'
 				}
 			]),
 		onStartTour: fn()
@@ -78,18 +75,12 @@ export const CompletedAndInterrupted: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'A finished flow shows "Abgeschlossen" and is offered again ("Noch einmal üben"). An interrupted one starts from the beginning.'
+				story: 'A finished flow shows "Abgeschlossen" and is offered again ("Noch einmal üben").'
 			}
 		}
 	},
 	play: async ({ canvas, args }) => {
 		await expect(await canvas.findByText('Abgeschlossen')).toBeVisible();
-		await expect(canvas.getByText('Nicht gestartet')).toBeVisible();
-		await expect(canvas.queryByText('In Bearbeitung')).toBeNull();
-		await expect(
-			canvas.queryByRole('button', { name: /fortsetzen/i })
-		).toBeNull();
-
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Noch einmal üben' })
 		);
@@ -100,19 +91,32 @@ export const CompletedAndInterrupted: Story = {
 	}
 };
 
-export const SupervisionHidden: Story = {
-	name: 'Supervision switched off · desktop',
-	args: { tours: practiceTours.slice(0, 1) },
+export const Interrupted: Story = {
+	name: 'Interrupted · desktop',
+	args: {
+		loadProgress: () =>
+			Promise.resolve<Progress>([
+				{
+					tourId: 'consultant-practice-accept',
+					tourVersion: 1,
+					status: 'in_progress'
+				}
+			]),
+		onStartTour: fn()
+	},
 	parameters: {
 		docs: {
 			description: {
-				story: 'When the Träger switched Supervision off, its card is hidden, not greyed. The wired section (`Organisms/PracticeOverviewSection`) does the filtering from the tenant settings.'
+				story: 'Practice state lives in memory only: an interrupted flow starts from the beginning, there is no "continue".'
 			}
 		}
 	},
 	play: async ({ canvas }) => {
-		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
-		await expect(canvas.queryByText(/Supervision/)).toBeNull();
+		await expect(await canvas.findByText('Nicht gestartet')).toBeVisible();
+		await expect(canvas.queryByText('In Bearbeitung')).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /fortsetzen/i })
+		).toBeNull();
 	}
 };
 
@@ -123,7 +127,7 @@ export const PhoneHint: Story = {
 	play: async ({ canvas, args }) => {
 		await canvas.findAllByRole('listitem');
 		const hints = canvas.getAllByText('Bitte üben Sie am Computer.');
-		await expect(hints).toHaveLength(2);
+		await expect(hints).toHaveLength(1);
 		for (const button of canvas.getAllByRole('button', {
 			name: 'Übung starten'
 		})) {

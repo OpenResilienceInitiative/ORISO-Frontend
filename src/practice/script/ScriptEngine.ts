@@ -92,7 +92,11 @@ export const createScriptEngine = ({
 	const cast = {
 		asker: person('asker', t('practiceScript.cast.asker')),
 		colleague: person('colleague', t('practiceScript.cast.colleague')),
-		supervisor: person('supervisor', t('practiceScript.cast.supervisor'))
+		supervisor: person('supervisor', t('practiceScript.cast.supervisor')),
+		colleagueClient: person(
+			'colleagueClient',
+			t('practiceScript.cast.colleagueClient')
+		)
 	};
 	const texts: ScriptTexts = {
 		askerFirstMessage: t('practiceScript.asker.firstMessage'),

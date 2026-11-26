@@ -54,6 +54,7 @@ import { useGroupWaitingAdmission } from './waitingAdmission/useGroupWaitingAdmi
 import { markCallAutoJoin } from './waitingAdmission/callAutoJoin';
 import { useAfterDelay } from './waitingAdmission/useAfterDelay';
 import { askCallDevicesWhileWaiting } from './waitingAdmission/askCallDevices';
+import { isPracticeMode } from '../../practice';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -323,7 +324,10 @@ export const JoinGroupChatView = ({
 				if (
 					groupChatApiCall === GROUP_CHAT_API.START &&
 					moderatorCallKind &&
-					stillHere
+					stillHere &&
+					// Practice has no calls (FE#2545 D3): the practice circle
+					// opens and its call button is only shown.
+					!isPracticeMode()
 				)
 					navigate(
 						{
@@ -508,6 +512,9 @@ export const JoinGroupChatView = ({
 					embedded
 					audience={canStartChat ? 'moderator' : 'participant'}
 					primaryLabel={isAsker ? undefined : buttonItem.label}
+					primaryTourTarget={
+						canStartChat ? 'groupchat-start-button' : undefined
+					}
 					askConsent={isAsker}
 					topicName={
 						isAsker

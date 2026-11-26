@@ -14,6 +14,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { SessionsListToolbar } from './SessionsListToolbar';
+import { subscribeToTourEvent } from '../productTour/tourEvents';
+import {
+	SESSIONS_SEARCH_CLOSED,
+	SESSIONS_SEARCH_OPENED
+} from '../productTour/tours/caseHandoverTour';
 
 afterEach(cleanup);
 
@@ -57,13 +62,13 @@ const roster = [
 	}
 ];
 
-const openSearch = (selectedPersonIds: string[] = []) => {
+const openSearch = (selectedPersonIds: string[] = [], searchValue = '') => {
 	const onSelectedPersonIdsChange = vi.fn();
 	render(
 		<MemoryRouter>
 			<SessionsListToolbar
 				translate={(key) => key}
-				searchValue=""
+				searchValue={searchValue}
 				onSearchChange={vi.fn()}
 				activeChip={null}
 				onChipToggle={vi.fn()}
@@ -173,5 +178,66 @@ describe('SessionsListToolbar search menu — centre names (FE#1725)', () => {
 		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
 
 		expect(screen.getByRole('radio', { name: 'Shelbyville' })).toBeTruthy();
+	});
+});
+
+describe('SessionsListToolbar search menu — tells a running tour it closed (FE#2545)', () => {
+	const listen = () => {
+		const closed = vi.fn();
+		const off = subscribeToTourEvent(SESSIONS_SEARCH_CLOSED, closed);
+		return { closed, off };
+	};
+
+	it.each([
+		[
+			'Enter',
+			() =>
+				fireEvent.keyDown(screen.getByRole('searchbox'), {
+					key: 'Enter'
+				})
+		],
+		[
+			'Escape',
+			() =>
+				fireEvent.keyDown(screen.getByRole('searchbox'), {
+					key: 'Escape'
+				})
+		],
+		['a press outside', () => fireEvent.mouseDown(document.body)]
+	])('emits once when a search for a name closes by %s', (_how, close) => {
+		const { closed, off } = listen();
+		try {
+			openSearch([], 'Alex');
+			expect(closed).not.toHaveBeenCalled();
+			close();
+			expect(closed).toHaveBeenCalledTimes(1);
+			expect(
+				screen.queryByTestId('session-search-results-scroll')
+			).toBeNull();
+		} finally {
+			off();
+		}
+	});
+
+	it('says when the menu opens', () => {
+		const opened = vi.fn();
+		const off = subscribeToTourEvent(SESSIONS_SEARCH_OPENED, opened);
+		try {
+			openSearch([], 'Alex');
+			expect(opened).toHaveBeenCalledTimes(1);
+		} finally {
+			off();
+		}
+	});
+
+	it('stays quiet when the menu closes without a name or a person', () => {
+		const { closed, off } = listen();
+		try {
+			openSearch();
+			fireEvent.mouseDown(document.body);
+			expect(closed).not.toHaveBeenCalled();
+		} finally {
+			off();
+		}
 	});
 });

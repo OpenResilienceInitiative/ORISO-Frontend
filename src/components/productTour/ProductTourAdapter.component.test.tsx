@@ -22,8 +22,17 @@ import {
 } from './ProductTourAdapter';
 import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';
-import { practiceSupervisionTour } from '../../practice/practiceTours';
+import { practiceCaseHandoverTour } from '../../practice/practiceTours';
 import { apiUpsertTutorialProgress } from '../../api/apiTutorialProgress';
+
+// The supervisor part of "Fälle übergeben" (formerly the F2 card): two
+// required controls, then two centered explanations.
+const supervisorPartOfHandover = {
+	...practiceCaseHandoverTour,
+	steps: ['add-supervisor', 'supervisor-reply', 'offer-pending', 'done'].map(
+		(id) => practiceCaseHandoverTour.steps.find((s) => s.id === id)!
+	)
+};
 
 interface CapturedJoyrideProps {
 	run: boolean;
@@ -277,7 +286,7 @@ describe('ProductTourAdapter', () => {
 		);
 	});
 
-	it('does not write completed progress when F2 supervisor controls are absent', async () => {
+	it('does not write completed progress when the supervisor controls of "Fälle übergeben" are absent', async () => {
 		const writes: string[] = [];
 		vi.stubGlobal(
 			'fetch',
@@ -288,7 +297,7 @@ describe('ProductTourAdapter', () => {
 		);
 		const ended = vi.fn();
 		renderAdapter({
-			tour: practiceSupervisionTour,
+			tour: supervisorPartOfHandover,
 			targetTimeoutMs: 20,
 			onEnd: ended,
 			onTerminalStatus: (progress) =>

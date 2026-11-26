@@ -118,9 +118,9 @@ describe('PracticeSandbox', () => {
 			`${endpoints.sessionBase}/${encodeURIComponent('!practice-9:practice.invalid')}/x`
 		);
 
-		expect([unknownCase.status, search.status, room.status]).toEqual([
-			204, 204, 204
-		]);
+		expect([unknownCase.status, room.status]).toEqual([204, 204]);
+		// The case search is the fake's anyway (FE#2545): it finds nothing.
+		expect(await search.json()).toMatchObject({ sessions: [], total: 0 });
 		expect(baseFetch).not.toHaveBeenCalled();
 	});
 

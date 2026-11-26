@@ -38,6 +38,7 @@ import { NavigationBar } from '../components/app/NavigationBar';
 import { LiveChatAvailability } from '../components/profile/LiveChatAvailability';
 import { Header } from '../components/header/Header';
 import { RouterConfigConsultant } from '../components/app/RouterConfig';
+import { CalendarPageWired } from '../components/calendar/CalendarPageWired';
 import { Walkthrough } from '../components/walkthrough/Walkthrough';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
@@ -139,8 +140,15 @@ vi.mock('react-joyride', async () => {
 });
 
 const ACCEPT = 'consultant-practice-accept';
-const SUPERVISION = 'consultant-practice-supervision';
+const HANDOVER = 'consultant-case-handover';
 const LIVE_CHAT = 'consultant-live-chat';
+const GROUP_CIRCLE = 'consultant-group-circle';
+const CALENDAR = 'consultant-calendar';
+const CALENDAR_ROUTE = '/booking/events';
+/** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
+/** The counsellor's own Beratungsstellen, as the create entry reads them. */
+const REAL_AGENCIES_URL = /^\/service\/agencies\/(\d+(?:,\d+)*)$/;
+const SECOND_AGENCY = { id: 4712, name: 'Zweite echte Beratungsstelle' };
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
@@ -173,6 +181,17 @@ const networkFetch = vi.fn(
 				? JSON.parse(body).status
 				: undefined;
 		network.push({ method, url, status });
+		// A real read the create entry needs: the Beratungsstelle's own
+		// settings, without policies, so the Träger's flags decide.
+		const agencyIds =
+			method === 'GET' && REAL_AGENCIES_URL.exec(new URL(url).pathname);
+		if (agencyIds) {
+			const ids = agencyIds[1].split(',').map(Number);
+			return new Response(JSON.stringify(ids.map((id) => ({ id }))), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
 				? new Response('[]', {
@@ -240,7 +259,14 @@ const renderApp = ({
 	practiceArea = true,
 	width = 1440,
 	strictMode = false,
-	liveChatViaSidebar = false
+	/** Gesprächskreise on, and the counsellor may create and start one. */
+	groupCircle = false,
+	/** Only the circle format: the create flow skips its format picker. */
+	circleOnly = false,
+	/** A second Beratungsstelle: the circle settings preselect none. */
+	twoAgencies = false,
+	liveChatViaSidebar = false,
+	supervision = true
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -251,8 +277,30 @@ const renderApp = ({
 	};
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
-		featureSupervisionEnabled: true
+		featureSupervisionEnabled: supervision,
+		...(groupCircle && { featureGroupChatV2Enabled: true }),
+		...(circleOnly && {
+			featureInternalGroupChatEnabled: false,
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		})
 	};
+	const userData = groupCircle
+		? {
+				...counsellor,
+				grantedAuthorities: [
+					...counsellor.grantedAuthorities,
+					'AUTHORIZATION_CREATE_NEW_CHAT'
+				],
+				agencies: twoAgencies
+					? [
+							...counsellor.agencies,
+							{ ...counsellor.agencies[0], ...SECOND_AGENCY }
+						]
+					: counsellor.agencies
+			}
+		: counsellor;
 	setTenantSettings(flags as any);
 	const store = createStore();
 	const routerConfig = RouterConfigConsultant(settings);
@@ -262,7 +310,7 @@ const renderApp = ({
 		[
 			UserDataContext,
 			{
-				userData: { ...counsellor, liveChatViaSidebar },
+				userData: { ...userData, liveChatViaSidebar },
 				setUserData: vi.fn()
 			}
 		],
@@ -276,7 +324,15 @@ const renderApp = ({
 		[
 			ConsultingTypesContext,
 			{
-				consultingTypes: [{ id: 0, isVideoCallAllowed: false }],
+				consultingTypes: [
+					{
+						id: 0,
+						isVideoCallAllowed: false,
+						// Every real consulting type carries it; the circle's
+						// waiting room reads it.
+						groupChat: { isGroupChat: false }
+					}
+				],
 				setConsultingTypes: vi.fn()
 			}
 		],
@@ -337,6 +393,10 @@ const renderApp = ({
 												routerConfig={routerConfig}
 											/>
 										}
+									/>
+									<Route
+										path={CALENDAR_ROUTE.slice(1)}
+										element={<CalendarPageWired />}
 									/>
 									<Route
 										path={SETTINGS_ROUTE.slice(1)}
@@ -711,10 +771,346 @@ const progressWrites = () =>
 const banner = () =>
 	within(screen.getByRole('status', { name: 'practice.banner.title' }));
 
+/**
+ * The Gesprächskreis flow from the settings on (FE#2545): "Erstellen" makes
+ * the circle in memory, the list opens it, the waiting room starts it, the
+ * call button shows the simulated start (D3), and the tour completes.
+ */
+const createOpenStartAndCall = async (
+	configureIndex: number,
+	{ agency, topic }: { agency?: string; topic?: boolean } = {}
+) => {
+	// The settings card: what "Erstellen" needs is filled in there, inside
+	// the spotlight; then Next.
+	const card = await expectStep(configureIndex);
+	expect(joyride!.steps[configureIndex]).toMatchObject({
+		disableFocusTrap: true
+	});
+	expect(joyride!.steps[configureIndex]).not.toHaveProperty(
+		'blockTargetInteraction'
+	);
+	if (topic) {
+		fireEvent.click(
+			within(card!).getByRole('button', {
+				name: 'groupChat.circle.topicLabel'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', { name: SCRIPT.names.topic })
+		);
+	}
+	if (agency) {
+		fireEvent.mouseDown(within(card!).getByRole('combobox'));
+		fireEvent.click(await screen.findByRole('option', { name: agency }));
+	}
+	pressNext(configureIndex);
+
+	// The real "Erstellen" of the settings; the circle is made in memory.
+	const settingsIndex = configureIndex + 1;
+	const settings = await expectStep(settingsIndex);
+	await waitFor(() => expect(settings!.hasAttribute('disabled')).toBe(false));
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
+		fireEvent.click(settings!);
+	});
+
+	// Back in the list (no share dialog): the new circle; click it.
+	const open = settingsIndex + 1;
+	await expectStep(open);
+	await waitFor(
+		() => expect(route()).toBe('/sessions/consultant/sessionView'),
+		SLOW
+	);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	const rowSelector = joyride!.steps[open].target;
+	await waitFor(() => {
+		const row = document.querySelector<HTMLElement>(rowSelector);
+		expect(row?.isConnected).toBe(true);
+		expect(row?.textContent).toContain(SCRIPT.names.topic);
+	}, SLOW);
+	await act(async () => {
+		fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	});
+	await waitFor(
+		() => expect(route()).toMatch(/sessionView\/!practice-4[^/]*\/-2/),
+		SLOW
+	);
+
+	// The waiting room's real "Video-Call starten"; it starts the circle.
+	const start = await expectStep(open + 1);
+	const startButton = within(start!).getByRole('button', {
+		name: 'videoCall.button.startVideoCall'
+	});
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleStarted, async () => {
+		await act(async () => {
+			fireEvent.click(startButton);
+		});
+	});
+
+	// The call button of the started circle, used: practice shows a
+	// simulated start (D3) and reaches neither the media nor a prompt.
+	const call = await expectStep(open + 2);
+	expect(route()).toMatch(/sessionView\/!practice-4/);
+	const getUserMedia = vi.fn();
+	Object.defineProperty(navigator, 'mediaDevices', {
+		configurable: true,
+		value: { getUserMedia }
+	});
+	const confirm = vi.spyOn(window, 'confirm');
+	const alert = vi.spyOn(window, 'alert');
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCallStarted, async () => {
+		await act(async () => {
+			fireEvent.click(call!.querySelector('.button__item, button')!);
+		});
+	});
+	expect(getUserMedia).not.toHaveBeenCalled();
+	expect(confirm).not.toHaveBeenCalled();
+	expect(alert).not.toHaveBeenCalled();
+	expect(screen.getByText('practice.callStart.description')).toBeTruthy();
+	fireEvent.click(screen.getByTestId('practice-call-start-close'));
+	await waitFor(() =>
+		expect(screen.queryByText('practice.callStart.description')).toBeNull()
+	);
+
+	// Done: completion is written for the circle tour itself, and the
+	// circle never left the page.
+	await finish(open + 3);
+	expect(
+		network.filter(({ url }) => url.includes('/service/users/chat'))
+	).toEqual([]);
+};
+
+/** The open "Neuer Eintrag" dialog (or another calendar dialog) by test id. */
+const calendarDialog = async (testId: string): Promise<HTMLElement> => {
+	let dialog: HTMLElement | null = null;
+	await waitFor(() => {
+		dialog = document.querySelector<HTMLElement>(
+			`[data-testid="${testId}"]`
+		);
+		expect(dialog, testId).not.toBeNull();
+	}, SLOW);
+	return dialog!;
+};
+
+/**
+ * "Neuer Eintrag" on the real calendar: the practice advice seeker is the
+ * one conversation to choose; optionally with "Weitere Personen per Link
+ * einladen" on. Saved with the dialog's own button.
+ */
+const createPracticeAppointment = async (
+	createButton: HTMLElement,
+	{ inviteOthers = false } = {}
+) => {
+	await act(async () => {
+		fireEvent.click(createButton);
+	});
+	const dialog = await calendarDialog('calendar-appointment-dialog');
+	fireEvent.mouseDown(within(dialog).getByRole('combobox'));
+	fireEvent.click(
+		await screen.findByRole('option', {
+			name: SCRIPT.cast.asker.username
+		})
+	);
+	if (inviteOthers) {
+		fireEvent.click(
+			within(dialog).getByRole('switch', {
+				name: 'directInvitation.dialog.inviteOthers'
+			})
+		);
+	}
+	await act(async () => {
+		fireEvent.click(
+			within(dialog).getByTestId('calendar-appointment-save')
+		);
+	});
+};
+
+/**
+ * Nothing of the calendar exercise reached the real calendar or links, from
+ * the practice start (`from`, an index into `network`) on. The navigation's
+ * own real proposal count before the start is not practice.
+ */
+const expectCalendarStayedInPractice = (from: number) =>
+	expect(
+		network
+			.slice(from)
+			.filter(({ url }) =>
+				/\/calendar\b|\/appointments\b|direct-invitations|directlinks/.test(
+					url
+				)
+			)
+	).toEqual([]);
+
+/**
+ * Opens the header "+" menu of the open case and picks an entry, until its
+ * dialog shows. The composer takes the focus once the case has opened, and
+ * focus outside the menu closes it, also between finding and clicking an
+ * entry: open it again until the dialog is there.
+ */
+const pickPlusMenuEntry = async (entry: 'supervision' | 'handover') => {
+	// The handover shows a loading state first, then the offer dialog.
+	const dialogTestIds =
+		entry === 'supervision'
+			? ['manage-people-dialog']
+			: ['supervisor-dialog', 'case-handover-state-dialog'];
+	const opened = () => dialogTestIds.some((id) => screen.queryByTestId(id));
+	const settle = () =>
+		act(() => new Promise<void>((resolve) => setTimeout(resolve, 50)));
+	for (let attempt = 0; attempt < 60; attempt++) {
+		if (opened()) return;
+		const item = document.querySelector<HTMLElement>(
+			`[data-cy="session-header-plus-${entry}"]`
+		);
+		if (!item) {
+			fireEvent.click(
+				document.querySelector<HTMLElement>(
+					'[data-tour-target="session-supervisor-add"]'
+				)!
+			);
+		} else if (item.getAttribute('aria-disabled') !== 'true') {
+			// "Supervisor verwalten" waits for the conversation features.
+			fireEvent.click(item);
+		}
+		await settle();
+	}
+	expect(opened()).toBe(true);
+};
+
+/** Picks an option of a real (MUI) select inside the given dialog. */
+const choose = async (
+	select: HTMLElement,
+	option: string | RegExp | ((name: string) => boolean)
+) => {
+	fireEvent.mouseDown(within(select).getByRole('combobox'));
+	fireEvent.click(
+		await screen.findByRole(
+			'option',
+			{
+				name:
+					typeof option === 'function'
+						? (name: string) => option(name)
+						: option
+			},
+			SLOW
+		)
+	);
+};
+
+/** The supervisor part (the former F2): "+" → "Supervisor verwalten", Robin, a reason, confirm. */
+const addTheSupervisor = async () => {
+	await pickPlusMenuEntry('supervision');
+	fireEvent.click(
+		await screen.findByRole(
+			'button',
+			{ name: 'managePeople.add.labelFor' },
+			SLOW
+		)
+	);
+	fireEvent.change(
+		await screen.findByPlaceholderText(
+			'managePeople.supervision.reasonPlaceholder'
+		),
+		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
+	);
+	await act(async () => {
+		fireEvent.click(
+			screen.getByRole('button', { name: 'managePeople.add.confirm' })
+		);
+	});
+};
+
+/** "+" → "Beratung übergeben": Alex, the first reason, "Übergabe anbieten". */
+const offerTheCaseToAlex = async () => {
+	await pickPlusMenuEntry('handover');
+	const dialog = await screen.findByTestId('supervisor-dialog', {}, SLOW);
+	await choose(
+		within(dialog).getByTestId('supervisor-dialog-person'),
+		(name: string) => name.startsWith(SCRIPT.cast.colleague.displayName)
+	);
+	fireEvent.mouseDown(
+		within(
+			within(dialog).getByTestId('supervisor-dialog-reason')
+		).getByRole('combobox')
+	);
+	const reasons = (await screen.findAllByRole('option', {}, SLOW)).filter(
+		(option) => option.getAttribute('data-value')
+	);
+	fireEvent.click(reasons[0]);
+	await act(async () => {
+		fireEvent.click(
+			within(dialog).getByRole('button', {
+				name: 'supervisorDialog.confirm.handover'
+			})
+		);
+	});
+};
+
+/** Types the colleague's name into the real search of the sessions list. */
+const searchForAlex = async (search: HTMLElement) => {
+	const input = await waitFor(() => {
+		const field = search.querySelector<HTMLInputElement>('input');
+		if (!field) {
+			fireEvent.click(
+				within(search).getByRole('button', {
+					name: 'sessionList.toolbar.search.toggle'
+				})
+			);
+		}
+		expect(field).toBeTruthy();
+		return field!;
+	}, SLOW);
+	fireEvent.focus(input);
+	fireEvent.change(input, { target: { value: 'Alex' } });
+	// The search runs after its debounce; the menu still lies over the list,
+	// so the tour must not move on yet (Dev, FE#2545).
+	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 600)));
+	expect(joyride?.stepIndex).toBe(stepIndexOf('sessions-search'));
+	expect(
+		document.querySelector('[data-testid="session-search-results-scroll"]')
+	).toBeTruthy();
+	// "✓" / Enter closes the menu: only now is "Zugriff anfragen" reachable.
+	fireEvent.keyDown(input, { key: 'Enter' });
+};
+
+/** The curtain wizard: "Schritt für Schritt zeigen", a reason, "Weiter", a text, "Zugriff anfragen". */
+const requestAccessThroughTheCurtain = async (curtain: HTMLElement) => {
+	fireEvent.click(
+		within(curtain).getByRole('button', {
+			name: 'caseHandover.curtain.intro.cta'
+		})
+	);
+	const [firstReason] = await within(curtain).findAllByRole(
+		'radio',
+		{},
+		SLOW
+	);
+	fireEvent.click(firstReason);
+	const next = () =>
+		document.querySelector<HTMLButtonElement>(
+			'[data-cy="case-handover-curtain-next"]'
+		)!;
+	await waitFor(() => expect(next().disabled).toBe(false), SLOW);
+	fireEvent.click(next());
+	const explanation = await waitFor(() => {
+		const field = document.querySelector<HTMLTextAreaElement>(
+			'[data-cy="case-handover-curtain-explanation"]'
+		);
+		expect(field).toBeTruthy();
+		return field!;
+	}, SLOW);
+	fireEvent.change(explanation, {
+		target: { value: 'Ich vertrete Alex in dieser Woche.' }
+	});
+	await waitFor(() => expect(next().disabled).toBe(false), SLOW);
+	await act(async () => {
+		fireEvent.click(next());
+	});
+};
+
 describe('practice flows on the real app shell', () => {
 	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
 		const app = renderApp({ strictMode: true });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 		expect(getPracticeNetworkGuard()?.isInstalled).toBe(true);
@@ -905,50 +1301,268 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});
 
-	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
-		const app = renderApp();
-		await app.start(SUPERVISION);
+	it.each([
+		{ twoAgencies: false, agency: undefined },
+		// Dev: a counsellor of several Beratungsstellen gets none preselected,
+		// and "Erstellen" waits for her choice in the settings card.
+		{ twoAgencies: true, agency: SECOND_AGENCY.name }
+	])(
+		'Gesprächskreis (FE#2545, two agencies: $twoAgencies): the real create flow makes a practice circle, which is opened, started and its call start simulated',
+		async ({ twoAgencies, agency }) => {
+			const app = renderApp({ groupCircle: true, twoAgencies });
+			// The Help list starts topic tours by request; there is no card.
+			await app.request(GROUP_CIRCLE);
 
-		// 1: the add-supervisor button of the accepted case; click, pick, confirm.
-		const add = await expectStep(0);
-		expect(getPracticeSnapshot().status).toBe('active');
-		expect(route()).toMatch(/sessionView\//);
-		expect(textOf('.chatStage__mainPane')).toContain(
-			SCRIPT.texts.acceptedCaseCounsellorMessage
-		);
-		await afterWorldEvent(
-			PRACTICE_TOUR_EVENTS.supervisorAdded,
-			async () => {
-				fireEvent.click(add!);
+			// 1: an exercise, nothing is real; Next.
+			await expectStep(0);
+			expect(getPracticeSnapshot().status).toBe('active');
+			pressNext(0);
+
+			// 2: the real "Erstellen" of the counsellor's own list; click it.
+			const create = stepIndexOf('groupchat-create-button');
+			const createButton = await expectStep(create);
+			expect(route()).toBe('/sessions/consultant/sessionView');
+			await act(async () => {
+				fireEvent.click(createButton!);
+				await new Promise<void>((resolve) => setTimeout(resolve, 0));
+			});
+
+			// 3: the circle card among the formats; Next.
+			const format = await expectStep(create + 1);
+			expect(format!.dataset.tourTarget).toBe('groupchat-format-circle');
+			pressNext(create + 1);
+
+			// 4: the topic: open the list, pick the practice topic, continue.
+			const picker = await expectStep(create + 2);
+			fireEvent.click(
+				within(picker!).getByRole('button', {
+					name: 'groupChat.circle.topicLabel'
+				})
+			);
+			fireEvent.click(
+				await screen.findByRole('option', { name: SCRIPT.names.topic })
+			);
+			await act(async () => {
 				fireEvent.click(
-					await screen.findByRole(
-						'button',
-						{ name: 'managePeople.add.labelFor' },
-						SLOW
-					)
+					within(picker!).getByRole('button', {
+						name: SCRIPT.names.topic
+					})
 				);
-				fireEvent.change(
-					await screen.findByPlaceholderText(
-						'managePeople.supervision.reasonPlaceholder'
-					),
-					{
-						target: {
-							value: 'Ich möchte mich zum Vorgehen absichern.'
-						}
-					}
+			});
+
+			if (twoAgencies) {
+				await expectStep(create + 3);
+				expect(
+					document
+						.querySelector(
+							'[data-tour-target="groupchat-circle-create"]'
+						)!
+						.hasAttribute('disabled')
+				).toBe(true);
+			}
+			await createOpenStartAndCall(create + 3, { agency });
+		},
+		120000
+	);
+
+	it('Gesprächskreis with only the circle format: the picker steps are skipped and the flow still ends at done', async () => {
+		const app = renderApp({ groupCircle: true, circleOnly: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		pressNext(0);
+
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
+		await act(async () => {
+			fireEvent.click(createButton!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// No format picker, no topic card: the settings open directly, and
+		// the tour goes on at their card. The topic is picked there.
+		await expectStep(create + 3);
+		expect(
+			document.querySelector(
+				'[data-tour-target="groupchat-format-circle"]'
+			)
+		).toBeNull();
+		expect(
+			document
+				.querySelector('[data-tour-target="groupchat-circle-create"]')!
+				.hasAttribute('disabled')
+		).toBe(true);
+
+		await createOpenStartAndCall(create + 3, { topic: true });
+	}, 120000);
+
+	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false, groupCircle: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(6);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('Kalender (FE#2545): a practice appointment, a Terminlink, a cancel, a Sperrzeit and automatic confirmation, all through the real calendar', async () => {
+		const app = renderApp();
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(CALENDAR);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		const practiceStart = network.length;
+		pressNext(0);
+
+		// 2: "Neuer Eintrag": an appointment with the practice advice seeker.
+		const appointment = stepIndexOf('calendar-create');
+		const create = await expectStep(appointment);
+		expect(route()).toBe(CALENDAR_ROUTE);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAppointmentCreated,
+			() => createPracticeAppointment(create!)
+		);
+
+		// 3: again, now with "Weitere Personen per Link einladen": the
+		// Terminlink is made in memory and its share dialog opens.
+		const invitation = await expectStep(appointment + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarInvitationCreated,
+			() => createPracticeAppointment(invitation!, { inviteOthers: true })
+		);
+		const share = await calendarDialog('direct-link-share-dialog');
+		// The practice link points at a reserved host: it leads nowhere.
+		expect(
+			within(share).getByDisplayValue(/^https:\/\/practice\.invalid\//)
+		).toBeTruthy();
+		fireEvent.click(
+			within(share).getByRole('button', { name: 'app.close' })
+		);
+
+		// 4: "Als Nächstes" lists both; one is cancelled from its menu.
+		const cancel = stepIndexOf('calendar-upcoming');
+		const upcoming = await expectStep(cancel);
+		const row = await waitFor(() => {
+			const found = upcoming!.querySelector<HTMLElement>(
+				'[data-cy^="calendar-upcoming-practice-appointment-"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		}, SLOW);
+		expect(row.textContent).toContain(SCRIPT.cast.asker.username);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled,
+			async () => {
+				fireEvent.click(row);
+				fireEvent.click(
+					await waitFor(() => {
+						const item = document.querySelector<HTMLElement>(
+							'[data-cy="calendar-entry-cancel"]'
+						);
+						expect(item).not.toBeNull();
+						return item!;
+					})
 				);
 				await act(async () => {
 					fireEvent.click(
-						screen.getByRole('button', {
-							name: 'managePeople.add.confirm'
-						})
+						await screen.findByTestId('calendar-cancel-confirm')
 					);
 				});
 			}
 		);
 
-		// 2: the side thread with the supervisor's reply; Next.
-		const panel = await expectStep(1);
+		// 5: "Neuer Eintrag" again, tab "Sperrzeit".
+		const blocker = await expectStep(cancel + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarBlockerCreated,
+			async () => {
+				await act(async () => {
+					fireEvent.click(blocker!);
+				});
+				fireEvent.click(
+					await screen.findByRole('tab', {
+						name: 'calendar.dialog.tabs.blocker'
+					})
+				);
+				const dialog = await calendarDialog('calendar-blocker-dialog');
+				await act(async () => {
+					fireEvent.click(
+						within(dialog).getByTestId('calendar-blocker-save')
+					);
+				});
+			}
+		);
+
+		// 6: ⋮ → Sprechstunden: "Buchungen automatisch bestätigen" on, saved.
+		const settings = await expectStep(stepIndexOf('calendar-settings'));
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn,
+			async () => {
+				fireEvent.click(settings!);
+				fireEvent.click(
+					await screen.findByText('calendar.consultationHours.title')
+				);
+				const dialog = await calendarDialog(
+					'calendar-consultation-hours-dialog'
+				);
+				const autoAccept = within(dialog).getByTestId(
+					'consultation-hours-auto-accept'
+				);
+				fireEvent.click(
+					autoAccept.querySelector('input') ?? autoAccept
+				);
+				await act(async () => {
+					fireEvent.click(
+						within(dialog).getByTestId('consultation-hours-save')
+					);
+				});
+			}
+		);
+
+		// Done: completion is written for the calendar tour itself, and
+		// nothing of the exercise reached the real calendar.
+		await finish(stepIndexOf('calendar-settings') + 1);
+		expectCalendarStayedInPractice(practiceStart);
+	}, 120000);
+
+	it('Kalender without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(CALENDAR);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(7);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it("Fälle übergeben (FE#2545): adds a supervisor, offers the case to Alex, finds Alex's case and requests access, all through the real controls", async () => {
+		const app = renderApp();
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(HANDOVER);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(joyride!.steps).toHaveLength(10);
+		pressNext(0);
+
+		// 2: "+" → "Supervisor verwalten" in the accepted practice case.
+		await expectStep(1);
+		expect(route()).toMatch(/sessionView\/!practice-/);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.acceptedCaseCounsellorMessage
+				),
+			SLOW
+		);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.supervisorAdded,
+			addTheSupervisor
+		);
+
+		// 3: Robin's reply in the side thread, not in the main chat; Next.
+		const panel = await expectStep(2);
 		await waitFor(
 			() =>
 				expect(panel!.textContent).toContain(
@@ -959,38 +1573,143 @@ describe('practice flows on the real app shell', () => {
 		expect(textOf('.chatStage__mainPane')).not.toContain(
 			SCRIPT.texts.supervisorReply
 		);
-		pressNext(1);
-
-		// 3: the standing assignment, explained; Next.
-		await expectStep(2);
 		pressNext(2);
 
-		// 4: done.
-		await finish(3);
+		// 4: "+" → "Beratung übergeben": Alex, a reason, "Übergabe anbieten".
+		await expectStep(3);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.caseHandoverOffered,
+			offerTheCaseToAlex
+		);
+
+		// 5: the offer waits for Alex; the dialog shows its state and
+		// "Angebot zurückziehen". Close it; Next.
+		await expectStep(4);
+		const state = await screen.findByTestId(
+			'case-handover-state-dialog',
+			{},
+			SLOW
+		);
+		expect(
+			within(state).getByRole('button', {
+				name: 'caseHandover.offer.withdraw'
+			})
+		).toBeTruthy();
+		// The primary "Schließen" in the footer (the header × has the same name).
+		fireEvent.click(
+			within(state)
+				.getAllByRole('button', { name: 'supervisorDialog.close' })
+				.at(-1)!
+		);
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('case-handover-state-dialog')
+			).toBeNull()
+		);
+		pressNext(4);
+
+		// 6: the real search of the sessions list; "Alex" lists Alex's case.
+		const search = await expectStep(5);
+		expect(route()).toMatch(/^\/sessions\/consultant\/sessionView/);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.colleagueCaseListed, () =>
+			searchForAlex(search!)
+		);
+
+		// 7: "Zugriff anfragen" on Alex's case; the click moves on.
+		const requestAccess = await expectStep(6);
+		expect(requestAccess!.textContent).toContain(
+			'caseHandover.list.requestAccess'
+		);
+		await act(async () => {
+			fireEvent.click(
+				requestAccess!.matches('button')
+					? requestAccess!
+					: requestAccess!.querySelector('button')!
+			);
+		});
+
+		// 8: the case opens behind its curtain; the wizard sends the request.
+		const curtain = await expectStep(7);
+		await waitFor(
+			() => expect(route()).toMatch(/sessionView\/session\/-3$/),
+			SLOW
+		);
+		expect(textOf('.chatStage__mainPane')).not.toContain(
+			SCRIPT.texts.acceptedCaseCounsellorMessage
+		);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.caseHandoverRequested, () =>
+			requestAccessThroughTheCurtain(curtain!)
+		);
+		await waitFor(
+			() =>
+				expect(curtain!.textContent).toContain(
+					'caseHandover.pending.title'
+				),
+			SLOW
+		);
+
+		// 9: the status lives in the activity timeline; Next.
+		await expectStep(8);
+		pressNext(8);
+
+		// 10: done. Only the completion is written; nothing else left.
+		await finish(9);
+		expect(progressWrites()).toEqual(expect.arrayContaining(['completed']));
+		expect(
+			network.filter(({ url }) => url.includes('case-handover'))
+		).toEqual([]);
 	}, 120000);
-	it('cannot launch F2 through a stale request below its picker breakpoint', async () => {
+
+	it('Fälle übergeben without supervision: the supervisor steps drop out, the handover stays', async () => {
+		const app = renderApp({ supervision: false });
+		await app.request(HANDOVER);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(joyride!.steps).toHaveLength(8);
+		pressNext(0);
+		const plus = await expectStep(1);
+		expect(plus!.getAttribute('data-tour-target')).toBe(
+			'session-supervisor-add'
+		);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.caseHandoverOffered,
+			offerTheCaseToAlex
+		);
+		await expectStep(2);
+	}, 120000);
+
+	it('Fälle übergeben without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(HANDOVER);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(6);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('cannot launch the "Fälle übergeben" practice through a stale request below its picker breakpoint', async () => {
 		const app = renderApp({ width: 1199 });
-		app.request(SUPERVISION);
+		app.request(HANDOVER);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
-		expect(progressWrites()).toEqual([]);
+		expect(progressWrites()).not.toContain('completed');
 		app.resize(1200);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 	});
 
-	it('can launch F2 at the real picker breakpoint', async () => {
+	it('can launch the "Fälle übergeben" practice at the real picker breakpoint', async () => {
 		const app = renderApp({ width: 1200 });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 	}, 120000);
 
-	it('does not restart F2 automatically after resizing below and back above its picker breakpoint', async () => {
+	it('does not restart the "Fälle übergeben" practice automatically after resizing below and back above its picker breakpoint', async () => {
 		const app = renderApp({ width: 1200 });
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 
 		app.resize(1199);
@@ -998,14 +1717,13 @@ describe('practice flows on the real app shell', () => {
 			() => expect(getPracticeSnapshot().status).toBe('inactive'),
 			SLOW
 		);
-		expect(route()).toBe(HELP_ROUTE);
 		app.resize(1200);
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 		expect(progressWrites()).not.toContain('completed');
 
-		await app.start(SUPERVISION);
+		await app.request(HANDOVER);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
 	}, 120000);
@@ -1015,8 +1733,10 @@ describe('practice flows on the real app shell', () => {
 		setMatrixClientServiceRef(service);
 		const app = renderApp();
 		try {
-			await app.start(SUPERVISION);
+			await app.request(HANDOVER);
 			await expectStep(0);
+			pressNext(0);
+			await expectStep(1);
 			const scope = () =>
 				document.querySelector<HTMLElement>('.chatStage__mainPane');
 			await waitFor(() => expect(liveEditor(scope)).toBeTruthy(), SLOW);
@@ -1052,15 +1772,17 @@ describe('practice flows on the real app shell', () => {
 		}
 	}, 120000);
 
-	it('banner End remains keyboard-accessible while the F2 picker is open', async () => {
+	it('banner End remains keyboard-accessible while the supervisor picker of "Fälle übergeben" is open', async () => {
 		// The real focus trap stays active; jsdom supplies no visible geometry.
 		vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
 			() => [{ width: 100, height: 40 }] as unknown as DOMRectList
 		);
 		const app = renderApp();
-		await app.start(SUPERVISION);
-		const add = await expectStep(0);
-		fireEvent.click(add!);
+		await app.request(HANDOVER);
+		await expectStep(0);
+		pressNext(0);
+		await expectStep(1);
+		await pickPlusMenuEntry('supervision');
 		await screen.findByRole(
 			'button',
 			{ name: 'managePeople.add.labelFor' },
