@@ -135,3 +135,59 @@ describe('CaseHandoverActionButton menu', () => {
 		expect(screen.queryByRole('menu')).not.toBeNull();
 	});
 });
+
+describe('CaseHandoverActionButton in selection mode (FE#2040)', () => {
+	afterEach(cleanup);
+
+	it.each(['awaitingApproval', 'accessGranted'] as const)(
+		'gives the %s pill the whole free row, like the select button',
+		(state) => {
+			render(
+				<CaseHandoverActionButton
+					labels={labels}
+					state={state}
+					batchMode
+				/>
+			);
+			const action = screen
+				.getByRole('button', { name: labels[state] })
+				.closest('.sessionsListItem__handoverAction');
+			expect(
+				action?.classList.contains(
+					'sessionsListItem__handoverAction--wide'
+				)
+			).toBe(true);
+			expect(
+				action?.classList.contains(
+					'sessionsListItem__handoverAction--select'
+				)
+			).toBe(false);
+		}
+	);
+
+	it('uses the short pending label in the selection list', () => {
+		render(
+			<CaseHandoverActionButton
+				labels={{ ...labels, awaitingApprovalShort: 'Requested' }}
+				state="awaitingApproval"
+				batchMode
+			/>
+		);
+		expect(screen.getByRole('button', { name: 'Requested' })).toBeTruthy();
+	});
+
+	it('keeps the pill compact outside selection mode', () => {
+		render(
+			<CaseHandoverActionButton
+				labels={labels}
+				state="awaitingApproval"
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: labels.awaitingApproval })
+				.closest('.sessionsListItem__handoverAction')
+				?.classList.contains('sessionsListItem__handoverAction--wide')
+		).toBe(false);
+	});
+});

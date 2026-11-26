@@ -4262,6 +4262,7 @@
 			"accessDenied": "Erişim reddedildi",
 			"accessGranted": "Erişim verildi",
 			"awaitingApproval": "Onay bekleniyor",
+			"awaitingApprovalShort": "İstendi",
 			"hiddenPreview": "Talep onaylanana kadar bilgiler gizli kalır",
 			"requestAccess": "Erişim talep et"
 		},

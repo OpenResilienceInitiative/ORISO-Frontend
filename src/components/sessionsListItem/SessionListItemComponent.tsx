@@ -1955,6 +1955,9 @@ export const SessionListItemComponent = ({
 									awaitingApproval: translate(
 										'caseHandover.list.awaitingApproval'
 									),
+									awaitingApprovalShort: translate(
+										'caseHandover.list.awaitingApprovalShort'
+									),
 									accessGranted: translate(
 										'caseHandover.list.accessGranted'
 									),

@@ -4262,6 +4262,7 @@
 			"accessDenied": "Accès refusé",
 			"accessGranted": "Accès autorisé",
 			"awaitingApproval": "En attente d'autorisation",
+			"awaitingApprovalShort": "Demandé",
 			"hiddenPreview": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 			"requestAccess": "Demander l'accès"
 		},

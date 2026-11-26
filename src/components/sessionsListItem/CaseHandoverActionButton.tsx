@@ -41,6 +41,8 @@ export type CaseHandoverActionState =
 export interface CaseHandoverActionLabels {
 	requestAccess: string;
 	awaitingApproval: string;
+	/** Shorter pending label for the selection list, where Mail and Audio leave little room. */
+	awaitingApprovalShort?: string;
 	accessGranted: string;
 	accessDenied: string;
 	selectCase: string;
@@ -183,7 +185,9 @@ export const CaseHandoverActionButton = ({
 	const isSelection = batchMode && !isLocked;
 	const statusLabel =
 		state === 'awaitingApproval'
-			? labels.awaitingApproval
+			? batchMode && labels.awaitingApprovalShort
+				? labels.awaitingApprovalShort
+				: labels.awaitingApproval
 			: state === 'accessGranted'
 				? labels.accessGranted
 				: state === 'accessDenied'
@@ -210,6 +214,11 @@ export const CaseHandoverActionButton = ({
 				'sessionsListItem__handoverAction',
 				isStatusPill && 'sessionsListItem__handoverAction--status',
 				isSelection && 'sessionsListItem__handoverAction--select',
+				// Pending/granted pills in the same list take the same free row,
+				// so "Warten auf Freigabe" is not cut next to Mail and Audio.
+				batchMode &&
+					isLocked &&
+					'sessionsListItem__handoverAction--wide',
 				isStatusPill &&
 					state === 'accessDenied' &&
 					'sessionsListItem__handoverAction--denied'

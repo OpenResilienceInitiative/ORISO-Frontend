@@ -4282,6 +4282,7 @@
 			"accessDenied": "Zugriff abgelehnt",
 			"accessGranted": "Zugriff freigegeben",
 			"awaitingApproval": "Warten auf Freigabe",
+			"awaitingApprovalShort": "Angefragt",
 			"hiddenPreview": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 			"requestAccess": "Zugriff anfragen"
 		},

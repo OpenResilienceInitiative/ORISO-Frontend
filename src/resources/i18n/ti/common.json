@@ -4236,6 +4236,7 @@
 			"accessDenied": "ተበጻሕነት ተነጺጉ",
 			"accessGranted": "ተበጻሕነት ተፈቒዱ",
 			"awaitingApproval": "ፍቓድ ይጽበ ኣሎ",
+			"awaitingApprovalShort": "ተሓቲቱ",
 			"hiddenPreview": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
 			"requestAccess": "ተበጻሕነት ሕተት"
 		},

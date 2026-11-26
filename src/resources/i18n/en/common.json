@@ -4228,6 +4228,7 @@
 			"accessDenied": "Access denied",
 			"accessGranted": "Access granted",
 			"awaitingApproval": "Awaiting approval",
+			"awaitingApprovalShort": "Requested",
 			"hiddenPreview": "Information hidden until request is approved",
 			"requestAccess": "Request access"
 		},
