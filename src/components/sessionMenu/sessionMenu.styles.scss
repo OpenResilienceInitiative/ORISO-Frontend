@@ -232,7 +232,8 @@ $iconSize: 20px;
 		width: 44px;
 		height: 44px;
 		border-radius: 32px;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		background: var(--m3-surface-container-lowest, #fff);
 		align-items: center;
 		justify-content: center;

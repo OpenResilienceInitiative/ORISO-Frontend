@@ -3379,9 +3379,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "ከም CSV ኣውርድ",
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
+				"hintMonth": "ንነፍሲ ወከፍ ሰሙን ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintWeek": "ንነፍሲ ወከፍ መዓልቲ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintYear": "ንነፍሲ ወከፍ ወርሒ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
 				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
 				"total": "ጠቕላላ"
 			},
@@ -3398,7 +3402,20 @@
 				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "ዝተሰረዙ",
+				"numberOfChatAppointments": "ቻት",
+				"numberOfOnsiteAppointments": "ብኣካል",
+				"numberOfPhoneAppointments": "ተሌፎን",
+				"numberOfVideoAppointments": "ቪድዮ"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "እዚ ወርሒ",
+					"currentWeek": "እዚ ሰሙን",
+					"lastMonth": "ዝሓለፈ ወርሒ",
+					"lastWeek": "ዝሓለፈ ሰሙን"
+				},
 				"currentMonth": "ናይ ሕጂ ወርሒ",
 				"currentWeek": "ናይ ሕጂ ሰሙን",
 				"currentYear": "ናይ ሕጂ ዓመት",
@@ -3410,7 +3427,17 @@
 				"lastMonth": "ዝሓለፈ ወርሒ",
 				"lastWeek": "ዝሓለፈ ሰሙን",
 				"lastYear": "ዝሓለፈ ዓመት",
-				"prefix": "ቁጽርታትኩም"
+				"offsetLabel": "እዋን",
+				"prefix": "ቁጽርታትኩም",
+				"unitLabel": "ኣሃዱ ግዜ",
+				"unitMonth": "ወርሒ",
+				"unitWeek": "ሰሙን",
+				"unitYear": "ዓመት"
+			},
+			"state": {
+				"empty": "ኣብዚ እዋን ገና ቁጽርታት የለን።",
+				"error": "ቁጽርታት ሕጂ ክጽዓኑ ኣይከኣሉን።",
+				"retry": "እንደገና ፈትን"
 			},
 			"title": "ስታቲስቲክስ ናተይ"
 		},
@@ -4795,7 +4822,6 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
-				"directLinks": "ቀጥታዊ ሊንክታት",
 				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
@@ -4820,9 +4846,10 @@
 				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
-				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
-				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
-				"directLinkChat": "ቀጥታዊ ሊንክ"
+				"directLinkVideo": "ቪድዮ",
+				"directLinkAudio": "ድምጺ",
+				"directLinkChat": "ቻት",
+				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
@@ -7501,6 +7528,7 @@
 			"title": "ምስ ናይ ጋሻ ሕሳብ ሓቢሩ ይድምሰስ"
 		},
 		"deletedGuest": "ጋሻ (ተደምሲሱ)",
+		"signedOutNotice": "ናይ ጋሻ ሕሳብኩም ድሕሪ እቲ ዝርርብ ተደምሲሱ እዩ፣ ስለዚ ወጺእኩም ኣለኹም። ንሓድሽ ዝርርብ፡ ነቲ ናይ ምኽሪ ኣገልግሎትኩም ሊንክ ደጊምኩም ክፈትዎ።",
 		"chip": {
 			"guest": "ናይ ጋሻ ሕሳብ"
 		},

@@ -33,7 +33,7 @@
 	max-width: 560px;
 	padding: 32px;
 	border-radius: 18px;
-	background: #ffffff;
+	background: var(--m3-surface-container-lowest, #ffffff);
 	box-shadow:
 		0 4px 8px 3px rgba(0, 0, 0, 0.08),
 		0 1px 3px 0 rgba(0, 0, 0, 0.18);
@@ -67,6 +67,10 @@
 	font-weight: 600;
 	color: #1f2937;
 	margin: 0;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
 }
 
 .anonymousConsentGate__body {
@@ -75,6 +79,10 @@
 	line-height: 1.4em;
 	color: #1f2937;
 	margin: 0;
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface, #e4e2e2);
+	}
 }
 
 .anonymousConsentGate__consent {
@@ -92,6 +100,10 @@
 		&:hover {
 			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
+	}
+
+	html[data-oriso-personal-scheme='dark'] & {
+		color: var(--m3-on-surface, #e4e2e2);
 	}
 }
 

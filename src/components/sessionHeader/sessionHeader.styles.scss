@@ -51,7 +51,8 @@ $room-header-back-gap: 8px;
 		box-sizing: content-box;
 		margin-left: 0;
 		padding: $room-header-gap-top 0 $room-header-gap;
-		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-bottom: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
 		// The action group (calls, menu) never shrinks; the title does.
 		> .sessionMenu__wrapper {
@@ -475,7 +476,7 @@ $room-header-back-gap: 8px;
 				padding: 0;
 				margin: 0;
 				list-style: none;
-				background-color: $white;
+				background-color: var(--m3-surface-container-lowest, #ffffff);
 				border-radius: 4px;
 				overflow-y: auto;
 			}
@@ -693,6 +694,12 @@ $room-header-back-gap: 8px;
 		min-width: 76px;
 		padding: 0 12px 0 4px;
 		background: var(--m3-secondary-container, #646d78);
+
+		// Dark: the container turns dark, so the type icon and the clock
+		// take its `on-` ink instead of the white surface.
+		html[data-oriso-personal-scheme='dark'] & {
+			--chatroom-main-icon-ink: var(--m3-on-secondary-container, #dae3f0);
+		}
 	}
 
 	&__add {
@@ -771,7 +778,10 @@ $room-header-back-gap: 8px;
 		width: 24px;
 		height: 24px;
 		display: block;
-		background: #fff;
+		background: var(
+			--chatroom-main-icon-ink,
+			var(--m3-surface-container-lowest, #ffffff)
+		);
 		mask-image: var(--chatroom-main-icon-url);
 		mask-size: contain;
 		mask-position: center;
@@ -802,7 +812,10 @@ $room-header-back-gap: 8px;
 			top: 4px;
 			width: 2px;
 			border-radius: 2px;
-			background: #fff;
+			background: var(
+				--chatroom-main-icon-ink,
+				var(--m3-surface-container-lowest, #ffffff)
+			);
 			transform-origin: bottom center;
 		}
 

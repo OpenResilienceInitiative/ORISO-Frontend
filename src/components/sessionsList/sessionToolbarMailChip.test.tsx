@@ -27,7 +27,6 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 	return {
 		ArchiveFilterIcon: Icon,
 		CreateChatFilterIcon: Icon,
-		DirectLinkFilterIcon: Icon,
 		DraftFilterIcon: Icon,
 		GroupFilterIcon: Icon,
 		InternalGroupFilterIcon: Icon,

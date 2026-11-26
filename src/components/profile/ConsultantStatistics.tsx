@@ -1,33 +1,32 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	apiGetConsultantStatistics,
 	ApiGetConsultantStatisticsInterface,
-	ConsultantStatisticsDTO
+	ConsultantStatisticsDTO,
+	FETCH_ERRORS
 } from '../../api';
-import { OrisoSelect } from '../form/OrisoSelect';
-import { Headline } from '../headline/Headline';
-import { Text } from '../text/Text';
-import { ReactComponent as PersonsIcon } from '../../resources/img/icons/persons.svg';
-import { ReactComponent as SpeechBubbleIcon } from '../../resources/img/icons/speech-bubble.svg';
-import { ReactComponent as SpeechBubblePlusIcon } from '../../resources/img/icons/speech-bubble-plus.svg';
-import { ReactComponent as DownloadIcon } from '../../resources/img/icons/download.svg';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import MarkChatReadOutlinedIcon from '@mui/icons-material/MarkChatReadOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { CSVLink } from 'react-csv';
 import { formatToDDMMYYYY } from '../../utils/dateHelpers';
+import { Headline } from '../headline/Headline';
 import dayjs from 'dayjs';
 import './statistics.styles';
 import './profile.styles';
 import { useTranslation } from 'react-i18next';
-import { SelectChangeEvent } from '@mui/material/Select';
 import {
 	breakdownForPeriod,
 	csvColumns,
 	csvRows,
 	datesForPeriod,
 	figureLabelKey,
-	StatisticsPeriod,
-	statisticsPeriods
+	StatisticsPeriod
 } from './consultantStatisticsData';
 
 type LoadStatistics = (
@@ -39,6 +38,24 @@ interface ConsultantStatisticsProps {
 	loadStatistics?: LoadStatistics;
 }
 
+/**
+ * The real endpoint. Errors are caught here, so a failed request shows the
+ * retry notice in the card instead of leaving for the error page; a 401 still
+ * takes the normal session handling (logout), never an endless retry.
+ */
+const loadOwnStatistics: LoadStatistics = (request) =>
+	apiGetConsultantStatistics({
+		...request,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL_EXCEPT_UNAUTHORIZED]
+	});
+
+type Unit = 'Week' | 'Month' | 'Year';
+type Offset = 'current' | 'last';
+type LoadState = 'loading' | 'ready' | 'error';
+
+const UNITS: Unit[] = ['Week', 'Month', 'Year'];
+const OFFSETS: Offset[] = ['current', 'last'];
+
 const appointmentKinds = [
 	'numberOfVideoAppointments',
 	'numberOfPhoneAppointments',
@@ -46,54 +63,141 @@ const appointmentKinds = [
 	'numberOfChatAppointments'
 ] as const;
 
+const figureKeys = [
+	'numberOfAppointments',
+	'numberOfAssignedSessions',
+	'numberOfActiveSessions',
+	'numberOfSentMessages'
+] as const;
+
+/** M3 segmented button, same look as the display-filter dialog. */
+const segmentedSx = {
+	'borderRadius': '999px',
+	'border': '1px solid var(--m3-outline, #747878)',
+	'overflow': 'hidden',
+	'& .MuiToggleButton-root': {
+		'flex': 1,
+		'minHeight': 40,
+		'minWidth': 0,
+		'px': '12px',
+		'py': 0,
+		'whiteSpace': 'nowrap',
+		'border': 0,
+		'borderRadius': 0,
+		'textTransform': 'none',
+		'fontSize': 14,
+		'fontWeight': 500,
+		'lineHeight': '20px',
+		'letterSpacing': '0.1px',
+		'color': 'var(--m3-on-surface, #1b1b1c)',
+		'& + .MuiToggleButton-root': {
+			borderLeft: '1px solid var(--m3-outline, #747878)'
+		},
+		'&.Mui-selected, &.Mui-selected:hover': {
+			backgroundColor: 'var(--m3-secondary-container, #656e79)',
+			color: 'var(--m3-on-secondary-container, #e6effb)'
+		},
+		'&.Mui-focusVisible': {
+			outline: '2px solid var(--m3-primary, #a5000a)',
+			outlineOffset: '-2px'
+		}
+	}
+} as const;
+
+const SegmentedChoice = <T extends string>({
+	label,
+	value,
+	options,
+	onChange,
+	cy
+}: {
+	label: string;
+	value: T;
+	options: { value: T; label: string }[];
+	onChange: (next: T) => void;
+	cy: string;
+}) => (
+	<ToggleButtonGroup
+		exclusive
+		size="small"
+		aria-label={label}
+		value={value}
+		onChange={(_, next: T | null) => {
+			if (next) onChange(next);
+		}}
+		sx={segmentedSx}
+		className="statistics__segmented"
+		data-cy={cy}
+	>
+		{options.map((option) => (
+			<ToggleButton
+				key={option.value}
+				value={option.value}
+				disableRipple
+				data-cy={`${cy}-${option.value}`}
+			>
+				{option.label}
+			</ToggleButton>
+		))}
+	</ToggleButtonGroup>
+);
+
 /**
- * The counsellor's own figures in the profile (ORISO-Frontend#2299):
- * realised appointments by kind and cancelled ones, consultations and
+ * The counsellor's own figures in the profile (ORISO-Frontend#2299, redesign
+ * #2558): realised appointments by kind and cancelled ones, consultations and
  * messages for a week, month or year, and a CSV with one row per day, week
  * or month plus a total row. Only aggregated own numbers, never content.
  */
 export const ConsultantStatistics = ({
-	loadStatistics = apiGetConsultantStatistics
+	loadStatistics = loadOwnStatistics
 }: ConsultantStatisticsProps) => {
 	const { t: translate } = useTranslation();
-	const [statisticsPeriod, setStatisticsPeriod] =
-		useState<StatisticsPeriod>('currentMonth');
+	const [unit, setUnit] = useState<Unit>('Month');
+	const [offset, setOffset] = useState<Offset>('current');
 	const [statistics, setStatistics] =
 		useState<ConsultantStatisticsDTO | null>(null);
-
-	const currentYear = dayjs().get('year');
-	const periodOptions = statisticsPeriods.map((value) => {
-		const label = translate(`profile.statistics.period.${value}`);
-		// The year picker shows the concrete year, without a new key per language.
-		if (value === 'currentYear') {
-			return { value, label: `${label} (${currentYear})` };
-		}
-		if (value === 'lastYear') {
-			return { value, label: `${label} (${currentYear - 1})` };
-		}
-		return { value, label };
-	});
+	const [loadState, setLoadState] = useState<LoadState>('loading');
+	const [attempt, setAttempt] = useState(0);
+	const statisticsPeriod = `${offset}${unit}` as StatisticsPeriod;
 
 	useEffect(() => {
 		let current = true;
+		setLoadState('loading');
 		loadStatistics({
 			...datesForPeriod(statisticsPeriod),
 			breakdown: breakdownForPeriod(statisticsPeriod)
 		})
 			.then((response) => {
-				if (current) setStatistics(response);
+				if (!current) return;
+				setStatistics(response);
+				setLoadState('ready');
 			})
 			.catch(() => {
-				if (current) setStatistics(null);
+				if (!current) return;
+				setStatistics(null);
+				setLoadState('error');
 			});
 		return () => {
 			current = false;
 		};
-	}, [statisticsPeriod, loadStatistics]);
+	}, [statisticsPeriod, loadStatistics, attempt]);
 
-	const periodDisplay = statistics
-		? `${formatToDDMMYYYY(dayjs(statistics.startDate).valueOf())} - ${formatToDDMMYYYY(dayjs(statistics.endDate).valueOf())}`
-		: translate('profile.statistics.period.display.default');
+	const retry = useCallback(() => setAttempt((n) => n + 1), []);
+
+	const currentYear = dayjs().get('year');
+	const offsetLabel = (value: Offset) => {
+		// The year picker shows the concrete year; week and month say
+		// "diese/letzte" in the chosen unit.
+		if (unit === 'Year') {
+			return String(value === 'current' ? currentYear : currentYear - 1);
+		}
+		return translate(`profile.statistics.period.button.${value}${unit}`);
+	};
+
+	const requested = datesForPeriod(statisticsPeriod);
+	// While a new period loads, show the requested dates, not the last answer's.
+	const range = loadState === 'ready' && statistics ? statistics : requested;
+	const periodDisplay = `${formatToDDMMYYYY(dayjs(range.startDate).valueOf())} – ${formatToDDMMYYYY(dayjs(range.endDate).valueOf())}`;
 
 	const csvHeaders = csvColumns.map((key) => ({
 		key,
@@ -110,107 +214,131 @@ export const ConsultantStatistics = ({
 		[statistics, translate]
 	);
 
+	const ready = loadState === 'ready';
 	const figure = (key: keyof ConsultantStatisticsDTO) =>
 		Number(statistics?.[key] ?? 0);
+	const shown = (key: keyof ConsultantStatisticsDTO) =>
+		ready ? figure(key) : '–';
+	const empty =
+		ready &&
+		[
+			...figureKeys,
+			...appointmentKinds,
+			'numberOfCancelledAppointments' as const
+		].every((key) => figure(key) === 0);
 
 	const tile = (
 		icon: React.ReactNode,
-		key: keyof ConsultantStatisticsDTO,
+		key: (typeof figureKeys)[number],
 		children?: React.ReactNode
 	) => (
-		<div className="statistics__visualization" data-figure={key}>
-			<span>
+		<div
+			className={`statistics__tile${children ? ' statistics__tile--wide' : ''}`}
+			data-figure={key}
+		>
+			<span className="statistics__tileIcon" aria-hidden="true">
 				{icon}
-				<p>{figure(key)}</p>
 			</span>
-			<Text text={translate(figureLabelKey(key))} type="standard" />
+			<span className="statistics__tileValue">{shown(key)}</span>
+			<span className="statistics__tileLabel">
+				{translate(figureLabelKey(key))}
+			</span>
 			{children}
 		</div>
 	);
 
 	return (
-		<div className="statistics">
+		<div className="statistics" data-state={loadState}>
 			<div className="profile__content__title">
 				<Headline
 					text={translate('profile.statistics.title')}
 					semanticLevel="5"
 				/>
 			</div>
-			<div className="statistics__periodSelect">
-				<Text
-					text={translate('profile.statistics.period.prefix')}
-					type="infoLargeAlternative"
-				/>
-				<OrisoSelect
-					id="statisticsSelect"
-					label={translate('profile.statistics.period.prefix')}
-					options={periodOptions}
-					value={statisticsPeriod}
-					onChange={(event: SelectChangeEvent<string>) =>
-						setStatisticsPeriod(
-							event.target.value as StatisticsPeriod
+			<div className="statistics__period">
+				<SegmentedChoice
+					label={translate('profile.statistics.period.unitLabel')}
+					value={unit}
+					options={UNITS.map((value) => ({
+						value,
+						label: translate(
+							`profile.statistics.period.unit${value}`
 						)
-					}
+					}))}
+					onChange={setUnit}
+					cy="statistics-unit"
 				/>
+				<SegmentedChoice
+					label={translate('profile.statistics.period.offsetLabel')}
+					value={offset}
+					options={OFFSETS.map((value) => ({
+						value,
+						label: offsetLabel(value)
+					}))}
+					onChange={setOffset}
+					cy="statistics-offset"
+				/>
+				<p className="statistics__range" aria-live="polite">
+					{periodDisplay}
+				</p>
 			</div>
-			<div className="b--1 p--3 mb--4">
-				<Text
-					text={`${translate(
-						'profile.statistics.period.display.prefix'
-					)}${periodDisplay}${translate(
-						'profile.statistics.period.display.suffix'
-					)}`}
-					className="text--center text--bold"
-					type="standard"
-				/>
-				<div className="statistics__visuals__wrapper">
+
+			{loadState === 'error' ? (
+				<div className="statistics__notice" role="status">
+					<span>{translate('profile.statistics.state.error')}</span>
+					<button
+						type="button"
+						className="statistics__textButton"
+						onClick={retry}
+					>
+						{translate('profile.statistics.state.retry')}
+					</button>
+				</div>
+			) : (
+				<div
+					className="statistics__tiles"
+					aria-busy={loadState === 'loading'}
+				>
 					{tile(
-						<EventOutlinedIcon aria-hidden="true" />,
+						<EventOutlinedIcon />,
 						'numberOfAppointments',
-						<ul className="statistics__breakdown">
+						<ul className="statistics__kinds">
 							{appointmentKinds.map((key) => (
 								<li key={key}>
-									{translate(figureLabelKey(key))}:{' '}
-									<strong>{figure(key)}</strong>
+									<span>
+										{translate(
+											`profile.statistics.kind.${key}`
+										)}
+									</span>
+									<strong>{shown(key)}</strong>
 								</li>
 							))}
-							<li>
-								{translate(
-									'profile.statistics.csvHeader.numberOfCancelledAppointments'
-								)}
-								:{' '}
+							<li className="statistics__kinds--cancelled">
+								<span>
+									{translate(
+										'profile.statistics.kind.numberOfCancelledAppointments'
+									)}
+								</span>
 								<strong>
-									{figure('numberOfCancelledAppointments')}
+									{shown('numberOfCancelledAppointments')}
 								</strong>
 							</li>
 						</ul>
 					)}
-					{tile(
-						<PersonsIcon aria-hidden="true" focusable="false" />,
-						'numberOfAssignedSessions'
-					)}
-					{tile(
-						<SpeechBubbleIcon
-							aria-hidden="true"
-							focusable="false"
-						/>,
-						'numberOfActiveSessions'
-					)}
-					{tile(
-						<SpeechBubblePlusIcon
-							aria-hidden="true"
-							focusable="false"
-						/>,
-						'numberOfSentMessages'
-					)}
+					{tile(<PeopleOutlineIcon />, 'numberOfAssignedSessions')}
+					{tile(<ForumOutlinedIcon />, 'numberOfActiveSessions')}
+					{tile(<MarkChatReadOutlinedIcon />, 'numberOfSentMessages')}
 				</div>
-			</div>
-			{statistics && (
+			)}
+
+			{empty && (
+				<p className="statistics__notice" role="status">
+					{translate('profile.statistics.state.empty')}
+				</p>
+			)}
+
+			{ready && statistics && (
 				<div className="statistics__download">
-					<Text
-						text={translate('profile.statistics.complete.title')}
-						type="infoLargeAlternative"
-					/>
 					<CSVLink
 						separator={';'}
 						headers={csvHeaders}
@@ -218,20 +346,15 @@ export const ConsultantStatistics = ({
 						filename={`${translate(
 							'profile.statistics.complete.filename'
 						)} - ${periodDisplay}.csv`}
-						className="button-as-link"
+						className="statistics__downloadButton"
+						data-cy="statistics-download"
 					>
-						<DownloadIcon
-							title={translate(
-								'profile.statistics.complete.download.label'
-							)}
-							aria-label={translate(
-								'profile.statistics.complete.download.label'
-							)}
-						/>
-						{translate(
-							'profile.statistics.complete.download.label'
-						)}
+						<FileDownloadOutlinedIcon aria-hidden="true" />
+						{translate('profile.statistics.complete.download.csv')}
 					</CSVLink>
+					<p className="statistics__hint">
+						{translate(`profile.statistics.complete.hint${unit}`)}
+					</p>
 				</div>
 			)}
 		</div>
