@@ -286,4 +286,6 @@ export const USER_CONSULTANT = 'consultant';
 export interface LoginArgs {
 	userId?: typeof USER_ASKER | typeof USER_CONSULTANT;
 	auth?: { expires_in: number; refresh_expires_in: number };
+	/** Set when `cy.clock()` is installed: tick the app's timers while logging in. */
+	tickTimers?: boolean;
 }
