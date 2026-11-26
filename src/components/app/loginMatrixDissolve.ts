@@ -3,8 +3,9 @@
 // then the button and the heading, then the other words at random places.
 // Every sign rattles through a few cipher signs before it settles, stands
 // still on its letter and only fades. Icons become small sign grids, outlines
-// turn into strokes and then signs, and a faint curtain of tiny signs falls
-// from the top and rises from the bottom behind the text. The letters stay in
+// turn into strokes and then signs, and over the whole light area strands of
+// tiny signs fall from the top and rise from the bottom behind the text. In a
+// long wait, waves keep rattling through the settled signs. The letters stay in
 // the DOM, so assistive technology reads the page unchanged. CSS runs the
 // timeline (opacity and transform only); one frame loop swaps signs.
 
@@ -23,6 +24,14 @@ const SVG = 'http://www.w3.org/2000/svg';
 const SIGNS = 'ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789Z:=*+<>¦';
 const sign = () => SIGNS[Math.floor(Math.random() * SIGNS.length)];
 const signs = (count: number) => Array.from({ length: count }, sign).join('');
+/** Always a different sign, so every change shows. */
+const other = (current = '') =>
+	SIGNS[
+		(SIGNS.indexOf(current) +
+			1 +
+			Math.floor(Math.random() * (SIGNS.length - 1))) %
+			SIGNS.length
+	];
 // MUI pads empty adornments and notches with zero-width spaces.
 const readable = (value: string) => /[^\s​-‍﻿]/u.test(value);
 
@@ -56,10 +65,36 @@ export const LOGIN_MATRIX_TIMING = {
 	field: 160,
 	outline: 640,
 	turn: 300,
+	settle: 600,
 	rattle: 70,
-	rain: 900,
-	pulse: 1100
+	wave: 700
 };
+
+/**
+ * The page's light area: the viewport less the brand panel beside the form
+ * (desktop) or above it (phone). The curtain covers all of it.
+ */
+function lit(form: HTMLElement) {
+	const card = form.getBoundingClientRect();
+	let top = 0;
+	let left = 0;
+	for (const panel of document.querySelectorAll(
+		'.stageLayout__stage, .stageMobileHero'
+	)) {
+		const { right, bottom, width, height } = panel.getBoundingClientRect();
+		if (!width || !height) continue;
+		if (right <= card.left) left = Math.max(left, right);
+		else if (bottom <= card.bottom)
+			top = Math.max(top, Math.min(bottom, card.top));
+	}
+	const { clientWidth, clientHeight } = document.documentElement;
+	return {
+		top,
+		left,
+		width: Math.max(clientWidth - left, form.offsetWidth),
+		height: Math.max(clientHeight - top, 0)
+	};
+}
 
 function visibleText(form: HTMLElement) {
 	const found: Text[] = [];
@@ -67,12 +102,13 @@ function visibleText(form: HTMLElement) {
 	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
 		const parent = node.parentElement;
 		if (
-			readable(node.nodeValue ?? '') &&
+			node instanceof Text &&
+			readable(node.data) &&
 			parent &&
 			!parent.closest(SKIPPED) &&
 			parent.getClientRects().length
 		)
-			found.push(node as Text);
+			found.push(node);
 	}
 	return found;
 }
@@ -253,31 +289,31 @@ export function startLoginMatrix(form: HTMLElement) {
 		};
 	};
 
-	/** A faint curtain of tiny signs falls from the top and rises from below. */
+	/**
+	 * Over the whole light area, strands of tiny signs fall from the top and
+	 * rise from the bottom, each at its own speed, for as long as it takes.
+	 */
+	const area = lit(form);
 	const curtain = () => {
 		const shift = offset();
 		const rain = document.createElement('div');
 		rain.className = 'loginMatrixRain';
 		rain.setAttribute('aria-hidden', 'true');
-		const count = Math.ceil(form.clientWidth / 11);
-		const rows = Math.ceil(form.clientHeight / 16) + 2;
+		const { top, left, width, height } = area;
+		rain.style.cssText = `top:${top}px;left:${left}px;width:${width}px;height:${height}px;--fall:${Math.round(height * 0.55)}px`;
+		const count = Math.ceil(width / 12);
 		for (const side of ['top', 'bottom']) {
 			const half = document.createElement('div');
 			half.dataset.side = side;
 			for (let i = 0; i < count; i++) {
-				const column = document.createElement('span');
-				const text = document.createTextNode(signs(rows));
-				column.style.setProperty(
-					'--at',
-					String(
-						Math.round(
-							T.lead / 2 + T.scatter * Math.random() - shift
-						)
-					)
+				const strand = document.createElement('span');
+				const text = document.createTextNode(
+					signs(10 + Math.floor(Math.random() * 22))
 				);
-				column.append(text);
+				strand.style.cssText = `--at:${Math.round(T.lead / 2 + T.scatter * 2 * Math.random() - shift)};--speed:${(2.4 + Math.random() * 4).toFixed(2)};--run:${Math.random().toFixed(2)}`;
+				strand.append(text);
 				columns.push(text);
-				half.append(column);
+				half.append(strand);
 			}
 			rain.append(half);
 		}
@@ -325,41 +361,37 @@ export function startLoginMatrix(form: HTMLElement) {
 			pieces.push(plans[index][1]());
 		});
 
-	const duration = lastLine + fields.length * T.field + T.outline + T.turn;
+	const duration = lastLine + fields.length * T.field + T.outline + T.settle;
 	// One piece per frame keeps every frame short: what is sent, the words,
 	// the fields, then the rain.
 	const steps = [values, words, edges, curtain];
 	let last = -Infinity;
-	let pulse = duration;
+	let wave = duration;
 	let frame = 0;
-	// One loop: rattle the signs that are turning, keep the rain alive, and
-	// in long waits flip one settled sign now and then.
+	const pick = <Item>(items: Item[]) =>
+		items[Math.floor(Math.random() * items.length)];
+	// One loop: rattle the signs that are turning, keep the strands changing,
+	// and in long waits send a wave through the settled signs.
 	const tick = (now: number) => {
 		steps.shift()?.();
 		const t = (now - started) / pace;
 		if (t - last >= T.rattle) {
 			last = t;
-			for (const [element, turn] of turning)
-				if (t >= turn && t < turn + T.turn * 1.5)
-					element.dataset.digit = sign();
-			const column = columns[Math.floor(Math.random() * columns.length)];
-			if (column) {
-				const at = Math.floor(Math.random() * column.length);
-				column.replaceData(at, 1, sign());
+			if (t >= wave && turning.length) {
+				wave = t + T.wave;
+				const count = Math.max(2, Math.ceil(turning.length / 12));
+				for (let i = 0; i < count; i++) pick(turning)[1] = t;
 			}
-			if (t >= pulse && turning.length) {
-				pulse = t + T.pulse;
-				const [element] =
-					turning[Math.floor(Math.random() * turning.length)];
-				// Always a different sign, so the flip shows.
-				const index = SIGNS.indexOf(element.dataset.digit ?? '');
-				element.dataset.digit =
-					SIGNS[
-						(index +
-							1 +
-							Math.floor(Math.random() * (SIGNS.length - 1))) %
-							SIGNS.length
-					];
+			for (const [element, turn] of turning)
+				if (t >= turn && t < turn + T.settle)
+					element.dataset.digit = other(element.dataset.digit);
+			for (let i = 0; i < 6 && columns.length; i++) {
+				const column = pick(columns);
+				column.replaceData(
+					Math.floor(Math.random() * column.length),
+					1,
+					sign()
+				);
 			}
 		}
 		frame = requestAnimationFrame(tick);

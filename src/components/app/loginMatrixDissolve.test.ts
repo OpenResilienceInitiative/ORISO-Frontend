@@ -18,7 +18,7 @@ const render = () =>
 const at = (glyph: Element) =>
 	Number((glyph as HTMLElement).style.getPropertyValue('--at'));
 
-it('re-encodes the real text and the typed values in place, and restores everything exactly', () => {
+it('re-encodes the real text and the typed values in place, keeps going in long waits, and restores everything exactly', () => {
 	render();
 	let nextFrame: FrameRequestCallback | undefined;
 	vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -104,13 +104,14 @@ it('re-encodes the real text and the typed values in place, and restores everyth
 		expect(edge.getAttribute('aria-hidden')).toBe('true');
 		expect(edge.textContent!.length).toBeGreaterThan(3);
 
-		// Frame 4: the curtain of signs, behind everything, hidden from
-		// assistive technology.
+		// Frame 4: the curtain of signs over the whole light area, behind
+		// everything, hidden from assistive technology.
 		frame(64);
-		expect(form.firstElementChild!.className).toBe('loginMatrixRain');
-		expect(form.firstElementChild!.getAttribute('aria-hidden')).toBe(
-			'true'
-		);
+		const rain = form.firstElementChild as HTMLElement;
+		expect(rain.className).toBe('loginMatrixRain');
+		expect(rain.getAttribute('aria-hidden')).toBe('true');
+		expect(rain.style.width).toMatch(/px$/);
+		expect(rain.style.getPropertyValue('--fall')).toMatch(/px$/);
 
 		// Hidden copies, zero-width padding and inputs are left alone.
 		expect(form.querySelector('legend .loginMatrixGlyph')).toBeNull();
@@ -129,15 +130,18 @@ it('re-encodes the real text and the typed values in place, and restores everyth
 			true
 		);
 
-		// Long waits: one sign at a time flips, then pause stops it.
+		// Long waits: waves keep rattling through the settled signs, for as
+		// long as the answer takes; pause stops them.
 		const read = () => signs.map(({ dataset }) => dataset.digit).join('');
-		const settled = read();
-		frame(scene.duration + 500);
-		const flipped = read();
-		expect(flipped).not.toBe(settled);
+		let previous = read();
+		for (const wait of [500, 5000, 20000]) {
+			frame(scene.duration + wait);
+			expect(read()).not.toBe(previous);
+			previous = read();
+		}
 		scene.pause();
-		frame(scene.duration + 5000);
-		expect(read()).toBe(flipped);
+		frame(scene.duration + 30000);
+		expect(read()).toBe(previous);
 
 		scene.dispose();
 		expect(form.innerHTML).toBe(before);

@@ -688,7 +688,7 @@ const reencodeStory = (
 
 export const ReencodeSignIn = reencodeStory(
 	'Anmelden — Text wird umkodiert',
-	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst werden Name und Passwort zu Zeichen, dann Button-Text und Überschrift, danach die übrigen Wörter an zufälligen Stellen. Jedes Zeichen rattert kurz durch Katakana und Ziffern, bevor es still auf seinem Buchstaben stehen bleibt. Icons werden zu kleinen Zeichenrastern, Feldränder erst zu Strichen, dann zu Zeichen, und hinter dem Text fällt ein feiner Vorhang aus Zeichen von oben und steigt von unten. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
+	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst werden Name und Passwort zu Zeichen, dann Button-Text und Überschrift, danach die übrigen Wörter an zufälligen Stellen. Jedes Zeichen rattert kurz durch Katakana und Ziffern, bevor es still auf seinem Buchstaben stehen bleibt. Icons werden zu kleinen Zeichenrastern, Feldränder erst zu Strichen, dann zu Zeichen, und über die ganze helle Fläche fallen feine Zeichensträhnen von oben und steigen von unten. Dauert die Anmeldung länger, rattern Wellen weiter durch die Zeichen. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
 	{ holdMs: 2500 },
 	{
 		play: async ({ canvasElement }) => {
@@ -779,6 +779,12 @@ export const ReencodeSlowMotion = reencodeStory(
 	'Anmelden — umkodiert, Zeitlupe',
 	'Viermal langsamer: Name und Passwort zuerst, dann Button und Überschrift, dann die übrigen Wörter an zufälligen Stellen, zuletzt Icons, Feldränder und der Zeichenvorhang.',
 	{ holdMs: 15000, pace: 4 }
+);
+
+export const ReencodeLongWait = reencodeStory(
+	'Anmelden — umkodiert, lange Ladezeit',
+	'Die Anmeldung antwortet erst nach 20 Sekunden. Die Animation läuft die ganze Zeit weiter: Wellen rattern durch die stehenden Zeichen, und die Zeichensträhnen laufen über die ganze helle Fläche, bis die Antwort kommt.',
+	{ holdMs: 20000 }
 );
 
 export const ReencodeReducedMotion = reencodeStory(
