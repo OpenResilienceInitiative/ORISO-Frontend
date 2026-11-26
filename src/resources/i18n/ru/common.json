@@ -4882,7 +4882,8 @@
 				"directLinkVideo": "Видео",
 				"directLinkAudio": "Аудио",
 				"directLinkChat": "Чат",
-				"directInvitationVia": "Прямое приглашение · {{medium}}"
+				"directInvitationVia": "Прямое приглашение · {{medium}}",
+				"agencyLink": "по ссылке консультационного центра"
 			},
 			"waiting": {
 				"minutes": "ждёт {{count}} мин.",

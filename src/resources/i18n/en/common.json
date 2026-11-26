@@ -4726,7 +4726,8 @@
 				"directLinkVideo": "Video",
 				"directLinkAudio": "Audio",
 				"directLinkChat": "Chat",
-				"directInvitationVia": "Direct invitation · {{medium}}"
+				"directInvitationVia": "Direct invitation · {{medium}}",
+				"agencyLink": "via counselling centre link"
 			},
 			"waiting": {
 				"minutes": "waiting {{count}} min",

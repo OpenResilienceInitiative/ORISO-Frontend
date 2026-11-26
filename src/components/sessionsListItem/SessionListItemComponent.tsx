@@ -131,6 +131,11 @@ import { logout } from '../logout/logout';
 import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import {
+	AGENCY_LINK_LABEL_KEY,
+	showsAgencyLinkLabel
+} from '../sessionsList/agencyLinkLabel';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { TopicTag } from '../topicTag/TopicTag';
 import { UpcomingAppointmentClock } from './UpcomingAppointmentClock';
@@ -297,6 +302,7 @@ export const SessionListItemComponent = ({
 
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const tenant = useTenant();
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -1562,6 +1568,14 @@ export const SessionListItemComponent = ({
 	// Direkteinladung is Mail-Beratung; the card says "Mail" and adds the
 	// channel (Video / Audio / Chat) as a tag.
 	const directLinkMedium = getDirectLinkMedium(activeSession);
+	// FE#1870: an Erstanfrage from the agency link says so, unless the Träger
+	// switched the label off.
+	const agencyLinkLabel =
+		!isAsker &&
+		!!activeSession?.isEnquiry &&
+		modality === Modality.AGENCY_COUNSELLING &&
+		!directLinkMedium &&
+		showsAgencyLinkLabel(activeSession.item, tenant?.settings);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
@@ -2137,6 +2151,14 @@ export const SessionListItemComponent = ({
 												</span>
 											)}
 										</div>
+									)}
+									{agencyLinkLabel && (
+										<span
+											className="sessionsListItem__agencyLinkLabel"
+											data-testid="agency-link-label"
+										>
+											{translate(AGENCY_LINK_LABEL_KEY)}
+										</span>
 									)}
 									{modality === Modality.INTERNAL_GROUP && (
 										<div

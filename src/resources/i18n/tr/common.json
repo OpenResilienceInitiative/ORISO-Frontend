@@ -4875,7 +4875,8 @@
 				"directLinkVideo": "Görüntülü",
 				"directLinkAudio": "Sesli",
 				"directLinkChat": "Sohbet",
-				"directInvitationVia": "Doğrudan davet · {{medium}}"
+				"directInvitationVia": "Doğrudan davet · {{medium}}",
+				"agencyLink": "danışma merkezi bağlantısıyla"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",

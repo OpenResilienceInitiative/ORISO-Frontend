@@ -4780,7 +4780,8 @@
 				"directLinkVideo": "Video",
 				"directLinkAudio": "Audio",
 				"directLinkChat": "Chat",
-				"directInvitationVia": "Direkteinladung · {{medium}}"
+				"directInvitationVia": "Direkteinladung · {{medium}}",
+				"agencyLink": "über Beratungsstellen-Link"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",

@@ -4849,7 +4849,8 @@
 				"directLinkVideo": "ቪድዮ",
 				"directLinkAudio": "ድምጺ",
 				"directLinkChat": "ቻት",
-				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}"
+				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}",
+				"agencyLink": "ብሊንክ ማእከል ምኽሪ"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",

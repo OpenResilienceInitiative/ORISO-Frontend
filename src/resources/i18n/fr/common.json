@@ -4875,7 +4875,8 @@
 				"directLinkVideo": "Vidéo",
 				"directLinkAudio": "Audio",
 				"directLinkChat": "Chat",
-				"directInvitationVia": "Invitation directe · {{medium}}"
+				"directInvitationVia": "Invitation directe · {{medium}}",
+				"agencyLink": "via le lien du centre de conseil"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",
