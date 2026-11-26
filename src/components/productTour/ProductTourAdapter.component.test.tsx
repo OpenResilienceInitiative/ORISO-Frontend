@@ -15,7 +15,11 @@ import {
 	useNavigate
 } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { ProductTourAdapter } from './ProductTourAdapter';
+import {
+	ProductTourAdapter,
+	TOUR_RUNNING_BODY_CLASS,
+	TOUR_TOOLTIP_SURFACE
+} from './ProductTourAdapter';
 import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';
 import { practiceSupervisionTour } from '../../practice/practiceTours';
@@ -162,6 +166,36 @@ describe('ProductTourAdapter', () => {
 
 		await waitFor(() => expect(joyrideProps).not.toBeNull());
 		expect(joyrideProps!.run).toBe(false);
+	});
+
+	it('colours the arrow with the tooltip surface token (dark mode)', async () => {
+		renderAdapter();
+
+		await waitFor(() => expect(joyrideProps).not.toBeNull());
+		expect((joyrideProps as any).options.arrowColor).toBe(
+			TOUR_TOOLTIP_SURFACE
+		);
+		expect(TOUR_TOOLTIP_SURFACE).toContain('var(--m3-surface');
+	});
+
+	it('marks the body while a step shows, so toasts sit below the tour card', async () => {
+		const { rerenderAdapter, unmount } = renderAdapter();
+
+		await waitFor(() =>
+			expect(document.body.classList).toContain(TOUR_RUNNING_BODY_CLASS)
+		);
+		rerenderAdapter({ paused: true });
+		await waitFor(() =>
+			expect(document.body.classList).not.toContain(
+				TOUR_RUNNING_BODY_CLASS
+			)
+		);
+		rerenderAdapter({ paused: false });
+		await waitFor(() =>
+			expect(document.body.classList).toContain(TOUR_RUNNING_BODY_CLASS)
+		);
+		unmount();
+		expect(document.body.classList).not.toContain(TOUR_RUNNING_BODY_CLASS);
 	});
 
 	it('navigates to the next step route and advances only once its target exists', async () => {

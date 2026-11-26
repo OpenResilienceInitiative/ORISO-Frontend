@@ -35,6 +35,18 @@ export const apiGetPendingCallKnocks = (
 		responseHandling: handled
 	}).then(asList);
 
+/**
+ * Everybody waiting for this counsellor, in all conversations, oldest first:
+ * the server's list without a scope (`DirectCallKnockService.pendingFor`).
+ * For the notice outside a call, which has no call to scope to.
+ */
+export const apiGetAllPendingCallKnocks = (): Promise<CallKnock[]> =>
+	fetchData({
+		url: endpoints.callKnocks,
+		method: FETCH_METHODS.GET,
+		responseHandling: handled
+	}).then(asList);
+
 export const apiAdmitCallKnock = (knockId: number): Promise<CallKnock> =>
 	fetchData({
 		url: `${endpoints.callKnocks}/${knockId}/admit`,

@@ -27,6 +27,12 @@ describe('apiCallKnocks (#1892)', () => {
 			`${BASE}?${Q}`
 		],
 		[
+			'lists everybody waiting for the counsellor, without a scope',
+			() => api.apiGetAllPendingCallKnocks(),
+			'GET',
+			BASE
+		],
+		[
 			'admits one',
 			() => api.apiAdmitCallKnock(7),
 			'POST',

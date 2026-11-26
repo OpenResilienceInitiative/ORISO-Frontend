@@ -12,7 +12,11 @@
 	   `.MuiDialog-paper` (0,1,0), so it does not matter whether MUI's
 	   stylesheet lands before or after this one in <head>. */
 	.m3Dialog__backdrop {
-		background: rgba(255, 255, 255, 0.8);
+		background: color-mix(
+			in srgb,
+			var(--m3-surface-container-lowest, #ffffff) 80%,
+			transparent
+		);
 		backdrop-filter: blur(4px);
 	}
 

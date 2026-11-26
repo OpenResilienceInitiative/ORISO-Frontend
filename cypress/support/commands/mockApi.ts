@@ -14,6 +14,7 @@ import fastLoginCommand from './helper/fastLogin';
 import askerSessionsCommand from './helper/askerSessions';
 import consultantSessionsCommand from './helper/consultantSessions';
 import apiTopics from './api/topic';
+import { ADDON_CONTRACT } from '../../../src/addons/addonTypes';
 
 let overrides = {};
 
@@ -92,9 +93,46 @@ fastLoginCommand(getWillReturn, setWillReturn);
 consultantSessionsCommand(getWillReturn, setWillReturn);
 askerSessionsCommand(getWillReturn, setWillReturn);
 
+// Services the app shell calls on every authenticated page. Without a stub the
+// local dev proxy answers 500 and the app leaves for /error.500.html, so every
+// spec that did not stub them failed (FE#2572). Registered first, so a spec's
+// own intercept for the same path wins.
+const mockAppShellDefaults = () => {
+	cy.intercept('GET', '**/service/addons/registry*', {
+		contract: ADDON_CONTRACT,
+		addons: []
+	});
+	cy.intercept('GET', '**/service/addons/calendar*', { entries: [] });
+	cy.intercept('GET', '**/service/users/calendar/proposals*', {
+		sent: [],
+		received: []
+	});
+	cy.intercept('GET', '**/service/users/directlinks*', []);
+	cy.intercept('GET', '**/service/users/chat-series/join-requests*', []);
+	cy.intercept('GET', '**/service/conversations/consultants/availability*', {
+		available: false
+	});
+	cy.intercept('GET', '**/service/users/statistics/consultant*', (req) => {
+		const url = new URL(req.url);
+		req.reply({
+			startDate: url.searchParams.get('startDate'),
+			endDate: url.searchParams.get('endDate'),
+			numberOfAssignedSessions: 0,
+			numberOfActiveSessions: 0,
+			numberOfSentMessages: 0,
+			breakdown: []
+		});
+	});
+	cy.intercept('POST', '**/service/error-reports*', { statusCode: 204 });
+	// The app boots without its Matrix conversation service.
+	cy.intercept('GET', '**/service/matrix/me/token*', { statusCode: 503 });
+};
+
 Cypress.Commands.add('mockApi', () => {
 	// Empty overrides
 	overrides = {};
+
+	mockAppShellDefaults();
 
 	// Generate 1 default sessions
 	setAskerSessions([]);

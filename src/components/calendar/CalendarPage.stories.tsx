@@ -69,6 +69,10 @@ import { withPersonAvatars } from './calendarAvatar';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
 import { AskerFreeTimesPanel } from './AskerFreeTimesPanel';
 import { storyBookSlot, storyFreeSlots } from './calendarStoryFreeSlots';
+import {
+	describeLowContrast,
+	findLowContrastText
+} from '../designTokens/textContrastContract';
 
 interface HarnessProps {
 	role?: CalendarRole;
@@ -739,6 +743,30 @@ export const RealAvatarsList: Story = {
 	name: 'Real avatars — list, 32 px, initials only without avatar (FE#2325)',
 	args: { initialView: 'list' },
 	play: async ({ canvasElement }) => expectRealAvatars(canvasElement)
+};
+
+/**
+ * P0 dark mode (2026-11-25): one's own appointments are the light pink
+ * `primary-fixed` in every scheme; their names and icons used to take the
+ * scheme's light ink (1:1 in dark). The free-time pills had the same fault.
+ */
+export const ListDarkReadable: Story = {
+	name: 'List — dark, own appointments and free times readable',
+	args: { initialView: 'list' },
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async ({ canvasElement }) => {
+		const rows = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.calEntry--appointment, .calendarQuick__freePill'
+			);
+			expect(found.length).toBeGreaterThan(0);
+			return Array.from(found);
+		});
+		const weak = rows.flatMap((row) =>
+			describeLowContrast(findLowContrastText(row))
+		);
+		await expect(weak).toEqual([]);
+	}
 };
 
 export const RealAvatarsListDark: Story = {
