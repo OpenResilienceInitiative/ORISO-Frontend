@@ -109,6 +109,25 @@ const mockAppShellDefaults = () => {
 	});
 	cy.intercept('GET', '**/service/users/directlinks*', []);
 	cy.intercept('GET', '**/service/users/chat-series/join-requests*', []);
+	// Background reads of a consultant chat. Unstubbed, the dev proxy forwards
+	// them to itself and on Linux CI they hang. Chrome opens at most six
+	// connections per host, so a handful of hanging reads queued every later
+	// request: the case-handover form never loaded in sessions.cy.ts.
+	cy.intercept('GET', '**/service/users/call-knocks*', []);
+	cy.intercept(
+		'GET',
+		'**/service/users/sessions/consultants/deleted-askers*',
+		[]
+	);
+	cy.intercept('GET', '**/service/users/appointments/upcoming*', []);
+	cy.intercept('GET', '**/service/users/sessions/*/supervisors', []);
+	cy.intercept('GET', '**/service/users/sessions/*/appointments', []);
+	cy.intercept('PATCH', '**/service/users/event-notifications/active-view*', {
+		statusCode: 204
+	});
+	cy.intercept('POST', '**/service/matrix/sync/register/*', {
+		statusCode: 204
+	});
 	cy.intercept('GET', '**/service/conversations/consultants/availability*', {
 		available: false
 	});

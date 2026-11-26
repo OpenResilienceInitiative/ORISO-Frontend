@@ -62,6 +62,9 @@ async function serveSyntheticShell(page: Page) {
 	});
 }
 
+/** Rendering noise in px, far below one line of text (about 20 px). */
+const SUBPIXEL_TOLERANCE = 2;
+
 async function openLogin(page: Page) {
 	await serveSyntheticShell(page);
 	await page.goto('/login');
@@ -82,13 +85,17 @@ for (const viewport of [
 		const topics = page.locator(TOPICS_LINK);
 		const box = await topics.boundingBox();
 		expect(box, 'consulting-topics link renders').toBeTruthy();
-		// Fully inside the viewport without any scrolling.
+		// Fully inside the viewport without any scrolling. Font rasterising on
+		// the CI runner puts the bottom edge up to 1.1 px past 664 at random
+		// (664.09, 665.10); allow that sub-pixel spill, not a cut-off line.
 		expect(box!.y).toBeGreaterThanOrEqual(0);
-		expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+		expect(box!.y + box!.height).toBeLessThanOrEqual(
+			viewport.height + SUBPIXEL_TOLERANCE
+		);
 
 		const register = await page.locator(REGISTER_BLOCK).boundingBox();
 		expect(register!.y + register!.height).toBeLessThanOrEqual(
-			viewport.height
+			viewport.height + SUBPIXEL_TOLERANCE
 		);
 	});
 }
