@@ -4752,7 +4752,8 @@
 				"team": "Team Beratung",
 				"directLinkVideo": "Videoanruf",
 				"directLinkAudio": "Audioanruf",
-				"directLinkChat": "Direkteinladung"
+				"directLinkChat": "Direkteinladung",
+				"agencyLink": "über Beratungsstellen-Link"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",

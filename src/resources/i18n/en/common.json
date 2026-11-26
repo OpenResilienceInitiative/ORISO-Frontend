@@ -4698,7 +4698,8 @@
 				"team": "Team counselling",
 				"directLinkVideo": "Video call",
 				"directLinkAudio": "Audio call",
-				"directLinkChat": "Direct invitation"
+				"directLinkChat": "Direct invitation",
+				"agencyLink": "via counselling centre link"
 			},
 			"waiting": {
 				"minutes": "waiting {{count}} min",

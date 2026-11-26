@@ -4848,7 +4848,8 @@
 				"team": "Conseil en équipe",
 				"directLinkVideo": "Appel vidéo",
 				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Invitation directe"
+				"directLinkChat": "Invitation directe",
+				"agencyLink": "via le lien du centre de conseil"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",

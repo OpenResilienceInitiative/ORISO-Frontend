@@ -4848,7 +4848,8 @@
 				"team": "Ekip danışmanlığı",
 				"directLinkVideo": "Görüntülü arama",
 				"directLinkAudio": "Sesli arama",
-				"directLinkChat": "Doğrudan davet"
+				"directLinkChat": "Doğrudan davet",
+				"agencyLink": "danışma merkezi bağlantısıyla"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",

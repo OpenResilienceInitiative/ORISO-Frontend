@@ -4822,7 +4822,8 @@
 				"team": "ጋንታዊ ምኽሪ",
 				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
 				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
-				"directLinkChat": "ቀጥታዊ ሊንክ"
+				"directLinkChat": "ቀጥታዊ ሊንክ",
+				"agencyLink": "via counselling centre link"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",

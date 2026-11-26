@@ -1798,3 +1798,19 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	height: 14px;
 	fill: currentcolor;
 }
+
+/* FE#1870: Erstanfrage that came in through the agency link. A quiet chip
+   next to the conversation kind; wraps on narrow rows instead of overlapping. */
+.sessionsListItem__agencyLinkLabel {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: var(--m3-secondary-container, #dde3ea);
+	color: var(--m3-on-surface-variant, #444748);
+	font-size: 12px;
+	line-height: 16px;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}

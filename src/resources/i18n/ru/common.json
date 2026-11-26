@@ -4855,7 +4855,8 @@
 				"team": "Командная консультация",
 				"directLinkVideo": "Видеозвонок",
 				"directLinkAudio": "Аудиозвонок",
-				"directLinkChat": "Прямое приглашение"
+				"directLinkChat": "Прямое приглашение",
+				"agencyLink": "по ссылке консультационного центра"
 			},
 			"waiting": {
 				"minutes": "ждёт {{count}} мин.",

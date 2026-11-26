@@ -1490,6 +1490,59 @@ export const DirectLinkConversationSelected: Story = {
 	}
 };
 
+/**
+ * FE#1870: two Erstanfragen. The first came in through the agency link
+ * (Beratungsstellen-Link) and carries the label; the second came through the
+ * postal-code search and does not.
+ */
+const AGENCY_LINK_ROWS = [
+	{ id: 4601, viaAgencyLink: true, user: 'heller_kranich' },
+	{ id: 4602, viaAgencyLink: false, user: 'gruene_eule' }
+] as const;
+
+export const AgencyLinkEnquiries: Story = {
+	name: 'Erstanfragen über Beratungsstellen-Link (FE#1870)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Erstanfragen">
+				{AGENCY_LINK_ROWS.map((row, index) => (
+					<RuntimeCard
+						key={row.id}
+						index={index}
+						grouped
+						isGroupStart={index === 0}
+						isGroupEnd={index === AGENCY_LINK_ROWS.length - 1}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: row.id,
+								status: STATUS_ENQUIRY,
+								matrixRoomId: `!enquiry-${row.id}:matrix.example.org`,
+								...({
+									viaAgencyLink: row.viaAgencyLink
+								} as object)
+							},
+							userOverrides: { username: row.user }
+						})}
+					/>
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-testid="agency-link-label"]'
+				)
+			).toHaveLength(1)
+		);
+	}
+};
+
 /** Resting consultant card: topic and postcode as one pill, Mail, alias preview in italics. */
 export const ConsultantUnselected: Story = {
 	name: 'Beratung — nicht ausgewählt',
