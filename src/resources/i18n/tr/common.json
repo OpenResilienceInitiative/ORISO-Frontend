@@ -4229,7 +4229,8 @@
 			"selectCase": "Vaka seç",
 			"selectedCount": "{{count}} tanesi seçildi",
 			"start": "Birden fazla vaka seç",
-			"title": "Toplu erişim talebi"
+			"title": "Toplu erişim talebi",
+			"clearSelection": "Seçimi kaldır"
 		},
 		"consent": {
 			"title": "Bir danışman bu görüşmeye erişim istiyor",
@@ -4276,7 +4277,9 @@
 			"required": "Bir neden seçin ve bir açıklama ekleyin."
 		},
 		"explanation": {
-			"placeholder": "Gerekçeyi açıklayın"
+			"placeholder": "Gerekçeyi açıklayın",
+			"optional": "Açıklama (isteğe bağlı)",
+			"required": "Açıklama (zorunlu)"
 		},
 		"eyebrow": "Talep onaylanana kadar bilgiler gizli kalır",
 		"hidden": {

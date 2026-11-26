@@ -4190,12 +4190,13 @@
 		"batch": {
 			"cancel": "Close selection",
 			"confirm": "Request selected",
-			"required": "Select at least one case, one reason, and an explanation.",
+			"required": "Select at least one case and a reason, and add an explanation where it is required.",
 			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
 			"selectCase": "Select case",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
-			"title": "Batch access request"
+			"title": "Batch access request",
+			"clearSelection": "Clear selection"
 		},
 		"consent": {
 			"sender": "Carimat",
@@ -4239,10 +4240,12 @@
 		"error": {
 			"failed": "The access request could not be sent.",
 			"forbidden": "You are not eligible to request access to this case.",
-			"required": "Select a reason and add an explanation."
+			"required": "Select a reason. This reason requires an explanation."
 		},
 		"explanation": {
-			"placeholder": "Describe the reason"
+			"placeholder": "Describe the reason",
+			"optional": "Explanation (optional)",
+			"required": "Explanation (required)"
 		},
 		"eyebrow": "Information hidden until request is approved",
 		"hidden": {

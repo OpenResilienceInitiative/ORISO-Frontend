@@ -4,6 +4,10 @@ import { Routes, Route, useLocation, matchPath } from 'react-router-dom';
 import { SessionTypeProvider } from '../../globalState/provider/SessionTypeProvider';
 import { SessionListViewStateProvider } from '../sessionsList/SessionListViewStateContext';
 import { ChatStagePanelProvider } from '../chatStage/ChatStagePanelContext';
+import {
+	CaseHandoverPaneSlot,
+	CaseHandoverPaneSlotProvider
+} from '../caseHandover/CaseHandoverPaneSlot';
 import { Loading } from './Loading';
 import { toV7Paths, stripPrefix } from '../../utils/routeHelpers';
 
@@ -39,56 +43,90 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 
 	return (
 		<SessionListViewStateProvider>
-			<ChatStagePanelProvider>
-				<div
-					className={`contentWrapper__list${
-						isDetailActive
-							? ' contentWrapper__list--smallInactive'
-							: ''
-					}`}
-				>
-					<Routes>
-						{(routerConfig.listRoutes ?? []).flatMap((route: any) =>
-							toV7Paths(route).map((path) => (
-								<Route
-									key={`list-${path}`}
-									path={stripPrefix(path, SESSIONS_PREFIX)}
-									element={
-										<SessionTypeProvider
-											type={route.type || null}
-										>
-											<route.component
-												sessionTypes={
-													route.sessionTypes
-												}
-											/>
-										</SessionTypeProvider>
-									}
-								/>
-							))
-						)}
-					</Routes>
-				</div>
-				<div
-					className={`contentWrapper__detail${
-						isDetailActive
-							? ''
-							: ' contentWrapper__detail--smallInactive'
-					}`}
-				>
-					<Suspense fallback={<Loading />}>
-						<Routes location={detailLocation}>
-							{(routerConfig.userProfileRoutes ?? []).flatMap(
+			<CaseHandoverPaneSlotProvider>
+				<ChatStagePanelProvider>
+					<div
+						className={`contentWrapper__list${
+							isDetailActive
+								? ' contentWrapper__list--smallInactive'
+								: ''
+						}`}
+					>
+						<Routes>
+							{(routerConfig.listRoutes ?? []).flatMap(
 								(route: any) =>
 									toV7Paths(route).map((path) => (
 										<Route
-											key={`userProfile-${path}`}
+											key={`list-${path}`}
 											path={stripPrefix(
 												path,
 												SESSIONS_PREFIX
 											)}
 											element={
-												<div className="contentWrapper__userProfile">
+												<SessionTypeProvider
+													type={route.type || null}
+												>
+													<route.component
+														sessionTypes={
+															route.sessionTypes
+														}
+													/>
+												</SessionTypeProvider>
+											}
+										/>
+									))
+							)}
+						</Routes>
+					</div>
+					<div
+						className={`contentWrapper__detail${
+							isDetailActive
+								? ''
+								: ' contentWrapper__detail--smallInactive'
+						}`}
+					>
+						<CaseHandoverPaneSlot />
+						<Suspense fallback={<Loading />}>
+							<Routes location={detailLocation}>
+								{(routerConfig.userProfileRoutes ?? []).flatMap(
+									(route: any) =>
+										toV7Paths(route).map((path) => (
+											<Route
+												key={`userProfile-${path}`}
+												path={stripPrefix(
+													path,
+													SESSIONS_PREFIX
+												)}
+												element={
+													<div className="contentWrapper__userProfile">
+														<SessionTypeProvider
+															type={
+																route.type ||
+																null
+															}
+														>
+															<route.component
+																type={
+																	route.type ||
+																	null
+																}
+															/>
+														</SessionTypeProvider>
+													</div>
+												}
+											/>
+										))
+								)}
+								{(routerConfig.detailRoutes ?? []).flatMap(
+									(route: any) =>
+										toV7Paths(route).map((path) => (
+											<Route
+												key={`detail-${path}`}
+												path={stripPrefix(
+													path,
+													SESSIONS_PREFIX
+												)}
+												element={
 													<SessionTypeProvider
 														type={
 															route.type || null
@@ -101,16 +139,21 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 															}
 														/>
 													</SessionTypeProvider>
-												</div>
-											}
-										/>
-									))
-							)}
-							{(routerConfig.detailRoutes ?? []).flatMap(
+												}
+											/>
+										))
+								)}
+								<Route path="*" element={null} />
+							</Routes>
+						</Suspense>
+					</div>
+					<Suspense fallback={<Loading />}>
+						<Routes>
+							{(routerConfig.dialogRoutes ?? []).flatMap(
 								(route: any) =>
 									toV7Paths(route).map((path) => (
 										<Route
-											key={`detail-${path}`}
+											key={`dialog-${path}`}
 											path={stripPrefix(
 												path,
 												SESSIONS_PREFIX
@@ -123,6 +166,7 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 														type={
 															route.type || null
 														}
+														dialog
 													/>
 												</SessionTypeProvider>
 											}
@@ -132,35 +176,8 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 							<Route path="*" element={null} />
 						</Routes>
 					</Suspense>
-				</div>
-				<Suspense fallback={<Loading />}>
-					<Routes>
-						{(routerConfig.dialogRoutes ?? []).flatMap(
-							(route: any) =>
-								toV7Paths(route).map((path) => (
-									<Route
-										key={`dialog-${path}`}
-										path={stripPrefix(
-											path,
-											SESSIONS_PREFIX
-										)}
-										element={
-											<SessionTypeProvider
-												type={route.type || null}
-											>
-												<route.component
-													type={route.type || null}
-													dialog
-												/>
-											</SessionTypeProvider>
-										}
-									/>
-								))
-						)}
-						<Route path="*" element={null} />
-					</Routes>
-				</Suspense>
-			</ChatStagePanelProvider>
+				</ChatStagePanelProvider>
+			</CaseHandoverPaneSlotProvider>
 		</SessionListViewStateProvider>
 	);
 };

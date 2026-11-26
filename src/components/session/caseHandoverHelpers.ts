@@ -1,5 +1,9 @@
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
-import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
+import type {
+	CaseHandoverExplanationLevel,
+	CaseHandoverReason,
+	CaseHandoverStatus
+} from '../../api/apiCaseHandover';
 import {
 	STATUS_ENQUIRY,
 	UserDataInterface
@@ -191,3 +195,28 @@ export const isCaseHandoverCoAccess = (
 			status.accessType === 'CO_ACCESS' &&
 			['GRANTED', 'GRANTED_PENDING_CLIENT_OPTOUT'].includes(status.status)
 	);
+
+/** The explanation level of a reason; absent or unknown reads as OFF (FE#2040). */
+export const caseHandoverExplanationLevel = (
+	reason?: Pick<CaseHandoverReason, 'explanationLevel'> | null
+): CaseHandoverExplanationLevel =>
+	reason?.explanationLevel === 'OPTIONAL' ||
+	reason?.explanationLevel === 'REQUIRED'
+		? reason.explanationLevel
+		: 'OFF';
+
+/** A reason is chosen and, when its level is REQUIRED, an explanation was typed. */
+export const isCaseHandoverRequestComplete = (
+	reason: Pick<CaseHandoverReason, 'explanationLevel'> | null | undefined,
+	explanation: string
+): boolean =>
+	Boolean(reason) &&
+	(caseHandoverExplanationLevel(reason) !== 'REQUIRED' ||
+		explanation.trim().length > 0);
+
+/** The text sent for a reason: nothing when its level is OFF. */
+export const caseHandoverExplanationToSend = (
+	reason: Pick<CaseHandoverReason, 'explanationLevel'> | null | undefined,
+	explanation: string
+): string =>
+	caseHandoverExplanationLevel(reason) === 'OFF' ? '' : explanation.trim();

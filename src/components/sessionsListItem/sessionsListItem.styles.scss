@@ -1536,6 +1536,23 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		&--denied .splitButton__main:disabled {
 			color: var(--m3-primary, #a5000a);
 		}
+
+		// FE#2040: in selection mode the "Select case" button spans the whole
+		// row under avatar and text, so it is an easy target, not squeezed.
+		&--select {
+			display: flex;
+			flex: 1 1 auto;
+			width: 100%;
+			max-width: 100%;
+
+			.splitButton {
+				width: 100%;
+			}
+
+			.splitButton__main {
+				flex: 1 1 auto;
+			}
+		}
 	}
 
 	// #1158: portalled to document.body so the card's `overflow: hidden`

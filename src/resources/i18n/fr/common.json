@@ -4229,7 +4229,8 @@
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
-			"title": "Demande d'accès groupée"
+			"title": "Demande d'accès groupée",
+			"clearSelection": "Annuler la sélection"
 		},
 		"consent": {
 			"title": "Une personne consultante demande l'accès à cette conversation",
@@ -4276,7 +4277,9 @@
 			"required": "Choisissez un motif et ajoutez une explication."
 		},
 		"explanation": {
-			"placeholder": "Décrivez le motif"
+			"placeholder": "Décrivez le motif",
+			"optional": "Justification (facultative)",
+			"required": "Justification (obligatoire)"
 		},
 		"eyebrow": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 		"hidden": {
