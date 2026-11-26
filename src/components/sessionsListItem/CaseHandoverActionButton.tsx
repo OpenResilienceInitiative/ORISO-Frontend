@@ -19,12 +19,12 @@ import './sessionsListItem.styles';
  * Two modes:
  * - Default: outlined "Request access" (status pills for awaiting, granted,
  *   denied); the chevron opens a menu with "Select multiple conversations".
- * - Batch (FE#1725): the main segment is the shared M3 checkbox "Select
- *   case" — outlined while unselected, filled primary once selected. Granted
- *   or pending cases show their status pill and cannot be selected. The
- *   chevron offers "Confirm selection" / "Deselect and close". FE#2040: the
- *   select button spans the card row, and selecting a case loads the reason
- *   step into the right pane (no bulk bar).
+ * - Batch (FE#1725): the main segment is the shared M3 checkbox "Select"
+ *   — outlined while unselected, filled primary once selected. Granted or
+ *   pending cases show their status pill and cannot be selected. FE#2040:
+ *   no chevron in this mode — selecting a case loads the reason step into
+ *   the right pane, which also offers "Clear selection" — so the select
+ *   button keeps the whole row and its label stays readable.
  *
  * The open (active) case is marked by the card, never by this button.
  */
@@ -47,10 +47,6 @@ export interface CaseHandoverActionLabels {
 	menuLabel: string;
 	selectMultipleTitle: string;
 	selectMultipleDescription: string;
-	confirmSelectionTitle: string;
-	confirmSelectionDescription: string;
-	deselectTitle: string;
-	deselectDescription: string;
 }
 
 interface CaseHandoverActionButtonProps {
@@ -73,8 +69,6 @@ interface CaseHandoverActionButtonProps {
 	tourTarget?: string;
 	onToggleSelect?: () => void;
 	onSelectMultiple?: () => void;
-	onConfirmSelection?: () => void;
-	onDeselectAndClose?: () => void;
 }
 
 const IconCheckSmall = () => (
@@ -104,27 +98,13 @@ const IconLockedSmall = () => (
 	</svg>
 );
 
-// Menu-item leading icons (ORISO icon master file):
-// check_box_400_24px for "Confirm selection", X square_400_24px for
-// "Deselect and close". currentColor so they inherit the menu text colour.
+// Menu-item leading icon (ORISO icon master file): check_box_400_24px for
+// "Select multiple conversations". currentColor inherits the menu text colour.
 const IconCheckBoxMenu = () => (
 	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
 		<path
 			d="M8.83333 13.5L14.7083 7.625L13.5417 6.45833L8.83333 11.1667L6.45833 8.79167L5.29167 9.95833L8.83333 13.5ZM4.16667 17.5C3.70833 17.5 3.31597 17.3368 2.98958 17.0104C2.66319 16.684 2.5 16.2917 2.5 15.8333V4.16667C2.5 3.70833 2.66319 3.31597 2.98958 2.98958C3.31597 2.66319 3.70833 2.5 4.16667 2.5H15.8333C16.2917 2.5 16.684 2.66319 17.0104 2.98958C17.3368 3.31597 17.5 3.70833 17.5 4.16667V15.8333C17.5 16.2917 17.3368 16.684 17.0104 17.0104C16.684 17.3368 16.2917 17.5 15.8333 17.5H4.16667Z"
 			fill="currentColor"
-		/>
-	</svg>
-);
-
-const IconXSquareMenu = () => (
-	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
-		<path
-			d="M7.5 7.5L12.5 12.5M12.5 7.5L7.5 12.5M4.16667 2.5H15.8333C16.7538 2.5 17.5 3.24619 17.5 4.16667V15.8333C17.5 16.7538 16.7538 17.5 15.8333 17.5H4.16667C3.24619 17.5 2.5 16.7538 2.5 15.8333V4.16667C2.5 3.24619 3.24619 2.5 4.16667 2.5Z"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
 		/>
 	</svg>
 );
@@ -148,9 +128,7 @@ export const CaseHandoverActionButton = ({
 	onRequestAccess,
 	tourTarget,
 	onToggleSelect,
-	onSelectMultiple,
-	onConfirmSelection,
-	onDeselectAndClose
+	onSelectMultiple
 }: CaseHandoverActionButtonProps) => {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const rootRef = useRef<HTMLDivElement | null>(null);
@@ -216,32 +194,15 @@ export const CaseHandoverActionButton = ({
 	const variant: SplitButtonVariant =
 		isSelection && selected ? 'primary' : 'outlined';
 
-	const menuItems = batchMode
-		? [
-				{
-					key: 'confirm',
-					title: labels.confirmSelectionTitle,
-					description: labels.confirmSelectionDescription,
-					Icon: IconCheckBoxMenu,
-					onSelect: onConfirmSelection
-				},
-				{
-					key: 'deselect',
-					title: labels.deselectTitle,
-					description: labels.deselectDescription,
-					Icon: IconXSquareMenu,
-					onSelect: onDeselectAndClose
-				}
-			]
-		: [
-				{
-					key: 'selectMultiple',
-					title: labels.selectMultipleTitle,
-					description: labels.selectMultipleDescription,
-					Icon: IconCheckBoxMenu,
-					onSelect: onSelectMultiple
-				}
-			];
+	const menuItems = [
+		{
+			key: 'selectMultiple',
+			title: labels.selectMultipleTitle,
+			description: labels.selectMultipleDescription,
+			Icon: IconCheckBoxMenu,
+			onSelect: onSelectMultiple
+		}
+	];
 
 	return (
 		<div
@@ -295,7 +256,9 @@ export const CaseHandoverActionButton = ({
 							}
 						: undefined
 				}
-				onToggleMenu={() => setMenuOpen((open) => !open)}
+				onToggleMenu={
+					batchMode ? undefined : () => setMenuOpen((open) => !open)
+				}
 				open={menuOpen}
 				menuLabel={labels.menuLabel}
 				mainOpensMenu={false}

@@ -4165,7 +4165,7 @@
 			"confirm": "Request selected",
 			"required": "Select at least one case and a reason, and add an explanation where it is required.",
 			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
-			"selectCase": "Select case",
+			"selectCase": "Select",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
 			"title": "Batch access request",

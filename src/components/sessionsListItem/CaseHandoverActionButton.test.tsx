@@ -19,11 +19,7 @@ const labels: CaseHandoverActionLabels = {
 	selectCase: 'Select case',
 	menuLabel: 'Case handover options',
 	selectMultipleTitle: 'Select multiple conversations',
-	selectMultipleDescription: 'Select several cases at once.',
-	confirmSelectionTitle: 'Confirm selection',
-	confirmSelectionDescription: 'Proceed with the current selection.',
-	deselectTitle: 'Deselect and close',
-	deselectDescription: 'Deselects everything and closes batch mode.'
+	selectMultipleDescription: 'Select several cases at once.'
 };
 
 const anchorToggleAt = (rect: Partial<DOMRect>) =>
