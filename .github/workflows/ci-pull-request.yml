@@ -221,7 +221,9 @@ jobs:
 
             # Specs listed in cypress/quarantine.json fail on dev and are being
             # repaired under FE#2572. They run on every PR so their state stays
-            # visible, without blocking unrelated work.
+            # visible, without blocking unrelated work. They write to their own
+            # screenshot folder: each `cypress run` empties its folder first, so a
+            # shared one would delete the blocking suite's failure evidence.
             - name: Cypress quarantined specs (non-blocking, FE#2572)
               if: always()
               continue-on-error: true
@@ -241,6 +243,7 @@ jobs:
                   name: e2e-browser
                   path: |
                       cypress/screenshots
+                      cypress/screenshots-quarantine
                       test-results
                   if-no-files-found: ignore
                   retention-days: 7

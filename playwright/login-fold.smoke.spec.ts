@@ -41,11 +41,14 @@ async function serveSyntheticShell(page: Page) {
 			}
 		});
 	});
+	// Taken from the configured base URL: before the first navigation
+	// commits, page.url() is about:blank and has no usable origin.
+	const appOrigin = new URL(
+		test.info().project.use.baseURL || 'http://localhost:9001'
+	).origin;
 	await page.route('**/*', async (route) => {
 		const url = new URL(route.request().url());
-		const origin = new URL(page.url() || url.href).origin;
-		if (url.origin !== origin && !url.href.startsWith('http://localhost'))
-			return route.abort();
+		if (url.origin !== appOrigin) return route.abort();
 		const path = url.pathname;
 		if (path === '/service/topic/public')
 			return route.fulfill({ json: topics });
