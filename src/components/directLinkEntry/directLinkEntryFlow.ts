@@ -114,7 +114,11 @@ export interface EntryMedia {
 }
 
 /** How the wait on the link page ended (FE#2542). */
-export type AdmissionOutcome = 'admitted' | 'declined' | 'cancelled';
+/**
+ * `ended`: the wait stopped without an answer: the session is no longer
+ * valid (401) or nobody answered within the maximum wait.
+ */
+export type AdmissionOutcome = 'admitted' | 'declined' | 'cancelled' | 'ended';
 
 /** The person waited on the link page and did not get in: they stay there. */
 export class DirectLinkNotAdmittedError extends Error {

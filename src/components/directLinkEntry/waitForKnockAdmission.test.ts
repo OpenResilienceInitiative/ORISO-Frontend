@@ -48,6 +48,42 @@ describe('waitForKnockAdmission (FE#2542)', () => {
 		).resolves.toBe('admitted');
 	});
 
+	it('treats a knock that no longer exists (404) as withdrawn', async () => {
+		const getKnock = vi.fn().mockRejectedValue({ status: 404 });
+		await expect(
+			waitForKnockAdmission(21, { getKnock, pollMs: 1 })
+		).resolves.toBe('cancelled');
+		expect(getKnock).toHaveBeenCalledOnce();
+	});
+
+	it('ends when the session is over (401) instead of asking for ever', async () => {
+		const getKnock = vi.fn().mockRejectedValue({ status: 401 });
+		await expect(
+			waitForKnockAdmission(21, { getKnock, pollMs: 1 })
+		).resolves.toBe('ended');
+		expect(getKnock).toHaveBeenCalledOnce();
+	});
+
+	it('keeps asking through a server error (503)', async () => {
+		const getKnock = vi
+			.fn()
+			.mockRejectedValueOnce({ status: 503 })
+			.mockResolvedValueOnce({ status: 'ADMITTED' });
+		await expect(
+			waitForKnockAdmission(21, { getKnock, pollMs: 1 })
+		).resolves.toBe('admitted');
+	});
+
+	it('ends after the maximum wait without an answer', async () => {
+		const getKnock = vi.fn().mockResolvedValue({ status: 'PENDING' });
+		await expect(
+			waitForKnockAdmission(21, { getKnock, pollMs: 2, maxWaitMs: 15 })
+		).resolves.toBe('ended');
+		const calls = getKnock.mock.calls.length;
+		await new Promise((r) => setTimeout(r, 20));
+		expect(getKnock.mock.calls.length).toBe(calls);
+	});
+
 	it('stops at once when the person no longer waits', async () => {
 		const stop = new AbortController();
 		const getKnock = vi.fn().mockResolvedValue({ status: 'PENDING' });

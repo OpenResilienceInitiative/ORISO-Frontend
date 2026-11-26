@@ -80,6 +80,7 @@ export const callEntryCopy = {
 	},
 	turnedDown:
 		'Sie wurden nicht hereingelassen. Sie können noch einmal anklopfen.',
+	waitEnded: 'Das Warten wurde beendet. Sie können noch einmal anklopfen.',
 	blocker: {
 		permissionDenied: {
 			title: 'Ihr Browser hat das Mikrofon gesperrt',

@@ -192,7 +192,7 @@ const DirectLinkCallEntryForm = ({
 	   (turned down, or no longer waiting) must not register again. */
 	const [registered, setRegistered] = useState(false);
 	const hasAccount = signedIn || registered;
-	const [turnedDown, setTurnedDown] = useState(false);
+	const [notLetIn, setNotLetIn] = useState<'declined' | 'ended' | null>(null);
 	const wait = useRef<{ knockId: number; stop: AbortController } | null>(
 		null
 	);
@@ -336,7 +336,7 @@ const DirectLinkCallEntryForm = ({
 	// Not memoised: `register` reads the current locale and tenant.
 	const handleJoin = async (account: CallEntryAccount) => {
 		setJoining(true);
-		setTurnedDown(false);
+		setNotLetIn(null);
 		try {
 			if (!hasAccount) {
 				// Registration resets auth cookies. Never replace a session that
@@ -362,11 +362,21 @@ const DirectLinkCallEntryForm = ({
 		} catch (error) {
 			setJoining(false);
 			setWaiting(false);
+			const knockId = wait.current?.knockId;
 			wait.current = null;
 			/* Turned down or no longer waiting: the person stays here, and the
 			   page says which; nothing failed. */
 			if (error instanceof DirectLinkNotAdmittedError) {
-				setTurnedDown(error.outcome === 'declined');
+				if (error.outcome === 'ended' && knockId !== undefined) {
+					/* Best effort: nobody should be asked to let in a person
+					   who stopped waiting. */
+					void cancelKnock(knockId).catch(() => undefined);
+				}
+				setNotLetIn(
+					error.outcome === 'declined' || error.outcome === 'ended'
+						? error.outcome
+						: null
+				);
 				return false;
 			}
 			const status = isSharedCall
@@ -408,7 +418,8 @@ const DirectLinkCallEntryForm = ({
 			closing={isSharedCall || knocks ? null : 'call'}
 			waiting={waiting}
 			onStopWaiting={stopWaiting}
-			turnedDown={turnedDown}
+			turnedDown={notLetIn === 'declined'}
+			waitEnded={notLetIn === 'ended'}
 			consent={{ html: isSharedCall ? consent.html : '', department }}
 			signedIn={hasAccount}
 			loginLink={

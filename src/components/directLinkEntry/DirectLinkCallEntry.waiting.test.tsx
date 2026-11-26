@@ -158,6 +158,40 @@ describe('DirectLinkCallEntry waiting to be let in', () => {
 		expect(addNotification).not.toHaveBeenCalled();
 	});
 
+	it('ends the wait when the session is over (401), withdraws the knock and says so', async () => {
+		const getKnock = vi.fn().mockRejectedValue({ status: 401 });
+		const cancelKnock = vi.fn().mockResolvedValue(undefined);
+		const addNotification = mount({
+			open: openThatKnocks(),
+			getKnock,
+			cancelKnock
+		});
+		let joined: Promise<boolean>;
+		await act(async () => {
+			joined = roomProps.current.onJoin(account);
+		});
+		await expect(joined!).resolves.toBe(false);
+		await waitFor(() => expect(roomProps.current.waitEnded).toBe(true));
+		expect(roomProps.current.waiting).toBe(false);
+		expect(roomProps.current.turnedDown).toBe(false);
+		expect(cancelKnock).toHaveBeenCalledWith(21);
+		expect(addNotification).not.toHaveBeenCalled();
+	});
+
+	it('gives the page back when the knock is gone (404), without an error', async () => {
+		const getKnock = vi.fn().mockRejectedValue({ status: 404 });
+		const addNotification = mount({ open: openThatKnocks(), getKnock });
+		let joined: Promise<boolean>;
+		await act(async () => {
+			joined = roomProps.current.onJoin(account);
+		});
+		await expect(joined!).resolves.toBe(false);
+		await waitFor(() => expect(roomProps.current.waiting).toBe(false));
+		expect(roomProps.current.turnedDown).toBe(false);
+		expect(roomProps.current.waitEnded).toBe(false);
+		expect(addNotification).not.toHaveBeenCalled();
+	});
+
 	it('registers once: knocking again after a refusal keeps the account', async () => {
 		const answer = { status: 'DECLINED' };
 		const getKnock = vi.fn(() => Promise.resolve(answer));

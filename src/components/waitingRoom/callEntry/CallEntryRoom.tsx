@@ -120,6 +120,8 @@ export interface CallEntryRoomProps {
 	onStopWaiting?: () => void;
 	/** The counsellor turned the knock down; "Beitreten" knocks again. */
 	turnedDown?: boolean;
+	/** The wait ended without an answer (session over or waited too long). */
+	waitEnded?: boolean;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
@@ -188,6 +190,7 @@ export const CallEntryRoom = ({
 	waiting = false,
 	onStopWaiting,
 	turnedDown = false,
+	waitEnded = false,
 	onBlockerAction,
 	playTone,
 	checkUsername,
@@ -595,7 +598,9 @@ export const CallEntryRoom = ({
 										? `${copy.missing}${missing}`
 										: turnedDown
 											? copy.turnedDown
-											: copy.allSet
+											: waitEnded
+												? copy.waitEnded
+												: copy.allSet
 						}
 						testingAttribute="call-entry-gate"
 					/>
