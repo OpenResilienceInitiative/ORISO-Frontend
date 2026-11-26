@@ -84,6 +84,10 @@ $cc-motion-easing: var(
 		letter-spacing: 0.5px;
 		line-height: 24px;
 		margin: 0;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	/* Figma "Chatroom Actions": 24px stack inside a 128px side inset. */
@@ -747,7 +751,8 @@ body.conversationCreate--active .navigation__wrapper {
 .conversationCreate {
 	&__panelHeader {
 		align-items: center;
-		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-bottom: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		display: flex;
 		padding: 4px;
 	}
@@ -858,7 +863,7 @@ body.conversationCreate--active .navigation__wrapper {
 		background: var(--m3-primary-fixed, #ffdad6);
 		border: none;
 		border-radius: 28px;
-		color: $cc-primary;
+		color: var(--oriso-primary-text-on-fixed, $cc-primary);
 		cursor: pointer;
 		display: flex;
 		flex-shrink: 0;

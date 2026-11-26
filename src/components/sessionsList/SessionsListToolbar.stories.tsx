@@ -26,6 +26,11 @@ import {
 	runtimeSession
 } from '../sessionsListItem/__storybook__/runtimeSessionCard';
 import './sessionsList.styles.scss';
+import {
+	describeLowContrast,
+	findLowContrastText,
+	paintedContrast
+} from '../designTokens/textContrastContract';
 
 const shell: React.CSSProperties = {
 	backgroundColor: '#eae7e8',
@@ -971,5 +976,32 @@ export const DirectLinksChip: Story = {
 		await expect(chip).not.toBeNull();
 		// #2252: "Direktlink" is now called "Direkteinladung".
 		await expect(chip!.textContent).toContain('Direkteinladungen');
+	}
+};
+
+/**
+ * P0 dark mode (2026-11-25): the search field and the filter circles were
+ * light literals in every scheme, under icons that turn light in dark mode
+ * (1.2:1). Icons reach 3:1, text 4.5:1.
+ */
+export const DefaultDark: Story = {
+	name: 'Default — dark, search field and filters readable',
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	render: () => <SessionsListToolbarPlayground />,
+	play: async ({ canvasElement }) => {
+		const icons = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.sessionsListToolbar__iconSvg, .sessionsListToolbar__chipIconSvg'
+			);
+			expect(found.length).toBeGreaterThan(0);
+			return Array.from(found);
+		});
+		const weak = icons
+			.map((icon) => paintedContrast(icon))
+			.filter((value) => value < 3);
+		await expect(weak).toEqual([]);
+		await expect(
+			describeLowContrast(findLowContrastText(canvasElement))
+		).toEqual([]);
 	}
 };

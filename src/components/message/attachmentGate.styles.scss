@@ -168,7 +168,10 @@
 	}
 
 	&__check--running &__checkMark {
-		border-color: var(--m3-primary-fixed, #ffdad5);
+		border-color: var(
+			--oriso-outline-soft,
+			var(--m3-primary-fixed, #ffdad5)
+		);
 		border-top-color: var(--m3-primary, #a5000a);
 		animation: attachment-gate-spin 900ms linear infinite;
 	}
