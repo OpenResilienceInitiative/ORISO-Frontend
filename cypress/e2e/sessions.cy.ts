@@ -27,8 +27,30 @@ describe('Sessions', () => {
 	});
 
 	describe('Consultant', () => {
+		// #1673: an active case is no longer reassigned through the assign
+		// select; the owner offers it to a colleague via "Beratung weitergeben".
 		it('should show confirmation forwarding the session', () => {
 			generateMultipleConsultantSessions(5);
+			cy.intercept('GET', '**/case-handover/recipients', [
+				{ consultantId: 'colleague-1', displayName: 'Kim Kollegin' }
+			]).as('handoverRecipients');
+			cy.intercept('GET', '**/case-handover/reasons', [
+				{
+					code: 'PLANNED_ABSENCE',
+					label: 'Planned absence',
+					clientConsentRequired: false
+				}
+			]);
+			cy.intercept('POST', '**/case-handover/offers', (req) =>
+				req.reply({
+					requestId: 1,
+					sessionId: Number(req.url.split('/').slice(-3, -2)[0]),
+					status: 'PENDING_RECIPIENT_ACCEPTANCE',
+					direction: 'PUSH',
+					canViewContent: true,
+					recipientConsultantId: 'colleague-1'
+				})
+			).as('handoverOffer');
 
 			cy.fastLogin({
 				userId: USER_CONSULTANT
@@ -39,16 +61,28 @@ describe('Sessions', () => {
 			cy.wait('@consultantSessions');
 
 			cy.get('[data-cy=session-list-item]').first().click();
-			cy.wait('@sessionRooms');
+			cy.wait('@sessionRoomById');
 
 			cy.get('#iconH').click();
 			cy.get('#flyout').should('be.visible');
-			cy.get('#flyout a').first().click();
-			cy.wait('@agencyConsultants');
+			cy.get('[data-cy=session-menu-group-handover]').click();
+			cy.get('[data-cy=session-menu-case-handover]').click();
+			cy.wait('@handoverRecipients');
 
-			cy.get('#assignSelect').click();
-			cy.get('.select__input__menu-list > div').first().click();
-			cy.get('.overlay').should('exist');
+			cy.get('[data-testid=supervisor-dialog-person]').click();
+			cy.contains('[role=option]', 'Kim Kollegin').click();
+			cy.get('[data-testid=supervisor-dialog-reason]').click();
+			cy.contains('[role=option]', 'Geplant abwesend').click();
+			cy.get('[data-testid=supervisor-dialog-confirm]').click();
+
+			cy.wait('@handoverOffer').its('request.body').should('include', {
+				targetConsultantId: 'colleague-1',
+				reasonCode: 'PLANNED_ABSENCE'
+			});
+			cy.contains(
+				'[data-testid=case-handover-state-dialog] [role=status]',
+				'Warten auf die ausgewählte Kolleg:in.'
+			).should('be.visible');
 		});
 
 		it('should list my sessions', () => {
@@ -90,7 +124,10 @@ describe('Sessions', () => {
 			cy.wait('@consultantSessions');
 		});
 
-		it('should scroll sessions list by dragging the pill handle', () => {
+		// The stage v3 review removed drag-to-scroll from the list handle
+		// (ResizableHandle.tsx header); Up/Down on the focused handle still
+		// scrolls the list, so that is what this covers now.
+		it('should scroll sessions list with the arrow keys on the handle', () => {
 			generateMultipleConsultantSessions(100);
 
 			cy.fastLogin({
@@ -99,33 +136,16 @@ describe('Sessions', () => {
 
 			cy.get('a[href="/sessions/consultant/sessionView"]').click();
 			cy.wait('@consultantSessions');
+			cy.get('.sessionsListItem.skeleton').should('not.exist');
 
 			cy.get('.sessionsList__scrollContainer').then(
 				([scrollContainer]) => {
 					const startTop = scrollContainer.scrollTop;
-					const rect = scrollContainer.getBoundingClientRect();
 
-					// Drag mostly vertically so the handle goes into "scroll" mode.
-					cy.get('.sessionsList__resizeHandle').trigger(
-						'pointerdown',
-						{
-							button: 0,
-							pointerId: 1,
-							clientX: rect.right - 4,
-							clientY: rect.top + 80
-						}
-					);
-					cy.get('.sessionsList__resizeHandle').trigger(
-						'pointermove',
-						{
-							pointerId: 1,
-							clientX: rect.right - 4,
-							clientY: rect.top + 240
-						}
-					);
-					cy.get('.sessionsList__resizeHandle').trigger('pointerup', {
-						pointerId: 1
-					});
+					cy.get('.sessionsList__resizeHandle')
+						.first()
+						.focus()
+						.trigger('keydown', { key: 'ArrowDown' });
 
 					cy.get('.sessionsList__scrollContainer').should(($sc) => {
 						expect($sc[0].scrollTop).to.be.greaterThan(startTop);
@@ -173,7 +193,6 @@ describe('Sessions', () => {
 				cy.fastLogin({
 					userId: USER_CONSULTANT
 				});
-				cy.wait('@rcSettingsPublic');
 
 				cy.get('a[href="/sessions/consultant/sessionView"]').click();
 				cy.wait('@consultantSessions')
@@ -201,7 +220,9 @@ describe('Sessions', () => {
 			cy.get('.sessionsListItem').should('have.length', 4);
 		});
 
-		it('should show a header with headline', () => {
+		// Decision pending in #2572: the asker list header was removed on
+		// purpose in 6b3e53609 (search toolbar). Retire or restore the test.
+		it.skip('should show a header with headline', () => {
 			cy.fastLogin();
 			cy.get('[data-cy=session-list-header]').should('exist');
 			cy.get('[data-cy=session-list-headline]').contains(
@@ -209,7 +230,10 @@ describe('Sessions', () => {
 			);
 		});
 
-		describe('welcome illustration', () => {
+		// Decision pending in #2572: <WelcomeIllustration> is no longer
+		// rendered since the Rocket.Chat removal (ef12120fb). Restore the
+		// illustration or retire these tests.
+		describe.skip('welcome illustration', () => {
 			it('should show until given session item limit is reached', () => {
 				// MAX_ITEMS_TO_SHOW_WELCOME_ILLUSTRATION minus 1 because on session is already added
 				generateMultipleAskerSessions(
