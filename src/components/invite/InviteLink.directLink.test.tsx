@@ -156,6 +156,20 @@ vi.mock('../directLinkEntry/DirectLinkCallEntry', () => ({
 		</div>
 	)
 }));
+/* #2356: the join view has its own tests; here only which links get it. */
+vi.mock('./staffJoin/StaffCallJoin', async () => {
+	const actual = await vi.importActual<
+		typeof import('./staffJoin/StaffCallJoin')
+	>('./staffJoin/StaffCallJoin');
+	return {
+		...actual,
+		StaffCallJoin: (props: any) => (
+			<div data-testid="staff-call-join" data-token={props.token}>
+				{props.medium}
+			</div>
+		)
+	};
+});
 vi.mock('../app/Loading', () => ({
 	Loading: () => <div data-testid="loading" />
 }));
@@ -788,6 +802,64 @@ describe('InviteLink with a counsellor direct link (#1795)', () => {
 			).toBeTruthy();
 			expect(apiGetConsultingType).not.toHaveBeenCalled();
 			expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+		} finally {
+			document.cookie =
+				'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		}
+	});
+
+	it.each(['VIDEO', 'AUDIO'])(
+		'offers a signed-in counsellor to join the %s call of an appointment link (#2356)',
+		async (medium) => {
+			const jwt = [
+				btoa(JSON.stringify({ alg: 'none' })),
+				btoa(
+					JSON.stringify({ realm_access: { roles: ['consultant'] } })
+				),
+				'sig'
+			].join('.');
+			document.cookie = `keycloak=${jwt}; path=/`;
+			try {
+				vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+				vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+					...directContext(medium),
+					appointmentStartTime: '2026-11-25T14:00:00Z'
+				} as any);
+				renderInvite();
+
+				const join = await screen.findByTestId('staff-call-join');
+				expect(join.textContent).toBe(medium);
+				expect(join.getAttribute('data-token')).toBe('token-123');
+				expect(
+					screen.queryByText('Sie sind als Beraterin angemeldet.')
+				).toBeNull();
+				expect(apiStartDirectLinkConversation).not.toHaveBeenCalled();
+			} finally {
+				document.cookie =
+					'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+			}
+		}
+	);
+
+	it('keeps the notice for a counsellor on an appointment chat link (#2356)', async () => {
+		const jwt = [
+			btoa(JSON.stringify({ alg: 'none' })),
+			btoa(JSON.stringify({ realm_access: { roles: ['consultant'] } })),
+			'sig'
+		].join('.');
+		document.cookie = `keycloak=${jwt}; path=/`;
+		try {
+			vi.mocked(hasActiveAuthSession).mockReturnValue(true);
+			vi.mocked(apiGetInviteLinkContext).mockResolvedValueOnce({
+				...directContext('CHAT'),
+				appointmentStartTime: '2026-11-25T14:00:00Z'
+			} as any);
+			renderInvite();
+
+			expect(
+				await screen.findByText('Sie sind als Beraterin angemeldet.')
+			).toBeTruthy();
+			expect(screen.queryByTestId('staff-call-join')).toBeNull();
 		} finally {
 			document.cookie =
 				'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';

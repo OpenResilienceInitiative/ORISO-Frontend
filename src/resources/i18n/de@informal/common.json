@@ -2897,6 +2897,18 @@
 				},
 				"done": {
 					"intro": "Ist das Gespräch vorbei, beendest du es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Live-Chats kommen ohne Registrierung über einen Link, die Person schreibt anonym. Gleich wartet ein Übungs-Live-Chat auf dich."
+				},
+				"openRequest": {
+					"intro": "In der Liste wartet ein Live-Chat einer anonymen ratsuchenden Person. Klick darauf, um ihn zu öffnen."
+				},
+				"reply": {
+					"intro": "Der Chat läuft. Schreib der Person eine kurze Antwort und schick sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"practiceAvailability": {
+					"intro": "Nur wer verfügbar ist, bekommt Live-Chats angeboten. Schalte „Bin verfügbar“ hier oder in der Menüleiste ein – in der Übung bleibt dein echter Status unverändert."
 				}
 			}
 		},
@@ -3233,10 +3245,34 @@
 		"edit": {
 			"nameRequired": "Bitte gib einen Namen ein.",
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuche es erneut."
+		},
+		"staffJoin": {
+			"offer": {
+				"text": "Du trittst dem Anruf mit deinem eigenen Konto bei und bleibst angemeldet. Die einladende Person lässt dich herein. Den Chat dieses Termins siehst du dabei nicht.",
+				"status": "Du bist als Berater:in angemeldet"
+			},
+			"waiting": {
+				"title": "Du hast angeklopft",
+				"text": "Sobald du hereingelassen wirst, startet der Anruf. Lass diese Seite offen."
+			},
+			"notStarted": {
+				"text": "Sobald der Anruf läuft, geht es hier weiter. Lass diese Seite offen."
+			},
+			"refused": {
+				"title": "Du wurdest nicht hereingelassen",
+				"text": "Die einladende Person hat dich zu diesem Anruf nicht hereingelassen."
+			},
+			"forbidden": {
+				"title": "Diesem Anruf kannst du nicht beitreten",
+				"text": "Der Link ist nicht mehr aktiv oder du wurdest aus diesem Anruf entfernt."
+			},
+			"ended": {
+				"text": "Du kannst diese Seite jetzt schließen."
+			},
+			"error": {
+				"text": "Bitte versuche es noch einmal."
+			}
 		}
-	},
-	"dashboard": {
-		"title": "Dein Überblick"
 	},
 	"temporaryAccount": {
 		"keepDialog": {

@@ -5,6 +5,7 @@ import { useConversationFeatureSettings } from '../../hooks/useConversationFeatu
 import { isSupervisionEnabledForChat } from '../../utils/conversationFeatureSettings';
 import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import { useChatHistoryPagination } from './useChatHistoryPagination';
+import { forwardComposerWheel } from './composerWheel';
 import { useThreadRouteHistory } from './useThreadRouteHistory';
 import * as React from 'react';
 import {
@@ -3363,8 +3364,34 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
+	// The pane node itself, so listeners follow it: on the phone a side
+	// panel replaces the main pane without unmounting this component, and
+	// closing the panel renders a new pane node.
+	const [mainPane, setMainPane] = useState<HTMLDivElement | null>(null);
+	const bindMainPane = useCallback((node: HTMLDivElement | null) => {
+		mainPaneRef.current = node;
+		setMainPane(node);
+	}, []);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
+	// #2513: the composer dock sits over the timeline, so a scroll over it
+	// never reached the timeline — on a laptop that is half of the chat. An
+	// upward scroll there also loads older messages, as the timeline's own
+	// `onWheel` does.
+	useEffect(() => {
+		if (!mainPane) {
+			return undefined;
+		}
+		const onWheel = (event: WheelEvent) =>
+			forwardComposerWheel(
+				event,
+				mainPane,
+				scrollContainerRef.current,
+				loadEarlierMessages
+			);
+		mainPane.addEventListener('wheel', onWheel, { passive: false });
+		return () => mainPane.removeEventListener('wheel', onWheel);
+	}, [mainPane, loadEarlierMessages]);
 
 	// D7 (phone): the composer's back arrow does what the header's Link
 	// did — list route AND `mobileListView()`.
@@ -3763,7 +3790,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		<>
 			<div
 				className="chatStage__mainPane"
-				ref={mainPaneRef}
+				ref={bindMainPane}
 				data-cy="stage-main"
 			>
 				<div
@@ -5109,6 +5136,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													appointmentSupervisor
 												}
 												ownerId={userData?.userId ?? ''}
+												callGates={supervisionCallGates}
 												fullScreen={isPhoneLayout}
 												supervisionRoom={
 													supervisionRoomId

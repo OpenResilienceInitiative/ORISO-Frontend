@@ -24,6 +24,7 @@ import {
 	draftError,
 	findConflicts,
 	isWholeDays,
+	APPOINTMENT_KINDS,
 	type AppointmentDraft,
 	type AppointmentKind,
 	type Colleague
@@ -48,6 +49,12 @@ export interface ColleagueAppointmentFormProps
 	fixedColleague?: { id: string; displayName: string };
 	/** Says who the fixed colleague is, e.g. "Supervisor:in". */
 	fixedColleagueLabel?: string;
+	/**
+	 * The kinds offered; all four unless narrowed, e.g. by the call gates of
+	 * the Supervision chat (product owner, 2026-11-25). The default kind is
+	 * the first of them.
+	 */
+	kinds?: readonly AppointmentKind[];
 }
 
 export const useColleagueAppointmentForm = ({
@@ -55,6 +62,7 @@ export const useColleagueAppointmentForm = ({
 	colleagues,
 	fixedColleague,
 	fixedColleagueLabel,
+	kinds: offeredKinds = APPOINTMENT_KINDS,
 	entries,
 	ownerId,
 	now,
@@ -86,7 +94,9 @@ export const useColleagueAppointmentForm = ({
 
 	const onsiteOnly =
 		colleagues.find((c) => c.id === colleagueId)?.internalChat === false;
-	const chosenKind: AppointmentKind = onsiteOnly ? 'onsite' : kind;
+	const kinds = onsiteOnly ? ONSITE_ONLY : offeredKinds;
+	// A kind that is not offered is never saved: fall back to the first one.
+	const chosenKind: AppointmentKind = kinds.includes(kind) ? kind : kinds[0];
 
 	const draft: Partial<AppointmentDraft> = {
 		type: 'appointment',
@@ -218,7 +228,7 @@ export const useColleagueAppointmentForm = ({
 						<AppointmentKindTiles
 							value={chosenKind}
 							onChange={setKind}
-							kinds={onsiteOnly ? ONSITE_ONLY : undefined}
+							kinds={kinds}
 						/>
 					)}
 					{conflicts.length > 0 && (

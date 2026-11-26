@@ -171,7 +171,6 @@
 		"selectLanguage": "ቋንቋ ምረጽ",
 		"stage": {
 			"title": "ምኽሪ\n& ሓገዝ",
-
 			"carrierLogoAlt": "ካርታ ናይ ቦታታት {{name}} ኣርእዩ"
 		},
 		"stop": "ደው ኣብል",
@@ -3380,9 +3379,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "ከም CSV ኣውርድ",
 					"label": "ናይ ኤክሰል ፋይል ኣውርድ"
 				},
 				"filename": "ስታቲስቲክስ ብኢንተርነት ዝወሃብ ምኽሪ",
+				"hintMonth": "ንነፍሲ ወከፍ ሰሙን ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintWeek": "ንነፍሲ ወከፍ መዓልቲ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
+				"hintYear": "ንነፍሲ ወከፍ ወርሒ ሓደ መስመርን ናይ ድምር መስመርን። ብExcel ውን ይኽፈት።",
 				"title": "ንዝመረጽኩሞ ናይ ምምኽኻር ግዜ ስታቲስቲክስኩም ኣብዚ ክትረኽብዎ ትኽእሉ ኢኹም፤",
 				"total": "ጠቕላላ"
 			},
@@ -3399,7 +3402,20 @@
 				"period": "እዋን",
 				"videoCallDuration": "ንውሓት ግዜ ቪድዮ ጻውዒት ብደቒቕ:ካልኢት"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "ዝተሰረዙ",
+				"numberOfChatAppointments": "ቻት",
+				"numberOfOnsiteAppointments": "ብኣካል",
+				"numberOfPhoneAppointments": "ተሌፎን",
+				"numberOfVideoAppointments": "ቪድዮ"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "እዚ ወርሒ",
+					"currentWeek": "እዚ ሰሙን",
+					"lastMonth": "ዝሓለፈ ወርሒ",
+					"lastWeek": "ዝሓለፈ ሰሙን"
+				},
 				"currentMonth": "ናይ ሕጂ ወርሒ",
 				"currentWeek": "ናይ ሕጂ ሰሙን",
 				"currentYear": "ናይ ሕጂ ዓመት",
@@ -3411,7 +3427,17 @@
 				"lastMonth": "ዝሓለፈ ወርሒ",
 				"lastWeek": "ዝሓለፈ ሰሙን",
 				"lastYear": "ዝሓለፈ ዓመት",
-				"prefix": "ቁጽርታትኩም"
+				"offsetLabel": "እዋን",
+				"prefix": "ቁጽርታትኩም",
+				"unitLabel": "ኣሃዱ ግዜ",
+				"unitMonth": "ወርሒ",
+				"unitWeek": "ሰሙን",
+				"unitYear": "ዓመት"
+			},
+			"state": {
+				"empty": "ኣብዚ እዋን ገና ቁጽርታት የለን።",
+				"error": "ቁጽርታት ሕጂ ክጽዓኑ ኣይከኣሉን።",
+				"retry": "እንደገና ፈትን"
 			},
 			"title": "ስታቲስቲክስ ናተይ"
 		},
@@ -4177,7 +4203,8 @@
 			"selectCase": "ጉዳይ ምረጽ",
 			"selectedCount": "{{count}} ተመሪጹ",
 			"start": "ብዙሓት ጉዳያት ምረጽ",
-			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት"
+			"title": "ናይ ብዙሓት ሕቶ ተበጻሕነት",
+			"clearSelection": "ምርጫ ኣልግስ"
 		},
 		"consent": {
 			"title": "ሓደ ኣማኻሪ ናብዚ ዝርርብ ተበጻሕነት ይሓትት ኣሎ",
@@ -4224,7 +4251,9 @@
 			"required": "ምኽንያት ምረጹ እሞ መብርሂ ወስኹ።"
 		},
 		"explanation": {
-			"placeholder": "መብርሂ ጽሓፉ"
+			"placeholder": "መብርሂ ጽሓፉ",
+			"optional": "መግለጺ (ኣማራጺ)",
+			"required": "መግለጺ (ግዴታ)"
 		},
 		"eyebrow": "እቲ ሕቶ ክሳብ ዝፍቀድ እቲ ሓበሬታ ተሸፊኑ ይጸንሕ",
 		"hidden": {
@@ -4796,7 +4825,6 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
-				"directLinks": "ቀጥታዊ ሊንክታት",
 				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
@@ -4821,9 +4849,11 @@
 				"selfHelp": "ክቢ",
 				"internal": "ውሽጣዊ",
 				"team": "ጋንታዊ ምኽሪ",
-				"directLinkVideo": "ናይ ቪድዮ ጻውዒት",
-				"directLinkAudio": "ናይ ድምጺ ጻውዒት",
-				"directLinkChat": "ቀጥታዊ ሊንክ"
+				"directLinkVideo": "ቪድዮ",
+				"directLinkAudio": "ድምጺ",
+				"directLinkChat": "ቻት",
+				"directInvitationVia": "ቀጥታዊ ሊንክ · {{medium}}",
+				"agencyLink": "ብሊንክ ማእከል ምኽሪ"
 			},
 			"waiting": {
 				"minutes": "ን{{count}} ደቒቕ ይጽበ ኣሎ",
@@ -6663,6 +6693,21 @@
 				"done": {
 					"title": "ቻት ወድእ",
 					"intro": "እቲ ዝርርብ ምስ ተወድአ ኣብ መኑ ⋮ ብ«ቻት ወድእ» ዕጸውዎ። ድሕሪኡ ናብ መስርዕ ትምለሱ።"
+				},
+				"practiceIntro": {
+					"intro": "እዚ ልምምድ እዩ፦ ኩሎም ሰባት ዝተፈጠሩ እዮም፡ ዝኾነ ነገር ኣይለኣኽን ኣይዕቀብን። ቀጥታዊ ዕላላት ብዘይ ምዝገባ ብመላግቦ ይመጹ፡ እቲ ሰብ ብዘይ ስም ይጽሕፍ። ሕጂ ናይ ልምምድ ቀጥታዊ ዕላል ክጽበየኩም እዩ።"
+				},
+				"openRequest": {
+					"title": "ቀጥታዊ ዕላል ክፈቱ",
+					"intro": "ኣብቲ ዝርዝር ካብ ስሙ ዘይፍለጥ ሰብ ቀጥታዊ ዕላል ይጽበ ኣሎ። ንምኽፋቱ ጠውቑዎ።"
+				},
+				"reply": {
+					"title": "መልሱ",
+					"intro": "ዕላል ይቕጽል ኣሎ። ነቲ ሰብ ሓጺር መልሲ ጽሓፉን ስደዱን። ኣብቲ ልምምድ ይጸንሕ፡ ኣብ ዝኾነ ቦታ ኣይዕቀብን።"
+				},
+				"practiceAvailability": {
+					"title": "ምህላውኩም ኣወልዑ",
+					"intro": "ቀጥታዊ ዝርርባት ዝቐርቡ ነቶም ዘለዉ ጥራይ እዩ። «ኣለኹ» ኣብዚ ወይ ኣብ መስመር መኑ ኣወልዕዎ፡ ኣብ ልምምድ እቲ ናይ ሓቂ ኩነታትኩም ኣይቀየርን።"
 				}
 			}
 		},
@@ -7100,6 +7145,7 @@
 			"waitingFor": "ን{{count}} ደቓይቕ ይጽበ ኣሎ",
 			"justArrived": "ሕጂ በጺሑ",
 			"admit": "ኣእቱ",
+			"startAndAdmit": "ጻውዒት ጀምር እሞ ኣእቱ",
 			"decline": "ኣይትቐበል",
 			"admitAll": "ንኹሎም ኣእቱ",
 			"position": "{{current}} ካብ {{total}}",
@@ -7422,21 +7468,54 @@
 			"failed": "እቲ ለውጢ ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
 			"scheduledAt": "ዕለትን ሰዓትን",
 			"clearScheduledAt": "ኣልግስ"
+		},
+		"staffJoin": {
+			"kicker": "ቀጥታ ዕድመ",
+			"offer": {
+				"status": "ከም ኣማኻሪ ኣቲኹም ኣለኹም",
+				"title": "ከም ኣማኻሪ ተጸንበሩ",
+				"text": "ብናይ ገዛእ ርእስኹም ኣካውንት ናብ ጻውዒት ትጽንበሩ፣ ኣቲኹም ድማ ትጸንሑ። ዝዓደመኩም ሰብ የእትወኩም። ናይዚ ቆጸራ ቻት ኣይትርእዩን።",
+				"join": "ከም ኣማኻሪ ተጸንበሩ"
+			},
+			"waiting": {
+				"status": "ንምእታው ይጽበ ኣሎ",
+				"title": "ማዕጾ ኳሕኲሕኩም",
+				"text": "ምስ ኣተኹም ጻውዒት ይጅምር። ነዚ ገጽ ክፉት ግደፍዎ።"
+			},
+			"notStarted": {
+				"status": "ጻውዒት ገና ኣይጀመረን",
+				"title": "ጻውዒት ገና ኣይጀመረን",
+				"text": "ጻውዒት ምስ ጀመረ ኣብዚ ይቕጽል። ነዚ ገጽ ክፉት ግደፍዎ።"
+			},
+			"refused": {
+				"status": "ኣይኣተኹምን",
+				"title": "ኣይተኣተኹምን",
+				"text": "ዝዓደመኩም ሰብ ናብዚ ጻውዒት ኣየእተወኩምን።"
+			},
+			"forbidden": {
+				"status": "ምጽንባር ኣይከኣልን",
+				"title": "ናብዚ ጻውዒት ክትጽንበሩ ኣይትኽእሉን",
+				"text": "እቲ ሊንክ ንጡፍ ኣይኮነን ወይ ካብዚ ጻውዒት ተኣሊኹም።"
+			},
+			"ended": {
+				"status": "ጻውዒት ተዛዚሙ",
+				"title": "ጻውዒት ተዛዚሙ",
+				"text": "ሕጂ ነዚ ገጽ ክትዓጽውዎ ትኽእሉ።"
+			},
+			"error": {
+				"status": "ምጽንባር ኣይሰለጠን",
+				"title": "ምጽንባር ኣይሰለጠን",
+				"text": "በጃኹም እንደገና ፈትኑ።"
+			},
+			"cancel": "ሰርዝ",
+			"retry": "እንደገና ፈትን",
+			"openOwnSessions": "ናብ ምኽርታተይ"
 		}
 	},
 	"dashboard": {
-		"title": "ሓፈሻዊ ርእይቶኻ",
-		"stats": {
-			"title": "ምኽሪ",
-			"period": "ዝሓለፉ 30 መዓልታት",
-			"assigned": "ሓደሽቲ",
-			"active": "ንጡፋት",
-			"archived": "ዝተዓቀቡ",
-			"sentMessages": "ዝተላእኩ መልእኽትታት"
-		},
-		"circles": {
-			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"assignedCounsellors": "ጉጅለ ኣማኸርቲ፡ {{count}}"
+		"quiet": {
+			"active": "ንጡፍ",
+			"assigned": "ሓደስቲ ዝተቐበልኩምዎም (30 መዓልቲ)"
 		}
 	},
 	"temporaryAccount": {
@@ -7445,6 +7524,7 @@
 			"title": "ምስ ናይ ጋሻ ሕሳብ ሓቢሩ ይድምሰስ"
 		},
 		"deletedGuest": "ጋሻ (ተደምሲሱ)",
+		"signedOutNotice": "ናይ ጋሻ ሕሳብኩም ድሕሪ እቲ ዝርርብ ተደምሲሱ እዩ፣ ስለዚ ወጺእኩም ኣለኹም። ንሓድሽ ዝርርብ፡ ነቲ ናይ ምኽሪ ኣገልግሎትኩም ሊንክ ደጊምኩም ክፈትዎ።",
 		"chip": {
 			"guest": "ናይ ጋሻ ሕሳብ"
 		},

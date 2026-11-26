@@ -87,6 +87,7 @@ import {
 	openDirectLinkConversation
 } from '../directLinkEntry/directLinkEntryFlow';
 import { DirectLinkCallEntry } from '../directLinkEntry/DirectLinkCallEntry';
+import { StaffCallJoin, staffCallMediumOf } from './staffJoin/StaffCallJoin';
 import {
 	entryGuestAccountMode,
 	withChosenAccount
@@ -238,6 +239,8 @@ export const InviteLink = () => {
 	const chatFirstRef = useRef(false);
 	/* #1795: a counsellor's direct link. Chat guests use the identity step
 	   below; call guests the call entry; signed-in people go straight in. */
+	/* #2356: a Direkteinladung's call a signed-in counsellor can join. */
+	const [staffCall, setStaffCall] = useState<'AUDIO' | 'VIDEO' | null>(null);
 	const [directLink, setDirectLink] = useState<{
 		context: InviteLinkContext;
 		medium: DirectLinkMedium;
@@ -349,6 +352,7 @@ export const InviteLink = () => {
 					return;
 				}
 				const context = read ? withAccessMode(read) : read;
+				setStaffCall(staffCallMediumOf(context));
 				if (holdsCounsellorSession()) {
 					setStatus('staff');
 					return;
@@ -774,8 +778,9 @@ export const InviteLink = () => {
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
 				signedIn={directLink.signedIn}
 				deps={{
-					open: (value) =>
+					open: (value, entryWait) =>
 						openDirectLinkConversation(value, {
+							...entryWait,
 							consent: askJoinConsent
 						})
 				}}
@@ -817,6 +822,12 @@ export const InviteLink = () => {
 				<M3SnackbarHost />
 			</>
 		);
+	}
+
+	/* #2356: the counsellor joins the call only, with their own account;
+	   other links keep the notice below. */
+	if (status === 'staff' && staffCall && token) {
+		return <StaffCallJoin token={token} medium={staffCall} />;
 	}
 
 	if (status === 'room' && roomSessionId !== null) {

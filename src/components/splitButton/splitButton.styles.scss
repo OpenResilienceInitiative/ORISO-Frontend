@@ -177,6 +177,18 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 
 	&--primary:not(.splitButton--disabled) &__segment:not(:disabled):hover {
 		background: var(--m3-primary-container, #cc1e1c);
+
+		// Dark: on-primary is a deep red there, unreadable on the dark-red
+		// container; the container's own ink pairs with it.
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-primary-container, #ffdad5);
+		}
+	}
+
+	// Dark tonal: secondary is a light grey-blue there, so its ink is
+	// on-secondary rather than the deep-red on-primary.
+	html[data-oriso-personal-scheme='dark'] &--tonal &__segment {
+		color: var(--m3-on-secondary, #263240);
 	}
 
 	&--disabled &__segment {

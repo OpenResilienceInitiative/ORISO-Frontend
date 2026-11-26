@@ -305,6 +305,8 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 			// Drafts moved into the individual sections — it is no longer a
 			// top-level rail item (Frank feedback 2026-07-19). The `/drafts`
 			// route + DraftsCenter page below remain reachable from sections.
+			// "Meine Termine" is a daily work area, so it comes before the
+			// less frequent "Mein Profil" (#2328).
 			{
 				condition: showAppointmentsMenuItem,
 				to: '/booking/events',

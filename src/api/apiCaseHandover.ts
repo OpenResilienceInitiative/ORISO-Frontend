@@ -50,9 +50,13 @@ export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
 
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
+/** Whether the counsellor writes an explanation for a reason (FE#2040). Absent reads as OFF. */
+export type CaseHandoverExplanationLevel = 'OFF' | 'OPTIONAL' | 'REQUIRED';
+
 export interface CaseHandoverReason {
 	code: string;
 	label: string;
+	explanationLevel?: CaseHandoverExplanationLevel;
 	clientConsent?: CaseHandoverConsentValue;
 	clientConsentRequired: boolean;
 	accessAllowed?: boolean;

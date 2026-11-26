@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { overflowEdges, wheelToHorizontal } from './scrollableBar';
+import {
+	canScrollAlong,
+	overflowEdges,
+	wheelDeltaPx,
+	wheelToHorizontal
+} from './scrollableBar';
 
 /**
  * Review v6 (T22): the icon bar scrolls sideways without a scrollbar. The
@@ -62,5 +67,22 @@ describe('wheelToHorizontal', () => {
 		expect(wheelToHorizontal({ deltaX: 0, deltaY: 3, deltaMode: 1 })).toBe(
 			48
 		);
+	});
+});
+
+describe('wheelDeltaPx', () => {
+	it('converts lines and pages to pixels', () => {
+		expect(wheelDeltaPx(-3, 0, 400)).toBe(-3);
+		expect(wheelDeltaPx(-3, 1, 400)).toBe(-48);
+		expect(wheelDeltaPx(-1, 2, 400)).toBe(-400);
+	});
+});
+
+describe('canScrollAlong', () => {
+	it('works for a vertical scroller as for the bar', () => {
+		expect(canScrollAlong(0, 300, 100, -40)).toBe(false);
+		expect(canScrollAlong(30, 300, 100, -40)).toBe(true);
+		expect(canScrollAlong(200, 300, 100, 40)).toBe(false);
+		expect(canScrollAlong(150, 300, 100, 40)).toBe(true);
 	});
 });

@@ -17,11 +17,13 @@ import {
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
 import { DisplayFilterValue } from '../components/displayFilter/displayFilterTypes';
 import {
+	DEFAULT_DISPLAY_FILTERS,
 	DisplayFilter,
 	DisplayFilterSection,
 	resolveEffective
 } from '../utils/displayFilter/model';
 import { displayFilterStore } from '../utils/displayFilter/store';
+import { isPracticeMode, subscribePractice } from '../practice/practiceMode';
 
 export const useDisplayFilterStoreBinding = (): void => {
 	const matrixContext = useContext(MatrixClientContext);
@@ -72,7 +74,12 @@ export const useDisplayFilter = (
 		(listener) => displayFilterStore.subscribe(listener),
 		() => displayFilterStore.getState()
 	);
-	const override = state.filters.sections[section] ?? null;
+	// FE#2545: while practising, the lists use the defaults, so a kind the
+	// counsellor has hidden (e.g. Live-Chat) cannot hide the practice case,
+	// and no change made during practice reaches the real preferences.
+	const practising = useSyncExternalStore(subscribePractice, isPracticeMode);
+	const filters = practising ? DEFAULT_DISPLAY_FILTERS : state.filters;
+	const override = filters.sections[section] ?? null;
 
 	const setSection = useCallback(
 		(value: DisplayFilterValue) =>
@@ -88,6 +95,20 @@ export const useDisplayFilter = (
 			displayFilterStore.setGlobal(section, filter),
 		[section]
 	);
+
+	if (practising) {
+		return {
+			effective: resolveEffective(filters, section),
+			override,
+			global: filters.global[section],
+			canWrite: false,
+			readOnly: false,
+			writeFailed: false,
+			setSection: () => false,
+			resetSection: () => false,
+			setGlobal: () => false
+		};
+	}
 
 	return {
 		effective: resolveEffective(state.filters, section),

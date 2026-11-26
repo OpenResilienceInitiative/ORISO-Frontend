@@ -8,12 +8,13 @@ describe('practice tour events', () => {
 		unsubscribers.splice(0).forEach((off) => off());
 	});
 
-	it('names the four events the flows wait for', () => {
+	it('names the five events the flows wait for', () => {
 		expect(PRACTICE_TOUR_EVENTS).toEqual({
 			teamMessageSent: 'practice:team-message-sent',
 			messageSent: 'practice:message-sent',
 			supervisorAdded: 'practice:supervisor-added',
-			enquiryAccepted: 'practice:enquiry-accepted'
+			enquiryAccepted: 'practice:enquiry-accepted',
+			liveChatAvailable: 'practice:live-chat-available'
 		});
 	});
 

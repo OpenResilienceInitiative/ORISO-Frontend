@@ -45,12 +45,13 @@ export const buildDeletedAskerRows = (
 ): DeletedAskerRow[] => {
 	const rows = new Map<number, DeletedAskerRow>();
 	markedForDeletion.forEach(({ sessionId, lastInteraction, topic }) => {
-		rows.set(sessionId, {
+		const row: DeletedAskerRow = {
 			key: `deleted-asker:${sessionId}`,
 			formerSessionId: sessionId,
-			timestamp: lastInteraction,
-			...(topic ? { topic } : {})
-		});
+			timestamp: lastInteraction
+		};
+		if (topic) row.topic = topic;
+		rows.set(sessionId, row);
 	});
 	placeholders.forEach(({ formerSessionId, deletedAt }) => {
 		if (rows.has(formerSessionId)) return;
@@ -69,6 +70,12 @@ export const buildDeletedAskerRows = (
 		.sort((left, right) => right.timestamp - left.timestamp);
 };
 
+/** The deleted cards slotted between the conversations. */
+export interface DeletedAskerPlacement {
+	before: DeletedAskerRow[][];
+	trailing: DeletedAskerRow[];
+}
+
 /**
  * Slots the rows between the conversations, which are sorted newest first.
  * `before[i]` holds the rows shown right above conversation `i`; `trailing`
@@ -80,7 +87,7 @@ export const placeDeletedAskerRows = (
 	conversationTimestamps: number[],
 	rows: DeletedAskerRow[],
 	hasMorePages: boolean
-): { before: DeletedAskerRow[][]; trailing: DeletedAskerRow[] } => {
+): DeletedAskerPlacement => {
 	const before: DeletedAskerRow[][] = conversationTimestamps.map(() => []);
 	let next = 0;
 	conversationTimestamps.forEach((timestamp, index) => {
@@ -100,6 +107,12 @@ export interface ListGroupEdges {
 	isAfterActive: boolean;
 }
 
+/** Group edges for every conversation, and for each deleted card by key. */
+export interface ListGroupEdgeMap {
+	sessions: ListGroupEdges[];
+	rows: Map<string, ListGroupEdges>;
+}
+
 /**
  * The grouped list is one outline, broken only around the active card
  * (Frank, 2026-11-25: "der Scroller ordentlich, nicht zerhackt"). Deleted
@@ -109,13 +122,10 @@ export interface ListGroupEdges {
  * is not the end while deleted cards follow it.
  */
 export const listGroupEdges = (
-	placement: { before: DeletedAskerRow[][]; trailing: DeletedAskerRow[] },
+	placement: DeletedAskerPlacement,
 	sessionActive: boolean[],
 	isRowActive: (row: DeletedAskerRow) => boolean
-): {
-	sessions: ListGroupEdges[];
-	rows: Map<string, ListGroupEdges>;
-} => {
+): ListGroupEdgeMap => {
 	const slots: { key: string; active: boolean; session?: number }[] = [];
 	sessionActive.forEach((active, index) => {
 		(placement.before[index] ?? []).forEach((row) =>
@@ -160,6 +170,6 @@ export const deletedAskerTopicName = (
 	const topic = raw?.session?.topic;
 	if (topic?.name) return topic.name;
 	const id = topic?.id ?? raw?.session?.mainTopicId;
-	if (typeof id !== 'number') return undefined;
+	if (id === undefined || id === null) return undefined;
 	return topics?.find((candidate) => candidate.id === id)?.name || undefined;
 };

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useHoldLoginHandover } from '../app/loginHandover';
 import {
 	useCallback,
@@ -49,12 +50,17 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { usePracticeLiveChatAvailability } from '../../practice/practiceLiveChatAvailability';
 import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
-import { peopleSearchHintKeys } from '../session/caseHandoverHelpers';
-import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
+import {
+	caseHandoverExplanationToSend,
+	isCaseHandoverRequestComplete,
+	peopleSearchHintKeys
+} from '../session/caseHandoverHelpers';
+import { useCaseHandoverPaneSlot } from '../caseHandover/CaseHandoverPaneSlot';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -63,7 +69,6 @@ import { apiGetSessionRoomsByRoomIds } from '../../api/apiGetSessionRooms';
 import { useWatcher } from '../../hooks/useWatcher';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { apiGetChatRoomById } from '../../api/apiGetChatRoomById';
-import FocusTrap from 'focus-trap-react';
 import { useTranslation } from 'react-i18next';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
@@ -81,7 +86,6 @@ import {
 	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
-	isDirectLinkSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
@@ -369,10 +373,6 @@ export const SessionsList = ({
 	});
 	const { invalidateRowStatuses: invalidateCaseHandoverRowStatuses } =
 		caseHandoverSearch;
-	const [caseHandoverReviewOpen, setCaseHandoverReviewOpen] = useState(false);
-	const [caseHandoverWizardStep, setCaseHandoverWizardStep] = useState<
-		'reason' | 'describe'
-	>('reason');
 	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
 		number[]
 	>([]);
@@ -454,8 +454,12 @@ export const SessionsList = ({
 	 * refetch so anonymous enquiries appear/disappear without a reload.
 	 * The flag is also read inside apiGetConsultantSessionList itself.
 	 */
-	const [liveChatAvailable] = useLiveChatAvailable(
+	const realLiveChatAvailability = useLiveChatAvailable(
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+	// FE#2545: in practice, the practice-only availability.
+	const [liveChatAvailable] = usePracticeLiveChatAvailability(
+		realLiveChatAvailability
 	);
 	// #1377 slices 4/5: the user's display filter for this list.
 	const displayFilterSection =
@@ -1641,6 +1645,20 @@ export const SessionsList = ({
 		}
 	};
 	const { candidateSessions } = caseHandoverSearch;
+	// FE#2040: found cases show their select button at once, all unselected.
+	useEffect(() => {
+		if (
+			showCaseHandoverBatchUi &&
+			!caseHandoverBatchMode &&
+			candidateSessions.length > 0
+		) {
+			setCaseHandoverBatchMode(true);
+		}
+	}, [
+		caseHandoverBatchMode,
+		candidateSessions.length,
+		showCaseHandoverBatchUi
+	]);
 	const finalSessionsList = React.useMemo(() => {
 		const baseSessions = (sessions || []).filter(filterSessions);
 		if (candidateSessions.length === 0) {
@@ -1930,14 +1948,6 @@ export const SessionsList = ({
 			),
 		[sessionToolbarPairs]
 	);
-	// FE#1952: the "Direktlinks" chip (and its display-filter row) appear once
-	// the list holds a conversation that came in through a direct link.
-	const hasDirectLinkRow = React.useMemo(
-		() =>
-			type === SESSION_LIST_TYPES.MY_SESSION &&
-			sessionToolbarPairs.some(({ raw }) => isDirectLinkSession(raw)),
-		[sessionToolbarPairs, type]
-	);
 	const activeIsLiveChat = React.useMemo(
 		() =>
 			sessionToolbarPairs.some(
@@ -1986,8 +1996,6 @@ export const SessionsList = ({
 						(isEligibleForSupervision &&
 							type === SESSION_LIST_TYPES.MY_SESSION)
 					);
-				case 'directLinks':
-					return hasDirectLinkRow;
 				default:
 					return true;
 			}
@@ -2034,7 +2042,6 @@ export const SessionsList = ({
 			})
 		);
 	}, [
-		hasDirectLinkRow,
 		isEligibleForSupervision,
 		rowsByKind,
 		showSupervisionChip,
@@ -2275,49 +2282,37 @@ export const SessionsList = ({
 			sortedSessions
 		]
 	);
-	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
-		setCaseHandoverSelectedIds((current) =>
-			current.includes(sessionId)
-				? current.filter((id) => id !== sessionId)
-				: [...current, sessionId]
-		);
-	}, []);
-	const caseHandoverContinueRef = useRef<HTMLButtonElement | null>(null);
-	const caseHandoverWizardRef = useRef<HTMLDivElement | null>(null);
-	const caseHandoverWizardWasOpen = useRef(false);
-	// Focus into the wizard on open, back to the bar's Continue on close.
-	useEffect(() => {
-		if (caseHandoverReviewOpen) {
-			caseHandoverWizardWasOpen.current = true;
-			caseHandoverWizardRef.current?.focus();
-			return;
-		}
-		if (caseHandoverWizardWasOpen.current) {
-			caseHandoverWizardWasOpen.current = false;
-			caseHandoverContinueRef.current?.focus();
-		}
-	}, [caseHandoverReviewOpen]);
-	// Bulk bar Continue and the chevron's "Confirm selection" share this.
-	const handleOpenCaseHandoverWizard = useCallback(() => {
-		setCaseHandoverWizardStep('reason');
+	const handleCaseHandoverSelect = useCallback(
+		(sessionId: number) => {
+			// The outcome effect resets the selection to the submitted set; a
+			// toggle made while the request runs would be lost silently.
+			if (caseHandoverBatch.submitting) return;
+			setCaseHandoverSelectedIds((current) =>
+				current.includes(sessionId)
+					? current.filter((id) => id !== sessionId)
+					: [...current, sessionId]
+			);
+		},
+		[caseHandoverBatch.submitting]
+	);
+	const caseHandoverPaneRef = useRef<HTMLElement | null>(null);
+	/** The chevron's "Confirm selection": jump to the reason step on the right. */
+	const handleFocusCaseHandoverPane = useCallback(() => {
 		setCaseHandoverBatchSummary('');
-		setCaseHandoverReviewOpen(true);
+		caseHandoverPaneRef.current?.focus();
 	}, []);
-	/** Cancel and Escape: back to the selection, which stays as it was. */
-	const handleCancelCaseHandoverWizard = useCallback(() => {
-		caseHandoverBatch.close(caseHandoverSelectedIds);
-		setCaseHandoverReviewOpen(false);
-		setCaseHandoverWizardStep('reason');
-		setCaseHandoverBatchSummary('');
-	}, [caseHandoverBatch, caseHandoverSelectedIds]);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
+		// close() would drop the operation ids while the request still runs on
+		// the server; the outcome would be lost and a retry would not be idempotent.
+		if (caseHandoverBatch.submitting) return;
 		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
-		setCaseHandoverReviewOpen(false);
 		setCaseHandoverSelectedIds([]);
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
-	}, [caseHandoverBatch, caseHandoverSelectedIds]);
+		// The focused "Clear selection" button unmounts with the pane.
+		listRef.current?.focus({ preventScroll: true });
+	}, [caseHandoverBatch, caseHandoverSelectedIds, listRef]);
 	useEffect(() => {
 		if (
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
@@ -2327,10 +2322,15 @@ export const SessionsList = ({
 		}
 	}, [caseHandoverBatchMode, handleCloseCaseHandoverBatch, sessionListTab]);
 	const handleSubmitCaseHandoverBatch = useCallback(async () => {
+		const selectedReason = caseHandoverReasons.reasons.find(
+			(reason) => reason.code === caseHandoverReasonCode
+		);
 		if (
 			caseHandoverSelectedIds.length === 0 ||
-			!caseHandoverReasonCode ||
-			!caseHandoverExplanation.trim()
+			!isCaseHandoverRequestComplete(
+				selectedReason,
+				caseHandoverExplanation
+			)
 		) {
 			setCaseHandoverBatchSummary(
 				translate('caseHandover.batch.required')
@@ -2342,7 +2342,10 @@ export const SessionsList = ({
 			await caseHandoverBatch.submit(
 				caseHandoverSelectedIds,
 				caseHandoverReasonCode,
-				caseHandoverExplanation
+				caseHandoverExplanationToSend(
+					selectedReason,
+					caseHandoverExplanation
+				)
 			);
 		} finally {
 			invalidateCaseHandoverRowStatuses(caseHandoverSelectedIds);
@@ -2351,6 +2354,7 @@ export const SessionsList = ({
 		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
+		caseHandoverReasons.reasons,
 		caseHandoverSelectedIds,
 		invalidateCaseHandoverRowStatuses,
 		translate
@@ -2368,10 +2372,6 @@ export const SessionsList = ({
 			})
 		);
 		setCaseHandoverSelectedIds(unresolvedSessionIds);
-		if (unresolvedSessionIds.length === 0) {
-			setCaseHandoverReviewOpen(false);
-			setCaseHandoverWizardStep('reason');
-		}
 		if (granted > 0 || pending > 0) void refetchSessionList();
 	}, [caseHandoverBatch.outcome, refetchSessionList, translate]);
 	useEffect(() => {
@@ -2379,6 +2379,47 @@ export const SessionsList = ({
 			setCaseHandoverBatchSummary(translate('caseHandover.error.failed'));
 		}
 	}, [caseHandoverBatch.error, translate]);
+	/**
+	 * FE#2040: as soon as one case is selected, the reason step is loaded into
+	 * the existing right pane (like an appointment) — no pop-up, no bottom bar.
+	 * Further selected cases are covered by the same reason and text. On small
+	 * screens, where list and pane are not visible together, it sits under the
+	 * list instead.
+	 */
+	const caseHandoverPaneSlot = useCaseHandoverPaneSlot();
+	const caseHandoverPaneOpen =
+		showCaseHandoverBatchUi &&
+		caseHandoverBatchMode &&
+		caseHandoverSelectedIds.length > 0;
+	const caseHandoverPane = caseHandoverPaneOpen ? (
+		<section
+			className="sessionsList__caseHandoverPane"
+			aria-label={translate('caseHandover.batch.title')}
+			ref={caseHandoverPaneRef}
+			tabIndex={-1}
+			data-cy="case-handover-pane"
+		>
+			<CaseHandoverCurtainView
+				step="reason"
+				reasons={caseHandoverReasons.reasons}
+				reasonCode={caseHandoverReasonCode}
+				explanation={caseHandoverExplanation}
+				isSubmitting={caseHandoverBatch.submitting}
+				reasonsUnavailable={caseHandoverReasons.unavailable}
+				reasonsLoadFailed={caseHandoverReasons.failed}
+				onRetryReasons={caseHandoverReasons.retry}
+				error={caseHandoverBatchSummary || undefined}
+				onStart={() => undefined}
+				onBack={() => undefined}
+				onNext={handleSubmitCaseHandoverBatch}
+				onReasonSelect={setCaseHandoverReasonCode}
+				onExplanationChange={setCaseHandoverExplanation}
+				onSubmit={handleSubmitCaseHandoverBatch}
+				selectionCount={caseHandoverSelectedIds.length}
+				onClearSelection={handleCloseCaseHandoverBatch}
+			/>
+		</section>
+	) : null;
 	const unmatchedDrafts = React.useMemo(() => {
 		if (sessionToolbarChip !== 'drafts') {
 			return [];
@@ -3067,9 +3108,6 @@ export const SessionsList = ({
 					chipView={chipPresentation.view}
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
-					showDirectLinksChip={
-						hasDirectLinkRow || sessionToolbarChip === 'directLinks'
-					}
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
@@ -3090,16 +3128,6 @@ export const SessionsList = ({
 							id: 'nearby',
 							label: translate('sessionList.toolbar.chips.nearby')
 						},
-						...(hasDirectLinkRow
-							? [
-									{
-										id: 'directLinks',
-										label: translate(
-											'sessionList.toolbar.chips.directLinks'
-										)
-									}
-								]
-							: []),
 						{
 							id: 'liveChat',
 							label: translate(
@@ -3217,7 +3245,7 @@ export const SessionsList = ({
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				caseHandoverBatchSummary &&
-				!caseHandoverReviewOpen && (
+				!caseHandoverPaneOpen && (
 					<div className="sessionsList__caseHandoverBatch">
 						<div
 							className="sessionsList__caseHandoverBatchSummary"
@@ -3228,93 +3256,10 @@ export const SessionsList = ({
 						</div>
 					</div>
 				)}
-			{showCaseHandoverBatchUi &&
-				caseHandoverBatchMode &&
-				caseHandoverReviewOpen && (
-					// aria-modal promises an inert page: Tab and Shift+Tab stay
-					// inside. Focus in and back to Continue is handled above.
-					<FocusTrap
-						focusTrapOptions={{
-							initialFocus: false,
-							returnFocusOnDeactivate: false,
-							escapeDeactivates: false,
-							allowOutsideClick: true,
-							fallbackFocus: () =>
-								caseHandoverWizardRef.current ?? document.body
-						}}
-					>
-						<div
-							className="sessionsList__caseHandoverWizardOverlay"
-							role="dialog"
-							aria-modal="true"
-							aria-label={translate('caseHandover.batch.title')}
-							ref={caseHandoverWizardRef}
-							tabIndex={-1}
-							onKeyDown={(event) => {
-								if (event.key !== 'Escape') return;
-								event.stopPropagation();
-								handleCancelCaseHandoverWizard();
-							}}
-						>
-							<div className="sessionsList__caseHandoverWizardShell">
-								<div className="sessionsList__caseHandoverWizardBar">
-									<strong>
-										{translate('caseHandover.batch.title')}
-									</strong>
-									<span>
-										{translate(
-											'caseHandover.batch.selectedCount',
-											{
-												count: caseHandoverSelectedIds.length
-											}
-										)}
-									</span>
-									<button
-										type="button"
-										className="sessionsList__caseHandoverWizardClose"
-										onClick={handleCancelCaseHandoverWizard}
-									>
-										{translate('caseHandover.batch.cancel')}
-									</button>
-								</div>
-								<CaseHandoverCurtainView
-									step={caseHandoverWizardStep}
-									reasons={caseHandoverReasons.reasons}
-									reasonCode={caseHandoverReasonCode}
-									explanation={caseHandoverExplanation}
-									isSubmitting={caseHandoverBatch.submitting}
-									reasonsUnavailable={
-										caseHandoverReasons.unavailable
-									}
-									reasonsLoadFailed={
-										caseHandoverReasons.failed
-									}
-									onRetryReasons={caseHandoverReasons.retry}
-									error={
-										caseHandoverReviewOpen &&
-										caseHandoverBatchSummary
-											? caseHandoverBatchSummary
-											: undefined
-									}
-									onStart={() =>
-										setCaseHandoverWizardStep('reason')
-									}
-									onBack={() =>
-										setCaseHandoverWizardStep('reason')
-									}
-									onNext={() =>
-										setCaseHandoverWizardStep('describe')
-									}
-									onReasonSelect={setCaseHandoverReasonCode}
-									onExplanationChange={
-										setCaseHandoverExplanation
-									}
-									onSubmit={handleSubmitCaseHandoverBatch}
-								/>
-							</div>
-						</div>
-					</FocusTrap>
-				)}
+			{caseHandoverPaneOpen &&
+				caseHandoverPaneSlot &&
+				!untilL &&
+				createPortal(caseHandoverPane, caseHandoverPaneSlot)}
 			{isRail && showMySessionToolbar && widenRail && (
 				<button
 					type="button"
@@ -3335,6 +3280,7 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
+					tabIndex={-1}
 					// Rail pills are tabs; full cards hold their own buttons (menu,
 					// mail, call), which a tab may not contain, so they are list
 					// items (#1338).
@@ -3472,15 +3418,12 @@ export const SessionsList = ({
 													setCaseHandoverBatchMode(
 														true
 													);
-													setCaseHandoverReviewOpen(
-														false
-													);
 													setCaseHandoverBatchSummary(
 														''
 													);
 												}}
 												onCaseHandoverBatchConfirm={
-													handleOpenCaseHandoverWizard
+													handleFocusCaseHandoverPane
 												}
 												onCaseHandoverBatchClose={
 													handleCloseCaseHandoverBatch
@@ -3557,6 +3500,11 @@ export const SessionsList = ({
 				)}
 			</div>
 
+			{/* Small screens: under the list (desktop portals to the right pane). */}
+			{caseHandoverPaneOpen &&
+				!(caseHandoverPaneSlot && !untilL) &&
+				caseHandoverPane}
+
 			{/* Not in the rail: 80 px set the sentence one letter per line
 			    (Frank, 2026-11-17); the rail's search button stays. */}
 			{listIsEmpty && !isRail && (
@@ -3570,30 +3518,6 @@ export const SessionsList = ({
 					type={type}
 				/>
 			)}
-			{showCaseHandoverBatchUi &&
-				caseHandoverBatchMode &&
-				!caseHandoverReviewOpen && (
-					<CaseHandoverBulkBar
-						ref={caseHandoverContinueRef}
-						count={caseHandoverSelectedIds.length}
-						labels={{
-							region: translate('caseHandover.bulkBar.label'),
-							selected: translate(
-								'caseHandover.bulkBar.selected',
-								{ count: caseHandoverSelectedIds.length }
-							),
-							continueLabel: translate(
-								'caseHandover.bulkBar.continue'
-							),
-							cancel: translate('caseHandover.bulkBar.cancel'),
-							emptyHint: translate(
-								'caseHandover.bulkBar.emptyHint'
-							)
-						}}
-						onContinue={handleOpenCaseHandoverWizard}
-						onCancel={handleCloseCaseHandoverBatch}
-					/>
-				)}
 			{movingEntry?.sessionId !== undefined && (
 				<AppointmentDateDialog
 					sessionId={movingEntry.sessionId}

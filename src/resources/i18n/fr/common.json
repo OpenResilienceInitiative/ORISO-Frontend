@@ -171,7 +171,6 @@
 		"selectLanguage": "Choisir la langue",
 		"stage": {
 			"title": "Conseil\nAide et assistance",
-
 			"carrierLogoAlt": "Afficher la carte des sites de {{name}}"
 		},
 		"stop": "Arrêter",
@@ -3406,9 +3405,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Télécharger en CSV",
 					"label": "Télécharger le fichier Excel"
 				},
 				"filename": "Statistiques de la consultation en ligne",
+				"hintMonth": "Une ligne par semaine et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintWeek": "Une ligne par jour et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintYear": "Une ligne par mois et une ligne de total. S’ouvre aussi dans Excel.",
 				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
 				"total": "Ensemble"
 			},
@@ -3425,7 +3428,20 @@
 				"period": "Période",
 				"videoCallDuration": "Durée des appels vidéo en minutes:secondes"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Annulés",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "Sur place",
+				"numberOfPhoneAppointments": "Téléphone",
+				"numberOfVideoAppointments": "Vidéo"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Ce mois-ci",
+					"currentWeek": "Cette semaine",
+					"lastMonth": "Le mois dernier",
+					"lastWeek": "La semaine dernière"
+				},
 				"currentMonth": "mois en cours",
 				"currentWeek": "semaine en cours",
 				"currentYear": "année en cours",
@@ -3437,7 +3453,17 @@
 				"lastMonth": "dernier mois",
 				"lastWeek": "semaine dernière",
 				"lastYear": "l'année dernière",
-				"prefix": "Vos chiffres du"
+				"offsetLabel": "Période",
+				"prefix": "Vos chiffres du",
+				"unitLabel": "Unité de temps",
+				"unitMonth": "Mois",
+				"unitWeek": "Semaine",
+				"unitYear": "Année"
+			},
+			"state": {
+				"empty": "Il n'y a pas encore de chiffres pour cette période.",
+				"error": "Les chiffres n'ont pas pu être chargés pour le moment.",
+				"retry": "Réessayer"
 			},
 			"title": "Mes statistiques"
 		},
@@ -4203,7 +4229,8 @@
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
-			"title": "Demande d'accès groupée"
+			"title": "Demande d'accès groupée",
+			"clearSelection": "Annuler la sélection"
 		},
 		"consent": {
 			"title": "Une personne consultante demande l'accès à cette conversation",
@@ -4250,7 +4277,9 @@
 			"required": "Choisissez un motif et ajoutez une explication."
 		},
 		"explanation": {
-			"placeholder": "Décrivez le motif"
+			"placeholder": "Décrivez le motif",
+			"optional": "Justification (facultative)",
+			"required": "Justification (obligatoire)"
 		},
 		"eyebrow": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 		"hidden": {
@@ -4822,7 +4851,6 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
-				"directLinks": "Invitations directes",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4847,9 +4875,11 @@
 				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
-				"directLinkVideo": "Appel vidéo",
-				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Invitation directe"
+				"directLinkVideo": "Vidéo",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Invitation directe · {{medium}}",
+				"agencyLink": "via le lien du centre de conseil"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",
@@ -6689,6 +6719,21 @@
 				"done": {
 					"title": "Terminer le chat",
 					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Les chats en direct arrivent par un lien, sans inscription, et la personne écrit de façon anonyme. Un chat d'exercice va vous attendre."
+				},
+				"openRequest": {
+					"title": "Ouvrir le chat en direct",
+					"intro": "Un chat en direct d'une personne anonyme attend dans la liste. Cliquez dessus pour l'ouvrir."
+				},
+				"reply": {
+					"title": "Répondre",
+					"intro": "Le chat est en cours. Écrivez une courte réponse à la personne et envoyez-la. Elle reste dans l'exercice et n'est enregistrée nulle part."
+				},
+				"practiceAvailability": {
+					"title": "Se rendre disponible",
+					"intro": "Seules les personnes disponibles reçoivent des chats en direct. Activez « Je suis disponible » ici ou dans la barre de menu ; pendant l'exercice, votre statut réel ne change pas."
 				}
 			}
 		},
@@ -7126,6 +7171,7 @@
 			"waitingFor": "attend depuis {{count}} min",
 			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
+			"startAndAdmit": "Démarrer l’appel et laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",
 			"position": "{{current}} sur {{total}}",
@@ -7455,21 +7501,54 @@
 			"failed": "La modification n’a pas pu être enregistrée. Veuillez réessayer.",
 			"scheduledAt": "Date et heure",
 			"clearScheduledAt": "Supprimer"
+		},
+		"staffJoin": {
+			"kicker": "Invitation directe",
+			"offer": {
+				"status": "Vous êtes connecté·e en tant que conseiller·ère",
+				"title": "Rejoindre en tant que conseiller·ère",
+				"text": "Vous rejoignez l'appel avec votre propre compte et restez connecté·e. La personne qui vous a invité·e vous fait entrer. Vous ne verrez pas le chat de ce rendez-vous.",
+				"join": "Rejoindre en tant que conseiller·ère"
+			},
+			"waiting": {
+				"status": "En attente d'admission",
+				"title": "Vous avez frappé",
+				"text": "L'appel commence dès que vous êtes admis·e. Gardez cette page ouverte."
+			},
+			"notStarted": {
+				"status": "L'appel n'a pas encore commencé",
+				"title": "L'appel n'a pas encore commencé",
+				"text": "Dès que l'appel est en cours, la suite s'affiche ici. Gardez cette page ouverte."
+			},
+			"refused": {
+				"status": "Non admis·e",
+				"title": "Vous n'avez pas été admis·e",
+				"text": "La personne qui vous a invité·e ne vous a pas admis·e à cet appel."
+			},
+			"forbidden": {
+				"status": "Impossible de rejoindre",
+				"title": "Vous ne pouvez pas rejoindre cet appel",
+				"text": "Le lien n'est plus actif ou vous avez été retiré·e de cet appel."
+			},
+			"ended": {
+				"status": "Appel terminé",
+				"title": "L'appel est terminé",
+				"text": "Vous pouvez fermer cette page."
+			},
+			"error": {
+				"status": "La connexion n'a pas fonctionné",
+				"title": "La connexion n'a pas fonctionné",
+				"text": "Veuillez réessayer."
+			},
+			"cancel": "Annuler",
+			"retry": "Réessayer",
+			"openOwnSessions": "Vers mes conversations"
 		}
 	},
 	"dashboard": {
-		"title": "Votre aperçu",
-		"stats": {
-			"title": "Consultations",
-			"period": "30 derniers jours",
-			"assigned": "Nouvelles prises en charge",
+		"quiet": {
 			"active": "Actives",
-			"archived": "Archivées",
-			"sentMessages": "Messages envoyés"
-		},
-		"circles": {
-			"title": "Prochains groupes d’entraide",
-			"assignedCounsellors": "Équipe de conseil : {{count}}"
+			"assigned": "Nouvellement prises en charge (30 jours)"
 		}
 	},
 	"temporaryAccount": {
@@ -7478,6 +7557,7 @@
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
+		"signedOutNotice": "Votre compte invité a été supprimé après l'entretien. Vous avez donc été déconnecté. Pour un nouvel entretien, veuillez rouvrir le lien de votre service de conseil.",
 		"chip": {
 			"guest": "Compte invité"
 		},

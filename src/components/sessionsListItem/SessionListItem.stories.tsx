@@ -1405,9 +1405,11 @@ const expectGroupRow = async (
 };
 
 /**
- * FE#1952: four conversations of one counsellor. The first came in by mail;
- * the others came in through the counsellor's video, audio and chat direct
- * link. The card names how each one came in, instead of "Mail" for all.
+ * FE#2546 (Frank, 2026-11-25): four Mail-Beratung cases of one counsellor.
+ * The first came in by mail; the others through the counsellor's video, audio
+ * and chat Direkteinladung. Every card says "Mail"; a direct invitation adds a
+ * quiet channel tag (Video / Audio / Chat). Until FE#2546 the card replaced
+ * "Mail" with "Videoanruf", "Audioanruf" or "Direkteinladung" (FE#1952).
  */
 const DIRECT_LINK_ROWS = [
 	{ id: 4501, medium: undefined, user: 'ruhiges_yak' },
@@ -1417,7 +1419,7 @@ const DIRECT_LINK_ROWS = [
 ] as const;
 
 export const DirectLinkConversations: Story = {
-	name: 'Direktlink-Gespräche (FE#1952)',
+	name: 'Direct-invitation cases are Mail (FE#2546)',
 	parameters: {
 		router: { initialPath: '/sessions/consultant/sessionView' }
 	},
@@ -1437,7 +1439,6 @@ export const DirectLinkConversations: Story = {
 								id: row.id,
 								matrixRoomId: `!direct-${row.id}:matrix.example.org`,
 								lastMessage: 'Hallo, ich warte im Anruf.',
-								// Unknown to builds before FE#1952: they show "Mail".
 								...({ directLinkMedium: row.medium } as object)
 							},
 							userOverrides: { username: row.user }
@@ -1446,16 +1447,34 @@ export const DirectLinkConversations: Story = {
 				))}
 			</div>
 		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, DIRECT_LINK_ROWS.length);
+		for (const [index, row] of rows.entries()) {
+			await expect(
+				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+					.textContent
+			).toBe('Mail');
+			const tag = row.querySelector<HTMLElement>(
+				'.sessionsListItem__channelTag'
+			);
+			const medium = DIRECT_LINK_ROWS[index].medium;
+			if (medium) {
+				await expect(tag?.dataset.medium).toBe(medium);
+			} else {
+				await expect(tag).toBeNull();
+			}
+		}
 	}
 };
 
 /**
- * FE#1952: the selected video direct-link card. Like Mail, the glyph keeps
- * the primary colour of its label; the active card's black-to-red filter
- * must not repaint it.
+ * FE#2546: the selected video direct-invitation card. The channel tag's glyph
+ * keeps the tag's colour; the active card's black-to-red filter must not
+ * repaint it.
  */
 export const DirectLinkConversationSelected: Story = {
-	name: 'Direktlink-Gespräch — ausgewählt (FE#1952)',
+	name: 'Direct-invitation case — selected (FE#2546)',
 	parameters: {
 		router: { initialPath: '/sessions/consultant/sessionView/session/4502' }
 	},
@@ -1475,17 +1494,64 @@ export const DirectLinkConversationSelected: Story = {
 		await expect(row.classList.contains('sessionsListItem--active')).toBe(
 			true
 		);
-		const glyph = part(
-			row,
-			'svg.sessionsListItem__consultingTypeIcon--directLinkIcon'
-		);
+		const glyph = part(row, 'svg.sessionsListItem__channelTagIcon');
 		await expect(getComputedStyle(glyph).filter).toBe('none');
-		const label = part(
-			row,
-			'.sessionsListItem__consultingTypeIcon--directLinkLabel'
-		);
+		const tag = part(row, '.sessionsListItem__channelTag');
 		await expect(getComputedStyle(glyph).color).toBe(
-			getComputedStyle(label).color
+			getComputedStyle(tag).color
+		);
+	}
+};
+
+/**
+ * FE#1870: two Erstanfragen. The first came in through the agency link
+ * (Beratungsstellen-Link) and carries the label; the second came through the
+ * postal-code search and does not.
+ */
+const AGENCY_LINK_ROWS = [
+	{ id: 4601, viaAgencyLink: true, user: 'heller_kranich' },
+	{ id: 4602, viaAgencyLink: false, user: 'gruene_eule' }
+] as const;
+
+export const AgencyLinkEnquiries: Story = {
+	name: 'Erstanfragen über Beratungsstellen-Link (FE#1870)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Erstanfragen">
+				{AGENCY_LINK_ROWS.map((row, index) => (
+					<RuntimeCard
+						key={row.id}
+						index={index}
+						grouped
+						isGroupStart={index === 0}
+						isGroupEnd={index === AGENCY_LINK_ROWS.length - 1}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: row.id,
+								status: STATUS_ENQUIRY,
+								matrixRoomId: `!enquiry-${row.id}:matrix.example.org`,
+								...({
+									viaAgencyLink: row.viaAgencyLink
+								} as object)
+							},
+							userOverrides: { username: row.user }
+						})}
+					/>
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-testid="agency-link-label"]'
+				)
+			).toHaveLength(1)
 		);
 	}
 };
