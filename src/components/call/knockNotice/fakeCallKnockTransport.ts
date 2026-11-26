@@ -23,7 +23,11 @@ export const createFakeCallKnockTransport = (
 	rooms: Record<string, number> = {}
 ): FakeCallKnockTransport => {
 	let pending = [...initial];
-	const listeners = new Map<(knocks: CallKnock[]) => void, CallKnockScope>();
+	/* `null`: a listener for everybody waiting, in every conversation. */
+	const listeners = new Map<
+		(knocks: CallKnock[]) => void,
+		CallKnockScope | null
+	>();
 	const decisions: string[] = [];
 	const inScope = (scope: CallKnockScope) => (knock: CallKnock) =>
 		knock.sessionId ===
@@ -32,7 +36,7 @@ export const createFakeCallKnockTransport = (
 			: rooms[scope.matrixRoomId]);
 	const publish = () =>
 		listeners.forEach((scope, listener) =>
-			listener(pending.filter(inScope(scope)))
+			listener(scope ? pending.filter(inScope(scope)) : [...pending])
 		);
 	const remove = (knockId: number) => {
 		pending = pending.filter((k) => k.id !== knockId);
@@ -49,6 +53,11 @@ export const createFakeCallKnockTransport = (
 		watchPending: (scope, onChange) => {
 			listeners.set(onChange, scope);
 			onChange(pending.filter(inScope(scope)));
+			return () => listeners.delete(onChange);
+		},
+		watchAllPending: (onChange) => {
+			listeners.set(onChange, null);
+			onChange([...pending]);
 			return () => listeners.delete(onChange);
 		},
 		admit: async (knockId) => {

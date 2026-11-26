@@ -169,6 +169,7 @@ const expectTourEvents = (expected: Partial<Record<string, number>>) =>
 		[PRACTICE_TOUR_EVENTS.messageSent]: 0,
 		[PRACTICE_TOUR_EVENTS.teamMessageSent]: 0,
 		[PRACTICE_TOUR_EVENTS.supervisorAdded]: 0,
+		[PRACTICE_TOUR_EVENTS.liveChatAvailable]: 0,
 		...expected
 	});
 

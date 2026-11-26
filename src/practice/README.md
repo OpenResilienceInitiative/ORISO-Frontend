@@ -24,6 +24,11 @@ sections 4 and 5. Two claims must stay provable:
   `surface: "frontend"` and the `tourId` of the running practice tour.
 - `POST` to `endpoints.keycloakAccessToken` with `grant_type=refresh_token`,
   `client_id=app` and no credentials. The password grant shares the URL: blocked.
+- `POST` to `endpoints.consultantLiveChatAvailabilityHeartbeat` (no query) with
+  an empty body: the real live-chat heartbeat. It only renews a lease the
+  counsellor already holds for real; switching availability on or off (`PUT`)
+  stays blocked. Decided by Frank on 2026-11-25 (FE#2545), so a counsellor who
+  is really available stays in the real queue while practising.
 - Unparseable, unreadable or oversized bodies fail closed. XHR and beacons get no
   exception. SigNoz/OTLP exports are blocked (non-essential). WebSocket is not
   wrapped (the app only receives on it), and no test that has run asserts on
@@ -120,21 +125,32 @@ Known limits: while practising, `/service/error-reports` is answered
 by the fake, so an error report from a practice run is not sent. The real reads
 in the table below were reviewed by hand; no test pins them.
 
-| Outside the sandbox                                       | Shows                                                                       | Decision                                                                                   |
-| --------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Navigation bar links, `/notifications` badge              | labels; an own unread number                                                | accept: no case data; the app-level sessions store is never written                        |
-| Zeitstrahl feed (`/notifications`, inside the outlet)     | real rows with asker names and links                                        | neutralised: the sandbox blanks the feed and its actions                                   |
-| Header title, claim, agency logo                          | tenant; the practice agency while a practice case is open                   | accept                                                                                     |
-| Header UI version switch                                  | one click opens Element with every real room                                | neutralised: hidden while practising                                                       |
-| Toast host, sound, OS banner                              | toasts of the practice views; real feed events after the exit, in one burst | accept (generic titles, no names)                                                          |
-| JoinRequestCenter snackbars                               | real colleague names and group titles                                       | accept: not case data; admit/decline fail while practising                                 |
-| Incoming real calls (FloatingCallWidget, GroupCallWidget) | ringing, asker initial                                                      | accept for now: answering fails while practising (decision below)                          |
-| Live-chat availability heartbeat                          | nothing until it lapses                                                     | accept for now: the blocked POST drops availability after about 2 minutes (decision below) |
-| Language switch, mute bell, absence overlay               | own settings                                                                | accept: the server write is blocked while practising                                       |
+| Outside the sandbox                                       | Shows                                                                       | Decision                                                                            |
+| --------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Navigation bar links, `/notifications` badge              | labels; an own unread number                                                | accept: no case data; the app-level sessions store is never written                 |
+| Zeitstrahl feed (`/notifications`, inside the outlet)     | real rows with asker names and links                                        | neutralised: the sandbox blanks the feed and its actions                            |
+| Header title, claim, agency logo                          | tenant; the practice agency while a practice case is open                   | accept                                                                              |
+| Header UI version switch                                  | one click opens Element with every real room                                | neutralised: hidden while practising                                                |
+| Toast host, sound, OS banner                              | toasts of the practice views; real feed events after the exit, in one burst | accept (generic titles, no names)                                                   |
+| JoinRequestCenter snackbars                               | real colleague names and group titles                                       | accept: not case data; admit/decline fail while practising                          |
+| Incoming real calls (FloatingCallWidget, GroupCallWidget) | ringing, asker initial                                                      | accept for now: answering fails while practising (decision below)                   |
+| Live-chat availability heartbeat                          | nothing until it lapses                                                     | allowlisted (Frank, 2026-11-25): real availability keeps its lease while practising |
+| Language switch, mute bell, absence overlay               | own settings                                                                | accept: the server write is blocked while practising                                |
 
-Open decisions (Frank): a counsellor who is live-chat available drops out after
-about 2 minutes of practice (allowlist the heartbeat, or switch live chat off
-at the start); a real incoming call cannot be answered while practising (end
+**Live-chat availability in practice (FE#2545).** The live-chat practice tour
+asks the counsellor to switch "Bin verfügbar" on with the real control (the
+settings switch, or the rail toggle with `liveChatViaSidebar`). While
+practising, both controls and the session list read
+`usePracticeLiveChatAvailability`: an in-memory value per practice run that
+starts off and never calls the API, writes localStorage or feeds the heartbeat.
+The heartbeat and the loss/DPA notices keep the real state. Proof:
+`practiceLiveChatAvailability.test.tsx` and the two live-chat runs in
+`PracticeFlow.integration.test.tsx` (no availability PUT or heartbeat POST, no
+`oriso_liveChat*` storage write, real state shown again after the exit).
+
+Decided (Frank, 2026-11-25, FE#2545): the real heartbeat is allowlisted, so a
+counsellor who is really live-chat available stays in the real queue while
+practising. Open decisions (Frank): a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
 
 ## Proof on Dev (T2)

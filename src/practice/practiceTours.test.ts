@@ -11,12 +11,19 @@ import trTranslations from '../resources/i18n/tr/common.json';
 import { frontendTours } from '../components/productTour/tourDefinitions';
 import { resolveTourSteps } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
-import { practiceAcceptedSessionRoute } from './practiceRoutes';
+import {
+	practiceAcceptedSessionRoute,
+	PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
+} from './practiceRoutes';
+import { LIVE_CHAT_QUEUE_PATH } from '../components/app/liveChatRailTarget';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
-import { PRACTICE_TOUR_IDS } from './practiceTourIds';
+import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
 	practiceAcceptTour,
+	practiceHostedTours,
+	practiceLiveChatTour,
 	practiceSupervisionTour,
 	practiceTours
 } from './practiceTours';
@@ -49,8 +56,13 @@ const stepIds = (steps: Array<{ id: string }>) => steps.map((s) => s.id);
 const TEAM_OFF = { flags: { featureTeamDiscussionEnabled: false } };
 
 describe('practiceTours registry', () => {
-	it('holds the two practice tours under the ids the guard allows', () => {
-		expect(practiceTours.map((t) => t.id)).toEqual([...PRACTICE_TOUR_IDS]);
+	it('holds the two practice cards, and every hosted tour under an id the guard allows', () => {
+		expect(practiceTours.map((t) => t.id)).toEqual([
+			...PRACTICE_CARD_TOUR_IDS
+		]);
+		expect(practiceHostedTours.map((t) => t.id)).toEqual([
+			...PRACTICE_TOUR_IDS
+		]);
 		expect(practiceAcceptTour.id).toBe('consultant-practice-accept');
 		expect(practiceSupervisionTour.id).toBe(
 			'consultant-practice-supervision'
@@ -308,6 +320,62 @@ describe('practiceSupervisionTour (flow F2)', () => {
 	});
 });
 
+describe('practiceLiveChatTour (FE#2545)', () => {
+	const step = (id: string) =>
+		practiceLiveChatTour.steps.find((s) => s.id === id)!;
+
+	it('switches availability on before the queue', () => {
+		expect(stepIds(practiceLiveChatTour.steps)).toEqual([
+			'intro',
+			'availability',
+			'queue',
+			'open-request',
+			'accept',
+			'reply',
+			'done'
+		]);
+	});
+
+	it('points at the control the counsellor uses, on the settings page, and waits for the practice switch-on', () => {
+		const availability = step('availability');
+		expect(availability.route).toBe(PRACTICE_LIVE_CHAT_SETTINGS_ROUTE);
+		expect(availability.target).toBe('livechat-availability-control');
+		// Required: whichever preference, exactly one control carries it.
+		expect(availability.optional).toBeFalsy();
+		expect(availability.advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.liveChatAvailable
+		});
+	});
+
+	it('goes on where switching on lands: the queue with the live-chat filter on', () => {
+		expect(PRACTICE_LIVE_CHAT_QUEUE_ROUTE).toBe(LIVE_CHAT_QUEUE_PATH);
+		expect(step('queue').route).toBe(PRACTICE_LIVE_CHAT_QUEUE_ROUTE);
+		// The filter is already on: a click would switch it off.
+		expect(step('queue').advanceOn).toBeUndefined();
+		expect(step('open-request').route).toBe(PRACTICE_LIVE_CHAT_QUEUE_ROUTE);
+	});
+
+	it('ships the availability copy in every full locale, du-form in the overlay only', () => {
+		const { titleKey, contentKey } = step('availability');
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				[titleKey, contentKey].forEach((key) =>
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string')
+				);
+			});
+		expect(resolveKey(deTranslations, contentKey)).toMatch(/\bSie\b/);
+		expect(resolveKey(deInformalTranslations, titleKey)).toBeUndefined();
+		expect(resolveKey(deInformalTranslations, contentKey)).toMatch(
+			/\bdein\b/
+		);
+	});
+});
+
 describe('practice tour wiring', () => {
 	// Anchors are rendered by components that this unit test cannot mount, so
 	// it reads the sources: a renamed or removed anchor must break here, not in
@@ -333,7 +401,7 @@ describe('practice tour wiring', () => {
 			return [step.target, clickTarget].filter(Boolean) as string[];
 		});
 
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
+	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s: every target and click target exists in a component',
 		(_id, tour) => {
 			targetsOf(tour).forEach((anchor) => {
@@ -349,7 +417,7 @@ describe('practice tour wiring', () => {
 		}
 	);
 
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
+	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s: a click step has something to click',
 		(_id, tour) => {
 			tour.steps
@@ -366,7 +434,7 @@ describe('practice tour wiring', () => {
 		}
 	);
 
-	it.each(practiceTours.map((t) => [t.id, t] as const))(
+	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s: every event step waits for a named practice event',
 		(_id, tour) => {
 			const known = Object.values(PRACTICE_TOUR_EVENTS) as string[];

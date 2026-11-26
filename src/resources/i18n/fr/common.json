@@ -6687,6 +6687,21 @@
 				"done": {
 					"title": "Terminer le chat",
 					"intro": "Une fois la conversation finie, terminez-la dans le menu ⋮ avec « Terminer le chat ». Vous revenez ensuite à la file d'attente."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Les chats en direct arrivent par un lien, sans inscription, et la personne écrit de façon anonyme. Un chat d'exercice va vous attendre."
+				},
+				"openRequest": {
+					"title": "Ouvrir le chat en direct",
+					"intro": "Un chat en direct d'une personne anonyme attend dans la liste. Cliquez dessus pour l'ouvrir."
+				},
+				"reply": {
+					"title": "Répondre",
+					"intro": "Le chat est en cours. Écrivez une courte réponse à la personne et envoyez-la. Elle reste dans l'exercice et n'est enregistrée nulle part."
+				},
+				"practiceAvailability": {
+					"title": "Se rendre disponible",
+					"intro": "Seules les personnes disponibles reçoivent des chats en direct. Activez « Je suis disponible » ici ou dans la barre de menu ; pendant l'exercice, votre statut réel ne change pas."
 				}
 			}
 		},
@@ -7124,6 +7139,7 @@
 			"waitingFor": "attend depuis {{count}} min",
 			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
+			"startAndAdmit": "Démarrer l’appel et laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",
 			"position": "{{current}} sur {{total}}",

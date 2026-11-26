@@ -120,6 +120,8 @@ export const enterPracticeMode = ({
 			allowedTourIds: [tourId],
 			tutorialProgressUrl: endpoints.tutorialProgress,
 			tokenRefreshUrl: endpoints.keycloakAccessToken,
+			liveChatHeartbeatUrl:
+				endpoints.consultantLiveChatAvailabilityHeartbeat,
 			onBlocked: (request) =>
 				blockedListeners.forEach((listener) => listener(request))
 		});

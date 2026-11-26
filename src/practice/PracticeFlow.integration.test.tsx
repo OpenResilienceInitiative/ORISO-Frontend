@@ -35,6 +35,7 @@ import '../components/messageSubmitInterface/messageSubmitInterfaceComponent';
 import '../components/session/SessionView';
 import { SessionsZone } from '../components/app/SessionsZone';
 import { NavigationBar } from '../components/app/NavigationBar';
+import { LiveChatAvailability } from '../components/profile/LiveChatAvailability';
 import { Header } from '../components/header/Header';
 import { RouterConfigConsultant } from '../components/app/RouterConfig';
 import { Walkthrough } from '../components/walkthrough/Walkthrough';
@@ -79,6 +80,11 @@ import {
 } from './script/scriptTestSupport';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 import { isPracticeId } from './practiceIds';
+import {
+	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
+	LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
+	LIVE_CHAT_AVAILABILITY_STORAGE_KEY
+} from '../utils/liveChatAvailabilityStorage';
 
 vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
@@ -134,10 +140,20 @@ vi.mock('react-joyride', async () => {
 
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
+const LIVE_CHAT = 'consultant-live-chat';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
 const TUTORIAL_PROGRESS = '/service/users/tutorials/progress';
+/** The real availability (GET/PUT) and its heartbeat (POST) share this path. */
+const LIVE_CHAT_AVAILABILITY =
+	'/service/conversations/consultants/availability';
+const SETTINGS_ROUTE = '/profile/aktivitaeten/abwesenheit';
+const LIVE_CHAT_STORAGE_KEYS = [
+	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
+	LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
+	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY
+];
 
 interface NetworkCall {
 	method: string;
@@ -164,6 +180,13 @@ const networkFetch = vi.fn(
 						headers: { 'Content-Type': 'application/json' }
 					})
 				: new Response(null, { status: 204 });
+		}
+		// The counsellor is really NOT available; only the read is answered.
+		if (method === 'GET' && url.endsWith(LIVE_CHAT_AVAILABILITY)) {
+			return new Response(JSON.stringify({ available: false }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 		throw new Error('network is not reachable in the practice flow proof');
 	}
@@ -216,7 +239,8 @@ const renderApp = ({
 	teamDiscussion = true,
 	practiceArea = true,
 	width = 1440,
-	strictMode = false
+	strictMode = false,
+	liveChatViaSidebar = false
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -235,7 +259,13 @@ const renderApp = ({
 	const providers: [React.Context<any>, any][] = [
 		[AppConfigContext, settings],
 		[ResponsiveContext, { width }],
-		[UserDataContext, { userData: counsellor, setUserData: vi.fn() }],
+		[
+			UserDataContext,
+			{
+				userData: { ...counsellor, liveChatViaSidebar },
+				setUserData: vi.fn()
+			}
+		],
 		[TenantContext, { tenant: { id: 1, settings: flags }, setTenant() {} }],
 		[
 			ConsultantListContext,
@@ -307,6 +337,10 @@ const renderApp = ({
 												routerConfig={routerConfig}
 											/>
 										}
+									/>
+									<Route
+										path={SETTINGS_ROUTE.slice(1)}
+										element={<LiveChatAvailability />}
 									/>
 									<Route
 										path="*"
@@ -438,6 +472,16 @@ const expectStep = async (index: number) => {
 		: document.querySelector<HTMLElement>(target)!;
 };
 
+/** The step that points at this tour target, in the resolved run. */
+const stepIndexOf = (name: string) => {
+	const index =
+		joyride?.steps.findIndex(
+			({ target }) => target === `[data-tour-target="${name}"]`
+		) ?? -1;
+	expect(index, name).toBeGreaterThanOrEqual(0);
+	return index;
+};
+
 const pressNext = (index: number) =>
 	act(() => {
 		joyride!.onEvent({
@@ -519,6 +563,57 @@ const expectNothingLeftThePracticeWorld = () => {
 	expect(appNotifications.addEventNotification).not.toHaveBeenCalled();
 	expect(appSessionsDispatch).not.toHaveBeenCalled();
 	expect(getPracticeNetworkGuard()?.blockedRequests ?? []).toEqual([]);
+};
+
+/** The availability keys the real toggle shares between tabs. */
+const liveChatStorage = () =>
+	LIVE_CHAT_STORAGE_KEYS.map((key) => [key, localStorage.getItem(key)]);
+const settingsSwitch = () =>
+	screen.getByRole<HTMLInputElement>('switch', {
+		name: 'profile.functions.liveChat.toggleLabel'
+	});
+const railToggle = () =>
+	document.querySelector<HTMLElement>(
+		'[data-tour-target="livechat-availability-toggle"]'
+	)!;
+
+/**
+ * The availability step: on the settings page, pointing at whichever control
+ * the counsellor uses; switching it on moves the tour on.
+ */
+const switchPracticeAvailabilityOn = async (control: () => HTMLElement) => {
+	const step = stepIndexOf('livechat-availability-control');
+	const target = await expectStep(step);
+	expect(route()).toBe(SETTINGS_ROUTE);
+	// The anchor is the control, or sits inside it (the rail button).
+	expect(target!.contains(control()) || control().contains(target)).toBe(
+		true
+	);
+	// Practice starts "off", whatever the real state.
+	expect(
+		control().getAttribute('aria-checked') ??
+			String((control() as HTMLInputElement).checked)
+	).toBe('false');
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.liveChatAvailable, async () => {
+		fireEvent.click(control());
+	});
+};
+
+/**
+ * Nothing reached the real availability: no PUT, no heartbeat POST, no
+ * shared preference, lease or loss record in localStorage.
+ */
+const expectRealAvailabilityUntouched = (before: unknown) => {
+	expect(
+		network.filter(
+			({ method, url }) =>
+				url.includes(LIVE_CHAT_AVAILABILITY) && method !== 'GET'
+		)
+	).toEqual([]);
+	expect(
+		storageWrites.filter((key) => key.startsWith('oriso_liveChat'))
+	).toEqual([]);
+	expect(liveChatStorage()).toEqual(before);
 };
 
 /** The enquiry steps of F1 up to the open enquiry: 1 and 2 in both variants. */
@@ -653,6 +748,162 @@ describe('practice flows on the real app shell', () => {
 		},
 		120000
 	);
+
+	it('Live chat (FE#2545): availability is switched on in practice only, then a practice live chat waits, is started with the real button and answered', async () => {
+		const app = renderApp();
+		const storageBefore = liveChatStorage();
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(LIVE_CHAT);
+
+		// 1: what is different about live chat; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		pressNext(0);
+
+		// 2: "Bin verfügbar" on the real settings page; switch it on.
+		await switchPracticeAvailabilityOn(settingsSwitch);
+
+		// 3: switching on landed on the shared queue, the live-chat filter
+		// already on (as in real life); Next.
+		const queue = stepIndexOf('livechat-queue');
+		await expectStep(queue);
+		expect(route()).toBe(`${PRACTICE_ENQUIRIES_ROUTE}?chip=liveChat`);
+		pressNext(queue);
+
+		// 4: the waiting live chat, the only row of the queue; click it.
+		const open = stepIndexOf('enquiry-list-item');
+		await expectStep(open);
+		// The queue filter stays on: only live chats are listed.
+		expect(route()).toBe(`${PRACTICE_ENQUIRIES_ROUTE}?chip=liveChat`);
+		const rowSelector = joyride!.steps[open].target;
+		await waitFor(() => {
+			const row = document.querySelector<HTMLElement>(rowSelector);
+			expect(row?.isConnected).toBe(true);
+			expect(row?.textContent).toContain(SCRIPT.cast.asker.displayName);
+		}, SLOW);
+		await act(async () => {
+			fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// The real "Chat starten"; it takes the live-chat accept path.
+		const accept = await expectStep(open + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.enquiryAccepted,
+			async () => {
+				fireEvent.click(accept!);
+			}
+		);
+		expect(
+			network.some(({ url }) =>
+				url.includes('/conversations/askers/anonymous/')
+			)
+		).toBe(false);
+		await waitFor(
+			() => expect(route()).toMatch(/sessionView\/!practice-1/),
+			SLOW
+		);
+
+		// The composer; the scripted asker answers the first reply.
+		await expectStep(open + 2);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.askerFirstMessage
+				),
+			SLOW
+		);
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
+			typeAndSend(
+				() => document.querySelector('.chatStage__mainPane'),
+				'Hallo, schön, dass Sie schreiben. Was beschäftigt Sie?'
+			)
+		);
+		await waitFor(
+			() =>
+				expect(textOf('.chatStage__mainPane')).toContain(
+					SCRIPT.texts.askerReply
+				),
+			SLOW
+		);
+
+		// Done: completion is written for the live-chat tour itself.
+		await finish(open + 3);
+		expectRealAvailabilityUntouched(storageBefore);
+	}, 120000);
+
+	it('Live chat with the switch in the menu bar (FE#2545): the rail toggle switches practice availability on, and the real state shows again after End', async () => {
+		const app = renderApp({ liveChatViaSidebar: true });
+		const storageBefore = liveChatStorage();
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		pressNext(0);
+
+		// The settings switch only mirrors the state here: the rail is the control.
+		await switchPracticeAvailabilityOn(railToggle);
+		expect(settingsSwitch).toThrow();
+		expect(railToggle().getAttribute('aria-checked')).toBe('true');
+		// The queue step follows on the enquiries list.
+		await expectStep(stepIndexOf('livechat-queue'));
+
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		// The real state, off, shows again.
+		await waitFor(() =>
+			expect(railToggle().getAttribute('aria-checked')).toBe('false')
+		);
+		expectNothingLeftThePracticeWorld();
+		expectRealAvailabilityUntouched(storageBefore);
+	}, 120000);
+
+	it('Live chat: narrowing the window ends the practice run instead of swapping in the explanation tour, and widening does not restart it', async () => {
+		const app = renderApp({ width: 1440 });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+
+		app.resize(899);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+		app.resize(1440);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		expect(progressWrites()).not.toContain('completed');
+	}, 120000);
+
+	it('Live chat launched on a small screen keeps its explanation tour, also after widening', async () => {
+		const app = renderApp({ width: 899 });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+
+		app.resize(1440);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		// Still the explanation tour, on its first step.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+	});
+
+	it('Live chat without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(LIVE_CHAT);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
 
 	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
 		const app = renderApp();

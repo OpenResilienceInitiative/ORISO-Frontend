@@ -26,9 +26,9 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import { isPracticeTourId } from '../../practice/practiceTourIds';
+import { isPracticeCardTourId } from '../../practice/practiceTourIds';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
-import { practiceTours } from '../../practice/practiceTours';
+import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
 
 type AutoRunState = 'unknown' | 'due' | 'not_due';
@@ -60,19 +60,53 @@ export const Walkthrough = () => {
 	const tenantSettings = useTenant()?.settings;
 	// A practice tour is hosted only by deliberate request, and only where
 	// the practice area is open to this counsellor; the auto-run
-	// below stays hard-wired to the intro tour.
-	const requestedTour = launchRequest
-		? (frontendTours.find((tour) => tour.id === launchRequest.tourId) ??
-			(canUsePractice(settings, userData) &&
-			canStartPracticeTourInViewport(launchRequest.tourId, viewport)
-				? practiceTours.find((tour) => tour.id === launchRequest.tourId)
-				: undefined))
-		: undefined;
+	// below stays hard-wired to the intro tour. A topic tour with a practice
+	// rendering (FE#2545) runs it there and its explanation tour elsewhere.
+	const practiceOpenFor = (tourId: string) =>
+		canUsePractice(settings, userData) &&
+		canStartPracticeTourInViewport(tourId, viewport);
+	const practiceCandidate =
+		launchRequest && practiceOpenFor(launchRequest.tourId)
+			? practiceHostedTours.find(
+					(tour) => tour.id === launchRequest.tourId
+				)
+			: undefined;
+	// The rendering (practice or explanation) is chosen once per launch
+	// request and then kept: widening the window during an explanation does
+	// not swap in a practice run, and narrowing it during practice ends the
+	// run (below) instead of swapping in the explanation, like the card
+	// flows. Widening again does not restart it from the stale request.
+	const [renderingChoice, setRenderingChoice] = useState<{
+		request: NonNullable<typeof launchRequest>;
+		practice: boolean;
+	} | null>(null);
+	const choiceIsCurrent =
+		!!launchRequest && renderingChoice?.request === launchRequest;
+	useEffect(() => {
+		if (launchRequest && !choiceIsCurrent) {
+			setRenderingChoice({
+				request: launchRequest,
+				practice: !!practiceCandidate
+			});
+		}
+	}, [launchRequest, choiceIsCurrent, practiceCandidate]);
+	const choosesPractice =
+		choiceIsCurrent && renderingChoice
+			? renderingChoice.practice
+			: !!practiceCandidate;
+	const practiceTour = choosesPractice ? practiceCandidate : undefined;
+	const lostPracticeRun =
+		!!launchRequest && choosesPractice && !practiceCandidate;
+	const requestedTour =
+		launchRequest && !lostPracticeRun
+			? (practiceTour ??
+				frontendTours.find((tour) => tour.id === launchRequest.tourId))
+			: undefined;
 	const unavailablePracticeRequest =
-		!!launchRequest &&
-		isPracticeTourId(launchRequest.tourId) &&
-		(!canUsePractice(settings, userData) ||
-			!canStartPracticeTourInViewport(launchRequest.tourId, viewport));
+		lostPracticeRun ||
+		(!!launchRequest &&
+			isPracticeCardTourId(launchRequest.tourId) &&
+			!practiceOpenFor(launchRequest.tourId));
 	useEffect(() => {
 		if (unavailablePracticeRequest) {
 			// Resizing may end an active practice run. Widening the window
@@ -124,10 +158,15 @@ export const Walkthrough = () => {
 	const isAutoRun = wantsAutoRun && autoRunState === 'due';
 	const activeTour =
 		requestedTour ?? (isAutoRun ? consultantWalkthroughTour : undefined);
+	// Only a practice rendering enters the practice world; the explanation
+	// tour under the same id stays on the real page.
+	const isPracticeRun = !!activeTour && activeTour === practiceTour;
 
 	// Variants resolve once per run, so the adapter, its reducer and the
 	// last-step check below all count the same steps.
-	const runKey = `${activeTour?.id}-${launchRequest?.requestedAt ?? 'auto'}`;
+	// The rendering is part of the run: a practice run that loses its
+	// viewport ends (teardown on unmount) instead of morphing in place.
+	const runKey = `${activeTour?.id}-${isPracticeRun ? 'practice' : 'plain'}-${launchRequest?.requestedAt ?? 'auto'}`;
 	const resolvedRunRef = useRef<{
 		key: string;
 		tour: TourDefinition;
@@ -142,7 +181,7 @@ export const Walkthrough = () => {
 				// A practice tour the Träger switched off (Supervision) has
 				// no steps, so nothing starts; no mid-run flip changes that.
 				steps:
-					isPracticeTourId(activeTour.id) &&
+					isPracticeRun &&
 					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
 						: resolveTourSteps(activeTour, {
@@ -166,7 +205,9 @@ export const Walkthrough = () => {
 	}, [shownTourId, setActiveTourId]);
 
 	// Feeds the practice banner's "Step i of N"; inert for the ordinary tours.
-	const reportPracticeProgress = usePracticeTourProgressReporter(runTour);
+	const reportPracticeProgress = usePracticeTourProgressReporter(
+		isPracticeRun ? runTour : undefined
+	);
 
 	const persistStepProgress = useCallback(
 		(event: TourEvent, step?: TourStep) => {
@@ -218,7 +259,13 @@ export const Walkthrough = () => {
 		return null;
 	}
 
-	const hostHooks = getTourHostHooks(runTour.id);
+	// The explanation rendering of a tour that also has a practice one must
+	// not enter practice mode; every other run gets its registered hooks.
+	const hostHooks =
+		isPracticeRun ||
+		!practiceHostedTours.some((tour) => tour.id === runTour.id)
+			? getTourHostHooks(runTour.id)
+			: undefined;
 
 	return (
 		<ProductTourAdapter
