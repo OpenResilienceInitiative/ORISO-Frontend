@@ -223,8 +223,9 @@ const COUNSELLOR_ROUTES = [
 	'/sessions/consultant/sessionPreview',
 	'/sessions/consultant/sessionView',
 	'/notifications',
-	'/profile',
-	'/booking/events'
+	// #2328: "Meine Termine" comes before "Mein Profil" for counsellors.
+	'/booking/events',
+	'/profile'
 ];
 
 export const Counsellor: Story = {
