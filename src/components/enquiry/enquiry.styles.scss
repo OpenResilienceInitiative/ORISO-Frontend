@@ -176,7 +176,7 @@ $background-circle-size: 1800px !default;
 
 	&__footer {
 		border-top: 1px solid $line-ochre;
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		position: absolute;
 		width: 100%;
 		bottom: 0;

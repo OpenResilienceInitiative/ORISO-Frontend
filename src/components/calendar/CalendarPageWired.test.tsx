@@ -2406,8 +2406,12 @@ describe('CalendarPageWired — "Freie Sprechzeiten" for advice seekers (FE#2494
 						agencyId: 7,
 						consultingType: 1
 					},
+					// As on Dev: the advice seeker's own list carries the
+					// advice seeker as `user` (#2494).
+					user: { username: 'quiet_otter_6824' },
 					consultant: {
 						consultantId: 'c1',
+						username: 'lberger_1234',
 						displayName: 'Laura Berger'
 					}
 				},

@@ -64,6 +64,7 @@
 
 	&__input:checked + &__box {
 		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
 		border-color: var(--m3-primary, #a5000a);
 
 		.m3Checkbox__check {
@@ -79,6 +80,7 @@
 	// checked, whatever the underlying `checked` value.
 	&--indeterminate &__box {
 		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
 		border-color: var(--m3-primary, #a5000a);
 
 		.m3Checkbox__check {

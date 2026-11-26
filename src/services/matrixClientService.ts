@@ -26,7 +26,6 @@ import { matrixLiveEventBridge } from './matrixLiveEventBridge';
 import { startDeviceDehydration } from './matrixDeviceDehydration';
 import { matrixRoomHistoryKeyTransfer } from './matrixRoomHistoryKeyTransfer';
 import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
-import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
 	TextMessageContentOptions,
 	type MessageRelationOptions,
@@ -1021,24 +1020,6 @@ export class MatrixClientService {
 			await this.refreshMatrixToken();
 			return sendWithCurrentClient();
 		}
-	}
-
-	// Create a direct message room with another user
-	public async createDirectMessageRoom(userId: string): Promise<string> {
-		await this.ensureFreshToken();
-
-		if (!this.client) {
-			throw new Error('Matrix client not initialized');
-		}
-
-		const response = await this.client.createRoom({
-			preset: 'private_chat' as any,
-			invite: [userId],
-			is_direct: true,
-			initial_state: [buildMatrixRoomEncryptionInitialState()]
-		});
-
-		return response.room_id;
 	}
 
 	// Get user rooms

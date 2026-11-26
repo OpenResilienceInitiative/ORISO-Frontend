@@ -11,15 +11,19 @@ import {
 	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
 import { LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS } from '../app/useLiveChatAvailabilityLossNotice';
+import { usePracticeLiveChatAvailability } from '../../practice/practiceLiveChatAvailability';
 
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	// While practising, the switch shows and flips a practice-only state
+	// (FE#2545): no API call, no shared preference.
+	const realAvailability = useLiveChatAvailable();
 	const [
 		liveChatAvailable,
 		setLiveChatAvailable,
 		{ loading, pending, error, lostReason }
-	] = useLiveChatAvailable();
+	] = usePracticeLiveChatAvailability(realAvailability);
 	const [liveChatViaSidebar, setLiveChatViaSidebar] = useLiveChatViaSidebar();
 
 	const handleToggle = useCallback(
@@ -61,15 +65,26 @@ export const LiveChatAvailability = () => {
 					className="flex"
 					data-tour-target="livechat-availability-settings"
 				>
-					<Switch
-						className="mr--1"
-						onChange={handleToggle}
-						checked={liveChatAvailable}
-						disabled={liveChatViaSidebar || loading || pending}
-						aria-label={translate(
-							'profile.functions.liveChat.toggleLabel'
-						)}
-					/>
+					{/* The practice tour's anchor sits on the control the
+					    counsellor actually uses: here, or on the rail. */}
+					<span
+						className="flex"
+						data-tour-target={
+							liveChatViaSidebar
+								? undefined
+								: 'livechat-availability-control'
+						}
+					>
+						<Switch
+							className="mr--1"
+							onChange={handleToggle}
+							checked={liveChatAvailable}
+							disabled={liveChatViaSidebar || loading || pending}
+							aria-label={translate(
+								'profile.functions.liveChat.toggleLabel'
+							)}
+						/>
+					</span>
 					<Text
 						text={translate(
 							'profile.functions.liveChat.toggleLabel'

@@ -61,7 +61,7 @@ export const downloadInvitationIcs = ({
 };
 
 /** The round icon above the room's words, as `CallNotice` draws it. */
-const RoomIcon = ({ children }: { children: React.ReactNode }) => (
+export const RoomIcon = ({ children }: { children: React.ReactNode }) => (
 	<Box
 		aria-hidden
 		sx={{

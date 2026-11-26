@@ -12,7 +12,6 @@ vi.mock('./SessionToolbarFilterIcons', () => {
 	return {
 		ArchiveFilterIcon: Icon,
 		CreateChatFilterIcon: Icon,
-		DirectLinkFilterIcon: Icon,
 		DraftFilterIcon: Icon,
 		GroupFilterIcon: Icon,
 		InternalGroupFilterIcon: Icon,
@@ -242,7 +241,6 @@ const CHIP_TRANSLATIONS: Record<string, string> = {
 	'sessionList.toolbar.chips.groups': 'Conversation circle',
 	'sessionList.toolbar.chips.supervision': 'Supervision',
 	'sessionList.toolbar.chips.chats': 'Mail',
-	'sessionList.toolbar.chips.directLinks': 'Direct links',
 	'sessionList.toolbar.chips.createRow': 'Create chat'
 };
 
@@ -378,21 +376,9 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 		expect(onChipToggle).toHaveBeenCalledWith('other');
 	});
 
-	// FE#1952: direct-link conversations have their own chip next to "Mail".
-	it('offers a "Direktlinks" chip right after "Mail" when the list has direct-link conversations', () => {
-		const onChipToggle = vi.fn();
-		const { container } = renderMenu({
-			onChipToggle,
-			showDirectLinksChip: true,
-			chipCounts: { unread: 0, drafts: 0, nearby: 2, directLinks: 1 }
-		});
-		const names = chipNames(container);
-		expect(names.indexOf('direct-links')).toBe(names.indexOf('nearby') + 1);
-		screen.getByRole('button', { name: /^Direct links/ }).click();
-		expect(onChipToggle).toHaveBeenCalledWith('directLinks');
-	});
-
-	it('omits the "Direktlinks" chip without direct-link conversations', () => {
+	// FE#2546 (Frank, 2026-11-25): direct-invitation conversations are Mail;
+	// the toolbar has no chip of their own any more.
+	it('has no "Direkteinladungen" chip', () => {
 		const { container } = renderMenu({});
 		expect(chipNames(container)).not.toContain('direct-links');
 	});

@@ -49,6 +49,22 @@ export interface WheelInput {
 const LINE_HEIGHT_PX = 16;
 const PAGE_WIDTH_PX = 280;
 
+/**
+ * Wheel travel in pixels, whatever unit the device reports (`deltaMode`
+ * 0 = pixels, 1 = lines, 2 = pages). Shared by this toolbar and the chat
+ * dock's wheel forwarding (`session/composerWheel.ts`, #2513).
+ */
+export const wheelDeltaPx = (
+	delta: number,
+	deltaMode: number,
+	pageSize: number
+): number =>
+	deltaMode === 1
+		? delta * LINE_HEIGHT_PX
+		: deltaMode === 2
+			? delta * pageSize
+			: delta;
+
 /** Sideways travel to apply, or `null` to leave the event to the browser. */
 export const wheelToHorizontal = ({
 	deltaX,
@@ -59,16 +75,25 @@ export const wheelToHorizontal = ({
 	if (shiftKey || deltaX !== 0 || deltaY === 0) {
 		return null;
 	}
-	const scale =
-		deltaMode === 1 ? LINE_HEIGHT_PX : deltaMode === 2 ? PAGE_WIDTH_PX : 1;
-	return deltaY * scale;
+	return wheelDeltaPx(deltaY, deltaMode, PAGE_WIDTH_PX);
 };
+
+/**
+ * Whether a scroller at `position` (of `total`, showing `visible`) can still
+ * move in the direction of `delta`. Works for either axis.
+ */
+export const canScrollAlong = (
+	position: number,
+	total: number,
+	visible: number,
+	delta: number
+): boolean =>
+	delta > 0
+		? position + visible < total - EDGE_TOLERANCE
+		: position > EDGE_TOLERANCE;
 
 /** Whether the bar can still move in the direction of `delta`. */
 export const canScrollBy = (
 	{ scrollLeft, scrollWidth, clientWidth }: ScrollMetrics,
 	delta: number
-): boolean =>
-	delta > 0
-		? scrollLeft + clientWidth < scrollWidth - EDGE_TOLERANCE
-		: scrollLeft > EDGE_TOLERANCE;
+): boolean => canScrollAlong(scrollLeft, scrollWidth, clientWidth, delta);

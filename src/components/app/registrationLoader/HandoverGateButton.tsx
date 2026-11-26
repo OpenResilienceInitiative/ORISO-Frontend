@@ -47,6 +47,12 @@ export interface HandoverGateButtonProps {
 	 * von Warten"). The queue position is said in words beside it.
 	 */
 	indeterminate?: boolean;
+	/**
+	 * A light that runs around the button's edge: somebody else has to act
+	 * now, and the person sees that the wait is alive (Frank, 2026-11-25, the
+	 * guest waiting to be let into a call). Stands still under reduced motion.
+	 */
+	glow?: boolean;
 	/** Replaces the arrow — a turning clock while the queue moves. */
 	icon?: React.ReactNode;
 	/**
@@ -87,6 +93,7 @@ export const HandoverGateButton = ({
 	status,
 	progress,
 	indeterminate = false,
+	glow = false,
 	icon,
 	type = 'button',
 	disabled = false,
@@ -181,7 +188,39 @@ export const HandoverGateButton = ({
 			});
 	};
 
-	return (
+	/* The ring sits behind the button, a little larger on every side (and
+	   past the 6 px edge below), so only its rim shows. */
+	const ring = {
+		'position': 'absolute',
+		'inset': '-4px -4px -10px -4px',
+		'borderRadius': '36px',
+		'overflow': 'hidden',
+		'pointerEvents': 'none',
+		'&::before': {
+			'content': '""',
+			'position': 'absolute',
+			'top': '50%',
+			'left': '50%',
+			'width': '200%',
+			'aspectRatio': '1',
+			'transform': 'translate(-50%, -50%)',
+			'backgroundImage': `conic-gradient(from 0deg, transparent 0deg, transparent 150deg, ${registrationMd3.primary} 340deg, transparent 360deg)`,
+			'animation': 'handoverGateGlow 2.4s linear infinite',
+			'@keyframes handoverGateGlow': {
+				from: { transform: 'translate(-50%, -50%) rotate(0deg)' },
+				to: { transform: 'translate(-50%, -50%) rotate(360deg)' }
+			},
+			/* Still lit all the way round, just no movement. */
+			'@media (prefers-reduced-motion: reduce)': {
+				animation: 'none',
+				backgroundImage: 'none',
+				backgroundColor: registrationMd3.primary,
+				opacity: 0.35
+			}
+		}
+	} as const;
+
+	const button = (
 		<ButtonBase
 			ref={buttonRef}
 			onClick={open ? handleClick : undefined}
@@ -195,6 +234,7 @@ export const HandoverGateButton = ({
 			data-cy-closing={closing}
 			sx={{
 				'position': 'relative',
+				'zIndex': 1,
 				'width': '100%',
 				'minHeight': 60,
 				'py': 1,
@@ -336,5 +376,19 @@ export const HandoverGateButton = ({
 				{icon ?? <ArrowForwardRoundedIcon />}
 			</Box>
 		</ButtonBase>
+	);
+	/* Wrapped only while it glows: every other consumer keeps the button as
+	   the direct child it lays out and tests against. */
+	if (!glow) return button;
+	return (
+		<Box sx={{ position: 'relative', width: '100%' }}>
+			<Box
+				aria-hidden
+				data-cy="handover-gate-glow"
+				sx={{ ...ring, filter: 'blur(8px)', opacity: 0.9 }}
+			/>
+			<Box aria-hidden sx={ring} />
+			{button}
+		</Box>
 	);
 };

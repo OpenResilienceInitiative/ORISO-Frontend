@@ -78,6 +78,10 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
+import {
+	LOGIN_NOTICE_PARAM,
+	isTemporaryAccountDeletedNotice
+} from './temporaryAccountDeletedNotice';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { translateWithFallback } from '../../utils/translationFallback';
 import { budibaseLogout } from '../budibase/budibaseLogout';
@@ -137,6 +141,9 @@ export const Login = () => {
 	const gcid = useSearchParam<string>('gcid');
 	const appointmentSeriesId = useSearchParam<string>('seriesId');
 	const returnTo = useSearchParam<string>('returnTo');
+	const guestAccountWasDeleted = isTemporaryAccountDeletedNotice(
+		useSearchParam<string>(LOGIN_NOTICE_PARAM)
+	);
 	const inviteAgencyId = useSearchParam<string>('aid');
 	const openingGroupInviteEntry = useGroupInviteEntryRedirect();
 	const registrationUrl = buildRegistrationLink(
@@ -1129,6 +1136,20 @@ export const Login = () => {
 							)}
 						</div>
 
+						{guestAccountWasDeleted && !showLoginError && (
+							<div
+								role="status"
+								data-cy="login-temporary-account-deleted"
+							>
+								<Text
+									text={translate(
+										'temporaryAccount.signedOutNotice'
+									)}
+									type="infoSmall"
+									className="loginForm__error"
+								/>
+							</div>
+						)}
 						{showLoginError && (
 							<Text
 								text={showLoginError}
