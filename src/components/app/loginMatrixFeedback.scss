@@ -59,6 +59,8 @@
 		// The digit stands in the word's own box, one even cell per letter:
 		// it never moves, only fades in while the letter fades out.
 		&::after {
+			// Browsers without alternative text for `content` still draw the sign.
+			content: attr(data-digit);
 			content: attr(data-digit) / '';
 			position: absolute;
 			inset-block: 0;
@@ -97,6 +99,8 @@
 			text-align: center;
 
 			&::after {
+				// Browsers without alternative text for `content` still draw the sign.
+				content: attr(data-digit);
 				content: attr(data-digit) / '';
 				animation: login-matrix-digit var(--login-matrix-turn)
 					ease-in-out var(--login-matrix-delay) both;
@@ -122,6 +126,8 @@
 			}
 
 			&::after {
+				// Browsers without alternative text for `content` still draw the sign.
+				content: attr(data-grid);
 				content: attr(data-grid) / '';
 				position: absolute;
 				inset-block-start: 50%;

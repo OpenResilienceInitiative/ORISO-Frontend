@@ -72,14 +72,15 @@ export const LOGIN_MATRIX_TIMING = {
 
 /**
  * The page's light area: the viewport less the brand panel beside the form
- * (desktop) or above it (phone). The curtain covers all of it.
+ * (desktop), the header and the brand hero above it (phone). The curtain
+ * covers all of it.
  */
 function lit(form: HTMLElement) {
 	const card = form.getBoundingClientRect();
 	let top = 0;
 	let left = 0;
 	for (const panel of document.querySelectorAll(
-		'.stageLayout__stage, .stageMobileHero'
+		'.stageLayout__stage, .stageMobileHero, .stageLayout__header'
 	)) {
 		const { right, bottom, width, height } = panel.getBoundingClientRect();
 		if (!width || !height) continue;
@@ -299,9 +300,11 @@ export function startLoginMatrix(form: HTMLElement) {
 		const rain = document.createElement('div');
 		rain.className = 'loginMatrixRain';
 		rain.setAttribute('aria-hidden', 'true');
-		const { top, left, width, height } = area;
-		rain.style.cssText = `top:${top}px;left:${left}px;width:${width}px;height:${height}px;--fall:${Math.round(height * 0.55)}px`;
-		const count = Math.ceil(width / 12);
+		const place = ({ top, left, width, height } = lit(form)) => {
+			rain.style.cssText = `top:${top}px;left:${left}px;width:${width}px;height:${height}px;--fall:${Math.round(height * 0.55)}px`;
+		};
+		place(area);
+		const count = Math.ceil(area.width / 12);
 		for (const side of ['top', 'bottom']) {
 			const half = document.createElement('div');
 			half.dataset.side = side;
@@ -318,7 +321,18 @@ export function startLoginMatrix(form: HTMLElement) {
 			rain.append(half);
 		}
 		form.prepend(rain);
-		restore.push(() => rain.remove());
+		// Scrolling, rotating or resizing moves the light area: follow it.
+		const follow = () => place();
+		window.addEventListener('resize', follow, { passive: true });
+		window.addEventListener('scroll', follow, {
+			passive: true,
+			capture: true
+		});
+		restore.push(() => {
+			window.removeEventListener('resize', follow);
+			window.removeEventListener('scroll', follow, { capture: true });
+			rain.remove();
+		});
 	};
 
 	const lastLine = T.lead + lines * T.drift + T.scatter / 2;
@@ -398,7 +412,13 @@ export function startLoginMatrix(form: HTMLElement) {
 	};
 	// The button turns on the submit frame; everything else is built on the
 	// next one, so the first frame stays short.
-	align(first.flatMap(encode));
+	try {
+		align(first.flatMap(encode));
+	} catch (error) {
+		// Never leave the button without its label.
+		restore.forEach((reset) => reset());
+		throw error;
+	}
 	frame = requestAnimationFrame(tick);
 
 	const pause = () => cancelAnimationFrame(frame);
