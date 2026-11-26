@@ -96,6 +96,11 @@ const focusActionTarget = (step: TourStep | undefined) => {
 	};
 };
 
+/** Set on `<body>` while a tour step shows; see productTour.styles.scss. */
+export const TOUR_RUNNING_BODY_CLASS = 'productTour--running';
+/** The tooltip's surface colour (`.productTourTooltip` background). */
+export const TOUR_TOOLTIP_SURFACE = 'var(--m3-surface, #ffffff)';
+
 export const ProductTourAdapter = ({
 	tour,
 	active,
@@ -517,6 +522,16 @@ export const ProductTourAdapter = ({
 	const currentTarget = currentStep?.target;
 	const listening = runState.run && !paused;
 
+	// Toasts (MUI snackbars, z-index 1400) would otherwise cover the tour
+	// card (z-index 53). While a tour step shows, they sit below the tour.
+	useEffect(() => {
+		if (!listening) {
+			return undefined;
+		}
+		document.body.classList.add(TOUR_RUNNING_BODY_CLASS);
+		return () => document.body.classList.remove(TOUR_RUNNING_BODY_CLASS);
+	}, [listening]);
+
 	useEffect(() => {
 		if (!currentAdvanceOn || !listening) {
 			return undefined;
@@ -596,6 +611,9 @@ export const ProductTourAdapter = ({
 				// into their own pane first (`bringTargetIntoView`).
 				skipScroll: true,
 				zIndex: 53,
+				// Same surface token as `.productTourTooltip`, so the arrow
+				// follows the tooltip in dark mode instead of staying white.
+				arrowColor: TOUR_TOOLTIP_SURFACE,
 				// Guided flows opt out of ESC / overlay-click dismissal so a
 				// stray key or click cannot mark the exercise skipped.
 				...(tour.dismissible === false && {

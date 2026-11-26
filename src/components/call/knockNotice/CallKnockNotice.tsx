@@ -13,15 +13,22 @@ import { chosenAvatarOf } from '../../../utils/avatarChoice';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { playKnockTone } from '../../../utils/knockTone';
 
-export type CallKnockPlacement = 'overlay' | 'docked';
+export type CallKnockPlacement = 'overlay' | 'docked' | 'page';
 
 export interface CallKnockNoticeProps {
 	people: KnockingPerson[];
 	/**
 	 * `overlay`: inside the call stage, under its top controls.
 	 * `docked`: the call is minimised — the notice sits just above it.
+	 * `page`: no call is running — the notice sits in the corner of the
+	 * page, wherever the counsellor is in the app.
 	 */
 	placement?: CallKnockPlacement;
+	/**
+	 * What "Einlassen" says where it does more than let in: outside a call
+	 * it starts the call too. Default: `calls.knock.admit`.
+	 */
+	admitLabel?: string;
 	/** A decision is on its way: every decision ignores clicks (focus stays put). */
 	busy?: CallKnockBusy;
 	onAdmit: (knockId: number) => void;
@@ -133,6 +140,18 @@ const placementSx: Record<CallKnockPlacement, SxProps<Theme>> = {
 		bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px + min(170px, 32vh) + 8px)',
 		width: 'min(320px, calc(100vw - 24px))',
 		zIndex: 10001
+	},
+	page: {
+		position: 'fixed',
+		right: 12,
+		// Clear of the bottom navigation on narrow screens.
+		bottom: {
+			xs: 'calc(env(safe-area-inset-bottom, 0px) + 84px)',
+			md: 'calc(env(safe-area-inset-bottom, 0px) + 12px)'
+		},
+		// Wide enough for "Anruf starten und einlassen" beside "Ablehnen".
+		width: 'min(360px, calc(100vw - 24px))',
+		zIndex: 1300
 	}
 };
 
@@ -156,6 +175,7 @@ export const CallKnockNotice = ({
 	onAdmit,
 	onDecline,
 	onAdmitAll,
+	admitLabel,
 	nowMs,
 	onNudge = playKnockTone
 }: CallKnockNoticeProps) => {
@@ -366,8 +386,17 @@ export const CallKnockNotice = ({
 						{t('calls.knock.admitAll')}
 					</Button>
 				)}
-				{/* The pair wraps as one, so "Einlassen" never ends up alone. */}
-				<Box sx={{ display: 'flex', gap: 0.5, ml: 'auto' }}>
+				{/* The pair wraps as one, so "Einlassen" never ends up alone;
+				    only a label too long for the row breaks the pair. */}
+				<Box
+					sx={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						justifyContent: 'flex-end',
+						gap: 0.5,
+						ml: 'auto'
+					}}
+				>
 					<Button
 						variant="text"
 						onClick={guard(() => onDecline(current.id), isBusy)}
@@ -394,7 +423,7 @@ export const CallKnockNotice = ({
 						data-nudge={due && !reducedMotion ? 'true' : undefined}
 						data-testid="call-knock-admit"
 					>
-						{t('calls.knock.admit')}
+						{admitLabel ?? t('calls.knock.admit')}
 					</Button>
 				</Box>
 			</Box>
