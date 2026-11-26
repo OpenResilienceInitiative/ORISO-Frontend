@@ -19,7 +19,7 @@ $tooltipWidth: 266px;
 		text-align: left;
 		z-index: 20;
 		box-sizing: border-box;
-		background: $white;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		padding: $grid-base-two 20px;
 		border: 1px solid $form-disabled;
 

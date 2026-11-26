@@ -140,7 +140,7 @@ $inputMaxWidth: 500px;
 	}
 
 	&__icon {
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 50%;
 		position: relative;
 		display: flex;

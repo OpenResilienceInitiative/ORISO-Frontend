@@ -1,5 +1,9 @@
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
-import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
+import type {
+	CaseHandoverExplanationLevel,
+	CaseHandoverReason,
+	CaseHandoverStatus
+} from '../../api/apiCaseHandover';
 import {
 	STATUS_ENQUIRY,
 	UserDataInterface
@@ -32,6 +36,8 @@ interface CaseHandoverSessionInput {
 		/** Teamberatung (FE#2494 *4): colleagues read, only the owner writes. */
 		isTeamSession?: boolean;
 		agencyId?: number;
+		/** FE#2494 *4: the model the case was created under; absent until stamped. */
+		caseSharingModel?: string | null;
 	};
 	consultant?: {
 		id?: string | number;
@@ -106,26 +112,28 @@ export const isCaseHandoverCandidate = ({
 };
 
 /**
+ * FE#2494 *4: whether the case is a Teamberatung case. The case keeps the
+ * model it was created under (`caseSharingModel`); only a case created before
+ * the model was stamped falls back to its team flag.
+ */
+const isTeamCase = (
+	item: CaseHandoverSessionInput['item'] | null | undefined
+): boolean =>
+	item?.caseSharingModel
+		? item.caseSharingModel === 'TEAM_COUNSELLING'
+		: Boolean(item?.isTeamSession);
+
+/**
  * FE#2494 *4 (decision d): in Teamberatung a colleague of the department reads
  * an accepted case without a request but never writes; only the assigned
  * counsellor does. The server enforces it with the Matrix reader power level.
+ * A later switch of the centre changes nothing here (Frank, 2026-11-25).
  */
 export const isTeamCounsellingReader = (
 	input: Omit<CaseHandoverCandidateInput, 'sessionListTab'>
 ): boolean =>
-	Boolean(input.activeSession?.item?.isTeamSession) &&
-	// A centre that has switched to another model has no team readers any more.
-	!isKnownNonTeamCentre(
-		input.activeSession?.item?.agencyId,
-		input.userData?.agencies
-	) &&
+	isTeamCase(input.activeSession?.item) &&
 	isCaseHandoverAccessControlled(input);
-
-const isKnownNonTeamCentre = (
-	agencyId: number | undefined,
-	centres: readonly CaseSharingCentreInput[] | null | undefined
-): boolean =>
-	centres?.find((centre) => centre.id === agencyId)?.teamAgency === false;
 
 /** A counsellor's centre; `teamAgency` follows the centre's current case sharing choice. */
 export interface CaseSharingCentreInput {
@@ -134,17 +142,20 @@ export interface CaseSharingCentreInput {
 }
 
 /**
- * FE#2494 *4: a centre in Teamberatung has no case handover, so "Beratung
- * übergeben" is not offered in its team cases (header "+", session menu,
- * profile). The assigned counsellor keeps it everywhere else: in a case
- * handover centre, and in an older team case whose centre has since switched
- * to case handover. An unknown centre keeps it; the server decides.
+ * FE#2494 *4: "Beratung übergeben" (header "+", session menu, profile) is
+ * offered only in a case created under case handover, whatever the centre
+ * chose since; the server decides by the same stamp. A case created before the
+ * stamp existed falls back to the centre's current choice: not in a team case
+ * of a centre in Teamberatung, otherwise offered and decided by the server.
  */
 export const offersCaseHandoverIn = (
 	activeSession: Pick<CaseHandoverSessionInput, 'item'> | null | undefined,
 	centres?: readonly CaseSharingCentreInput[] | null
 ): boolean => {
 	const item = activeSession?.item;
+	if (item?.caseSharingModel) {
+		return item.caseSharingModel === 'CASE_HANDOVER';
+	}
 	if (!item?.isTeamSession) {
 		return true;
 	}
@@ -184,3 +195,28 @@ export const isCaseHandoverCoAccess = (
 			status.accessType === 'CO_ACCESS' &&
 			['GRANTED', 'GRANTED_PENDING_CLIENT_OPTOUT'].includes(status.status)
 	);
+
+/** The explanation level of a reason; absent or unknown reads as OFF (FE#2040). */
+export const caseHandoverExplanationLevel = (
+	reason?: Pick<CaseHandoverReason, 'explanationLevel'> | null
+): CaseHandoverExplanationLevel =>
+	reason?.explanationLevel === 'OPTIONAL' ||
+	reason?.explanationLevel === 'REQUIRED'
+		? reason.explanationLevel
+		: 'OFF';
+
+/** A reason is chosen and, when its level is REQUIRED, an explanation was typed. */
+export const isCaseHandoverRequestComplete = (
+	reason: Pick<CaseHandoverReason, 'explanationLevel'> | null | undefined,
+	explanation: string
+): boolean =>
+	Boolean(reason) &&
+	(caseHandoverExplanationLevel(reason) !== 'REQUIRED' ||
+		explanation.trim().length > 0);
+
+/** The text sent for a reason: nothing when its level is OFF. */
+export const caseHandoverExplanationToSend = (
+	reason: Pick<CaseHandoverReason, 'explanationLevel'> | null | undefined,
+	explanation: string
+): string =>
+	caseHandoverExplanationLevel(reason) === 'OFF' ? '' : explanation.trim();

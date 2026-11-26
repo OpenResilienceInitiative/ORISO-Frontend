@@ -239,6 +239,8 @@ export const createFakeRestBackend = ({
 			...(caseListed(status, anonymous) ? [listItem()] : []),
 			...(status === STATUS_ACTIVE && circle ? [circleItem()] : [])
 		];
+		// SAFETY: a practice fixture; the list renderer reads only the fields
+		// set here, and the items come from listItem() / circleItem().
 		return sessions.length
 			? ok({
 					sessions,
@@ -267,6 +269,8 @@ export const createFakeRestBackend = ({
 		);
 		const topic = createPracticeTopic(script.names.topic);
 		const createdAt = new Date(now()).toISOString();
+		// SAFETY: an in-memory practice circle; every field the circle views
+		// read is set below, the rest stays at the DTO's optional default.
 		circle = {
 			id: PRACTICE_CIRCLE_CHAT_ID,
 			matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
@@ -286,6 +290,8 @@ export const createFakeRestBackend = ({
 			groupChatRulesTranslations: settings?.groupChatRulesTranslations,
 			consultingType: practiceCase.session.consultingType,
 			assignedAgencies: [
+				// SAFETY: the practice agency; it carries every field the circle
+				// settings and the agency chip read.
 				{
 					id: PRACTICE_AGENCY_ID,
 					name: script.names.agency,

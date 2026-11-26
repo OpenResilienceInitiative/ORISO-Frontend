@@ -79,15 +79,15 @@ export const startRoomCall = async ({
 	notify = (message: string) => window.alert(message),
 	confirm = (message: string) => window.confirm(message),
 	getCallManager = lazyCallManager
-}: StartRoomCallOptions): Promise<void> => {
+}: StartRoomCallOptions): Promise<boolean> => {
 	// Practice has no calls; the buttons are hidden, this is the backstop.
 	if (isPracticeMode()) {
-		return;
+		return false;
 	}
 	try {
 		if (!roomId) {
 			notify('Cannot start call: No Matrix room found for this session');
-			return;
+			return false;
 		}
 
 		// 🍎 Safari iOS needs HTTPS for getUserMedia.
@@ -103,7 +103,7 @@ export const startRoomCall = async ({
 			) {
 				window.location.href = httpsUrl;
 			}
-			return;
+			return false;
 		}
 
 		// Request the permissions synchronously with the click so mobile
@@ -121,7 +121,7 @@ export const startRoomCall = async ({
 					mediaError instanceof Error ? mediaError : {}
 				)
 			);
-			return;
+			return false;
 		}
 
 		getCallManager().startCall(
@@ -130,9 +130,11 @@ export const startRoomCall = async ({
 			isGroup,
 			roomName ? { roomName } : undefined
 		);
+		return true;
 	} catch (error) {
 		notify(
 			`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
 		);
+		return false;
 	}
 };

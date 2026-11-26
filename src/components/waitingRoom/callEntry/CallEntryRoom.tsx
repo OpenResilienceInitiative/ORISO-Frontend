@@ -111,6 +111,17 @@ export interface CallEntryRoomProps {
 	 * animation.
 	 */
 	closing?: ClosingFocal | null;
+	/**
+	 * FE#2542: the person knocked and waits here until the counsellor lets
+	 * them in. The button says so and glows; it cannot be pressed.
+	 */
+	waiting?: boolean;
+	/** "Nicht mehr warten": withdraws the knock; the person stays here. */
+	onStopWaiting?: () => void;
+	/** The counsellor turned the knock down; "Beitreten" knocks again. */
+	turnedDown?: boolean;
+	/** The wait ended without an answer (session over or waited too long). */
+	waitEnded?: boolean;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
 	/** Default: the backend, as in the registration. Stories pass a fake. */
@@ -176,6 +187,10 @@ export const CallEntryRoom = ({
 	initialConsentOpen = false,
 	onJoin,
 	closing = 'call',
+	waiting = false,
+	onStopWaiting,
+	turnedDown = false,
+	waitEnded = false,
 	onBlockerAction,
 	playTone,
 	checkUsername,
@@ -242,11 +257,13 @@ export const CallEntryRoom = ({
 	// at the end, and the field can no longer correct it.
 	const wasEditable = useRef(usernameEditable);
 	useEffect(() => {
-		if (wasEditable.current && !usernameEditable) {
+		/* Not once the account exists (joining, or signed in): the name on
+		   screen is the account's, and a new one would be a wrong one. */
+		if (wasEditable.current && !usernameEditable && !joining && !signedIn) {
 			setUsername(toRegistrationUsername(identity));
 		}
 		wasEditable.current = usernameEditable;
-	}, [usernameEditable, identity]);
+	}, [usernameEditable, identity, joining, signedIn]);
 
 	const select = (kind: CallDeviceKind, id: string) => {
 		setSelection((current) => ({ ...current, [kind]: id }));
@@ -522,7 +539,7 @@ export const CallEntryRoom = ({
 			</Box>
 			<WaitingRoomBar
 				consent={
-					consentOpen ? (
+					consentOpen && !waiting ? (
 						<WaitingRoomConsentPanel
 							consent={consent}
 							heading={copy.consent.heading}
@@ -544,9 +561,16 @@ export const CallEntryRoom = ({
 				>
 					<HandoverGateButton
 						state={
-							joining ? 'entering' : ready ? 'ready' : 'preparing'
+							waiting
+								? 'queued'
+								: joining
+									? 'entering'
+									: ready
+										? 'ready'
+										: 'preparing'
 						}
 						indeterminate={joining}
+						glow={waiting}
 						progress={
 							joining
 								? undefined
@@ -562,16 +586,41 @@ export const CallEntryRoom = ({
 							})
 						}
 						closing={closing ?? undefined}
-						label={copy.join[modality]}
+						label={
+							waiting ? copy.waiting.label : copy.join[modality]
+						}
 						status={
-							joining
-								? copy.joining
-								: ready
-									? copy.allSet
-									: `${copy.missing}${missing}`
+							waiting
+								? copy.waiting.status
+								: joining
+									? copy.joining
+									: !ready
+										? `${copy.missing}${missing}`
+										: turnedDown
+											? copy.turnedDown
+											: waitEnded
+												? copy.waitEnded
+												: copy.allSet
 						}
 						testingAttribute="call-entry-gate"
 					/>
+					{waiting && onStopWaiting && (
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'center',
+								mt: 2
+							}}
+						>
+							<Button
+								variant="text"
+								onClick={onStopWaiting}
+								data-cy="call-entry-stop-waiting"
+							>
+								{copy.waiting.stop}
+							</Button>
+						</Box>
+					)}
 				</Box>
 			</WaitingRoomBar>
 		</EntryRoomShell>

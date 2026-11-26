@@ -10,7 +10,7 @@ export type CurrentCallView = {
 
 export interface KnockCallDeps {
 	/** The conversation call button's own start path (`startRoomCall`). */
-	start: (options: StartRoomCallOptions) => Promise<void> | void;
+	start: (options: StartRoomCallOptions) => Promise<unknown> | void;
 	currentCall: () => CurrentCallView;
 	/**
 	 * #2170: what the call is called, by conversation room. The knock names

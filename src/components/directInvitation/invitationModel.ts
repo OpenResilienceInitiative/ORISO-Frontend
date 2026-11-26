@@ -93,12 +93,50 @@ export const toInvitationPresetState = (
 	}
 });
 
+/** FE#2510 *2: "Neuer Eintrag" without a date, for the open invitation link. */
+export interface OpenLinkPreset {
+	kind?: AppointmentKind;
+}
+
+export interface OpenLinkPresetState {
+	openLinkPreset?: { kind?: AppointmentKind };
+}
+
+export const toOpenLinkPresetState = (
+	preset: OpenLinkPreset
+): OpenLinkPresetState => ({
+	openLinkPreset: preset.kind ? { kind: preset.kind } : {}
+});
+
+/** Router state as the presets "Chat erstellen" can receive. */
+export type PresetRouterState = Partial<
+	InvitationPresetState & OpenLinkPresetState
+>;
+
+/**
+ * The one boundary for router state: `location.state` is untyped, and the
+ * readers below check every field they use before trusting it.
+ */
+export const readPresetRouterState = (
+	state: unknown
+): PresetRouterState | undefined =>
+	// SAFETY: only read through the field checks in the readers below.
+	(state as PresetRouterState | null | undefined) ?? undefined;
+
+/** The open-link preset back from router state; anything unreadable is none. */
+export const fromOpenLinkPresetState = (
+	state: PresetRouterState | undefined
+): OpenLinkPreset | undefined => {
+	const raw = state?.openLinkPreset;
+	if (!raw) return undefined;
+	return raw.kind && raw.kind in MEDIUM_FOR_KIND ? { kind: raw.kind } : {};
+};
+
 /** The preset back from router state; anything unreadable is no preset. */
 export const fromInvitationPresetState = (
-	state: unknown
+	state: PresetRouterState | undefined
 ): InvitationPreset | undefined => {
-	const raw = (state as InvitationPresetState | null | undefined)
-		?.invitationPreset;
+	const raw = state?.invitationPreset;
 	if (!raw) return undefined;
 	const start = new Date(raw.start);
 	const end = new Date(raw.end);
