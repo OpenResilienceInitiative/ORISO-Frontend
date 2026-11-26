@@ -253,7 +253,7 @@ $profile-footer-justify-content: center !default;
 	}
 
 	&__icon {
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 50%;
 		width: $profileIconSize;
 		height: $profileIconSize;
@@ -344,6 +344,12 @@ $profile-footer-justify-content: center !default;
 
 			.text {
 				margin-top: $grid-base;
+			}
+
+			// Dark: the title's icon button kept the browser's light button
+			// face (#efefef) under a light icon; it takes a dark container.
+			html[data-oriso-personal-scheme='dark'] & .button-as-link {
+				background-color: var(--m3-surface-container-highest, #353535);
 			}
 		}
 
@@ -561,6 +567,10 @@ $profile-footer-justify-content: center !default;
 			color: #6b7280;
 			font-size: 14px;
 			line-height: 1.5;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 	}
 
@@ -592,6 +602,14 @@ $profile-footer-justify-content: center !default;
 		.text {
 			color: #4b5563;
 			font-size: 13px;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-lowest, #0e0e0f);
 		}
 	}
 
@@ -622,7 +640,7 @@ $profile-footer-justify-content: center !default;
 	}
 
 	.notifications__panel {
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid #e5e7eb;
 		border-radius: 12px;
 		padding: 20px;
@@ -651,11 +669,19 @@ $profile-footer-justify-content: center !default;
 		margin-right: -8px;
 		padding-left: 9px;
 		padding-right: 8px;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	.notifications__panel--muted {
 		background: #faf6f6;
 		box-shadow: none;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	.notifications__alwaysSent {
@@ -667,6 +693,10 @@ $profile-footer-justify-content: center !default;
 
 		li + li {
 			margin-top: 4px;
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
 		}
 	}
 
@@ -691,23 +721,39 @@ $profile-footer-justify-content: center !default;
 		border-radius: 10px;
 		padding: 12px;
 		background: #f9fafb;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-lowest, #0e0e0f);
+		}
 	}
 
 	.notifications__feed__item__title {
 		margin: 0 0 4px;
 		font-weight: 600;
 		color: #111827;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	.notifications__feed__item__text {
 		margin: 0 0 6px;
 		color: #374151;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	.notifications__feed__item__time {
 		margin: 0;
 		font-size: 12px;
 		color: #6b7280;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 }
 

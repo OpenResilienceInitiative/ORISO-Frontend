@@ -220,11 +220,13 @@ const Overview = () => (
 	<div
 		style={{
 			height: '100vh',
+			display: 'flex',
 			background: 'var(--m3-surface-container, #f0eded)'
 		}}
 	>
 		<CounsellorDashboardWired
-			fallback={<p data-testid="dashboard-fallback">Alles erledigt</p>}
+			headline="Kurz durchatmen. Alles erledigt."
+			variant="conversation-nothing-to-do"
 		/>
 	</div>
 );
@@ -240,155 +242,33 @@ const withoutStatistics = {
 	updateTenantSettings: () => undefined
 };
 
-const inDays = (days: number, hour: number) => {
-	const date = new Date();
-	date.setDate(date.getDate() + days);
-	date.setHours(hour, 0, 0, 0);
-	return date.toISOString();
-};
-
-/** Two self-help circles in her own list, as `GET /sessions/consultants` sends them. */
-const circleSessions = () => [
-	{
-		chat: {
-			id: 71,
-			topic: 'Trauer am Abend',
-			conversationType: 'SELF_HELP',
-			startDateWithTime: inDays(2, 19),
-			duration: 90,
-			modality: 'VIDEO',
-			participants: [{}, {}, {}, {}],
-			active: false
-		}
-	},
-	{
-		chat: {
-			id: 72,
-			topic: 'Schulden gemeinsam angehen',
-			conversationType: 'SELF_HELP',
-			startDateWithTime: inDays(5, 18),
-			duration: 60,
-			modality: 'TEXT',
-			participants: [{}, {}],
-			active: false
-		}
-	},
-	{ session: { id: 9 }, user: { username: 'ratsuchend' } }
-];
-
-export const OverviewWithLinks: Story = {
-	name: 'Gespräche · overview with real links and figures',
+export const OverviewWithFigures: Story = {
+	name: 'Gespräche · overview: the cup and her own figures',
 	globals: desktop1440Globals,
-	beforeEach: () =>
-		installDirectLinkMockApi({
-			links: [
-				fixtureLink(1),
-				fixtureLink(2, {
-					name: 'Aushang Rathaus',
-					medium: 'CHAT',
-					temporary: false,
-					admission: 'DIRECT',
-					active: false
-				})
-			]
-		}),
+	beforeEach: () => installDirectLinkMockApi({ links: [fixtureLink(1)] }),
 	render: () => <Overview />,
-	play: async ({ canvasElement, canvas }) => {
-		await expect(await canvas.findByText('Flyer Schule')).toBeVisible();
-		await expect(canvas.getByText('Aushang Rathaus')).toBeVisible();
-		await waitFor(() => expect(canvas.getByText('14')).toBeVisible());
+	play: async ({ canvas }) => {
+		// Frank, 2026-11-25 (variant C): no tiles and no invitation line;
+		// direct links are managed in "Meine Termine".
+		await expect(
+			await canvas.findByTestId('counsellor-dashboard-figures')
+		).toBeVisible();
+		await expect(canvas.queryByText('Flyer Schule')).toBeNull();
+		await expect(canvas.queryByRole('switch')).toBeNull();
 		const stats = directLinkMock().requests.find((request) =>
 			request.path.includes('/statistics/consultant')
 		);
 		await expect(stats).toBeTruthy();
-
-		await userEvent.click(
-			canvas.getAllByRole('button', { name: 'QR-Code zeigen' })[0]
-		);
-		const share = await within(
-			canvasElement.ownerDocument.body
-		).findByTestId('direct-link-share-dialog');
-		await expect(within(share).getByRole('textbox')).toHaveValue(
-			'https://app.oriso.org/invite/tok1'
-		);
-		await userEvent.click(
-			within(share).getByRole('button', { name: 'Fertig' })
-		);
-		await waitFor(() =>
-			expect(
-				canvasElement.ownerDocument.querySelector(
-					'[data-testid="direct-link-share-dialog"]'
-				)
-			).toBeNull()
-		);
-
-		await userEvent.click(
-			canvas.getByRole('switch', { name: 'Flyer Schule aktiv' })
-		);
-		await waitFor(() =>
-			expect(
-				directLinkMock().requests.find(
-					(request) => request.method === 'PATCH'
-				)
-			).toMatchObject({
-				path: expect.stringMatching(/\/directlinks\/1$/),
-				body: { active: false }
-			})
-		);
-	}
-};
-
-export const OverviewWithoutLinks: Story = {
-	name: 'Gespräche · no link yet: the screen stays as it was',
-	globals: desktop1440Globals,
-	beforeEach: () => installDirectLinkMockApi({ links: [] }),
-	render: () => <Overview />,
-	play: async ({ canvas }) => {
 		await expect(
-			await canvas.findByTestId('dashboard-fallback')
-		).toBeVisible();
-	}
-};
-
-export const OverviewWithCircles: Story = {
-	name: 'Gespräche · links and the next self-help circles',
-	globals: desktop1440Globals,
-	beforeEach: () =>
-		installDirectLinkMockApi({
-			links: [fixtureLink(1)],
-			sessions: circleSessions()
-		}),
-	render: () => <Overview />,
-	play: async ({ canvas }) => {
-		await expect(await canvas.findByText('Trauer am Abend')).toBeVisible();
-		await expect(
-			canvas.getByText('Schulden gemeinsam angehen')
-		).toBeVisible();
-		const tile = canvas
-			.getByRole('heading', { name: 'Nächste Gesprächskreise' })
-			.closest('section') as HTMLElement;
-		const items = within(tile).getAllByRole('listitem');
-		// Soonest first; the plain conversation in the list is no circle.
-		await expect(items).toHaveLength(2);
-		await expect(items[0]).toHaveTextContent('Trauer am Abend');
-		await expect(items[0]).toHaveTextContent('Beratungsteam: 4');
-	}
-};
-
-export const OverviewCirclesOnly: Story = {
-	name: 'Gespräche · no link, but circles ahead',
-	globals: phone390Globals,
-	beforeEach: () =>
-		installDirectLinkMockApi({ links: [], sessions: circleSessions() }),
-	render: () => <Overview />,
-	play: async ({ canvas }) => {
-		await expect(await canvas.findByText('Trauer am Abend')).toBeVisible();
-		await expect(canvas.queryByTestId('dashboard-fallback')).toBeNull();
+			directLinkMock().requests.some((request) =>
+				request.path.includes('/directlinks')
+			)
+		).toBe(false);
 	}
 };
 
 export const OverviewStatisticsOff: Story = {
-	name: 'Gespräche · Träger switched statistics off: no figures',
+	name: 'Gespräche · Träger switched statistics off: the cup only',
 	globals: desktop1440Globals,
 	beforeEach: () => installDirectLinkMockApi({ links: [fixtureLink(1)] }),
 	render: () => (
@@ -397,9 +277,11 @@ export const OverviewStatisticsOff: Story = {
 		</TenantContext.Provider>
 	),
 	play: async ({ canvas }) => {
-		await expect(await canvas.findByText('Flyer Schule')).toBeVisible();
 		await expect(
-			canvas.queryByRole('heading', { name: 'Beratungen' })
+			await canvas.findByTestId('counsellor-dashboard')
+		).toBeVisible();
+		await expect(
+			canvas.queryByTestId('counsellor-dashboard-figures')
 		).toBeNull();
 		await expect(
 			directLinkMock().requests.some((request) =>

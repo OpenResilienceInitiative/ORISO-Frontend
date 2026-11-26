@@ -80,6 +80,74 @@ export const OnsiteOnly: Story = {
 	}
 };
 
+/**
+ * Product owner, 2026-11-25: video and phone appointments only where the
+ * supervision chat allows video and audio calls. Video off: no "Video"
+ * tile, "Telefon" is the default.
+ */
+export const VideoCallsOff: Story = {
+	name: 'Supervision ohne Videoanruf: kein Video-Termin',
+	args: { callGates: { video: false, audio: true } },
+	play: async ({ args }) => {
+		const phone = await body().findByRole('button', { name: 'Telefon' });
+		await waitFor(() => expect(phone).toBeVisible());
+		await expect(phone).toHaveAttribute('aria-pressed', 'true');
+		await expect(
+			body().queryByRole('button', { name: 'Video' })
+		).toBeNull();
+		await userEvent.click(
+			await body().findByTestId('calendar-appointment-save')
+		);
+		await waitFor(() =>
+			expect(args.onSave).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'phone' })
+			)
+		);
+	}
+};
+
+/** Audio off: no "Telefon" tile, "Video" stays the default. */
+export const AudioCallsOff: Story = {
+	name: 'Supervision ohne Audioanruf: kein Telefon-Termin',
+	args: { callGates: { video: true, audio: false } },
+	play: async () => {
+		const video = await body().findByRole('button', { name: 'Video' });
+		await waitFor(() => expect(video).toBeVisible());
+		await expect(video).toHaveAttribute('aria-pressed', 'true');
+		await expect(
+			body().queryByRole('button', { name: 'Telefon' })
+		).toBeNull();
+	}
+};
+
+/** Neither: no video or phone appointment, "Vor Ort" is the default. */
+export const NoCallsAllowed: Story = {
+	name: 'Supervision ohne Anrufe: nur Vor Ort und Chat',
+	args: { callGates: { video: false, audio: false } },
+	play: async ({ args }) => {
+		const onsite = await body().findByRole('button', { name: 'Vor Ort' });
+		await waitFor(() => expect(onsite).toBeVisible());
+		await expect(onsite).toHaveAttribute('aria-pressed', 'true');
+		await expect(
+			body().getByRole('button', { name: 'Chat' })
+		).toBeVisible();
+		await expect(
+			body().queryByRole('button', { name: 'Video' })
+		).toBeNull();
+		await expect(
+			body().queryByRole('button', { name: 'Telefon' })
+		).toBeNull();
+		await userEvent.click(
+			await body().findByTestId('calendar-appointment-save')
+		);
+		await waitFor(() =>
+			expect(args.onSave).toHaveBeenCalledWith(
+				expect.objectContaining({ kind: 'onsite' })
+			)
+		);
+	}
+};
+
 /** Outside the own calendar reach: said plainly, no save that must fail. */
 export const Unreachable: Story = {
 	name: 'Supervisor:in nicht im Kalender erreichbar',

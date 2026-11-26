@@ -73,6 +73,8 @@ import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
 import {
 	formatPresetRange,
 	fromInvitationPresetState,
+	fromOpenLinkPresetState,
+	readPresetRouterState,
 	MEDIUM_FOR_KIND
 } from '../directInvitation/invitationModel';
 import { DirectLink } from './directLink/directLink';
@@ -170,9 +172,21 @@ const CreateConversationFlow = ({
 	   and Art: the Direkteinladung opens with that appointment (one
 	   invitation flow, door A from the calendar). */
 	const invitationPreset = useMemo(
-		() => fromInvitationPresetState(location.state),
+		() => fromInvitationPresetState(readPresetRouterState(location.state)),
 		[location.state]
 	);
+	/* FE#2510 *2: "Neuer Eintrag" without a date — the open invitation
+	   link, with the calendar's Art as the medium. */
+	const openLinkPreset = useMemo(
+		() =>
+			invitationPreset
+				? undefined
+				: fromOpenLinkPresetState(
+						readPresetRouterState(location.state)
+					),
+		[invitationPreset, location.state]
+	);
+	const presetKind = invitationPreset?.kind ?? openLinkPreset?.kind;
 
 	const availability = getConversationFormatAvailability(
 		tenantData,
@@ -254,7 +268,7 @@ const CreateConversationFlow = ({
 	const [step, setStep] = useState<CreateStep>(() =>
 		isEditMode
 			? 'circle'
-			: invitationPreset && directLinkOffered
+			: (invitationPreset || openLinkPreset) && directLinkOffered
 				? 'directLink'
 				: withDirectLink(
 						resolveInitialStep(
@@ -646,11 +660,7 @@ const CreateConversationFlow = ({
 			compact={!fromL}
 			topicsLoadFailed={topicsLoadFailed}
 			onRetryTopics={loadTopics}
-			initialMedium={
-				invitationPreset?.kind
-					? MEDIUM_FOR_KIND[invitationPreset.kind]
-					: undefined
-			}
+			initialMedium={presetKind ? MEDIUM_FOR_KIND[presetKind] : undefined}
 			/* "Fertig": the link now lives in "Gespräche". */
 			onDone={() => navigate(consultantConversationList)}
 		/>
@@ -969,6 +979,15 @@ const CreateConversationFlow = ({
 						fromL ? '' : ' conversationCreate__single--compact'
 					}${stepEnterClass}`}
 				>
+					{openLinkPreset && (
+						<p
+							className="conversationCreate__cardText"
+							aria-live="polite"
+							data-testid="invitation-preset-note"
+						>
+							{translate('directInvitation.fromCalendarOpenLink')}
+						</p>
+					)}
 					{invitationPreset && (
 						<p
 							className="conversationCreate__cardText"

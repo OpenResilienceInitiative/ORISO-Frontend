@@ -3405,9 +3405,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Télécharger en CSV",
 					"label": "Télécharger le fichier Excel"
 				},
 				"filename": "Statistiques de la consultation en ligne",
+				"hintMonth": "Une ligne par semaine et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintWeek": "Une ligne par jour et une ligne de total. S’ouvre aussi dans Excel.",
+				"hintYear": "Une ligne par mois et une ligne de total. S’ouvre aussi dans Excel.",
 				"title": "Vous pouvez télécharger ici vos statistiques sur la période de consultation que vous avez choisie :",
 				"total": "Ensemble"
 			},
@@ -3424,7 +3428,20 @@
 				"period": "Période",
 				"videoCallDuration": "Durée des appels vidéo en minutes:secondes"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Annulés",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "Sur place",
+				"numberOfPhoneAppointments": "Téléphone",
+				"numberOfVideoAppointments": "Vidéo"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Ce mois-ci",
+					"currentWeek": "Cette semaine",
+					"lastMonth": "Le mois dernier",
+					"lastWeek": "La semaine dernière"
+				},
 				"currentMonth": "mois en cours",
 				"currentWeek": "semaine en cours",
 				"currentYear": "année en cours",
@@ -3436,7 +3453,17 @@
 				"lastMonth": "dernier mois",
 				"lastWeek": "semaine dernière",
 				"lastYear": "l'année dernière",
-				"prefix": "Vos chiffres du"
+				"offsetLabel": "Période",
+				"prefix": "Vos chiffres du",
+				"unitLabel": "Unité de temps",
+				"unitMonth": "Mois",
+				"unitWeek": "Semaine",
+				"unitYear": "Année"
+			},
+			"state": {
+				"empty": "Il n'y a pas encore de chiffres pour cette période.",
+				"error": "Les chiffres n'ont pas pu être chargés pour le moment.",
+				"retry": "Réessayer"
 			},
 			"title": "Mes statistiques"
 		},
@@ -4203,7 +4230,8 @@
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
-			"title": "Demande d'accès groupée"
+			"title": "Demande d'accès groupée",
+			"clearSelection": "Annuler la sélection"
 		},
 		"consent": {
 			"title": "Une personne consultante demande l'accès à cette conversation",
@@ -4250,7 +4278,9 @@
 			"required": "Choisissez un motif et ajoutez une explication."
 		},
 		"explanation": {
-			"placeholder": "Décrivez le motif"
+			"placeholder": "Décrivez le motif",
+			"optional": "Justification (facultative)",
+			"required": "Justification (obligatoire)"
 		},
 		"eyebrow": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 		"hidden": {
@@ -4822,7 +4852,6 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
-				"directLinks": "Invitations directes",
 				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
@@ -4847,9 +4876,11 @@
 				"selfHelp": "Cercle",
 				"internal": "Échange interne",
 				"team": "Conseil en équipe",
-				"directLinkVideo": "Appel vidéo",
-				"directLinkAudio": "Appel audio",
-				"directLinkChat": "Invitation directe"
+				"directLinkVideo": "Vidéo",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Invitation directe · {{medium}}",
+				"agencyLink": "via le lien du centre de conseil"
 			},
 			"waiting": {
 				"minutes": "en attente depuis {{count}} min",
@@ -7232,6 +7263,7 @@
 			"waitingFor": "attend depuis {{count}} min",
 			"justArrived": "vient d’arriver",
 			"admit": "Laisser entrer",
+			"startAndAdmit": "Démarrer l’appel et laisser entrer",
 			"decline": "Refuser",
 			"admitAll": "Laisser entrer tout le monde",
 			"position": "{{current}} sur {{total}}",
@@ -7610,18 +7642,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Votre aperçu",
-		"stats": {
-			"title": "Consultations",
-			"period": "30 derniers jours",
-			"assigned": "Nouvelles prises en charge",
+		"quiet": {
 			"active": "Actives",
-			"archived": "Archivées",
-			"sentMessages": "Messages envoyés"
-		},
-		"circles": {
-			"title": "Prochains groupes d’entraide",
-			"assignedCounsellors": "Équipe de conseil : {{count}}"
+			"assigned": "Nouvellement prises en charge (30 jours)"
 		}
 	},
 	"temporaryAccount": {
@@ -7630,6 +7653,7 @@
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
+		"signedOutNotice": "Votre compte invité a été supprimé après l'entretien. Vous avez donc été déconnecté. Pour un nouvel entretien, veuillez rouvrir le lien de votre service de conseil.",
 		"chip": {
 			"guest": "Compte invité"
 		},
@@ -7694,7 +7718,12 @@
 			},
 			"linkFailedTitle": "Lien d'invitation non créé",
 			"linkFailedAfterAppointment": "Le rendez-vous est enregistré, mais pas le lien d'invitation. Veuillez réessayer.",
-			"appointmentSaved": "Le rendez-vous est enregistré."
+			"appointmentSaved": "Le rendez-vous est enregistré.",
+			"openLink": {
+				"action": "Continuer vers le lien d'invitation",
+				"hint": "Sans date, vous créez un lien d'invitation ouvert : chaque personne qui l'ouvre obtient sa propre conversation. Le lien reste valable jusqu'à ce que vous le supprimiez. Ensuite, vous choisissez son thème et son nom.",
+				"mediumOff": "Les invitations directes ne sont pas autorisées pour ce type. Choisissez un autre type."
+			}
 		},
 		"overview": {
 			"title": "Rendez-vous et invitations directes",
@@ -7771,6 +7800,7 @@
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
 		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
+		"fromCalendarOpenLink": "Depuis le calendrier : lien d'invitation ouvert sans date.",
 		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {

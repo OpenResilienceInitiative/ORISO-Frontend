@@ -3,7 +3,8 @@ export const deepMerge = (
 	props: { [key: string]: any }
 ) => {
 	Object.keys(props).forEach((key) => {
-		if (typeof props[key] === 'object') {
+		// null replaces the value (e.g. `session: null` for a group chat row).
+		if (props[key] !== null && typeof props[key] === 'object') {
 			if (!obj[key]) {
 				obj[key] = props[key];
 			} else {

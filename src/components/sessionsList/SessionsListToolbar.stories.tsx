@@ -26,6 +26,11 @@ import {
 	runtimeSession
 } from '../sessionsListItem/__storybook__/runtimeSessionCard';
 import './sessionsList.styles.scss';
+import {
+	describeLowContrast,
+	findLowContrastText,
+	paintedContrast
+} from '../designTokens/textContrastContract';
 
 const shell: React.CSSProperties = {
 	backgroundColor: '#eae7e8',
@@ -926,9 +931,9 @@ function ToolbarChipMenuPreset({
 }
 
 /**
- * FE#1952: conversations that came in through a counsellor direct link have
- * their own "Direktlinks" chip right after "Mail" and no longer count there.
- * The list shows the chip once it holds such a conversation.
+ * FE#2546 (Frank, 2026-11-25): conversations that came in through a
+ * Direkteinladung are Mail-Beratung. They count under "Mail"; the toolbar has
+ * no chip of their own any more (FE#1952's "Direktlinks" chip is gone).
  */
 function ToolbarWithDirectLinks() {
 	const { t } = useTranslation();
@@ -949,9 +954,8 @@ function ToolbarWithDirectLinks() {
 				showCreateGroupChatAction
 				showSupervisionChip
 				chipView="labels"
-				chipCounts={{ unread: 3, drafts: 0, nearby: 1, directLinks: 2 }}
-				// Unknown to builds before FE#1952: no chip there.
-				{...({ showDirectLinksChip: true } as object)}
+				// One mail case and two direct-invitation cases: all three are Mail.
+				chipCounts={{ unread: 3, drafts: 0, nearby: 3 }}
 				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
 				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
 				archiveTabActive={false}
@@ -961,15 +965,46 @@ function ToolbarWithDirectLinks() {
 	);
 }
 
-export const DirectLinksChip: Story = {
-	name: 'Direktlinks chip (FE#1952)',
+export const DirectInvitationsCountAsMail: Story = {
+	name: 'Direct invitations count as Mail (FE#2546)',
 	render: () => <ToolbarWithDirectLinks />,
 	play: async ({ canvasElement }) => {
-		const chip = canvasElement.querySelector(
-			'[data-cy="sessions-list-chip-direct-links"]'
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="sessions-list-chip-direct-links"]'
+			)
+		).toBeNull();
+		const mail = canvasElement.querySelector(
+			'[data-cy="sessions-list-chip-nearby"]'
 		);
-		await expect(chip).not.toBeNull();
-		// #2252: "Direktlink" is now called "Direkteinladung".
-		await expect(chip!.textContent).toContain('Direkteinladungen');
+		await expect(mail).not.toBeNull();
+		await expect(mail!.textContent).toContain('3');
+	}
+};
+
+/**
+ * P0 dark mode (2026-11-25): the search field and the filter circles were
+ * light literals in every scheme, under icons that turn light in dark mode
+ * (1.2:1). Icons reach 3:1, text 4.5:1.
+ */
+export const DefaultDark: Story = {
+	name: 'Default — dark, search field and filters readable',
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	render: () => <SessionsListToolbarPlayground />,
+	play: async ({ canvasElement }) => {
+		const icons = await waitFor(() => {
+			const found = canvasElement.querySelectorAll(
+				'.sessionsListToolbar__iconSvg, .sessionsListToolbar__chipIconSvg'
+			);
+			expect(found.length).toBeGreaterThan(0);
+			return Array.from(found);
+		});
+		const weak = icons
+			.map((icon) => paintedContrast(icon))
+			.filter((value) => value < 3);
+		await expect(weak).toEqual([]);
+		await expect(
+			describeLowContrast(findLowContrastText(canvasElement))
+		).toEqual([]);
 	}
 };

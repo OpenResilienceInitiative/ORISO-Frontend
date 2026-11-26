@@ -5,11 +5,12 @@ import { getModalityIfKnown, Modality, ModalityInput } from './getModality';
  * direct link (#1475, ADR-029): the link's medium, sent by ORISO-UserService
  * as `SessionDTO.directLinkMedium`.
  *
- * This is a LABEL, not a modality. ADR-006 keeps the four modalities, and a
- * direct-link conversation stays `AGENCY_COUNSELLING`; only the word in the
- * counsellor's list changes from "Mail" to "Videoanruf", "Audioanruf" or
- * "Direktlink". So the origin is read only for agency counselling: a live
- * chat or a group never carries one, whatever a field says.
+ * This is a CHANNEL, not a modality. ADR-006 keeps the four modalities, and a
+ * direct-link conversation stays `AGENCY_COUNSELLING` (Mail-Beratung). FE#2546
+ * (Frank, 2026-11-25): the card keeps "Mail" and adds a channel tag "Video",
+ * "Audio" or "Chat" ("Direkteinladung · Video" as its name); there is no chip
+ * of its own. So the origin is read only for agency counselling: a live chat
+ * or a group never carries one, whatever a field says.
  */
 export type DirectLinkMedium = 'CHAT' | 'AUDIO' | 'VIDEO';
 
@@ -52,6 +53,6 @@ const LABEL_KEYS: Record<DirectLinkMedium, string> = {
 	CHAT: 'sessionList.item.sessionType.directLinkChat'
 };
 
-/** i18n key of the list chip / rail mark for a direct-link medium. */
+/** i18n key of the channel word (Video / Audio / Chat) of a direct-link medium. */
 export const directLinkLabelKey = (medium: DirectLinkMedium): string =>
 	LABEL_KEYS[medium];

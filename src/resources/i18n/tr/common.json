@@ -3405,9 +3405,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "CSV olarak indir",
 					"label": "Excel dosyasını indirin"
 				},
 				"filename": "Çevrimiçi danışmanlık istatistikleri",
+				"hintMonth": "Her hafta için bir satır ve bir toplam satırı. Excel ile de açılır.",
+				"hintWeek": "Her gün için bir satır ve bir toplam satırı. Excel ile de açılır.",
+				"hintYear": "Her ay için bir satır ve bir toplam satırı. Excel ile de açılır.",
 				"title": "Seçtiğiniz danışmanlık dönemi için istatistiklerinizi buradan indirebilirsiniz:",
 				"total": "Toplam"
 			},
@@ -3424,7 +3428,20 @@
 				"period": "Dönem",
 				"videoCallDuration": "Dakika:saniye cinsinden görüntülü arama süresi"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "İptal edilen",
+				"numberOfChatAppointments": "Sohbet",
+				"numberOfOnsiteAppointments": "Yüz yüze",
+				"numberOfPhoneAppointments": "Telefon",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Bu ay",
+					"currentWeek": "Bu hafta",
+					"lastMonth": "Geçen ay",
+					"lastWeek": "Geçen hafta"
+				},
 				"currentMonth": "geçerli ay",
 				"currentWeek": "bu hafta",
 				"currentYear": "cari yıl",
@@ -3436,7 +3453,17 @@
 				"lastMonth": "geçen ay",
 				"lastWeek": "geçen hafta",
 				"lastYear": "geçen yıl",
-				"prefix": "Sizin rakamlarınız"
+				"offsetLabel": "Dönem",
+				"prefix": "Sizin rakamlarınız",
+				"unitLabel": "Zaman birimi",
+				"unitMonth": "Ay",
+				"unitWeek": "Hafta",
+				"unitYear": "Yıl"
+			},
+			"state": {
+				"empty": "Bu dönem için henüz rakam yok.",
+				"error": "Rakamlar şu anda yüklenemedi.",
+				"retry": "Tekrar dene"
 			},
 			"title": "Benim istatistiklerim"
 		},
@@ -4203,7 +4230,8 @@
 			"selectCase": "Vaka seç",
 			"selectedCount": "{{count}} tanesi seçildi",
 			"start": "Birden fazla vaka seç",
-			"title": "Toplu erişim talebi"
+			"title": "Toplu erişim talebi",
+			"clearSelection": "Seçimi kaldır"
 		},
 		"consent": {
 			"title": "Bir danışman bu görüşmeye erişim istiyor",
@@ -4250,7 +4278,9 @@
 			"required": "Bir neden seçin ve bir açıklama ekleyin."
 		},
 		"explanation": {
-			"placeholder": "Gerekçeyi açıklayın"
+			"placeholder": "Gerekçeyi açıklayın",
+			"optional": "Açıklama (isteğe bağlı)",
+			"required": "Açıklama (zorunlu)"
 		},
 		"eyebrow": "Talep onaylanana kadar bilgiler gizli kalır",
 		"hidden": {
@@ -4822,7 +4852,6 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
-				"directLinks": "Doğrudan davetler",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4847,9 +4876,11 @@
 				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı",
-				"directLinkVideo": "Görüntülü arama",
-				"directLinkAudio": "Sesli arama",
-				"directLinkChat": "Doğrudan davet"
+				"directLinkVideo": "Görüntülü",
+				"directLinkAudio": "Sesli",
+				"directLinkChat": "Sohbet",
+				"directInvitationVia": "Doğrudan davet · {{medium}}",
+				"agencyLink": "danışma merkezi bağlantısıyla"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",
@@ -7232,6 +7263,7 @@
 			"waitingFor": "{{count}} dk'dır bekliyor",
 			"justArrived": "az önce geldi",
 			"admit": "İçeri al",
+			"startAndAdmit": "Aramayı başlat ve içeri al",
 			"decline": "Reddet",
 			"admitAll": "Herkesi içeri al",
 			"position": "{{current}} / {{total}}",
@@ -7610,18 +7642,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Genel bakışınız",
-		"stats": {
-			"title": "Danışmanlıklar",
-			"period": "Son 30 gün",
-			"assigned": "Yeni üstlenilen",
+		"quiet": {
 			"active": "Aktif",
-			"archived": "Arşivlenen",
-			"sentMessages": "Gönderilen mesajlar"
-		},
-		"circles": {
-			"title": "Yaklaşan öz yardım grupları",
-			"assignedCounsellors": "Danışman ekibi: {{count}}"
+			"assigned": "Yeni devralınan (30 gün)"
 		}
 	},
 	"temporaryAccount": {
@@ -7630,6 +7653,7 @@
 			"title": "Misafir hesabıyla birlikte silinir"
 		},
 		"deletedGuest": "Misafir (silindi)",
+		"signedOutNotice": "Misafir hesabınız görüşmeden sonra silindi, bu nedenle oturumunuz kapatıldı. Yeni bir görüşme için lütfen danışmanlık hizmetinizin bağlantısını yeniden açın.",
 		"chip": {
 			"guest": "Misafir hesabı"
 		},
@@ -7694,7 +7718,12 @@
 			},
 			"linkFailedTitle": "Davet bağlantısı oluşturulmadı",
 			"linkFailedAfterAppointment": "Randevu kaydedildi, ancak davet bağlantısı oluşturulmadı. Lütfen tekrar deneyin.",
-			"appointmentSaved": "Randevu kaydedildi."
+			"appointmentSaved": "Randevu kaydedildi.",
+			"openLink": {
+				"action": "Davet bağlantısına devam et",
+				"hint": "Tarih olmadan açık bir davet bağlantısı oluşturursunuz: bağlantıyı açan herkes kendi görüşmesini alır. Bağlantı siz silene kadar geçerlidir. Sonraki adımda konusunu ve adını seçersiniz.",
+				"mediumOff": "Bu tür için doğrudan davetler etkin değil. Başka bir tür seçin."
+			}
 		},
 		"overview": {
 			"title": "Randevular ve doğrudan davetler",
@@ -7771,6 +7800,7 @@
 			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
 		},
 		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun.",
+		"fromCalendarOpenLink": "Takvimden: tarihsiz açık davet bağlantısı.",
 		"fromCalendarPopup": "Takvimden randevu: {{range}}"
 	},
 	"calendar": {

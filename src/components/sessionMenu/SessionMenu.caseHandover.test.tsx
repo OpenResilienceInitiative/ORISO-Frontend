@@ -303,15 +303,34 @@ describe('SessionMenu — Beratung übergeben (#2250)', () => {
 		expect(document.body.textContent).not.toContain(HANDOVER);
 	});
 
-	it('is still offered in an older team case once its centre chose case handover', () => {
+	it('is still offered in a case handover case after its centre chose Teamberatung', () => {
 		renderMenu({
-			user: { ...counsellor, agencies: [{ id: 5, teamAgency: false }] },
+			user: { ...counsellor, agencies: [{ id: 5, teamAgency: true }] },
 			activeSession: oneOnOne(
-				sessionItem(1, { isTeamSession: true, agencyId: 5 })
+				sessionItem(1, {
+					caseSharingModel: 'CASE_HANDOVER',
+					agencyId: 5
+				})
 			)
 		});
 		expect(document.body.textContent).toContain(HANDOVER);
 	});
+
+	it.each(['NONE', 'TEAM_COUNSELLING'])(
+		'is not offered in a case stamped %s, whatever the centre chose since',
+		(caseSharingModel) => {
+			renderMenu({
+				user: {
+					...counsellor,
+					agencies: [{ id: 5, teamAgency: false }]
+				},
+				activeSession: oneOnOne(
+					sessionItem(1, { caseSharingModel, agencyId: 5 })
+				)
+			});
+			expect(document.body.textContent).not.toContain(HANDOVER);
+		}
+	);
 
 	it('opens the same handover dialog as the profile button', async () => {
 		renderMenu({

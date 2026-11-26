@@ -57,6 +57,18 @@
 	// value and is no longer the menu hover.)
 	--oriso-menu-hover-surface: var(--m3-on-secondary-container, #e7effc);
 
+	// Quiet text (descriptions) on that hover surface.
+	--oriso-menu-hover-description: var(
+		--m3-on-secondary-fixed-variant,
+		#3f4852
+	);
+
+	// Quiet secondary text on a surface (sender lines, hints, counters). The
+	// light value is the long-used `secondary-container` grey; dark mode
+	// takes `on-surface-variant`, because `secondary-container` is a near-
+	// black fill there (P0 dark mode, 2026-11-25).
+	--oriso-quiet-text: var(--m3-secondary-container, #646d78);
+
 	// Secondary fixed family (M3 Light table = engine output, T27).
 	--m3-secondary-fixed: #dae3f0;
 	--m3-secondary-fixed-dim: #bec7d4;
@@ -155,4 +167,42 @@
 		1rem * var(--oriso-personal-text-scale, 1)
 	);
 	--composer-font-size: calc(0.875rem * var(--oriso-personal-text-scale, 1));
+}
+
+// Dark scheme (P0 dark mode, 2026-11-25): `on-secondary-container` turns
+// light pale blue there, and the menu labels turn light pink — light on
+// light. The hover surface takes the dark `secondary-container` instead and
+// its quiet text the matching `on-` role.
+html[data-oriso-personal-scheme='dark'] {
+	--oriso-menu-hover-surface: var(--m3-secondary-container, #3f4852);
+	--oriso-menu-hover-description: var(--m3-on-secondary-container, #dae3f0);
+	--oriso-quiet-text: var(--m3-on-surface-variant, #c4c7c8);
+	--oriso-statistics-highlight: var(
+		--oriso-primary-text,
+		var(--m3-primary, #ffb4aa)
+	);
+
+	// Outlines: the pastel `-fixed` pinks stay light in dark, so thin lines
+	// turn neutral and selection/focus rings take the scheme's primary.
+	--oriso-outline-soft: var(--m3-outline-variant, #444748);
+	--oriso-outline-accent: var(--m3-primary, #ffb4aa);
+	--oriso-menu-border: var(--m3-outline-variant, #444748);
+	--oriso-text-high: var(--m3-on-surface, #e4e2e2);
+	--oriso-text-low: var(--m3-on-surface-variant, #c4c7c8);
+	--oriso-text-disabled: color-mix(
+		in srgb,
+		var(--m3-on-surface, #e4e2e2) 38%,
+		transparent
+	);
+	--oriso-picker-active-surface: var(--m3-primary-container, #930008);
+	--oriso-picker-active-ink: var(--m3-on-primary-container, #ffdad5);
+	--oriso-picker-selected-ink: var(--m3-on-primary, #690004);
+	--oriso-toolbar-chip-border: var(--m3-outline-variant, #444748);
+	--oriso-toolbar-chip-hover-bg: var(--m3-surface-container, #1f1f20);
+	--oriso-toolbar-chip-hover-border: var(--m3-outline, #8e9192);
+
+	// List rows (calendar side rows) and the custom scroll thumb.
+	--oriso-row-surface: var(--m3-surface-container-low, #1b1b1c);
+	--oriso-row-hover-surface: var(--m3-surface-container-high, #2a2a2b);
+	--oriso-scroll-thumb: var(--m3-outline, #8e9192);
 }
