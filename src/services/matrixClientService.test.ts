@@ -1309,6 +1309,43 @@ describe('MatrixClientService', () => {
 		]);
 	});
 
+	// The homeserver must only ever see ciphertext: no file name, no MIME
+	// type, no plain `url` in the event (replaces the retired Cypress spec
+	// matrix-send-message-privacy, FE#2572).
+	it('uploads a file only as opaque ciphertext and sends the encrypted-file shape', async () => {
+		const uploadContent = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/file' });
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const { client } = createRefreshableClient({
+			uploadContent,
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendFileMessage(
+			'!room:matrix.localhost',
+			new File(['secret case note'], 'case-note.txt', {
+				type: 'text/plain'
+			})
+		);
+
+		expect(uploadContent).toHaveBeenCalledTimes(1);
+		const [uploaded, uploadOptions] = uploadContent.mock.calls[0];
+		expect(uploaded).toBe('encrypted-blob');
+		expect(uploadOptions).toMatchObject({
+			includeFilename: false,
+			type: 'application/octet-stream'
+		});
+		const content = sendMessage.mock.calls[0][1];
+		expect(content).not.toHaveProperty('url');
+		expect(content.file).toMatchObject({
+			url: 'mxc://server/file',
+			v: 'v2'
+		});
+	});
+
 	it('names a failed token refresh, so a 503 is not just an unknown error', async () => {
 		const uploadContent = vi.fn();
 		const { client } = createRefreshableClient({ uploadContent });

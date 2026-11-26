@@ -227,7 +227,14 @@ jobs:
             - name: Cypress quarantined specs (non-blocking, FE#2572)
               if: always()
               continue-on-error: true
-              run: npm run test:e2e:cypress:quarantine
+              # An empty list would make Cypress fall back to its default spec
+              # pattern, so the step only runs while something is quarantined.
+              run: |
+                  if node -e "process.exit(require('./cypress/quarantine.json').specs.length ? 0 : 1)"; then
+                      npm run test:e2e:cypress:quarantine
+                  else
+                      echo "No quarantined Cypress specs."
+                  fi
 
             - name: Preserve browser evidence
               if: always()
