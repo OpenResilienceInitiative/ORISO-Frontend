@@ -10,6 +10,7 @@ import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
 	PRACTICE_CALENDAR_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
@@ -322,8 +323,10 @@ export const practiceGroupCircleTour: TourDefinition = {
 		{
 			// The counsellor fills what "Erstellen" needs, e.g. the
 			// Beratungsstelle when she works for several: the card is the
-			// spotlight, so its fields and their menus stay usable.
-			id: 'configure',
+			// spotlight, so its fields and their menus stay usable. Its
+			// "Erstellen" is held until `settings`, which waits for the
+			// create: a create here would leave the card and stop the run.
+			id: PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
 			target: 'groupchat-circle-settings',
 			placement: 'right',
 			interactive: true,
@@ -367,8 +370,17 @@ export const practiceGroupCircleTour: TourDefinition = {
 		{
 			// D3: the button is used, and practice shows a simulated start
 			// instead of a call: no camera, no microphone, no request.
+			// The practice circle meets by video, and its agency has no
+			// settings of its own: the header shows the video button exactly
+			// when these tenant flags are not off (`GroupChatHeader`). Without
+			// it the step is dropped instead of stopping the run.
 			id: 'call',
 			hideBack: true,
+			when: [
+				{ flag: 'featureCallsEnabled' },
+				{ flag: 'featureVideoCallsEnabled' },
+				{ flag: 'featureVideoCallsGroupChatsEnabled' }
+			],
 			target: 'groupchat-call-button',
 			placement: 'bottom',
 			advanceOn: {
