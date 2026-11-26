@@ -69,7 +69,8 @@ import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
 import { PracticeOverviewSection } from './PracticeOverviewSection';
-import { practiceTours } from './practiceTours';
+import { practiceCalendarTour, practiceTours } from './practiceTours';
+import { COMPACT_MAX_WIDTH } from '../components/calendar/calendarViews';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
@@ -173,6 +174,8 @@ interface NetworkCall {
 	status?: string;
 }
 const network: NetworkCall[] = [];
+/** The Beratungsstelle's own settings in its real read; none by default. */
+let realAgencySettings: Record<string, unknown> | undefined;
 const networkFetch = vi.fn(
 	async (input: RequestInfo | URL, init?: RequestInit) => {
 		const request = input instanceof Request ? input : null;
@@ -190,10 +193,20 @@ const networkFetch = vi.fn(
 			method === 'GET' && REAL_AGENCIES_URL.exec(new URL(url).pathname);
 		if (agencyIds) {
 			const ids = agencyIds[1].split(',').map(Number);
-			return new Response(JSON.stringify(ids.map((id) => ({ id }))), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify(
+					ids.map((id) => ({
+						id,
+						...(realAgencySettings && {
+							settings: realAgencySettings
+						})
+					}))
+				),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
@@ -462,6 +475,7 @@ const renderApp = ({
 beforeEach(async () => {
 	joyride = null;
 	network.length = 0;
+	realAgencySettings = undefined;
 	realMatrixWrites.length = 0;
 	storageWrites.length = 0;
 	networkFetch.mockClear();
@@ -794,6 +808,17 @@ const createOpenStartAndCall = async (
 	// The settings card: what "Erstellen" needs is filled in there, inside
 	// the spotlight; then Next.
 	const card = await expectStep(configureIndex);
+	// What Joyride reports when it shows the tooltip (the mock does not):
+	// the run's progress then names this step.
+	act(() => {
+		joyride!.onEvent({
+			action: 'update',
+			index: configureIndex,
+			lifecycle: 'tooltip',
+			status: 'running',
+			type: 'tooltip'
+		});
+	});
 	expect(joyride!.steps[configureIndex]).toMatchObject({
 		disableFocusTrap: true
 	});
@@ -814,6 +839,15 @@ const createOpenStartAndCall = async (
 		fireEvent.mouseDown(within(card!).getByRole('combobox'));
 		fireEvent.click(await screen.findByRole('option', { name: agency }));
 	}
+	// "Erstellen" sits in the card, but waits for its own step: a create
+	// here would leave the settings and stop the run at the next step.
+	const createInCard = document.querySelector<HTMLButtonElement>(
+		'[data-tour-target="groupchat-circle-create"]'
+	)!;
+	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+	expect(createInCard.disabled).toBe(true);
+	fireEvent.click(createInCard);
+	await expectStep(configureIndex);
 	pressNext(configureIndex);
 
 	// The real "Erstellen" of the settings; the circle is made in memory.
@@ -1370,6 +1404,35 @@ describe('practice flows on the real app shell', () => {
 		await finish(stepIndexOf('calendar-settings') + 1);
 		expectCalendarStayedInPractice(practiceStart);
 	}, 120000);
+
+	it('Kalender where the Beratungsstelle allows no video invitation: the Terminlink step is left out, as the calendar offers none', async () => {
+		// The Träger allows it (unset); the agency's own setting does not.
+		realAgencySettings = { featureDirectInviteVideoEnabled: false };
+		const app = renderApp();
+		await app.request(CALENDAR);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+
+		const appointment = stepIndexOf('calendar-create');
+		expect(
+			joyride!.steps[appointment + 1].target,
+			'no invitation step after the appointment'
+		).toBe('[data-tour-target="calendar-upcoming"]');
+		expect(joyride!.steps).toHaveLength(
+			practiceCalendarTour.steps.length - 1
+		);
+	});
+
+	it.each([900, COMPACT_MAX_WIDTH])(
+		'Kalender at %i px, where the calendar is compact and has no "Als Nächstes": the explanation tour runs instead',
+		async (width) => {
+			const app = renderApp({ width });
+			await app.request(CALENDAR);
+			await expectStep(0);
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(getPracticeNetworkGuard()).toBeFalsy();
+		}
+	);
 
 	it('Kalender without the practice area: the explanation tour runs on the real page', async () => {
 		const app = renderApp({ practiceArea: false });

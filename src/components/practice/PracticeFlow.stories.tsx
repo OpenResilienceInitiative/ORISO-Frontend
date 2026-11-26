@@ -1043,6 +1043,9 @@ export const Calendar: Story = {
 			const card = (
 				await canvas.findByRole('heading', { name: 'Kalender' }, SLOW)
 			).closest('li')!;
+			// Everything from the Start on counts, the calendar's first
+			// reads included.
+			practiceStart = requestLog.length;
 			await userEvent.click(
 				within(card).getByRole('button', { name: 'Starten' })
 			);
@@ -1050,7 +1053,6 @@ export const Calendar: Story = {
 		await step('1: Read that this is an exercise', async () => {
 			await expectStep(1, of);
 			await expect(getPracticeSnapshot().status).toBe('active');
-			practiceStart = requestLog.length;
 			await next();
 		});
 		await step('2: Enter an appointment', async () => {
@@ -1061,11 +1063,12 @@ export const Calendar: Story = {
 			await expectStep(3, of);
 			await enterPracticeAppointment(true);
 			const share = await calendarDialog('direct-link-share-dialog');
-			await expect(
-				within(share).getByDisplayValue(
-					/^https:\/\/practice\.invalid\//
-				)
-			).toBeVisible();
+			// The dialog fades in: the field exists before it shows. Wait
+			// for it to show, not just to exist.
+			const linkField = within(share).getByDisplayValue(
+				/^https:\/\/practice\.invalid\//
+			);
+			await waitFor(() => expect(linkField).toBeVisible(), SLOW);
 			await userEvent.click(
 				within(share).getByRole('button', { name: 'Schließen' })
 			);

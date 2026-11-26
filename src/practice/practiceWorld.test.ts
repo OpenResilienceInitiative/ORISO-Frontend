@@ -12,6 +12,11 @@ import {
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import {
+	enterPracticeMode,
+	exitPracticeMode,
+	restartPracticeMode
+} from './practiceMode';
 import { endpoints } from '../resources/scripts/endpoints';
 import {
 	createTestScript,
@@ -420,6 +425,44 @@ describe('practice world tour events', () => {
 		await addSupervisor(world, world.script.cast.colleague.id);
 
 		expect(counts[PRACTICE_TOUR_EVENTS.supervisorAdded]).toBe(0);
+	});
+
+	it('emits nothing for a save of a run that was restarted while the save was underway', async () => {
+		enterPracticeMode({ tourId: 'consultant-calendar' });
+		try {
+			const counts = watch();
+			const world = worldIn('de', 'acceptedCase');
+			const save = (target: PracticeWorld) =>
+				target.rest.handle(
+					send(
+						endpoints.sessionAppointments(
+							PRACTICE_ENQUIRY_SESSION_ID
+						),
+						'POST',
+						{
+							startTime: '2026-11-26T09:00:00.000Z',
+							endTime: '2026-11-26T10:00:00.000Z',
+							kind: 'VIDEO'
+						}
+					)
+				);
+
+			// The body is still being read when the run restarts.
+			const late = save(world);
+			restartPracticeMode();
+			await late;
+			expect(
+				counts[PRACTICE_TOUR_EVENTS.calendarAppointmentCreated]
+			).toBe(0);
+
+			// The current run's world still tells the tour.
+			await save(worldIn('de', 'acceptedCase'));
+			expect(
+				counts[PRACTICE_TOUR_EVENTS.calendarAppointmentCreated]
+			).toBe(1);
+		} finally {
+			exitPracticeMode();
+		}
 	});
 
 	it('emits nothing for a world that was only built and read', async () => {

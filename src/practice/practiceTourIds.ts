@@ -29,6 +29,12 @@ export const PRACTICE_CALENDAR_TOUR_ID = 'consultant-calendar';
  */
 export const PRACTICE_TIMELINE_TOUR_ID = 'consultant-timeline';
 
+/**
+ * The Gesprächskreis flow's settings-card step: "Erstellen" in the card
+ * waits for the next step, which listens for the create (FE#2545).
+ */
+export const PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID = 'configure';
+
 /** The flows with a practice card of their own (Help → Meine Rundgänge). */
 export const PRACTICE_CARD_TOUR_IDS = [
 	PRACTICE_ACCEPT_TOUR_ID,
