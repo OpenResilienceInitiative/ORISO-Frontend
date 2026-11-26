@@ -784,7 +784,10 @@ export const useInvitationForm = ({
 								: t(`${KEYS}.openLink.hint`)
 						)}
 						{openLink && kindMediumOff && (
-							<p className="invitationDialog__hint" role="status">
+							<p
+								className="invitationDialog__hint"
+								aria-live="polite"
+							>
 								{t(`${KEYS}.openLink.mediumOff`)}
 							</p>
 						)}

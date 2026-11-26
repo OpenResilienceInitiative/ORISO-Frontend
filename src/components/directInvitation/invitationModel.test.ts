@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
 	fromInvitationPresetState,
+	readPresetRouterState,
 	fromOpenLinkPresetState,
 	toOpenLinkPresetState,
 	groupUpcomingByDay,
@@ -158,23 +159,39 @@ describe('nextExpiryRead', () => {
 describe('open link from "Neuer Eintrag" without a date (FE#2510 *2)', () => {
 	it('round-trips the Art through router state', () => {
 		expect(
-			fromOpenLinkPresetState(toOpenLinkPresetState({ kind: 'phone' }))
+			fromOpenLinkPresetState(
+				readPresetRouterState(toOpenLinkPresetState({ kind: 'phone' }))
+			)
 		).toEqual({ kind: 'phone' });
-		expect(fromOpenLinkPresetState(toOpenLinkPresetState({}))).toEqual({});
+		expect(
+			fromOpenLinkPresetState(
+				readPresetRouterState(toOpenLinkPresetState({}))
+			)
+		).toEqual({});
 	});
 
 	it('reads nothing else as an open link, and drops an unknown Art', () => {
-		expect(fromOpenLinkPresetState(undefined)).toBeUndefined();
-		expect(fromOpenLinkPresetState(null)).toBeUndefined();
-		expect(fromOpenLinkPresetState({ other: 1 })).toBeUndefined();
 		expect(
-			fromOpenLinkPresetState({ openLinkPreset: { kind: 'fax' } })
+			fromOpenLinkPresetState(readPresetRouterState(undefined))
+		).toBeUndefined();
+		expect(
+			fromOpenLinkPresetState(readPresetRouterState(null))
+		).toBeUndefined();
+		expect(
+			fromOpenLinkPresetState(readPresetRouterState({ other: 1 }))
+		).toBeUndefined();
+		expect(
+			fromOpenLinkPresetState(
+				readPresetRouterState({ openLinkPreset: { kind: 'fax' } })
+			)
 		).toEqual({});
 	});
 
 	it('is not an appointment preset', () => {
 		expect(
-			fromInvitationPresetState(toOpenLinkPresetState({ kind: 'video' }))
+			fromInvitationPresetState(
+				readPresetRouterState(toOpenLinkPresetState({ kind: 'video' }))
+			)
 		).toBeUndefined();
 	});
 });

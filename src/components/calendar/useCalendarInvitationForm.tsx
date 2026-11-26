@@ -19,7 +19,10 @@ import * as React from 'react';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
-import { useInvitationForm } from '../directInvitation/InvitationDialog';
+import {
+	useInvitationForm,
+	type InvitationDialogInitial
+} from '../directInvitation/InvitationDialog';
 import type {
 	InvitationDialogValue,
 	InvitationPreset,
@@ -99,17 +102,15 @@ export const useCalendarInvitationForm = ({
 				.toDate();
 	const end = timedSlot?.end ?? dayjs(start).add(1, 'hour').toDate();
 
+	const initial: InvitationDialogInitial = { start, end };
+	if (slot?.kind) initial.kind = slot.kind;
+	// FE#2510 *2: the "Mit Termin" setting last used (Frank).
+	if (onCreateOpenLink)
+		initial.withAppointment = readNewEntryWithDate(ownerId);
+
 	const form = useInvitationForm({
 		variant: 'appointment',
-		initial: {
-			start,
-			end,
-			...(slot?.kind ? { kind: slot.kind } : {}),
-			// FE#2510 *2: the "Mit Termin" setting last used (Frank).
-			...(onCreateOpenLink
-				? { withAppointment: readNewEntryWithDate(ownerId) }
-				: {})
-		},
+		initial,
 		known: { slot: Boolean(timedSlot), kind: Boolean(slot?.kind) },
 		withKind: true,
 		conversations: {

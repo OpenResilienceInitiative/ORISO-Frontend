@@ -74,6 +74,7 @@ import {
 	formatPresetRange,
 	fromInvitationPresetState,
 	fromOpenLinkPresetState,
+	readPresetRouterState,
 	MEDIUM_FOR_KIND
 } from '../directInvitation/invitationModel';
 import { DirectLink } from './directLink/directLink';
@@ -171,7 +172,7 @@ const CreateConversationFlow = ({
 	   and Art: the Direkteinladung opens with that appointment (one
 	   invitation flow, door A from the calendar). */
 	const invitationPreset = useMemo(
-		() => fromInvitationPresetState(location.state),
+		() => fromInvitationPresetState(readPresetRouterState(location.state)),
 		[location.state]
 	);
 	/* FE#2510 *2: "Neuer Eintrag" without a date — the open invitation
@@ -180,7 +181,9 @@ const CreateConversationFlow = ({
 		() =>
 			invitationPreset
 				? undefined
-				: fromOpenLinkPresetState(location.state),
+				: fromOpenLinkPresetState(
+						readPresetRouterState(location.state)
+					),
 		[invitationPreset, location.state]
 	);
 	const presetKind = invitationPreset?.kind ?? openLinkPreset?.kind;
@@ -979,7 +982,7 @@ const CreateConversationFlow = ({
 					{openLinkPreset && (
 						<p
 							className="conversationCreate__cardText"
-							role="status"
+							aria-live="polite"
 							data-testid="invitation-preset-note"
 						>
 							{translate('directInvitation.fromCalendarOpenLink')}
