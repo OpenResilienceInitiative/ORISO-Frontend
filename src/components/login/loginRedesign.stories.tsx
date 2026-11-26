@@ -633,7 +633,7 @@ const readLines = (form: HTMLElement) => {
 	const origin = form.getBoundingClientRect();
 	return Array.from(
 		form.querySelectorAll<HTMLElement>(
-			'h2, label, p, .loginForm__actions, button:not(.loginForm__actions button)'
+			'h2, label, p, .loginForm__actions, .loginForm__register__separator > span, button:not(.loginForm__actions button)'
 		),
 		(node) => {
 			const { x, y, width, height } = node.getBoundingClientRect();
@@ -763,6 +763,16 @@ export const ReencodeEnglish = reencodeStory(
 	'Dieselbe Folge auf Englisch. Die Folge liest den sichtbaren Text, sie kennt keine Übersetzungsschlüssel und funktioniert in jeder Sprache.',
 	{},
 	{ globals: { locale: 'en' } }
+);
+
+export const ReencodePhone = reencodeStory(
+	'Anmelden — umkodiert, Handy',
+	'Dieselbe Folge auf dem Handy, mit „Neu hier?“ und „Zu den Beratungsthemen“. Jede Zeile bleibt an ihrem Platz, die Wortabstände bleiben erhalten.',
+	{ holdMs: 2500 },
+	{
+		globals: { viewport: { value: 'phone390', isRotated: false } },
+		play: (context) => ReencodeSignIn.play!(context)
+	}
 );
 
 export const ReencodeSlowMotion = reencodeStory(

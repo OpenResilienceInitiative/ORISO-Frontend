@@ -165,13 +165,17 @@ export function startLoginMatrix(form: HTMLElement) {
 			built.push(glyph);
 			return glyph;
 		});
-		// React keeps owning the original node: it stays in place, only empty.
+		// One inline box for the whole text, so a flex parent still sees one
+		// item and keeps the spaces. React keeps owning the original node: it
+		// stays in place, only empty.
+		const box = document.createElement('span');
+		box.append(...parts);
 		const original = text.data;
-		text.after(...parts);
+		text.after(box);
 		text.data = '';
 		glyphs.push(...built);
 		restore.push(() => {
-			for (const part of parts) part.remove();
+			box.remove();
 			if (!text.data) text.data = original;
 		});
 		return built;

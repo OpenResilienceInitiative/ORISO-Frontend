@@ -53,7 +53,7 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 		// The submit frame turns only the button, at random places within it.
 		expect(button.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
 		expect(form.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
-		const turns = [...button.children[0].children].map(at);
+		const turns = [...button.querySelectorAll('.loginMatrixGlyph')].map(at);
 		expect(Math.min(...turns)).toBeGreaterThanOrEqual(-1);
 		expect(Math.max(...turns)).toBeLessThanOrEqual(
 			LOGIN_MATRIX_TIMING.button
@@ -87,6 +87,11 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 		expect(form.querySelector('legend .loginMatrixGlyph')).toBeNull();
 		expect(form.querySelector('fieldset .loginMatrixGlyph')).toBeNull();
 		expect(form.querySelector('.notranslate .loginMatrixGlyph')).toBeNull();
+		// Each text becomes one inline box with its spaces, so a flex parent
+		// still lays it out as one item.
+		const code = form.querySelector('p')!.firstChild!.nextSibling!;
+		expect(code.nodeName).toBe('SPAN');
+		expect(code.textContent).toBe('Code ');
 		// Letters stay in the DOM: the accessible text does not change.
 		expect(button.textContent).toBe('Anmelden');
 		expect(heading.firstChild).toBe(headingText);
