@@ -35,7 +35,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(255, 255, 255, 0.65);
+		background: color-mix(
+			in srgb,
+			var(--m3-surface-container-lowest, #ffffff) 65%,
+			transparent
+		);
 		pointer-events: none;
 	}
 
@@ -171,7 +175,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				padding: 0 !important;
 				border-radius: 24px 4px 24px 24px !important;
 				box-shadow: none !important;
-				border: 1px solid var(--m3-primary-fixed, #ffdad5) !important;
+				border: 1px solid
+					var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5)) !important;
 				overflow: visible;
 				min-height: var(--composer-height, 196px);
 				height: var(--composer-height, 196px);
@@ -318,7 +323,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				// field border (the resting/selected states keep theirs).
 				&--supervision:not(.textarea__wrapper-send-message--selected)
 					.textarea__input {
-					border-color: var(--m3-primary-fixed-dim, #ffb4aa);
+					border-color: var(
+						--oriso-outline-accent,
+						var(--m3-primary-fixed-dim, #ffb4aa)
+					);
 				}
 
 				// The Teamberatung room's composer, same rule with the
@@ -517,7 +525,8 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			width: 100%;
 			height: 100%;
 			border-radius: 16px var(--composer-corner, 4px) 16px 16px;
-			border: 1px solid var(--m3-primary-fixed, #ffdad5);
+			border: 1px solid
+				var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 			box-sizing: border-box;
 			position: relative;
 
@@ -580,8 +589,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			z-index: 9;
 			padding: 2px 7px;
 			border-radius: 10px;
-			background: rgba(255, 255, 255, 0.92);
-			color: var(--m3-secondary-container, #646d78);
+			background: color-mix(
+				in srgb,
+				var(--m3-surface-container-lowest, #ffffff) 92%,
+				transparent
+			);
+			color: var(--oriso-quiet-text, #646d78);
 			font-size: 11px;
 			font-weight: 500;
 			line-height: 16px;
@@ -673,8 +686,13 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-size: 0.75rem;
 			font-weight: 600;
 			cursor: pointer;
-			background: #fff;
+			background: var(--m3-surface-container-lowest, #fff);
 			color: var(--m3-primary-container, #cc1e1c);
+
+			// Dark: `primary-container` is a deep red on a near-black surface.
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+			}
 			box-shadow: 0 0 0 1px
 				color-mix(
 					in srgb,
@@ -687,9 +705,19 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 				background: color-mix(
 					in srgb,
 					var(--m3-primary-fixed, #ffdad5) 40%,
-					#fff
+					var(--m3-surface-container-lowest, #fff)
 				);
 				outline: none;
+
+				// Dark: the pastel mix turns mid-tone under the light primary
+				// text; a faint primary tint keeps the surface dark.
+				html[data-oriso-personal-scheme='dark'] & {
+					background: color-mix(
+						in srgb,
+						var(--m3-primary, #ffb4aa) 16%,
+						var(--m3-surface-container-lowest, #0e0e0f)
+					);
+				}
 			}
 		}
 
@@ -1176,7 +1204,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			overflow-y: auto;
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
 			border-radius: 12px;
-			background: #fff !important;
+			background: var(--m3-surface-container-lowest, #ffffff) !important;
 			opacity: 1;
 			padding: 8px;
 
@@ -1191,7 +1219,11 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__audienceSelectorMenuOverlay {
 			position: fixed;
 			inset: 0;
-			background: rgba(255, 255, 255, 0.8);
+			background: color-mix(
+				in srgb,
+				var(--m3-surface-container-lowest, #ffffff) 80%,
+				transparent
+			);
 			backdrop-filter: blur(4px);
 			-webkit-backdrop-filter: blur(4px);
 			z-index: 999998;
@@ -1237,7 +1269,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			font-size: 16px;
 			font-weight: 500;
 			line-height: 1.4;
-			color: rgba(0, 0, 0, 0.9);
+			color: var(--oriso-text-high, rgba(0, 0, 0, 0.9));
 			text-align: right;
 		}
 
@@ -1256,7 +1288,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__audienceSelectorSection {
 			border: 1px solid #e1e6ee;
 			border-radius: 12px;
-			background: #fff;
+			background: var(--m3-surface-container-lowest, #ffffff);
 			padding: 4px;
 		}
 
@@ -1289,30 +1321,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		}
 
 		&__audienceSelectorSectionRadio {
-			width: 14px;
-			height: 14px;
-			border-radius: 999px;
-			border: 2px solid var(--m3-secondary-container, #5f6873);
-			background: #fff;
-			flex: 0 0 14px;
+			@include recipient-radio;
 		}
 
 		&__audienceSelectorSectionRadio--selected {
-			border-color: #3f4753;
-			background: radial-gradient(
-				circle at 50% 50%,
-				#3f4753 45%,
-				transparent 47%
-			);
+			@include recipient-radio-selected;
 		}
 
 		&__audienceSelectorSectionRadio--partial {
-			border-color: transparent;
-			background: transparent;
-			background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.66667 10V3.33333C5.74444 3.33333 4.95833 3.65833 4.30833 4.30833C3.65833 4.95833 3.33333 5.74444 3.33333 6.66667C3.33333 7.58889 3.65833 8.375 4.30833 9.025C4.95833 9.675 5.74444 10 6.66667 10ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45555 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45555 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45555 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45555 13.1583 7.58889 13.3333 6.66667 13.3333ZM6.66667 12C8.15555 12 9.41667 11.4833 10.45 10.45C11.4833 9.41667 12 8.15555 12 6.66667C12 5.17778 11.4833 3.91667 10.45 2.88333C9.41667 1.85 8.15555 1.33333 6.66667 1.33333C5.17778 1.33333 3.91667 1.85 2.88333 2.88333C1.85 3.91667 1.33333 5.17778 1.33333 6.66667C1.33333 8.15555 1.85 9.41667 2.88333 10.45C3.91667 11.4833 5.17778 12 6.66667 12Z' fill='%234C555F'/%3E%3C/svg%3E");
-			background-repeat: no-repeat;
-			background-size: 14px 14px;
-			background-position: center;
+			@include recipient-radio-partial;
 		}
 
 		&__audienceSelectorSectionChevron {
@@ -1328,6 +1345,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorSectionChevron:hover {
 			color: #2f3743;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		&__audienceSelectorSectionChevronIcon {
@@ -1343,6 +1364,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorSectionSelectAll:hover {
 			color: #2f3743;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		&__audienceSelectorSectionBody {
@@ -1381,7 +1406,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			padding: 6px 10px;
 			border: 1px solid #e1e6ee;
 			border-radius: 999px;
-			background: #fff;
+			background: var(--m3-surface-container-lowest, #ffffff);
 			color: var(--m3-secondary, #4c555f);
 			font-size: 12px;
 			font-weight: 700;
@@ -1391,6 +1416,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__audienceSelectorPill:hover {
 			background: #f5f7fb;
+
+			// A selected pill keeps its own hover fill.
+			html[data-oriso-personal-scheme='dark']
+				&:not(.textarea__audienceSelectorPill--selected) {
+				background: var(--m3-surface-container-low, #1b1b1c);
+			}
 		}
 
 		&__audienceSelectorPill--selected {
@@ -1546,7 +1577,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 		&__toolbar {
 			width: calc(100% - 1px);
-			background-color: white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			display: none;
 			position: absolute;
 			top: 0;
@@ -1657,7 +1688,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			bottom: 0;
 			height: 48px;
 			width: calc(100% - #{1px});
-			background-color: white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			z-index: 2;
 		}
 
@@ -1756,7 +1787,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			border: 1px solid var(--m3-primary, $primary);
 			margin: 0 0 4px 14px;
 			align-self: flex-end;
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			transition: background-color 0.6s ease;
 			overflow: hidden;
 			&:hover {
@@ -1802,8 +1833,12 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 		&__toolbarScrollHintButton {
 			display: none;
 			border: none;
-			background: rgba(255, 255, 255, 0.95);
-			color: var(--m3-secondary-container, #646d78);
+			background: color-mix(
+				in srgb,
+				var(--m3-surface-container-lowest, #ffffff) 95%,
+				transparent
+			);
+			color: var(--oriso-quiet-text, #646d78);
 			width: 24px;
 			height: 24px;
 			border-radius: 999px;
@@ -1819,7 +1854,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			&:hover {
 				color: var(--m3-secondary, #4b515a);
-				background: #ffffff;
+				background: var(--m3-surface-container-lowest, #ffffff);
 			}
 
 			@media screen and (width <= 899px) {

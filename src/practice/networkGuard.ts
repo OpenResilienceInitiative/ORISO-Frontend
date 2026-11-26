@@ -158,7 +158,8 @@ export const createNetworkGuard = (
 	const config: RequestPolicyConfig = {
 		allowedTourIds: [...options.allowedTourIds],
 		tutorialProgressUrl: options.tutorialProgressUrl,
-		tokenRefreshUrl: options.tokenRefreshUrl
+		tokenRefreshUrl: options.tokenRefreshUrl,
+		liveChatHeartbeatUrl: options.liveChatHeartbeatUrl
 	};
 	const blocked: BlockedRequest[] = [];
 	const allowed: RecordedRequest[] = [];

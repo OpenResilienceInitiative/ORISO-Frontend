@@ -1,6 +1,6 @@
 name: 'ORISO Frontend Deploy'
 
-run-name: Deploy Frontend to ${{ github.event.inputs.environment }}
+run-name: Deploy ${{ github.event.inputs.component || 'frontend' }} to ${{ github.event.inputs.environment }}
 
 # Rolls the frontend out on one of the ORISO servers by running that
 # server's own deploy script over SSH.
@@ -41,6 +41,14 @@ on:
                     - pre-dev
                     - dev
                     - prod
+            component:
+                type: choice
+                description: What to roll out (storybook = restart both Dev Storybooks so they pull the current :dev image)
+                required: true
+                default: frontend
+                options:
+                    - frontend
+                    - storybook
 
 permissions:
     contents: read
@@ -50,13 +58,13 @@ permissions:
 # replaces one that is still pending, which is fine because the server
 # script always deploys whatever is current.
 concurrency:
-    group: frontend-deploy-${{ github.event.inputs.environment }}
+    group: frontend-deploy-${{ github.event.inputs.environment }}-${{ github.event.inputs.component || 'frontend' }}
     cancel-in-progress: false
 
 jobs:
     deploy-oriso-server:
         name: Deploy to ${{ github.event.inputs.environment }}
-        if: ${{ github.event.inputs.environment == 'dev' || github.event.inputs.environment == 'pre-dev' }}
+        if: ${{ (github.event.inputs.component || 'frontend') == 'frontend' && (github.event.inputs.environment == 'dev' || github.event.inputs.environment == 'pre-dev') }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         environment:
@@ -107,8 +115,73 @@ jobs:
                         -o jsonpath='{range .items[*]}{.metadata.name}{"  "}{.status.containerStatuses[0].image}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}' \
                         || echo "(could not read the frontend pods; the deploy script result above still stands)"
 
+    # Dev only: the chart-managed Storybooks (ORISO-Helm templates/storybook,
+    # runbooks/dev-storybook.md) run oriso-storybook images with pullPolicy Always,
+    # so a rollout restart pulls the image the Storybook workflows just published.
+    # Pre-Dev's Storybooks are deployed outside the chart (predev-sync) and are not
+    # touched here.
+    restart-dev-storybook:
+        name: Restart Storybook on ${{ github.event.inputs.environment }}
+        if: ${{ github.event.inputs.component == 'storybook' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        environment:
+            name: development
+            url: https://dev.oriso.org/storybook-frontend/
+        steps:
+            - name: Refuse anything but Dev
+              env:
+                  TARGET: ${{ github.event.inputs.environment }}
+              run: |
+                  if [ "$TARGET" != "dev" ]; then
+                    echo "::error::component=storybook is only supported for environment=dev (Pre-Dev Storybooks are deployed by predev-sync, Prod has none)."
+                    exit 1
+                  fi
+
+            - name: Check the deploy secrets are set
+              env:
+                  HAS_HOST: ${{ secrets.DEPLOY_SSH_HOST != '' }}
+                  HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
+                  HAS_FINGERPRINT: ${{ secrets.DEPLOY_SSH_FINGERPRINT != '' }}
+              run: |
+                  missing=""
+                  [ "$HAS_HOST" = "true" ] || missing="$missing DEPLOY_SSH_HOST"
+                  [ "$HAS_KEY" = "true" ] || missing="$missing DEPLOY_SSH_KEY"
+                  if [ -n "$missing" ]; then
+                    echo "::error::GitHub environment 'development' is missing:$missing (Settings → Environments → development)"
+                    exit 1
+                  fi
+                  [ "$HAS_FINGERPRINT" = "true" ] || echo "::warning::DEPLOY_SSH_FINGERPRINT is not set in 'development'; the server's host key is not verified."
+
+            - name: Restart storybook-frontend and storybook-admin
+              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              with:
+                  host: ${{ secrets.DEPLOY_SSH_HOST }}
+                  username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
+                  key: ${{ secrets.DEPLOY_SSH_KEY }}
+                  port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+                  fingerprint: ${{ secrets.DEPLOY_SSH_FINGERPRINT }}
+                  command_timeout: 10m
+                  script: |
+                      set -euo pipefail
+                      ns=caritas
+                      echo "--- before"
+                      kubectl get pods -n "$ns" -l 'app in (storybook-frontend,storybook-admin)' \
+                        -o jsonpath='{range .items[*]}{.metadata.labels.app}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}'
+                      for d in storybook-frontend storybook-admin; do
+                        kubectl rollout restart "deployment/$d" -n "$ns"
+                      done
+                      for d in storybook-frontend storybook-admin; do
+                        kubectl rollout status "deployment/$d" -n "$ns" --timeout=5m
+                      done
+                      # Proof of what is running now, so the run log answers
+                      # "which image is live?" without anyone logging in.
+                      echo "--- after"
+                      kubectl get pods -n "$ns" -l 'app in (storybook-frontend,storybook-admin)' \
+                        -o jsonpath='{range .items[*]}{.metadata.labels.app}{"  "}{.status.containerStatuses[0].image}{"  "}{.status.containerStatuses[0].imageID}{"\n"}{end}'
+
     deploy-prod:
-        if: ${{ github.event.inputs.environment == 'prod' }}
+        if: ${{ github.event.inputs.environment == 'prod' && (github.event.inputs.component || 'frontend') == 'frontend' }}
         runs-on: ubuntu-latest
         timeout-minutes: 30
         environment: production

@@ -11,6 +11,16 @@ import {
 /** The consultant enquiries list (the real route, not a practice copy). */
 export const PRACTICE_ENQUIRIES_ROUTE = '/sessions/consultant/sessionPreview';
 
+/**
+ * The live-chat queue: the enquiries with the live-chat filter on, where
+ * switching "Bin verfügbar" on lands (`LIVE_CHAT_QUEUE_PATH`).
+ */
+export const PRACTICE_LIVE_CHAT_QUEUE_ROUTE = `${PRACTICE_ENQUIRIES_ROUTE}?chip=liveChat`;
+
+/** Where "Bin verfügbar" lives: the settings page of the live-chat switch. */
+export const PRACTICE_LIVE_CHAT_SETTINGS_ROUTE =
+	'/profile/aktivitaeten/abwesenheit';
+
 const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
 
 /**

@@ -171,7 +171,6 @@
 		"selectLanguage": "Dil seçin",
 		"stage": {
 			"title": "Danışmanlık\n& Yardım",
-
 			"carrierLogoAlt": "{{name}} konumlarının haritasını göster"
 		},
 		"stop": "Dur",
@@ -6693,6 +6692,21 @@
 				"done": {
 					"title": "Sohbeti bitir",
 					"intro": "Görüşme bitince ⋮ menüsünden “Sohbeti bitir” ile sonlandırın. Ardından sıraya geri dönersiniz."
+				},
+				"practiceIntro": {
+					"intro": "Bu bir alıştırmadır: Buradaki herkes hayal ürünüdür, hiçbir şey gönderilmez veya kaydedilmez. Canlı sohbetler kayıt olmadan bir bağlantı üzerinden gelir ve kişi anonim yazar. Birazdan sizi bir alıştırma canlı sohbeti bekleyecek."
+				},
+				"openRequest": {
+					"title": "Canlı sohbeti aç",
+					"intro": "Listede anonim bir danışanın canlı sohbeti bekliyor. Açmak için üzerine tıklayın."
+				},
+				"reply": {
+					"title": "Yanıtla",
+					"intro": "Sohbet sürüyor. Kişiye kısa bir yanıt yazın ve gönderin. Yanıt alıştırmada kalır ve hiçbir yere kaydedilmez."
+				},
+				"practiceAvailability": {
+					"title": "Uygun ol",
+					"intro": "Canlı sohbetler yalnızca uygun olanlara sunulur. “Uygunum” ayarını burada ya da menü çubuğunda açın; alıştırmada gerçek durumunuz değişmez."
 				}
 			}
 		},
@@ -7130,6 +7144,7 @@
 			"waitingFor": "{{count}} dk'dır bekliyor",
 			"justArrived": "az önce geldi",
 			"admit": "İçeri al",
+			"startAndAdmit": "Aramayı başlat ve içeri al",
 			"decline": "Reddet",
 			"admitAll": "Herkesi içeri al",
 			"position": "{{current}} / {{total}}",
@@ -7459,6 +7474,48 @@
 			"failed": "Değişiklik kaydedilemedi. Lütfen tekrar deneyin.",
 			"scheduledAt": "Tarih ve saat",
 			"clearScheduledAt": "Kaldır"
+		},
+		"staffJoin": {
+			"kicker": "Doğrudan davet",
+			"offer": {
+				"status": "Danışman olarak oturum açtınız",
+				"title": "Danışman olarak katıl",
+				"text": "Görüşmeye kendi hesabınızla katılırsınız ve oturumunuz açık kalır. Sizi davet eden kişi içeri alır. Bu randevunun sohbetini görmezsiniz.",
+				"join": "Danışman olarak katıl"
+			},
+			"waiting": {
+				"status": "İçeri alınmayı bekliyor",
+				"title": "Kapıyı çaldınız",
+				"text": "İçeri alındığınız anda görüşme başlar. Bu sayfayı açık bırakın."
+			},
+			"notStarted": {
+				"status": "Görüşme henüz başlamadı",
+				"title": "Görüşme henüz başlamadı",
+				"text": "Görüşme başlar başlamaz burada devam edilir. Bu sayfayı açık bırakın."
+			},
+			"refused": {
+				"status": "İçeri alınmadınız",
+				"title": "İçeri alınmadınız",
+				"text": "Sizi davet eden kişi bu görüşmeye sizi almadı."
+			},
+			"forbidden": {
+				"status": "Katılmak mümkün değil",
+				"title": "Bu görüşmeye katılamazsınız",
+				"text": "Bağlantı artık etkin değil veya bu görüşmeden çıkarıldınız."
+			},
+			"ended": {
+				"status": "Görüşme sona erdi",
+				"title": "Görüşme sona erdi",
+				"text": "Bu sayfayı artık kapatabilirsiniz."
+			},
+			"error": {
+				"status": "Katılım olmadı",
+				"title": "Katılım olmadı",
+				"text": "Lütfen tekrar deneyin."
+			},
+			"cancel": "İptal",
+			"retry": "Tekrar dene",
+			"openOwnSessions": "Görüşmelerime git"
 		}
 	},
 	"dashboard": {

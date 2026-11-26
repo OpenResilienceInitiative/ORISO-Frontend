@@ -28,6 +28,7 @@ import {
 	DARK_BRAND_TONES,
 	DARK_NEUTRAL_TONES,
 	DEFAULT_SIGNAL,
+	HIGH_CONTRAST_INK_TONES,
 	INVERTED_NEUTRAL_TONES,
 	LIGHT_NEUTRAL_TONES,
 	NEUTRAL,
@@ -392,12 +393,16 @@ export const computeOrisoPalette = (
 		signalContainer
 	);
 
-	const neutralTones =
+	const schemeTones =
 		scheme === 'light'
 			? LIGHT_NEUTRAL_TONES
 			: scheme === 'dark'
 				? DARK_NEUTRAL_TONES
 				: INVERTED_NEUTRAL_TONES;
+	const neutralTones =
+		contrast === 'high' && scheme !== 'inverted'
+			? { ...schemeTones, ...HIGH_CONTRAST_INK_TONES[scheme] }
+			: schemeTones;
 
 	const tokens: Record<string, string> = {
 		'--m3-primary': brand.role,

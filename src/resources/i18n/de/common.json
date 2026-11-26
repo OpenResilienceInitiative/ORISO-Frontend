@@ -171,7 +171,6 @@
 		"selectLanguage": "Sprache wählen",
 		"stage": {
 			"title": "Beratung\n& Hilfe",
-
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
 		"stop": "Stopp",
@@ -6683,6 +6682,21 @@
 				"done": {
 					"title": "Chat beenden",
 					"intro": "Ist das Gespräch vorbei, beenden Sie es über das Menü ⋮ mit „Chat beenden“. Danach geht es zurück zur Warteschlange."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Live-Chats kommen ohne Registrierung über einen Link, die Person schreibt anonym. Gleich wartet ein Übungs-Live-Chat auf Sie."
+				},
+				"openRequest": {
+					"title": "Live-Chat öffnen",
+					"intro": "In der Liste wartet ein Live-Chat einer anonymen ratsuchenden Person. Klicken Sie darauf, um ihn zu öffnen."
+				},
+				"reply": {
+					"title": "Antworten",
+					"intro": "Der Chat läuft. Schreiben Sie der Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"practiceAvailability": {
+					"title": "Verfügbar schalten",
+					"intro": "Nur wer verfügbar ist, bekommt Live-Chats angeboten. Schalten Sie „Bin verfügbar“ hier oder in der Menüleiste ein – in der Übung bleibt Ihr echter Status unverändert."
 				}
 			}
 		},
@@ -7120,6 +7134,7 @@
 			"waitingFor": "wartet seit {{count}} Min.",
 			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
+			"startAndAdmit": "Anruf starten und einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",
 			"position": "{{current}} von {{total}}",
@@ -7449,6 +7464,48 @@
 			"failed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
 			"scheduledAt": "Datum und Uhrzeit",
 			"clearScheduledAt": "Entfernen"
+		},
+		"staffJoin": {
+			"kicker": "Direkteinladung",
+			"offer": {
+				"status": "Sie sind als Berater:in angemeldet",
+				"title": "Als Berater:in beitreten",
+				"text": "Sie treten dem Anruf mit Ihrem eigenen Konto bei und bleiben angemeldet. Die einladende Person lässt Sie herein. Den Chat dieses Termins sehen Sie dabei nicht.",
+				"join": "Als Berater:in beitreten"
+			},
+			"waiting": {
+				"status": "Warten auf Einlass",
+				"title": "Sie haben angeklopft",
+				"text": "Sobald Sie hereingelassen werden, startet der Anruf. Lassen Sie diese Seite offen."
+			},
+			"notStarted": {
+				"status": "Der Anruf hat noch nicht begonnen",
+				"title": "Der Anruf hat noch nicht begonnen",
+				"text": "Sobald der Anruf läuft, geht es hier weiter. Lassen Sie diese Seite offen."
+			},
+			"refused": {
+				"status": "Nicht hereingelassen",
+				"title": "Sie wurden nicht hereingelassen",
+				"text": "Die einladende Person hat Sie zu diesem Anruf nicht hereingelassen."
+			},
+			"forbidden": {
+				"status": "Beitreten nicht möglich",
+				"title": "Diesem Anruf können Sie nicht beitreten",
+				"text": "Der Link ist nicht mehr aktiv oder Sie wurden aus diesem Anruf entfernt."
+			},
+			"ended": {
+				"status": "Anruf beendet",
+				"title": "Der Anruf ist beendet",
+				"text": "Sie können diese Seite jetzt schließen."
+			},
+			"error": {
+				"status": "Beitreten hat nicht geklappt",
+				"title": "Beitreten hat nicht geklappt",
+				"text": "Bitte versuchen Sie es noch einmal."
+			},
+			"cancel": "Abbrechen",
+			"retry": "Erneut versuchen",
+			"openOwnSessions": "Zu meinen Beratungen"
 		}
 	},
 	"dashboard": {
