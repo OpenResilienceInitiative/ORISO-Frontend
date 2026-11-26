@@ -1,4 +1,6 @@
 import { expect, Page, test } from '@playwright/test';
+import settings from '../cypress/fixtures/service.settings.json';
+import topics from '../cypress/fixtures/service.topics.json';
 
 /**
  * Fold contract for the asker login screen on phones.
@@ -20,7 +22,45 @@ const FORGOT_PASSWORD = '.loginForm .button-as-link:not(.consulting-topics)';
 const TOPICS_LINK = '.loginForm .consulting-topics';
 const REGISTER_BLOCK = '.loginForm__register';
 
+// The login screen boots from the settings and topic services. Serve them from
+// the shared synthetic fixtures so the fold contract runs without a reachable
+// backend (CI runners cannot reach the dev cluster).
+async function serveSyntheticShell(page: Page) {
+	await page.addInitScript(() => {
+		localStorage.setItem('locale', 'de');
+		localStorage.setItem('showDevTools', '0');
+		const base = window.location.origin;
+		Object.assign(window, {
+			__ORISO_RUNTIME_CONFIG__: {
+				REACT_APP_API_URL: base,
+				REACT_APP_KEYCLOAK_ORIGIN: base,
+				REACT_APP_KEYCLOAK_REALM: 'local',
+				REACT_APP_MATRIX_HOMESERVER_URL: base,
+				REACT_APP_ELEMENT_CALL_BASE_URL: base,
+				REACT_APP_LIVEKIT_WS_URL: base.replace('http', 'ws')
+			}
+		});
+	});
+	await page.route('**/*', async (route) => {
+		const url = new URL(route.request().url());
+		const origin = new URL(page.url() || url.href).origin;
+		if (url.origin !== origin && !url.href.startsWith('http://localhost'))
+			return route.abort();
+		const path = url.pathname;
+		if (path === '/service/topic/public')
+			return route.fulfill({ json: topics });
+		if (path === '/service/settings')
+			return route.fulfill({ json: settings });
+		if (path === '/service/consultingtypes/basic')
+			return route.fulfill({ json: [] });
+		if (path === '/p/api/settings' || path.startsWith('/service/'))
+			return route.fulfill({ json: {} });
+		return route.continue();
+	});
+}
+
 async function openLogin(page: Page) {
+	await serveSyntheticShell(page);
 	await page.goto('/login');
 	await expect(page.locator('input[type="password"]')).toBeVisible();
 	await expect(page.locator(REGISTER_BLOCK)).toBeVisible();

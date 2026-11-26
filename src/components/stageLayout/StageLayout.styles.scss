@@ -364,7 +364,10 @@
 		@media (width < 720px) {
 			--curtain-corner: 1.5rem;
 
-			height: 17rem;
+			// 17rem on tall phones; capped on short ones so the "New here?"
+			// registration entry stays above the fold at 390x664 (Chrome's
+			// toolbar shown), the owner requirement in login-fold.smoke.spec.ts.
+			height: min(17rem, 38svh);
 
 			// Tuck the rounded edge behind the sheet until the curtains part.
 			margin-block-end: calc(-1 * var(--curtain-corner));
