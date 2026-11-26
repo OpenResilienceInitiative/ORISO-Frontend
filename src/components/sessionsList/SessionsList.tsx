@@ -2260,13 +2260,19 @@ export const SessionsList = ({
 		toolbarNarrowsList,
 		totalItems
 	]);
-	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
-		setCaseHandoverSelectedIds((current) =>
-			current.includes(sessionId)
-				? current.filter((id) => id !== sessionId)
-				: [...current, sessionId]
-		);
-	}, []);
+	const handleCaseHandoverSelect = useCallback(
+		(sessionId: number) => {
+			// The outcome effect resets the selection to the submitted set; a
+			// toggle made while the request runs would be lost silently.
+			if (caseHandoverBatch.submitting) return;
+			setCaseHandoverSelectedIds((current) =>
+				current.includes(sessionId)
+					? current.filter((id) => id !== sessionId)
+					: [...current, sessionId]
+			);
+		},
+		[caseHandoverBatch.submitting]
+	);
 	const caseHandoverPaneRef = useRef<HTMLElement | null>(null);
 	/** The chevron's "Confirm selection": jump to the reason step on the right. */
 	const handleFocusCaseHandoverPane = useCallback(() => {
@@ -2279,7 +2285,9 @@ export const SessionsList = ({
 		setCaseHandoverSelectedIds([]);
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
-	}, [caseHandoverBatch, caseHandoverSelectedIds]);
+		// The focused "Clear selection" button unmounts with the pane.
+		listRef.current?.focus({ preventScroll: true });
+	}, [caseHandoverBatch, caseHandoverSelectedIds, listRef]);
 	useEffect(() => {
 		if (
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
@@ -3224,9 +3232,9 @@ export const SessionsList = ({
 					</div>
 				)}
 			{caseHandoverPaneOpen &&
-				(caseHandoverPaneSlot && !untilL
-					? createPortal(caseHandoverPane, caseHandoverPaneSlot)
-					: caseHandoverPane)}
+				caseHandoverPaneSlot &&
+				!untilL &&
+				createPortal(caseHandoverPane, caseHandoverPaneSlot)}
 			{isRail && showMySessionToolbar && widenRail && (
 				<button
 					type="button"
@@ -3247,6 +3255,7 @@ export const SessionsList = ({
 						'sessionRailList': isRail
 					})}
 					ref={listRef}
+					tabIndex={-1}
 					// Rail pills are tabs; full cards hold their own buttons (menu,
 					// mail, call), which a tab may not contain, so they are list
 					// items (#1338).
@@ -3481,6 +3490,11 @@ export const SessionsList = ({
 					</button>
 				)}
 			</div>
+
+			{/* Small screens: under the list (desktop portals to the right pane). */}
+			{caseHandoverPaneOpen &&
+				!(caseHandoverPaneSlot && !untilL) &&
+				caseHandoverPane}
 
 			{/* Not in the rail: 80 px set the sentence one letter per line
 			    (Frank, 2026-11-17); the rail's search button stays. */}
