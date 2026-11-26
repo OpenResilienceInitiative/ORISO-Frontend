@@ -6,6 +6,7 @@ import {
 } from './saveAppointmentInvitation';
 import {
 	fromInvitationPresetState,
+	readPresetRouterState,
 	MEDIUM_FOR_KIND,
 	toInvitationPresetState
 } from './invitationModel';
@@ -137,35 +138,45 @@ describe('the calendar hands a new person to "Chat erstellen"', () => {
 	it('keeps slot and Art through router state', () => {
 		const state = toInvitationPresetState({ ...slot, kind: 'onsite' });
 		expect(JSON.parse(JSON.stringify(state))).toEqual(state);
-		expect(fromInvitationPresetState(state)).toEqual({
-			...slot,
-			kind: 'onsite'
-		});
+		expect(fromInvitationPresetState(readPresetRouterState(state))).toEqual(
+			{
+				...slot,
+				kind: 'onsite'
+			}
+		);
 	});
 
 	it('ignores state that is no preset', () => {
-		expect(fromInvitationPresetState(null)).toBeUndefined();
 		expect(
-			fromInvitationPresetState({
-				invitationPreset: { start: 'x', end: 'y' }
-			})
+			fromInvitationPresetState(readPresetRouterState(null))
 		).toBeUndefined();
 		expect(
-			fromInvitationPresetState({
-				invitationPreset: {
-					start: slot.end.toISOString(),
-					end: slot.start.toISOString()
-				}
-			})
+			fromInvitationPresetState(
+				readPresetRouterState({
+					invitationPreset: { start: 'x', end: 'y' }
+				})
+			)
 		).toBeUndefined();
 		expect(
-			fromInvitationPresetState({
-				invitationPreset: {
-					start: slot.start.toISOString(),
-					end: slot.end.toISOString(),
-					kind: 'teleport'
-				}
-			})
+			fromInvitationPresetState(
+				readPresetRouterState({
+					invitationPreset: {
+						start: slot.end.toISOString(),
+						end: slot.start.toISOString()
+					}
+				})
+			)
+		).toBeUndefined();
+		expect(
+			fromInvitationPresetState(
+				readPresetRouterState({
+					invitationPreset: {
+						start: slot.start.toISOString(),
+						end: slot.end.toISOString(),
+						kind: 'teleport'
+					}
+				})
+			)
 		).toEqual(slot);
 	});
 

@@ -7611,7 +7611,12 @@
 			},
 			"linkFailedTitle": "Einladungslink nicht erstellt",
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
-			"appointmentSaved": "Der Termin ist angelegt."
+			"appointmentSaved": "Der Termin ist angelegt.",
+			"openLink": {
+				"action": "Weiter zum Einladungslink",
+				"hint": "Ohne Termin entsteht ein offener Einladungslink: Jede Person, die ihn öffnet, bekommt ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen. Im nächsten Schritt wählen Sie Thema und Namen.",
+				"mediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art."
+			}
 		},
 		"overview": {
 			"title": "Termine & Direkteinladungen",
@@ -7688,6 +7693,7 @@
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
 		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarOpenLink": "Aus dem Kalender: offener Einladungslink ohne Termin.",
 		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {
