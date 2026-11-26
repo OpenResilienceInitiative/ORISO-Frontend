@@ -179,6 +179,12 @@
 	"src/api/apiSetLiveChatAvailability.ts": {
 		"anti-slop(no-runtime-typeof)": 1
 	},
+	"src/api/apiStaffJoin.ts": {
+		"anti-slop(no-runtime-typeof)": 5,
+		"anti-slop(no-unknown-parameters)": 1,
+		"anti-slop(no-unsafe-dictionary-type)": 1,
+		"anti-slop(require-safety-comment-for-type-assertion)": 1
+	},
 	"src/api/apiTeamDiscussion.ts": {
 		"anti-slop(no-unknown-parameters)": 1
 	},
@@ -624,6 +630,12 @@
 		"react(refs)": 1,
 		"react(set-state-in-effect)": 2
 	},
+	"src/components/call/knockNotice/WaitingGuestNoticeHost.tsx": {
+		"anti-slop(no-conditional-empty-object-spread)": 1,
+		"anti-slop(no-runtime-typeof)": 1,
+		"anti-slop(no-unknown-returns)": 1,
+		"react(purity)": 1
+	},
 	"src/components/call/knockNotice/callKnockModel.ts": {
 		"anti-slop(no-array-filter-map)": 1
 	},
@@ -639,6 +651,11 @@
 		"promise(no-callback-in-promise)": 1,
 		"react(refs)": 1,
 		"react(set-state-in-effect)": 1
+	},
+	"src/components/call/knockNotice/waitingGuests.ts": {
+		"anti-slop(no-runtime-typeof)": 2,
+		"anti-slop(no-unsafe-dictionary-type)": 1,
+		"anti-slop(require-safety-comment-for-type-assertion)": 1
 	},
 	"src/components/call/prejoin/CallPrejoinDialog.tsx": {
 		"anti-slop(no-unknown-returns)": 1
@@ -878,6 +895,9 @@
 		"anti-slop(require-safety-comment-for-type-assertion)": 3,
 		"jsx-a11y(prefer-tag-over-role)": 1
 	},
+	"src/components/designTokens/textContrastContract.ts": {
+		"anti-slop(no-array-filter-map)": 2
+	},
 	"src/components/devToolbar/DevToolbar.tsx": {
 		"anti-slop(no-runtime-typeof)": 3,
 		"jsx-a11y(click-events-have-key-events)": 1,
@@ -931,12 +951,10 @@
 		"react(refs)": 1
 	},
 	"src/components/directLinkEntry/DirectLinkCallEntry.tsx": {
+		"anti-slop(no-conditional-empty-object-spread)": 2,
 		"anti-slop(no-unknown-returns)": 2,
 		"anti-slop(require-safety-comment-for-type-assertion)": 4,
 		"react(refs)": 1
-	},
-	"src/components/directLinkEntry/DirectLinkKnockGate.tsx": {
-		"react(set-state-in-effect)": 1
 	},
 	"src/components/directLinkEntry/SharedCallGuest.tsx": {
 		"anti-slop(no-unknown-parameters)": 1,
@@ -947,6 +965,9 @@
 		"anti-slop(no-conditional-empty-object-spread)": 1,
 		"anti-slop(no-runtime-typeof)": 1,
 		"anti-slop(no-unknown-parameters)": 1
+	},
+	"src/components/directLinkEntry/answerOrKnock.ts": {
+		"anti-slop(no-conditional-empty-object-spread)": 1
 	},
 	"src/components/directLinkEntry/callMessageKnock.ts": {
 		"anti-slop(no-conditional-empty-object-spread)": 1
@@ -962,6 +983,9 @@
 	},
 	"src/components/directLinkEntry/useDirectLinkKnock.ts": {
 		"promise(no-callback-in-promise)": 2
+	},
+	"src/components/directLinkEntry/waitForKnockAdmission.ts": {
+		"anti-slop(require-safety-comment-for-type-assertion)": 1
 	},
 	"src/components/directLinks/DirectLinkEditDialog.tsx": {
 		"react(set-state-in-effect)": 1
@@ -1003,9 +1027,9 @@
 		"unicorn(no-useless-fallback-in-spread)": 2
 	},
 	"src/components/displayFilter/kindOptions.ts": {
-		"anti-slop(no-chained-type-assertions)": 11,
+		"anti-slop(no-chained-type-assertions)": 10,
 		"anti-slop(no-known-value-widening)": 2,
-		"anti-slop(require-safety-comment-for-type-assertion)": 23
+		"anti-slop(require-safety-comment-for-type-assertion)": 21
 	},
 	"src/components/dpaSign/DpaSign.tsx": {
 		"anti-slop(no-unknown-parameters)": 2,
@@ -1342,6 +1366,11 @@
 		"jsx-a11y(prefer-tag-over-role)": 1,
 		"react(set-state-in-effect)": 1
 	},
+	"src/components/invite/staffJoin/StaffCallJoin.tsx": {
+		"anti-slop(no-unknown-parameters)": 1,
+		"anti-slop(require-safety-comment-for-type-assertion)": 1,
+		"react(refs)": 2
+	},
 	"src/components/journey/JourneyQuestionField.tsx": {
 		"anti-slop(require-safety-comment-for-type-assertion)": 1
 	},
@@ -1400,7 +1429,7 @@
 		"anti-slop(no-unknown-parameters)": 3,
 		"anti-slop(require-safety-comment-for-type-assertion)": 7,
 		"eslint(no-unused-vars)": 3,
-		"jsx-a11y(prefer-tag-over-role)": 2,
+		"jsx-a11y(prefer-tag-over-role)": 3,
 		"react(set-state-in-effect)": 4
 	},
 	"src/components/login/LoginSecurityExplainer.tsx": {
@@ -1721,6 +1750,9 @@
 		"anti-slop(no-unknown-parameters)": 1,
 		"anti-slop(no-unsafe-dictionary-type)": 3
 	},
+	"src/components/notificationsCenter/knockCallAction.ts": {
+		"anti-slop(no-unknown-returns)": 1
+	},
 	"src/components/notificationsCenter/notificationActionTarget.ts": {
 		"anti-slop(no-known-value-widening)": 1,
 		"anti-slop(no-runtime-typeof)": 16,
@@ -1871,7 +1903,9 @@
 		"react(set-state-in-effect)": 1
 	},
 	"src/components/profile/ConsultantStatistics.tsx": {
-		"anti-slop(require-safety-comment-for-type-assertion)": 1
+		"anti-slop(require-safety-comment-for-type-assertion)": 1,
+		"jsx-a11y(prefer-tag-over-role)": 2,
+		"react(set-state-in-effect)": 1
 	},
 	"src/components/profile/DisplayNameSettings.tsx": {
 		"eslint(no-unused-vars)": 2,
@@ -2481,7 +2515,7 @@
 		"jsx-a11y(no-noninteractive-element-interactions)": 2,
 		"jsx-a11y(no-noninteractive-tabindex)": 2,
 		"jsx-a11y(no-static-element-interactions)": 5,
-		"jsx-a11y(prefer-tag-over-role)": 3
+		"jsx-a11y(prefer-tag-over-role)": 4
 	},
 	"src/components/sessionsListItem/SessionListItemLastMessage.tsx": {
 		"jsx-a11y(prefer-tag-over-role)": 1
@@ -2713,7 +2747,7 @@
 	},
 	"src/components/walkthrough/Walkthrough.tsx": {
 		"react(refs)": 18,
-		"react(set-state-in-effect)": 1
+		"react(set-state-in-effect)": 2
 	},
 	"src/containers/overview/components/BookingEvent/index.tsx": {
 		"jsx-a11y(prefer-tag-over-role)": 1
@@ -3023,6 +3057,9 @@
 		"anti-slop(require-safety-comment-for-type-assertion)": 8,
 		"eslint(no-setter-return)": 1
 	},
+	"src/practice/assertNoPracticeWrites.ts": {
+		"anti-slop(no-runtime-typeof)": 1
+	},
 	"src/practice/fakeMatrix/FakeMatrixService.ts": {
 		"anti-slop(no-runtime-typeof)": 1,
 		"anti-slop(no-unknown-parameters)": 2,
@@ -3060,8 +3097,8 @@
 		"jsx-a11y(prefer-tag-over-role)": 1
 	},
 	"src/practice/practiceTourIds.ts": {
-		"anti-slop(no-runtime-typeof)": 1,
-		"anti-slop(require-safety-comment-for-type-assertion)": 1
+		"anti-slop(no-runtime-typeof)": 2,
+		"anti-slop(require-safety-comment-for-type-assertion)": 2
 	},
 	"src/practice/practiceTourOffer.ts": {
 		"anti-slop(no-unsafe-dictionary-type)": 1
@@ -3370,6 +3407,9 @@
 		"anti-slop(require-safety-comment-for-type-assertion)": 1,
 		"react(refs)": 1,
 		"react(set-state-in-effect)": 1
+	},
+	"src/utils/localSpeechVoice.ts": {
+		"anti-slop(no-known-value-widening)": 1
 	},
 	"src/utils/matrixActivityEventResolver.ts": {
 		"anti-slop(require-safety-comment-for-type-assertion)": 2
