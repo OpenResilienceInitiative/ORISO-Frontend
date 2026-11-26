@@ -12,6 +12,10 @@ import {
 } from './MessageItemComponent.mocks';
 import { MessageContextShell, phone375Globals } from './messageStoryShell';
 import './message.styles.scss';
+import {
+	describeLowContrast,
+	findLowContrastText
+} from '../designTokens/textContrastContract';
 
 /**
  * Appointment changes in a 1:1 conversation (FE#1960 notice): booked, moved,
@@ -235,5 +239,34 @@ export const SentBeforeThisChange: Story = {
 		await expect(
 			canvas.queryByRole('button', { name: calendarLabel })
 		).toBeNull();
+	}
+};
+
+const darkGlobals = {
+	scheme: 'dark',
+	backgrounds: { value: 'dark' }
+} as const;
+
+/**
+ * P0 dark mode (2026-11-25): the "von …" line under the title used the
+ * `secondary-container` role as text, which is near-black in dark mode.
+ */
+export const CounsellorDark: Story = {
+	name: 'Counsellor — dark, sender line readable',
+	args: { viewer: 'counsellor', compact: false, onCreateNew: fn() },
+	globals: darkGlobals,
+	render,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getByTestId('appointment-notice-icon-created')
+			).toBeVisible()
+		);
+		await waitFor(async () => {
+			await expect(
+				describeLowContrast(findLowContrastText(canvasElement))
+			).toEqual([]);
+		});
 	}
 };

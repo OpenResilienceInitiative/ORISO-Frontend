@@ -81,7 +81,6 @@ import {
 	countUnreadOtherSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
-	isDirectLinkSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
@@ -1932,14 +1931,6 @@ export const SessionsList = ({
 			),
 		[sessionToolbarPairs]
 	);
-	// FE#1952: the "Direktlinks" chip (and its display-filter row) appear once
-	// the list holds a conversation that came in through a direct link.
-	const hasDirectLinkRow = React.useMemo(
-		() =>
-			type === SESSION_LIST_TYPES.MY_SESSION &&
-			sessionToolbarPairs.some(({ raw }) => isDirectLinkSession(raw)),
-		[sessionToolbarPairs, type]
-	);
 	const activeIsLiveChat = React.useMemo(
 		() =>
 			sessionToolbarPairs.some(
@@ -1988,8 +1979,6 @@ export const SessionsList = ({
 						(isEligibleForSupervision &&
 							type === SESSION_LIST_TYPES.MY_SESSION)
 					);
-				case 'directLinks':
-					return hasDirectLinkRow;
 				default:
 					return true;
 			}
@@ -2036,7 +2025,6 @@ export const SessionsList = ({
 			})
 		);
 	}, [
-		hasDirectLinkRow,
 		isEligibleForSupervision,
 		rowsByKind,
 		showSupervisionChip,
@@ -3050,9 +3038,6 @@ export const SessionsList = ({
 					chipView={chipPresentation.view}
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
-					showDirectLinksChip={
-						hasDirectLinkRow || sessionToolbarChip === 'directLinks'
-					}
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
@@ -3073,16 +3058,6 @@ export const SessionsList = ({
 							id: 'nearby',
 							label: translate('sessionList.toolbar.chips.nearby')
 						},
-						...(hasDirectLinkRow
-							? [
-									{
-										id: 'directLinks',
-										label: translate(
-											'sessionList.toolbar.chips.directLinks'
-										)
-									}
-								]
-							: []),
 						{
 							id: 'liveChat',
 							label: translate(
