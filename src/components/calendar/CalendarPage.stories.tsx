@@ -1059,11 +1059,22 @@ export const ColleaguesBandClick: Story = {
 /** Monday 11–12: A. Kaya (video) and P. Nowak (phone), "2 von 4 belegt". */
 const MONDAY_BAND = `${new Date(2026, 10, 16, 11).getTime()}-${new Date(2026, 10, 16, 12).getTime()}`;
 const TEAM = ['kaya', 'demir', 'hoffmann', 'nowak'];
-/** A band by its stretch, and a point on it no entry or grip covers. */
+const nextFrame = () =>
+	new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+/**
+ * A band by its stretch, and a point on it no entry or grip covers. The
+ * point is taken only once the band has stopped moving: a notice left over
+ * from the previous story can still collapse above the grid, and a point
+ * taken before that lands one hour lower, on the next band.
+ */
 const bandByKey = (root: HTMLElement, key: string) =>
-	waitFor(() => {
+	waitFor(async () => {
 		const band = root.querySelector<HTMLElement>(`[data-band="${key}"]`);
 		expect(band).toBeTruthy();
+		const before = band!.getBoundingClientRect().top;
+		await nextFrame();
+		await nextFrame();
+		expect(band!.getBoundingClientRect().top).toBe(before);
 		const point = pointOnBand(band!);
 		expect(point).toBeTruthy();
 		return { band: band!, point: point! };
