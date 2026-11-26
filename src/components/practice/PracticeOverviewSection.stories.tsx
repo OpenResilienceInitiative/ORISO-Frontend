@@ -120,7 +120,10 @@ type Story = StoryObj<typeof meta>;
 export const SwitchOffStillStarts: Story = {
 	name: 'Personal tutorial switch off · desktop',
 	play: async ({ canvas }) => {
-		await expect(await canvas.findAllByRole('listitem')).toHaveLength(2);
+		// F1 only: Supervision has no practice card any more; it is the topic
+		// tour "Supervision" in Help → Rundgänge (FE#2545).
+		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
+		await expect(canvas.queryByText(/Supervision/)).toBeNull();
 		for (const button of canvas.getAllByRole('button', {
 			name: 'Übung starten'
 		})) {
