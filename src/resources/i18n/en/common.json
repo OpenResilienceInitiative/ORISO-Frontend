@@ -7536,7 +7536,12 @@
 			},
 			"linkFailedTitle": "Invitation link not created",
 			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
-			"appointmentSaved": "The appointment is saved."
+			"appointmentSaved": "The appointment is saved.",
+			"openLink": {
+				"action": "Continue to invitation link",
+				"hint": "Without a date you create an open invitation link: everyone who opens it gets their own conversation. The link stays valid until you delete it. Next you choose its topic and name.",
+				"mediumOff": "Direct invitations are not enabled for this type. Choose another type."
+			}
 		},
 		"overview": {
 			"title": "Appointments & direct invitations",
@@ -7613,6 +7618,7 @@
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
 		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarOpenLink": "From the calendar: open invitation link without a date.",
 		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {

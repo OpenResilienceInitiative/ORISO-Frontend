@@ -1,6 +1,11 @@
 // @vitest-environment oriso-jsdom
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { readEdgeChoice, writeEdgeChoice } from './calendarPreferences';
+import {
+	readEdgeChoice,
+	readNewEntryWithDate,
+	writeEdgeChoice,
+	writeNewEntryWithDate
+} from './calendarPreferences';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -35,5 +40,27 @@ describe('calendarPreferences — remembered grip choice', () => {
 		expect(() => writeEdgeChoice('me', 'day')).not.toThrow();
 		expect(() => writeEdgeChoice('me', null)).not.toThrow();
 		expect(readEdgeChoice('me')).toBeNull();
+	});
+});
+
+describe('calendarPreferences — "Mit Termin" of "Neuer Eintrag" (FE#2510 *2)', () => {
+	it('is on until the counsellor last used it off, per person', () => {
+		expect(readNewEntryWithDate('me')).toBe(true);
+		writeNewEntryWithDate('me', false);
+		expect(readNewEntryWithDate('me')).toBe(false);
+		expect(readNewEntryWithDate('kaya')).toBe(true);
+		writeNewEntryWithDate('me', true);
+		expect(readNewEntryWithDate('me')).toBe(true);
+	});
+
+	it('stays on when storage is blocked', () => {
+		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+			throw new Error('blocked');
+		});
+		vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+			throw new Error('blocked');
+		});
+		expect(() => writeNewEntryWithDate('me', false)).not.toThrow();
+		expect(readNewEntryWithDate('me')).toBe(true);
 	});
 });

@@ -7621,7 +7621,12 @@
 			},
 			"linkFailedTitle": "Davet bağlantısı oluşturulmadı",
 			"linkFailedAfterAppointment": "Randevu kaydedildi, ancak davet bağlantısı oluşturulmadı. Lütfen tekrar deneyin.",
-			"appointmentSaved": "Randevu kaydedildi."
+			"appointmentSaved": "Randevu kaydedildi.",
+			"openLink": {
+				"action": "Davet bağlantısına devam et",
+				"hint": "Tarih olmadan açık bir davet bağlantısı oluşturursunuz: bağlantıyı açan herkes kendi görüşmesini alır. Bağlantı siz silene kadar geçerlidir. Sonraki adımda konusunu ve adını seçersiniz.",
+				"mediumOff": "Bu tür için doğrudan davetler etkin değil. Başka bir tür seçin."
+			}
 		},
 		"overview": {
 			"title": "Randevular ve doğrudan davetler",
@@ -7698,6 +7703,7 @@
 			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
 		},
 		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun.",
+		"fromCalendarOpenLink": "Takvimden: tarihsiz açık davet bağlantısı.",
 		"fromCalendarPopup": "Takvimden randevu: {{range}}"
 	},
 	"calendar": {
