@@ -116,6 +116,18 @@ describe('RouterConfigConsultant navigation', () => {
 		expect(notificationIndex).toBeGreaterThanOrEqual(0);
 		expect(profileIndex).toBeGreaterThan(notificationIndex);
 	});
+
+	it('shows "Meine Termine" directly before "Mein Profil" (#2328)', () => {
+		const order = RouterConfigConsultant(settings).navigation.map(
+			(item) => item.to
+		);
+
+		expect(order.slice(-3)).toEqual([
+			'/notifications',
+			'/booking/events',
+			'/profile'
+		]);
+	});
 });
 
 describe('"My direct links" moved into the calendar list (*19)', () => {
