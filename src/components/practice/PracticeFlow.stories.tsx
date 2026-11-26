@@ -1236,14 +1236,15 @@ export const Timeline: Story = {
 						]),
 					SLOW
 				);
-				// The newest entry is open: the advice seeker's reply.
-				await expect(
-					await within(
-						document.querySelector<HTMLElement>(
-							'.notificationsCenter__detail'
-						)!
-					).findByText(/Vielen Dank für Ihre Antwort/, {}, SLOW)
-				).toBeVisible();
+				// The newest entry is open: the advice seeker's reply. The
+				// message mounts at opacity 0 and fades in, so it is found
+				// before it shows. Wait for it to show, not just to exist.
+				const reply = await within(
+					document.querySelector<HTMLElement>(
+						'.notificationsCenter__detail'
+					)!
+				).findByText(/Vielen Dank für Ihre Antwort/, {}, SLOW);
+				await waitFor(() => expect(reply).toBeVisible(), SLOW);
 				await next();
 			}
 		);
