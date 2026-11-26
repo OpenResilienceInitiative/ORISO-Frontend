@@ -2280,6 +2280,9 @@ export const SessionsList = ({
 		caseHandoverPaneRef.current?.focus();
 	}, []);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
+		// close() would drop the operation ids while the request still runs on
+		// the server; the outcome would be lost and a retry would not be idempotent.
+		if (caseHandoverBatch.submitting) return;
 		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
 		setCaseHandoverSelectedIds([]);

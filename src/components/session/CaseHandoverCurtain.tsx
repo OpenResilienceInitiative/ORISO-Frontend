@@ -162,6 +162,7 @@ export const CaseHandoverCurtainView = ({
 									type="button"
 									className="caseHandoverCurtain__clearSelection"
 									onClick={onClearSelection}
+									disabled={isSubmitting}
 									data-cy="case-handover-clear-selection"
 								>
 									{translate(
