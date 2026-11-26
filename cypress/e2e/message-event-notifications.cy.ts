@@ -19,7 +19,12 @@ describe('Message event notification privacy', () => {
 			threadRootId: '$thread-root',
 			supervisorMessage: true,
 			senderDisplayName: 'Counsellor',
-			threadParentPreview: null
+			threadParentPreview: null,
+			// Later additions to the payload; none of them carries message text.
+			feedbackMailIntent: false,
+			teamDiscussion: false,
+			mentionedUserIds: null,
+			matrixEventId: null
 		});
 		expect(JSON.stringify(payload)).not.to.contain(
 			'highly sensitive Matrix message body'

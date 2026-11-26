@@ -34,7 +34,6 @@ import { DirectLinkShareDialog } from './directLink/DirectLinkShareDialog';
 import { useCreateViewExit } from './useCreateViewExit';
 import {
 	CounsellorDashboard,
-	DashboardCircle,
 	DashboardStats
 } from '../counsellorDashboard/CounsellorDashboard';
 import { DirectLink } from './directLink/directLink';
@@ -218,44 +217,17 @@ const InternaCard = ({ preset }: { preset: 'empty' | 'filled' }) => {
 
 type PickerStep = 'picker' | 'directLink' | 'links';
 
-/** Sample figures; `archivedSessions` needs a field in the statistics service. */
+/** Sample figures. */
 const DASHBOARD_STATS: DashboardStats = {
 	assignedSessions: 3,
-	activeSessions: 18,
-	sentMessages: 124,
-	archivedSessions: 7
+	activeSessions: 18
 };
 
 /** A counsellor who has just started: few figures, one link, no circles. */
 const SPARSE_STATS: DashboardStats = {
 	assignedSessions: 1,
-	activeSessions: 2,
-	sentMessages: 9
+	activeSessions: 2
 };
-
-const UPCOMING_CIRCLES: DashboardCircle[] = [
-	{
-		id: 'c1',
-		topic: 'Schulden',
-		when: 'Do., 30. Okt · 19:00',
-		medium: 'VIDEO',
-		assignedCounsellors: 6
-	},
-	{
-		id: 'c2',
-		topic: 'Trauer',
-		when: 'Mo., 3. Nov · 18:00',
-		medium: 'AUDIO',
-		assignedCounsellors: 4
-	},
-	{
-		id: 'c3',
-		topic: 'Sozialberatung',
-		when: 'Mi., 5. Nov · 17:30',
-		medium: 'CHAT',
-		assignedCounsellors: 8
-	}
-];
 
 /** #1795: what the backend will hand back; story-only. */
 const toDirectLink = (draft: DirectLinkDraft, index: number): DirectLink => ({
@@ -314,18 +286,9 @@ const FormatPicker = ({
 					onCreate={() => setStep('picker')}
 				>
 					<CounsellorDashboard
+						headline={t('session.emptyAllCaughtUp')}
+						variant="conversation-nothing-to-do"
 						stats={DASHBOARD_STATS}
-						links={links}
-						upcomingCircles={UPCOMING_CIRCLES}
-						onToggleLink={(id, active) =>
-							setLinks((current) =>
-								current.map((link) =>
-									link.id === id ? { ...link, active } : link
-								)
-							)
-						}
-						onShowQr={setShared}
-						onCopy={() => undefined}
 					/>
 				</DesktopFrame>
 			) : step === 'directLink' ? (
@@ -525,94 +488,24 @@ const DesktopFrame = ({
 	);
 };
 
-/** "Gespräche" with nothing selected: the session card holds the overview. */
-const SessionCardShell = ({ children }: { children: React.ReactNode }) => (
-	<div style={{ background: '#e9e6e6', padding: 24 }}>
-		<div
-			style={{
-				background: '#fff',
-				border: '1px solid #ffb4aa',
-				borderRadius: 28,
-				margin: '0 auto',
-				maxWidth: 960,
-				minHeight: 640
-			}}
-		>
-			{children}
-		</div>
-	</div>
-);
-
+/** Creates a video link end to end and lands in the overview. */
 const DashboardStory = ({
-	initial,
-	circles,
 	stats = DASHBOARD_STATS
 }: {
-	initial: DirectLink[];
-	circles: DashboardCircle[];
 	stats?: DashboardStats;
 }) => {
-	const [links, setLinks] = useState(initial);
-	const [shared, setShared] = useState<DirectLink>();
+	const { t } = useTranslation();
 	return (
 		<DesktopFrame>
 			<CounsellorDashboard
+				headline={t('session.emptyAllCaughtUp')}
+				variant="conversation-nothing-to-do"
 				stats={stats}
-				links={links}
-				upcomingCircles={circles}
-				onToggleLink={(id, active) =>
-					setLinks((current) =>
-						current.map((link) =>
-							link.id === id ? { ...link, active } : link
-						)
-					)
-				}
-				onShowQr={setShared}
-				onCopy={() => undefined}
 			/>
-			{shared && (
-				<DirectLinkShareDialog
-					open
-					link={shared}
-					onCopy={() => undefined}
-					onClose={() => setShared(undefined)}
-				/>
-			)}
 		</DesktopFrame>
 	);
 };
 
-const SAMPLE_LINKS: DirectLink[] = [
-	{
-		id: 'a',
-		name: 'Flyer Schule',
-		topic: 'Schulden',
-		medium: 'VIDEO',
-		temporary: true,
-		active: true,
-		url: 'https://app.oriso.org/l/k7m2qx'
-	},
-	{
-		id: 'b',
-		name: 'Website Beratungsstelle',
-		topic: 'Sozialberatung',
-		medium: 'CHAT',
-		temporary: false,
-		active: true,
-		url: 'https://app.oriso.org/l/p4tz9a'
-	},
-	{
-		id: 'c',
-		name: 'Telefonsprechstunde',
-		topic: 'Kinder und Jugendliche',
-		medium: 'AUDIO',
-		temporary: true,
-		active: false,
-		url: 'https://app.oriso.org/l/w3nd8r'
-	}
-];
-
-/** Creates a video link end to end and lands in the overview. */
 const createVideoLink = async (canvasElement: HTMLElement) => {
 	const canvas = within(canvasElement);
 	const body = within(document.body);
@@ -641,10 +534,12 @@ const createVideoLink = async (canvasElement: HTMLElement) => {
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Fertig' })
 	);
-	const list = await canvas.findByRole('region', {
-		name: 'Meine Direkteinladungen'
-	});
-	await expect(within(list).getAllByText('Schulden')[0]).toBeInTheDocument();
+	// Variant C (2026-11-25): the overview no longer lists links; it lands on
+	// the quiet cup with two figures. Links are managed in "Meine Termine".
+	const overview = await canvas.findByTestId('counsellor-dashboard');
+	await expect(
+		within(overview).getByTestId('counsellor-dashboard-figures')
+	).toBeInTheDocument();
 };
 
 export const FormatPickerDesktop: Story = {
@@ -1163,7 +1058,7 @@ export const DirectLinkFlowDesktop: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in "Gespräche", where the overview lists the new link under "Meine Direktlinks". The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
+				story: '#1795, clickable. Choose a topic and a medium, create the link, share it, then land in the quiet "Gespräche" overview (cup and two figures; links are managed in "Meine Termine"). The temporary-account switch follows the medium (chat off, calls on) and can be changed.'
 			}
 		}
 	},
@@ -1193,49 +1088,20 @@ export const DirectLinkFlowMobile: Story = {
 };
 
 export const DashboardWithLinks: Story = {
-	name: 'Gespräche — overview with direct links and circles',
+	name: 'Gespräche — overview: the cup and two figures',
 	parameters: {
 		docs: {
 			description: {
-				story: 'What "Gespräche" shows while no conversation is selected, once the counsellor has a direct link or an upcoming circle. Tiles on the grey app background, no empty conversation room. Figures come from the counsellor statistics service; "Archiviert" needs a new field there. Figures and circles are sample data.'
+				story: 'What "Gespräche" shows while no conversation is selected (Frank, 2026-11-25, variant C): the turning cup and two small figures. Direct links are managed in "Meine Termine". Figures are sample data.'
 			}
 		}
 	},
-	render: () => (
-		<DashboardStory initial={SAMPLE_LINKS} circles={UPCOMING_CIRCLES} />
-	)
+	render: () => <DashboardStory />
 };
 
 export const DashboardSparse: Story = {
-	name: 'Gespräche — overview, just started: one link',
-	parameters: {
-		docs: {
-			description: {
-				story: 'Little has happened yet: two figures, one direct link, no circles (most counsellors run none). A single link becomes a wide card instead of standing alone.'
-			}
-		}
-	},
-	render: () => (
-		<DashboardStory
-			initial={[SAMPLE_LINKS[0]]}
-			circles={[]}
-			stats={SPARSE_STATS}
-		/>
-	)
-};
-
-export const DashboardNothingYet: Story = {
-	name: 'Gespräche — nothing yet: the turning cup stays',
-	render: () => (
-		<SessionCardShell>
-			<DashboardStory initial={[]} circles={[]} />
-		</SessionCardShell>
-	),
-	play: async ({ canvasElement }) => {
-		await expect(
-			within(canvasElement).queryByTestId('counsellor-dashboard')
-		).toBeNull();
-	}
+	name: 'Gespräche — overview, just started',
+	render: () => <DashboardStory stats={SPARSE_STATS} />
 };
 
 export const InternaCardStates: Story = {

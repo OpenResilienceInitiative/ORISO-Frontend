@@ -14,6 +14,7 @@ import fastLoginCommand from './helper/fastLogin';
 import askerSessionsCommand from './helper/askerSessions';
 import consultantSessionsCommand from './helper/consultantSessions';
 import apiTopics from './api/topic';
+import { ADDON_CONTRACT } from '../../../src/addons/addonTypes';
 
 let overrides = {};
 
@@ -92,9 +93,65 @@ fastLoginCommand(getWillReturn, setWillReturn);
 consultantSessionsCommand(getWillReturn, setWillReturn);
 askerSessionsCommand(getWillReturn, setWillReturn);
 
+// Services the app shell calls on every authenticated page. Without a stub the
+// local dev proxy answers 500 and the app leaves for /error.500.html, so every
+// spec that did not stub them failed (FE#2572). Registered first, so a spec's
+// own intercept for the same path wins.
+const mockAppShellDefaults = () => {
+	cy.intercept('GET', '**/service/addons/registry*', {
+		contract: ADDON_CONTRACT,
+		addons: []
+	});
+	cy.intercept('GET', '**/service/addons/calendar*', { entries: [] });
+	cy.intercept('GET', '**/service/users/calendar/proposals*', {
+		sent: [],
+		received: []
+	});
+	cy.intercept('GET', '**/service/users/directlinks*', []);
+	cy.intercept('GET', '**/service/users/chat-series/join-requests*', []);
+	cy.intercept('GET', '**/service/conversations/consultants/availability*', {
+		available: false
+	});
+	cy.intercept('GET', '**/service/users/statistics/consultant*', (req) => {
+		const url = new URL(req.url);
+		req.reply({
+			startDate: url.searchParams.get('startDate'),
+			endDate: url.searchParams.get('endDate'),
+			numberOfAssignedSessions: 0,
+			numberOfActiveSessions: 0,
+			numberOfSentMessages: 0,
+			breakdown: []
+		});
+	});
+	cy.intercept('POST', '**/service/error-reports*', { statusCode: 204 });
+	// Case handover (#2447 era): own sessions are not under a handover, so the
+	// list must not render them as locked.
+	cy.intercept('GET', '**/service/users/case-handover/candidates*', {
+		sessions: [],
+		offset: 0,
+		count: 0,
+		total: 0
+	});
+	cy.intercept('GET', '**/service/users/sessions/*/case-handover', (req) => {
+		const sessionId = Number(
+			new URL(req.url).pathname.split('/').slice(-2, -1)[0]
+		);
+		req.reply({
+			sessionId,
+			status: 'NOT_REQUESTED',
+			canViewContent: true,
+			ownershipRevision: 1
+		});
+	});
+	// The app boots without its Matrix conversation service.
+	cy.intercept('GET', '**/service/matrix/me/token*', { statusCode: 503 });
+};
+
 Cypress.Commands.add('mockApi', () => {
 	// Empty overrides
 	overrides = {};
+
+	mockAppShellDefaults();
 
 	// Generate 1 default sessions
 	setAskerSessions([]);
@@ -139,9 +196,12 @@ Cypress.Commands.add('mockApi', () => {
 	});
 
 	cy.fixture('service.users.sessions.room.json').then((session) => {
-		const rooms = defaultReturns['sessionRooms'];
-		rooms.body.sessions.push(session);
-		overrides['sessionRooms'] = rooms;
+		// Copy instead of pushing into defaultReturns: the push leaked one
+		// more fixture session into every following test of a spec.
+		overrides['sessionRooms'] = {
+			...defaultReturns['sessionRooms'],
+			body: { sessions: [session] }
+		};
 	});
 
 	cy.fixture('service.agency.consultants.json').then((agencyConsultants) => {
@@ -226,4 +286,6 @@ export const USER_CONSULTANT = 'consultant';
 export interface LoginArgs {
 	userId?: typeof USER_ASKER | typeof USER_CONSULTANT;
 	auth?: { expires_in: number; refresh_expires_in: number };
+	/** Set when `cy.clock()` is installed: tick the app's timers while logging in. */
+	tickTimers?: boolean;
 }

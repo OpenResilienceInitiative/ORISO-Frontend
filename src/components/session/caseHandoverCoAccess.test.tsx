@@ -26,8 +26,12 @@ const ROOM_ID = '!session:matrix.example.org';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, options?: { until?: string }) =>
-			options?.until ? `${key} ${options.until}` : key,
+		t: (key: string, options?: { until?: string; name?: string }) =>
+			options?.until
+				? `${key} ${options.until}`
+				: options?.name
+					? `${key} ${options.name}`
+					: key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -283,6 +287,58 @@ describe('SessionItemComponent — Teamberatung is read-only for colleagues (FE#
 		);
 		expect(screen.queryByTestId('composer')).toBeNull();
 		expect(screen.queryByTestId('case-handover-extend')).toBeNull();
+	});
+
+	// The room endpoint's counsellor view (GET /users/sessions/room/{id}):
+	// id and real name, plus the public name the server now resolves.
+	const roomConsultant = {
+		id: 'counsellor-1',
+		firstName: 'Marge',
+		lastName: 'Realname',
+		absent: false
+	};
+
+	it('names the writing counsellor by display name, never by real name', async () => {
+		renderSession(teamReader, {
+			...teamCase,
+			consultant: {
+				...roomConsultant,
+				username: 'marge.public',
+				displayName: 'Marge S.'
+			}
+		});
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe(
+			'caseHandover.readOnly.teamNotice Marge S.'
+		);
+		expect(notice.textContent).not.toContain('Realname');
+	});
+
+	it('falls back to the username when there is no display name', async () => {
+		renderSession(teamReader, {
+			...teamCase,
+			consultant: { ...roomConsultant, username: 'marge.public' }
+		});
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe(
+			'caseHandover.readOnly.teamNotice marge.public'
+		);
+	});
+
+	it('shows the generic notice rather than a real name when no public name came back', async () => {
+		renderSession(teamReader, { ...teamCase, consultant: roomConsultant });
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe('caseHandover.readOnly.notice');
+		expect(notice.textContent).not.toContain('Realname');
 	});
 
 	it('keeps the message field for the assigned counsellor', async () => {

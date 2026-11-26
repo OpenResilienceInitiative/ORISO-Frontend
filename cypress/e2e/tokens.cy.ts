@@ -16,6 +16,17 @@ const waitForTokenProcessing = () => {
 	return cy.wait(500); // eslint-disable-line cypress/no-unnecessary-waiting
 };
 
+// With cy.clock() the app's timers only run when ticked: tick until the
+// aliased request has been sent `count` times.
+const tickUntilRequested = (alias: string, count: number, attempts = 120) =>
+	cy.get<unknown[]>(`@${alias}.all`, { log: false }).then((calls) => {
+		if (calls.length >= count) return;
+		if (attempts <= 0) throw new Error(`${alias} was not requested`);
+		cy.tick(250, { log: false });
+		cy.wait(10, { log: false }); // eslint-disable-line cypress/no-unnecessary-waiting
+		tickUntilRequested(alias, count, attempts - 1);
+	});
+
 describe('Keycloak Tokens', () => {
 	let authTokenJson;
 	before(() => {
@@ -53,7 +64,7 @@ describe('Keycloak Tokens', () => {
 
 	it('should keep refreshing access token before it expires', () => {
 		cy.clock();
-		cy.login();
+		cy.login({ tickTimers: true });
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
 
@@ -75,16 +86,21 @@ describe('Keycloak Tokens', () => {
 		cy.willReturn('consultingType', { statusCode: 404 });
 
 		cy.clock();
-		cy.login();
+		cy.login({ tickTimers: true });
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
 
 		cy.clock().then((clock) => {
 			clock.restore();
 		});
-		cy.clock(authTokenJson.expires_in * 1000 + 1);
+		// Relative to the stored deadline: the login ticked the clock on.
+		cy.then(() =>
+			cy.clock(
+				getTokenExpiryFromLocalStorage().accessTokenValidUntilTime + 1
+			)
+		);
 		cy.reload();
-		cy.get('#appRoot');
+		tickUntilRequested('authToken', 2);
 
 		cy.wait('@authToken').then((interception) => {
 			expect(interception.request.body).to.include(
@@ -98,29 +114,32 @@ describe('Keycloak Tokens', () => {
 
 	it('should logout if refresh token is already expired when loading the app', () => {
 		cy.clock();
-		cy.login();
+		cy.login({ tickTimers: true });
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
 
 		cy.clock().then((clock) => {
 			clock.restore();
 		});
-		cy.clock(authTokenJson.refresh_expires_in * 1000 + 1);
+		// Relative to the stored deadline: the login ticked the clock on.
+		cy.then(() =>
+			cy.clock(
+				getTokenExpiryFromLocalStorage().refreshTokenValidUntilTime + 1
+			)
+		);
 		cy.reload();
-		cy.get('#appRoot');
+		cy.tickUntil('#appRoot');
 		waitForTokenProcessing();
 
-		cy.wait('@apiLogout');
-		cy.wait('@authLogout');
-		// Wait to get cookies processed and timeout is started
-		cy.wait(100); // eslint-disable-line cypress/no-unnecessary-waiting
-		cy.tick(2000); // logout() call uses setTimeout
+		// The session is already dead, so the app tears it down locally
+		// without a Keycloak logout call (1ab247e6a, a828dcc4e).
+		cy.tickUntil('.loginForm');
 		cy.get('.loginForm').should('exist');
 	});
 
 	it('should logout if refresh token is expired while the app is loaded', () => {
 		cy.clock();
-		cy.login();
+		cy.login({ tickTimers: true });
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
 
@@ -129,18 +148,17 @@ describe('Keycloak Tokens', () => {
 		cy.tick(authTokenJson.refresh_expires_in * 1000 + 1);
 		waitForTokenProcessing();
 
-		cy.wait('@apiLogout');
-		cy.wait('@authLogout');
-		// Wait to get cookies processed and timeout is started
-		cy.wait(100); // eslint-disable-line cypress/no-unnecessary-waiting
-		cy.tick(2000); // logout() call uses setTimeout
+		// The session is already dead, so the app tears it down locally
+		// without a Keycloak logout call (1ab247e6a, a828dcc4e).
+		cy.tickUntil('.loginForm');
 		cy.get('.loginForm').should('exist');
 	});
 
 	it('should not logout if refresh token is expired but access token is still valid', () => {
 		cy.clock();
 		cy.login({
-			auth: { expires_in: 1800, refresh_expires_in: 600 }
+			auth: { expires_in: 1800, refresh_expires_in: 600 },
+			tickTimers: true
 		});
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
@@ -158,7 +176,8 @@ describe('Keycloak Tokens', () => {
 
 		cy.clock();
 		cy.login({
-			auth: { expires_in: 1800, refresh_expires_in: refreshExpiresIn }
+			auth: { expires_in: 1800, refresh_expires_in: refreshExpiresIn },
+			tickTimers: true
 		});
 		cy.wait('@usersData');
 		cy.wait('@askerSessions');
@@ -166,9 +185,13 @@ describe('Keycloak Tokens', () => {
 		cy.clock().then((clock) => {
 			clock.restore();
 		});
-		cy.clock(refreshExpiresIn * 1000 + 1);
+		cy.then(() =>
+			cy.clock(
+				getTokenExpiryFromLocalStorage().refreshTokenValidUntilTime + 1
+			)
+		);
 		cy.reload();
-		cy.get('#appRoot');
+		cy.tickUntil('#appRoot');
 		waitForTokenProcessing();
 
 		cy.tick(1000); // logout() call uses setTimeout

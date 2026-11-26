@@ -8,6 +8,9 @@ declare global {
 		interface Chainable {
 			login(args?: LoginArgs): Chainable<Element>;
 
+			/** With cy.clock() installed: tick until `selector` renders. */
+			tickUntil(selector: string): Chainable<unknown>;
+
 			fastLogin(args?: FastLoginArgs): Chainable<Element>;
 
 			askerSession(

@@ -32,6 +32,7 @@ import {
 } from '../call/prejoin/callPrejoin';
 
 import { DirectLinkKnockDeps, useDirectLinkKnock } from './useDirectLinkKnock';
+import { markCallAutoJoin } from '../groupChat/waitingAdmission/callAutoJoin';
 
 /** The open device check over the call message waits for its own knock. */
 const unclaimedPendingKnock = () => {
@@ -460,7 +461,87 @@ export const DirectLinkKnockGate = ({
 		/>
 	);
 
-	if (!knock || !location.pathname.startsWith('/sessions/user/view')) {
+	/* Let in: the call takes over, whichever window the wait was in. */
+	const enterCall = (admitted: PendingKnock) => {
+		setKnock(null);
+		/* Let in once: later calls here join without a knock. */
+		rememberAdmittedConversation(admitted.sessionId);
+		/* Join the call that is already running, never a second one;
+		   after a reload the one recorded with the knock (#2016). */
+		const storedJoin = takeAdmittedJoin(admitted.sessionId);
+		switch (admissionAction(admitted, storedJoin)) {
+			case 'storedJoin':
+				storedJoin?.();
+				return;
+			case 'joinRunningCall':
+				void joinRunningCall(admitted).then(
+					(result) => {
+						if (result !== 'joined') {
+							runningCallJoinFailed(admitted);
+						}
+					},
+					() => runningCallJoinFailed(admitted)
+				);
+				return;
+			case 'joinCounsellorsCall':
+				void joinCall(admitted, {
+					confirmLeaveRunningCall
+				}).then(
+					(result) => {
+						/* In a call by another way (its card joined): none is
+						   missing. */
+						if (
+							result !== 'joined' &&
+							!callManager.hasActiveCall?.()
+						) {
+							counsellorCallMissing(admitted);
+						}
+					},
+					() => counsellorCallMissing(admitted)
+				);
+				return;
+			case 'none':
+				forgetSwitches(admitted);
+		}
+	};
+
+	/*
+	 * FE#2542: let in while waiting on the link page. The person has seen the
+	 * wait and the answer there, so no dialog comes a second time: the call
+	 * takes the switches from that page and opens.
+	 */
+	const overConversation = location.pathname.startsWith(
+		'/sessions/user/view'
+	);
+	const entered =
+		knock?.admittedOnEntry && knock.status === 'ADMITTED' ? knock : null;
+	const enteredOnce = useRef<number | null>(null);
+	useEffect(() => {
+		if (!entered || !overConversation) return;
+		if (enteredOnce.current === entered.knockId) return;
+		enteredOnce.current = entered.knockId;
+		forgetPendingKnock();
+		const room = callRoomOf(entered);
+		const choice = entered.entryMedia;
+		if (room && choice?.media) {
+			rememberJoinMedia(
+				room,
+				choice.media,
+				choice.cameraSwitch,
+				choice.selection
+			);
+		}
+		/* The app loads while the counsellor's call starts: a call that rang
+		   before this client listened no longer rings here. Its card in the
+		   conversation then joins by itself (the mark of #2237), so the
+		   person is in the call either way. */
+		markCallAutoJoin(entered.sessionId);
+		setKnock(null);
+		enterCall(entered);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per knock
+	}, [entered?.knockId, overConversation]);
+
+	if (!knock || !overConversation || entered) {
 		return leaveDialog || null;
 	}
 
@@ -473,43 +554,7 @@ export const DirectLinkKnockGate = ({
 				deps={deps}
 				pollMs={pollMs}
 				onDone={() => setKnock(null)}
-				onAdmitted={(admitted) => {
-					setKnock(null);
-					/* Let in once: later calls here join without a knock. */
-					rememberAdmittedConversation(admitted.sessionId);
-					/* Join the call that is already running, never a second one;
-				   after a reload the one recorded with the knock (#2016). */
-					const storedJoin = takeAdmittedJoin(admitted.sessionId);
-					switch (admissionAction(admitted, storedJoin)) {
-						case 'storedJoin':
-							storedJoin?.();
-							return;
-						case 'joinRunningCall':
-							void joinRunningCall(admitted).then(
-								(result) => {
-									if (result !== 'joined') {
-										runningCallJoinFailed(admitted);
-									}
-								},
-								() => runningCallJoinFailed(admitted)
-							);
-							return;
-						case 'joinCounsellorsCall':
-							void joinCall(admitted, {
-								confirmLeaveRunningCall
-							}).then(
-								(result) => {
-									if (result !== 'joined') {
-										counsellorCallMissing(admitted);
-									}
-								},
-								() => counsellorCallMissing(admitted)
-							);
-							return;
-						case 'none':
-							forgetSwitches(admitted);
-					}
-				}}
+				onAdmitted={enterCall}
 			/>
 		</>
 	);
