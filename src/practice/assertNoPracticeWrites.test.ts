@@ -195,13 +195,21 @@ describe('assertNoPracticeWrites: the live-chat heartbeat (FE#2545)', () => {
 	it('passes for a bodyless heartbeat POST as Playwright records it (postData null)', () => {
 		expect(
 			findPracticeWrites(
-				[
-					{ method: 'POST', url: HEARTBEAT_URL, postData: null },
-					{ method: 'POST', url: HEARTBEAT_URL }
-				],
+				[{ method: 'POST', url: HEARTBEAT_URL, postData: null }],
 				withHeartbeat
 			)
 		).toEqual([]);
+	});
+
+	it('rejects a heartbeat whose body was not captured (postData omitted)', () => {
+		expect(
+			findPracticeWrites(
+				[{ method: 'POST', url: HEARTBEAT_URL }],
+				withHeartbeat
+			)
+		).toEqual([
+			{ method: 'POST', url: HEARTBEAT_URL, reason: 'body-rejected' }
+		]);
 	});
 
 	it('still fails for the heartbeat when the run does not allow it', () => {

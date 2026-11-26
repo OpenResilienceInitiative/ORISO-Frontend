@@ -594,6 +594,36 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 		]);
 	});
 
+	it.each([
+		'featureCallsEnabled',
+		'featureVideoCallsEnabled',
+		'featureVideoCallsGroupChatsEnabled'
+	])(
+		'drops the call step where %s is off: the header then shows no video button for the practice circle',
+		(flag) => {
+			const ids = resolveTourSteps(tour, {
+				flags: { [flag]: false }
+			}).map((s) => s.id);
+			expect(ids).not.toContain('call');
+			expect(ids.slice(-2)).toEqual(['start', 'done']);
+		}
+	);
+
+	it('keeps the call step while video calls in group chats are on or unset', () => {
+		expect(
+			resolveTourSteps(tour, { flags: {} }).map((s) => s.id)
+		).toContain('call');
+		expect(
+			resolveTourSteps(tour, {
+				flags: {
+					featureCallsEnabled: true,
+					featureVideoCallsEnabled: true,
+					featureVideoCallsGroupChatsEnabled: true
+				}
+			}).map((s) => s.id)
+		).toContain('call');
+	});
+
 	it('starts in the counsellor sessions, where "Erstellen" lives', () => {
 		expect(step('create').route).toBe('/sessions/consultant/sessionView');
 		expect(step('open-circle').route).toBe(
@@ -704,6 +734,12 @@ describe('practiceCalendarTour (FE#2545, Kalender)', () => {
 					name: PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn
 				}
 			]
+		]);
+	});
+
+	it('offers no Back after the cancellation, which cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'blocker'
 		]);
 	});
 

@@ -13,7 +13,12 @@ import {
 	type PracticeStart
 } from './fixtures/practiceScenario';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
-import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import {
+	emitPracticeEvent as emitToTour,
+	PRACTICE_TOUR_EVENTS,
+	type PracticeTourEventName
+} from './practiceTourEvents';
+import { getPracticeSnapshot } from './practiceMode';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import { SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED } from '../components/message/supervisorReplacedNotice';
 import {
@@ -73,6 +78,19 @@ export const createPracticeWorld = ({
 		start,
 		now: now()
 	});
+	// The run this world belongs to (none outside practice mode). A save
+	// still underway when the run restarts must not move the new run's tour,
+	// the same run check as the simulated call start and the live chat.
+	const currentRunId = () => {
+		const snapshot = getPracticeSnapshot();
+		return snapshot.status === 'inactive' ? null : snapshot.session.runId;
+	};
+	const runId = currentRunId();
+	const emitPracticeEvent = (name: PracticeTourEventName) => {
+		if (runId === null || currentRunId() === runId) {
+			emitToTour(name);
+		}
+	};
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
 	let supervisorAnswered = false;
@@ -153,10 +171,29 @@ export const createPracticeWorld = ({
 		hooks: {
 			onEnquiryAccepted: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted),
-			onSupervisorAdded: () => {
+			onSupervisorAdded: (added) => {
+				const person = [
+					script.cast.supervisor,
+					script.cast.secondSupervisor
+				].find(({ id }) => id === added.supervisorConsultantId);
+				// Robin is seeded for the standing-supervisor flow; anyone
+				// added by hand (Kim) joins the side room too.
+				if (person) {
+					matrix.addMember(PRACTICE_SUPERVISION_ROOM_ID, {
+						userId: person.matrixUserId,
+						displayName: person.displayName
+					});
+				}
 				if (!supervisorAnswered) {
 					supervisorAnswered = true;
-					play(script.reactionFor({ type: 'supervisor-added' }));
+					const reaction = script.reactionFor({
+						type: 'supervisor-added'
+					});
+					play(
+						reaction && person
+							? { ...reaction, sender: person.matrixUserId }
+							: reaction
+					);
 				}
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
 			},

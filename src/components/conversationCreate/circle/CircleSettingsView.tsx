@@ -46,6 +46,11 @@ import {
 import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
 import { emitTourEvent } from '../../productTour/tourEvents';
 import { GROUP_CIRCLE_SETTINGS_OPENED } from '../../productTour/tours/groupCircleTour';
+import { usePracticeTourAtStep } from '../../../practice/usePracticeTourProgress';
+import {
+	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID
+} from '../../../practice/practiceTourIds';
 import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import '../../groupChat/createChat.styles.scss';
 
@@ -259,9 +264,16 @@ export const CircleSettingsView = ({
 		seriesFields.repeatCount >= 1 &&
 		seriesFields.repeatCount <= 365 &&
 		!isSubmitting;
+	// The Gesprächskreis practice flow (FE#2545) lets the counsellor fill
+	// this card on one step and create on the next, which waits for it.
+	const isCreateHeldByPracticeTour = usePracticeTourAtStep(
+		PRACTICE_GROUP_CIRCLE_TOUR_ID,
+		PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID
+	);
+	const canCreate = isReady && !isCreateHeldByPracticeTour;
 
 	const handleCreate = () => {
-		if (!isReady || selectedAgency === null) {
+		if (!canCreate || selectedAgency === null) {
 			return;
 		}
 		submit(
@@ -566,11 +578,11 @@ export const CircleSettingsView = ({
 						type="button"
 						data-tour-target="groupchat-circle-create"
 						className={`circleSettings__createButton${
-							isReady
+							canCreate
 								? ' circleSettings__createButton--primary'
 								: ''
 						}`}
-						disabled={!isReady}
+						disabled={!canCreate}
 						onClick={handleCreate}
 					>
 						<AddCircleIcon aria-hidden />

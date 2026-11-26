@@ -29,6 +29,8 @@ import {
 	PRACTICE_TOPIC_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import { PracticeBlockedRequestError } from '../networkGuard';
+import { isSafeMethod, redactUrl } from '../requestPolicy';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -100,7 +102,11 @@ export interface FakeRestBackendOptions {
 }
 
 export interface HandleOptions {
-	/** Answer only requests addressed to a practice id or room. */
+	/**
+	 * Answer only requests addressed to a practice id or room. A view-wide
+	 * practice write then rejects with `PracticeBlockedRequestError` instead
+	 * of reaching the real backend.
+	 */
 	practiceAddressedOnly?: boolean;
 }
 
@@ -139,6 +145,12 @@ type Route = {
 	viewWide?: true;
 	/** Practice drafts and their shared index may finish during teardown. */
 	duringDrain?: (request: ParsedRequest) => boolean;
+	/**
+	 * A write only practice makes, with no practice id in its URL. What the
+	 * fake does not answer (while draining, or `null` from `handle`) is
+	 * blocked, never passed on to the real backend.
+	 */
+	practiceOnlyWrite?: true;
 	handle: (
 		request: ParsedRequest,
 		match: RegExpMatchArray
@@ -233,6 +245,8 @@ export const createFakeRestBackend = ({
 	let calendar: CalendarEntryDTO[];
 	let consultationHours: Required<CalendarConsultationHoursDTO>;
 	let calendarSeq: number;
+	/** The colleagues picked as its co-moderators: practice cast only. */
+	let coModerators: PracticePerson[];
 	const served: ServedRequest[] = [];
 
 	const reset = () => {
@@ -255,6 +269,7 @@ export const createFakeRestBackend = ({
 			slotMinutes: 60
 		};
 		calendarSeq = 0;
+		coModerators = [];
 		served.length = 0;
 	};
 	reset();
@@ -298,6 +313,9 @@ export const createFakeRestBackend = ({
 			: noContent();
 	};
 
+	/** Who the create screen offers as co-moderators. */
+	const practiceColleagues = (): PracticePerson[] => [script.cast.colleague];
+
 	const isCircle = (id: string) =>
 		!!circle && Number(id) === circle.id && isPracticeId(id);
 
@@ -308,6 +326,9 @@ export const createFakeRestBackend = ({
 	 * invite token: the share dialog would offer a link that leads nowhere.
 	 */
 	const createCircle = (settings: Partial<groupChatSettings> | null) => {
+		coModerators = practiceColleagues().filter((person) =>
+			(settings?.consultantIds ?? []).includes(person.id)
+		);
 		const topic = createPracticeTopic(script.names.topic);
 		const createdAt = new Date(now()).toISOString();
 		circle = {
@@ -340,13 +361,16 @@ export const createFakeRestBackend = ({
 					consultingType: practiceCase.session.consultingType
 				} as AgencyService.Schemas.AgencyResponseDTO
 			],
-			moderators: [PRACTICE_COUNSELLOR_MATRIX_USER_ID],
 			active: false,
 			subscribed: false,
 			messagesRead: true,
 			messageDate: Math.floor(now() / 1000),
 			lastMessage: '',
-			createdAt
+			createdAt,
+			moderators: [
+				PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+				...coModerators.map((person) => person.matrixUserId)
+			]
 		} as GroupChatItemInterface;
 		hooks.onCircleCreated?.(circle.id);
 		return ok({ matrixRoomId: circle.matrixRoomId });
@@ -539,6 +563,20 @@ export const createFakeRestBackend = ({
 			(entry) => entry.type === 'APPOINTMENT' && !entry.colleagueId
 		);
 
+	/**
+	 * One appointment with the advice seeker of the practice case; never the
+	 * supervisor's (FE#2545), which the enquiry routes must not move, cancel
+	 * or invite to.
+	 */
+	const enquiryAppointment = (id: unknown) =>
+		typeof id === 'string' && isPracticeId(id)
+			? appointments().find(
+					(entry) =>
+						entry.id === id &&
+						entry.sessionId === practiceCase.session.id
+				)
+			: undefined;
+
 	/** Entries that overlap [from, to); without a range, all of them. */
 	const entriesIn = (url: URL) => {
 		const from = Date.parse(url.searchParams.get('from') || '');
@@ -574,7 +612,11 @@ export const createFakeRestBackend = ({
 		start?: string,
 		end?: string
 	) => {
-		if (!isCalendarEntry(id, type) || !start || !end) return null;
+		const known =
+			type === 'APPOINTMENT'
+				? !!enquiryAppointment(id)
+				: isCalendarEntry(id, type);
+		if (!known || !start || !end) return null;
 		calendar = calendar.map((entry) =>
 			entry.id === id ? { ...entry, start, end } : entry
 		);
@@ -586,10 +628,7 @@ export const createFakeRestBackend = ({
 	 * and points at a reserved host, so a copied practice link leads nowhere.
 	 */
 	const createInvitation = (body: Record<string, unknown> | null) => {
-		const appointment = calendar.find(
-			(entry) =>
-				entry.type === 'APPOINTMENT' && entry.id === body?.appointmentId
-		);
+		const appointment = enquiryAppointment(body?.appointmentId);
 		if (!appointment) return noContent();
 		const id = calendarId('invitation');
 		const medium = typeof body?.medium === 'string' ? body.medium : 'VIDEO';
@@ -722,6 +761,7 @@ export const createFakeRestBackend = ({
 			method: 'PUT',
 			path: calendarPath('/consultation-hours'),
 			viewWide: true,
+			practiceOnlyWrite: true,
 			handle: async ({ body }) => {
 				const next = (await body()) as CalendarConsultationHoursDTO;
 				if (!next || !Array.isArray(next.windows)) return noContent();
@@ -771,6 +811,7 @@ export const createFakeRestBackend = ({
 			method: 'POST',
 			path: calendarPath('/blockers'),
 			viewWide: true,
+			practiceOnlyWrite: true,
 			handle: async ({ body }) => createBlocker(await body())
 		},
 		{
@@ -828,12 +869,10 @@ export const createFakeRestBackend = ({
 				`/${PRACTICE_STRING_SEGMENT}/cancel`
 			),
 			handle: (_request, [, id, appointmentId]) => {
-				if (
-					!isCase(id) ||
-					!isCalendarEntry(appointmentId, 'APPOINTMENT')
-				)
-					return null;
-				const entry = calendar.find((e) => e.id === appointmentId)!;
+				const entry = isCase(id)
+					? enquiryAppointment(appointmentId)
+					: undefined;
+				if (!entry) return null;
 				calendar = calendar.filter((e) => e.id !== appointmentId);
 				hooks.onAppointmentCancelled?.(appointmentId);
 				return ok({ ...asAppointment(entry), status: 'CANCELLED' });
@@ -907,12 +946,15 @@ export const createFakeRestBackend = ({
 				if (!roomIds.length || !roomIds.every(isPracticeRoomId)) {
 					return null;
 				}
-				if (circle && roomIds.includes(circle.matrixRoomId)) {
-					return ok({ sessions: [circleItem()] });
-				}
-				return roomIds.includes(practiceCase.session.matrixRoomId)
-					? ok(roomList())
-					: noContent();
+				const sessions = [
+					...(roomIds.includes(practiceCase.session.matrixRoomId)
+						? roomList().sessions
+						: []),
+					...(circle && roomIds.includes(circle.matrixRoomId)
+						? [circleItem()]
+						: [])
+				];
+				return sessions.length ? ok({ sessions }) : noContent();
 			}
 		},
 		// The Gesprächskreis flow (FE#2545): topics and co-moderators of the
@@ -934,7 +976,7 @@ export const createFakeRestBackend = ({
 			viewWide: true,
 			handle: () =>
 				ok(
-					[script.cast.colleague].map((person) => ({
+					practiceColleagues().map((person) => ({
 						consultantId: person.id,
 						firstName: person.firstName,
 						lastName: person.lastName,
@@ -950,7 +992,7 @@ export const createFakeRestBackend = ({
 			viewWide: true,
 			handle: () =>
 				ok(
-					[script.cast.colleague].map((person) => ({
+					practiceColleagues().map((person) => ({
 						consultantId: person.id,
 						displayName: person.displayName,
 						agencies: [
@@ -969,7 +1011,10 @@ export const createFakeRestBackend = ({
 				`(?:${escapeRegExp(GROUP_CHAT_API.CREATEV2)}|${escapeRegExp(GROUP_CHAT_API.CREATE)})`
 			),
 			viewWide: true,
-			handle: async ({ body }) => createCircle(await body())
+			practiceOnlyWrite: true,
+			// The circle room is seeded only for the Gesprächskreis start.
+			handle: async ({ body }) =>
+				start === 'groupCircle' ? createCircle(await body()) : null
 		},
 		{
 			method: 'GET',
@@ -1005,8 +1050,14 @@ export const createFakeRestBackend = ({
 										counsellorAsSessionConsultant(
 											counsellor
 										).displayName,
-									role: 'CONSULTANT'
-								}
+									role: 'CONSULTANT' as const
+								},
+								...coModerators.map((person) => ({
+									userId: person.id,
+									username: person.username,
+									displayName: person.displayName,
+									role: 'CONSULTANT' as const
+								}))
 							]
 						} satisfies UserService.Schemas.ChatMembersResponseDTO)
 					: null
@@ -1307,17 +1358,35 @@ export const createFakeRestBackend = ({
 	return {
 		async handle(input, init, options = {}) {
 			const request = parseRequest(input, init);
+			const block = (): never => {
+				throw new PracticeBlockedRequestError({
+					method: request.method,
+					url: redactUrl(request.url.href),
+					channel: 'fetch',
+					reason: 'default-deny'
+				});
+			};
 			for (const route of routes) {
 				if (route.method !== request.method) continue;
+				const match = request.url.pathname.match(route.path);
+				if (!match) continue;
 				if (
 					route.viewWide &&
 					options.practiceAddressedOnly &&
 					!route.duringDrain?.(request)
-				)
+				) {
+					// A view-wide practice write carries no practice id, so
+					// forwarding it would reach the real backend. A route with
+					// `duringDrain` already decides which requests are its own.
+					if (
+						route.practiceOnlyWrite ||
+						(!route.duringDrain && !isSafeMethod(request.method))
+					)
+						block();
 					continue;
-				const match = request.url.pathname.match(route.path);
-				if (!match) continue;
+				}
 				const response = await route.handle(request, match);
+				if (!response && route.practiceOnlyWrite) block();
 				if (response) {
 					served.push({
 						method: request.method,

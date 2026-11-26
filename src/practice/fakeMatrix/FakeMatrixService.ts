@@ -435,6 +435,21 @@ export class FakeMatrixService {
 	stopAndCleanup(): void {}
 
 	/**
+	 * A supervisor added by hand (FE#2545): joins the side room, as on the
+	 * server; whoever is already in it stays.
+	 */
+	addMember(
+		roomId: string,
+		member: { userId: string; displayName: string }
+	): void {
+		const room = this.client.getRoom(roomId);
+		if (!room) {
+			throw new Error(`Unknown practice room ${roomId}`);
+		}
+		room.addMember(member.userId, member.displayName);
+	}
+
+	/**
 	 * A supervisor swap (FE#2545): the new supervisor continues the side
 	 * room, the previous one leaves it, as on the server (#2494 *6).
 	 */

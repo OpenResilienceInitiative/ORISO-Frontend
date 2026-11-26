@@ -33,6 +33,12 @@ export const PRACTICE_GROUP_CIRCLE_TOUR_ID = 'consultant-group-circle';
 export const PRACTICE_CALENDAR_TOUR_ID = 'consultant-calendar';
 
 /**
+ * The Gesprächskreis flow's settings-card step: "Erstellen" in the card
+ * waits for the next step, which listens for the create (FE#2545).
+ */
+export const PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID = 'configure';
+
+/**
  * The only tour ids the network guard may ever allow a progress write for.
  * Each must also be on the UserService allowlist `tutorial.tours.frontend` in
  * every environment, so adding one is a product decision, not a code change.

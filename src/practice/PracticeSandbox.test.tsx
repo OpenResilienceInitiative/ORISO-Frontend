@@ -11,6 +11,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
+import { PracticeBlockedRequestError } from './networkGuard';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { endpoints } from '../resources/scripts/endpoints';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
@@ -416,6 +417,66 @@ describe('PracticeSandbox', () => {
 			expect(isPracticeMode()).toBe(false);
 			expect(window.fetch).toBe(pageFetch);
 			expect(pageFetch).not.toHaveBeenCalled();
+		});
+
+		it('never passes a Gesprächskreis create on to the real backend while practice drains', async () => {
+			enterPracticeMode({ tourId: 'consultant-group-circle' });
+			const view = render(
+				<PracticeSandbox
+					counsellor={counsellor}
+					script={createTestScript()}
+					start="groupCircle"
+					baseFetch={baseFetch as any}
+				>
+					{null}
+				</PracticeSandbox>
+			);
+			await settle();
+			// A practice request still in flight keeps the sandbox draining.
+			let finishBody = () => undefined as void;
+			const body = new ReadableStream<Uint8Array>({
+				start(controller) {
+					finishBody = () => {
+						controller.enqueue(
+							new TextEncoder().encode(
+								JSON.stringify({
+									roomId: PRACTICE_MAIN_ROOM_ID,
+									active: false
+								})
+							)
+						);
+						controller.close();
+					};
+				}
+			});
+			const inFlight = window.fetch(
+				new Request(`${endpoints.eventNotifications}/active-view`, {
+					method: 'PATCH',
+					body,
+					duplex: 'half'
+				} as RequestInit)
+			);
+			const ended = endPractice();
+			view.unmount();
+			await settle();
+
+			// The create URL carries no practice id: unanswered, it would
+			// fall through to the base fetch.
+			await expect(
+				window.fetch(
+					new Request(`${endpoints.groupChatBase}v2/new`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ topic: 'Übung' })
+					})
+				)
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+			expect(baseFetch).not.toHaveBeenCalled();
+
+			finishBody();
+			await inFlight;
+			await act(() => ended);
+			expect(baseFetch).not.toHaveBeenCalled();
 		});
 	});
 

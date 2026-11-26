@@ -362,8 +362,10 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 			/data-tour-target=\{menuTourTarget\}[\s\S]*data-tour-target=\{item\.tourTarget\}/
 	},
 	{
+		// Scoped to the `PaperProps` block: the anchor must land on the
+		// dialog surface, not only on the prop binding near the top.
 		sourceFile: 'm3Dialog/M3Dialog.tsx',
-		expected: /'data-tour-target': tourTarget/
+		expected: /PaperProps=\{\{[\s\S]*?'data-tour-target': tourTarget\s*\}\}/
 	},
 	{
 		// The toolbar binds each chip's configured anchor to the shared chip.
