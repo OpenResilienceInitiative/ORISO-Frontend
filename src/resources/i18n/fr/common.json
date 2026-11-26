@@ -7561,6 +7561,7 @@
 			"title": "Supprimé avec le compte invité"
 		},
 		"deletedGuest": "Invité (supprimé)",
+		"signedOutNotice": "Votre compte invité a été supprimé après l'entretien. Vous avez donc été déconnecté. Pour un nouvel entretien, veuillez rouvrir le lien de votre service de conseil.",
 		"chip": {
 			"guest": "Compte invité"
 		},

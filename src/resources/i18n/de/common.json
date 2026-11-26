@@ -7551,6 +7551,7 @@
 			"title": "Wird mit dem Gastkonto gelöscht"
 		},
 		"deletedGuest": "Gast (gelöscht)",
+		"signedOutNotice": "Ihr Gastkonto wurde nach dem Gespräch gelöscht. Sie wurden deshalb abgemeldet. Für ein weiteres Gespräch öffnen Sie bitte den Link Ihrer Beratung erneut.",
 		"chip": {
 			"guest": "Gastkonto"
 		},
