@@ -914,6 +914,10 @@ export class MatrixClientService {
 			if (!client) {
 				throw new Error('Matrix client not initialized');
 			}
+			// Like text: a room the client does not hold yet cannot be
+			// encrypted for, so wait for sync before the upload starts.
+			await this.ensureSyncedRoom(client, roomId);
+			stopIfCancelled();
 			await this.refreshTrackedRoomMemberDevices(client, roomId);
 			const content = await this.uploadFileMessageContent(
 				client,
