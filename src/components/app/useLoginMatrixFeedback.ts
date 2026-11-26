@@ -22,7 +22,10 @@ const subscribe = (notify: () => void) => {
 const load = () => import('./loginMatrixDissolve');
 
 export function warmLoginMatrix() {
-	if (!reduced()) void load().catch(() => undefined);
+	if (!reduced())
+		void load()
+			.then(({ warmSigns }) => warmSigns())
+			.catch(() => undefined);
 }
 
 /** Feedback never gates authentication. An error, a new attempt, or unmount restores the original translated nodes. */
@@ -45,34 +48,20 @@ export function useLoginMatrixFeedback(
 
 	useLayoutEffect(() => {
 		const host = ref.current;
-		const panel = host?.closest<HTMLElement>(
-			'.stageLayout__contentWrapper'
-		);
-		if (!active || !panel || !host) return;
+		if (!active || !host) return;
 		let stopped = false;
-		const canvas = document.createElement('canvas');
-		canvas.className = 'loginMatrixCanvas';
-		canvas.setAttribute('aria-hidden', 'true');
 		void load()
 			.then(({ startLoginMatrix }) => {
 				if (stopped || host.dataset.matrixPhase !== 'loading') return;
-				panel.classList.add('loginMatrixSheet');
-				panel.append(canvas);
-				scene.current = startLoginMatrix(canvas, host);
+				scene.current = startLoginMatrix(host);
 				setRunning(true);
 			})
-			.catch(() => {
-				if (stopped) return;
-				canvas.remove();
-				panel.classList.remove('loginMatrixSheet');
-			});
+			.catch(() => undefined);
 		return () => {
 			stopped = true;
 			scene.current?.dispose();
 			scene.current = null;
 			setRunning(false);
-			canvas.remove();
-			panel.classList.remove('loginMatrixSheet');
 		};
 	}, [active, ref]);
 	return active && running;

@@ -827,9 +827,7 @@ export const Login = () => {
 					>
 						<div className="loginForm__headline">
 							<h2>
-								<span data-cipher-at={965}>
-									{translate('login.headline')}
-								</span>
+								<span>{translate('login.headline')}</span>
 							</h2>
 						</div>
 						{accountCreatedLogin && (
@@ -915,7 +913,7 @@ export const Login = () => {
 									}
 									onKeyUp={handleKeyUp}
 									label={
-										<span data-cipher-at={1000}>
+										<span>
 											{activeLoginMethod === 'password'
 												? translate('login.user.label')
 												: translate(
@@ -930,8 +928,6 @@ export const Login = () => {
 									fullWidth
 									autoComplete="username"
 									inputProps={{
-										'data-cipher-input': 855,
-										'data-cipher-length': username.length,
 										'aria-label':
 											activeLoginMethod === 'password'
 												? translate('login.user.label')
@@ -968,7 +964,7 @@ export const Login = () => {
 										onChange={handlePasswordChange}
 										onKeyUp={handleKeyUp}
 										label={
-											<span data-cipher-at={1035}>
+											<span>
 												{translate(
 													'login.password.label'
 												)}
@@ -979,9 +975,6 @@ export const Login = () => {
 										autoComplete="current-password"
 										inputRef={passwordInputRef}
 										inputProps={{
-											'data-cipher-input': 890,
-											'data-cipher-length':
-												password.length,
 											'aria-label': translate(
 												'login.password.label'
 											)
@@ -1059,7 +1052,7 @@ export const Login = () => {
 													className="loginForm__emailHint"
 													type="infoLargeAlternative"
 												>
-													<span data-cipher-at={1080}>
+													<span>
 														{translate(
 															'twoFactorAuth.activate.email.resend.hint'
 														)}
@@ -1074,7 +1067,7 @@ export const Login = () => {
 												onChange={handleOtpChange}
 												onKeyUp={handleKeyUp}
 												label={
-													<span data-cipher-at={1050}>
+													<span>
 														{translate(
 															'twoFactorAuth.activate.otp.input.label.text'
 														)}
@@ -1093,9 +1086,6 @@ export const Login = () => {
 													'aria-label': translate(
 														'twoFactorAuth.activate.otp.input.label.text'
 													),
-													'data-cipher-input': 925,
-													'data-cipher-length':
-														otp.length,
 													'maxLength': OTP_LENGTH,
 													'tabIndex': isOtpRequired
 														? 0
@@ -1182,7 +1172,7 @@ export const Login = () => {
 											isRequestInProgress
 								}
 							>
-								<span data-cipher-at={65}>
+								<span>
 									{activeLoginMethod === 'password'
 										? loginButton.label
 										: translate(
