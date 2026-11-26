@@ -50,6 +50,7 @@ on:
                     - frontend
                     - storybook
                     - predev-status
+                    - predev-helm-check
 
 permissions:
     contents: read
@@ -156,6 +157,40 @@ jobs:
                         d=$(dirname "$c"); echo "-- $d"; (cd "$d" && git rev-parse --abbrev-ref HEAD 2>/dev/null; git log -1 --format='%h %cd %s' --date=short 2>/dev/null; git status --porcelain 2>/dev/null | head -5; ls -1 *.yaml 2>/dev/null)
                       done
                       echo "== addon namespace"; kubectl get all -n addons 2>&1 | head -20
+
+    # Read only: server-side dry run of the pre-dev chart with Pre-Dev's own values
+    # (ORISO-Helm predev-lane/helm-check.sh). Prints Helm's errors or the images it would
+    # roll out; never values, secrets or manifests. Changes nothing.
+    predev-helm-check:
+        name: Pre-Dev Helm dry run
+        if: ${{ github.event.inputs.component == 'predev-helm-check' }}
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        environment:
+            name: pre-development
+            url: https://predev.oriso.org
+        steps:
+            - name: Refuse anything but Pre-Dev
+              env:
+                  TARGET: ${{ github.event.inputs.environment }}
+              run: |
+                  [ "$TARGET" = "pre-dev" ] || { echo "::error::predev-helm-check only runs against pre-dev"; exit 1; }
+            - name: Dry run on the server
+              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              with:
+                  host: ${{ secrets.DEPLOY_SSH_HOST }}
+                  username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
+                  key: ${{ secrets.DEPLOY_SSH_KEY }}
+                  port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+                  fingerprint: ${{ secrets.DEPLOY_SSH_FINGERPRINT }}
+                  command_timeout: 10m
+                  script: |
+                      set -euo pipefail
+                      D=/root/predev-lane/runner
+                      mkdir -p /root/predev-lane && chmod 700 /root/predev-lane
+                      [ -d "$D/.git" ] || git clone -q --depth 1 --branch pre-dev https://github.com/OpenResilienceInitiative/ORISO-Helm "$D"
+                      git -C "$D" fetch -q --depth 1 origin pre-dev && git -C "$D" checkout -q -B pre-dev FETCH_HEAD
+                      bash "$D/predev-lane/helm-check.sh"
 
     # Dev only: the chart-managed Storybooks (ORISO-Helm templates/storybook,
     # runbooks/dev-storybook.md) run oriso-storybook images with pullPolicy Always,
