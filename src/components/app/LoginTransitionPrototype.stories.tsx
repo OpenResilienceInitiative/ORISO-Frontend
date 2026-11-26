@@ -500,9 +500,13 @@ export const MatrixKeyboardHandover: Story = {
 		const submit = canvas.getByRole('button', { name: 'Anmelden' });
 		submit.focus();
 		await userEvent.keyboard('{Enter}');
-		const replay = await canvas.findByRole('button', {
-			name: 'Erneut ansehen'
-		});
+		// The reveal ends after `readyAfter` plus up to 700 ms; a busy CI runner
+		// needs more than findByRole's default second.
+		const replay = await canvas.findByRole(
+			'button',
+			{ name: 'Erneut ansehen' },
+			{ timeout: 4000 }
+		);
 		await waitFor(() =>
 			expect(
 				canvas.getByRole('heading', { name: 'Beratungsstelle' })
