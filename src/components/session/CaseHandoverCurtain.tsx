@@ -114,7 +114,7 @@ export const CaseHandoverCurtainView = ({
 	onRetryReasons,
 	onStart,
 	onBack,
-	onNext,
+	onNext: _onNext,
 	onReasonSelect,
 	onExplanationChange,
 	onSubmit,
