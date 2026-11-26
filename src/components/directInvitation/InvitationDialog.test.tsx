@@ -131,6 +131,34 @@ describe('InvitationDialog (#2252)', () => {
 			});
 		});
 
+		it('"Mit Termin" preselects today at the next half hour, one hour long (#2358)', () => {
+			/* NOW is 12:00 on the 3rd. */
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			const value = (name: string) =>
+				(screen.getByLabelText(`${SLOT}.${name}`) as HTMLInputElement)
+					.value;
+			expect(value('date')).toBe('2026-11-03');
+			expect(value('start')).toBe('12:30');
+			expect(value('end')).toBe('13:30');
+		});
+
+		it('setting Beginn moves Ende to Beginn + 1 h (#2358)', async () => {
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			setField('date', '2026-11-05');
+			setTime('start', 16);
+			expect(
+				(screen.getByLabelText(`${SLOT}.end`) as HTMLInputElement).value
+			).toBe('17:00');
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(5, 16), end: local(5, 17) }
+				})
+			);
+		});
+
 		it.each([
 			['end equal to start', '2026-11-05', 14, 14, 'order'],
 			['end before start', '2026-11-05', 14, 13, 'order'],
