@@ -682,6 +682,30 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		).rejects.toThrow('Matrix client not initialized');
 	});
 
+	// A failed SDK send surfaces unchanged: no fallback path, no metadata
+	// notification for a message that never arrived (replaces the retired
+	// Cypress spec matrix-send-message-privacy, FE#2572).
+	it('rejects with the SDK error and sends no notification when the Matrix send fails', async () => {
+		const failure = new Error('SDK send failed');
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage: vi.fn(() => Promise.reject(failure))
+		} as any;
+
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: ROOM_ID,
+				message: 'secret text',
+				sendMailNotification: true,
+				isEncrypted: false,
+				matrixRoomId: ROOM_ID,
+				matrixClientServiceOverride: override
+			})
+		).rejects.toBe(failure);
+		expect(override.sendMessage).toHaveBeenCalledTimes(1);
+		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
+	});
+
 	it('refreshes a stale pre-accept session to resolve its Matrix room before sending', async () => {
 		apiGetSessionRoomBySessionId.mockResolvedValueOnce({
 			sessions: [{ session: { id: 42, matrixRoomId: ROOM_ID } }]
@@ -833,6 +857,40 @@ describe('chatTransportService team attachment notifications', () => {
 		expect(postNotification).toHaveBeenCalledWith(
 			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
 		);
+	});
+
+	// The attachment notification carries metadata only: never the file name,
+	// its contents or a preview (replaces the retired Cypress spec
+	// matrix-send-message-privacy, FE#2572).
+	it('posts attachment notifications without the file name, contents or previews', async () => {
+		const postNotification = vi.fn(() => Promise.resolve({}));
+		setMatrixClientServiceRef({
+			getClient: () => ({}),
+			sendFileMessage: vi.fn(() => Promise.resolve({ event_id: '$file' }))
+		} as any);
+
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['secret body'], 'case-note.txt', { type: 'text/plain' }),
+			{
+				threadRootId: '$root',
+				supervisorMessage: true,
+				senderDisplayName: 'Counsellor',
+				postMessageEventNotification: postNotification
+			}
+		);
+
+		expect(postNotification).toHaveBeenCalledTimes(1);
+		const serialized = JSON.stringify(postNotification.mock.calls);
+		expect(serialized).not.toContain('case-note');
+		expect(serialized).not.toContain('secret body');
+		const body = (postNotification.mock.calls[0] as unknown[])[0] as Record<
+			string,
+			unknown
+		>;
+		expect(body).toMatchObject({ roomId: ROOM_ID, matrixRoom: true });
+		expect(body.messagePreview ?? null).toBeNull();
+		expect(body.threadParentPreview ?? null).toBeNull();
 	});
 
 	it('forwards the thread root to the Matrix file sender', async () => {

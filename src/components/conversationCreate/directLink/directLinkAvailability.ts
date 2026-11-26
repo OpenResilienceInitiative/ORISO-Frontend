@@ -29,6 +29,8 @@ type Settings = Partial<Record<DirectInviteFlag, boolean | null>>;
 export const directInviteFlagsFor = (
 	media: readonly DirectLinkMedium[]
 ): Record<DirectInviteFlag, boolean> =>
+	// SAFETY: DIRECT_LINK_MEDIA covers every medium and FLAG maps each to
+	// its flag, so every DirectInviteFlag key is present.
 	Object.fromEntries(
 		DIRECT_LINK_MEDIA.map((medium) => [
 			FLAG[medium],
@@ -46,6 +48,8 @@ export const getDirectLinkMedia = (
 		if (agencies.length === 0) return true;
 		return agencies.some(
 			(agency) =>
+				// SAFETY: agency settings carry the same flag keys as the
+				// Träger's Settings; a missing key reads as allowed.
 				(agency.settings as Settings | null | undefined)?.[
 					FLAG[medium]
 				] !== false

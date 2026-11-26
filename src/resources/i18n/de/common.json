@@ -3426,9 +3426,13 @@
 		"statistics": {
 			"complete": {
 				"download": {
+					"csv": "Als CSV herunterladen",
 					"label": "Download Excel Datei"
 				},
 				"filename": "Statistik Online-Beratung",
+				"hintMonth": "Eine Zeile pro Woche und eine Summenzeile. Lässt sich auch in Excel öffnen.",
+				"hintWeek": "Eine Zeile pro Tag und eine Summenzeile. Lässt sich auch in Excel öffnen.",
+				"hintYear": "Eine Zeile pro Monat und eine Summenzeile. Lässt sich auch in Excel öffnen.",
 				"title": "Ihre Statistik über Ihren gewählten Beratungszeitraum können Sie hier herunterladen:",
 				"total": "Gesamt"
 			},
@@ -3445,7 +3449,20 @@
 				"period": "Zeitraum",
 				"videoCallDuration": "Dauer von Video-Calls in Minuten:Sekunden"
 			},
+			"kind": {
+				"numberOfCancelledAppointments": "Abgesagt",
+				"numberOfChatAppointments": "Chat",
+				"numberOfOnsiteAppointments": "Vor Ort",
+				"numberOfPhoneAppointments": "Telefon",
+				"numberOfVideoAppointments": "Video"
+			},
 			"period": {
+				"button": {
+					"currentMonth": "Dieser Monat",
+					"currentWeek": "Diese Woche",
+					"lastMonth": "Letzter Monat",
+					"lastWeek": "Letzte Woche"
+				},
 				"currentMonth": "diesen Monat",
 				"currentWeek": "diese Woche",
 				"currentYear": "dieses Jahr",
@@ -3457,7 +3474,17 @@
 				"lastMonth": "letzten Monat",
 				"lastWeek": "letzte Woche",
 				"lastYear": "letztes Jahr",
-				"prefix": "Ihre Zahlen für"
+				"offsetLabel": "Zeitraum",
+				"prefix": "Ihre Zahlen für",
+				"unitLabel": "Zeiteinheit",
+				"unitMonth": "Monat",
+				"unitWeek": "Woche",
+				"unitYear": "Jahr"
+			},
+			"state": {
+				"empty": "In diesem Zeitraum gibt es noch keine Zahlen.",
+				"error": "Die Zahlen konnten gerade nicht geladen werden.",
+				"retry": "Erneut versuchen"
 			},
 			"title": "Meine Statistik"
 		},
@@ -4217,12 +4244,13 @@
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
-			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
+			"required": "Wählen Sie mindestens einen Fall und einen Grund; ist die Begründung Pflicht, ergänzen Sie sie.",
 			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
-			"title": "Mehrfach-Zugriffsanfrage"
+			"title": "Mehrfach-Zugriffsanfrage",
+			"clearSelection": "Auswahl aufheben"
 		},
 		"consent": {
 			"sender": "Carimat",
@@ -4266,10 +4294,12 @@
 		"error": {
 			"failed": "Die Zugriffsanfrage konnte nicht gesendet werden.",
 			"forbidden": "Sie dürfen für diesen Fall keinen Zugriff anfragen.",
-			"required": "Wählen Sie einen Grund und ergänzen Sie eine Begründung."
+			"required": "Wählen Sie einen Grund. Für diesen Grund ist eine Begründung Pflicht."
 		},
 		"explanation": {
-			"placeholder": "Begründung beschreiben"
+			"placeholder": "Begründung beschreiben",
+			"optional": "Begründung (optional)",
+			"required": "Begründung (Pflicht)"
 		},
 		"eyebrow": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 		"hidden": {
@@ -4750,9 +4780,11 @@
 				"selfHelp": "Kreis",
 				"internal": "Interna",
 				"team": "Team Beratung",
-				"directLinkVideo": "Videoanruf",
-				"directLinkAudio": "Audioanruf",
-				"directLinkChat": "Direkteinladung"
+				"directLinkVideo": "Video",
+				"directLinkAudio": "Audio",
+				"directLinkChat": "Chat",
+				"directInvitationVia": "Direkteinladung · {{medium}}",
+				"agencyLink": "über Beratungsstellen-Link"
 			},
 			"waiting": {
 				"minutes": "wartet seit {{count}} Min.",
@@ -4855,7 +4887,6 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
-				"directLinks": "Direkteinladungen",
 				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",
@@ -7189,6 +7220,7 @@
 			"waitingFor": "wartet seit {{count}} Min.",
 			"justArrived": "ist gerade angekommen",
 			"admit": "Einlassen",
+			"startAndAdmit": "Anruf starten und einlassen",
 			"decline": "Ablehnen",
 			"admitAll": "Alle einlassen",
 			"position": "{{current}} von {{total}}",
@@ -7568,18 +7600,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Ihr Überblick",
-		"stats": {
-			"title": "Beratungen",
-			"period": "Letzte 30 Tage",
-			"assigned": "Neu übernommen",
+		"quiet": {
 			"active": "Aktiv",
-			"archived": "Archiviert",
-			"sentMessages": "Gesendete Nachrichten"
-		},
-		"circles": {
-			"title": "Nächste Gesprächskreise",
-			"assignedCounsellors": "Beratungsteam: {{count}}"
+			"assigned": "Neu übernommen (30 Tage)"
 		}
 	},
 	"temporaryAccount": {
@@ -7588,6 +7611,7 @@
 			"title": "Wird mit dem Gastkonto gelöscht"
 		},
 		"deletedGuest": "Gast (gelöscht)",
+		"signedOutNotice": "Ihr Gastkonto wurde nach dem Gespräch gelöscht. Sie wurden deshalb abgemeldet. Für ein weiteres Gespräch öffnen Sie bitte den Link Ihrer Beratung erneut.",
 		"chip": {
 			"guest": "Gastkonto"
 		},
@@ -7652,7 +7676,12 @@
 			},
 			"linkFailedTitle": "Einladungslink nicht erstellt",
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
-			"appointmentSaved": "Der Termin ist angelegt."
+			"appointmentSaved": "Der Termin ist angelegt.",
+			"openLink": {
+				"action": "Weiter zum Einladungslink",
+				"hint": "Ohne Termin entsteht ein offener Einladungslink: Jede Person, die ihn öffnet, bekommt ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen. Im nächsten Schritt wählen Sie Thema und Namen.",
+				"mediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art."
+			}
 		},
 		"overview": {
 			"title": "Termine & Direkteinladungen",
@@ -7729,6 +7758,7 @@
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
 		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarOpenLink": "Aus dem Kalender: offener Einladungslink ohne Termin.",
 		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {

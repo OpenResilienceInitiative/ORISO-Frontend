@@ -26,7 +26,10 @@ import {
 	type ConsultationHours,
 	type OneOffConsultation
 } from './calendarConsultationHours';
-import type { InvitationPreset } from '../directInvitation/invitationModel';
+import type {
+	InvitationPreset,
+	OpenLinkPreset
+} from '../directInvitation/invitationModel';
 import type { DirectLinkMedium } from '../conversationCreate/directLink/directLink';
 import type {
 	AppointmentDraft,
@@ -95,6 +98,8 @@ export interface NewEntryDialogProps {
 	inviteMedia?: readonly DirectLinkMedium[];
 	/** Termin: "Neue Person per Direkteinladung …" opens "Chat erstellen". */
 	onInviteNewPerson?: (preset: InvitationPreset) => void;
+	/** FE#2510 *2: "Mit Termin" off creates the open invitation link. */
+	onCreateOpenLink?: (preset: OpenLinkPreset) => void;
 	onClose: () => void;
 }
 
@@ -149,6 +154,7 @@ export const NewEntryDialog = ({
 	allowGuestInvite,
 	inviteMedia,
 	onInviteNewPerson,
+	onCreateOpenLink,
 	onClose
 }: NewEntryDialogProps) => {
 	const { t } = useTranslation();
@@ -187,6 +193,7 @@ export const NewEntryDialog = ({
 		allowGuestInvite,
 		inviteMedia,
 		onInviteNewPerson,
+		onCreateOpenLink,
 		onClose
 	});
 	const blocker = useBlockerForm({

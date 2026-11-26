@@ -23,7 +23,6 @@ export type SessionKindId =
 	| 'unread'
 	| 'drafts'
 	| 'oneToOne'
-	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'circle'
@@ -43,8 +42,6 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	'unread',
 	'drafts',
 	'oneToOne',
-	// FE#1952: right after Mail, as in the toolbar.
-	'directLinks',
 	'liveChat',
 	'internalGroup',
 	'circle',
@@ -82,7 +79,6 @@ export const SESSION_KIND_CHIP: Partial<
 	unread: 'unread',
 	drafts: 'drafts',
 	oneToOne: 'nearby',
-	directLinks: 'directLinks',
 	nearby: 'nearby',
 	liveChat: 'liveChat',
 	internalGroup: 'internalGroup',

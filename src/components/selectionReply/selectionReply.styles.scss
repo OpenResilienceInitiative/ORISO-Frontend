@@ -139,7 +139,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	box-sizing: border-box;
 	padding: 12px;
 	background: var(--m3-surface-container-lowest, #fff);
-	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
 	// FE#2494 (Frank's redline, 24 Nov): 24px, the top-right corner 8px
 	// where the badge sits; quote and field meet with 4px corners.
@@ -276,7 +277,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	grid-template-columns: minmax(0, 1fr) auto auto auto;
 	align-items: center;
 	min-height: 40px;
-	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
 	// Top corners 4px where the box meets the quote (Frank's green marks).
 	border-radius: 4px 4px 16px 16px;
@@ -626,8 +628,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		width: 12px;
 		height: 12px;
 		background: inherit;
-		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
-		border-left: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-top: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+		border-left: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		transform: rotate(45deg);
 	}
 }
@@ -638,8 +642,10 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	bottom: -7px;
 	border-top: 0;
 	border-left: 0;
-	border-right: 1px solid var(--m3-primary-fixed, #ffdad5);
-	border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border-right: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+	border-bottom: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 }
 
 .selectionReply__bubbleActions {
@@ -747,7 +753,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		outline: 2px solid
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 		outline-offset: 2px;
 	}
 }
@@ -755,7 +762,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 @keyframes selectionReplyJumpRing {
 	0%,
 	45% {
-		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+		box-shadow: 0 0 0 3px
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 	}
 
 	100% {
@@ -766,7 +774,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 @media (prefers-reduced-motion: reduce) {
 	.messageItem__message--jumpTarget {
 		animation: none;
-		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+		box-shadow: 0 0 0 3px
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 	}
 
 	.selectionReply__toolbarButton,

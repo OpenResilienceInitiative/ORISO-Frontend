@@ -31,7 +31,8 @@
 	}
 
 	@include breakpoint($fromLarge) {
-		border: 1px solid var(--m3-primary-fixed-dim, #ffd8d4);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed-dim, #ffd8d4));
 		border-radius: var(--session-card-radius, 28px);
 	}
 }
@@ -41,7 +42,31 @@
 	align-items: center;
 	gap: 12px;
 	padding: $grid-base * 0.5;
-	border-bottom: 1px solid var(--m3-primary-fixed-dim, #ffd8d4);
+	border-bottom: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed-dim, #ffd8d4));
+}
+
+.caseHandoverCurtain__clearSelection {
+	margin-left: auto;
+	flex-shrink: 0;
+	padding: 8px 16px;
+	border: 1px solid var(--m3-outline, #857371);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--m3-on-surface, #1b1b1c);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container-highest, #e4e2e3);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a3000d);
+		outline-offset: 2px;
+	}
 }
 
 .caseHandoverCurtain__headerIcon {

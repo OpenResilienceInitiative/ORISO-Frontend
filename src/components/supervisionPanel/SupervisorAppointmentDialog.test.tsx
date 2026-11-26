@@ -15,7 +15,11 @@ import {
 	it,
 	vi
 } from 'vite-plus/test';
-import { SupervisorAppointmentDialogWired } from './SupervisorAppointmentDialog';
+import {
+	SupervisorAppointmentDialog,
+	SupervisorAppointmentDialogWired
+} from './SupervisorAppointmentDialog';
+import type { CallFeatureGates } from '../call/callFeatureGates';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -146,5 +150,103 @@ describe('SupervisorAppointmentDialog (FE#2494)', () => {
 			await screen.findByText('supervision.appointment.failed')
 		).toBeTruthy();
 		expect(onClose).not.toHaveBeenCalled();
+	});
+});
+
+/*
+ * Product owner, 2026-11-25: video and phone appointments only where video
+ * and audio calls are allowed in the supervision chat.
+ */
+describe('SupervisorAppointmentDialog: supervision call gates', () => {
+	const renderGated = (callGates: CallFeatureGates) => {
+		const onSave = vi.fn();
+		render(
+			<SupervisorAppointmentDialog
+				supervisor={SUPERVISOR}
+				ownerId="me"
+				colleagues={[
+					{
+						...SUPERVISOR,
+						agencyName: 'Nord',
+						relation: 'sameAgency'
+					}
+				]}
+				entries={[]}
+				now={new Date(2026, 10, 25, 12, 0)}
+				callGates={callGates}
+				onSave={onSave}
+				onClose={vi.fn()}
+			/>
+		);
+		return onSave;
+	};
+	const tile = (kind: string) =>
+		screen.queryByRole('button', { name: `calendar.kinds.${kind}` });
+	const savedKind = (onSave: ReturnType<typeof vi.fn>) => {
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+		expect(onSave).toHaveBeenCalledTimes(1);
+		return onSave.mock.calls[0][0].kind;
+	};
+
+	it('offers video and phone when both calls are allowed', () => {
+		const onSave = renderGated({ video: true, audio: true });
+		expect(tile('video')).toBeTruthy();
+		expect(tile('phone')).toBeTruthy();
+		expect(tile('onsite')).toBeTruthy();
+		expect(tile('chat')).toBeTruthy();
+		expect(savedKind(onSave)).toBe('video');
+	});
+
+	it('offers no video tile when video calls are off', () => {
+		const onSave = renderGated({ video: false, audio: true });
+		expect(tile('video')).toBeNull();
+		expect(tile('phone')).toBeTruthy();
+		expect(tile('onsite')).toBeTruthy();
+		expect(tile('chat')).toBeTruthy();
+		expect(savedKind(onSave)).toBe('phone');
+	});
+
+	it('offers no phone tile when audio calls are off', () => {
+		const onSave = renderGated({ video: true, audio: false });
+		expect(tile('video')).toBeTruthy();
+		expect(tile('phone')).toBeNull();
+		expect(savedKind(onSave)).toBe('video');
+	});
+
+	it('offers neither video nor phone when both calls are off', () => {
+		const onSave = renderGated({ video: false, audio: false });
+		expect(tile('video')).toBeNull();
+		expect(tile('phone')).toBeNull();
+		expect(tile('onsite')).toBeTruthy();
+		expect(tile('chat')).toBeTruthy();
+		const kind = savedKind(onSave);
+		expect(kind).not.toBe('video');
+		expect(kind).not.toBe('phone');
+		expect(kind).toBe('onsite');
+	});
+
+	it('passes the gates through the wired dialog', async () => {
+		api.apiGetCalendarColleagues.mockResolvedValue({
+			colleagues: [colleagueDto('sup-1')]
+		});
+		const onClose = vi.fn();
+		render(
+			<SupervisorAppointmentDialogWired
+				supervisor={SUPERVISOR}
+				ownerId="me"
+				callGates={{ video: false, audio: false }}
+				onClose={onClose}
+			/>
+		);
+		const save = await screen.findByTestId('calendar-appointment-save');
+		await waitFor(() =>
+			expect((save as HTMLButtonElement).disabled).toBe(false)
+		);
+		expect(tile('video')).toBeNull();
+		fireEvent.click(save);
+		await waitFor(() => expect(onClose).toHaveBeenCalled());
+		expect(api.apiCreateColleagueAppointment).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'ONSITE' })
+		);
 	});
 });

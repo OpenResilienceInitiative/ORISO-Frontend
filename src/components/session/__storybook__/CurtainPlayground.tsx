@@ -6,12 +6,14 @@ import {
 } from '../CaseHandoverCurtain';
 import type { CaseHandoverReason } from '../../../api/apiCaseHandover';
 
-// The four neutral codes UserService serves (#1536).
-const reasons: CaseHandoverReason[] = [
+// The four neutral codes UserService serves (#1536), with one explanation level
+// each as in FE#2040's test plan: planned absence REQUIRED, advice OPTIONAL, rest OFF.
+export const curtainReasons: CaseHandoverReason[] = [
 	{
 		code: 'PLANNED_ABSENCE',
 		label: 'Planned absence',
-		clientConsentRequired: false
+		clientConsentRequired: false,
+		explanationLevel: 'REQUIRED'
 	},
 	{
 		code: 'UNPLANNED_ABSENCE',
@@ -26,7 +28,8 @@ const reasons: CaseHandoverReason[] = [
 	{
 		code: 'ADVICE_REQUESTED',
 		label: 'Advice requested',
-		clientConsentRequired: true
+		clientConsentRequired: true,
+		explanationLevel: 'OPTIONAL'
 	}
 ];
 
@@ -71,7 +74,7 @@ export function CurtainPlayground({
 		<CaseHandoverCurtainView
 			step={step}
 			topicLabel={topicLabel}
-			reasons={noReasons || failed ? [] : reasons}
+			reasons={noReasons || failed ? [] : curtainReasons}
 			reasonsUnavailable={noReasons}
 			reasonsLoadFailed={failed}
 			onRetryReasons={() => setFailed(false)}
@@ -82,7 +85,7 @@ export function CurtainPlayground({
 			onReclaim={() => {}}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
-			onNext={() => setStep('describe')}
+			onNext={() => setStep('pending')}
 			onReasonSelect={setReasonCode}
 			onExplanationChange={setExplanation}
 			onSubmit={() => setStep('pending')}

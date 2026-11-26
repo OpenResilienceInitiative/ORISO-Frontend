@@ -75,7 +75,7 @@
 			top 0.5s;
 		color: var(--m3-on-surface-variant, $tertiary);
 		text-align: left;
-		background-color: white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 	}
 
 	/* stylelint-enable */
