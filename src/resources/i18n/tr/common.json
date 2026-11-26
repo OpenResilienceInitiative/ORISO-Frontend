@@ -4824,7 +4824,6 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
-				"directLinks": "Doğrudan davetler",
 				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
@@ -4849,9 +4848,10 @@
 				"selfHelp": "Çember",
 				"internal": "Dahili",
 				"team": "Ekip danışmanlığı",
-				"directLinkVideo": "Görüntülü arama",
-				"directLinkAudio": "Sesli arama",
-				"directLinkChat": "Doğrudan davet"
+				"directLinkVideo": "Görüntülü",
+				"directLinkAudio": "Sesli",
+				"directLinkChat": "Sohbet",
+				"directInvitationVia": "Doğrudan davet · {{medium}}"
 			},
 			"waiting": {
 				"minutes": "Bekleme: {{count}} dk.",

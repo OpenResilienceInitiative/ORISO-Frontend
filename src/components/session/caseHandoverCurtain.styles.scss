@@ -31,7 +31,8 @@
 	}
 
 	@include breakpoint($fromLarge) {
-		border: 1px solid var(--m3-primary-fixed-dim, #ffd8d4);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed-dim, #ffd8d4));
 		border-radius: var(--session-card-radius, 28px);
 	}
 }
@@ -41,7 +42,8 @@
 	align-items: center;
 	gap: 12px;
 	padding: $grid-base * 0.5;
-	border-bottom: 1px solid var(--m3-primary-fixed-dim, #ffd8d4);
+	border-bottom: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed-dim, #ffd8d4));
 }
 
 .caseHandoverCurtain__clearSelection {

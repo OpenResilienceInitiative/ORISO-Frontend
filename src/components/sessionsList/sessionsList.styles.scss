@@ -370,7 +370,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		border-radius: 999px;
 
 		// Figma: white dragger
-		background: rgba(255, 255, 255, 0.96);
+		// Dark: `--oriso-scroll-thumb` (dark only) is the outline role,
+		// which stands out from the list surface.
+		background: color-mix(
+			in srgb,
+			var(
+					--oriso-scroll-thumb,
+					var(--m3-surface-container-lowest, #ffffff)
+				)
+				96%,
+			transparent
+		);
 		box-shadow:
 			0 0 0 1px rgba(0, 0, 0, 0.06),
 			0 3px 10px rgba(0, 0, 0, 0.08);
@@ -384,13 +394,19 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		@media (hover: hover) {
 			&:hover {
-				background: rgba(255, 255, 255, 1);
+				background: var(
+					--oriso-scroll-thumb,
+					var(--m3-surface-container-lowest, #ffffff)
+				);
 			}
 		}
 
 		&:active {
 			cursor: grabbing;
-			background: rgba(255, 255, 255, 1);
+			background: var(
+				--oriso-scroll-thumb,
+				var(--m3-surface-container-lowest, #ffffff)
+			);
 			box-shadow:
 				0 0 0 1px rgba(0, 0, 0, 0.08),
 				0 2px 8px rgba(0, 0, 0, 0.12);
@@ -500,7 +516,9 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
-		box-shadow: 0 0 0 1px var(--m3-primary-fixed, #ffdad5);
+		// Keyboard focus: the focus role (primary in dark), not the hairline.
+		box-shadow: 0 0 0 1px
+			var(--oriso-outline-accent, var(--m3-primary-fixed, #ffdad5));
 	}
 
 	&__functionalityWrapper {
@@ -687,7 +705,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		bottom: 0;
 		left: calc(50% - 0.5px);
 		width: 1px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		pointer-events: none;
 	}
 }
@@ -866,16 +884,21 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 // Figma-aligned search + horizontal filter chips (consultant / asker MY_SESSION)
 .sessionsListToolbar {
-	$toolbar-search-bg: #f6f3f3;
+	// Scheme roles, not literals: the light hex values left a white search
+	// field and white filter circles in dark mode (P0 dark mode, 2026-11-25).
+	$toolbar-search-bg: var(--m3-surface-container-low, #f6f3f3);
 	$search-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
-	$toolbar-text: #444748;
+	$toolbar-text: var(--m3-on-surface-variant, #444748);
 
 	// Figma filter pill contract: inactive icon-only pills, expanded active pill.
-	$toolbar-chip-bg: #ffffff;
-	$toolbar-chip-fg: #4c555f;
-	$toolbar-chip-border-rest: #e1e6ee;
-	$toolbar-chip-hover-bg: #eef1f6;
-	$toolbar-chip-hover-border: #d1d8e6;
+	$toolbar-chip-bg: var(--m3-surface-container-lowest, #ffffff);
+	$toolbar-chip-fg: var(--m3-secondary, #4c555f);
+
+	// Light keeps the blue-tinted Figma values; dark sets the roles in
+	// `mui-variables-mapping.scss`.
+	$toolbar-chip-border-rest: var(--oriso-toolbar-chip-border, #e1e6ee);
+	$toolbar-chip-hover-bg: var(--oriso-toolbar-chip-hover-bg, #eef1f6);
+	$toolbar-chip-hover-border: var(--oriso-toolbar-chip-hover-border, #d1d8e6);
 	$toolbar-chip-selected-bg: #410001;
 	$toolbar-chip-selected-fg: #ffffff;
 
@@ -1071,6 +1094,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		display: block;
 		width: 24px;
 		height: 24px;
+		color: $toolbar-text;
 	}
 
 	&__chipsScroll {
@@ -1239,7 +1263,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 				&::before {
 					opacity: 0.12;
-					background: #fff;
+					background: var(--m3-surface-container-lowest, #ffffff);
 				}
 			}
 		}
@@ -1377,7 +1401,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		gap: 6px;
 		min-height: 56px;
 		padding: 4px 8px;
-		border-bottom: 1px solid #747878;
+		border-bottom: 1px solid var(--m3-outline, #747878);
 	}
 
 	&__searchModalIconButton {
@@ -1402,7 +1426,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__searchModalQueryInput {
 		font-size: 28px;
 		line-height: 40px;
-		color: #1b1b1c;
+		color: var(--m3-on-surface, #1b1b1c);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1439,7 +1463,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 14px;
 		line-height: 20px;
 		font-weight: 500;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		cursor: pointer;
 		border-bottom: 3px solid transparent;
@@ -1513,7 +1537,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		width: 100%;
 		min-height: 72px;
 		border: none;
-		border-bottom: 1px solid #d8d6d6;
+		border-bottom: 1px solid var(--m3-outline-variant, #d8d6d6);
 		background: transparent;
 		padding: 8px 16px;
 		display: flex;
@@ -1546,7 +1570,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__personName {
 		font-size: 16px;
 		line-height: 24px;
-		color: #1b1b1c;
+		color: var(--m3-on-surface, #1b1b1c);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1555,7 +1579,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	&__personSubtitle {
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1639,7 +1663,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 18px 16px;
 		font-size: 14px;
 		line-height: 20px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	/* FE#1152: why a colleague may be missing, or why none could be loaded. */
@@ -1647,7 +1671,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		padding: 12px 16px;
 		font-size: 12px;
 		line-height: 16px;
-		color: #444748;
+		color: var(--m3-on-surface-variant, #444748);
 		border-top: 1px solid #d8d6d6;
 
 		/* Stays in view when the list is long and the menu scrolls. */

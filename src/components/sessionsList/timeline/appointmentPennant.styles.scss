@@ -256,3 +256,10 @@
 .roomAppointmentPennants.roomTeamChatPennant > .appointmentPennant {
 	min-width: auto;
 }
+
+// Dark scheme (P0 dark mode, 2026-11-25): the body was the darkest surface
+// under ink tuned for the light rose, so the date read deep red on black.
+// In dark the pennant body takes its accent fill, which that ink is made for.
+html[data-oriso-personal-scheme='dark'] .appointmentPennant {
+	background: var(--pennant-accent);
+}
