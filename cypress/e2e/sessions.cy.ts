@@ -60,13 +60,21 @@ describe('Sessions', () => {
 			cy.get('.sessionsListItem').should('exist');
 			cy.wait('@consultantSessions');
 
+			// Open the case only once the list has settled: a list that is still
+			// loading re-renders the session header, and an offer dialog opened in
+			// that moment never loads its form.
+			cy.get('.sessionsListItem.skeleton').should('not.exist');
 			cy.get('[data-cy=session-list-item]').first().click();
 			cy.wait('@sessionRoomById');
+			cy.get('.sessionsListItem.skeleton').should('not.exist');
 
 			cy.get('#iconH').click();
 			cy.get('#flyout').should('be.visible');
 			cy.get('[data-cy=session-menu-group-handover]').click();
 			cy.get('[data-cy=session-menu-case-handover]').click();
+			cy.get('[data-testid=supervisor-dialog-person]').should(
+				'be.visible'
+			);
 			cy.wait('@handoverRecipients');
 
 			cy.get('[data-testid=supervisor-dialog-person]').click();
@@ -195,10 +203,20 @@ describe('Sessions', () => {
 				});
 
 				cy.get('a[href="/sessions/consultant/sessionView"]').click();
-				cy.wait('@consultantSessions')
-					.its('response.statusCode')
-					.should('eq', 200);
+				// The first page loads fine. The list may ask more than once while
+				// it settles, and an aborted request has no response, so check that
+				// one of them succeeded rather than the first one.
+				cy.wait('@consultantSessions');
 				cy.get('.sessionsListItem.skeleton').should('not.exist');
+				cy.get('@consultantSessions.all').should((calls) => {
+					expect(
+						(
+							calls as unknown as {
+								response?: { statusCode: number };
+							}[]
+						).map((call) => call.response?.statusCode)
+					).to.include(200);
+				});
 				cy.get('.sessionsListItem').should('exist');
 
 				cy.willReturn('consultantSessions', {
@@ -231,7 +249,7 @@ describe('Sessions', () => {
 		});
 
 		// Decision pending in #2572: <WelcomeIllustration> is no longer
-		// rendered since the Rocket.Chat removal (ef12120fb). Restore the
+		// rendered since the legacy chat backend was removed (ef12120fb). Restore the
 		// illustration or retire these tests.
 		describe.skip('welcome illustration', () => {
 			it('should show until given session item limit is reached', () => {
