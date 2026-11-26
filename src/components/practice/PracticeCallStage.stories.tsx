@@ -133,6 +133,20 @@ type Story = StoryObj<typeof meta>;
 const anchor = (name: string) =>
 	document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`);
 const robotTile = () => screen.getByTestId('practice-call-robot-tile');
+
+/** Whether a loaded stylesheet styles `selector` on hover. */
+const hasHoverRule = (selector: string) =>
+	Array.from(document.styleSheets).some((sheet) => {
+		try {
+			return Array.from(sheet.cssRules).some(
+				(rule) =>
+					rule instanceof CSSStyleRule &&
+					rule.selectorText.includes(`${selector}:hover`)
+			);
+		} catch {
+			return false;
+		}
+	});
 const SLOW = { timeout: 8000 };
 
 /** Starts the call with a real click and waits for Carimat's first line. */
@@ -210,6 +224,31 @@ export const Muted: Story = {
 			expect(window.speechSynthesis?.speaking ?? false).toBe(false)
 		);
 		expect(robotTile().hasAttribute('data-speaking')).toBe(false);
+
+		// The stage's controls are the shared call atoms, with their hover
+		// and focus ring, not a practice-only copy (PR #2556 review).
+		const mute = anchor(PRACTICE_CALL_TARGETS.mute)!;
+		const camera = anchor(PRACTICE_CALL_TARGETS.camera)!;
+		for (const control of [
+			mute,
+			camera,
+			anchor(PRACTICE_CALL_TARGETS.minimise)!
+		]) {
+			expect(control.classList).toContain('call-icon-button');
+			expect(control.classList).toContain('call-icon-button--stage');
+		}
+		expect(mute.classList).toContain('call-icon-button--off');
+		expect(anchor(PRACTICE_CALL_TARGETS.leave)!.classList).toContain(
+			'call-fab'
+		);
+		expect(hasHoverRule('.call-icon-button--stage')).toBe(true);
+		expect(hasHoverRule('.call-icon-button--off')).toBe(true);
+		expect(hasHoverRule('.call-fab')).toBe(true);
+		await userEvent.tab();
+		expect(document.activeElement).toBe(camera);
+		expect(camera.matches(':focus-visible')).toBe(true);
+		expect(getComputedStyle(camera).outlineStyle).toBe('solid');
+		expect(getComputedStyle(camera).outlineWidth).toBe('3px');
 	}
 };
 

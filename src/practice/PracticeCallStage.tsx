@@ -310,7 +310,7 @@ export const PracticeCallStageView = ({
 
 				<div className="practice-call-stage__controls">
 					<ButtonBase
-						className={`practice-call-stage__control${muted ? ' practice-call-stage__control--off' : ''}`}
+						className={`call-icon-button call-icon-button--stage${muted ? ' call-icon-button--off' : ''}`}
 						onClick={onToggleMute}
 						aria-pressed={muted}
 						aria-label={translate(
@@ -325,7 +325,7 @@ export const PracticeCallStageView = ({
 						)}
 					</ButtonBase>
 					<ButtonBase
-						className={`practice-call-stage__control${cameraOff ? ' practice-call-stage__control--off' : ''}`}
+						className={`call-icon-button call-icon-button--stage${cameraOff ? ' call-icon-button--off' : ''}`}
 						onClick={onToggleCamera}
 						aria-pressed={cameraOff}
 						aria-label={translate(
@@ -342,7 +342,7 @@ export const PracticeCallStageView = ({
 						)}
 					</ButtonBase>
 					<ButtonBase
-						className="practice-call-stage__control"
+						className="call-icon-button call-icon-button--stage"
 						onClick={onMinimise}
 						aria-label={translate('calls.states.minimize')}
 						data-tour-target={PRACTICE_CALL_TARGETS.minimise}

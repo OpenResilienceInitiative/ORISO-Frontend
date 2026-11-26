@@ -119,6 +119,31 @@
 		outline-offset: 1px;
 	}
 
+	/*
+	 * On a dark stage (the practice group stage, FE#2545): a light disc the
+	 * size of the hang-up fab beside it. Before `--off`, so a pressed toggle
+	 * keeps the filled state and its own hover.
+	 */
+	&--stage {
+		width: 56px;
+		height: 56px;
+		background: var(--m3-surface-container-lowest, #fff);
+		color: var(--m3-on-surface, #1c1b1f);
+
+		svg {
+			width: 24px;
+			height: 24px;
+		}
+
+		&:hover {
+			background: var(--m3-surface-container-high, #eae7e8);
+		}
+
+		&:focus-visible {
+			outline-offset: 3px;
+		}
+	}
+
 	/* An active toggle reads as the control bar's filled state (1c). */
 	&--off {
 		background: var(--m3-secondary-container, #646d78);
