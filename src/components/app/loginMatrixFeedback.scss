@@ -5,6 +5,12 @@
 .loginForm[data-matrix-phase] {
 	--matrix-primary: var(--m3-primary, #a5000a);
 	--login-matrix-turn: calc(300ms * var(--login-matrix-pace, 1));
+	--login-matrix-signs: ui-monospace, 'SF Mono', menlo, consolas, monospace;
+
+	// The rain sits behind the text, above the card's own background.
+	&:has(> .loginMatrixRain) {
+		isolation: isolate;
+	}
 
 	&:is(
 		[data-phase='loading'],
@@ -33,6 +39,8 @@
 	}
 
 	.loginMatrixGlyph,
+	.loginMatrixValue > span,
+	.loginMatrixRain span,
 	[data-matrix-field] {
 		--login-matrix-delay: calc(
 			var(--at, 0) * var(--login-matrix-pace, 1) * 1ms
@@ -54,6 +62,7 @@
 			position: absolute;
 			inset-block: 0;
 			inset-inline: -0.5em;
+			font-family: var(--login-matrix-signs);
 			font-size: 0.92em;
 			line-height: normal;
 			text-align: center;
@@ -69,9 +78,40 @@
 		color: var(--matrix-primary);
 	}
 
-	// Each field: the icon becomes a small grid of digits, the outline turns
-	// into short strokes and then into digits running along the same edge.
+	// What is being sent: the typed name and password fade, and one sign per
+	// character takes their place on the same line.
+	.loginMatrixValue {
+		position: absolute;
+		display: flex;
+		align-items: center;
+		box-sizing: border-box;
+		overflow: hidden;
+		pointer-events: none;
+		color: var(--matrix-primary);
+		font-family: var(--login-matrix-signs);
+
+		> span {
+			flex: none;
+			width: 0.62em;
+			text-align: center;
+
+			&::after {
+				content: attr(data-digit) / '';
+				animation: login-matrix-digit var(--login-matrix-turn)
+					ease-in-out var(--login-matrix-delay) both;
+			}
+		}
+	}
+
+	// Each field: the icon becomes a small grid of signs, the outline turns
+	// into short strokes and then into signs running along the same edge.
 	[data-matrix-field] {
+		input {
+			animation: login-matrix-letter var(--login-matrix-turn) ease-in-out
+				calc(var(--value-at, 0) * var(--login-matrix-pace, 1) * 1ms)
+				both;
+		}
+
 		.MuiInputAdornment-positionStart {
 			position: relative;
 
@@ -81,16 +121,16 @@
 			}
 
 			&::after {
-				content: '010\A 101\A 011' / '';
+				content: attr(data-grid) / '';
 				position: absolute;
 				inset-block-start: 50%;
 				inset-inline-start: 50%;
 				transform: translate(-50%, -50%);
 				white-space: pre;
-				font: 600 6px/1.2 monospace;
+				font: 600 7px/1.05 var(--login-matrix-signs);
 				letter-spacing: 1px;
 				color: var(--matrix-primary);
-				animation: login-matrix-digit var(--login-matrix-turn)
+				animation: login-matrix-drip calc(var(--login-matrix-turn) * 2)
 					cubic-bezier(0.16, 1, 0.3, 1) var(--login-matrix-delay) both;
 			}
 		}
@@ -137,7 +177,52 @@
 		}
 	}
 
+	.loginMatrixRain {
+		--rain-run: calc(900ms * var(--login-matrix-pace, 1));
+
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+		pointer-events: none;
+		color: var(--matrix-primary);
+		opacity: 0.17;
+		font: 9px/1 var(--login-matrix-signs);
+
+		> div {
+			position: absolute;
+			inset-inline: 0;
+			display: flex;
+			justify-content: space-between;
+			height: 55%;
+			overflow: hidden;
+		}
+
+		> [data-side='top'] {
+			top: 0;
+			mask-image: linear-gradient(#000 25%, transparent);
+		}
+
+		> [data-side='bottom'] {
+			bottom: 0;
+			align-items: flex-end;
+			mask-image: linear-gradient(transparent, #000 75%);
+		}
+
+		span {
+			writing-mode: vertical-lr;
+			text-orientation: upright;
+			animation: login-matrix-fall var(--rain-run)
+				cubic-bezier(0.2, 0.7, 0.2, 1) var(--login-matrix-delay) both;
+		}
+
+		[data-side='bottom'] span {
+			animation-name: login-matrix-rise;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
+		[data-matrix-field] input,
 		.loginMatrixGlyph > span,
 		[data-matrix-field] > fieldset,
 		[data-matrix-field] .MuiInputAdornment-positionStart > svg {
@@ -146,6 +231,8 @@
 
 		.loginMatrixGlyph::after,
 		[data-matrix-field] .MuiInputAdornment-positionStart::after,
+		.loginMatrixValue,
+		.loginMatrixRain,
 		.loginMatrixEdge {
 			display: none;
 		}
@@ -173,6 +260,25 @@
 @keyframes login-matrix-digit {
 	from {
 		opacity: 0;
+	}
+}
+
+@keyframes login-matrix-drip {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -110%);
+	}
+}
+
+@keyframes login-matrix-fall {
+	from {
+		transform: translateY(-100%);
+	}
+}
+
+@keyframes login-matrix-rise {
+	from {
+		transform: translateY(100%);
 	}
 }
 

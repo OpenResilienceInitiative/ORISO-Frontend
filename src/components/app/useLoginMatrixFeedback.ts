@@ -22,7 +22,10 @@ const subscribe = (notify: () => void) => {
 const load = () => import('./loginMatrixDissolve');
 
 export function warmLoginMatrix() {
-	if (!reduced()) void load().catch(() => undefined);
+	if (!reduced())
+		void load()
+			.then(({ warmSigns }) => warmSigns())
+			.catch(() => undefined);
 }
 
 /** Feedback never gates authentication. An error, a new attempt, or unmount restores the original translated nodes. */

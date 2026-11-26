@@ -688,7 +688,7 @@ const reencodeStory = (
 
 export const ReencodeSignIn = reencodeStory(
 	'Anmelden — Text wird umkodiert',
-	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst kodieren Button-Text und Überschrift um, jede Ziffer in einer gleich breiten Zelle ihres Worts. Die übrigen Zeilen wechseln an zufälligen Stellen, die Ziffern stehen still auf dem Text. Danach werden die Icons zu kleinen Ziffernrastern und die Feldränder erst zu Strichen, dann zu Ziffern — direkt auf den echten Elementen, ohne Maske. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
+	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst werden Name und Passwort zu Zeichen, dann Button-Text und Überschrift, danach die übrigen Wörter an zufälligen Stellen. Jedes Zeichen rattert kurz durch Katakana und Ziffern, bevor es still auf seinem Buchstaben stehen bleibt. Icons werden zu kleinen Zeichenrastern, Feldränder erst zu Strichen, dann zu Zeichen, und hinter dem Text fällt ein feiner Vorhang aus Zeichen von oben und steigt von unten. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
 	{ holdMs: 2500 },
 	{
 		play: async ({ canvasElement }) => {
@@ -753,7 +753,7 @@ export const ReencodeSignIn = reencodeStory(
 
 export const ReencodeDark = reencodeStory(
 	'Anmelden — umkodiert, dunkles Theme',
-	'Dieselbe Folge im dunklen Theme. Ziffern übernehmen die Textfarbe des Elements, die Überschrift die Primärfarbe des Trägers.',
+	'Dieselbe Folge im dunklen Theme. Zeichen übernehmen die Textfarbe des Elements; Überschrift, Feldinhalte und Vorhang die Primärfarbe des Trägers.',
 	{},
 	{ globals: { scheme: 'dark' } }
 );
@@ -777,13 +777,13 @@ export const ReencodePhone = reencodeStory(
 
 export const ReencodeSlowMotion = reencodeStory(
 	'Anmelden — umkodiert, Zeitlupe',
-	'Viermal langsamer: Button und Überschrift zuerst, dann wechseln die übrigen Buchstaben an zufälligen Stellen, zuletzt Icons und Feldränder.',
+	'Viermal langsamer: Name und Passwort zuerst, dann Button und Überschrift, dann die übrigen Wörter an zufälligen Stellen, zuletzt Icons, Feldränder und der Zeichenvorhang.',
 	{ holdMs: 15000, pace: 4 }
 );
 
 export const ReencodeReducedMotion = reencodeStory(
 	'Anmelden — reduzierte Bewegung',
-	'Mit „Bewegung reduzieren“ bleibt der Text stehen. Nur der Hinweis „Bitte warten“ erscheint, bis die Anmeldung antwortet.',
+	'Mit „Bewegung reduzieren“ bleiben Text und Feldinhalte stehen, ohne Zeichen und ohne Vorhang. Nur der Hinweis „Bitte warten“ erscheint, bis die Anmeldung antwortet.',
 	{ reduceMotion: true },
 	{
 		play: async ({ canvasElement }) => {

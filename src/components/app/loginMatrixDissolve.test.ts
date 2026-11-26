@@ -6,7 +6,6 @@ import { LOGIN_MATRIX_TIMING, startLoginMatrix } from './loginMatrixDissolve';
 afterEach(() => {
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
-	vi.useRealTimers();
 	document.body.replaceChildren();
 });
 
@@ -19,13 +18,15 @@ const render = () =>
 const at = (glyph: Element) =>
 	Number((glyph as HTMLElement).style.getPropertyValue('--at'));
 
-it('re-encodes the real text in place, button first, and restores it exactly', () => {
-	vi.useFakeTimers();
+it('re-encodes the real text and the typed values in place, and restores everything exactly', () => {
 	render();
 	let nextFrame: FrameRequestCallback | undefined;
 	vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
 		nextFrame = callback;
 		return 1;
+	});
+	vi.stubGlobal('cancelAnimationFrame', () => {
+		nextFrame = undefined;
 	});
 	const form = document.createElement('form');
 	form.innerHTML = `
@@ -39,28 +40,41 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 	document.body.append(form);
 	const before = form.innerHTML;
 	const input = form.querySelector('input')!;
-	// The animation never reads or writes a credential.
-	const forbidden = () => {
-		throw new Error('Animation accessed a credential');
-	};
-	Object.defineProperty(input, 'value', { get: forbidden, set: forbidden });
+	// The animation may count the typed characters, but never writes them
+	// anywhere and never changes the value.
+	Object.defineProperty(input, 'value', {
+		get: () => 'secret-name',
+		set: () => {
+			throw new Error('Animation wrote a credential');
+		}
+	});
 	const button = form.querySelector('button')!;
 	const heading = form.querySelector('h2 span')!;
 	const headingText = heading.firstChild;
 
+	let t0 = 0;
+	const frame = (ms: number) => nextFrame?.(t0 + ms);
 	for (let attempt = 0; attempt < 2; attempt++) {
+		t0 = performance.now();
 		const scene = startLoginMatrix(form);
 		// The submit frame turns only the button, at random places within it.
 		expect(button.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
 		expect(form.querySelectorAll('.loginMatrixGlyph')).toHaveLength(8);
 		const turns = [...button.querySelectorAll('.loginMatrixGlyph')].map(at);
-		expect(Math.min(...turns)).toBeGreaterThanOrEqual(-1);
+		expect(Math.min(...turns)).toBeGreaterThanOrEqual(-50);
 		expect(Math.max(...turns)).toBeLessThanOrEqual(
 			LOGIN_MATRIX_TIMING.button
 		);
-		nextFrame!(performance.now());
 
-		// Every readable line follows the button.
+		// Frame 1: what is being sent turns first, one sign per character.
+		frame(16);
+		const row = form.querySelector('.loginMatrixValue')!;
+		expect(row.getAttribute('aria-hidden')).toBe('true');
+		expect(row.children).toHaveLength('secret-name'.length);
+		expect(form.innerHTML).not.toContain('secret');
+
+		// Frame 2: every readable line follows; the heading first.
+		frame(32);
 		const lines = ['h2', 'label', 'p'].map((selector) =>
 			Math.min(
 				...[
@@ -68,21 +82,36 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 				].map(at)
 			)
 		);
-		// The heading turns right after the button, the other lines after it.
 		expect(lines[0]).toBeGreaterThanOrEqual(
-			LOGIN_MATRIX_TIMING.heading - 1
+			LOGIN_MATRIX_TIMING.heading - 50
 		);
 		expect(Math.min(lines[1], lines[2])).toBeGreaterThanOrEqual(
-			LOGIN_MATRIX_TIMING.lead - 1
+			LOGIN_MATRIX_TIMING.lead - 50
 		);
-		// The field's outline is redrawn as digits on its own edge.
+
+		// Frame 3: the field's icon and outline are redrawn as signs.
+		frame(48);
 		const field = form.querySelector<HTMLElement>(
 			'.MuiOutlinedInput-root'
 		)!;
 		expect(field.dataset.matrixField).toBe('');
+		expect(
+			field.querySelector<HTMLElement>(
+				'.MuiInputAdornment-positionStart'
+			)!.dataset.grid
+		).toMatch(/^.{3}\n.{3}\n.{3}$/u);
 		const edge = field.querySelector('.loginMatrixEdge')!;
 		expect(edge.getAttribute('aria-hidden')).toBe('true');
-		expect(edge.textContent).toMatch(/^[01]+$/);
+		expect(edge.textContent!.length).toBeGreaterThan(3);
+
+		// Frame 4: the curtain of signs, behind everything, hidden from
+		// assistive technology.
+		frame(64);
+		expect(form.firstElementChild!.className).toBe('loginMatrixRain');
+		expect(form.firstElementChild!.getAttribute('aria-hidden')).toBe(
+			'true'
+		);
+
 		// Hidden copies, zero-width padding and inputs are left alone.
 		expect(form.querySelector('legend .loginMatrixGlyph')).toBeNull();
 		expect(form.querySelector('fieldset .loginMatrixGlyph')).toBeNull();
@@ -95,21 +124,20 @@ it('re-encodes the real text in place, button first, and restores it exactly', (
 		// Letters stay in the DOM: the accessible text does not change.
 		expect(button.textContent).toBe('Anmelden');
 		expect(heading.firstChild).toBe(headingText);
-		const digits = [...form.querySelectorAll<HTMLElement>('[data-digit]')];
-		expect(
-			digits.every(({ dataset }) => /^[01]$/.test(dataset.digit!))
-		).toBe(true);
+		const signs = [...form.querySelectorAll<HTMLElement>('[data-digit]')];
+		expect(signs.every(({ dataset }) => dataset.digit!.length === 1)).toBe(
+			true
+		);
 
-		// Long waits: one digit at a time flips, then pause stops it.
-		const settled = digits.map(({ dataset }) => dataset.digit).join('');
-		vi.advanceTimersByTime(scene.duration);
-		const flipped = digits.map(({ dataset }) => dataset.digit).join('');
+		// Long waits: one sign at a time flips, then pause stops it.
+		const read = () => signs.map(({ dataset }) => dataset.digit).join('');
+		const settled = read();
+		frame(scene.duration + 500);
+		const flipped = read();
 		expect(flipped).not.toBe(settled);
 		scene.pause();
-		vi.advanceTimersByTime(10_000);
-		expect(digits.map(({ dataset }) => dataset.digit).join('')).toBe(
-			flipped
-		);
+		frame(scene.duration + 5000);
+		expect(read()).toBe(flipped);
 
 		scene.dispose();
 		expect(form.innerHTML).toBe(before);

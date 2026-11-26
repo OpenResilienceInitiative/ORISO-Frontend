@@ -1,9 +1,12 @@
-// Re-encodes the form's own visible text in place: the sign-in label and the
-// heading first, then the rest at random places, then each field's icon and
-// outline. Digits stand still on the text; only opacity changes. There is no overlay over the panel. Each letter keeps its
-// box and fades out while a digit, drawn by a pseudo-element that assistive
-// technology ignores, settles over it. CSS runs the whole timeline (opacity and
-// transform only); JS only builds the pieces and says when each one turns.
+// Re-encodes the form in place while sign-in is pending, like the code rain
+// in The Matrix: what is being sent (the name and the password) turns first,
+// then the button and the heading, then the other words at random places.
+// Every sign rattles through a few cipher signs before it settles, stands
+// still on its letter and only fades. Icons become small sign grids, outlines
+// turn into strokes and then signs, and a faint curtain of tiny signs falls
+// from the top and rises from the bottom behind the text. The letters stay in
+// the DOM, so assistive technology reads the page unchanged. CSS runs the
+// timeline (opacity and transform only); one frame loop swaps signs.
 
 const segmenter =
 	typeof Intl.Segmenter === 'function' ? new Intl.Segmenter() : null;
@@ -16,21 +19,45 @@ const SKIPPED =
 	'input, textarea, select, legend, [aria-hidden="true"], .sr-only, .loginForm__otp:not(.loginForm__otp--active)';
 const BUTTON = 'button[type="submit"], .loginForm__actions button';
 const SVG = 'http://www.w3.org/2000/svg';
-const bit = () => (Math.random() < 0.5 ? '0' : '1');
+// Half-width katakana, digits and a few signs, as in the film's rain.
+const SIGNS = 'ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789Z:=*+<>¦';
+const sign = () => SIGNS[Math.floor(Math.random() * SIGNS.length)];
+const signs = (count: number) => Array.from({ length: count }, sign).join('');
 // MUI pads empty adornments and notches with zero-width spaces.
-const readable = (value: string) => /[^\s\u200B-\u200D\uFEFF]/u.test(value);
+const readable = (value: string) => /[^\s​-‍﻿]/u.test(value);
+
+let warmed = false;
+/**
+ * Lays the signs out once while the form is idle. The system looks up a font
+ * for the katakana the first time; done on submit, that costs a long frame.
+ */
+export function warmSigns() {
+	if (warmed) return;
+	warmed = true;
+	const probe = document.createElement('span');
+	probe.setAttribute('aria-hidden', 'true');
+	probe.style.cssText =
+		'position:fixed;top:0;opacity:0.01;pointer-events:none;font:9px ui-monospace,monospace';
+	probe.textContent = SIGNS;
+	document.body.append(probe);
+	probe.getBoundingClientRect();
+	requestAnimationFrame(() => requestAnimationFrame(() => probe.remove()));
+}
 
 /** Milliseconds on one timeline, before `--login-matrix-pace` stretches it. */
 export const LOGIN_MATRIX_TIMING = {
+	values: 0,
 	button: 420,
-	heading: 120,
-	lead: 380,
+	heading: 160,
+	lead: 420,
 	drift: 60,
 	scatter: 720,
 	letters: 380,
 	field: 160,
 	outline: 640,
 	turn: 300,
+	rattle: 70,
+	rain: 900,
 	pulse: 1100
 };
 
@@ -50,7 +77,7 @@ function visibleText(form: HTMLElement) {
 	return found;
 }
 
-/** One even cell per letter across each word, so the digits stand in a row. */
+/** One even cell per letter across each word, so the signs stand in a row. */
 function align(glyphs: HTMLElement[]) {
 	const words: HTMLElement[][] = [];
 	for (const glyph of glyphs) {
@@ -80,12 +107,17 @@ function align(glyphs: HTMLElement[]) {
 		glyph.style.setProperty('--shift', `${shift.toFixed(2)}px`);
 }
 
-/** The field's own outline turns into small strokes, then into digits. */
+/**
+ * The field's own outline turns into small strokes, then into signs. Reads the
+ * geometry now and returns the builder, so all reads come before any write.
+ */
 function outline(field: HTMLElement, id: string) {
 	const set = field.querySelector<HTMLElement>(':scope > fieldset');
-	if (!set) return;
+	if (!set) return () => undefined;
 	const w = set.offsetWidth;
 	const h = set.offsetHeight;
+	const x = set.offsetLeft;
+	const y = set.offsetTop;
 	const r = Math.min(
 		parseFloat(getComputedStyle(set).borderTopLeftRadius) || 0,
 		h / 2
@@ -93,22 +125,31 @@ function outline(field: HTMLElement, id: string) {
 	const legend = set.querySelector('legend');
 	const gap = legend && legend.offsetWidth > 2 ? legend : null;
 	const from = gap ? gap.offsetLeft + gap.offsetWidth : r;
+	const to = gap ? gap.offsetLeft : r;
+	// The rounded rectangle's perimeter, less the notch for the label.
+	const length = 2 * (w + h) - 8 * r + 2 * Math.PI * r - (from - to);
+	return () => build(field, id, { w, h, x, y, r, from, to, length });
+}
+
+function build(
+	field: HTMLElement,
+	id: string,
+	{ w, h, x, y, r, from, to, length }: Record<string, number>
+) {
 	const svg = document.createElementNS(SVG, 'svg');
 	svg.setAttribute('class', 'loginMatrixEdge');
 	svg.setAttribute('aria-hidden', 'true');
-	svg.style.cssText = `left:${set.offsetLeft}px;top:${set.offsetTop}px;width:${w}px;height:${h}px`;
+	svg.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
 	const arc = `A${r} ${r} 0 0 1`;
-	svg.innerHTML = `<path id="${id}" d="M${from} 0H${w - r}${arc} ${w} ${r}V${h - r}${arc} ${w - r} ${h}H${r}${arc} 0 ${h - r}V${r}${arc} ${r} 0H${gap ? gap.offsetLeft : r}"/><text><textPath href="#${id}"></textPath></text>`;
+	svg.innerHTML = `<path id="${id}" d="M${from} 0H${w - r}${arc} ${w} ${r}V${h - r}${arc} ${w - r} ${h}H${r}${arc} 0 ${h - r}V${r}${arc} ${r} 0H${to}"/><text><textPath href="#${id}"></textPath></text>`;
 	field.append(svg);
-	const path = svg.querySelector('path')!;
 	const ring = svg.querySelector('textPath')!;
-	const length = path.getTotalLength?.() || 2 * (w + h);
 	const count = Math.max(4, Math.floor(length / 7));
 	ring.setAttribute('textLength', String(length));
 	ring.setAttribute('lengthAdjust', 'spacing');
 	for (let i = 0; i < count; i++) {
 		const cell = document.createElementNS(SVG, 'tspan');
-		cell.textContent = bit();
+		cell.textContent = sign();
 		cell.style.setProperty('--run', Math.random().toFixed(3));
 		ring.append(cell);
 	}
@@ -120,7 +161,9 @@ export function startLoginMatrix(form: HTMLElement) {
 	const style = getComputedStyle(form);
 	const pace = parseFloat(style.getPropertyValue('--login-matrix-pace')) || 1;
 	const button = form.querySelector(BUTTON);
-	const glyphs: HTMLElement[] = [];
+	// Every sign that rattles, with its turn on the timeline.
+	const turning: [HTMLElement, number][] = [];
+	const columns: Text[] = [];
 	const restore: (() => void)[] = [];
 	const texts = visibleText(form);
 	const inButton = (text: Text) => Boolean(button?.contains(text));
@@ -136,33 +179,34 @@ export function startLoginMatrix(form: HTMLElement) {
 			!field.closest('.loginForm__otp:not(.loginForm__otp--active)')
 	);
 	const started = performance.now();
+	// Pieces built a frame late still land on the same timeline.
+	const offset = () => (performance.now() - started) / pace;
 	let line = 0;
 
+	/** A sign that turns at `turn` ms; it rattles until it settles. */
+	const cipher = (element: HTMLElement, turn: number, shift: number) => {
+		element.dataset.digit = sign();
+		element.style.setProperty('--at', String(Math.round(turn - shift)));
+		turning.push([element, turn]);
+		return element;
+	};
+
 	const encode = (text: Text) => {
-		// Button and heading first; then the rest turns at random places,
-		// drifting gently down the form.
 		const [lead, spread] = inButton(text)
 			? [0, T.button]
 			: inHeading(text)
 				? [T.heading, T.letters]
 				: [T.lead + line++ * T.drift, T.scatter];
-		// Pieces built a frame late still land on the same timeline.
-		const start = lead - (performance.now() - started) / pace;
-		const letters = graphemes(text.data);
+		const shift = offset();
 		const built: HTMLElement[] = [];
-		const parts = letters.map((letter) => {
+		const parts = graphemes(text.data).map((letter) => {
 			if (!readable(letter)) return document.createTextNode(letter);
 			const glyph = document.createElement('span');
 			const ink = document.createElement('span');
 			ink.textContent = letter;
 			glyph.className = 'loginMatrixGlyph';
-			glyph.dataset.digit = bit();
-			glyph.style.setProperty(
-				'--at',
-				String(Math.round(start + spread * Math.random()))
-			);
 			glyph.append(ink);
-			built.push(glyph);
+			built.push(cipher(glyph, lead + spread * Math.random(), shift));
 			return glyph;
 		});
 		// One inline box for the whole text, so a flex parent still sees one
@@ -173,7 +217,6 @@ export function startLoginMatrix(form: HTMLElement) {
 		const original = text.data;
 		text.after(box);
 		text.data = '';
-		glyphs.push(...built);
 		restore.push(() => {
 			box.remove();
 			if (!text.data) text.data = original;
@@ -181,47 +224,152 @@ export function startLoginMatrix(form: HTMLElement) {
 		return built;
 	};
 
+	/** What is being sent turns first: one sign per typed character. */
+	const value = (field: HTMLElement) => {
+		const input = field.querySelector('input');
+		// Only the length is read; the characters never reach the DOM.
+		const count = Math.min(input?.value.length ?? 0, 40);
+		if (!input || !count) return () => undefined;
+		const place = `left:${input.offsetLeft}px;top:${input.offsetTop}px;width:${input.offsetWidth}px;height:${input.offsetHeight}px;padding-inline-start:${getComputedStyle(input).paddingLeft}`;
+		return (shift: number) => {
+			const row = document.createElement('span');
+			row.className = 'loginMatrixValue';
+			row.setAttribute('aria-hidden', 'true');
+			row.style.cssText = place;
+			for (let i = 0; i < count; i++)
+				row.append(
+					cipher(
+						document.createElement('span'),
+						T.values + T.letters * Math.random(),
+						shift
+					)
+				);
+			field.style.setProperty(
+				'--value-at',
+				String(Math.round(T.values - shift))
+			);
+			field.append(row);
+			return row;
+		};
+	};
+
+	/** A faint curtain of tiny signs falls from the top and rises from below. */
+	const curtain = () => {
+		const shift = offset();
+		const rain = document.createElement('div');
+		rain.className = 'loginMatrixRain';
+		rain.setAttribute('aria-hidden', 'true');
+		const count = Math.ceil(form.clientWidth / 11);
+		const rows = Math.ceil(form.clientHeight / 16) + 2;
+		for (const side of ['top', 'bottom']) {
+			const half = document.createElement('div');
+			half.dataset.side = side;
+			for (let i = 0; i < count; i++) {
+				const column = document.createElement('span');
+				const text = document.createTextNode(signs(rows));
+				column.style.setProperty(
+					'--at',
+					String(
+						Math.round(
+							T.lead / 2 + T.scatter * Math.random() - shift
+						)
+					)
+				);
+				column.append(text);
+				columns.push(text);
+				half.append(column);
+			}
+			rain.append(half);
+		}
+		form.prepend(rain);
+		restore.push(() => rain.remove());
+	};
+
 	const lastLine = T.lead + lines * T.drift + T.scatter / 2;
-	const later = () => {
-		const built = rest.flatMap(encode);
-		const edges = fields.map((field, index) => {
-			const at =
-				lastLine +
-				index * T.field -
-				(performance.now() - started) / pace;
+	// Read every position before the first write, so layout runs once.
+	const plans = fields.map(
+		(field, index) =>
+			[
+				value(field),
+				outline(field, `login-matrix-edge-${index}`)
+			] as const
+	);
+	const pieces: (Element | undefined)[] = [];
+	restore.push(() => {
+		for (const piece of pieces) piece?.remove();
+		for (const field of fields) {
+			delete field.dataset.matrixField;
+			delete field.querySelector<HTMLElement>(
+				'.MuiInputAdornment-positionStart'
+			)?.dataset.grid;
+			field.style.removeProperty('--at');
+			field.style.removeProperty('--value-at');
+			if (!field.getAttribute('style')) field.removeAttribute('style');
+		}
+	});
+	const values = () => {
+		const shift = offset();
+		pieces.push(...plans.map(([row]) => row(shift)));
+	};
+	const words = () => align(rest.flatMap(encode));
+	const edges = () =>
+		fields.forEach((field, index) => {
+			const at = lastLine + index * T.field - offset();
 			field.style.setProperty('--at', String(Math.round(at)));
 			field.dataset.matrixField = '';
-			return outline(field, `login-matrix-edge-${index}`);
+			const icon = field.querySelector<HTMLElement>(
+				'.MuiInputAdornment-positionStart'
+			);
+			if (icon)
+				icon.dataset.grid = `${signs(3)}\n${signs(3)}\n${signs(3)}`;
+			pieces.push(plans[index][1]());
 		});
-		align(built);
-		restore.push(() => {
-			for (const edge of edges) edge?.remove();
-			for (const field of fields) {
-				delete field.dataset.matrixField;
-				field.style.removeProperty('--at');
-				if (!field.getAttribute('style'))
-					field.removeAttribute('style');
+
+	const duration = lastLine + fields.length * T.field + T.outline + T.turn;
+	// One piece per frame keeps every frame short: what is sent, the words,
+	// the fields, then the rain.
+	const steps = [values, words, edges, curtain];
+	let last = -Infinity;
+	let pulse = duration;
+	let frame = 0;
+	// One loop: rattle the signs that are turning, keep the rain alive, and
+	// in long waits flip one settled sign now and then.
+	const tick = (now: number) => {
+		steps.shift()?.();
+		const t = (now - started) / pace;
+		if (t - last >= T.rattle) {
+			last = t;
+			for (const [element, turn] of turning)
+				if (t >= turn && t < turn + T.turn * 1.5)
+					element.dataset.digit = sign();
+			const column = columns[Math.floor(Math.random() * columns.length)];
+			if (column) {
+				const at = Math.floor(Math.random() * column.length);
+				column.replaceData(at, 1, sign());
 			}
-		});
+			if (t >= pulse && turning.length) {
+				pulse = t + T.pulse;
+				const [element] =
+					turning[Math.floor(Math.random() * turning.length)];
+				// Always a different sign, so the flip shows.
+				const index = SIGNS.indexOf(element.dataset.digit ?? '');
+				element.dataset.digit =
+					SIGNS[
+						(index +
+							1 +
+							Math.floor(Math.random() * (SIGNS.length - 1))) %
+							SIGNS.length
+					];
+			}
+		}
+		frame = requestAnimationFrame(tick);
 	};
 	// The button turns on the submit frame; everything else is built on the
 	// next one, so the first frame stays short.
 	align(first.flatMap(encode));
-	const frame = requestAnimationFrame(later);
+	frame = requestAnimationFrame(tick);
 
-	const duration = lastLine + fields.length * T.field + T.outline + T.turn;
-	// Longer waits: now and then one digit flips, nothing else moves.
-	let timer = window.setTimeout(function pulse() {
-		const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
-		if (glyph)
-			glyph.dataset.digit = glyph.dataset.digit === '1' ? '0' : '1';
-		timer = window.setTimeout(pulse, T.pulse * pace);
-	}, duration * pace);
-
-	const pause = () => {
-		cancelAnimationFrame(frame);
-		window.clearTimeout(timer);
-	};
+	const pause = () => cancelAnimationFrame(frame);
 	return {
 		duration,
 		pause,
