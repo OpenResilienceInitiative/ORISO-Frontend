@@ -10,7 +10,7 @@
  * Inverted preview continues to use its existing Admin palette.
  */
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import type { GlobalTypes } from 'storybook/internal/types';
 import { useGlobals, useParameter } from 'storybook/preview-api';
 import {
@@ -60,6 +60,24 @@ export const orisoSchemeGlobalType: GlobalTypes = {
 	}
 };
 
+/**
+ * Runs `change` with every CSS transition switched off, so a scheme switch
+ * repaints at once. Without it, a component whose colours transition (the
+ * session-list chips: 480 ms) still shows a light/dark mix when a story's
+ * play function measures contrast (2.85:1 instead of 11.3:1 in CI).
+ */
+const withoutTransitions = (change: () => void) => {
+	const freeze = document.createElement('style');
+	freeze.textContent =
+		'*, *::before, *::after { transition: none !important; }';
+	document.head.appendChild(freeze);
+	change();
+	// Commit the new colours while transitions are off.
+	void getComputedStyle(document.documentElement).color;
+	void document.body.offsetHeight;
+	freeze.remove();
+};
+
 const isScheme = (value: unknown): value is OrisoSchemeName =>
 	value === 'light' || value === 'dark' || value === 'inverted';
 
@@ -73,25 +91,28 @@ export const withOrisoScheme = function OrisoSchemeDecorator(
 	const level =
 		active === 'inverted' ? 'standard' : parseContrastLevel(contrast);
 
-	useEffect(() => {
+	// Before paint, so the story's first frame already has the scheme.
+	useLayoutEffect(() => {
 		const { tokens } = computeOrisoPalette(
 			seeds ?? { primary: seed },
 			active,
 			level
 		);
 		const root = document.documentElement;
-		if (active !== 'inverted') {
-			root.dataset.orisoPersonalScheme = active;
-			root.dataset.orisoContrastLevel = level;
-		}
-		for (const [name, value] of Object.entries(tokens)) {
-			root.style.setProperty(name, value);
-		}
-		// The canvas is not a component, so it has no role of its own to
-		// read; without this the story would sit on Storybook's white
-		// while its content renders dark.
-		document.body.style.backgroundColor = tokens['--m3-surface'];
-		document.body.style.color = tokens['--m3-on-surface'];
+		withoutTransitions(() => {
+			if (active !== 'inverted') {
+				root.dataset.orisoPersonalScheme = active;
+				root.dataset.orisoContrastLevel = level;
+			}
+			for (const [name, value] of Object.entries(tokens)) {
+				root.style.setProperty(name, value);
+			}
+			// The canvas is not a component, so it has no role of its own to
+			// read; without this the story would sit on Storybook's white
+			// while its content renders dark.
+			document.body.style.backgroundColor = tokens['--m3-surface'];
+			document.body.style.color = tokens['--m3-on-surface'];
+		});
 		const rebuildMui =
 			active === 'dark' ||
 			level !== 'standard' ||
@@ -106,13 +127,15 @@ export const withOrisoScheme = function OrisoSchemeDecorator(
 		};
 		announce();
 		return () => {
-			for (const name of Object.keys(tokens)) {
-				root.style.removeProperty(name);
-			}
-			delete root.dataset.orisoPersonalScheme;
-			delete root.dataset.orisoContrastLevel;
-			document.body.style.removeProperty('background-color');
-			document.body.style.removeProperty('color');
+			withoutTransitions(() => {
+				for (const name of Object.keys(tokens)) {
+					root.style.removeProperty(name);
+				}
+				delete root.dataset.orisoPersonalScheme;
+				delete root.dataset.orisoContrastLevel;
+				document.body.style.removeProperty('background-color');
+				document.body.style.removeProperty('color');
+			});
 			announce();
 		};
 	}, [active, level, seed, seeds]);
