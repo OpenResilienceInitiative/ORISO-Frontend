@@ -76,6 +76,15 @@ export const ThreeParticipants: Story = {
 			'[data-cy="participant-avatar"]'
 		);
 		await expect(avatars).toHaveLength(3);
+		for (const avatar of avatars) {
+			const frame = avatar.querySelector<HTMLElement>(
+				'[data-testid="user-avatar"]'
+			)!;
+			await expect(getComputedStyle(frame, '::after').content).toBe(
+				'none'
+			);
+			await expect(getComputedStyle(avatar).boxShadow).toContain('2px');
+		}
 		// Latest activity first: the client wrote last.
 		await expect(avatars[0].getAttribute('data-user-id')).toBe(
 			client.userId
@@ -341,7 +350,7 @@ export const OverflowBadgeOpensList: Story = {
 		// Tab closes it and continues from the badge, not from the portal:
 		// Shift+Tab lands on the avatar right before the badge. Real browser
 		// keys: the simulated Tab cannot follow focus out of a removed node.
-		const browser = await import('@vitest/browser/context');
+		const browser = await import('vitest/browser');
 		await browser.userEvent.keyboard('{Shift>}{Tab}{/Shift}');
 		await waitFor(() =>
 			expect(

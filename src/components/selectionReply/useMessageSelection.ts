@@ -22,6 +22,8 @@ export interface PassageAnchor {
 	top: number;
 	bottom: number;
 	centerX: number;
+	/** Right edge of the passage (FE#2494: the bubble handle sits there). */
+	right?: number;
 	layerWidth: number;
 	/**
 	 * The band of the layer the reader actually sees, in layer coordinates:
@@ -71,6 +73,7 @@ export const anchorFor = (rect: DOMRect, layer: HTMLElement): PassageAnchor => {
 		top: rect.top - box.top,
 		bottom: rect.bottom - box.top,
 		centerX: rect.left - box.left + rect.width / 2,
+		right: rect.right - box.left,
 		layerWidth: box.width,
 		visibleTop: Math.max(view.top, 0) - box.top,
 		visibleBottom: view.bottom - reserve - box.top

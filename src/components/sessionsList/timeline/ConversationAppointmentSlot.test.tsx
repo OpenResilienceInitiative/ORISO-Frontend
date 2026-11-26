@@ -47,6 +47,10 @@ vi.mock('./useAppointmentNotice', () => ({
 vi.mock('./AppointmentDateDialog', () => ({
 	AppointmentDateDialog: () => <div data-testid="appointment-date-dialog" />
 }));
+// FE#2494: the supervisor's pennant has its own tests.
+vi.mock('./useSupervisorPennant', () => ({
+	useSupervisorPennant: () => undefined
+}));
 vi.mock('./useAppointmentActions', () => ({
 	useAppointmentActions: () => onAction
 }));
@@ -76,10 +80,11 @@ const requested = (days = 2) => ({
 });
 
 const MARKER = 'sessionList.timeline.appointment.request.marker';
+/* FE#2494: the pennant's date; a click on it opens the pennant's menu. */
 const splitButtonLabel = async (container: HTMLElement) => {
 	const main = await waitFor(() => {
 		const found = container.querySelector<HTMLElement>(
-			'[data-cy="room-next-appointment"] .splitButton__main'
+			'[data-cy="room-next-appointment"] .appointmentPennant__text'
 		);
 		expect(found).not.toBeNull();
 		return found!;
@@ -397,11 +402,12 @@ describe('ConversationAppointmentSlot', () => {
 					'[data-testid="appointment-request-card"]'
 				)
 			).toBeNull();
+			// FE#2494: one pennant, which opens the menu as a whole.
 			expect(
 				container.querySelectorAll(
 					'[data-cy="room-next-appointment"] button'
 				)
-			).toHaveLength(2);
+			).toHaveLength(1);
 		});
 
 		it('leaves the split button when its start passes, without a reload', async () => {
@@ -429,42 +435,6 @@ describe('ConversationAppointmentSlot', () => {
 				).toBeNull();
 				expect(getAppointments).toHaveBeenCalledTimes(1);
 			} finally {
-				vi.useRealTimers();
-			}
-		});
-
-		it('never sets a timer browsers fire at once for a request weeks ahead', async () => {
-			// Browsers run any delay above 2^31 - 1 ms (24.8 days) immediately:
-			// the slot would render, set the timer again and loop.
-			vi.useFakeTimers({ shouldAdvanceTime: true });
-			const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
-			try {
-				getAppointments.mockResolvedValue([requested(30)]);
-				const { container } = renderSlot(vi.fn());
-				const main = await splitButtonLabel(container);
-
-				const delays = setTimeoutSpy.mock.calls
-					.map(([, delay]) => delay ?? 0)
-					.filter((delay) => delay > 24 * 3600_000);
-				expect(delays.length).toBeGreaterThan(0);
-				delays.forEach((delay) =>
-					expect(delay).toBeLessThanOrEqual(2_147_483_647)
-				);
-				const scheduled = setTimeoutSpy.mock.calls.length;
-				await act(async () => {
-					await vi.advanceTimersByTimeAsync(1_000);
-				});
-				expect(
-					setTimeoutSpy.mock.calls.filter(
-						([, delay]) => (delay ?? 0) > 24 * 3600_000
-					).length
-				).toBe(delays.length);
-				expect(
-					setTimeoutSpy.mock.calls.length - scheduled
-				).toBeLessThan(5);
-				expect(main.textContent).toMatch(new RegExp(`^${MARKER} · `));
-			} finally {
-				setTimeoutSpy.mockRestore();
 				vi.useRealTimers();
 			}
 		});

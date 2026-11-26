@@ -28,6 +28,7 @@ import {
 	DARK_BRAND_TONES,
 	DARK_NEUTRAL_TONES,
 	DEFAULT_SIGNAL,
+	HIGH_CONTRAST_INK_TONES,
 	INVERTED_NEUTRAL_TONES,
 	LIGHT_NEUTRAL_TONES,
 	NEUTRAL,
@@ -40,8 +41,10 @@ import {
 	TOO_PALE_CHROMA
 } from './orisoTuning';
 import { wcagContrast } from './wcagContrast';
+import { enhanceOrisoContrast } from './enhanceOrisoContrast';
 
 export type OrisoSchemeName = 'light' | 'dark' | 'inverted';
+export type ContrastLevel = 'standard' | 'medium' | 'high';
 
 export interface OrisoSeeds {
 	/** Required Träger brand colour; drives the whole palette. */
@@ -114,14 +117,18 @@ const MAX_LEGIBLE_TEXT_TONE = Math.floor(
  * just above it. Contrast of the on-colours is guaranteed by
  * construction (white only when it reaches AA, dark text otherwise).
  */
-const lightBrandFamily = (seedHex: string): BrandFamily => {
-	const argb = argbFromHex(seedHex);
-	const hct = Hct.fromInt(argb);
-	const palette = TonalPalette.fromInt(argb);
-	const boosted = TonalPalette.fromHueAndChroma(
-		hct.hue,
-		hct.chroma * CONTAINER_CHROMA_FACTOR
+const containerPalette = (palette: TonalPalette): TonalPalette =>
+	TonalPalette.fromHueAndChroma(
+		palette.hue,
+		palette.chroma * CONTAINER_CHROMA_FACTOR
 	);
+
+const lightBrandFamily = (
+	seedHex: string,
+	palette: TonalPalette,
+	boosted: TonalPalette
+): BrandFamily => {
+	const hct = Hct.fromInt(argbFromHex(seedHex));
 
 	const onRole =
 		Contrast.ratioOfTones(100, hct.tone) >= CONTRAST_AA
@@ -209,9 +216,7 @@ const topicTagTokens = (brand: BrandFamily): Record<string, string> => {
 	};
 };
 
-const darkBrandFamily = (seedHex: string): BrandFamily => {
-	const argb = argbFromHex(seedHex);
-	const palette = TonalPalette.fromInt(argb);
+const darkBrandFamily = (palette: TonalPalette): BrandFamily => {
 	return {
 		role: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onRole: hex(palette.tone(DARK_BRAND_TONES.onRole)),
@@ -272,7 +277,9 @@ const accentFamilyFromPalette = (
  */
 const signalFamily = (
 	scheme: OrisoSchemeName,
-	signalSeed?: string
+	signalSeed: string | undefined,
+	palette: TonalPalette,
+	container: TonalPalette
 ): {
 	error: string;
 	onError: string;
@@ -282,8 +289,8 @@ const signalFamily = (
 	if (signalSeed) {
 		const family =
 			scheme === 'light'
-				? lightBrandFamily(signalSeed)
-				: darkBrandFamily(signalSeed);
+				? lightBrandFamily(signalSeed, palette, container)
+				: darkBrandFamily(palette);
 		return {
 			error: family.role,
 			onError: family.onRole,
@@ -294,9 +301,6 @@ const signalFamily = (
 	if (scheme === 'light') {
 		return DEFAULT_SIGNAL.light;
 	}
-	const palette = TonalPalette.fromInt(
-		argbFromHex(DEFAULT_SIGNAL.anchorSeed)
-	);
 	return {
 		error: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onError: hex(palette.tone(DARK_BRAND_TONES.onRole)),
@@ -332,7 +336,8 @@ const harmonizedAccentPalette = (
  */
 export const computeOrisoPalette = (
 	seeds: OrisoSeeds,
-	scheme: OrisoSchemeName
+	scheme: OrisoSchemeName,
+	contrast: ContrastLevel = 'standard'
 ): OrisoPaletteResult => {
 	const primarySeed = normalizeHex(seeds.primary, 'primary');
 	const accentSeed =
@@ -351,10 +356,15 @@ export const computeOrisoPalette = (
 	);
 	const slate = TonalPalette.fromHueAndChroma(SLATE.hue, SLATE.chroma);
 
+	const primaryPalette = TonalPalette.fromInt(argbFromHex(primarySeed));
+	const brandContainer = containerPalette(primaryPalette);
+	const stageBrand = lightBrandFamily(
+		primarySeed,
+		primaryPalette,
+		brandContainer
+	);
 	const brand =
-		scheme === 'light'
-			? lightBrandFamily(primarySeed)
-			: darkBrandFamily(primarySeed);
+		scheme === 'light' ? stageBrand : darkBrandFamily(primaryPalette);
 
 	const secondaryPalette = accentSeed
 		? harmonizedAccentPalette(accentSeed, primarySeed)
@@ -365,14 +375,34 @@ export const computeOrisoPalette = (
 		scheme
 	);
 	const tertiary = accentFamilyFromPalette(slate, TERTIARY_TONES, scheme);
-	const signal = signalFamily(scheme, signalSeed);
+	const signalPalette = TonalPalette.fromInt(
+		argbFromHex(signalSeed ?? DEFAULT_SIGNAL.anchorSeed)
+	);
+	const signalContainer =
+		scheme !== 'light'
+			? signalPalette
+			: signalSeed
+				? containerPalette(signalPalette)
+				: TonalPalette.fromInt(
+						argbFromHex(DEFAULT_SIGNAL.light.errorContainer)
+					);
+	const signal = signalFamily(
+		scheme,
+		signalSeed,
+		signalPalette,
+		signalContainer
+	);
 
-	const neutralTones =
+	const schemeTones =
 		scheme === 'light'
 			? LIGHT_NEUTRAL_TONES
 			: scheme === 'dark'
 				? DARK_NEUTRAL_TONES
 				: INVERTED_NEUTRAL_TONES;
+	const neutralTones =
+		contrast === 'high' && scheme !== 'inverted'
+			? { ...schemeTones, ...HIGH_CONTRAST_INK_TONES[scheme] }
+			: schemeTones;
 
 	const tokens: Record<string, string> = {
 		'--m3-primary': brand.role,
@@ -380,6 +410,11 @@ export const computeOrisoPalette = (
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
+		// The entry artwork keeps the tenant's brand across display modes.
+		'--oriso-stage-brand': stageBrand.role,
+		'--oriso-stage-brand-on': stageBrand.onRole,
+		'--oriso-stage-brand-container': stageBrand.container,
+		'--oriso-stage-brand-edge': stageBrand.hover,
 		'--oriso-primary-text': brand.text,
 		'--oriso-primary-text-hover': brand.textHover,
 		'--oriso-primary-text-on-fixed': textOnFixed(brand),
@@ -460,27 +495,62 @@ export const computeOrisoPalette = (
 		'--m3-outline-variant': hex(variant.tone(neutralTones.outlineVariant)),
 
 		'--m3-shadow': '#000000',
-		'--m3-scrim': '#000000',
-
-		'--oriso-primary-fixed': brand.fixed,
-		'--oriso-primary-fixed-dim': brand.fixedDim,
-		'--oriso-on-primary-fixed': brand.onFixed,
-		'--oriso-on-primary-fixed-variant': brand.onFixedVariant,
-		...topicTagTokens(brand),
-		'--oriso-app-action': brand.role,
-		'--oriso-lottie-accent-color': brand.fixedDim,
-		'--oriso-lottie-secondary-color': secondary.container,
-
-		'--primary': brand.role,
-		'--primary-3': brand.hover,
-		'--hover-primary': brand.hover,
-		'--skin-color-primary': brand.role,
-		'--skin-color-primary-hover': brand.hover,
-		'--skin-color-primary-contrast-safe': brand.text,
-		'--skin-color-secondary': secondary.role,
-		'--skin-color-secondary-contrast-safe': secondary.role,
-		'--skin-color-default': secondary.role
+		'--m3-scrim': '#000000'
 	};
+
+	const enhanced = contrast !== 'standard' && scheme !== 'inverted';
+	if (enhanced) {
+		enhanceOrisoContrast(
+			tokens,
+			{
+				neutral,
+				variant,
+				primary: primaryPalette,
+				primaryContainer:
+					scheme === 'light' ? brandContainer : primaryPalette,
+				secondary: secondaryPalette,
+				tertiary: slate,
+				error: signalPalette,
+				errorContainer: signalContainer
+			},
+			contrast === 'high' ? 7 : 5.5
+		);
+	}
+
+	Object.assign(tokens, {
+		'--oriso-primary-fixed': tokens['--m3-primary-fixed'],
+		'--oriso-primary-fixed-dim': tokens['--m3-primary-fixed-dim'],
+		'--oriso-on-primary-fixed': tokens['--m3-on-primary-fixed'],
+		'--oriso-on-primary-fixed-variant':
+			tokens['--m3-on-primary-fixed-variant'],
+		...(enhanced
+			? {
+					'--oriso-topic-tag-bg': tokens['--m3-primary-fixed'],
+					'--oriso-topic-tag-fg':
+						tokens['--m3-on-primary-fixed-variant'],
+					'--oriso-topic-tag-active-bg':
+						tokens['--m3-primary-container'],
+					'--oriso-topic-tag-active-fg':
+						tokens['--m3-on-primary-container']
+				}
+			: topicTagTokens(brand)),
+		'--oriso-app-action': tokens['--m3-primary'],
+		'--oriso-lottie-accent-color': tokens['--m3-primary-fixed-dim'],
+		'--oriso-lottie-secondary-color':
+			tokens[
+				scheme === 'dark' ? '--m3-outline' : '--m3-secondary-container'
+			],
+
+		'--primary': tokens['--m3-primary'],
+		'--primary-3': tokens['--m3-primary-hover'],
+		'--hover-primary': tokens['--m3-primary-hover'],
+		'--skin-color-primary': tokens['--m3-primary'],
+		'--skin-color-primary-hover': tokens['--m3-primary-hover'],
+		'--skin-color-primary-contrast-safe': tokens['--oriso-primary-text'],
+		'--skin-color-secondary': tokens['--m3-secondary'],
+		'--skin-color-secondary-contrast-safe': tokens['--m3-secondary'],
+		'--skin-color-default': tokens['--m3-secondary']
+	});
 
 	const tooPale =
 		Hct.fromInt(argbFromHex(primarySeed)).chroma < TOO_PALE_CHROMA;

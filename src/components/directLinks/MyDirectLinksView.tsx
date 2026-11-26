@@ -16,12 +16,15 @@ export interface MyDirectLinksViewProps {
 	pendingIds?: ReadonlySet<string>;
 	onShowQr: (link: DirectLink) => void;
 	onEdit: (link: DirectLink) => void;
-	onCreate: () => void;
+	/** The round create button; without it the list has none (*2b). */
+	onCreate?: () => void;
 	onRetry: () => void;
 	onCopy?: (url: string) => void | Promise<void>;
 	/** *19: title and one line for the calendar's "Links ohne Termin". */
 	title?: string;
 	description?: string;
+	/** FE#2494 *2a: compact rows instead of illustrated tiles. */
+	variant?: 'tiles' | 'rows';
 }
 
 /** The round button: links are only created in "Create chat". */
@@ -79,7 +82,8 @@ export const MyDirectLinksView = ({
 	onRetry,
 	onCopy,
 	title,
-	description
+	description,
+	variant
 }: MyDirectLinksViewProps) => {
 	const { t } = useTranslation();
 
@@ -118,7 +122,8 @@ export const MyDirectLinksView = ({
 				onShowQr={onShowQr}
 				onEdit={onEdit}
 				onCopy={onCopy}
-				headerAction={<CreateButton onCreate={onCreate} />}
+				headerAction={onCreate && <CreateButton onCreate={onCreate} />}
+				variant={variant}
 				emptyState={<DirectLinksEmptyState />}
 				title={title}
 				description={description}

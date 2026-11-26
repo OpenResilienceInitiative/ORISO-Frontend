@@ -1,5 +1,12 @@
 .e2eeActivatedMessage {
-	background-color: $background-color-e2ee-hint;
+	// The hint green mixed from the scheme's success and surface (light:
+	// the former #cee7d5), so it turns dark in dark mode under light ink.
+	background-color: color-mix(
+		in srgb,
+		var(--m3-success, #0a882f) 20%,
+		var(--m3-surface, #ffffff)
+	);
+	color: var(--m3-on-surface, #1b1b1c);
 	padding: $grid-base-two;
 	border: 1px solid $border-color-e2ee-hint;
 	border-radius: $border-radius-e2ee-hint;

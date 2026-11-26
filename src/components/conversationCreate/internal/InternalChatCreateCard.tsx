@@ -9,6 +9,7 @@ import {
 	TOPIC_LENGTHS
 } from '../../groupChat/createChatHelpers';
 import { FormatCard } from '../FormatCard';
+import { CardInfoButton } from '../CardInfoButton';
 import { ArtworkImage } from '../ArtworkImage';
 import { INTERNAL_CHAT_ARTWORK } from '../../../resources/img/topics';
 import { SplitButton } from '../../splitButton/SplitButton';
@@ -150,6 +151,18 @@ export const InternalChatCreateCard = ({
 			title={translate('groupChat.internal.title')}
 			subtitle={translate('groupChat.internal.subtitle')}
 			avatar={<InternalIcon />}
+			headerAction={
+				<CardInfoButton
+					label={translate('groupChat.internal.infoLabel')}
+					data-cy="internal-card-info"
+				>
+					<p>{translate('groupChat.internal.supportText')}</p>
+					<p>
+						{translate(recipientScopeHintKey(scope))}{' '}
+						{translate('groupChat.internal.privateRoomHint')}
+					</p>
+				</CardInfoButton>
+			}
 			media={
 				<ArtworkImage
 					artwork={INTERNAL_CHAT_ARTWORK}
@@ -200,10 +213,17 @@ export const InternalChatCreateCard = ({
 					onDraftChange({ ...draft, name: event.target.value })
 				}
 			/>
+			{/* One short line; the explanation sits behind the "i" in the
+			    header so the card keeps its size (Frank, 2026-11-21). The
+			    scope hint stays in the accessible description of the
+			    person button. */}
 			<p className="internalChatCreateCard__supportText">
-				{translate('groupChat.internal.supportText')}
+				{translate('groupChat.internal.cardShort')}
 			</p>
-			<p className="internalChatCreateCard__hint" id={`${id}-scopeHint`}>
+			<p
+				className="internalChatCreateCard__hint conversationCreate__srOnly"
+				id={`${id}-scopeHint`}
+			>
 				{translate(recipientScopeHintKey(scope))}{' '}
 				{translate('groupChat.internal.privateRoomHint')}
 			</p>

@@ -70,12 +70,26 @@ export const CallNotice = ({
 				sx={{
 					...registrationScreenTitleSx,
 					mt: compact ? 2 : 3,
-					...(compact && { fontSize: 18, lineHeight: '24px' })
+					...(compact && {
+						fontSize:
+							'calc(1.125rem * var(--oriso-personal-text-scale, 1))',
+						lineHeight: 1.333
+					})
 				}}
 			>
 				{text.title}
 			</Typography>
-			<Typography sx={{ ...registrationScreenIntroSx, mt: 1.5 }}>
+			<Typography
+				sx={{
+					...registrationScreenIntroSx,
+					mt: 1.5,
+					...(compact && {
+						fontSize:
+							'calc(1rem * var(--oriso-personal-text-scale, 1))',
+						lineHeight: 1.5
+					})
+				}}
+			>
 				{text.body}
 			</Typography>
 			{text.steps.length > 0 && (
@@ -88,8 +102,10 @@ export const CallNotice = ({
 						'maxWidth': 420,
 						'pl': 3,
 						'color': registrationMd3.onSurface,
-						'fontSize': 15,
-						'lineHeight': '24px',
+						'fontSize': compact
+							? 'calc(0.9375rem * var(--oriso-personal-text-scale, 1))'
+							: 15,
+						'lineHeight': 1.6,
 						'& li + li': { mt: 1 }
 					}}
 				>

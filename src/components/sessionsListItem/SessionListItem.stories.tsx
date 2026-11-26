@@ -37,6 +37,7 @@ import {
 	SessionListItemComponent,
 	type SessionCardDatePlacement
 } from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { seedMatrixRoom } from './__storybook__/runtimeSessionCard';
 import './sessionsListItem.styles.scss';
@@ -47,7 +48,7 @@ const ORISO_M3_FIGMA_URL =
 	'https://www.figma.com/design/RTUi1rcrEWECXz8rNFmj7Q/Design-System-M3_ORISO?node-id=60853-24182&p=f&t=ieIskw4Lz5hlc7iM-0';
 
 const listShell: React.CSSProperties = {
-	backgroundColor: '#eae7e8',
+	backgroundColor: 'var(--m3-surface-container-high, #eae7e8)',
 	maxWidth: 440,
 	margin: '0 auto',
 	padding: '4px 8px'
@@ -379,7 +380,6 @@ function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 const meta = {
 	title: 'Components/Session/List/SessionListItem',
 	tags: ['autodocs'],
-	globals: { backgrounds: { value: 'gray' } },
 	parameters: {
 		layout: 'fullscreen',
 		router: {
@@ -432,6 +432,14 @@ export const RuntimeComponent: Story = {
 		const canvas = within(canvasElement);
 		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
 		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
+	}
+};
+
+export const ContrastWithTenantAccent: Story = {
+	...RuntimeComponent,
+	name: 'Kontrast mit hellem Trägerakzent',
+	parameters: {
+		orisoSeeds: { primary: '#a5000a', accent: '#ffd700', signal: '#db005b' }
 	}
 };
 
@@ -567,7 +575,10 @@ export const SupervisedByOthers: Story = {
 				'[data-testid="supervision-indicator"]'
 			);
 			expect(indicator).not.toBeNull();
-			expect(indicator!.textContent).toContain('Sabine Supervisor');
+			// #2494 *5: a 32px round icon; the name shows on hover.
+			expect(indicator!.getAttribute('title')).toContain(
+				'Sabine Supervisor'
+			);
 			expect(
 				indicator!.querySelector('svg path[fill="currentColor"]')
 			).not.toBeNull();
@@ -1092,7 +1103,7 @@ const expectCardLayout = async (
 		const menu = at('.sessionsListItem__menuIcon');
 		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
 
-		// 48 px avatar straight under the chip row, without its outline.
+		// 48 px avatar straight under the chip row, with the shared chat outline.
 		const avatar = at('.sessionsListItem__icon');
 		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
 		await expect(Math.round(avatar.top - box.top)).toBe(
@@ -1101,6 +1112,13 @@ const expectCardLayout = async (
 		await expect(Math.round(avatar.left - box.left)).toBe(
 			CARD_BORDER + CARD_INSET
 		);
+		const avatarFrame = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		await expect(getComputedStyle(avatarFrame, '::after').content).toBe(
+			'none'
+		);
+		await expect(getComputedStyle(avatarFrame).boxShadow).toContain('2px');
 		const circle = card.querySelector<HTMLElement>(
 			'[data-testid="user-avatar"] > div'
 		)!;
@@ -1387,9 +1405,11 @@ const expectGroupRow = async (
 };
 
 /**
- * FE#1952: four conversations of one counsellor. The first came in by mail;
- * the others came in through the counsellor's video, audio and chat direct
- * link. The card names how each one came in, instead of "Mail" for all.
+ * FE#2546 (Frank, 2026-11-25): four Mail-Beratung cases of one counsellor.
+ * The first came in by mail; the others through the counsellor's video, audio
+ * and chat Direkteinladung. Every card says "Mail"; a direct invitation adds a
+ * quiet channel tag (Video / Audio / Chat). Until FE#2546 the card replaced
+ * "Mail" with "Videoanruf", "Audioanruf" or "Direkteinladung" (FE#1952).
  */
 const DIRECT_LINK_ROWS = [
 	{ id: 4501, medium: undefined, user: 'ruhiges_yak' },
@@ -1399,7 +1419,7 @@ const DIRECT_LINK_ROWS = [
 ] as const;
 
 export const DirectLinkConversations: Story = {
-	name: 'Direktlink-Gespräche (FE#1952)',
+	name: 'Direct-invitation cases are Mail (FE#2546)',
 	parameters: {
 		router: { initialPath: '/sessions/consultant/sessionView' }
 	},
@@ -1419,7 +1439,6 @@ export const DirectLinkConversations: Story = {
 								id: row.id,
 								matrixRoomId: `!direct-${row.id}:matrix.example.org`,
 								lastMessage: 'Hallo, ich warte im Anruf.',
-								// Unknown to builds before FE#1952: they show "Mail".
 								...({ directLinkMedium: row.medium } as object)
 							},
 							userOverrides: { username: row.user }
@@ -1428,16 +1447,34 @@ export const DirectLinkConversations: Story = {
 				))}
 			</div>
 		);
+	},
+	play: async ({ canvasElement }) => {
+		const rows = await settledRows(canvasElement, DIRECT_LINK_ROWS.length);
+		for (const [index, row] of rows.entries()) {
+			await expect(
+				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+					.textContent
+			).toBe('Mail');
+			const tag = row.querySelector<HTMLElement>(
+				'.sessionsListItem__channelTag'
+			);
+			const medium = DIRECT_LINK_ROWS[index].medium;
+			if (medium) {
+				await expect(tag?.dataset.medium).toBe(medium);
+			} else {
+				await expect(tag).toBeNull();
+			}
+		}
 	}
 };
 
 /**
- * FE#1952: the selected video direct-link card. Like Mail, the glyph keeps
- * the primary colour of its label; the active card's black-to-red filter
- * must not repaint it.
+ * FE#2546: the selected video direct-invitation card. The channel tag's glyph
+ * keeps the tag's colour; the active card's black-to-red filter must not
+ * repaint it.
  */
 export const DirectLinkConversationSelected: Story = {
-	name: 'Direktlink-Gespräch — ausgewählt (FE#1952)',
+	name: 'Direct-invitation case — selected (FE#2546)',
 	parameters: {
 		router: { initialPath: '/sessions/consultant/sessionView/session/4502' }
 	},
@@ -1457,17 +1494,64 @@ export const DirectLinkConversationSelected: Story = {
 		await expect(row.classList.contains('sessionsListItem--active')).toBe(
 			true
 		);
-		const glyph = part(
-			row,
-			'svg.sessionsListItem__consultingTypeIcon--directLinkIcon'
-		);
+		const glyph = part(row, 'svg.sessionsListItem__channelTagIcon');
 		await expect(getComputedStyle(glyph).filter).toBe('none');
-		const label = part(
-			row,
-			'.sessionsListItem__consultingTypeIcon--directLinkLabel'
-		);
+		const tag = part(row, '.sessionsListItem__channelTag');
 		await expect(getComputedStyle(glyph).color).toBe(
-			getComputedStyle(label).color
+			getComputedStyle(tag).color
+		);
+	}
+};
+
+/**
+ * FE#1870: two Erstanfragen. The first came in through the agency link
+ * (Beratungsstellen-Link) and carries the label; the second came through the
+ * postal-code search and does not.
+ */
+const AGENCY_LINK_ROWS = [
+	{ id: 4601, viaAgencyLink: true, user: 'heller_kranich' },
+	{ id: 4602, viaAgencyLink: false, user: 'gruene_eule' }
+] as const;
+
+export const AgencyLinkEnquiries: Story = {
+	name: 'Erstanfragen über Beratungsstellen-Link (FE#1870)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionPreview' }
+	},
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div style={listShell} role="list" aria-label="Erstanfragen">
+				{AGENCY_LINK_ROWS.map((row, index) => (
+					<RuntimeCard
+						key={row.id}
+						index={index}
+						grouped
+						isGroupStart={index === 0}
+						isGroupEnd={index === AGENCY_LINK_ROWS.length - 1}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: row.id,
+								status: STATUS_ENQUIRY,
+								matrixRoomId: `!enquiry-${row.id}:matrix.example.org`,
+								...({
+									viaAgencyLink: row.viaAgencyLink
+								} as object)
+							},
+							userOverrides: { username: row.user }
+						})}
+					/>
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelectorAll(
+					'[data-testid="agency-link-label"]'
+				)
+			).toHaveLength(1)
 		);
 	}
 };
@@ -2406,8 +2490,13 @@ export const SupervisionRowLabel: Story = {
 				'[data-testid="supervision-modality"]'
 			);
 			expect(modality).not.toBeNull();
-			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
-			expect(modality!.querySelector('svg')).not.toBeNull();
+			// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since
+			// FE#2494 it is the same 32 px kind icon (a mask) as Mail.
+			expect(
+				modality!.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
+			).not.toBeNull();
 			// The mail label is gone for this viewer.
 			expect(
 				canvasElement.querySelector(
@@ -2561,7 +2650,7 @@ const selectedSelfHelpContrast = (
 			{ primary: '#A5000A' },
 			scheme
 		).tokens;
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		const viewports =
 			scheme === 'light'
@@ -3177,5 +3266,47 @@ export const EnquiryWaitingHiddenWhenOff: Story = {
 		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
 			longTopic.name
 		);
+	}
+};
+
+/** The compact group rail uses UserAvatar directly, rather than MessageAvatar. */
+export const GroupRailAvatarCustomTheme: Story = {
+	name: 'Gruppenleiste — Avatar im eigenen Theme',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<div
+				style={
+					{
+						...listShell,
+						'--m3-outline-variant': '#314f69'
+					} as React.CSSProperties
+				}
+			>
+				<div role="tablist" aria-label="Conversations">
+					<SessionListRailProvider rail>
+						<RuntimeCard
+							item={runtimeGroupChat({
+								id: 5901,
+								name: 'Eine Person'
+							})}
+						/>
+					</SessionListRailProvider>
+				</div>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"]'
+		)!;
+		const animal = avatar.querySelector<HTMLElement>(':scope > div')!;
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		const railFrame = avatar.closest<HTMLElement>(
+			'.sessionRailPill__avatar'
+		)!;
+		expect(getComputedStyle(railFrame).boxShadow).toContain('2px');
+		expect(getComputedStyle(animal).borderTopWidth).toBe('0px');
+		expect(getComputedStyle(animal).boxShadow).toBe('none');
 	}
 };

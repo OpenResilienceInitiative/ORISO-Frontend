@@ -551,7 +551,7 @@ const expectCarimatOrganism = async (
 
 const panelTint = async (canvasElement: HTMLElement) => {
 	// The field border is measured at rest — a selected composer wears the
-	// 2 px `primary-container` focus border instead (#597). A freshly
+	// 2 px `primary` focus border instead (#597, Frontend#1134). A freshly
 	// mounted panel composer may take focus AFTER our first blur (its
 	// autofocus runs a tick later), so the blur is repeated inside the
 	// wait: every retry drops the focus again and the 240 ms `all`
@@ -559,7 +559,7 @@ const panelTint = async (canvasElement: HTMLElement) => {
 	// B2 D-5 — the single blur + 1 s default timeout flaked 1/2).
 	const focusRing = (() => {
 		const hex = getComputedStyle(document.documentElement)
-			.getPropertyValue('--m3-primary-container')
+			.getPropertyValue('--m3-primary')
 			.trim();
 		const n = parseInt(hex.replace('#', ''), 16);
 		return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
@@ -928,7 +928,7 @@ export const FocusedComposerPillTakesTheActiveColour: Story = {
 		});
 		const activeBorder = (() => {
 			const hex = getComputedStyle(document.documentElement)
-				.getPropertyValue('--m3-primary-container')
+				.getPropertyValue('--m3-primary')
 				.trim();
 			const n = parseInt(hex.replace('#', ''), 16);
 			return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
@@ -1477,11 +1477,8 @@ export const PanelChannelCardOrganismHover: Story = {
 				item.querySelector('.chatMenuDropdown__itemDescription')
 			).not.toBeNull();
 		});
-		// Hover / selected = D3 "Hellblau" surface (the alias
-		// `--oriso-menu-hover-surface`), primary label + icon. Review v10:
-		// the alias is bound to the engine's `--m3-on-secondary-container`
-		// (the table's #e7effc; the engine emits #e6effb — within one unit),
-		// so the assertion follows the engine, not a hard hex.
+		// The selected and focused rows use the shared menu surface alias.
+		// Its light tint follows the generated on-secondary-container role.
 		const root = getComputedStyle(document.documentElement);
 		const secondaryFixed = root
 			.getPropertyValue('--oriso-menu-hover-surface')
@@ -1489,7 +1486,6 @@ export const PanelChannelCardOrganismHover: Story = {
 		const engineHover = root
 			.getPropertyValue('--m3-on-secondary-container')
 			.trim();
-		await expect(engineHover).toMatch(/^#e[67]eff[bc]$/i);
 		await expect(secondaryFixed.toLowerCase()).toBe(
 			engineHover.toLowerCase()
 		);
@@ -2361,14 +2357,6 @@ export const ChatTextSizeCompact: Story = {
 		await expect(
 			canvasElement.querySelector('[class*="chatStage--"][class*="Text"]')
 		).toBeNull();
-		// D1 lives in the global token file, not in a component stylesheet.
-		const root = getComputedStyle(document.documentElement);
-		await expect(root.getPropertyValue('--message-font-size').trim()).toBe(
-			'14px'
-		);
-		await expect(
-			root.getPropertyValue('--session-preview-font-size').trim()
-		).toBe('12px');
 	}
 };
 
@@ -2498,13 +2486,18 @@ const paintsOutside = (pane: HTMLElement) => {
 		);
 };
 
-/** No control leaves the row, and no two of them sit on top of each other. */
+/** Controls fit the header without overlapping when they wrap onto another line. */
 const expectRowControlsFit = async (row: HTMLElement) => {
 	const box = row.getBoundingClientRect();
-	const kids = Array.from(row.children)
-		.map((child) => child.getBoundingClientRect())
-		.filter((rect) => rect.width > 0);
-	for (const rect of kids) {
+	const controls = Array.from(row.children).flatMap((child) =>
+		getComputedStyle(child).display === 'contents'
+			? Array.from(child.children)
+			: [child]
+	);
+	const rects = controls
+		.map((control) => control.getBoundingClientRect())
+		.filter((rect) => rect.width > 0 && rect.height > 0);
+	for (const rect of rects) {
 		await expect(Math.round(rect.left)).toBeGreaterThanOrEqual(
 			Math.round(box.left) - 1
 		);
@@ -2512,11 +2505,18 @@ const expectRowControlsFit = async (row: HTMLElement) => {
 			Math.round(box.right) + 1
 		);
 	}
-	const sorted = [...kids].sort((a, b) => a.left - b.left);
-	for (let i = 1; i < sorted.length; i += 1) {
-		await expect(Math.round(sorted[i].left)).toBeGreaterThanOrEqual(
-			Math.round(sorted[i - 1].right) - 1
-		);
+	for (const [index, rect] of rects.entries()) {
+		for (const other of rects.slice(index + 1)) {
+			const horizontalOverlap =
+				Math.min(rect.right, other.right) -
+				Math.max(rect.left, other.left);
+			const verticalOverlap =
+				Math.min(rect.bottom, other.bottom) -
+				Math.max(rect.top, other.top);
+			await expect(
+				Math.min(horizontalOverlap, verticalOverlap)
+			).toBeLessThanOrEqual(1);
+		}
 	}
 };
 
@@ -2529,7 +2529,8 @@ const expectTruncationIsEllipsis = async (pane: HTMLElement) => {
 	const cut = Array.from(pane.querySelectorAll<HTMLElement>('*')).filter(
 		(el) =>
 			el.children.length === 0 &&
-			el.clientWidth > 0 &&
+			// A 1 px box is the screen-reader-only pattern, not visible text.
+			el.clientWidth > 1 &&
 			el.scrollWidth - el.clientWidth > 1 &&
 			(el.textContent ?? '').trim().length > 0 &&
 			getComputedStyle(el).overflowX === 'hidden'

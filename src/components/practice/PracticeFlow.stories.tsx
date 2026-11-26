@@ -45,8 +45,29 @@ const TUTORIAL_PROGRESS = '/service/users/tutorials/progress';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 const TENANT_FLAGS = {
 	featureTeamDiscussionEnabled: false,
-	featureSupervisionEnabled: true
+	featureSupervisionEnabled: true,
+	featureAnonymousChatEnabled: false
 };
+/** The real availability (GET/PUT) and its heartbeat (POST) share this path. */
+const LIVE_CHAT_AVAILABILITY =
+	'/service/conversations/consultants/availability';
+
+interface StageArgs {
+	teamDiscussion?: boolean;
+	/** The Träger offers live chat: the Live-Chat tour is on the Help page. */
+	liveChat?: boolean;
+	/** The counsellor moved the availability switch into the menu bar. */
+	liveChatViaSidebar?: boolean;
+}
+
+const tenantFlagsFor = ({
+	teamDiscussion = false,
+	liveChat = false
+}: StageArgs) => ({
+	...TENANT_FLAGS,
+	featureTeamDiscussionEnabled: teamDiscussion,
+	featureAnonymousChatEnabled: liveChat
+});
 
 interface RecordedRequest {
 	method: string;
@@ -105,6 +126,16 @@ const RecordedNetwork = ({ children }: { children: React.ReactNode }) => {
 				url: request.url,
 				status: saved?.status
 			});
+			// The counsellor is really NOT available; only the read is answered.
+			if (
+				request.method === 'GET' &&
+				new URL(request.url).pathname.endsWith(LIVE_CHAT_AVAILABILITY)
+			) {
+				return new Response(JSON.stringify({ available: false }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				});
+			}
 			if (request.url.includes(TUTORIAL_PROGRESS)) {
 				return request.method === 'GET'
 					? new Response(JSON.stringify([...progress.values()]), {
@@ -148,14 +179,15 @@ const SessionSupport = ({ children }: { children: React.ReactNode }) => (
  * tour host, practice banner, navigation, header, and the routed content in
  * `PracticeSurface`. Profile and sessions are the real pages.
  */
-const PracticeFlowStage = ({ teamDiscussion = false }) => {
+const PracticeFlowStage = ({
+	teamDiscussion = false,
+	liveChat = false,
+	liveChatViaSidebar = false
+}: StageArgs) => {
 	const store = useMemo(() => createStore(), []);
 	const tenantFlags = useMemo(
-		() => ({
-			...TENANT_FLAGS,
-			featureTeamDiscussionEnabled: teamDiscussion
-		}),
-		[teamDiscussion]
+		() => tenantFlagsFor({ teamDiscussion, liveChat }),
+		[teamDiscussion, liveChat]
 	);
 	const settings = useMemo(
 		() => ({
@@ -174,8 +206,11 @@ const PracticeFlowStage = ({ teamDiscussion = false }) => {
 		[settings]
 	);
 	const userData = useMemo(
-		() => practiceCounsellorFixture({ isWalkThroughEnabled: false }),
-		[]
+		() => ({
+			...practiceCounsellorFixture({ isWalkThroughEnabled: false }),
+			liveChatViaSidebar
+		}),
+		[liveChatViaSidebar]
 	);
 
 	return (
@@ -330,12 +365,9 @@ const meta = {
 		}
 	},
 	globals: { viewport: { value: 'desktop1440', isRotated: false } },
-	args: { teamDiscussion: false },
+	args: { teamDiscussion: false, liveChat: false, liveChatViaSidebar: false },
 	beforeEach: ({ args }) => {
-		replaceTenantSettings({
-			...TENANT_FLAGS,
-			featureTeamDiscussionEnabled: args.teamDiscussion
-		});
+		replaceTenantSettings(tenantFlagsFor(args));
 		// #1338: the tour (react-joyride and its floating-ui positioning)
 		// re-measures inside ResizeObserver callbacks, and Chrome reports the
 		// harmless "loop completed with undelivered notifications", once or twice
@@ -446,7 +478,9 @@ const acceptAnEnquiry: NonNullable<Story['play']> = async ({
 	step,
 	args
 }) => {
-	const of = args.teamDiscussion ? 8 : 6;
+	// FE#2491: the team chat lives in "Weitere Funktionen"; the tour has no
+	// team steps whatever the flag says.
+	const of = 6;
 	const storageBefore = storageSnapshot();
 	await step('Start the exercise from its Help card', async () => {
 		const card = (
@@ -472,31 +506,12 @@ const acceptAnEnquiry: NonNullable<Story['play']> = async ({
 		await userEvent.click(await target('enquiry-list-item'));
 	});
 
-	if (args.teamDiscussion) {
-		await step('3: Open the team discussion', async () => {
-			await expectStep(3, of);
-			await userEvent.click(await target('enquiry-team-button'));
-		});
-		await step('4: Send a reply in the team discussion', async () => {
-			await expectStep(4, of);
-			const panel = await target('team-discussion-panel');
-			await sendReply(panel, 'Ich übernehme das gern.');
-			await expect(
-				document.querySelector('.chatStage__mainPane')?.textContent
-			).not.toContain('Ich übernehme das gern.');
-		});
-	}
-
-	const acceptAt = args.teamDiscussion ? 5 : 3;
+	const acceptAt = 3;
 	await step(`${acceptAt}: Accept the enquiry`, async () => {
 		await expectStep(acceptAt, of);
-		if (!args.teamDiscussion) {
-			await expect(
-				document.querySelector(
-					'[data-tour-target="enquiry-team-button"]'
-				)
-			).toBeNull();
-		}
+		await expect(
+			document.querySelector('[data-cy="enquiry-open-team"]')
+		).toBeNull();
 		await userEvent.click(await target('enquiry-accept-button'));
 	});
 	await step(
@@ -556,7 +571,7 @@ export const AcceptAnEnquiryWithTeamDiscussion: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Walks all eight acceptance steps with Team-Besprechung enabled. The team reply stays in its side thread; the case reply receives the scripted answer. Completion returns to Help with no practice writes outside the page.'
+				story: 'With the team chat enabled the exercise walks the same six steps (FE#2491: the team chat is switched on in "Weitere Funktionen", there is no team button beside "Annehmen" for the tour to point at). Completion returns to Help with no practice writes outside the page.'
 			}
 		}
 	},
@@ -629,23 +644,30 @@ export const AddASupervisor: Story = {
 				).toBeNull();
 				await userEvent.click(await target('session-supervisor-add'));
 				await userEvent.click(
-					await screen.findByRole('combobox', {}, SLOW)
-				);
-				await userEvent.click(
 					await screen.findByRole(
-						'option',
-						{ name: 'Robin (Übung)' },
+						'button',
+						{ name: 'Robin (Übung) hinzufügen' },
 						SLOW
 					)
 				);
 				await userEvent.type(
-					screen.getByPlaceholderText(
-						'Bitte geben Sie den Grund für die Supervision an...'
+					await screen.findByPlaceholderText(
+						'Warum soll diese Person den Fall supervidieren?'
 					),
 					'Ich möchte mich zum Vorgehen absichern.'
 				);
 				await userEvent.click(
-					screen.getByRole('button', { name: 'Hinzufügen' })
+					screen.getByRole('button', {
+						name: 'Robin (Übung) hinzufügen'
+					})
+				);
+				// Practice closes the dialog, so the next step's panel is visible.
+				await waitFor(
+					() =>
+						expect(
+							screen.queryByTestId('manage-people-dialog')
+						).toBeNull(),
+					SLOW
 				);
 			}
 		);
@@ -740,20 +762,23 @@ export const SupervisorPickerWithKeyboard: Story = {
 			'Open the picker, choose Robin and type the reason with the keyboard',
 			async () => {
 				await userEvent.keyboard('{Enter}');
-				const picker = await screen.findByRole('combobox', {}, SLOW);
-				await tabTo(picker);
-				await userEvent.keyboard('{Enter}');
 				const robin = await screen.findByRole(
-					'option',
-					{ name: 'Robin (Übung)' },
+					'button',
+					{ name: 'Robin (Übung) hinzufügen' },
 					SLOW
 				);
-				await waitFor(() => expect(robin).toHaveFocus(), SLOW);
+				await tabTo(robin);
 				await userEvent.keyboard('{Enter}');
-				await expect(picker).toHaveTextContent('Robin (Übung)');
-				const reason = screen.getByPlaceholderText(
-					'Bitte geben Sie den Grund für die Supervision an...'
+				const reason = await screen.findByPlaceholderText(
+					'Warum soll diese Person den Fall supervidieren?',
+					{},
+					SLOW
 				);
+				await expect(
+					within(screen.getByRole('dialog')).getAllByText(
+						'Robin (Übung)'
+					)[0]
+				).toBeVisible();
 				await tabTo(reason);
 				await userEvent.keyboard(
 					'Ich möchte mich zum Vorgehen absichern.'
@@ -803,4 +828,142 @@ export const SupervisorPickerWithKeyboard: Story = {
 			}
 		);
 	}
+};
+
+/** The keys the real availability shares between tabs, and their values. */
+const liveChatStorage = () =>
+	Array.from({ length: localStorage.length }, (_, index) => {
+		const key = localStorage.key(index) as string;
+		return key.startsWith('oriso_liveChat')
+			? `${key}=${localStorage.getItem(key)}`
+			: null;
+	})
+		.filter(Boolean)
+		.sort();
+
+/**
+ * FE#2545: the practice Live-Chat tour, started from its Help card. The
+ * availability step points at the control the counsellor uses: the settings
+ * switch, or the rail toggle with the "via sidebar" preference.
+ */
+const practiseLiveChat =
+	(
+		availabilityControl: () => Promise<HTMLElement>
+	): NonNullable<Story['play']> =>
+	async ({ canvas, step }) => {
+		const of = 7;
+		const storageBefore = storageSnapshot();
+		const liveChatBefore = liveChatStorage();
+		await step('Start the Live-Chat tour from its Help card', async () => {
+			const card = (
+				await canvas.findByRole('heading', { name: 'Live-Chat' }, SLOW)
+			).closest('li')!;
+			await userEvent.click(
+				within(card).getByRole('button', { name: 'Starten' })
+			);
+		});
+		await step('1: Read what is different about live chat', async () => {
+			await expectStep(1, of);
+			await expect(getPracticeSnapshot().status).toBe('active');
+			await next();
+		});
+		await step(
+			'2: Switch "Bin verfügbar" on, in practice only',
+			async () => {
+				await expectStep(2, of);
+				await target('livechat-availability-control');
+				const tourAnchor = document.querySelector<HTMLElement>(
+					'[data-tour-target="livechat-availability-control"]'
+				)!;
+				const control = await availabilityControl();
+				// The anchor is the control, or sits inside it (the rail button).
+				const anchoredOnControl =
+					tourAnchor.contains(control) ||
+					control.contains(tourAnchor);
+				await expect(anchoredOnControl).toBe(true);
+				// Practice starts "off", like the real state here.
+				await expect(control).not.toBeChecked();
+				await userEvent.click(control);
+			}
+		);
+		await step(
+			'3: Read the queue with the live-chat filter on',
+			async () => {
+				await expectStep(3, of);
+				await target('livechat-queue');
+				await next();
+			}
+		);
+		await step('4: Open the waiting practice live chat', async () => {
+			await expectStep(4, of);
+			await userEvent.click(await target('enquiry-list-item'));
+		});
+		await step('5: Start the chat with the real button', async () => {
+			await expectStep(5, of);
+			await userEvent.click(await target('enquiry-accept-button'));
+		});
+		await step('6: Reply and receive the asker’s answer', async () => {
+			await expectStep(6, of);
+			await target('session-composer');
+			await sendReply(
+				document.querySelector<HTMLElement>('.chatStage__mainPane')!,
+				'Hallo, schön, dass Sie schreiben. Was beschäftigt Sie?'
+			);
+			await waitFor(
+				() =>
+					expect(
+						document.querySelector('.chatStage__mainPane')
+							?.textContent
+					).toContain('Vielen Dank für Ihre Antwort'),
+				SLOW
+			);
+		});
+		await step(
+			`${of}: Finish and return to Help without outbound writes`,
+			async () => {
+				await expectStep(of, of);
+				await expect(
+					getPracticeNetworkGuard()?.blockedRequests
+				).toEqual([]);
+				await next('Fertig');
+				await expectExited(canvas, storageBefore);
+				// The real availability: no PUT, no heartbeat, no shared state.
+				await expect(
+					requestLog.filter(
+						({ method, url }) =>
+							url.includes(LIVE_CHAT_AVAILABILITY) &&
+							method !== 'GET'
+					)
+				).toEqual([]);
+				await expect(liveChatStorage()).toEqual(liveChatBefore);
+			}
+		);
+	};
+
+export const LiveChatWithProfileSwitch: Story = {
+	name: 'Live chat with the settings switch · desktop',
+	args: { liveChat: true },
+	parameters: {
+		docs: {
+			description: {
+				story: 'Starts the Live-Chat tour from Help with the practice area open (FE#2545). "Bin verfügbar" on the real settings page is switched on in practice only, the waiting practice live chat is opened, started with "Chat starten" and answered by the scripted asker. Completion is written; the real availability, its heartbeat and the `oriso_liveChat*` storage stay untouched.'
+			}
+		}
+	},
+	play: practiseLiveChat(() =>
+		screen.findByRole('switch', { name: 'Bin verfügbar' }, SLOW)
+	)
+};
+
+export const LiveChatWithSidebarToggle: Story = {
+	name: 'Live chat with the menu bar toggle · desktop',
+	args: { liveChat: true, liveChatViaSidebar: true },
+	parameters: {
+		docs: {
+			description: {
+				story: 'The same practice run for a counsellor who moved the availability switch into the menu bar: the rail toggle is the control, the settings switch only mirrors it. Nothing reaches the real availability, heartbeat or browser storage.'
+			}
+		}
+	},
+	play: practiseLiveChat(() => target('livechat-availability-toggle'))
 };

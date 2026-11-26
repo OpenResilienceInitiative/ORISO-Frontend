@@ -284,9 +284,14 @@ const toPassageRepliesPreview = (
 		return { kind: 'text', text };
 	}
 	const clip = replies.find((reply) => reply.audio)?.audio;
-	return clip
-		? { kind: 'voice', text: null, durationMs: clip.durationMs }
-		: null;
+	if (clip) {
+		return { kind: 'voice', text: null, durationMs: clip.durationMs };
+	}
+	// A quote may be collected without its own answer; it is still the latest
+	// message and must not make the list fall back to an older conversation.
+	// Excerpts are plain text. Parsing them as HTML could load remote resources.
+	const quote = (replies[0]?.excerpt || '').replace(/\s+/g, ' ').trim();
+	return quote ? { kind: 'text', text: quote } : null;
 };
 
 const toKindPreview = (

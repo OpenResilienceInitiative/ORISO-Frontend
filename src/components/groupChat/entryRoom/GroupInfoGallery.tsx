@@ -129,10 +129,11 @@ export const GroupInfoGallery = ({
 
 			<Box
 				sx={{
-					/* From `sm` the cards have their own height; the panel
-					   scrolls on a short laptop instead of squeezing them. */
-					flex: { xs: 1, sm: 'none' },
-					minHeight: { xs: 0, sm: 'auto' },
+					/* The carousel takes the panel's free height and sizes
+					   its cards from it, as in every waiting room (Frank,
+					   2026-11-20), so nothing is cut off at any zoom. */
+					flex: 1,
+					minHeight: 0,
 					display: 'flex',
 					flexDirection: 'column'
 					/* No negative margin for a full-bleed row: the panel

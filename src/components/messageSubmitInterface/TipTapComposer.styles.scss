@@ -31,11 +31,16 @@
 			border: none;
 			background: transparent;
 			border-radius: 6px;
-			color: var(--m3-secondary-container, #646d78);
+			color: var(--oriso-quiet-text, #646d78);
 			cursor: pointer;
 
 			&:hover {
 				background: #f2f2f2;
+
+				// An active button keeps its pink under the pointer.
+				html[data-oriso-personal-scheme='dark'] &:not(.is-active) {
+					background: var(--m3-surface-container-low, #1b1b1c);
+				}
 			}
 
 			&.is-active {
@@ -115,6 +120,19 @@
 				background: #ffe69b;
 				padding: 0 2px;
 				border-radius: 3px;
+
+				// TipTap emits inline "color: inherit" on coloured marks. Limit
+				// this override to the light fills supported by the composer.
+				@media (forced-colors: none) {
+					&:not([data-color]),
+					&[data-color='#fff59d' i],
+					&[data-color='#ffcc80' i],
+					&[data-color='#ffcdd2' i],
+					&[data-color='#b2f2bb' i],
+					&[data-color='#b3e5fc' i] {
+						color: var(--m3-on-secondary-fixed, #141c25) !important;
+					}
+				}
 			}
 		}
 	}

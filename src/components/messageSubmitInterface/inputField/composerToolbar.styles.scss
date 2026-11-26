@@ -95,7 +95,7 @@
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary-outline, #930008);
+			outline: $focus-outline;
 			outline-offset: 1px;
 		}
 
@@ -352,7 +352,7 @@
 		min-width: 176px;
 		padding: 6px;
 		border-radius: 12px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		box-shadow:
 			0 4px 8px 3px rgba(0, 0, 0, 0.08),
 			0 1px 3px rgba(0, 0, 0, 0.2);

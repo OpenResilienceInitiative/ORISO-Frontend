@@ -1,4 +1,5 @@
 import { SecurityPrivacySettings } from './SecurityPrivacySettings';
+import { PersonalDisplayProfile } from '../../features/personal-display/PersonalDisplayEntry';
 import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { TimelineSettings } from '../timelineSettings/TimelineSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
@@ -34,7 +35,8 @@ export const profileRoutesSettings = (
 	/** #1894: false when "Direkteinladung erlauben" allows no medium. */
 	directLinksAllowed = true,
 	/** Effective tenant permissions (#1979); absent = server defaults. */
-	tenantSettings?: Partial<TenantDataSettingsInterface> | null
+	tenantSettings?: Partial<TenantDataSettingsInterface> | null,
+	personalDisplayAvailable = false
 ): (TabGroups | SingleComponentType)[] => [
 	{
 		title: 'profile.routes.settings.security.title',
@@ -42,6 +44,7 @@ export const profileRoutesSettings = (
 		elements: [
 			{
 				component: SecurityPrivacySettings,
+				tourTarget: 'profile-security',
 				boxed: false,
 				fullWidth: true,
 				order: 1
@@ -62,12 +65,14 @@ export const profileRoutesSettings = (
 						? usesNewNotifications(settings)
 						: askerHasEmailSettings(settings, tenantSettings)),
 				component: EmailNotification,
+				tourTarget: 'profile-notifications',
 				column: COLUMN_LEFT,
 				order: 1
 			},
 			{
 				condition: () => usesNewNotifications(settings),
 				component: NotificationSettingsPanel,
+				tourTarget: 'profile-notifications',
 				column: COLUMN_RIGHT,
 				order: 1
 			},
@@ -78,6 +83,7 @@ export const profileRoutesSettings = (
 						userData
 					) && !usesNewNotifications(settings),
 				component: ConsultantNotifications,
+				tourTarget: 'profile-notifications',
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 4
@@ -90,6 +96,7 @@ export const profileRoutesSettings = (
 					!usesNewNotifications(settings) &&
 					!!isBrowserNotificationSupported(),
 				component: BrowserNotification,
+				tourTarget: 'profile-notifications',
 				icon: NotificationsActiveOutlinedIcon,
 				column: COLUMN_LEFT,
 				order: 4
@@ -117,7 +124,16 @@ export const profileRoutesSettings = (
 		url: '/anzeige',
 		elements: [
 			{
+				condition: (userData) =>
+					personalDisplayAvailable &&
+					hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
+				component: PersonalDisplayProfile,
+				column: COLUMN_LEFT,
+				order: 1
+			},
+			{
 				component: MenuEffectsSettings,
+				tourTarget: 'profile-display',
 				icon: AnimationOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 2
@@ -143,6 +159,7 @@ export const profileRoutesSettings = (
 		elements: [
 			{
 				component: KeyboardShortcutsSettings,
+				tourTarget: 'profile-shortcuts',
 				icon: KeyboardOutlinedIcon,
 				column: COLUMN_RIGHT,
 				order: 6

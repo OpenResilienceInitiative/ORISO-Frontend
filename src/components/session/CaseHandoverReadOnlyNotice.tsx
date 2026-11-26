@@ -8,13 +8,20 @@ import {
 } from '../../api/apiCaseHandover';
 import { formatAbsoluteTime } from '../notificationsCenter/timelineTime';
 
-/** #200: takes the composer's place for a read-only co-access viewer. */
+/**
+ * #200: takes the composer's place for a read-only co-access viewer.
+ * FE#2494: also for a colleague reading a case in a Teamberatung centre
+ * (`ownerName` set); that access does not expire and cannot be extended.
+ */
 export const CaseHandoverReadOnlyNotice = ({
 	expiresAt,
 	sessionId,
 	canExtend,
-	onStatusChange
+	onStatusChange,
+	ownerName
 }: {
+	/** Teamberatung: the counsellor who owns the case and writes in it. */
+	ownerName?: string;
 	expiresAt?: string;
 	sessionId?: number;
 	/** The server lets this viewer extend their co-access right now. */
@@ -49,11 +56,17 @@ export const CaseHandoverReadOnlyNotice = ({
 				role="status"
 				data-cy="case-handover-read-only-notice"
 			>
-				{until
-					? translate('caseHandover.readOnly.noticeUntil', { until })
-					: translate('caseHandover.readOnly.notice')}
+				{ownerName
+					? translate('caseHandover.readOnly.teamNotice', {
+							name: ownerName
+						})
+					: until
+						? translate('caseHandover.readOnly.noticeUntil', {
+								until
+							})
+						: translate('caseHandover.readOnly.notice')}
 			</div>
-			{canExtend && sessionId && onStatusChange && (
+			{!ownerName && canExtend && sessionId && onStatusChange && (
 				<button
 					type="button"
 					className="session__readOnlyExtend"

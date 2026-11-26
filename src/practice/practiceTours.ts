@@ -2,14 +2,17 @@ import { isTourAvailable } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
-	practiceEnquirySessionRoute,
-	PRACTICE_ENQUIRIES_ROUTE
+	PRACTICE_ENQUIRIES_ROUTE,
+	PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
+import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
 
 /*
  * The two practice flows, a registry of their own: `frontendTours` feeds the
@@ -18,13 +21,13 @@ import {
  * never mark the exercise skipped.
  */
 
-const TEAM_DISCUSSION_ON = { flag: 'featureTeamDiscussionEnabled' };
 const SUPERVISION_ON = { flag: 'featureSupervisionEnabled' };
 
 /**
- * Flow F1. The Team-Besprechung steps exist only where the Träger switched the
- * feature on; `resolveTourSteps` drops them otherwise, so the banner counts 8
- * or 6 steps.
+ * Flow F1. FE#2491 (Frank, 23 Nov): the team chat has no button of its own
+ * any more — it is switched on in "Weitere Funktionen", like supervision.
+ * A step inside the menu flyout cannot be pointed at reliably, so the two
+ * team steps (open the team chat, reply in it) left this flow; it has 6.
  */
 export const practiceAcceptTour: TourDefinition = {
 	id: PRACTICE_ACCEPT_TOUR_ID,
@@ -51,30 +54,6 @@ export const practiceAcceptTour: TourDefinition = {
 			advanceOn: { type: 'click' },
 			titleKey: 'tour.practiceAccept.step.openEnquiry.title',
 			contentKey: 'tour.practiceAccept.step.openEnquiry.intro'
-		},
-		{
-			id: 'open-team',
-			// Also what "Back" from the panel returns to: the button is only
-			// there while the panel is closed.
-			route: practiceEnquirySessionRoute(),
-			target: 'enquiry-team-button',
-			placement: 'top',
-			advanceOn: { type: 'click' },
-			when: TEAM_DISCUSSION_ON,
-			titleKey: 'tour.practiceAccept.step.openTeam.title',
-			contentKey: 'tour.practiceAccept.step.openTeam.intro'
-		},
-		{
-			id: 'team-reply',
-			target: 'team-discussion-panel',
-			placement: 'left',
-			advanceOn: {
-				type: 'event',
-				name: PRACTICE_TOUR_EVENTS.teamMessageSent
-			},
-			when: TEAM_DISCUSSION_ON,
-			titleKey: 'tour.practiceAccept.step.teamReply.title',
-			contentKey: 'tour.practiceAccept.step.teamReply.intro'
 		},
 		{
 			id: 'accept',
@@ -175,6 +154,111 @@ export const practiceSupervisionTour: TourDefinition = {
 export const practiceTours: TourDefinition[] = [
 	practiceAcceptTour,
 	practiceSupervisionTour
+];
+
+/**
+ * FE#2545: the Live-Chat topic tour as a practice flow. A practice live chat
+ * from an anonymous practice asker waits in the queue. The counsellor
+ * switches "Bin verfügbar" on (in practice only), opens the chat, starts it
+ * with the real button and writes the first reply, which the script answers.
+ * Same id and version as the explanation tour it replaces where practice is
+ * open, so Help shows one status; no card of its own.
+ */
+export const practiceLiveChatTour: TourDefinition = {
+	id: PRACTICE_LIVE_CHAT_TOUR_ID,
+	version: LIVE_CHAT_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: 'tour.liveChat.title',
+	summaryKey: 'tour.liveChat.summary',
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	when: { flag: 'featureAnonymousChatEnabled' },
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.liveChat.step.intro.title',
+			contentKey: 'tour.liveChat.step.practiceIntro.intro'
+		},
+		{
+			// Live chats only reach a counsellor who is available. The real
+			// control (settings switch, or the rail toggle where the
+			// counsellor moved it) flips a practice-only state: no request,
+			// no storage, no heartbeat (`practiceLiveChatAvailability`).
+			id: 'availability',
+			route: PRACTICE_LIVE_CHAT_SETTINGS_ROUTE,
+			target: 'livechat-availability-control',
+			placement: 'auto',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.liveChatAvailable
+			},
+			titleKey: 'tour.liveChat.step.practiceAvailability.title',
+			contentKey: 'tour.liveChat.step.practiceAvailability.intro'
+		},
+		{
+			// Switching on lands on the shared queue with the live-chat
+			// filter already on, as in real life: the step explains it
+			// (Next). A click would switch the filter off again.
+			id: 'queue',
+			route: PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+			target: 'livechat-queue',
+			placement: 'bottom',
+			// The chip shows only where the Träger lists live chats apart.
+			optional: true,
+			titleKey: 'tour.liveChat.step.queue.title',
+			contentKey: 'tour.liveChat.step.queue.intro'
+		},
+		{
+			id: 'open-request',
+			route: PRACTICE_LIVE_CHAT_QUEUE_ROUTE,
+			target: 'enquiry-list-item',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.liveChat.step.openRequest.title',
+			contentKey: 'tour.liveChat.step.openRequest.intro'
+		},
+		{
+			id: 'accept',
+			target: 'enquiry-accept-button',
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.liveChat.step.accept.title',
+			contentKey: 'tour.liveChat.step.accept.intro'
+		},
+		{
+			id: 'reply',
+			// The chat is started; Back would show a request that is gone.
+			hideBack: true,
+			target: 'session-composer',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.messageSent
+			},
+			titleKey: 'tour.liveChat.step.reply.title',
+			contentKey: 'tour.liveChat.step.reply.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.liveChat.step.done.title',
+			contentKey: 'tour.liveChat.step.done.intro'
+		}
+	]
+};
+
+/**
+ * Every tour the practice world can host: the card flows and the topic tours
+ * that run as practice where it is open. The tour host, the banner and the
+ * host hooks read this list; the practice cards read `practiceTours` only.
+ */
+export const practiceHostedTours: TourDefinition[] = [
+	...practiceTours,
+	practiceLiveChatTour
 ];
 
 /**

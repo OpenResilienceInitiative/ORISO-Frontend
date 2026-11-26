@@ -22,7 +22,10 @@ vi.mock('react-i18next', () => ({
 
 afterEach(() => send.mockReset());
 
-const notice = (kind: 'created' | 'declined' | 'expired') => {
+const notice = (
+	kind: 'created' | 'declined' | 'expired',
+	extra: { feedbackMailIntent?: boolean } = {}
+) => {
 	send.mockResolvedValue(undefined);
 	const { result } = renderHook(() => useAppointmentNotice(), {
 		wrapper: ({ children }: { children: React.ReactNode }) => (
@@ -38,9 +41,16 @@ const notice = (kind: 'created' | 'declined' | 'expired') => {
 		start: new Date('2026-11-18T10:00:00Z'),
 		end: new Date('2026-11-18T11:00:00Z'),
 		sessionId: 4401,
-		matrixRoomId: '!r:x'
+		matrixRoomId: '!r:x',
+		...extra
 	});
 };
+
+// apiSendMessage(message, room, sendMail, encrypted, sessionId, matrixRoomId,
+// threadRoot, supervisorMessage, sender, client, replyTo, mentions,
+// teamDiscussion, feedbackMailIntent)
+const FEEDBACK_MAIL_ARG = 13;
+const TEAM_DISCUSSION_ARG = 12;
 
 describe('useAppointmentNotice', () => {
 	it('sends a created appointment as the card payload', async () => {
@@ -59,4 +69,16 @@ describe('useAppointmentNotice', () => {
 			);
 		}
 	);
+
+	it('keeps an ordinary conversation on the generic notification', async () => {
+		await notice('created');
+		expect(send.mock.calls[0][FEEDBACK_MAIL_ARG]).toBe(false);
+	});
+
+	it('sends a Supervision-room notice on the protected mail path', async () => {
+		await notice('created', { feedbackMailIntent: true });
+		expect(send.mock.calls[0][FEEDBACK_MAIL_ARG]).toBe(true);
+		// The protected path is skipped for team discussions.
+		expect(send.mock.calls[0][TEAM_DISCUSSION_ARG]).toBe(false);
+	});
 });

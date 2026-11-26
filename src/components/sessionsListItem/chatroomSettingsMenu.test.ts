@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
+	withSupervisionChannelParam,
 	withTeamDiscussionParam,
 	ChatroomSettingsMenuInput
 } from './chatroomSettingsMenu';
@@ -404,5 +405,23 @@ describe('getChatroomSettingsMenuVisibility leave group', () => {
 				askerGroup({ isGroup: false, isSession: true })
 			).showLeaveGroup
 		).toBe(false);
+	});
+});
+
+describe('withSupervisionChannelParam (#2494 *5)', () => {
+	it('opens the supervision channel on the session route', () => {
+		expect(
+			withSupervisionChannelParam('/sessions/consultant/sessionView/42')
+		).toBe('/sessions/consultant/sessionView/42?channel=supervision');
+	});
+
+	it('keeps the existing query and fragment', () => {
+		expect(
+			withSupervisionChannelParam(
+				'/sessions/consultant/sessionView/42?sessionListTab=archive#m1'
+			)
+		).toBe(
+			'/sessions/consultant/sessionView/42?sessionListTab=archive&channel=supervision#m1'
+		);
 	});
 });

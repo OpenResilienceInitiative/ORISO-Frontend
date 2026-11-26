@@ -19,7 +19,8 @@ import {
 	chosenAvatarOf,
 	COUNSELLOR_MOTIF_FILES
 } from '../../utils/avatarChoice';
-import { AvatarPicker } from './AvatarPicker/AvatarPicker';
+import { AvatarPicker, INITIALS_TILE } from './AvatarPicker/AvatarPicker';
+import { CounsellorAvatar } from '../message/CounsellorAvatar';
 import { Text } from '../text/Text';
 
 interface ProfileAvatarChoiceProps {
@@ -29,7 +30,7 @@ interface ProfileAvatarChoiceProps {
 
 /**
  * The existing avatar grid inside General's role-specific data card (#1540, US#1240). Counsellors
- * pick from Admin's motif set, advice seekers an animal; the first tile brings
+ * pick initials or an Admin motif, advice seekers an animal; the first tile brings
  * back the default derived from the user id. Saves straight away.
  */
 export const ProfileAvatarChoice = ({
@@ -50,7 +51,12 @@ export const ProfileAvatarChoice = ({
 		[derived]
 	);
 	const choice = chosenAvatarOf(userData);
-	const saved = choice && choice.kind !== 'initials' ? choice.file : null;
+	let saved: string | null = null;
+	if (choice?.kind === 'initials') {
+		if (isConsultant) saved = INITIALS_TILE;
+	} else if (choice) {
+		saved = choice.file;
+	}
 	// Shows the pick at once; the reloaded user data takes over afterwards.
 	const [pending, setPending] = useState<string | null | undefined>();
 
@@ -67,12 +73,16 @@ export const ProfileAvatarChoice = ({
 		if (!loading) setPending(undefined);
 	}, [loading, saved]);
 
-	const choose = (file: string | null) => {
+	const choose = (selection: string | null) => {
 		if (loading) return;
-		setPending(file);
-		const avatarId = file ? avatarIdOfFile(file) : '';
+		setPending(selection);
+		if (selection === INITIALS_TILE) {
+			mutate({ avatarKind: 'INITIALS', avatarId: '' });
+			return;
+		}
+		const avatarId = selection ? avatarIdOfFile(selection) : '';
 		mutate(
-			isConsultant && file
+			isConsultant && selection
 				? { avatarKind: 'ICON', avatarId }
 				: { avatarId }
 		);
@@ -99,6 +109,23 @@ export const ProfileAvatarChoice = ({
 							? pending === null
 							: choice === null
 				}}
+				initialsTile={
+					isConsultant
+						? {
+								label: translate('profile.avatar.initials'),
+								content: (
+									<CounsellorAvatar
+										choice={{ kind: 'initials' }}
+										displayName={userData.displayName}
+										firstName={userData.firstName}
+										lastName={userData.lastName}
+										username={userData.userName}
+										size={52}
+									/>
+								)
+							}
+						: undefined
+				}
 				askerColors={isConsultant ? undefined : askerColors}
 				disabled={loading}
 			/>

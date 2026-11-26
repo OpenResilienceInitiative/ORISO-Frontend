@@ -171,11 +171,9 @@ const MessageAttachmentContent = ({
 			});
 		};
 
-		// With a content scanner deployed (ADR-019), an encrypted file is
-		// never fetched and decrypted here. The client seals the file keys
-		// to the scanner, which fetches, decrypts and scans it, and only
-		// then hands back the plaintext. That is what makes the block
-		// server-side: without a verdict there are simply no bytes.
+		// With a content scanner deployed (ADR-019), the scanner download
+		// service supplies verified plaintext after approval. Rejections and
+		// errors keep the attachment withheld.
 		const scan = isMediaContentScannerEnabled();
 		try {
 			if (scan) {

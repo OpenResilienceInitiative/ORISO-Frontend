@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../../utils/theme/wcagContrast';
+import {
 	OfficeHoursPrototype,
 	type AutoAcceptLink,
 	type OfficeWindow
@@ -84,6 +88,43 @@ export const AddWindow: Story = {
 		await waitFor(() =>
 			expect(canvas.getAllByText('Mo 14:00–16:00').length).toBe(2)
 		);
+	}
+};
+
+export const DarkTimeInputs: Story = {
+	name: 'Sprechzeiten und Zeitfelder in Dunkel',
+	globals: { scheme: 'dark' },
+	play: async ({ canvasElement }) => {
+		const timeFields = canvasElement.querySelectorAll('input[type="time"]');
+		await expect(timeFields).toHaveLength(2);
+		await waitFor(async () => {
+			for (const field of Array.from(timeFields)) {
+				await expect(getComputedStyle(field).colorScheme).toBe('dark');
+			}
+			const canvas = within(canvasElement);
+			const text = [
+				canvas.getByText(/In diesen Zeitfenstern/),
+				canvas.getByText(/Wer einen dieser Links öffnet/),
+				canvas.getByText('Mo 14:00–16:00'),
+				canvas.getByText('8:00'),
+				canvas.getByLabelText('Tag'),
+				...timeFields,
+				...canvasElement.querySelectorAll(
+					'[data-cy="office-hours-new"] .MuiFormControlLabel-label'
+				)
+			];
+			for (const element of text) {
+				expect(
+					wcagContrast(
+						getComputedStyle(element).color,
+						effectiveBackground(element)
+					),
+					element.textContent ??
+						element.getAttribute('aria-label') ??
+						'Zeitfeld'
+				).toBeGreaterThanOrEqual(4.5);
+			}
+		});
 	}
 };
 

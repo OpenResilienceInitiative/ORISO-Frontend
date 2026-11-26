@@ -106,6 +106,12 @@ export interface DisplayFilterKindOption {
 	 * pinned, off) — the dialog renders a picker in the Anzeigen column.
 	 */
 	modes?: boolean;
+	/**
+	 * #2494 *5: the pill appears by itself when the kind has rows for me
+	 * ("Dynamisch"), can be pinned ("Fest") or switched off — the live-chat
+	 * picker without "Bei Sitzung". Used by Supervision for counsellors.
+	 */
+	autoModes?: boolean;
 	/** The kind has no rows and no tone, only a pill (Archiv chip). */
 	pillOnly?: boolean;
 	/** Announced but not wired yet (Termine): greyed row, controls disabled. */

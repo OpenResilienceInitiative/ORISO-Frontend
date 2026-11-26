@@ -386,20 +386,26 @@ const colourStyles = (
 	...overrides
 });
 
-export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
+/**
+ * The react-select parts live at module scope so they keep their identity
+ * across re-renders. Declared inside the component, every parent re-render
+ * mounted a new value container and the search field lost focus and text
+ * (#2518). The visible input label reaches the value container via context.
+ */
+const InputLabelContext = React.createContext<string | undefined>(undefined);
+
+const IconOption = (props) => (
+	<components.Option {...props} className="language-select__option">
+		<span className="language-select__option__icon">
+			{props.data.iconLabel}
+		</span>
+		<p className="language-select__option__label">{props.data.label}</p>
+	</components.Option>
+);
+
+const IconDropdown = (props) => {
 	const { t: translate } = useTranslation();
-	const { fromL } = useResponsive();
-
-	const IconOption = (props) => (
-		<components.Option {...props} className="language-select__option">
-			<span className="language-select__option__icon">
-				{props.data.iconLabel}
-			</span>
-			<p className="language-select__option__label">{props.data.label}</p>
-		</components.Option>
-	);
-
-	const IconDropdown = (props) => (
+	return (
 		<components.DropdownIndicator {...props}>
 			<span
 				id="selectIcon"
@@ -421,30 +427,40 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 			</span>
 		</components.DropdownIndicator>
 	);
+};
 
-	const currentSelectInputLabel = props.selectInputLabel;
-	const CustomValueContainer = ({ children, ...props }) => (
+const CustomValueContainer = ({ children, ...props }) => {
+	const { t: translate } = useTranslation();
+	const inputLabel = React.useContext(InputLabelContext);
+	return (
 		<components.ValueContainer
 			{...props}
 			className="language-select__inputWrapper"
 		>
 			{React.Children.map(children, (child) => child)}
 			<label className="language-select__inputLabel">
-				{translate(currentSelectInputLabel)}
+				{translate(inputLabel)}
 			</label>
 		</components.ValueContainer>
 	);
+};
 
-	const CustomMultiValueRemove = (props) => {
-		return (
-			<components.MultiValueRemove {...props}>
-				<CloseCircle
-					title={translate('app.delete')}
-					aria-label={translate('app.delete')}
-				/>
-			</components.MultiValueRemove>
-		);
-	};
+const CustomMultiValueRemove = (props) => {
+	const { t: translate } = useTranslation();
+	return (
+		<components.MultiValueRemove {...props}>
+			<CloseCircle
+				title={translate('app.delete')}
+				aria-label={translate('app.delete')}
+			/>
+		</components.MultiValueRemove>
+	);
+};
+
+const HiddenIndicatorSeparator = () => null;
+
+export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
+	const { fromL } = useResponsive();
 
 	const menuPlacement = useMemo<MenuPlacement>(() => {
 		switch (props.menuPlacement) {
@@ -521,83 +537,91 @@ export const LanguageSelectDropdown = (props: SelectDropdownItem) => {
 			ref={wrapperRef}
 			className={clsx(props.className, 'language-select__wrapper')}
 		>
-			<Select
-				id={props.id}
-				aria-label={props.ariaLabel}
-				className={`language-select__input ${
-					props.hasError ? 'language-select__input--error' : ''
-				}`}
-				classNamePrefix="language-select__input"
-				components={{
-					Option: props.useIconOption
-						? IconOption
-						: components.Option,
-					DropdownIndicator: IconDropdown,
-					ValueContainer: props.selectInputLabel
-						? CustomValueContainer
-						: components.ValueContainer,
-					IndicatorSeparator: !props.isSearchable
-						? () => null
-						: components.IndicatorSeparator,
-					MultiValueRemove: CustomMultiValueRemove
-				}}
-				menuPortalTarget={
-					props.menuPlacement === MENUPLACEMENT_RIGHT
-						? document.body
-						: undefined
-				}
-				value={props.defaultValue ? props.defaultValue : null}
-				defaultValue={props.defaultValue ? props.defaultValue : null}
-				onChange={props.handleDropdownSelect}
-				options={props.selectedOptions}
-				noOptionsMessage={() => null}
-				menuPosition={props.menuPosition}
-				menuShouldBlockScroll={props.menuShouldBlockScroll}
-				menuPlacement={menuPlacement}
-				placeholder={props.placeholder ? props.placeholder : ''}
-				isClearable={props.isClearable}
-				isSearchable={props.isSearchable}
-				isMulti={props.isMulti}
-				styles={colourStyles(
-					fromL,
-					props.menuPlacement,
-					props.styleOverrides ?? {}
-				)}
-				onKeyDown={(e) => (props.onKeyDown ? props.onKeyDown(e) : null)}
-				tabIndex={props.isInsideMenu ? -1 : 0}
-				ref={(ref) => {
-					selectRef.current = ref;
-					if (props.selectRef) {
-						if (typeof props.selectRef === 'function') {
-							props.selectRef(ref);
-						} else {
-							props.selectRef.current = ref;
+			<InputLabelContext.Provider value={props.selectInputLabel}>
+				<Select
+					id={props.id}
+					aria-label={props.ariaLabel}
+					className={`language-select__input ${
+						props.hasError ? 'language-select__input--error' : ''
+					}`}
+					classNamePrefix="language-select__input"
+					components={{
+						Option: props.useIconOption
+							? IconOption
+							: components.Option,
+						DropdownIndicator: IconDropdown,
+						ValueContainer: props.selectInputLabel
+							? CustomValueContainer
+							: components.ValueContainer,
+						IndicatorSeparator: !props.isSearchable
+							? HiddenIndicatorSeparator
+							: components.IndicatorSeparator,
+						MultiValueRemove: CustomMultiValueRemove
+					}}
+					menuPortalTarget={
+						props.menuPlacement === MENUPLACEMENT_RIGHT
+							? document.body
+							: undefined
+					}
+					value={props.defaultValue ? props.defaultValue : null}
+					defaultValue={
+						props.defaultValue ? props.defaultValue : null
+					}
+					onChange={props.handleDropdownSelect}
+					options={props.selectedOptions}
+					noOptionsMessage={() => null}
+					menuPosition={props.menuPosition}
+					menuShouldBlockScroll={props.menuShouldBlockScroll}
+					menuPlacement={menuPlacement}
+					placeholder={props.placeholder ? props.placeholder : ''}
+					isClearable={props.isClearable}
+					isSearchable={props.isSearchable}
+					isMulti={props.isMulti}
+					styles={colourStyles(
+						fromL,
+						props.menuPlacement,
+						props.styleOverrides ?? {}
+					)}
+					onKeyDown={(e) =>
+						props.onKeyDown ? props.onKeyDown(e) : null
+					}
+					tabIndex={props.isInsideMenu ? -1 : 0}
+					ref={(ref) => {
+						selectRef.current = ref;
+						if (props.selectRef) {
+							if (typeof props.selectRef === 'function') {
+								props.selectRef(ref);
+							} else {
+								props.selectRef.current = ref;
+							}
 						}
-					}
-				}}
-				openMenuOnFocus={props.isInsideMenu ? true : false}
-				onMenuOpen={() => {
-					if (props.menuPlacement === MENUPLACEMENT_RIGHT) {
-						setTimeout(() => {
-							requestAnimationFrame(() => {
-								requestAnimationFrame(positionRightLocaleMenu);
-							});
-						}, 0);
-					}
-					props.onMenuOpen?.();
-				}}
-				closeMenuOnSelect={true}
-				onMenuClose={() => {
-					if (props.isInsideMenu) {
-						setTimeout(() => {
-							document
-								.getElementById('local-switch-wrapper')
-								.focus();
-						}, 10); //we need this timeout because the menu is not closed when switching the focus
-					}
-					props.onMenuClose?.();
-				}}
-			/>
+					}}
+					openMenuOnFocus={props.isInsideMenu ? true : false}
+					onMenuOpen={() => {
+						if (props.menuPlacement === MENUPLACEMENT_RIGHT) {
+							setTimeout(() => {
+								requestAnimationFrame(() => {
+									requestAnimationFrame(
+										positionRightLocaleMenu
+									);
+								});
+							}, 0);
+						}
+						props.onMenuOpen?.();
+					}}
+					closeMenuOnSelect={true}
+					onMenuClose={() => {
+						if (props.isInsideMenu) {
+							setTimeout(() => {
+								document
+									.getElementById('local-switch-wrapper')
+									.focus();
+							}, 10); //we need this timeout because the menu is not closed when switching the focus
+						}
+						props.onMenuClose?.();
+					}}
+				/>
+			</InputLabelContext.Provider>
 			{props.hasError && (
 				<div className="language-select__error">
 					<Text text={props.errorMessage} type="infoSmall" />

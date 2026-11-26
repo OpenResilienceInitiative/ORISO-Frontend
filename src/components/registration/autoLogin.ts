@@ -45,36 +45,15 @@ interface AutoLoginProps {
 	 * uses it to show its handover screen and start loading in parallel.
 	 */
 	onCredentialsAccepted?: () => void;
+	isCurrentAttempt?: () => boolean;
 }
 
-const loginKeycloak = async (
-	username: string,
-	password: string,
-	otp?: string
-) => {
-	// console.log("🔐 DEBUG: loginKeycloak called with:", { username, password: password ? "***" : "undefined", otp });
-
-	const keycloakRes = await getKeycloakAccessToken(
-		username,
-		encodeURIComponent(password),
-		otp || null
-	);
-
-	// console.log("🔐 DEBUG: loginKeycloak received response:", keycloakRes);
-
-	setTokens(
-		keycloakRes.access_token,
-		keycloakRes.expires_in,
-		keycloakRes.refresh_token,
-		keycloakRes.refresh_expires_in
-	);
-
-	// console.log("🔐 DEBUG: loginKeycloak tokens set successfully");
-	return keycloakRes;
-};
+const loginKeycloak = (username: string, password: string, otp?: string) =>
+	getKeycloakAccessToken(username, encodeURIComponent(password), otp || null);
 
 export const autoLogin = async ({
 	password,
+	isCurrentAttempt = () => true,
 	onCredentialsAccepted,
 	...autoLoginProps
 }: AutoLoginProps): Promise<any> => {
@@ -102,6 +81,7 @@ export const autoLogin = async ({
 		// console.log("🔐 DEBUG: autoLogin - Keycloak login successful with entered username");
 	} catch (e: any) {
 		// console.log("🔐 DEBUG: autoLogin - Keycloak login failed with entered username:", e.message);
+		if (!isCurrentAttempt()) return;
 		if (e.message === FETCH_ERRORS.UNAUTHORIZED) {
 			userHash = legacyEncodedUsername;
 			username = legacyEncodedUsername;
@@ -117,6 +97,13 @@ export const autoLogin = async ({
 		}
 	}
 
+	if (!isCurrentAttempt()) return;
+	setTokens(
+		keycloakRes.access_token,
+		keycloakRes.expires_in,
+		keycloakRes.refresh_token,
+		keycloakRes.refresh_expires_in
+	);
 	const tokenPayload = parseJwt(keycloakRes.access_token);
 
 	if (
@@ -147,7 +134,9 @@ export const autoLogin = async ({
 		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
+		if (!isCurrentAttempt()) return;
 		const matrixLoginData = await getMatrixAccessToken();
+		if (!isCurrentAttempt()) return;
 
 		// Only persist the Matrix login data here. The actual Matrix client is
 		// created and registered exactly once by AuthenticatedApp on the
@@ -162,10 +151,11 @@ export const autoLogin = async ({
 		// session list; chat features recover on the next successful login.
 	}
 
-	if (tenantSettings?.featureToolsEnabled) {
+	if (isCurrentAttempt() && tenantSettings?.featureToolsEnabled) {
 		try {
 			await getBudibaseAccessToken(username, password, tenantSettings);
 		} catch (error) {
+			if (!isCurrentAttempt()) return;
 			clearLoginRecoveryPassword();
 			throw error;
 		}

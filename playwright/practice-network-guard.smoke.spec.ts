@@ -49,7 +49,9 @@ import {
  *  - no request URL or body names a practice id (`-1`, `practice-...`,
  *    `practice.invalid`), carries what was typed, or is a WebSocket publish;
  *  - localStorage, sessionStorage and the IndexedDB database names are the
- *    same as before the start;
+ *    same as before the start, except the acknowledgement time of the allowed
+ *    live-chat heartbeat (a bodyless POST, FE#2545); a PUT to the
+ *    availability stays a forbidden write;
  *  - after the practice, the real Anfragen list holds no practice id or name.
  * Flow F1 runs with the Team-Besprechung steps when the tenant has them
  * switched on, and without otherwise: the variant is reported as an annotation.
@@ -73,7 +75,13 @@ const policyConfig = (tourId: string): RequestPolicyConfig => {
 		tutorialProgressUrl:
 			process.env.ORISO_TUTORIAL_PROGRESS_URL ??
 			new URL('/service/users/tutorials/progress', base).href,
-		tokenRefreshUrl
+		tokenRefreshUrl,
+		// The app allows this one write during practice (FE#2545): a counsellor
+		// who is really available keeps her lease. Same origin as the progress URL.
+		liveChatHeartbeatUrl: new URL(
+			'/service/conversations/consultants/availability/heartbeat',
+			process.env.ORISO_TUTORIAL_PROGRESS_URL ?? base
+		).href
 	};
 };
 

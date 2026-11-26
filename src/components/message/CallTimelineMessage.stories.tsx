@@ -43,7 +43,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ended: Story = {
-	play: async ({ canvas }) => {
+	play: async ({ canvas, canvasElement }) => {
 		await waitFor(() =>
 			expect(
 				canvas.getByRole('status', {
@@ -52,6 +52,13 @@ export const Ended: Story = {
 			).toBeVisible()
 		);
 		await expect(canvas.getByText(/02:05/)).toBeVisible();
+		const avatar = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__avatar--system'
+		)!;
+		expect(getComputedStyle(avatar).borderTopWidth).toBe('6px');
+		expect(getComputedStyle(avatar, '::after').content).toBe('none');
+		const icon = avatar.querySelector<SVGElement>('.systemMessage__icon')!;
+		expect(getComputedStyle(icon).width).toBe('48px');
 	}
 };
 export const AudioEnded: Story = {

@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { resolveSessionRoomRouteId } from '../../utils/matrixRoomUtils';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { SessionItemInterface } from '../../globalState/interfaces';
 import {
 	OVERLAY_E2EE,
@@ -398,7 +399,13 @@ export const AcceptAssign = ({
 				: apiEnquiryAcceptance(sessionId);
 
 		acceptRequest
-			.then(() => fetchSessionRoutingAfterAccept(sessionId))
+			.then(() => {
+				// The server attached the standing supervisor (if any) inside
+				// the accept request. The conversation may stay mounted on
+				// the same route, so tell its supervisor lookups (#2386).
+				notifySessionSupervisorsChanged(sessionId);
+				return fetchSessionRoutingAfterAccept(sessionId);
+			})
 			.then((routing) =>
 				encryptRoom(setE2EEState, routing.roomRouteId).then(
 					() => routing
@@ -473,42 +480,50 @@ export const AcceptAssign = ({
 				<div
 					className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
 				>
-					{activeSession.isEnquiry && (
-						<Button
-							item={buttonItem}
-							disabled={
-								isRequestInProgress || showRejectionConfirmation
-							}
-							buttonHandle={() =>
-								handleButtonClick(activeSession.item.id)
-							}
-							// The button itself, not the wrapper: the team action beside
-							// it must not count as a click on "accept" for a tour.
-							tourTarget="enquiry-accept-button"
-						/>
+					{(activeSession.isEnquiry || canReject) && (
+						<div className="session__decisionActions">
+							{activeSession.isEnquiry && (
+								<Button
+									item={buttonItem}
+									disabled={
+										isRequestInProgress ||
+										showRejectionConfirmation
+									}
+									buttonHandle={() =>
+										handleButtonClick(activeSession.item.id)
+									}
+									// The button itself, not the wrapper: the team action beside
+									// it must not count as a click on "accept" for a tour.
+									tourTarget="enquiry-accept-button"
+								/>
+							)}
+							{canReject && (
+								<Button
+									className="session__declineAction"
+									ariaHasPopup="dialog"
+									item={{
+										label: 'enquiry.rejection.action',
+										type: BUTTON_TYPES.LINK
+									}}
+									disabled={
+										isRequestInProgress ||
+										showRejectionConfirmation
+									}
+									buttonHandle={() => {
+										openedFor.current = {
+											context: contextKey,
+											auth: authIdentity(),
+											epoch: operationEpoch.current
+										};
+										setRejectionError('');
+										setRejectionRetryable(true);
+										setShowRejectionConfirmation(true);
+									}}
+								/>
+							)}
+						</div>
 					)}
 					{secondaryAction}
-					{canReject && (
-						<Button
-							item={{
-								label: 'enquiry.rejection.action',
-								type: BUTTON_TYPES.SECONDARY
-							}}
-							disabled={
-								isRequestInProgress || showRejectionConfirmation
-							}
-							buttonHandle={() => {
-								openedFor.current = {
-									context: contextKey,
-									auth: authIdentity(),
-									epoch: operationEpoch.current
-								};
-								setRejectionError('');
-								setRejectionRetryable(true);
-								setShowRejectionConfirmation(true);
-							}}
-						/>
-					)}
 				</div>
 			)}
 			{showRejectionConfirmation && (

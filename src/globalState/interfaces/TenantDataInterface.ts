@@ -109,7 +109,17 @@ export interface TenantDataSettingsInterface {
 	featureVideoCallsGroupChatsEnabled?: boolean;
 	featureVideoCallsSupervisionChatsEnabled?: boolean;
 	featureThreadsEnabled?: boolean;
+	/** FE#2491: team chat on open enquiries — a policy like supervision. */
 	featureTeamDiscussionEnabled?: boolean;
+	/** FE#2491: keep the team chat switchable after accept (default off). */
+	featureTeamDiscussionAfterAcceptEnabled?: boolean;
+	featureVideoCallsTeamDiscussionsEnabled?: boolean;
+	featureAudioCallsTeamDiscussionsEnabled?: boolean;
+	featureVoiceMessagesTeamDiscussionsEnabled?: boolean;
+	featureThreadsTeamDiscussionsEnabled?: boolean;
+	featureMediaUploadTeamDiscussionsEnabled?: boolean;
+	featureMediaInlineDisplayTeamDiscussionsEnabled?: boolean;
+	featureMediaAiScanTeamDiscussionsEnabled?: boolean;
 	featureThreadsAnonymousChatsEnabled?: boolean;
 	featureThreadsGroupChatsEnabled?: boolean;
 	featureThreadsOneOnOneEnabled?: boolean;
@@ -119,6 +129,8 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
 	featureVoiceMessagesGroupChatsEnabled?: boolean;
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+	/** FE#1870: label on Erstanfragen from the agency link; absent means on. */
+	featureAgencyLinkLabelEnabled?: boolean;
 	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
 	featureAskerEmailEnabled?: boolean;
 	/** Collection permission, separate from notification delivery. Absent preserves compatibility. */

@@ -35,6 +35,7 @@ import {
 } from '../../globalState/provider/NotificationsProvider';
 import {
 	CallRoomMembershipTimeoutError,
+	type ElementCallAppearance,
 	type OrisoWindowCommand,
 	useElementCallWidget
 } from './widget/useElementCallWidget';
@@ -71,8 +72,14 @@ import { type CallConversation, callPartyOf, counterpartOf } from './callParty';
 import { callWidgetEntryOf } from './callHostContext';
 import { TopicsContext } from '../../globalState/provider/TopicsProvider';
 import { IncomingCallCard } from './states/IncomingCallCard';
+import {
+	isKnockingOnCall,
+	readPendingKnock
+} from '../directLinkEntry/directLinkEntryFlow';
+import { answerOrKnock } from '../directLinkEntry/answerOrKnock';
 import { DockedCall } from './states/DockedCall';
 import { useRegisterFloatingSurface } from '../floatingSurfaces/floatingSurfaces';
+import { usePersonalDisplay } from '../../features/personal-display/PersonalDisplayProvider';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -153,6 +160,8 @@ const conversationOf = (
 
 export const GroupCallWidget: React.FC = () => {
 	const { t, i18n } = useTranslation();
+	const { preferences: displayPreferences, scheme: displayScheme } =
+		usePersonalDisplay();
 	const { matrixClientService } = useMatrixClient();
 	// Outside the app's providers (Storybook) there is no topic catalogue.
 	const topics = useContext(TopicsContext)?.topics;
@@ -396,11 +405,21 @@ export const GroupCallWidget: React.FC = () => {
 	const hostContextPending =
 		!!conversationRoomId && conversationSettledFor !== conversationRoomId;
 
+	const appearance: ElementCallAppearance | undefined = displayScheme
+		? {
+				theme:
+					displayPreferences.contrast === 'standard'
+						? displayScheme
+						: `${displayScheme}-${displayPreferences.contrast}-contrast`,
+				fontScale: displayPreferences.textSize / 100
+			}
+		: undefined;
 	const widget = useElementCallWidget(
 		matrixClientService?.getClient() ?? null,
 		{
 			roomId: shouldPrepareWidget ? callRoomId : null,
 			isVideo: callData?.isVideo ?? true,
+			appearance,
 			// FE#2209: nobody meets Element Call's own lobby; a guest's device
 			// choice arrives as the call's start parameters (`callStart`).
 			skipLobby: conversationParams?.skipLobby ?? true,
@@ -973,9 +992,20 @@ export const GroupCallWidget: React.FC = () => {
 		}
 	}, [elementCallUrl, callData?.callId]);
 
+	const [, showKnockWait] = useState(0);
 	const handleAnswer = () => {
 		if (!callData || !callData.isIncoming) return;
-		callManager.answerCall();
+		/* An advice seeker who is not let in yet waits in the lobby instead of
+		   opening a call the media server refuses ("Call access denied"). */
+		void answerOrKnock(callData, callManager, {
+			asker: Boolean(
+				userData &&
+					hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+			)
+		})
+			.catch(() => undefined)
+			/* A knock is on record now: the ringing card gives way to the lobby. */
+			.finally(() => showKnockWait((n) => n + 1));
 	};
 
 	const handleDecline = () => {
@@ -1339,6 +1369,17 @@ export const GroupCallWidget: React.FC = () => {
 	 * the app behind stays usable. It replaces the old black popup.
 	 */
 	if (callData.isIncoming && callData.state === 'ringing') {
+		/* A person knocking on this call waits in the knock dialog and is let
+		   in by the counsellor; ringing them too leads to "Call access denied". */
+		if (
+			isKnockingOnCall(readPendingKnock(), [
+				callData.signalRoomId,
+				callData.roomId,
+				callData.elementCallRoomId
+			])
+		) {
+			return null;
+		}
 		return (
 			<IncomingCallCard
 				caller={incomingCaller}

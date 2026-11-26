@@ -19,7 +19,8 @@ export const generateConsultantSession = ({
 		status = 2;
 	}
 
-	const sessionId = Math.random();
+	// Session ids are integers: the app parses them from /session/<id>.
+	const sessionId = Cypress._.random(1000, 2 ** 31 - 1);
 	const matrixRoomId = `!${uuid()}:matrix.example`;
 
 	const sessionData: SessionUserDataInterface = {
@@ -88,7 +89,8 @@ export const generateAskerSession = ({
 }: {
 	messagesRead?: boolean;
 } = {}): ListItemInterface => {
-	const sessionId = Math.random();
+	// Session ids are integers: the app parses them from /session/<id>.
+	const sessionId = Cypress._.random(1000, 2 ** 31 - 1);
 	const matrixRoomId = `!${uuid()}:matrix.example`;
 
 	return {

@@ -33,6 +33,7 @@ const EXISTING_EMITTED_TYPES = [
 	'supervisor.added',
 	'supervisor.removed',
 	'supervisor.assigned',
+	'supervisor.replaced',
 	'counselor.renamed'
 ];
 
@@ -86,6 +87,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'supervisor.removed': 'conversation',
 	'supervisor.assigned': 'conversation',
 	'counselor.renamed': 'conversation',
+	'supervisor.replaced': 'conversation',
 	'topic_duplicate.started': 'conversation',
 	'request.new': 'request',
 	'draft.created': 'draft',
@@ -146,8 +148,9 @@ describe('WP-06 event-descriptor registry', () => {
 		// + 3 group-chat lifecycle + 4 appointments
 		// + team discussion + first response + conversation finished
 		// + service notice, three offer events, deleted advice seeker,
-		// topic duplicate, direct-invitation renewal and add-on notification = 43.
-		expect(KNOWN_EVENT_TYPES.length).toBe(43);
+		// topic duplicate, direct-invitation renewal, add-on notification
+		// and the FE#2494 supervisor swap = 44.
+		expect(KNOWN_EVENT_TYPES.length).toBe(44);
 		[
 			'request.new',
 			'request.denied',

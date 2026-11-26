@@ -71,7 +71,7 @@ $button-group-icon-size: 24px;
 			color 0.2s ease;
 
 		&:focus-visible {
-			outline: 3px solid var(--m3-primary-outline, #930008);
+			outline: $focus-outline;
 			outline-offset: 2px;
 		}
 
@@ -182,6 +182,11 @@ $button-group-icon-size: 24px;
 		border-color: transparent;
 		background-color: var(--m3-secondary, #4c555f);
 		color: var(--m3-on-secondary-container, #e7effc);
+
+		// Dark: `secondary` turns light, so its ink is `on-secondary`.
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-secondary, #263240);
+		}
 	}
 
 	&__item--outline {

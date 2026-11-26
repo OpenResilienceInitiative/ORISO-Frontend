@@ -26,8 +26,12 @@ const ROOM_ID = '!session:matrix.example.org';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, options?: { until?: string }) =>
-			options?.until ? `${key} ${options.until}` : key,
+		t: (key: string, options?: { until?: string; name?: string }) =>
+			options?.until
+				? `${key} ${options.until}`
+				: options?.name
+					? `${key} ${options.name}`
+					: key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -156,7 +160,11 @@ const grant = (
 	...(accessType === 'CO_ACCESS' && { expiresAt: EXPIRES_AT })
 });
 
-const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
+const renderSession = (
+	caseHandoverStatus: CaseHandoverStatus | null,
+	session: any = activeSession,
+	userData: any = counsellorUserData
+) =>
 	render(
 		<MemoryRouter>
 			<NotificationsContext.Provider
@@ -165,7 +173,7 @@ const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
 				<UserDataContext.Provider
 					value={
 						{
-							userData: counsellorUserData,
+							userData,
 							setUserData: vi.fn()
 						} as any
 					}
@@ -176,7 +184,7 @@ const renderSession = (caseHandoverStatus: CaseHandoverStatus | null) =>
 						<ActiveSessionContext.Provider
 							value={
 								{
-									activeSession,
+									activeSession: session,
 									reloadActiveSession: vi.fn()
 								} as any
 							}
@@ -242,6 +250,102 @@ describe('SessionItemComponent — case handover co-access is read-only', () => 
 
 	it('keeps the composer for a TAKEOVER recipient', async () => {
 		renderSession(grant('TAKEOVER'));
+
+		expect(await screen.findByTestId('composer')).toBeTruthy();
+		expect(
+			screen.queryByTestId('case-handover-read-only-notice')
+		).toBeNull();
+	});
+});
+
+describe('SessionItemComponent — Teamberatung is read-only for colleagues (FE#2494 *4)', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	const teamCase = {
+		...activeSession,
+		item: { ...activeSession.item, isTeamSession: true }
+	};
+	const teamReader: CaseHandoverStatus = {
+		sessionId: SESSION_ID,
+		status: 'GRANTED',
+		canViewContent: true,
+		clientConsentRequired: false,
+		auditOutcome: 'TEAM_READER'
+	} as CaseHandoverStatus;
+
+	it('lets a colleague read without a message field and shows the Teamberatung notice', async () => {
+		renderSession(teamReader, teamCase);
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toContain(
+			'caseHandover.readOnly.teamNotice'
+		);
+		expect(screen.queryByTestId('composer')).toBeNull();
+		expect(screen.queryByTestId('case-handover-extend')).toBeNull();
+	});
+
+	// The room endpoint's counsellor view (GET /users/sessions/room/{id}):
+	// id and real name, plus the public name the server now resolves.
+	const roomConsultant = {
+		id: 'counsellor-1',
+		firstName: 'Marge',
+		lastName: 'Realname',
+		absent: false
+	};
+
+	it('names the writing counsellor by display name, never by real name', async () => {
+		renderSession(teamReader, {
+			...teamCase,
+			consultant: {
+				...roomConsultant,
+				username: 'marge.public',
+				displayName: 'Marge S.'
+			}
+		});
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe(
+			'caseHandover.readOnly.teamNotice Marge S.'
+		);
+		expect(notice.textContent).not.toContain('Realname');
+	});
+
+	it('falls back to the username when there is no display name', async () => {
+		renderSession(teamReader, {
+			...teamCase,
+			consultant: { ...roomConsultant, username: 'marge.public' }
+		});
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe(
+			'caseHandover.readOnly.teamNotice marge.public'
+		);
+	});
+
+	it('shows the generic notice rather than a real name when no public name came back', async () => {
+		renderSession(teamReader, { ...teamCase, consultant: roomConsultant });
+
+		const notice = await screen.findByTestId(
+			'case-handover-read-only-notice'
+		);
+		expect(notice.textContent).toBe('caseHandover.readOnly.notice');
+		expect(notice.textContent).not.toContain('Realname');
+	});
+
+	it('keeps the message field for the assigned counsellor', async () => {
+		renderSession(null, teamCase, {
+			...counsellorUserData,
+			userId: 'counsellor-1'
+		});
 
 		expect(await screen.findByTestId('composer')).toBeTruthy();
 		expect(

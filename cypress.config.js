@@ -57,7 +57,9 @@ const styleLoaders = (modules) => [
 const options = {
 	webpackOptions: {
 		resolve: {
-			extensions: ['.ts', '.tsx', '.js', '.jsx'],
+			// App code imports stylesheets without extension (`import './x.styles'`),
+			// as the app bundler allows; without `.scss` here those specs fail to bundle.
+			extensions: ['.ts', '.tsx', '.js', '.jsx', '.scss'],
 			alias: {
 				'matrix-js-sdk$': path.resolve(
 					__dirname,
@@ -133,7 +135,7 @@ const options = {
 							type: 'asset/resource'
 						},
 						{
-							test: /\.(bmp|gif|jpe?g|png|webp|woff2?|eot|ttf|otf)$/,
+							test: /\.(bmp|gif|jpe?g|png|webp|woff2?|eot|ttf|otf|mp3)$/,
 							type: 'asset/resource'
 						}
 					]
@@ -151,36 +153,64 @@ try {
 	conf = {};
 }
 
+// Specs being repaired under FE#2572. CYPRESS_QUARANTINE=exclude runs the
+// blocking suite without them; CYPRESS_QUARANTINE=only runs just them.
+const quarantinedSpecs = require('./cypress/quarantine.json').specs;
+const applyQuarantine = (config) => {
+	const mode = process.env.CYPRESS_QUARANTINE;
+	if (mode === 'exclude') {
+		config.e2e.excludeSpecPattern = [
+			...[].concat(config.e2e.excludeSpecPattern || []),
+			...quarantinedSpecs
+		];
+	} else if (mode === 'only') {
+		config.e2e.specPattern = quarantinedSpecs;
+	}
+	return config;
+};
+
 module.exports = defineConfig(
-	_.mergeWith(
-		{
-			e2e: {
-				testIsolation: true,
-				baseUrl: 'http://localhost:9001',
-				supportFile: 'cypress/support/e2e.{js,jsx,ts,tsx}',
-				setupNodeEvents(on, config) {
-					on('file:preprocessor', wp(options));
+	applyQuarantine(
+		_.mergeWith(
+			{
+				e2e: {
+					testIsolation: true,
+					baseUrl: 'http://localhost:9001',
+					supportFile: 'cypress/support/e2e.{js,jsx,ts,tsx}',
+					setupNodeEvents(on, config) {
+						on('file:preprocessor', wp(options));
+					},
+					specPattern: ['cypress/e2e/**/*.cy.ts']
 				},
-				specPattern: ['cypress/e2e/**/*.cy.ts']
+				component: {
+					devServer: {
+						framework: 'react',
+						bundler: 'webpack',
+						webpackConfig: options.webpackOptions
+					},
+					specPattern: ['cypress/component/**/*.cy.tsx'],
+					supportFile: false
+				},
+				env: {
+					CYPRESS_WS_URL:
+						process.env.CYPRESS_WS_URL ||
+						process.env.REACT_APP_API_URL
+				},
+				retries: {
+					runMode: 2
+				},
+				experimentalMemoryManagement: true,
+				numTestsKeptInMemory: 20,
+				video: false,
+				chromeWebSecurity: false,
+				viewportWidth: 1200,
+				viewportHeight: 800,
+				defaultCommandTimeout: 30000,
+				modifyObstructiveCode: false
 			},
-			env: {
-				CYPRESS_WS_URL:
-					process.env.CYPRESS_WS_URL || process.env.REACT_APP_API_URL
-			},
-			retries: {
-				runMode: 2
-			},
-			experimentalMemoryManagement: true,
-			numTestsKeptInMemory: 20,
-			video: false,
-			chromeWebSecurity: false,
-			viewportWidth: 1200,
-			viewportHeight: 800,
-			defaultCommandTimeout: 30000,
-			modifyObstructiveCode: false
-		},
-		conf,
-		(objValue, srcValue) =>
-			_.isArray(objValue) ? objValue.concat(srcValue) : undefined
+			conf,
+			(objValue, srcValue) =>
+				_.isArray(objValue) ? objValue.concat(srcValue) : undefined
+		)
 	)
 );

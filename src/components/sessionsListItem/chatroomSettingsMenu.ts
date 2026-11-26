@@ -1,3 +1,7 @@
+import {
+	CHANNEL_PARAM,
+	SUPERVISION_CHANNEL_ID
+} from '../../utils/channelRoute';
 /**
  * FE#781 — visibility rules for the session-list "Chatroom Settings" menu.
  *
@@ -111,7 +115,18 @@ export const getChatroomSettingsMenuVisibility = ({
  * carries `teamDiscussion=1`; the list menu reuses that contract instead of
  * introducing a second way to open the panel.
  */
-export const withTeamDiscussionParam = (path: string): string => {
+export const withTeamDiscussionParam = (path: string): string =>
+	withQueryParam(path, 'teamDiscussion', '1');
+
+/**
+ * #2494 *5: the list row's Supervision icon opens the side panel through the
+ * channel route (`?channel=supervision`, utils/channelRoute) — the same
+ * contract notifications use, so there is one way to open the panel.
+ */
+export const withSupervisionChannelParam = (path: string): string =>
+	withQueryParam(path, CHANNEL_PARAM, SUPERVISION_CHANNEL_ID);
+
+const withQueryParam = (path: string, key: string, value: string): string => {
 	// Split the fragment off first: it always trails the query, so parsing the
 	// other way round would either encode `#x` into a param value or emit a
 	// query *after* the fragment, where it stops being a query at all.
@@ -128,6 +143,6 @@ export const withTeamDiscussionParam = (path: string): string => {
 	const query = queryAt === -1 ? '' : withoutFragment.substring(queryAt + 1);
 
 	const params = new URLSearchParams(query);
-	params.set('teamDiscussion', '1');
+	params.set(key, value);
 	return `${pathname}?${params.toString()}${fragment}`;
 };

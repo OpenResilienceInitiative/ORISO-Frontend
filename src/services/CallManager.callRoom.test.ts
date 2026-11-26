@@ -172,7 +172,15 @@ describe('createElementCallRoom', () => {
 		await createCallRoom();
 
 		const options = createRoom.mock.calls[0][0] as CreateRoomOptions;
-		expect(stateContent(options, 'm.room.encryption')).toBeDefined();
+		expect(
+			options.initial_state?.find(
+				(event) => event.type === 'm.room.encryption'
+			)
+		).toEqual({
+			type: 'm.room.encryption',
+			state_key: '',
+			content: { algorithm: 'm.megolm.v1.aes-sha2' }
+		});
 		expect(stateContent(options, 'm.room.history_visibility')).toEqual({
 			history_visibility: 'joined'
 		});
@@ -385,6 +393,81 @@ describe('createElementCallRoom', () => {
 
 		await expect(createCallRoom()).rejects.toThrow(
 			/Could not invite 1 of 1/
+		);
+	});
+});
+
+/*
+ * Group calls in a session room open `org.matrix.msc3401.call.member` to level
+ * 0 so every member can join. That rewrite must only ever happen in a room
+ * that is confirmed encrypted (replaces the retired Cypress spec
+ * matrix-call-room-privacy, FE#2572).
+ */
+describe('ensureGroupCallPermissions', () => {
+	const ROOM = '!group:oriso.example';
+
+	const roomWithLevels = (encrypted: boolean) => ({
+		hasEncryptionStateEvent: () => encrypted,
+		currentState: {
+			getStateEvents: (type: string) =>
+				type === 'm.room.power_levels'
+					? {
+							getContent: () => ({
+								events: {
+									'org.matrix.msc3401.call.member': 50
+								},
+								state_default: 50
+							})
+						}
+					: null
+		}
+	});
+
+	const ensurePermissions = (roomId: string): Promise<void> =>
+		(
+			callManager as unknown as {
+				ensureGroupCallPermissions: (roomId: string) => Promise<void>;
+			}
+		).ensureGroupCallPermissions(roomId);
+
+	beforeEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null as never);
+	});
+
+	it('does not rewrite power levels in a room without encryption', async () => {
+		const sendStateEvent = vi.fn().mockResolvedValue({});
+		installClient({
+			getRoom: () => roomWithLevels(false),
+			isRoomEncrypted: () => false,
+			sendStateEvent
+		});
+
+		await ensurePermissions(ROOM);
+
+		expect(sendStateEvent).not.toHaveBeenCalled();
+	});
+
+	it('opens call membership to level 0 in an encrypted room', async () => {
+		const sendStateEvent = vi.fn().mockResolvedValue({});
+		installClient({
+			getRoom: () => roomWithLevels(true),
+			isRoomEncrypted: () => true,
+			sendStateEvent
+		});
+
+		await ensurePermissions(ROOM);
+
+		expect(sendStateEvent).toHaveBeenCalledExactlyOnceWith(
+			ROOM,
+			'm.room.power_levels',
+			expect.objectContaining({
+				events: { 'org.matrix.msc3401.call.member': 0 }
+			}),
+			''
 		);
 	});
 });

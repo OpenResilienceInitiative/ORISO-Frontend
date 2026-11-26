@@ -78,7 +78,7 @@ jobs:
                   name: call-harness
                   path: storybook-static/call-harness
 
-            - name: Publish Storybook Docker image
+            - name: Build, scan and publish Storybook Docker image
               uses: ./.github/actions/docker-build-push
               with:
                   push_to_ghcr: true

@@ -239,3 +239,29 @@ export const recommendFurtherCounsellingSuccessOverlayItem: OverlayItem = {
 		}
 	]
 };
+
+/** FE#2491: action name of the team-chat switch-off confirmation. */
+export const SWITCH_OFF_TEAM_CHAT = 'SWITCH_OFF_TEAM_CHAT';
+
+/**
+ * FE#2491: switching the team chat off asks first, like removing a
+ * supervisor does. It can be switched on again, so the tone stays neutral.
+ */
+export const teamChatSwitchOffConfirmOverlayItem: OverlayItem = {
+	svg: XIllustration,
+	illustrationBackground: 'neutral',
+	headline: 'teamDiscussion.switchOff.confirm.headline',
+	copy: 'teamDiscussion.switchOff.confirm.copy',
+	buttonSet: [
+		{
+			label: 'teamDiscussion.switchOff.confirm.confirm',
+			function: SWITCH_OFF_TEAM_CHAT,
+			type: BUTTON_TYPES.PRIMARY
+		},
+		{
+			label: 'teamDiscussion.switchOff.confirm.cancel',
+			function: OVERLAY_FUNCTIONS.CLOSE,
+			type: BUTTON_TYPES.SECONDARY
+		}
+	]
+};

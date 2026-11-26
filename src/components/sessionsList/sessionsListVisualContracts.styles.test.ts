@@ -75,8 +75,9 @@ describe('session list visual contracts', () => {
 		// Frank 2026-09-21: the divider only while list AND chat pane are
 		// empty, desktop only, drawn by the handle so the toolbar cannot
 		// cover it — and never as a border on the empty state itself.
+		// White in light via the lowest-surface token, so dark follows.
 		expect(css).toMatch(
-			/\.contentWrapper:has\(\.contentWrapper__detail \.session--empty\):has\(\.sessionsList__emptyState\) \.sessionsList__resizeHandle--end::before\s*\{[^}]*background:\s*#fff;/s
+			/\.contentWrapper:has\(\.contentWrapper__detail \.session--empty\) \.sessionsList__wrapper:has\(\[data-list-empty=['"]?true['"]?\]\) > \.sessionsList__resizeHandle--end::before,[^{}]*\.notificationsCenter--emptySplit \.notificationsCenter__listColumn > \.sessionsList__resizeHandle--end::before\s*\{[^}]*background:\s*var\(--m3-surface-container-lowest,\s*#ffffff\);/s
 		);
 		expect(css).not.toMatch(
 			/\.sessionsList__emptyState\s*\{[^}]*border-right/s

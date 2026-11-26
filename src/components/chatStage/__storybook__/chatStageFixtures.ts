@@ -271,6 +271,34 @@ export const supervisionSystemNotice = (
 	};
 };
 
+/** The supervisor before the swap (#2494 *6). */
+export const PREVIOUS_SUPERVISOR_NAME = 'Clara C.';
+
+/**
+ * #2494 *6: the server's notice in the side room after the counsellor
+ * replaced the supervisor. It carries names and the reason only; the app
+ * words it (`supervisorReplacedNotice.ts`). Sent as the counsellor, like
+ * every server notice of this room.
+ */
+export const supervisorReplacedNotice = (
+	reason = 'Clara C. ist ab Dezember in Elternzeit.'
+): MessageItem => ({
+	...message(
+		'$s5',
+		'counsellor',
+		`[SYSTEM_NOTIFICATION]${JSON.stringify({
+			type: 'SUPERVISOR_REPLACED',
+			previousName: PREVIOUS_SUPERVISOR_NAME,
+			newName: SUPERVISOR_NAME,
+			reason,
+			title: 'Supervision gewechselt',
+			description: `${SUPERVISOR_NAME} supervidiert diesen Chat jetzt anstelle von ${PREVIOUS_SUPERVISOR_NAME}.`
+		})}`,
+		'10:02',
+		SUPERVISION_ROOM_ID
+	)
+});
+
 /** The same builder, the same organism — only the room and the words differ. */
 export const teamSystemNotice = (
 	title: string,

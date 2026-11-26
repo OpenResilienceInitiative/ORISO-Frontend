@@ -6,6 +6,7 @@ import {
 	stripReplyFallback
 } from './messageRelations';
 import { getMentionedUserIdsFromContent } from './messageMentions';
+import { parsePassageBlurRemovedReason } from '../components/selectionReply/passageBlurEvents';
 import { parseCallLifecycleMessage } from './callLifecycleMessage';
 import {
 	getPassageReplies,
@@ -86,12 +87,112 @@ export const passageReplyAudioAttachment = (
 	};
 };
 
+/** Timeline marker of a lifted blur (#2494 *9); `MessageItem.t`. */
+export const BLUR_REMOVED_MESSAGE_TYPE = 'blur-removed';
+
+const memberName = (matrixRoom: any, userId: string): string => {
+	const member = matrixRoom?.getMember?.(userId);
+	return (
+		member?.name ||
+		member?.rawDisplayName ||
+		userId?.split(':')[0]?.substring(1) ||
+		''
+	);
+};
+
+/**
+ * Only a room moderator may lift a blur, so only a moderator's redaction
+ * counts as one: the marker is a free-text `reason` anybody could type, and
+ * an advice seeker deleting their own message must still read "gelöscht",
+ * not a platform notice. Moderator = the room's `redact` level (Matrix
+ * default 50); the assigned counsellor holds 100, advice seekers 0,
+ * supervisors 10 (UserService AssignEnquiryFacade, SessionSupervisorFacade).
+ */
+const isRoomModerator = (
+	matrixRoom: any,
+	userId: string,
+	/* The sender's member at the redaction (`MatrixEvent.sender`, from the
+	   timeline state): a removal stays a removal when the remover's power
+	   drops later. Falls back to the current member. */
+	memberAtEvent?: { powerLevel?: number } | null
+): boolean => {
+	if (!matrixRoom || !userId) return false;
+	const levels = matrixRoom.currentState
+		?.getStateEvents?.('m.room.power_levels', '')
+		?.getContent?.();
+	const redactLevel = typeof levels?.redact === 'number' ? levels.redact : 50;
+	const level =
+		typeof memberAtEvent?.powerLevel === 'number'
+			? memberAtEvent.powerLevel
+			: matrixRoom.getMember?.(userId)?.powerLevel;
+	return typeof level === 'number' && level >= redactLevel;
+};
+
+/* A redaction the server refused stays in the timeline as a local echo. */
+const NOT_SENT = 'not_sent';
+
+/**
+ * #2494 *9: the redaction that lifted a blur becomes the platform notice
+ * "Schwärzung aufgehoben von <Name>" at the moment it happened; the
+ * redacted blur itself shows nothing (it was never a message).
+ */
+const formatBlurRemoval = (event: any, matrixRoom: any) => {
+	const removal = parsePassageBlurRemovedReason(
+		event?.getContent?.()?.reason
+	);
+	if (!removal) return null;
+	if (event?.status === NOT_SENT) return null;
+	const removerId = event?.getSender?.() || '';
+	if (!isRoomModerator(matrixRoom, removerId, event?.sender)) return null;
+	const target = removal.targetEventId
+		? matrixRoom?.findEventById?.(removal.targetEventId)
+		: undefined;
+	const targetSenderId = target?.getSender?.();
+	return {
+		_id: event?.getId?.() || `${removerId}-${event?.getTs?.()}`,
+		msg: '',
+		ts: new Date(event?.getTs?.() || Date.now()),
+		t: BLUR_REMOVED_MESSAGE_TYPE,
+		u: {
+			_id: removerId,
+			username: removerId?.split(':')[0]?.substring(1) || 'unknown',
+			name: memberName(matrixRoom, removerId)
+		},
+		blurRemoved: {
+			targetEventId: removal.targetEventId,
+			targetSenderId,
+			targetSenderName: targetSenderId
+				? memberName(matrixRoom, targetSenderId)
+				: undefined
+		}
+	};
+};
+
+const isLiftedBlur = (event: any, matrixRoom: any): boolean => {
+	const redaction =
+		event?.getUnsigned?.()?.redacted_because ??
+		event?.getRedactionEvent?.();
+	if (!parsePassageBlurRemovedReason(redaction?.content?.reason))
+		return false;
+	const redactionEvent = redaction?.event_id
+		? matrixRoom?.findEventById?.(redaction.event_id)
+		: undefined;
+	return isRoomModerator(
+		matrixRoom,
+		redaction?.sender,
+		redactionEvent?.sender
+	);
+};
+
 export const formatMatrixTimelineEvent = (
 	event: any,
 	matrixRoom: any,
 	encryptedFallbackText: string
 ) => {
 	const eventType = event?.getType?.();
+	if (eventType === 'm.room.redaction') {
+		return formatBlurRemoval(event, matrixRoom);
+	}
 	if (eventType !== 'm.room.message' && eventType !== 'm.room.encrypted') {
 		return null;
 	}
@@ -105,6 +206,9 @@ export const formatMatrixTimelineEvent = (
 	// Matrix redact (#827): redacted events keep m.room.message type but
 	// empty content — surface as legacy deleted state for MessageItem.
 	if (event?.isRedacted?.()) {
+		if (isLiftedBlur(event, matrixRoom)) {
+			return null;
+		}
 		return {
 			_id:
 				event?.getId?.() ||

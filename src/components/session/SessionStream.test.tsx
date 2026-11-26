@@ -26,6 +26,7 @@ import {
 } from '../../globalState';
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 import { SessionStream } from './SessionStream';
+import { notifySessionSupervisorsChanged } from './sessionSupervisorsRefresh';
 import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
@@ -477,7 +478,7 @@ describe('SessionStream history request card', () => {
 
 	it('shows history recovery alongside consent identified from event params', async () => {
 		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
-			new Error('NO_MATCH')
+			new Error('Offline')
 		);
 		renderSessionStream({
 			isGroup: false,
@@ -571,7 +572,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		// Without a server answer the mount-time check leaves the card as it is.
 		mocks.getCaseHandoverRequestStatus.mockReset();
 		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
-			new Error('NO_MATCH')
+			new Error('Offline')
 		);
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
@@ -820,6 +821,24 @@ describe('SessionStream Matrix room lifecycle', () => {
 		).toBe(true);
 	});
 
+	it('hides a consent card when the exact request is unavailable on load', async () => {
+		const load = deferred<never>();
+		mocks.getCaseHandoverRequestStatus.mockReturnValueOnce(load.promise);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [consentNotification()]
+		});
+		await screen.findByTestId('case-handover-inline-consent');
+
+		await act(async () => load.reject(new Error('NO_MATCH')));
+
+		expect(screen.queryByTestId('case-handover-inline-consent')).toBeNull();
+		expect(mocks.getCaseHandoverRequestStatus).toHaveBeenCalledWith(1, 11);
+		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+		expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+		expect(mocks.refreshNotificationFeed).not.toHaveBeenCalled();
+	});
+
 	describe('stale consent card after a failed decision (#1705)', () => {
 		it('settles the visible request when another session render suspends before commit', async () => {
 			const decision = deferred<any>();
@@ -898,39 +917,46 @@ describe('SessionStream Matrix room lifecycle', () => {
 			}
 		);
 
-		it('ignores a closed request load after the signed-in asker changes', async () => {
-			const oldLoad = deferred<any>();
-			mocks.getCaseHandoverRequestStatus
-				.mockReturnValueOnce(oldLoad.promise)
-				.mockResolvedValue(
-					requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
-				);
-			const options = {
-				isGroup: false,
-				notificationFeed: [consentNotification()]
-			};
-			const view = renderSessionStream(options);
-			await screen.findByRole('button', {
-				name: 'caseHandover.consent.approve'
-			});
-			view.rerender(
-				sessionStreamElement({
-					...options,
-					userData: { ...askerUserData, userId: 'asker-2' }
-				})
-			);
-			await act(async () => {
-				oldLoad.resolve(
-					requestStatus({ status: 'CLIENT_CONSENT_DECLINED' })
-				);
-			});
-			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
-			expect(
+		it.each(['closed', 'missing'])(
+			'ignores a %s request load after the signed-in asker changes',
+			async (result) => {
+				const oldLoad = deferred<any>();
+				mocks.getCaseHandoverRequestStatus
+					.mockReturnValueOnce(oldLoad.promise)
+					.mockResolvedValue(
+						requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+					);
+				const options = {
+					isGroup: false,
+					notificationFeed: [consentNotification()]
+				};
+				const view = renderSessionStream(options);
 				await screen.findByRole('button', {
 					name: 'caseHandover.consent.approve'
-				})
-			).toBeTruthy();
-		});
+				});
+				view.rerender(
+					sessionStreamElement({
+						...options,
+						userData: { ...askerUserData, userId: 'asker-2' }
+					})
+				);
+				await act(async () => {
+					if (result === 'missing') {
+						oldLoad.reject(new Error('NO_MATCH'));
+					} else {
+						oldLoad.resolve(
+							requestStatus({ status: 'CLIENT_CONSENT_DECLINED' })
+						);
+					}
+				});
+				expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+				expect(
+					await screen.findByRole('button', {
+						name: 'caseHandover.consent.approve'
+					})
+				).toBeTruthy();
+			}
+		);
 
 		it('ignores a failed old decision after another request becomes the active card', async () => {
 			const decision = deferred<any>();
@@ -968,52 +994,61 @@ describe('SessionStream Matrix room lifecycle', () => {
 			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
 		});
 
-		it('ignores the old request fallback after another request becomes the active card', async () => {
-			const fallback = deferred<any>();
-			mocks.getCaseHandoverRequestStatus
-				.mockRejectedValueOnce(new Error('NO_MATCH'))
-				.mockReturnValueOnce(fallback.promise)
-				.mockRejectedValue(new Error('NO_MATCH'));
-			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
-				new Error('decision failure')
-			);
-			const view = renderSessionStream({
-				isGroup: false,
-				notificationFeed: [consentNotification()]
-			});
-			await clickApprove();
-			await waitFor(() =>
-				expect(
-					mocks.getCaseHandoverRequestStatus
-				).toHaveBeenCalledTimes(2)
-			);
-			view.rerender(
-				sessionStreamElement({
+		it.each(['closed', 'missing'])(
+			'ignores the %s old request fallback after another request becomes the active card',
+			async (result) => {
+				const fallback = deferred<any>();
+				mocks.getCaseHandoverRequestStatus
+					.mockRejectedValueOnce(new Error('Offline'))
+					.mockReturnValueOnce(fallback.promise)
+					.mockRejectedValue(new Error('Offline'));
+				vi.mocked(
+					apiDecideCaseHandoverClientConsent
+				).mockRejectedValueOnce(new Error('decision failure'));
+				const view = renderSessionStream({
 					isGroup: false,
-					notificationFeed: [
-						consentNotification({
-							id: 'new-request',
-							actionPath:
-								'/sessions/user/view/session/1?caseHandoverRequestId=12'
-						})
-					]
-				})
-			);
-			await act(async () => {
-				fallback.resolve(
-					requestStatus({ status: 'CLIENT_CONSENT_DECLINED' })
+					notificationFeed: [consentNotification()]
+				});
+				await clickApprove();
+				await waitFor(() =>
+					expect(
+						mocks.getCaseHandoverRequestStatus
+					).toHaveBeenCalledTimes(2)
 				);
-			});
-			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
-			expect(screen.queryByText('caseHandover.error.failed')).toBeNull();
-			expect(
-				(
-					await screen.findByRole('button', {
-						name: 'caseHandover.consent.approve'
+				view.rerender(
+					sessionStreamElement({
+						isGroup: false,
+						notificationFeed: [
+							consentNotification({
+								id: 'new-request',
+								actionPath:
+									'/sessions/user/view/session/1?caseHandoverRequestId=12'
+							})
+						]
 					})
-				).hasAttribute('disabled')
-			).toBe(false);
-		});
+				);
+				await act(async () => {
+					if (result === 'missing') {
+						fallback.reject(new Error('NO_MATCH'));
+					} else {
+						fallback.resolve(
+							requestStatus({ status: 'CLIENT_CONSENT_DECLINED' })
+						);
+					}
+				});
+				expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+				expect(
+					screen.queryByText('caseHandover.error.failed')
+				).toBeNull();
+				expect(
+					(
+						await screen.findByRole('button', {
+							name: 'caseHandover.consent.approve'
+						})
+					).hasAttribute('disabled')
+				).toBe(false);
+			}
+		);
 
 		it('settles on the request own final status, read through the asker-allowed per-request endpoint', async () => {
 			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
@@ -1152,7 +1187,38 @@ describe('SessionStream Matrix room lifecycle', () => {
 			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
 		});
 
-		it.each(['FORBIDDEN', 'NO_MATCH'])(
+		it('hides the consent card when a failed decision finds the exact request unavailable', async () => {
+			mocks.getCaseHandoverRequestStatus
+				.mockResolvedValueOnce(
+					requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+				)
+				.mockRejectedValueOnce(new Error('NO_MATCH'));
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CATCH_ALL')
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			await waitFor(() =>
+				expect(
+					screen.queryByTestId('case-handover-inline-consent')
+				).toBeNull()
+			);
+			expect(mocks.getCaseHandoverRequestStatus.mock.calls).toEqual([
+				[1, 11],
+				[1, 11]
+			]);
+			expect(apiDecideCaseHandoverClientConsent).toHaveBeenCalledTimes(1);
+			expect(screen.queryByRole('alert')).toBeNull();
+			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+			expect(mocks.refreshNotificationFeed).not.toHaveBeenCalled();
+		});
+
+		it.each(['FORBIDDEN', 'Offline'])(
 			'keeps the controls and the error when the status read is refused (%s)',
 			async (refusal) => {
 				vi.mocked(
@@ -2961,6 +3027,63 @@ describe('SessionStream Matrix room lifecycle', () => {
 		view.unmount();
 		await act(async () => lateStatus.resolve(grantedHandoverStatus()));
 		expect(mocks.getMatrixRoomMessages).not.toHaveBeenCalled();
+	});
+
+	it('looks up the supervisors again when accepting attached a standing supervisor (#2386)', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		mocks.getSessionSupervisors.mockResolvedValueOnce([]);
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2386,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(2)
+		);
+		expect(mocks.getSessionSupervisors).toHaveBeenLastCalledWith(2386);
+	});
+
+	it('does not look up the supervisors again for another session', async () => {
+		mocks.getSessionSupervisors.mockClear();
+		renderSessionStream({
+			isGroup: false,
+			userData: consultantUserData,
+			activeSession: {
+				rid: ROOM_ID,
+				isGroup: false,
+				isSession: true,
+				item: {
+					id: 2387,
+					matrixRoomId: ROOM_ID,
+					active: true,
+					status: 2
+				}
+			} as any
+		});
+		await waitFor(() =>
+			expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1)
+		);
+
+		await act(async () => notifySessionSupervisorsChanged(2386));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+
+		expect(mocks.getSessionSupervisors).toHaveBeenCalledTimes(1);
 	});
 });
 

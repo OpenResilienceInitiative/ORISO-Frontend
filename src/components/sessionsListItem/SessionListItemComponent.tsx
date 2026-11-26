@@ -11,7 +11,8 @@ import { getSessionRailMarks } from '../sessionsList/sessionRailState';
 import { getModality, Modality } from '../session/getModality';
 import {
 	directLinkLabelKey,
-	getDirectLinkMedium
+	getDirectLinkMedium,
+	type DirectLinkMedium
 } from '../session/directLinkOrigin';
 import { DirectLinkGlyph } from '../session/DirectLinkGlyph';
 import {
@@ -50,9 +51,12 @@ import mailConversationHoverIcon from '../../resources/img/icons/chatroom/nearby
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200_32.svg';
 import internalConversationHoverIcon from '../../resources/img/icons/chatroom/internal_conversation_400_24.svg';
 import selfHelpHoverIcon from '../../resources/img/icons/chatroom/self_help_group_400_24.svg';
+import { SupervisionIconButton } from './SupervisionIconButton';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_circ_400_24px.svg';
 // Self-help consulting-type icon (not the supervision marker).
 import selfHelpIcon from '../../resources/img/icons/chatroom/self_help_group_200_32.svg';
+import supervisionKindIcon from '../../resources/img/icons/chatroom/supervision_200_32.svg';
+import supervisionKindHoverIcon from '../../resources/img/icons/chatroom/supervision_400_24.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	SESSION_LIST_TAB,
@@ -80,6 +84,10 @@ import { useRunningCall } from './runningCall';
 import { SessionListItemAttachment } from './SessionListItemAttachment';
 import clsx from 'clsx';
 import {
+	isTeamDiscussionEnabled,
+	resolveConversationFeatureSettings
+} from '../../utils/conversationFeatureSettings';
+import {
 	TeamDiscussionBadge,
 	getCachedTeamDiscussion
 } from '../teamDiscussion/TeamDiscussionBadge';
@@ -92,9 +100,12 @@ import { parseMessagePrefixes } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SessionListItemLastMessage } from './SessionListItemLastMessage';
+import type { CandidateRowStatus } from '../sessionsList/caseHandoverRowStatuses';
+import { useSessionCaseHandoverStatus } from './useSessionCaseHandoverStatus';
 import { getSessionNavigationPath } from './sessionsListItemHelpers';
 import {
 	getChatroomSettingsMenuVisibility,
+	withSupervisionChannelParam,
 	withTeamDiscussionParam
 } from './chatroomSettingsMenu';
 import { SessionListItemMenu } from './SessionListItemMenu';
@@ -103,12 +114,10 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import {
-	apiGetCaseHandoverStatus,
 	apiPutArchive,
 	apiPutDearchive,
 	apiPutGroupChat,
 	GROUP_CHAT_API,
-	CaseHandoverStatus,
 	FETCH_ERRORS
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
@@ -122,6 +131,11 @@ import { logout } from '../logout/logout';
 import { clearSelfLeave, markSelfLeave } from '../groupChat/selfLeaveGuard';
 import { mobileListView } from '../app/navigationHandler';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import {
+	AGENCY_LINK_LABEL_KEY,
+	showsAgencyLinkLabel
+} from '../sessionsList/agencyLinkLabel';
 import { LegalLinkModal } from '../legalLinks/LegalLinkModal';
 import { TopicTag } from '../topicTag/TopicTag';
 import { UpcomingAppointmentClock } from './UpcomingAppointmentClock';
@@ -167,6 +181,7 @@ export interface SessionListItemProps {
 	isGroupStart?: boolean;
 	/** Last card of a group: end of the list or right above the active card. */
 	isGroupEnd?: boolean;
+	caseHandoverRowStatus?: CandidateRowStatus;
 	caseHandoverBatchMode?: boolean;
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
@@ -234,6 +249,7 @@ export const SessionListItemComponent = ({
 	grouped = false,
 	isGroupStart = true,
 	isGroupEnd = true,
+	caseHandoverRowStatus,
 	caseHandoverBatchMode = false,
 	caseHandoverSelected = false,
 	onCaseHandoverSelect,
@@ -246,6 +262,11 @@ export const SessionListItemComponent = ({
 	datePlacement = 'corner'
 }: SessionListItemProps) => {
 	const { t: translate } = useTranslation(['common']);
+	/** FE#2546: "Direkteinladung · Video", the one name of the channel. */
+	const directInvitationVia = (medium: DirectLinkMedium) =>
+		translate('sessionList.item.sessionType.directInvitationVia', {
+			medium: translate(directLinkLabelKey(medium))
+		});
 	const location = useLocation();
 	// WP-06 Slice 0b: route-derived single source of truth for the active item
 	// (replaces the per-component rid/sessionId comparison below).
@@ -281,6 +302,7 @@ export const SessionListItemComponent = ({
 
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	const legalLinks = useContext(LegalLinksContext);
+	const tenant = useTenant();
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -308,10 +330,6 @@ export const SessionListItemComponent = ({
 		url: string;
 	} | null>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-	const [caseHandoverStatus, setCaseHandoverStatus] =
-		useState<CaseHandoverStatus | null>(null);
-	const [caseHandoverStatusLoading, setCaseHandoverStatusLoading] =
-		useState(false);
 	// FE#781: after acceptance the Team-Besprechung entry point only survives
 	// as read-only archive access, so the menu must know whether a discussion
 	// exists. Resolved lazily on menu open (cached per session by the badge
@@ -365,6 +383,14 @@ export const SessionListItemComponent = ({
 		type,
 		sessionListTab
 	});
+	const { status: caseHandoverStatus, loading: caseHandoverStatusLoading } =
+		useSessionCaseHandoverStatus({
+			accessControlled: caseHandoverAccessControlled,
+			actorId: userData.userId,
+			listScope: sessionListTab,
+			sessionId: sessionItem?.id,
+			candidateStatus: caseHandoverRowStatus
+		});
 	const caseHandoverContentLocked =
 		caseHandoverAccessControlled && !caseHandoverStatus?.canViewContent;
 	const matrixPreviewEvents = useMatrixSessionEvents(
@@ -522,52 +548,6 @@ export const SessionListItemComponent = ({
 		ready
 	]);
 
-	useEffect(() => {
-		let cancelled = false;
-		if (!caseHandoverAccessControlled || !activeSession?.item?.id) {
-			setCaseHandoverStatus(null);
-			setCaseHandoverStatusLoading(false);
-			return () => {
-				cancelled = true;
-			};
-		}
-
-		setCaseHandoverStatusLoading(true);
-		apiGetCaseHandoverStatus(activeSession.item.id)
-			.then((status) => {
-				if (!cancelled) {
-					setCaseHandoverStatus(status);
-				}
-			})
-			.catch((error) => {
-				if (cancelled) {
-					return;
-				}
-
-				if (error?.message === FETCH_ERRORS.FORBIDDEN) {
-					setCaseHandoverStatus({
-						sessionId: activeSession.item.id,
-						status: 'DENIED',
-						canViewContent: false,
-						clientConsentRequired: false,
-						auditOutcome: 'ACCESS_DENIED'
-					});
-					return;
-				}
-
-				setCaseHandoverStatus(null);
-			})
-			.finally(() => {
-				if (!cancelled) {
-					setCaseHandoverStatusLoading(false);
-				}
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [activeSession?.item?.id, caseHandoverAccessControlled]);
-
 	const isAsker = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// Non-owner consultant view: drives the read-only menu (no archive/delete).
 	// Both a silent member and an assigned supervisor are non-owners here.
@@ -601,7 +581,16 @@ export const SessionListItemComponent = ({
 			: [];
 
 	// FE#781 — Chatroom Settings menu, see chatroomSettingsMenu.ts.
-	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	// FE#2491: the effective team-chat policy, never the raw tenant value —
+	// resolved with this row's own agency policy when the list carries it.
+	// Without one this is the platform/Träger cap; a Beratungsstelle that has
+	// it off answers 403, which reads as "none".
+	const featureTeamDiscussionEnabled = isTeamDiscussionEnabled(
+		resolveConversationFeatureSettings(
+			getTenantSettings(),
+			activeSession?.agency?.settings
+		)
+	);
 	const isAgencyCounselling =
 		!!activeSession &&
 		getModality(activeSession) === Modality.AGENCY_COUNSELLING;
@@ -681,8 +670,7 @@ export const SessionListItemComponent = ({
 	const canShowCaseHandoverAction =
 		caseHandoverCandidate &&
 		!caseHandoverStatusLoading &&
-		(!caseHandoverStatus?.canViewContent ||
-			Boolean(caseHandoverStatus?.requestId));
+		(!caseHandoverStatus?.canViewContent || caseHandoverStatus?.hasRequest);
 
 	const displayLastMessage = useMemo(() => {
 		if (!plainTextLastMessage) return plainTextLastMessage;
@@ -1199,6 +1187,7 @@ export const SessionListItemComponent = ({
 		};
 		const railAvatar = activeSession.isGroup ? (
 			<UserAvatar
+				chatOutline
 				username={activeSession.item.matrixRoomId || 'group'}
 				displayName={railName}
 				userId={
@@ -1224,6 +1213,7 @@ export const SessionListItemComponent = ({
 			/>
 		) : (
 			<UserAvatar
+				chatOutline
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
 				userId={
@@ -1274,9 +1264,9 @@ export const SessionListItemComponent = ({
 							'sessionList.toolbar.chips.supervision'
 						),
 						mail: translate('sessionList.toolbar.chips.nearby'),
-						videoCall: translate(directLinkLabelKey('VIDEO')),
-						audioCall: translate(directLinkLabelKey('AUDIO')),
-						directLink: translate(directLinkLabelKey('CHAT')),
+						videoCall: directInvitationVia('VIDEO'),
+						audioCall: directInvitationVia('AUDIO'),
+						directLink: directInvitationVia('CHAT'),
 						appointment:
 							upcomingAppointment ||
 							translate('sessionList.timeline.upcoming'),
@@ -1574,9 +1564,18 @@ export const SessionListItemComponent = ({
 
 	const postcodeLabel = getDisplayablePostcode(activeSession.item.postcode);
 	const modality = getModality(activeSession);
-	// FE#1952: a conversation opened through a direct link names its medium
-	// where every other agency-counselling conversation says "Mail".
+	// FE#2546 (Frank, 2026-11-25): a conversation opened through a
+	// Direkteinladung is Mail-Beratung; the card says "Mail" and adds the
+	// channel (Video / Audio / Chat) as a tag.
 	const directLinkMedium = getDirectLinkMedium(activeSession);
+	// FE#1870: an Erstanfrage from the agency link says so, unless the Träger
+	// switched the label off.
+	const agencyLinkLabel =
+		!isAsker &&
+		!!activeSession?.isEnquiry &&
+		modality === Modality.AGENCY_COUNSELLING &&
+		!directLinkMedium &&
+		showsAgencyLinkLabel(activeSession.item, tenant?.settings);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const shouldShowPostcode =
 		!isAsker &&
@@ -1857,6 +1856,7 @@ export const SessionListItemComponent = ({
 								/>
 							) : (
 								<UserAvatar
+									chatOutline
 									username={
 										activeSession.consultant?.username ||
 										'User'
@@ -2014,6 +2014,11 @@ export const SessionListItemComponent = ({
 									!canBatchSelectCaseHandover
 								}
 								onRequestAccess={handleOnClick}
+								tourTarget={
+									index === 0
+										? 'case-handover-request-access'
+										: undefined
+								}
 								onToggleSelect={() =>
 									onCaseHandoverSelect?.(
 										activeSession.item.id
@@ -2030,30 +2035,16 @@ export const SessionListItemComponent = ({
 							{/* ADR-008: the owning consultant sees who supervises the
 						    session (supervisor sits read-only in the room). */}
 							{supervisorNames.length > 0 && (
-								<span
-									className="sessionsListItem__supervisionIndicator"
-									data-testid="supervision-indicator"
-									aria-label={translate(
-										'sessionList.supervision.supervisedBy',
-										{
-											name: supervisorNames.join(', ')
-										}
-									)}
-									title={translate(
-										'sessionList.supervision.supervisedBy',
-										{
-											name: supervisorNames.join(', ')
-										}
-									)}
-								>
-									<SupervisionIcon
-										aria-hidden="true"
-										focusable="false"
-									/>
-									<span className="sessionsListItem__supervisionIndicatorName">
-										{supervisorNames.join(', ')}
-									</span>
-								</span>
+								<SupervisionIconButton
+									supervisorNames={supervisorNames}
+									onOpen={() =>
+										navigate(
+											withSupervisionChannelParam(
+												getSessionPath()
+											)
+										)
+									}
+								/>
 							)}
 							{/* Consulting-type modality icon (Mail / Live Chat / Interna
 						    / Gesprächskreis) — always shown, including alongside the
@@ -2063,9 +2054,11 @@ export const SessionListItemComponent = ({
 									className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--supervision"
 									data-testid="supervision-modality"
 								>
-									<SupervisionIcon
-										aria-hidden="true"
-										focusable="false"
+									{/* FE#2494: the same 32 px, weight-200 kind
+									    icon and grey as Mail (Frank, 23 Nov). */}
+									<ConsultingKindIcon
+										src={supervisionKindIcon}
+										hoverSrc={supervisionKindHoverIcon}
 									/>
 									<span
 										className="sessionsListItem__consultingTypeIcon--supervisionLabel"
@@ -2109,49 +2102,64 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{modality === Modality.AGENCY_COUNSELLING &&
-										directLinkMedium && (
-											<div
-												className={clsx(
-													'sessionsListItem__consultingTypeIcon',
-													'sessionsListItem__consultingTypeIcon--directLink'
+									{modality ===
+										Modality.AGENCY_COUNSELLING && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--nearby'
+											)}
+										>
+											<ConsultingKindIcon
+												src={mailConversationIcon}
+												hoverSrc={
+													mailConversationHoverIcon
+												}
+											/>
+											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+												{translate(
+													'sessionList.toolbar.chips.nearby'
 												)}
-												data-medium={directLinkMedium}
-											>
-												<DirectLinkGlyph
-													medium={directLinkMedium}
-													className="sessionsListItem__consultingTypeIcon--directLinkIcon"
-												/>
-												<span className="sessionsListItem__consultingTypeIcon--directLinkLabel">
-													{translate(
-														directLinkLabelKey(
-															directLinkMedium
-														)
-													)}
-												</span>
-											</div>
-										)}
-									{modality === Modality.AGENCY_COUNSELLING &&
-										!directLinkMedium && (
-											<div
-												className={clsx(
-													'sessionsListItem__consultingTypeIcon',
-													'sessionsListItem__consultingTypeIcon--nearby'
-												)}
-											>
-												<ConsultingKindIcon
-													src={mailConversationIcon}
-													hoverSrc={
-														mailConversationHoverIcon
+											</span>
+											{directLinkMedium && (
+												<span
+													className="sessionsListItem__channelTag"
+													role="img"
+													data-medium={
+														directLinkMedium
 													}
-												/>
-												<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-													{translate(
-														'sessionList.toolbar.chips.nearby'
+													title={directInvitationVia(
+														directLinkMedium
 													)}
+													aria-label={directInvitationVia(
+														directLinkMedium
+													)}
+												>
+													<DirectLinkGlyph
+														medium={
+															directLinkMedium
+														}
+														className="sessionsListItem__channelTagIcon"
+													/>
+													<span aria-hidden="true">
+														{translate(
+															directLinkLabelKey(
+																directLinkMedium
+															)
+														)}
+													</span>
 												</span>
-											</div>
-										)}
+											)}
+										</div>
+									)}
+									{agencyLinkLabel && (
+										<span
+											className="sessionsListItem__agencyLinkLabel"
+											data-testid="agency-link-label"
+										>
+											{translate(AGENCY_LINK_LABEL_KEY)}
+										</span>
+									)}
 									{modality === Modality.INTERNAL_GROUP && (
 										<div
 											className={clsx(
@@ -2195,6 +2203,7 @@ export const SessionListItemComponent = ({
 							{/* FE#514: team-only discussion exists on this
 								    enquiry (consultants only, ADR-016). */}
 							{!isAsker &&
+								featureTeamDiscussionEnabled &&
 								activeSession.isEnquiry &&
 								modality === Modality.AGENCY_COUNSELLING &&
 								activeSession.item?.id && (

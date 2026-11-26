@@ -1,3 +1,4 @@
+@import './avatarFrame';
 $icon-size: 24px;
 $icon-size-small: 24px;
 
@@ -7,7 +8,6 @@ $icon-size-small: 24px;
 // `--thread-entry-font-size`, `--session-preview-font-size`); the fallbacks
 // here repeat the defaults (14/20, name 12/16, thread entry 14/20).
 $message-attachment-color: $secondary !default;
-$message-avatar-ring: #ebe2e2;
 
 // $message-incoming-bg / $message-outgoing-bg / $message-outgoing-text moved
 // to resources/styles/settings.scss so other bubble renderers (e.g. the
@@ -30,8 +30,11 @@ $message-avatar-overlap: -19px;
 	display: flex;
 	flex-direction: column;
 	margin-bottom: 32px;
-	opacity: 0;
-	animation: appearMessageItem 150ms ease forwards;
+	animation: appearMessageItem 150ms ease both;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
 
 	@for $i from 1 through 50 {
 		&:nth-last-child(#{$i}) {
@@ -122,7 +125,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--user {
-			color: #000000;
+			color: var(--m3-on-surface, #1b1b1c);
 		}
 
 		&--consultant {
@@ -134,7 +137,7 @@ $message-avatar-overlap: -19px;
 	 * Second line of the sender header: the counselling centre a counsellor
 	 * speaks for, with its postcode (Figma "Message Recipient Header",
 	 * App.Oriso 9229:24595). Quieter and smaller than the name, aligned to the
-	 * same 20px inset so the two read as one block. Rendered only when there is
+	 * agency icon in its own column. Rendered only when there is
 	 * an agency to name, so every other message keeps its one-line header.
 	 * See OpenResilienceInitiative/ORISO-Frontend#895.
 	 */
@@ -145,6 +148,10 @@ $message-avatar-overlap: -19px;
 		flex-direction: column;
 		align-items: flex-start;
 		min-width: 0;
+
+		&:has(.messageItem__usernameSubtitle) .messageItem__username {
+			padding-inline-start: 12px;
+		}
 	}
 
 	// Figma 783:19926 (Beratungsstelle row): 16px house-heart icon, 2px gap,
@@ -154,11 +161,10 @@ $message-avatar-overlap: -19px;
 		align-items: center;
 		gap: 2px;
 		padding-left: 20px;
-		margin-top: 2px;
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 14px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #646d78);
 		text-align: left;
 		overflow-wrap: anywhere;
 	}
@@ -236,23 +242,17 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the white
+	// Figma 7539-29194: the 48px avatar sits in a 60px frame — the canvas-coloured
 	// ring got thicker by growing OUTWARD into that frame space (6px ring),
 	// so the visible avatar stays 48px and the ring cuts into the bubble
 	// corner without touching the kebab.
 	&__avatar {
-		width: 60px;
-		height: 60px;
-		min-width: 60px;
-		min-height: 60px;
-		border: 6px solid #fff;
-		border-radius: 999px;
-		background: #fff;
+		@include chat-avatar-frame;
+
 		overflow: hidden;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		box-sizing: border-box;
 		flex-shrink: 0;
 
 		// Force Compound avatar to render properly
@@ -276,7 +276,7 @@ $message-avatar-overlap: -19px;
 	 * circle, and the glyph's chin sits exactly on that edge — so it was
 	 * rendered with a flat-cut bottom and shaved sides (review screenshot on
 	 * ORISO-Frontend#491). Figma App.Oriso 9564-86125 draws the full robot on
-	 * an unclipped white disc; the 6px ring is white too, so letting the glyph
+	 * an unclipped disc; the ring matches the chat canvas, so letting the glyph
 	 * reach into it changes nothing but the missing pixels.
 	 */
 	&__avatar--bot {
@@ -333,17 +333,16 @@ $message-avatar-overlap: -19px;
 
 		&--left {
 			translate: 0% -25%;
+
+			// The taller sender header still has to cut into the bubble.
+			.messageItem__messageWrap:has(.messageItem__usernameSubtitle) & {
+				translate: 0 calc(-25% + var(--message-name-line-height, 16px));
+			}
 		}
 
 		&--right {
 			margin-top: auto;
 			translate: 0% 25%;
-		}
-	}
-
-	&--right {
-		.messageItem__avatar {
-			background: #fff;
 		}
 	}
 
@@ -382,7 +381,7 @@ $message-avatar-overlap: -19px;
 
 			path,
 			circle {
-				fill: #17191c;
+				fill: var(--m3-on-surface-variant, #444748);
 			}
 		}
 
@@ -444,6 +443,10 @@ $message-avatar-overlap: -19px;
 		box-sizing: border-box;
 		position: relative;
 		z-index: 9500;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	&__visibilityChip--active {
@@ -507,7 +510,7 @@ $message-avatar-overlap: -19px;
 		padding: 8px;
 		border: 2px solid var(--m3-primary-container, #cc1e1c);
 		border-radius: 12px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		box-shadow:
 			0 30px 28px rgba(0, 0, 0, 0.1),
 			0 0 30px 28px rgba(0, 0, 0, 0.05);
@@ -523,7 +526,7 @@ $message-avatar-overlap: -19px;
 		border: 1px solid #e1e6ee;
 		border-radius: 12px;
 		padding: 4px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 	}
 
 	&__visibilityMenuSectionHeader {
@@ -573,30 +576,15 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__visibilityMenuSectionRadio {
-		width: 14px;
-		height: 14px;
-		border-radius: 999px;
-		border: 2px solid var(--m3-secondary-container, #5f6873);
-		background: #fff;
-		flex: 0 0 14px;
+		@include recipient-radio;
 	}
 
 	&__visibilityMenuSectionRadio--selected {
-		border-color: #3f4753;
-		background: radial-gradient(
-			circle at 50% 50%,
-			#3f4753 45%,
-			transparent 47%
-		);
+		@include recipient-radio-selected;
 	}
 
 	&__visibilityMenuSectionRadio--partial {
-		border-color: transparent;
-		background: transparent;
-		background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.66667 10V3.33333C5.74444 3.33333 4.95833 3.65833 4.30833 4.30833C3.65833 4.95833 3.33333 5.74444 3.33333 6.66667C3.33333 7.58889 3.65833 8.375 4.30833 9.025C4.95833 9.675 5.74444 10 6.66667 10ZM6.66667 13.3333C5.74444 13.3333 4.87778 13.1583 4.06667 12.8083C3.25556 12.4583 2.55 11.9833 1.95 11.3833C1.35 10.7833 0.875 10.0778 0.525 9.26667C0.175 8.45555 0 7.58889 0 6.66667C0 5.74444 0.175 4.87778 0.525 4.06667C0.875 3.25556 1.35 2.55 1.95 1.95C2.55 1.35 3.25556 0.875 4.06667 0.525C4.87778 0.175 5.74444 0 6.66667 0C7.58889 0 8.45555 0.175 9.26667 0.525C10.0778 0.875 10.7833 1.35 11.3833 1.95C11.9833 2.55 12.4583 3.25556 12.8083 4.06667C13.1583 4.87778 13.3333 5.74444 13.3333 6.66667C13.3333 7.58889 13.1583 8.45555 12.8083 9.26667C12.4583 10.0778 11.9833 10.7833 11.3833 11.3833C10.7833 11.9833 10.0778 12.4583 9.26667 12.8083C8.45555 13.1583 7.58889 13.3333 6.66667 13.3333ZM6.66667 12C8.15555 12 9.41667 11.4833 10.45 10.45C11.4833 9.41667 12 8.15555 12 6.66667C12 5.17778 11.4833 3.91667 10.45 2.88333C9.41667 1.85 8.15555 1.33333 6.66667 1.33333C5.17778 1.33333 3.91667 1.85 2.88333 2.88333C1.85 3.91667 1.33333 5.17778 1.33333 6.66667C1.33333 8.15555 1.85 9.41667 2.88333 10.45C3.91667 11.4833 5.17778 12 6.66667 12Z' fill='%234C555F'/%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-size: 14px 14px;
-		background-position: center;
+		@include recipient-radio-partial;
 	}
 
 	// `keyboard_arrow_up.svg` (24 box): at 20px the glyph is the old 10×6;
@@ -642,7 +630,7 @@ $message-avatar-overlap: -19px;
 		font-size: 16px;
 		line-height: 1.4;
 		font-weight: 500;
-		color: rgba(0, 0, 0, 0.9);
+		color: var(--oriso-text-high, rgba(0, 0, 0, 0.9));
 		text-align: right;
 		padding: 0 12px 8px;
 	}
@@ -666,7 +654,7 @@ $message-avatar-overlap: -19px;
 		gap: 4px;
 		border-radius: 999px;
 		border: 1px solid #e1e6ee;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		padding: 6px 10px;
 		font-size: 12px;
 		font-weight: 700;
@@ -722,6 +710,10 @@ $message-avatar-overlap: -19px;
 		justify-content: center;
 		flex-shrink: 0;
 		z-index: 5;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	// Bot avatar (reused Carimat robot from the live-chat onboarding).
@@ -772,7 +764,11 @@ $message-avatar-overlap: -19px;
 	// The system-notice icon (`SystemMessageIcon`) as the avatar of a
 	// platform entry (#2237): its own size and colour, centred in the shared
 	// avatar frame instead of the inline offset it has beside a subject.
+	// Same footprint as a person's picture in the 60px frame (48px), so the
+	// info avatar lines up with the asker's (#2494, Frank 24 Nov).
 	&__avatar--system .systemMessage__icon {
+		width: 48px;
+		height: 48px;
 		margin: 0;
 		padding: 0;
 	}
@@ -927,6 +923,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		.messageItem__highlight {
+			color: var(--m3-on-secondary-fixed, #141c25);
 			padding: 0 2px;
 			border-radius: 3px;
 			background-color: #fff59d;
@@ -950,6 +947,14 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__highlight[data-color='#b3e5fc'] {
 			background-color: #b3e5fc;
+		}
+
+		@media (forced-colors: active) {
+			.messageItem__highlight[data-color],
+			mark:not([data-color]) {
+				color: MarkText;
+				background-color: Mark;
+			}
 		}
 
 		.messageItem__align {
@@ -1055,6 +1060,12 @@ $message-avatar-overlap: -19px;
 			background-color: $message-outgoing-bg;
 			border-color: $message-outgoing-bg;
 
+			.messageItem__messageTime,
+			.messageItem__deliveryStatus svg path {
+				color: var(--m3-on-primary-fixed-variant, #930008);
+				fill: currentColor;
+			}
+
 			// The voice player runs with bubble="none" inside this bubble, so
 			// its unplayed tiles have to read against the outgoing surface
 			// rather than against the incoming one.
@@ -1093,7 +1104,7 @@ $message-avatar-overlap: -19px;
 	&__visibleOnlyLabel {
 		font-size: 10px;
 		line-height: 12px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--oriso-quiet-text, #646d78);
 	}
 
 	&__visibleOnlyChip {
@@ -1104,7 +1115,7 @@ $message-avatar-overlap: -19px;
 		padding: 0 10px;
 		border: 1px solid #e1e6ee;
 		border-radius: 999px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		font-size: 12px;
 		font-weight: 700;
 		line-height: 14px;
@@ -1142,7 +1153,7 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__senderInfoName {
-		color: $text-low-emphasis;
+		color: var(--m3-on-surface-variant, #444748);
 		font-size: $font-size-secondary;
 		line-height: 13px;
 		font-weight: 600;
@@ -1156,7 +1167,7 @@ $message-avatar-overlap: -19px;
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 12px;
-		color: var(--m3-secondary-container, #646d78);
+		color: var(--m3-on-surface-variant, #646d78);
 		min-width: 0;
 		max-width: 100%;
 		overflow-wrap: anywhere;
@@ -1236,6 +1247,10 @@ $message-avatar-overlap: -19px;
 		font-size: 14px;
 		line-height: 1.4;
 		color: #5a5a5a;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&--feedback {
@@ -1247,6 +1262,10 @@ $message-avatar-overlap: -19px;
 	&--right {
 		.messageItem__systemNotificationDescription {
 			color: #3b4044;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 
 		.messageItem__visibleOnly {
@@ -1281,7 +1300,8 @@ $message-avatar-overlap: -19px;
 		max-width: 100%;
 		margin-top: 6px;
 		padding: 6px 12px;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		border-radius: 0 12px 12px 12px;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-secondary, #4c555f);
@@ -1296,7 +1316,10 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(
+				--oriso-primary-text-on-fixed,
+				var(--oriso-primary-text, var(--m3-primary, #a5000a))
+			);
 		}
 
 		&:focus-visible {
@@ -1441,7 +1464,7 @@ $message-avatar-overlap: -19px;
 
 	&__footer {
 		border-top: 1px solid $line-ochre;
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		position: absolute;
 		bottom: 0;
 		width: 100%;
@@ -1590,6 +1613,10 @@ $message-avatar-overlap: -19px;
 		&:hover {
 			color: #c0392b;
 			text-decoration: none;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-error, #ffb4ab);
+			}
 		}
 
 		&:focus {
@@ -1675,8 +1702,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--m3-primary-outline, #930008);
-			outline-offset: 2px;
+			@include control-focus-ring;
 		}
 	}
 
@@ -1685,8 +1711,8 @@ $message-avatar-overlap: -19px;
 	}
 }
 
-// Reactions (Figma 336-12244 / 336-12225): white M3 assist chips inside the
-// bubble, sharing the time rail. Own reaction = red count.
+// Reactions (Figma 336-12244 / 336-12225): M3 assist chips inside the bubble,
+// sharing the time rail. The active count uses the brand text role.
 // Issue #564: overflow must scroll horizontally — never wrap/stack.
 .messageItem__reactions {
 	display: flex;
@@ -1720,12 +1746,9 @@ $message-avatar-overlap: -19px;
 		padding: 6px 8px;
 		white-space: nowrap;
 
-		// M3 outlined chips stroke with `outline-variant`; this design uses
-		// the custom Figma role `outline-variant-light`, which is fixed white
-		// and NOT emitted by the OrisoScheme engine — hence the literal.
-		border: 1px solid #fff;
+		border: 1px solid transparent;
 		border-radius: 8px;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #fff);
 		font-size: 16px;
 		line-height: 1;
 		cursor: pointer;
@@ -1733,6 +1756,10 @@ $message-avatar-overlap: -19px;
 		&:hover,
 		&:focus-visible {
 			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+		}
+
+		&:focus-visible {
+			@include control-focus-ring(-3px);
 		}
 
 		.messageItem__reactionPillCount {
@@ -1806,7 +1833,7 @@ $message-avatar-overlap: -19px;
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
-	color: var(--m3-secondary-container, #646d78);
+	color: var(--oriso-quiet-text, #646d78);
 }
 
 .messageItem__sendFailedRetry {
@@ -1885,6 +1912,20 @@ $message-avatar-overlap: -19px;
 		translate: none;
 	}
 
+	// Mine (Figma 8606:42438): mirrored. The avatar sits bottom-right like any
+	// own message (8498-32645), so the content needs no left overlap and the
+	// title/subtitle align right above the bubble (#2494 *9).
+	&.messageItem--right {
+		.messageItem__content {
+			margin-left: 0;
+		}
+
+		.messageItem__systemNotificationHeaderText {
+			padding-left: 0;
+			text-align: right;
+		}
+	}
+
 	// The kebab is a pure affordance here — there is no message action menu
 	// outside the stream, so it must not look or behave like a control.
 	.messageItem__kebabButton--static {
@@ -1895,13 +1936,19 @@ $message-avatar-overlap: -19px;
 
 // Quick-react emoji row inside the message action menu (long-press / kebab),
 // Slack-style. Lives in a portal, hence outside .messageItem.
+// Give all seven controls room while retaining the shared menu's viewport cap.
+.messageItem__actionMenu.chatMenuDropdown--compact {
+	width: 280px;
+}
+
 .messageItem__actionMenuReactions {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(7, minmax(24px, 1fr));
 	align-items: center;
-	justify-content: space-between;
-	gap: 2px;
-	padding: 4px 12px 8px;
+	overflow-x: auto;
+	scrollbar-width: thin;
+	gap: 0;
+	padding: 4px 0 8px;
 	margin-bottom: 4px;
 	border-bottom: 1px solid var(--m3-outline-variant, rgba(0, 0, 0, 0.12));
 
@@ -1910,7 +1957,9 @@ $message-avatar-overlap: -19px;
 		background: none;
 		font-size: 18px;
 		line-height: 1;
-		padding: 5px;
+		min-width: 0;
+		min-height: 36px;
+		padding: 5px 0;
 		cursor: pointer;
 		border-radius: 999px;
 
@@ -1936,7 +1985,9 @@ $message-avatar-overlap: -19px;
 		color: var(--m3-secondary, #4b515a);
 		font-size: 18px;
 		line-height: 1;
-		padding: 5px;
+		min-width: 0;
+		min-height: 36px;
+		padding: 5px 0;
 		cursor: pointer;
 		border-radius: 999px;
 

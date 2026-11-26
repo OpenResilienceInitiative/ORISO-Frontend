@@ -9,6 +9,8 @@ import { apiGetConsultingType } from '../../api/apiGetConsultingType';
 import type { InviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { redirectToApp } from '../registration/autoLogin';
 import type { CallLifecycleMessage } from '../../utils/callLifecycleMessage';
+import type { JoinMedia } from '../call/prejoin/callPrejoin';
+import type { CallDeviceSelection } from '../waitingRoom/callEntry/callEntryTypes';
 
 /**
  * Counsellor direct links on the person's side (#1795, ORISO-UserService#1479):
@@ -92,6 +94,38 @@ export interface PendingKnock {
 	 * joins it at once instead of tapping the call message again.
 	 */
 	joinCall?: KnockJoinCall;
+	/**
+	 * FE#2542: the person waited on the link page and was let in there. The
+	 * app then opens the call at once, without the knock dialog a second time.
+	 */
+	admittedOnEntry?: boolean;
+	/**
+	 * FE#2542: microphone and camera as the link page left them. The app is a
+	 * new document after the link page, so the choice travels with the knock.
+	 */
+	entryMedia?: EntryMedia | null;
+}
+
+/** What `rememberJoinMedia` takes; device labels and ids, nothing personal. */
+export interface EntryMedia {
+	media: JoinMedia | null;
+	cameraSwitch?: boolean;
+	selection?: CallDeviceSelection;
+}
+
+/** How the wait on the link page ended (FE#2542). */
+/**
+ * `ended`: the wait stopped without an answer: the session is no longer
+ * valid (401) or nobody answered within the maximum wait.
+ */
+export type AdmissionOutcome = 'admitted' | 'declined' | 'cancelled' | 'ended';
+
+/** The person waited on the link page and did not get in: they stay there. */
+export class DirectLinkNotAdmittedError extends Error {
+	constructor(readonly outcome: Exclude<AdmissionOutcome, 'admitted'>) {
+		super(`direct link knock ${outcome}`);
+		this.name = 'DirectLinkNotAdmittedError';
+	}
 }
 
 /**
@@ -217,6 +251,24 @@ export const directLinkSessionOf = (
 		: null;
 };
 
+/**
+ * The conversation a call room belongs to, when it came through an audio or
+ * video direct link on this device. The ringing card knows only the room.
+ */
+export const directLinkSessionIdOfRoom = (
+	roomIds: Array<string | null | undefined>
+): number | null => {
+	const rooms = roomIds.filter(Boolean);
+	const found = Object.entries(readDirectLinkSessions()).find(
+		([, link]) =>
+			link?.medium !== 'CHAT' &&
+			Boolean(link?.matrixRoomId) &&
+			rooms.includes(link.matrixRoomId)
+	);
+	const id = found ? Number(found[0]) : NaN;
+	return Number.isFinite(id) ? id : null;
+};
+
 export const pendingKnockFrom = (
 	token: string,
 	conversation: DirectLinkConversation
@@ -269,6 +321,23 @@ export const rememberAdmittedConversation = (sessionId: number) => {
 export const wasAdmittedTo = (sessionId: number | null | undefined) =>
 	sessionId != null && readAdmitted().includes(sessionId);
 
+/**
+ * P0 Direkteinladung: a person who knocked on this call and is not let in yet
+ * is waiting in the knock dialog. The call that the counsellor starts must not
+ * also ring them: "Annehmen" would open the call without admission and end in
+ * "Call access denied" (403).
+ */
+export const isKnockingOnCall = (
+	pending: PendingKnock | null,
+	callRoomIds: Array<string | null | undefined>
+): boolean =>
+	Boolean(
+		pending &&
+			pending.status !== 'ADMITTED' &&
+			pending.matrixRoomId &&
+			callRoomIds.includes(pending.matrixRoomId)
+	);
+
 /** The call notice in the feed knows only the room: it must not skip the knock. */
 export const isDirectLinkCallRoom = (roomId: string | null | undefined) =>
 	Boolean(roomId) &&
@@ -294,6 +363,16 @@ export interface OpenDirectLinkDeps {
 	 * agreement is recorded. Until then the person does not enter.
 	 */
 	consent?: (conversation: DirectLinkConversation) => Promise<void>;
+	/**
+	 * FE#2542: the link page waits for the counsellor itself. With it, a
+	 * pending knock is waited for here and the app opens only after "let in";
+	 * turned down or withdrawn, nothing opens and the call rejects with
+	 * `DirectLinkNotAdmittedError`. Without it the app opens at once and its
+	 * knock dialog waits (the path of a call started inside the app).
+	 */
+	waitForAdmission?: (knock: PendingKnock) => Promise<AdmissionOutcome>;
+	/** Read when the person is let in: the switches as they are then. */
+	entryMedia?: () => EntryMedia | null;
 }
 
 /**
@@ -308,7 +387,9 @@ export const openDirectLinkConversation = async (
 		redirect = (sessionId) => redirectToApp(undefined, { sessionId }),
 		cancelKnock = apiCancelOwnCallKnock,
 		chatFirst = false,
-		consent
+		consent,
+		waitForAdmission,
+		entryMedia
 	}: OpenDirectLinkDeps = {}
 ): Promise<DirectLinkConversation> => {
 	const conversation = await start(token);
@@ -339,6 +420,26 @@ export const openDirectLinkConversation = async (
 			})
 		]);
 		clearTimeout(timer);
+	}
+	if (knock && !chatFirst && waitForAdmission) {
+		const outcome =
+			knock.status === 'PENDING'
+				? await waitForAdmission(knock)
+				: knock.status === 'ADMITTED'
+					? 'admitted'
+					: null;
+		if (outcome && outcome !== 'admitted') {
+			forgetPendingKnock();
+			throw new DirectLinkNotAdmittedError(outcome);
+		}
+		if (outcome === 'admitted') {
+			rememberPendingKnock({
+				...knock,
+				status: 'ADMITTED',
+				admittedOnEntry: true,
+				entryMedia: entryMedia?.() ?? null
+			});
+		}
 	}
 	redirect(conversation.sessionId);
 	return conversation;

@@ -131,17 +131,20 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	z-index: 31;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+
+	// FE#2494 (Frank, 24 Nov): quote and field sit close, one unit.
+	gap: 4px;
 	width: 400px;
 	max-width: calc(100% - 24px);
 	box-sizing: border-box;
 	padding: 12px;
 	background: var(--m3-surface-container-lowest, #fff);
-	border: 1px solid var(--m3-primary-fixed, #ffdad5);
+	border: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
-	// Round at the top left, where it points away from the passage; the
-	// other corners stay small.
-	border-radius: 24px 8px 8px;
+	// FE#2494 (Frank's redline, 24 Nov): 24px, the top-right corner 8px
+	// where the badge sits; quote and field meet with 4px corners.
+	border-radius: 24px 8px 24px 24px;
 	box-shadow: $selection-reply-elevation;
 	color: var(--m3-on-surface, #1b1b1c);
 
@@ -164,7 +167,9 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-items: flex-start;
 	gap: 8px;
 	padding: 8px 8px 8px 12px;
-	border-radius: 16px 4px 4px 4px;
+
+	// Frank (24 Nov): 4px where the grey quote meets the field.
+	border-radius: 12px 4px 4px 4px;
 	background: var(--m3-surface-container-high, #eae7e8);
 	font-size: 12px;
 	line-height: 16px;
@@ -228,18 +233,20 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
-.selectionReply__inputRow {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-}
-
 .selectionReply__input {
 	flex: 1 1 auto;
 	min-width: 0;
-	height: 44px;
-	padding: 0 4px 0 8px;
+	box-sizing: border-box;
+	min-height: 36px;
+
+	// FE#2494: several lines, growing like the composer (height set in JS).
+	resize: none;
+	overflow-y: auto;
+	padding: 9px 12px 9px 14px;
 	border: 0;
+
+	// Surface, frame and corners belong to `.selectionReply__box`.
+	border-radius: 4px 0 0 16px;
 	background: transparent;
 	color: var(--m3-on-surface, #1b1b1c);
 	font: inherit;
@@ -253,12 +260,169 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	// The same ring as the other controls here; no hover tint for a field.
 	&:focus-visible {
 		outline: none;
-		border-radius: 4px;
-		box-shadow: 0 0 0 2px var(--m3-primary-outline, #930008);
 	}
 
 	&:disabled {
 		cursor: not-allowed;
+	}
+}
+
+// FE#2494 (Frank, 24 Nov): one box like the chat's own composer — the
+// accent frame (primary-fixed, red when focused), white surface, the
+// composer's corners and Send docked in the top-right notch. From the
+// second line on, Stack sits under Send instead of beside it.
+.selectionReply__box {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto auto;
+	align-items: center;
+	min-height: 40px;
+	border: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+
+	// Top corners 4px where the box meets the quote (Frank's green marks).
+	border-radius: 4px 4px 16px 16px;
+	background: var(--m3-surface-container-lowest, #fff);
+	transition: border-color 150ms ease;
+
+	// The composer's selected state: a 2px primary frame, no extra ring.
+	&:focus-within {
+		border-color: var(--m3-primary-container, #cc1e1c);
+		box-shadow: inset 0 0 0 1px var(--m3-primary-container, #cc1e1c);
+	}
+
+	> .selectionReply__hintWrap,
+	> .selectionReply__fieldMic {
+		align-self: start;
+	}
+
+	// Frank (24 Nov): the voice note plays in its own second row across
+	// the whole box; the text field stays above it.
+	> .selectionReply__voiceField {
+		grid-column: 1 / -1;
+		width: auto;
+		margin: 0 4px 4px 8px;
+
+		> .voicePlayer {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		// Not bigger than Send: the composer toolbar's 32px.
+		.voiceNoteRow__discard {
+			width: 32px;
+			height: 32px;
+			font-size: 18px;
+			background: var(--m3-surface-container-low, #f6f3f3);
+		}
+	}
+
+	> .selectionReply__send {
+		position: relative;
+		z-index: 1;
+		align-self: start;
+
+		// Sit on the frame, flush with the notch.
+		margin: -1px -1px 0 0;
+	}
+
+	// One line: Send covers the frame on top, right and bottom, so the
+	// focused red line does not show beneath it (Frank, 24 Nov), and its
+	// bottom-right corner follows the box's round one.
+	&:not(.selectionReply__box--stacked, .selectionReply__box--withVoice)
+		> .selectionReply__send {
+		align-self: stretch;
+		margin-bottom: -1px;
+
+		.sendButton {
+			height: 100%;
+			min-height: 40px;
+			border-bottom-right-radius: 16px;
+
+			// No curve where Send meets the bottom frame (Frank, 24 Nov):
+			// the curve left a notch of red border beneath it.
+			border-bottom-left-radius: 0;
+		}
+	}
+
+	&--stacked {
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-rows: auto auto 1fr;
+		align-items: start;
+
+		> .selectionReply__input {
+			grid-row: 1 / span 3;
+			grid-column: 1;
+		}
+
+		> .selectionReply__send {
+			grid-row: 1;
+			grid-column: 2;
+		}
+
+		> .selectionReply__voiceField {
+			grid-row: 4;
+		}
+
+		> .selectionReply__hintWrap:not(.selectionReply__send) {
+			grid-row: 2;
+			grid-column: 2;
+			justify-self: center;
+
+			// Frank (24 Nov): keep the grey circle clear of the box's round
+			// bottom-right corner, even at two lines.
+			margin: 2px 0 6px;
+		}
+	}
+}
+
+// Frank (24 Nov): mic and stack are the composer's own toolbar buttons —
+// round, the light `surface-container-low` fill, a bit smaller here — and
+// sit at the top right next to Send instead of hanging in the middle.
+.selectionReply__box .selectionReply__fieldMic.selectionReply__iconButton,
+.selectionReply__box .selectionReply__collect {
+	align-self: start;
+	width: 32px;
+	height: 32px;
+
+	// Frank (24 Nov): a little more room between mic and stack.
+	margin: 4px 4px 0;
+	border-radius: 50%;
+	background: var(--m3-surface-container-low, #f6f3f3);
+	color: var(--m3-on-surface-variant, #444748);
+
+	&:hover:not(:disabled) {
+		background: var(--m3-primary-fixed, #ffdad5);
+		color: var(--m3-primary-container, #cc1e1c);
+	}
+
+	// Frank (24 Nov): smaller icons in the small circles.
+	svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.stackCountIcon svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+.selectionReply__iconButton {
+	width: 36px;
+	height: 36px;
+}
+
+// Stack and Send side by side; from the second line on Stack sits above
+// Send, which keeps its corner (Frank, 24 Nov).
+.selectionReply__actions {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: 2px;
+
+	&--stacked {
+		flex-direction: column;
 	}
 }
 
@@ -267,8 +431,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	width: 40px;
-	height: 40px;
+	width: 36px;
+	height: 36px;
 	padding: 0;
 	border: 0;
 	border-radius: 50%;
@@ -291,33 +455,227 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 }
 
-// "+": the answer joins the one message being put together in the composer.
+// Stack (FE#2494 *8): the answer joins the one message being put together.
+// A plain icon like the microphone — the dark round "+" read as upload and
+// was too heavy. Its number says which stacked answer this one becomes.
 .selectionReply__collect {
+	position: relative;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	width: 40px;
-	height: 40px;
+	width: 36px;
+	height: 36px;
 	padding: 0;
-	border: 1px solid var(--m3-outline-variant, #c4c7c7);
-	border-radius: 50%;
-	background: transparent;
-	color: var(--m3-on-surface, #1b1b1c);
-	cursor: pointer;
-	transition:
-		background-color 150ms ease,
-		color 150ms ease;
+	border: 0;
 
-	svg {
-		font-size: 22px;
-	}
+	// The send button's shape: round with a 4px top-right corner.
+	border-radius: 18px 4px 18px 18px;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+	transition: background-color 150ms ease;
 
 	@include selection-reply-control-states;
 
 	&:disabled {
 		opacity: 0.38;
 		cursor: not-allowed;
+	}
+}
+
+.selectionReply__collectIcon {
+	width: 24px;
+	height: 24px;
+}
+
+// The numbered icon is centred by the button itself; the 24px box above
+// pushed it into the top-left corner (Frank, 24 Nov).
+.selectionReply__collectIcon.stackCountIcon {
+	width: auto;
+	height: auto;
+}
+
+.selectionReply__stackCount {
+	position: absolute;
+
+	// Outside the circle's corner, so the reply-all arrows stay readable.
+	// The 2px ring is a shadow, not a border: a surface role may only
+	// fill (m3Sweep role-misuse lint). Ring included, it stays 16px.
+	top: -2px;
+	right: -2px;
+	min-width: 12px;
+	height: 12px;
+	padding: 0 2px;
+	box-sizing: border-box;
+	border-radius: 6px;
+	box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #fff);
+	background: var(--m3-inverse-surface, #313033);
+	color: var(--m3-inverse-on-surface, #f4eff4);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 12px;
+	text-align: center;
+}
+
+// FE#2494 *7: where the answer goes ("In Supervision antworten").
+// FE#2494 *7: where the answer goes — a badge attached on top of the
+// bubble (Frank, 24 Nov), not a line of text inside it.
+.selectionReply__popover--targeted {
+	padding-top: 18px;
+}
+
+// Variant (Frank, 24 Nov): the badge as a pennant under the bubble's
+// bottom-left, its 4px corner pointing up at the bubble.
+.selectionReply__popover--targetedBottom {
+	margin-bottom: 12px;
+
+	> .selectionReply__target {
+		top: auto;
+		right: auto;
+		bottom: -12px;
+		left: 16px;
+		border-radius: 4px 12px 12px 12px;
+	}
+}
+
+// Variant (Frank, 24 Nov): the badge hangs on the grey quote instead of the
+// bubble's edge; the bubble keeps its plain padding.
+.selectionReply__popover--targetedQuote {
+	.selectionReply__quote {
+		position: relative;
+		margin-top: 10px;
+		padding-top: 14px;
+	}
+}
+
+.selectionReply__target {
+	position: absolute;
+	top: -12px;
+	right: 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+
+	// Frank (24 Nov): a round chip, all four corners.
+	height: 24px;
+	margin: 0;
+	padding: 0 10px 0 6px;
+	border: 0;
+	border-radius: 12px;
+
+	// Frank, 24 Nov: the side room's own chip colours — Supervision is the
+	// accent `primary-fixed-dim` with the dark `on-primary-fixed`, the
+	// Teamberatung its `secondary-fixed` pair (as in the panel header).
+	&--supervision {
+		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--m3-on-primary-fixed, #410001);
+	}
+
+	&--team {
+		background: var(--m3-secondary-fixed, #dae3ee);
+		color: var(--m3-on-secondary-fixed, #131c25);
+	}
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.selectionReply__targetIcon {
+	display: inline-flex;
+
+	svg {
+		width: 16px;
+		height: 16px;
+		fill: currentColor;
+	}
+}
+
+// FE#2494 *7 bubble variant: a small reply handle on the top right corner
+// of the marked text; it opens the one speech-bubble menu.
+.selectionReply__handle {
+	position: absolute;
+	z-index: 30;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
+	border-radius: 16px 16px 16px 4px;
+	background: var(--m3-surface-container-lowest, #fff);
+	color: var(--m3-primary, #a5000a);
+	box-shadow: $selection-reply-elevation;
+	cursor: pointer;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	@include selection-reply-control-states;
+}
+
+// The menu as a speech bubble hanging from the handle (tail top right).
+.selectionReply__popover--bubble {
+	&::before {
+		content: '';
+		position: absolute;
+		top: -7px;
+		left: var(--bubble-tail-x, calc(100% - 24px));
+		width: 12px;
+		height: 12px;
+		background: inherit;
+		border-top: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+		border-left: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+		transform: rotate(45deg);
+	}
+}
+
+// Opened above the passage: the tail points down to it.
+.selectionReply__popover--above::before {
+	top: auto;
+	bottom: -7px;
+	border-top: 0;
+	border-left: 0;
+	border-right: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+	border-bottom: 1px solid
+		var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
+}
+
+.selectionReply__bubbleActions {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	padding-top: 4px;
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+}
+
+// One labelled row of the bubble menu: icon + words, full width.
+.selectionReply__menuRow {
+	justify-content: flex-start;
+	width: 100%;
+	text-align: left;
+
+	svg {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+// Library icons (src/resources/img/icons) take the button's colour.
+.selectionReply__micIcon,
+.selectionReply__sideRoomIcon {
+	width: 20px;
+	height: 20px;
+
+	path {
+		fill: currentColor;
 	}
 }
 
@@ -351,12 +709,17 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	display: inline-flex;
 	flex-shrink: 0;
 
-	// A plain round button here: the composer's corner shape belongs to
-	// the composer card.
+	// The composer's own send shape, docked in the box's top-right notch.
 	.sendButton {
 		width: 40px;
 		height: 40px;
-		border-radius: 50%;
+		border-radius: 0 4px 0 20px;
+
+		// Frank (24 Nov): a lighter send glyph than the composer's 24px.
+		svg {
+			width: 20px;
+			height: 20px;
+		}
 	}
 }
 
@@ -390,7 +753,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		outline: 2px solid
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 		outline-offset: 2px;
 	}
 }
@@ -398,7 +762,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 @keyframes selectionReplyJumpRing {
 	0%,
 	45% {
-		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+		box-shadow: 0 0 0 3px
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 	}
 
 	100% {
@@ -409,7 +774,8 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 @media (prefers-reduced-motion: reduce) {
 	.messageItem__message--jumpTarget {
 		animation: none;
-		box-shadow: 0 0 0 3px var(--m3-primary-fixed-dim, #ffb4aa);
+		box-shadow: 0 0 0 3px
+			var(--oriso-outline-accent, var(--m3-primary-fixed-dim, #ffb4aa));
 	}
 
 	.selectionReply__toolbarButton,
@@ -446,5 +812,34 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 @media (width <= 599px) {
 	.selectionReply__wideLabel {
 		display: none;
+	}
+}
+
+// FE#2494 *8: the numbered stack icon — outline at rest, filled while the
+// button is hovered or focused.
+.stackCountIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	svg {
+		width: 20px;
+		height: 20px;
+		fill: currentColor;
+	}
+
+	&__filled {
+		display: none;
+	}
+}
+
+.selectionReply__collect:hover,
+.selectionReply__collect:focus-visible {
+	.stackCountIcon__outline {
+		display: none;
+	}
+
+	.stackCountIcon__filled {
+		display: block;
 	}
 }

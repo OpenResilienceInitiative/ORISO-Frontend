@@ -1,27 +1,28 @@
 import * as React from 'react';
 import { useState } from 'react';
-import {
-	Alert,
-	Box,
-	Button,
-	Stack,
-	TextField,
-	Typography
-} from '@mui/material';
+import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { OrisoTextField } from '../form/OrisoTextField';
 
 export interface LiveChatConversionFormProps {
 	loginName: string;
 	busy: boolean;
 	error?: string | null;
+	/** Shown above the fields, e.g. that an earlier attempt is pending. */
+	notice?: string | null;
 	onSubmit: (password: string) => void;
 }
 
-/** Collects durable credentials after the shared recovery-key confirmation step. */
+/**
+ * Collects the durable password: after the recovery-key step, or directly when
+ * the chat history is recovered with the login password (FE#2334). Built from
+ * the form kit so labels never overlap the masked value (FE#2332).
+ */
 export const LiveChatConversionForm = ({
 	loginName,
 	busy,
 	error,
+	notice,
 	onSubmit
 }: LiveChatConversionFormProps) => {
 	const { t } = useTranslation();
@@ -54,7 +55,8 @@ export const LiveChatConversionForm = ({
 					{tr('loginName', 'Your login name:')}{' '}
 					<strong>{loginName}</strong>
 				</Typography>
-				<TextField
+				{notice && <Alert severity="info">{notice}</Alert>}
+				<OrisoTextField
 					type="password"
 					autoComplete="new-password"
 					label={tr('password', 'Password')}
@@ -62,7 +64,7 @@ export const LiveChatConversionForm = ({
 					onChange={(event) => setPassword(event.target.value)}
 					helperText={tr('passwordHelp', 'At least 16 characters')}
 				/>
-				<TextField
+				<OrisoTextField
 					type="password"
 					autoComplete="new-password"
 					label={tr('repeat', 'Repeat password')}

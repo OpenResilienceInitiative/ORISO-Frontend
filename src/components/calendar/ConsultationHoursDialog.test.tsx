@@ -1,8 +1,17 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { ConsultationHoursDialog } from './ConsultationHoursDialog';
+import {
+	ConsultationHoursDialog,
+	useConsultationHoursForm
+} from './ConsultationHoursDialog';
 import type { ConsultationHours } from './calendarConsultationHours';
 
 vi.mock('react-i18next', () => ({
@@ -174,5 +183,395 @@ describe('ConsultationHoursDialog (FE#2287)', () => {
 		).toBeTruthy();
 		fireEvent.click(screen.getByTestId('consultation-hours-save'));
 		expect(onSave).not.toHaveBeenCalled();
+	});
+
+	it('adds a second window to a day with "+" and saves both (FE#2494 *2b)', () => {
+		const onSave = open({
+			...none,
+			windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+		});
+		fireEvent.click(
+			document.querySelector('[data-cy="consultation-add-2"]')!
+		);
+		expect(screen.getByTestId('consultation-window-2-1')).toBeTruthy();
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '09:00', end: '12:00' },
+			{ weekday: 2, start: '12:00', end: '14:00' }
+		]);
+	});
+
+	it('removes a window and keeps the rest of the day', () => {
+		const onSave = open({
+			...none,
+			windows: [
+				{ weekday: 2, start: '09:00', end: '12:00' },
+				{ weekday: 2, start: '16:00', end: '18:00' }
+			]
+		});
+		fireEvent.click(
+			document.querySelector('[data-cy="consultation-remove-2-0"]')!
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '16:00', end: '18:00' }
+		]);
+	});
+
+	it('offers "Einmalig" only where a one-off can be saved', () => {
+		open(none);
+		expect(
+			screen.queryByRole('radio', {
+				name: 'calendar.consultationHours.modes.once'
+			})
+		).toBeNull();
+	});
+
+	it('takes saved hours that arrive after it opened, while untouched (FE#2494 review)', () => {
+		const props = {
+			open: true,
+			onSave: vi.fn(),
+			onClose: () => undefined
+		};
+		const { rerender } = render(
+			<ConsultationHoursDialog {...props} hours={none} />
+		);
+		rerender(
+			<ConsultationHoursDialog
+				{...props}
+				hours={{
+					...none,
+					windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+				}}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(props.onSave.mock.calls[0][0].windows).toEqual([
+			{ weekday: 2, start: '09:00', end: '12:00' }
+		]);
+	});
+
+	it('keeps an edited draft when the saved hours arrive later', () => {
+		const props = {
+			open: true,
+			onSave: vi.fn(),
+			onClose: () => undefined
+		};
+		const { rerender } = render(
+			<ConsultationHoursDialog {...props} hours={none} />
+		);
+		fireEvent.click(
+			screen
+				.getByTestId('consultation-hours-4')
+				.querySelector('input[type="checkbox"]')!
+		);
+		rerender(
+			<ConsultationHoursDialog
+				{...props}
+				hours={{
+					...none,
+					windows: [{ weekday: 2, start: '09:00', end: '12:00' }]
+				}}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('consultation-hours-save'));
+		expect(
+			props.onSave.mock.calls[0][0].windows.map(
+				(w: { weekday: number }) => w.weekday
+			)
+		).toEqual([4]);
+	});
+
+	const saveOnce = (props: {
+		slot: { start: Date; end: Date };
+		blockerConflict?: { start: Date; end: Date };
+	}) => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined,
+				...props
+			});
+			return null;
+		};
+		render(<Form />);
+		const save = form?.actions.find(
+			(a) => a.testId === 'consultation-once-save'
+		);
+		expect(save?.disabled).toBe(false);
+		act(() => save?.onClick?.());
+		return onSaveOneOff.mock.calls[0][0];
+	};
+
+	it('proposes a one-off that can still be booked with the default notice', () => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				now: new Date(2026, 10, 25, 10, 15),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		fireEvent.click(
+			screen.getByRole('radio', {
+				name: 'calendar.consultationHours.modes.once'
+			})
+		);
+		act(() =>
+			form?.actions
+				.find((a) => a.testId === 'consultation-once-save')
+				?.onClick?.()
+		);
+		expect(onSaveOneOff.mock.calls[0][0].start).toEqual(
+			new Date(2026, 10, 25, 12, 0)
+		);
+	});
+
+	it('does not release a one-off nobody can book any more', () => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				slot: {
+					start: new Date(2026, 10, 25, 8, 30),
+					end: new Date(2026, 10, 25, 9, 30)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		expect(
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled
+		).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooLate')
+		).toBeTruthy();
+	});
+
+	it('does not release a one-off shorter than one appointment', () => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				slot: {
+					start: new Date(2026, 10, 26, 10, 0),
+					end: new Date(2026, 10, 26, 10, 15)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		expect(
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled
+		).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooShort:60')
+		).toBeTruthy();
+	});
+
+	const onceForm = (
+		props: Partial<Parameters<typeof useConsultationHoursForm>[0]>
+	) => {
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined,
+				...props
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		return () =>
+			form?.actions.find((a) => a.testId === 'consultation-once-save')
+				?.disabled;
+	};
+	const released = (day: number, from: number, to: number) => ({
+		id: `o${day}-${from}`,
+		start: new Date(2026, 10, day, from, 0),
+		end: new Date(2026, 10, day, to, 0),
+		noticeMinutes: 60
+	});
+
+	it('refuses a one-off longer than 12 hours', () => {
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 6, 0),
+				end: new Date(2026, 10, 26, 19, 0)
+			}
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceTooLong')
+		).toBeTruthy();
+	});
+
+	it('takes a typed date at once, without leaving the field (Dev test 24 Nov)', () => {
+		const onSaveOneOff = vi.fn();
+		let form: ReturnType<typeof useConsultationHoursForm> | undefined;
+		const Form = () => {
+			form = useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff,
+				slot: {
+					start: new Date(2026, 10, 26, 10, 0),
+					end: new Date(2026, 10, 26, 11, 0)
+				},
+				now: new Date(2026, 10, 25, 8, 0),
+				onClose: () => undefined
+			});
+			return form.content as React.ReactElement;
+		};
+		render(<Form />);
+		const date = screen.getByLabelText(
+			'calendar.consultationHours.date'
+		) as HTMLInputElement;
+		fireEvent.change(date, { target: { value: '1.12.2026' } });
+		act(() =>
+			form?.actions
+				.find((a) => a.testId === 'consultation-once-save')
+				?.onClick?.()
+		);
+		expect(onSaveOneOff.mock.calls[0][0].start).toEqual(
+			new Date(2026, 11, 1, 10, 0)
+		);
+	});
+
+	it('says a one-off over 12 hours next to the times, and marks them', () => {
+		onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 6, 0),
+				end: new Date(2026, 10, 26, 19, 0)
+			}
+		});
+		const error = screen.getByText(
+			'calendar.consultationHours.onceTooLong'
+		);
+		const notice = screen.getByRole('combobox', {
+			name: 'calendar.consultationHours.onceNotice'
+		});
+		expect(
+			error.compareDocumentPosition(notice) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+		const from = screen.getByLabelText(
+			'calendar.consultationHours.from'
+		) as HTMLInputElement;
+		expect(from.getAttribute('aria-invalid')).toBe('true');
+	});
+
+	it('refuses a one-off over another one and lists them to withdraw', () => {
+		const onWithdrawOneOff = vi.fn();
+		const other = released(26, 9, 11);
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 10, 0),
+				end: new Date(2026, 10, 26, 12, 0)
+			},
+			oneOffs: [other],
+			onWithdrawOneOff
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceOverlap')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('consultation-once-withdraw'));
+		expect(onWithdrawOneOff).toHaveBeenCalledWith(other);
+	});
+
+	it('refuses a 51st upcoming one-off', () => {
+		const many = Array.from({ length: 50 }, (_, i) =>
+			released(27 + Math.floor(i / 10), 8 + (i % 10), 9 + (i % 10))
+		);
+		const disabled = onceForm({
+			slot: {
+				start: new Date(2026, 10, 26, 10, 0),
+				end: new Date(2026, 10, 26, 12, 0)
+			},
+			oneOffs: many
+		});
+		expect(disabled()).toBe(true);
+		expect(
+			screen.getByText('calendar.consultationHours.onceLimit:50')
+		).toBeTruthy();
+	});
+
+	it('keeps a one-off that ends at midnight on the next day', () => {
+		const saved = saveOnce({
+			slot: {
+				start: new Date(2026, 10, 25, 23, 0),
+				end: new Date(2026, 10, 26, 0, 0)
+			}
+		});
+		expect(saved.start).toEqual(new Date(2026, 10, 25, 23, 0));
+		expect(saved.end).toEqual(new Date(2026, 10, 26, 0, 0));
+	});
+
+	it('releases over a Sperrzeit the server named, though none is loaded', () => {
+		const slot = {
+			start: new Date(2026, 11, 20, 10, 0),
+			end: new Date(2026, 11, 20, 11, 0)
+		};
+		expect(saveOnce({ slot }).overBlocker).toBe(false);
+		cleanup();
+		expect(saveOnce({ slot, blockerConflict: slot }).overBlocker).toBe(
+			true
+		);
+		cleanup();
+		// Refused for another interval: no override for this one.
+		expect(
+			saveOnce({
+				slot,
+				blockerConflict: {
+					start: new Date(2026, 11, 20, 12, 0),
+					end: new Date(2026, 11, 20, 13, 0)
+				}
+			}).overBlocker
+		).toBe(false);
+	});
+
+	it('switches "Einmalig" and "Jede Woche" with the arrow keys', () => {
+		const Form = () =>
+			useConsultationHoursForm({
+				hours: none,
+				onSave: vi.fn(),
+				onSaveOneOff: vi.fn(),
+				onClose: () => undefined
+			}).content as React.ReactElement;
+		render(<Form />);
+		const weekly = screen.getByRole('radio', {
+			name: 'calendar.consultationHours.modes.weekly'
+		});
+		expect(weekly.getAttribute('aria-checked')).toBe('true');
+		fireEvent.keyDown(weekly, { key: 'ArrowLeft' });
+		const once = screen.getByRole('radio', {
+			name: 'calendar.consultationHours.modes.once'
+		});
+		expect(once.getAttribute('aria-checked')).toBe('true');
+		expect(document.activeElement).toBe(once);
 	});
 });

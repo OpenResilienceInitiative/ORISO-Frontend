@@ -1210,6 +1210,10 @@ declare namespace UserService {
 			 */
 			isTeamSession?: boolean;
 			/**
+			 * FE#2494 *4: the case sharing model the case was created under (CASE_HANDOVER, TEAM_COUNSELLING or NONE); absent for a case created before it was stamped.
+			 */
+			caseSharingModel?: string;
+			/**
 			 * example:
 			 * 17
 			 */
@@ -2783,6 +2787,10 @@ declare namespace UserService {
 			 * false
 			 */
 			isTeamSession?: boolean;
+			/**
+			 * FE#2494 *4: the case sharing model the case was created under (CASE_HANDOVER, TEAM_COUNSELLING or NONE); absent for a case created before it was stamped.
+			 */
+			caseSharingModel?: string;
 			/**
 			 * example:
 			 * ANONYMOUS

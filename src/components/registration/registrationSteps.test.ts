@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import {
 	filterRegistrationStepsForDirectLink,
+	resolveDirectLinkZipcode,
 	getConsultantDirectLinkTopicIds,
 	RegistrationStep
 } from './registrationSteps';
@@ -112,5 +113,61 @@ describe('registrationSteps direct link helpers', () => {
 		});
 
 		expect(steps.map((step) => step.name)).toEqual(['account-data']);
+	});
+});
+
+describe('resolveDirectLinkZipcode', () => {
+	it('keeps the postcode the URL names', () => {
+		expect(
+			resolveDirectLinkZipcode({
+				urlZipcode: '12345',
+				directLinkAgency: { postcode: '10965' }
+			})
+		).toBe('12345');
+	});
+
+	it("uses the linked agency's postcode", () => {
+		expect(
+			resolveDirectLinkZipcode({
+				directLinkAgency: { postcode: '10965' }
+			})
+		).toBe('10965');
+	});
+
+	it("falls back to any of the counsellor's agencies", () => {
+		expect(
+			resolveDirectLinkZipcode({
+				directLinkAgency: { postcode: null },
+				consultantAgencies: [{ postcode: '' }, { postcode: '13353' }]
+			})
+		).toBe('13353');
+	});
+
+	it('never answers with the anonymous-guest placeholder', () => {
+		// UserService reads 00000 as a Live Chat guest and hides the enquiry.
+		expect(
+			resolveDirectLinkZipcode({
+				directLinkAgency: { postcode: '00000' }
+			})
+		).toBeUndefined();
+	});
+
+	it('answers undefined when nothing is known, so the person is asked', () => {
+		expect(resolveDirectLinkZipcode({})).toBeUndefined();
+	});
+});
+
+describe('filterRegistrationStepsForDirectLink — counsellor link postcode', () => {
+	it('keeps the postcode step when no postcode is known', () => {
+		const steps = filterRegistrationStepsForDirectLink(baseSteps, {
+			preselectedConsultantId: 'c-1',
+			preselectedConsultant: { agencies: [{ topicIds: [1] }] },
+			directLinkAgency: { id: 1 }
+		});
+
+		expect(steps.map((step) => step.name)).toEqual([
+			'zipcode',
+			'account-data'
+		]);
 	});
 });

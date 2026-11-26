@@ -5,7 +5,6 @@ import { SESSION_LIST_TAB_ARCHIVE } from '../session/sessionHelpers';
 import {
 	ArchiveFilterIcon,
 	CreateChatFilterIcon,
-	DirectLinkFilterIcon,
 	DraftFilterIcon,
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
@@ -158,8 +157,6 @@ interface SessionsListToolbarProps {
 	chipAutoSort?: boolean;
 	/** Offer the Sonstiges chip (lists that classify their rows, #1377). */
 	showOtherChip?: boolean;
-	/** FE#1952: the list has conversations that came in through a direct link. */
-	showDirectLinksChip?: boolean;
 	/** The Archiv link (Gespräche); the display filter's Archiv pill drives it. */
 	showArchiveChip?: boolean;
 	/** Pill of the Erstellen row (display filter); the Träger gate stays `showCreateGroupChatAction`. */
@@ -237,6 +234,8 @@ type FilterChipConfig = {
 	labelKey: string;
 	Icon: React.ComponentType<SessionToolbarFilterIconProps>;
 	dataCy: string;
+	/** Product-tour anchor on this chip (inert `data-tour-target`). */
+	tourTarget?: string;
 };
 
 const FILTER_CHIPS: FilterChipConfig[] = [
@@ -250,7 +249,8 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		id: 'drafts',
 		labelKey: 'sessionList.toolbar.chips.drafts',
 		Icon: DraftFilterIcon,
-		dataCy: 'sessions-list-chip-drafts'
+		dataCy: 'sessions-list-chip-drafts',
+		tourTarget: 'sessions-drafts-chip'
 	},
 	{
 		id: 'nearby',
@@ -259,16 +259,11 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		dataCy: 'sessions-list-chip-nearby'
 	},
 	{
-		id: 'directLinks',
-		labelKey: 'sessionList.toolbar.chips.directLinks',
-		Icon: DirectLinkFilterIcon,
-		dataCy: 'sessions-list-chip-direct-links'
-	},
-	{
 		id: 'liveChat',
 		labelKey: 'sessionList.toolbar.chips.liveChat',
 		Icon: LiveChatFilterIcon,
-		dataCy: 'sessions-list-chip-live-chat'
+		dataCy: 'sessions-list-chip-live-chat',
+		tourTarget: 'livechat-queue'
 	},
 	{
 		id: 'internalGroup',
@@ -339,6 +334,7 @@ const FilterChip = ({
 			onClick={onClick}
 			onDeactivatedClick={onDeactivatedClick}
 			data-cy={chip.dataCy}
+			tourTarget={chip.tourTarget}
 		/>
 	);
 };
@@ -392,7 +388,6 @@ export const SessionsListToolbar = ({
 	chipView = 'icons',
 	chipAutoSort = false,
 	showOtherChip = false,
-	showDirectLinksChip = false,
 	showArchiveChip = true,
 	showCreateChip = true
 }: SessionsListToolbarProps) => {
@@ -639,9 +634,6 @@ export const SessionsListToolbar = ({
 			if (chip.id === 'other') {
 				return showOtherChip;
 			}
-			if (chip.id === 'directLinks') {
-				return showDirectLinksChip;
-			}
 			return true;
 		});
 		// Drafts are a count, not unread: they never float.
@@ -661,7 +653,6 @@ export const SessionsListToolbar = ({
 		hiddenKindChips,
 		showGroupChip,
 		showInternalGroupChip,
-		showDirectLinksChip,
 		showLiveChatChip,
 		showOtherChip,
 		showSupervisionChip,
@@ -714,6 +705,7 @@ export const SessionsListToolbar = ({
 			<div
 				className="sessionsListToolbar__search"
 				ref={searchRootRef}
+				data-tour-target="sessions-search"
 				onKeyDown={closeSearchOnEscape}
 			>
 				<div

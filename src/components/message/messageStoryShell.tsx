@@ -63,10 +63,14 @@ export const PSEUDONYM_TYPICAL = 'sanftes Alpaka Mika';
 export const PSEUDONYM_LONGEST = 'absichtslose Schildkröte Andrea';
 export const LOGIN_NAME_EXAMPLE = 'schildkroete_andrea_1234';
 
+/** Same surface role as the conversation stage. */
+export const MESSAGE_STORY_BACKGROUND =
+	'var(--m3-surface-container-lowest, #ffffff)';
+
 export function MessageStoryShell({
 	children,
 	compact = false,
-	background = '#ffffff'
+	background = MESSAGE_STORY_BACKGROUND
 }: {
 	children: React.ReactNode;
 	compact?: boolean;

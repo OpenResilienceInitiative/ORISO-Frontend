@@ -20,7 +20,10 @@ import { ResolvedBaustein } from './erstantwortResolve';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
+		t: (key: string, fallback?: string) =>
+			key === 'erstantwort.whoReadsAlong.headline'
+				? 'Wer Ihre Nachricht liest'
+				: (fallback ?? key)
 	})
 }));
 
@@ -49,6 +52,24 @@ const runSequence = () =>
 	});
 
 describe('ErstantwortSequence', () => {
+	it('labels a stored disclosure without a headline and shows its original text', () => {
+		const body =
+			'Unser Team hat diesen Hinweis zu Ihrer Anfrage gespeichert.';
+		render(
+			<ErstantwortSequence
+				bausteine={[{ id: 'whoReadsAlong', body }]}
+				skipAnimation
+			/>
+		);
+
+		const question = screen.getByText('Wer Ihre Nachricht liest');
+		fireEvent.click(question);
+		expect(question.closest('details')?.open).toBe(true);
+		expect(screen.getByText(body).closest('details')).toBe(
+			question.closest('details')
+		);
+	});
+
 	it('keeps frozen FAQ wording available inside expandable chat content', () => {
 		render(<ErstantwortSequence bausteine={bausteine} skipAnimation />);
 		const question = screen.getByText('Wann Sie eine Antwort erhalten');

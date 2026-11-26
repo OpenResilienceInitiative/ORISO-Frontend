@@ -630,7 +630,11 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 		await nextTick();
 		const indicator = screen.getByTestId('supervision-indicator');
-		expect(indicator.textContent).toContain('Sabine Supervisor');
+		// #2494 *5: a 32px round icon button; the name is its hover/label.
+		expect(indicator.tagName).toBe('BUTTON');
+		expect(indicator.getAttribute('aria-label')).toBe(
+			'sessionList.supervision.supervisedBy:Sabine Supervisor'
+		);
 		expect(indicator.getAttribute('title')).toBe(
 			'sessionList.supervision.supervisedBy:Sabine Supervisor'
 		);
@@ -756,9 +760,14 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 			makeUserData(ME)
 		);
 		await nextTick();
-		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei." Since FE#2494
+		// it is the 32px kind icon (CSS mask), grey like the Mail icon.
 		expect(
-			screen.getByTestId('supervision-modality').querySelector('svg')
+			screen
+				.getByTestId('supervision-modality')
+				.querySelector(
+					'.sessionsListItem__consultingTypeIcon--kindIcon'
+				)
 		).toBeTruthy();
 	});
 
@@ -867,14 +876,15 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 		).toBeTruthy();
 	});
 
-	// FE#1952: a conversation opened through a direct link said "Mail".
+	// FE#1952 gave the rail the medium's glyph in the mail's slot; FE#2546
+	// keeps the glyph and names it with the one channel pattern.
 	it.each([
-		['VIDEO', 'videoCall', 'sessionList.item.sessionType.directLinkVideo'],
-		['AUDIO', 'audioCall', 'sessionList.item.sessionType.directLinkAudio'],
-		['CHAT', 'directLink', 'sessionList.item.sessionType.directLinkChat']
+		['VIDEO', 'videoCall'],
+		['AUDIO', 'audioCall'],
+		['CHAT', 'directLink']
 	] as const)(
-		'marks a %s direct-link conversation by its medium instead of mail',
-		(directLinkMedium, mark, label) => {
+		'marks a %s direct-invitation conversation by its medium on the rail',
+		(directLinkMedium, mark) => {
 			renderItem(makeSession({ directLinkMedium }), makeUserData(), {
 				rail: true
 			});
@@ -882,36 +892,46 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 				document.querySelectorAll('.sessionRailPill__mark')
 			).map((element) => (element as HTMLElement).dataset.mark);
 			expect(marks).toEqual([mark]);
-			expect(screen.getByRole('img', { name: label })).toBeTruthy();
 			expect(
-				screen.queryByRole('img', {
-					name: 'sessionList.toolbar.chips.nearby'
+				screen.getByRole('img', {
+					name: 'sessionList.item.sessionType.directInvitationVia'
 				})
-			).toBeNull();
+			).toBeTruthy();
 		}
 	);
 
+	// FE#2546 (Frank, 2026-11-25): a direct-invitation case is Mail-Beratung.
+	// The card says "Mail" like every other case and adds the channel.
 	it.each([
 		['VIDEO', 'sessionList.item.sessionType.directLinkVideo'],
 		['AUDIO', 'sessionList.item.sessionType.directLinkAudio'],
 		['CHAT', 'sessionList.item.sessionType.directLinkChat']
 	] as const)(
-		'labels a %s direct-link conversation by its medium on the card',
+		'keeps "Mail" on a %s direct-invitation card and adds a channel tag',
 		(directLinkMedium, label) => {
 			renderItem(makeSession({ directLinkMedium }));
-			const chip = document.querySelector(
-				'.sessionsListItem__consultingTypeIcon--directLink'
-			);
-			expect(chip?.textContent).toBe(label);
 			expect(
 				document.querySelector(
-					'.sessionsListItem__consultingTypeIcon--nearby'
+					'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+				)?.textContent
+			).toBe('sessionList.toolbar.chips.nearby');
+			const tag = document.querySelector(
+				'.sessionsListItem__channelTag'
+			) as HTMLElement | null;
+			expect(tag?.dataset.medium).toBe(directLinkMedium);
+			expect(tag?.textContent).toBe(label);
+			expect(tag?.getAttribute('title')).toBe(
+				'sessionList.item.sessionType.directInvitationVia'
+			);
+			expect(
+				document.querySelector(
+					'.sessionsListItem__consultingTypeIcon--directLink'
 				)
 			).toBeNull();
 		}
 	);
 
-	it('keeps the mail chip on the card for a conversation without a direct link', () => {
+	it('shows no channel tag on a conversation without a direct link', () => {
 		renderItem(makeSession());
 		expect(
 			document.querySelector(
@@ -919,9 +939,7 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 			)?.textContent
 		).toBe('sessionList.toolbar.chips.nearby');
 		expect(
-			document.querySelector(
-				'.sessionsListItem__consultingTypeIcon--directLink'
-			)
+			document.querySelector('.sessionsListItem__channelTag')
 		).toBeNull();
 	});
 

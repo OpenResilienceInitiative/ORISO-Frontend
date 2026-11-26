@@ -199,6 +199,16 @@ export interface Colleague {
 	internalChat?: boolean;
 }
 
+export const repeatedColleagueNames = (colleagues: readonly Colleague[]) => {
+	const seen = new Set<string>();
+	const repeated = new Set<string>();
+	for (const { displayName } of colleagues) {
+		if (seen.has(displayName)) repeated.add(displayName);
+		seen.add(displayName);
+	}
+	return repeated;
+};
+
 const RELATIONS_IN_SCOPE: Record<CalendarVisibilityScope, ColleagueRelation[]> =
 	{
 		AGENCY: ['sameAgency'],
@@ -380,7 +390,10 @@ export type CalendarRole = 'consultant' | 'asker';
 /** A conversation an appointment can belong to. */
 export interface CalendarConversation {
 	sessionId: number;
-	/** The advice seeker's username. */
+	/**
+	 * The other person: the advice seeker's username for a counsellor, the
+	 * counsellor's public name for an advice seeker.
+	 */
 	username: string;
 	/**
 	 * False for a deleted advice seeker or another counsellor's

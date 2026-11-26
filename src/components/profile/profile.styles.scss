@@ -253,7 +253,7 @@ $profile-footer-justify-content: center !default;
 	}
 
 	&__icon {
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 50%;
 		width: $profileIconSize;
 		height: $profileIconSize;
@@ -344,6 +344,12 @@ $profile-footer-justify-content: center !default;
 
 			.text {
 				margin-top: $grid-base;
+			}
+
+			// Dark: the title's icon button kept the browser's light button
+			// face (#efefef) under a light icon; it takes a dark container.
+			html[data-oriso-personal-scheme='dark'] & .button-as-link {
+				background-color: var(--m3-surface-container-highest, #353535);
 			}
 		}
 
@@ -553,7 +559,7 @@ $profile-footer-justify-content: center !default;
 		.headline {
 			font-size: 18px;
 			font-weight: 600;
-			color: #1a1a1a;
+			color: var(--m3-on-surface, #1a1a1a);
 			margin-bottom: 8px;
 		}
 
@@ -561,21 +567,28 @@ $profile-footer-justify-content: center !default;
 			color: #6b7280;
 			font-size: 14px;
 			line-height: 1.5;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
 		}
 	}
 
 	&__data__content {
-		background-color: $white;
+		background-color: var(--m3-surface-container-lowest, $white);
 		padding: 20px 24px;
 		border-radius: 8px;
 		margin-bottom: 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-		border: 1px solid #e5e7eb;
+		border: 1px solid var(--m3-outline-variant, #e5e7eb);
+
+		&:not(a) {
+			color: var(--m3-on-surface, $secondary);
+		}
 
 		&--agencies {
 			padding: 16px 20px;
 			font-weight: 500;
-			color: #374151;
 		}
 	}
 
@@ -589,6 +602,14 @@ $profile-footer-justify-content: center !default;
 		.text {
 			color: #4b5563;
 			font-size: 13px;
+
+			html[data-oriso-personal-scheme='dark'] & {
+				color: var(--m3-on-surface-variant, #c4c7c8);
+			}
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-lowest, #0e0e0f);
 		}
 	}
 
@@ -602,7 +623,7 @@ $profile-footer-justify-content: center !default;
 			box-shadow: none;
 
 			.profile__content__title {
-				background: #fff;
+				background: var(--m3-surface-container-lowest, #fff);
 				border: 1px solid #e5e7eb;
 				border-radius: 8px;
 				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -619,7 +640,7 @@ $profile-footer-justify-content: center !default;
 	}
 
 	.notifications__panel {
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid #e5e7eb;
 		border-radius: 12px;
 		padding: 20px;
@@ -648,11 +669,19 @@ $profile-footer-justify-content: center !default;
 		margin-right: -8px;
 		padding-left: 9px;
 		padding-right: 8px;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	.notifications__panel--muted {
 		background: #faf6f6;
 		box-shadow: none;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	.notifications__alwaysSent {
@@ -664,6 +693,10 @@ $profile-footer-justify-content: center !default;
 
 		li + li {
 			margin-top: 4px;
+		}
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
 		}
 	}
 
@@ -688,23 +721,39 @@ $profile-footer-justify-content: center !default;
 		border-radius: 10px;
 		padding: 12px;
 		background: #f9fafb;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-lowest, #0e0e0f);
+		}
 	}
 
 	.notifications__feed__item__title {
 		margin: 0 0 4px;
 		font-weight: 600;
 		color: #111827;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	.notifications__feed__item__text {
 		margin: 0 0 6px;
 		color: #374151;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	.notifications__feed__item__time {
 		margin: 0;
 		font-size: 12px;
 		color: #6b7280;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 }
 
@@ -788,6 +837,27 @@ $profile-footer-justify-content: center !default;
 			max-width: 460px;
 			margin-top: 8px;
 		}
+	}
+
+	.profile__card__body
+		> .personalDisplayProfile
+		> .personalDisplayProfile__title {
+		flex-direction: row;
+		justify-content: center;
+
+		.headline {
+			font-size: calc(1.5rem * var(--oriso-personal-text-scale, 1));
+			line-height: 1.33;
+			color: inherit;
+			overflow-wrap: anywhere;
+		}
+	}
+}
+
+html[data-oriso-personal-scheme='dark'] .profile__cards {
+	.profile__card__body .profile__content__title .headline,
+	.menuEffectsSettings .text__standard {
+		color: var(--m3-on-surface, #1a1c1e);
 	}
 }
 

@@ -193,11 +193,26 @@ export const EmailTokenSheet: React.FC = () => (
 	</div>
 );
 
+const catalogueSecondary = `var(--m3-on-surface-variant, ${emailColor.onSurfaceVariant})`;
+const catalogueCell: React.CSSProperties = {
+	...td,
+	borderTop: `1px solid var(--m3-outline-variant, ${emailColor.outline})`
+};
+
 /** Every mail, its audience, and the placeholders it needs filled. */
 export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 	locale = 'de-sie'
 }) => (
-	<div style={{ ...shell, overflowX: 'auto' }}>
+	<div
+		role="region"
+		aria-label={`Email catalogue · ${EMAIL_LOCALE_LABELS[locale]}`}
+		tabIndex={0}
+		style={{
+			...shell,
+			color: `var(--m3-on-surface, ${emailColor.onSurface})`,
+			overflowX: 'auto'
+		}}
+	>
 		<table style={{ borderCollapse: 'collapse', width: '100%' }}>
 			<thead>
 				<tr>
@@ -205,7 +220,11 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 						(label) => (
 							<th
 								key={label}
-								style={{ ...th, whiteSpace: 'nowrap' as const }}
+								style={{
+									...th,
+									color: catalogueSecondary,
+									whiteSpace: 'nowrap'
+								}}
 							>
 								{label}
 							</th>
@@ -217,7 +236,10 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 				{EMAIL_IDS.map((id) => {
 					const built = buildEmail(id, locale);
 					const tokens = listEmailPlaceholders(built.html);
-					const tight = { ...td, whiteSpace: 'nowrap' as const };
+					const tight = {
+						...catalogueCell,
+						whiteSpace: 'nowrap' as const
+					};
 					return (
 						<tr key={id}>
 							<td style={tight}>{EMAIL_LABELS[id]}</td>
@@ -230,9 +252,9 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 							<td style={tight}>{built.subject}</td>
 							<td
 								style={{
-									...td,
+									...catalogueCell,
 									...mono,
-									color: '#a5000a',
+									color: 'var(--oriso-primary-text, #a5000a)',
 									lineHeight: '20px'
 								}}
 							>
@@ -243,7 +265,7 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 				})}
 			</tbody>
 		</table>
-		<p style={{ color: emailColor.onSurfaceVariant, maxWidth: '72ch' }}>
+		<p style={{ color: catalogueSecondary, maxWidth: '72ch' }}>
 			Variants:{' '}
 			{EMAIL_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(', ')} — of
 			which{' '}

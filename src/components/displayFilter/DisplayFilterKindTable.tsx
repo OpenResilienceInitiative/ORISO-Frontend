@@ -315,7 +315,11 @@ export const DisplayFilterKindTable = ({
 							? 'off'
 							: kind.modes
 								? kindPillMode(value, kind.id)
-								: 'on';
+								: kind.autoModes
+									? kindPillMode(value, kind.id) === 'fixed'
+										? 'fixed'
+										: 'dynamic'
+									: 'on';
 						const emailCell = emailColumn
 							? email!.cell(kind.id)
 							: null;
@@ -435,16 +439,31 @@ export const DisplayFilterKindTable = ({
 																label: labels.pillOff
 															}
 														]
-													: [
-															{
-																id: 'on',
-																label: labels.pillOn
-															},
-															{
-																id: 'off',
-																label: labels.pillOff
-															}
-														]
+													: kind.autoModes
+														? [
+																{
+																	id: 'dynamic',
+																	label: labels.liveChatDynamic
+																},
+																{
+																	id: 'fixed',
+																	label: labels.liveChatFixed
+																},
+																{
+																	id: 'off',
+																	label: labels.pillOff
+																}
+															]
+														: [
+																{
+																	id: 'on',
+																	label: labels.pillOn
+																},
+																{
+																	id: 'off',
+																	label: labels.pillOff
+																}
+															]
 											}
 											selected={pillValue}
 											mainLabel={labels.pillKind(

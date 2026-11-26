@@ -16,4 +16,62 @@
 .callDeviceCheck__pickers {
 	display: flex;
 	gap: 8px;
+	flex-wrap: wrap;
+
+	> .MuiButtonBase-root {
+		flex-basis: min(100%, calc(9rem * var(--oriso-personal-text-scale, 1)));
+	}
+}
+
+/* The call's existing portal owns the scroll pane and keeps its actions visible. */
+.m3Dialog.knockWaitDialog:has(.callDeviceCheck) {
+	.m3Dialog__title,
+	.m3Dialog__description,
+	.m3Dialog__action {
+		overflow-wrap: anywhere;
+	}
+
+	.m3Dialog__title {
+		font-size: calc(1.5rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.333;
+	}
+
+	.m3Dialog__description,
+	.m3Dialog__action,
+	.knockWaitDialog__status {
+		font-size: calc(0.875rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.429;
+	}
+
+	.m3Dialog__action {
+		min-block-size: 40px;
+		block-size: auto;
+	}
+
+	.knockWaitDialog__quiet {
+		font-size: calc(0.75rem * var(--oriso-personal-text-scale, 1));
+		line-height: 1.333;
+	}
+
+	html[data-oriso-personal-scheme='dark'] & .m3Dialog__backdrop {
+		background: color-mix(in srgb, var(--m3-scrim, #000) 74%, transparent);
+	}
+}
+
+/* A blocked or busy camera is said out loud, with a retry (Dev, 2026-11-21). */
+.callDeviceCheck__cameraNotice {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 12px 16px;
+	border-radius: 12px;
+	background-color: var(--m3-surface-container-high, #f0eded);
+	color: var(--m3-on-surface, #1c1b1b);
+}
+
+.callDeviceCheck__cameraNoticeText {
+	margin: 0;
+	font-size: 14px;
+	line-height: 20px;
 }

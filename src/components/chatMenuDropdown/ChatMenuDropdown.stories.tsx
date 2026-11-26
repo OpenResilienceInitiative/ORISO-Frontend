@@ -2,6 +2,10 @@ import ReplyOutlinedIcon from '@mui/icons-material/ReplyOutlined';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import * as React from 'react';
 import i18n from '../../i18n';
+import {
+	describeLowContrast,
+	findLowContrastText
+} from '../designTokens/textContrastContract';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
 import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
@@ -271,7 +275,7 @@ export const RepeatedDeleteActions: Story = {
 				0
 			);
 		}
-		const { page } = await import('@vitest/browser/context');
+		const { page } = await import('vitest/browser');
 		const originalViewport = [window.innerWidth, window.innerHeight];
 		try {
 			for (const [width, height] of [
@@ -306,5 +310,28 @@ export const RepeatedDeleteActions: Story = {
 		}
 		// No DOM-ID normalizer or duplicate-ID fake checker: the unchanged
 		// Storybook addon runs the genuine axe4.7 audit over both instances.
+	}
+};
+
+const darkGlobals = {
+	scheme: 'dark',
+	backgrounds: { value: 'dark' }
+} as const;
+
+/**
+ * P0 dark mode (2026-11-25): the hover/selected surface was the light
+ * "Hellblau" in every scheme, under labels that turn light pink in dark
+ * mode. In dark it is the dark secondary container; all text reaches AA.
+ */
+export const ActiveStateDark: Story = {
+	name: 'Active state — dark, labels readable',
+	globals: darkGlobals,
+	render: () => <FigmaMenuItems activeFirst />,
+	play: async () => {
+		await waitFor(async () => {
+			await expect(
+				describeLowContrast(findLowContrastText(document.body))
+			).toEqual([]);
+		});
 	}
 };

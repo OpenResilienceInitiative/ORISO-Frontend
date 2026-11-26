@@ -76,6 +76,60 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		color: var(--m3-on-surface-variant, #444748);
 	}
 
+	// Foldable group: the heading reads like `__groupLabel` but is a button
+	// with a chevron that turns while the group is open.
+	&__groupToggle {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		width: 100%;
+		min-height: 44px;
+		margin: 0;
+		padding: 10px 8px;
+		border: none;
+		border-radius: 8px;
+		background: transparent;
+		font: inherit;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 16px;
+		text-align: left;
+		color: var(--m3-on-surface-variant, #444748);
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	&__groupToggleChevron {
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+		transition: transform 150ms ease;
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+
+	// `__section` is `display: flex`, which would beat the `hidden` attribute.
+	&__collapsible &__section[hidden] {
+		display: none;
+	}
+
+	&__collapsible--open &__groupToggleChevron {
+		transform: rotate(180deg);
+	}
+
 	// A short explanatory line inside the card.
 	&__note {
 		margin: 0;
@@ -133,7 +187,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 			}
 
 			.chatMenuDropdown__itemDescription {
-				color: var(--m3-on-secondary-fixed-variant, #3f4852);
+				color: var(--oriso-menu-hover-description, #3f4852);
 			}
 
 			.chatMenuDropdown__itemIcon {

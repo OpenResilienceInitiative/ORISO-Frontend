@@ -84,6 +84,10 @@ $cc-motion-easing: var(
 		letter-spacing: 0.5px;
 		line-height: 24px;
 		margin: 0;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	/* Figma "Chatroom Actions": 24px stack inside a 128px side inset. */
@@ -747,7 +751,8 @@ body.conversationCreate--active .navigation__wrapper {
 .conversationCreate {
 	&__panelHeader {
 		align-items: center;
-		border-bottom: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-bottom: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		display: flex;
 		padding: 4px;
 	}
@@ -858,7 +863,7 @@ body.conversationCreate--active .navigation__wrapper {
 		background: var(--m3-primary-fixed, #ffdad6);
 		border: none;
 		border-radius: 28px;
-		color: $cc-primary;
+		color: var(--oriso-primary-text-on-fixed, $cc-primary);
 		cursor: pointer;
 		display: flex;
 		flex-shrink: 0;
@@ -1253,13 +1258,29 @@ body.conversationCreate--active .navigation__wrapper {
 /* Figma 7633-34734: "Stacked card" is a fixed 360px wide, 480px tall, radius 28;
    cards sit 32px apart; the round arrows are 128 x 96 with a 100px radius. */
 $cc-card-width: 360px;
-$cc-card-min-height: 480px;
+
+/* Every format card has the same, stable size whatever its copy or state
+   ("1 Person hinzugefügt", a chosen Beratungsstelle, an error): the row never
+   grows or jumps (Frank, 2026-11-21). Longer explanations sit behind the "i"
+   in the card header (`CardInfoButton`); anything that still does not fit
+   scrolls inside the card's content area. */
+$cc-card-height: 600px;
+$cc-compact-card-width: min(85%, 340px);
+$cc-compact-card-height: 390px;
+
+/* M3 emphasized easing: accelerate out, decelerate in. */
+$cc-ease-out: cubic-bezier(0.3, 0, 0.8, 0.15);
+$cc-ease-in: cubic-bezier(0.05, 0.7, 0.1, 1);
 
 .formatCardCarousel {
-	/* Arrows and layout come from the shared HoverScrollArrows (`below`). */
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+
+	/* Arrows come from the shared HoverScrollArrows (`overlay`, the waiting
+	   rooms' edge control); page dots from CarouselDots. */
 	&__scroller {
-		/* Stretch so every format ends up the same height whatever its copy. */
-		align-items: stretch;
 		display: flex;
 		gap: 32px;
 		overflow-x: auto;
@@ -1268,8 +1289,8 @@ $cc-card-min-height: 480px;
 		scroll-snap-type: x mandatory;
 		scrollbar-width: none;
 
-		/* Room for card shadows and focus rings; the snap padding above keeps
-		   the first card at scroll position 0. */
+		/* Room for card shadows, focus rings and the flip's perspective; the
+		   snap padding above keeps the first card at scroll position 0. */
 		padding: 4px;
 
 		&::-webkit-scrollbar {
@@ -1288,10 +1309,153 @@ $cc-card-min-height: 480px;
 
 		> * {
 			flex: 0 0 $cc-card-width;
-			min-height: $cc-card-min-height;
+			height: $cc-card-height;
 			scroll-snap-align: start;
 			width: $cc-card-width;
 		}
+	}
+
+	&--compact &__scroller {
+		gap: 16px;
+
+		> * {
+			flex-basis: $cc-compact-card-width;
+			height: $cc-compact-card-height;
+			width: $cc-compact-card-width;
+		}
+	}
+
+	/* One card: the slot the scroller sizes; the card fills it. */
+	&__slide {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+
+		> .formatCard,
+		> .formatPickerCard {
+			flex: 1;
+			min-height: 0;
+			width: 100%;
+		}
+
+		.formatCard__content {
+			min-height: 0;
+			overflow-y: auto;
+		}
+	}
+}
+
+.formatPickerCard {
+	display: flex;
+	flex-direction: column;
+
+	&__card {
+		flex: 1;
+		min-height: 0;
+		width: 100%;
+	}
+
+	&__choose {
+		@include cc-pill-button;
+
+		background: $cc-primary;
+		color: $cc-on-primary;
+		cursor: pointer;
+		height: 48px;
+		opacity: 1;
+
+		&:hover {
+			background: var(--m3-primary-hover, #7e0008);
+		}
+
+		&:focus-visible {
+			outline: 3px solid $cc-primary;
+			outline-offset: 2px;
+		}
+	}
+}
+
+.conversationCreate__srOnly {
+	block-size: 1px;
+	clip-path: inset(50%);
+	inline-size: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+}
+
+/*
+ * Picking a format (Frank, 2026-11-21): the other cards zoom out to the
+ * right, the chosen one flips away, then the next step rises from below.
+ * Short (420ms out, 320ms in); none of it under prefers-reduced-motion, where
+ * the component also switches the step at once.
+ */
+.conversationCreate__picker[data-leaving] {
+	pointer-events: none;
+
+	.formatCardCarousel__scroller {
+		overflow: visible;
+		perspective: 1400px;
+	}
+
+	.formatCardCarousel__slide:not([data-chosen]) {
+		opacity: 0;
+		transform: translateX(60%) scale(0.85);
+		transition:
+			transform 360ms $cc-ease-out,
+			opacity 300ms $cc-ease-out;
+	}
+
+	.formatCardCarousel__slide[data-chosen] {
+		animation: conversationCreateFlip 420ms $cc-ease-out forwards;
+		backface-visibility: hidden;
+		transform-origin: center;
+	}
+
+	[data-cy='format-card-carousel-dots'],
+	[data-cy^='format-card-carousel-arrows-'] {
+		opacity: 0;
+		transition: opacity 150ms linear;
+	}
+}
+
+@keyframes conversationCreateFlip {
+	0% {
+		transform: rotateY(0deg) scale(1);
+	}
+
+	30% {
+		transform: rotateY(0deg) scale(1.03);
+	}
+
+	100% {
+		opacity: 0.4;
+		transform: rotateY(90deg) scale(0.96);
+	}
+}
+
+.conversationCreate__stepEnter {
+	animation: conversationCreateStepEnter 320ms $cc-ease-in both;
+}
+
+@keyframes conversationCreateStepEnter {
+	from {
+		opacity: 0;
+		transform: translateY(48px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.conversationCreate__picker[data-leaving] .formatCardCarousel__slide,
+	.conversationCreate__stepEnter {
+		animation: none !important;
+		transition: none !important;
 	}
 }
 

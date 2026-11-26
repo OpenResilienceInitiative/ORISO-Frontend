@@ -8,14 +8,20 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
-import { DirectLinkCreateCard } from './DirectLinkCreateCard';
+import {
+	DirectLinkCreateCard,
+	useDirectInvitationSetup
+} from './DirectLinkCreateCard';
 
 const create = vi.fn();
 vi.mock('./useDirectLinks', () => ({
 	useDirectLinks: () => ({ create })
 }));
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string) => key,
+		i18n: { language: 'de' }
+	})
 }));
 /* The dialog has its own tests; here it hands over what a counsellor chose. */
 const dialog = vi.hoisted(() => ({
@@ -198,5 +204,98 @@ describe('DirectLinkCreateCard', () => {
 				.getByRole('button', { name: 'directLink.medium.chat' })
 				.getAttribute('aria-pressed')
 		).not.toBe('true');
+	});
+});
+
+/* #2494 *1: from the calendar the popup stands alone and asks Thema and
+   Name itself; the Art decided the medium. */
+describe('useDirectInvitationSetup — calendar popup', () => {
+	const start = new Date('2026-11-25T10:00:00Z');
+	const end = new Date('2026-11-25T11:00:00Z');
+	const Harness = ({ onCreated }: { onCreated: () => void }) => {
+		const setup = useDirectInvitationSetup({
+			topics: [
+				{ value: '4', label: 'Sucht' },
+				{ value: '5', label: 'Schulden' }
+			],
+			agencies: [{ id: 11, topicIds: [4, 5] }],
+			preset: { start, end, kind: 'video' },
+			onCreated
+		});
+		return (
+			<>
+				<button
+					type="button"
+					onClick={() => setup.startWithDetails('VIDEO')}
+				>
+					open-popup
+				</button>
+				{setup.dialog}
+			</>
+		);
+	};
+
+	it('asks for topic and name, keeps the slot, and creates the link from them', async () => {
+		create.mockResolvedValue({ id: '9' });
+		const onCreated = vi.fn();
+		render(<Harness onCreated={onCreated} />);
+		fireEvent.click(screen.getByText('open-popup'));
+		expect(dialog.props.linkDetails.topics).toHaveLength(2);
+		expect(dialog.props.known).toEqual({ slot: true });
+		expect(dialog.props.description).toBe(
+			'directInvitation.fromCalendarPopup'
+		);
+		expect(dialog.props.initial).toEqual({
+			start,
+			end,
+			withAppointment: true
+		});
+		dialog.value = {
+			appointment: null,
+			link: { validityMinutes: null, access: 'accounts', knock: true },
+			linkDetails: { topic: '5', name: 'Frau M.' }
+		};
+		fireEvent.click(screen.getByText('submit-invitation'));
+		await waitFor(() =>
+			expect(create).toHaveBeenCalledWith({
+				medium: 'VIDEO',
+				topicId: 5,
+				temporary: false,
+				name: 'Frau M.',
+				accessMode: 'ACCOUNTS_ONLY',
+				knock: true
+			})
+		);
+		expect(onCreated).toHaveBeenCalledWith({ id: '9' });
+	});
+
+	it('passes a failed topic load and its retry to the open popup', () => {
+		const retry = vi.fn();
+		const Failed = () => {
+			const setup = useDirectInvitationSetup({
+				topics: [],
+				agencies: [],
+				preset: { start, end },
+				topicsLoadFailed: true,
+				onRetryTopics: retry,
+				onCreated: vi.fn()
+			});
+			return (
+				<>
+					<button
+						type="button"
+						onClick={() => setup.startWithDetails('CHAT')}
+					>
+						open-popup
+					</button>
+					{setup.dialog}
+				</>
+			);
+		};
+		render(<Failed />);
+		fireEvent.click(screen.getByText('open-popup'));
+		expect(dialog.props.linkDetails.loadFailed).toBe(true);
+		dialog.props.linkDetails.onRetry();
+		expect(retry).toHaveBeenCalledTimes(1);
 	});
 });

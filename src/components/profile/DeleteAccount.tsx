@@ -9,7 +9,14 @@ import { apiDeleteAskerAccount, FETCH_ERRORS } from '../../api';
 import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { clearDeletedMatrixAccountStorage } from '../../services/matrixAccountStorage';
+import {
+	captureMatrixAccountForDeletion,
+	clearDeletedMatrixAccountStorage,
+	isDeletedAccountSessionCurrent,
+	type DeletedMatrixAccount
+} from '../../services/matrixAccountStorage';
+
+const RETRY_LOCAL_CLEANUP = 'RETRY_LOCAL_CLEANUP';
 
 export const DeleteAccount = () => {
 	const settings = useAppConfig();
@@ -17,7 +24,10 @@ export const DeleteAccount = () => {
 
 	const [isOverlayActive, setIsOverlayActive] = useState<boolean>(false);
 	const [password, setPassword] = useState<string>('');
-	const [isSuccessOverlay, setIsSuccessOverlay] = useState<boolean>(false);
+	const [deletion, setDeletion] = useState<{
+		account: DeletedMatrixAccount;
+		cleanupComplete: boolean;
+	} | null>(null);
 	const [isPasswordWarningActive, setIsPasswordWarningActive] =
 		useState<boolean>(false);
 	const [isRequestInProgress, setIsRequestInProgress] =
@@ -69,7 +79,7 @@ export const DeleteAccount = () => {
 				label: translate('deleteAccount.confirmOverlay.button.confirm'),
 				function: OVERLAY_FUNCTIONS.DELETE_ACCOUNT,
 				type: BUTTON_TYPES.PRIMARY,
-				disabled: password.length === 0
+				disabled: password.length === 0 || isRequestInProgress
 			},
 			{
 				label: translate('deleteAccount.confirmOverlay.button.deny'),
@@ -79,46 +89,84 @@ export const DeleteAccount = () => {
 		]
 	};
 
+	const cleanupIncomplete = deletion?.cleanupComplete === false;
+	const retryCleanupButton: ButtonItem = {
+		label: translate('deleteAccount.successOverlay.retryCleanup'),
+		function: RETRY_LOCAL_CLEANUP,
+		type: BUTTON_TYPES.PRIMARY,
+		disabled: isRequestInProgress
+	};
 	const overlaySuccess: OverlayItem = {
 		headline: translate('deleteAccount.successOverlay.headline'),
-		svg: CheckIllustration,
+		copy: cleanupIncomplete
+			? translate('deleteAccount.successOverlay.cleanupIncomplete')
+			: undefined,
+		svg: cleanupIncomplete ? undefined : CheckIllustration,
 		buttonSet: [
+			...(cleanupIncomplete && deletion?.account.userId
+				? [retryCleanupButton]
+				: []),
 			{
 				label: translate('deleteAccount.successOverlay.button'),
 				function: OVERLAY_FUNCTIONS.REDIRECT,
-				type: BUTTON_TYPES.SECONDARY
+				type: BUTTON_TYPES.SECONDARY,
+				disabled: isRequestInProgress
 			}
 		]
 	};
 
-	const handleOverlayAction = (buttonFunction: string) => {
+	const finishLocalCleanup = async (account: DeletedMatrixAccount) => {
+		try {
+			const cleanupComplete =
+				await clearDeletedMatrixAccountStorage(account);
+			setDeletion({ account, cleanupComplete });
+		} catch {
+			setDeletion({ account, cleanupComplete: false });
+		} finally {
+			setIsRequestInProgress(false);
+		}
+	};
+
+	const handleOverlayAction = async (buttonFunction: string) => {
+		if (isRequestInProgress) return;
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setIsOverlayActive(false);
 		} else if (
-			!isRequestInProgress &&
-			buttonFunction === OVERLAY_FUNCTIONS.DELETE_ACCOUNT
+			buttonFunction === OVERLAY_FUNCTIONS.DELETE_ACCOUNT &&
+			!deletion
 		) {
+			const account = captureMatrixAccountForDeletion();
 			setIsRequestInProgress(true);
-			apiDeleteAskerAccount(password)
-				.then(async () => {
-					await clearDeletedMatrixAccountStorage();
-					setIsSuccessOverlay(true);
-				})
-				.catch((error) => {
-					if (error.message === FETCH_ERRORS.BAD_REQUEST) {
-						setIsPasswordWarningActive(true);
-						setIsRequestInProgress(false);
-					}
-				});
-		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT) {
-			removeAllCookies();
+			try {
+				await apiDeleteAskerAccount(password);
+			} catch (error) {
+				if (
+					error instanceof Error &&
+					error.message === FETCH_ERRORS.BAD_REQUEST
+				) {
+					setIsPasswordWarningActive(true);
+				}
+				setIsRequestInProgress(false);
+				return;
+			}
+			setPassword('');
+			await finishLocalCleanup(account);
+		} else if (buttonFunction === RETRY_LOCAL_CLEANUP && deletion) {
+			setIsRequestInProgress(true);
+			await finishLocalCleanup(deletion.account);
+		} else if (buttonFunction === OVERLAY_FUNCTIONS.REDIRECT && deletion) {
+			if (isDeletedAccountSessionCurrent(deletion.account))
+				removeAllCookies();
 			window.location.href = settings.urls.home;
 		}
 	};
 
 	return (
 		<>
-			<div className="deleteAccount">
+			<div
+				className="deleteAccount"
+				data-tour-target="settings-delete-account"
+			>
 				<Button
 					item={deleteAccountButton}
 					buttonHandle={() => setIsOverlayActive(true)}
@@ -127,7 +175,7 @@ export const DeleteAccount = () => {
 			{isOverlayActive && (
 				<Overlay
 					className="deleteAccount__overlay"
-					item={isSuccessOverlay ? overlaySuccess : overlayConfirm}
+					item={deletion ? overlaySuccess : overlayConfirm}
 					handleOverlay={handleOverlayAction}
 				/>
 			)}

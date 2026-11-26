@@ -20,8 +20,6 @@ export type SessionToolbarChipFilter =
 	| 'unread'
 	| 'drafts'
 	| 'nearby'
-	// FE#1952: conversations that came in through a counsellor direct link.
-	| 'directLinks'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
@@ -43,14 +41,15 @@ export const normalizeSessionToolbarChip = (
 		case 'neu':
 		case 'unread':
 			return 'unread';
+		// FE#2546: the own Direkteinladungen chip is gone; a saved or linked
+		// ?chip=directLinks opens Mail, where these conversations now are.
 		case 'oneToOne':
 		case 'chats':
 		case 'nearby':
+		case 'directLinks':
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
-		case 'directLinks':
-			return 'directLinks';
 		case 'other':
 			return 'other';
 		case 'liveChat':
@@ -79,10 +78,13 @@ export const isInternalGroupChatSession = (
 ): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
 
 /**
- * FE#1952 (Frank, 2026-10-30): a conversation that came in through a
- * counsellor direct link has its own "Direktlinks" chip and leaves "Mail".
- * Same reading as the row's label (`getDirectLinkMedium`): agency counselling
- * with a direct-link medium.
+ * A conversation that came in through a Direkteinladung: agency counselling
+ * with a direct-link medium (`getDirectLinkMedium`, the row's channel tag).
+ *
+ * FE#2546 (Frank, 2026-11-25): such a conversation is a Mail-Beratung case.
+ * It stays under the "Mail" chip and is classified `oneToOne`; only the row
+ * names the channel (Video / Audio / Chat). This revokes the decision of
+ * 2026-10-30 (FE#1952) that gave it its own "Direktlinks" chip.
  */
 export const isDirectLinkSession = (raw: ListItemInterface): boolean =>
 	getDirectLinkMedium(raw) !== undefined;
@@ -102,6 +104,21 @@ const isSupervisedByMe = (
 	currentUserId: string | undefined
 ): boolean =>
 	getSupervisionListState(extended, currentUserId) === 'supervisedByMe';
+
+/**
+ * #2494 *5: the viewer's own case that a colleague supervises. The row keeps
+ * its own kind (1:1, live chat …); only the Supervision chip, its visibility
+ * and its unread count also take it in, so the chip shows both the cases I
+ * supervise and my cases under supervision (Frank, 24 Nov 2026).
+ */
+export const isOwnCaseUnderSupervision = (
+	raw: ListItemInterface,
+	extended: ExtendedSessionInterface,
+	currentUserId: string | undefined
+): boolean =>
+	Boolean(currentUserId) &&
+	String(raw?.consultant?.id ?? '') === String(currentUserId) &&
+	getSupervisionListState(extended, currentUserId) === 'supervisedByOthers';
 
 /**
  * Exactly one kind per row, evaluated in the spec's order (§5.2): supervision
@@ -145,10 +162,6 @@ export const classifySession = (
 		String(raw.consultant.id) !== String(currentUserId || '')
 	) {
 		return 'supervision';
-	}
-	// FE#1952: a 1:1 conversation that came in through a direct link.
-	if (isDirectLinkSession(raw)) {
-		return 'directLinks';
 	}
 	return 'oneToOne';
 };
@@ -249,9 +262,10 @@ export const countUnreadSupervisedSessions = (
 	currentUserId?: string
 ): number =>
 	pairs.filter(
-		({ extended }) =>
-			getSupervisionListState(extended, currentUserId) ===
-				'supervisedByMe' &&
+		({ raw, extended }) =>
+			(getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' ||
+				isOwnCaseUnderSupervision(raw, extended, currentUserId)) &&
 			isRoomUnread(extended.item?.supervision?.sideRoomId)
 	).length;
 
@@ -309,14 +323,6 @@ export function sessionMatchesToolbar(
 	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
 		return false;
 	}
-	// FE#1952: direct-link conversations have their own chip, not "Mail".
-	const isDirectLink = isDirectLinkSession(raw);
-	if (effectiveChip === 'nearby' && isDirectLink) {
-		return false;
-	}
-	if (effectiveChip === 'directLinks' && !isDirectLink) {
-		return false;
-	}
 
 	if (effectiveChip === 'unread') {
 		// Derived from the Matrix client (#1147) — the DTO's `messagesRead`
@@ -340,11 +346,12 @@ export function sessionMatchesToolbar(
 		}
 	} else if (effectiveChip === 'supervision') {
 		// Same rule as the display filter (#1703): a colleague's group chat
-		// is never supervision, whatever the marker fallback says. The chip
-		// is only listed for consultants who can supervise.
+		// is never supervision, whatever the marker fallback says. My own
+		// cases under supervision count too (#2494 *5).
 		if (
 			classifySession(raw, extended, currentUserId, true) !==
-			'supervision'
+				'supervision' &&
+			!isOwnCaseUnderSupervision(raw, extended, currentUserId)
 		) {
 			return false;
 		}
