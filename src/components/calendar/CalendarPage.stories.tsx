@@ -1088,14 +1088,31 @@ export const ColleaguesBandClick: Story = {
 const MONDAY_BAND = `${new Date(2026, 10, 16, 11).getTime()}-${new Date(2026, 10, 16, 12).getTime()}`;
 const TEAM = ['kaya', 'demir', 'hoffmann', 'nowak'];
 /** A band by its stretch, and a point on it no entry or grip covers. */
-const bandByKey = (root: HTMLElement, key: string) =>
-	waitFor(() => {
-		const band = root.querySelector<HTMLElement>(`[data-band="${key}"]`);
-		expect(band).toBeTruthy();
-		const point = pointOnBand(band!);
-		expect(point).toBeTruthy();
-		return { band: band!, point: point! };
-	});
+const bandByKey = (root: HTMLElement, key: string) => {
+	let previousTop: number | undefined;
+	let stableSamples = 0;
+	return waitFor(
+		() => {
+			const band = root.querySelector<HTMLElement>(
+				`[data-band="${key}"]`
+			);
+			expect(band).toBeTruthy();
+			const point = pointOnBand(band!);
+			expect(point).toBeTruthy();
+			const top = band!.getBoundingClientRect().top;
+			stableSamples =
+				previousTop !== undefined && Math.abs(previousTop - top) < 0.5
+					? stableSamples + 1
+					: 0;
+			previousTop = top;
+			// FullCalendar applies its initial 08:00 scroll after rendering. Do
+			// not retain coordinates from before that scroll and click a later band.
+			expect(stableSamples).toBeGreaterThanOrEqual(2);
+			return { band: band!, point: point! };
+		},
+		{ interval: 50 }
+	);
+};
 
 export const ColleaguesBandCard: Story = {
 	name: 'Colleagues shown — a click on a band: who is busy, in the left column (Frank *16.2)',
