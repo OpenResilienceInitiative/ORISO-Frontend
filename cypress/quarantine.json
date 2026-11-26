@@ -1,14 +1,9 @@
 {
 	"$comment": "Specs that fail on dev and are being repaired under OpenResilienceInitiative/ORISO-Frontend#2572. CI runs them in a separate, non-blocking step so their state stays visible. Remove a spec from this list in the PR that makes it pass.",
 	"specs": [
-		"cypress/e2e/case-handover-reclaim.cy.ts",
 		"cypress/e2e/matrix-call-room-privacy.cy.ts",
 		"cypress/e2e/matrix-live-event-bridge.cy.ts",
 		"cypress/e2e/matrix-send-message-privacy.cy.ts",
-		"cypress/e2e/matrix-session-stream-privacy.cy.ts",
-		"cypress/e2e/message-event-notifications.cy.ts",
-		"cypress/e2e/profile.cy.ts",
-		"cypress/e2e/release-notes.cy.ts",
 		"cypress/e2e/session-list-figma-regression.cy.ts",
 		"cypress/e2e/session-toolbar-filters.cy.ts",
 		"cypress/e2e/sessions.cy.ts",
