@@ -49,7 +49,7 @@
 		height: 8px;
 		border-radius: 50%;
 		background: var(--m3-primary, #a5000a);
-		box-shadow: 0 0 0 2px #ffffff;
+		box-shadow: 0 0 0 2px var(--m3-surface-container-lowest, #ffffff);
 	}
 }
 

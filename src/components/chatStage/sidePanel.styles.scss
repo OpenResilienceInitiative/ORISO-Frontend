@@ -16,7 +16,8 @@
 
 	// Joined to the open chat card: the same surface, a hairline between.
 	&--inside {
-		border-left: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-left: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 	}
 
 	// `--card` and `--fullscreen` also carry `.session`: the card chrome
@@ -156,7 +157,10 @@ $room-actions-gap: 12px;
 		background-size: 100% $room-header-tint-height;
 
 		.panelHeader__divider {
-			border-top-color: var(--m3-primary-fixed-dim, #ffb4aa);
+			border-top-color: var(
+				--oriso-outline-soft,
+				var(--m3-primary-fixed-dim, #ffb4aa)
+			);
 		}
 
 		.panelHeader__kindButton {
@@ -200,6 +204,19 @@ $room-actions-gap: 12px;
 	&--thread {
 		.panelHeader__kindButton {
 			background: var(--m3-surface-container-high, #eae7e8);
+			color: var(--m3-secondary, #4c555f);
+		}
+
+		// Dark: the thread chip sits on a neutral dark surface, not a
+		// `-fixed` fill, so hover/open take the brand text tone made for
+		// dark surfaces instead of the on-fixed ink.
+		html[data-oriso-personal-scheme='dark']
+			&
+			.panelHeader__kindButton:not(:disabled):hover,
+		html[data-oriso-personal-scheme='dark']
+			&
+			.panelHeader__kindButton--open {
+			color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
 		}
 	}
 
@@ -254,7 +271,10 @@ $room-actions-gap: 12px;
 		border: 0;
 		border-radius: 0 0 4px 4px;
 		background: var(--m3-primary-fixed, #ffdad5);
-		color: var(--m3-secondary, #4c555f);
+
+		// On a `-fixed` fill the ink must be an `on-*-fixed` role: the fill
+		// stays light in dark mode, `secondary` does not.
+		color: var(--m3-on-secondary-fixed-variant, #3f4852);
 		font-family: inherit;
 		font-size: 12px;
 		font-weight: 500;
@@ -269,7 +289,10 @@ $room-actions-gap: 12px;
 
 		&:not(:disabled):hover,
 		&--open {
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(
+				--oriso-primary-text-on-fixed,
+				var(--oriso-primary-text, var(--m3-primary, #a5000a))
+			);
 		}
 
 		&:focus-visible {
@@ -397,7 +420,7 @@ $room-actions-gap: 12px;
 		font-weight: 500;
 		line-height: 16px;
 		letter-spacing: 0.5px;
-		color: var(--m3-secondary, #4c555f);
+		color: var(--m3-on-secondary-fixed-variant, #3f4852);
 		background: var(--m3-primary-fixed, #ffdad5);
 		white-space: nowrap;
 	}
@@ -439,7 +462,8 @@ $room-actions-gap: 12px;
 		width: 32px;
 		height: 32px;
 		padding: 0;
-		border: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 		border-radius: 32px;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-on-surface-variant, #444748);
@@ -496,7 +520,8 @@ $room-actions-gap: 12px;
 		align-items: flex-start;
 		min-height: 1px;
 		padding: 0 0 0 37px;
-		border-top: 1px solid var(--m3-primary-fixed, #ffdad5);
+		border-top: 1px solid
+			var(--oriso-outline-soft, var(--m3-primary-fixed, #ffdad5));
 
 		@media screen and (width <= 899px) {
 			padding-left: 0;

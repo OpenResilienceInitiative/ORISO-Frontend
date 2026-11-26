@@ -5,6 +5,11 @@ import { Box, Stack, Typography } from '@mui/material';
 import { OrisoCalendar } from './OrisoCalendar';
 import { OrisoDatePicker } from './OrisoDatePicker';
 import { OrisoTimePicker } from './OrisoTimePicker';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+	describeLowContrast,
+	findLowContrastText
+} from '../designTokens/textContrastContract';
 
 const meta = {
 	title: 'Components/Form/M3DateTime',
@@ -202,4 +207,51 @@ export const TimePicker24h: Story = {
 
 export const StateMatrix: Story = {
 	render: () => <StateMatrixStory />
+};
+
+const darkGlobals = {
+	scheme: 'dark',
+	backgrounds: { value: 'dark' }
+} as const;
+
+/**
+ * P0 dark mode (2026-11-25): the selected day, the dial and the hour/minute
+ * boxes carried light-only literals, so dark mode showed light numbers on a
+ * light dial and white on light pink. Every text must reach AA here.
+ */
+export const CalendarDark: Story = {
+	name: 'Calendar — dark, selected day readable',
+	globals: darkGlobals,
+	render: () => <CalendarStory />,
+	play: async ({ canvasElement }) => {
+		const selected = await waitFor(() => {
+			const day = canvasElement.querySelector(
+				'.orisoCalendarDay--selected'
+			);
+			expect(day).not.toBeNull();
+			return day!;
+		});
+		await expect(
+			describeLowContrast(findLowContrastText(selected.parentElement!))
+		).toEqual([]);
+	}
+};
+
+export const TimePickerDialDark: Story = {
+	name: 'Time picker dial — dark, numbers readable',
+	globals: darkGlobals,
+	render: () => <TimePicker24hStory />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const open = await canvas.findByRole('button', {
+			name: /zeitauswahl öffnen|open time picker/i
+		});
+		await userEvent.click(open);
+		const dialog = await within(document.body).findByRole('dialog');
+		await waitFor(async () => {
+			await expect(
+				describeLowContrast(findLowContrastText(dialog))
+			).toEqual([]);
+		});
+	}
 };
