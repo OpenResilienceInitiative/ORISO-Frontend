@@ -7542,18 +7542,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Votre aperçu",
-		"stats": {
-			"title": "Consultations",
-			"period": "30 derniers jours",
-			"assigned": "Nouvelles prises en charge",
+		"quiet": {
 			"active": "Actives",
-			"archived": "Archivées",
-			"sentMessages": "Messages envoyés"
-		},
-		"circles": {
-			"title": "Prochains groupes d’entraide",
-			"assignedCounsellors": "Équipe de conseil : {{count}}"
+			"assigned": "Nouvellement prises en charge (30 jours)"
 		}
 	},
 	"temporaryAccount": {

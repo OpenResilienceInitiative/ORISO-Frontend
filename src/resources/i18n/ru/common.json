@@ -7559,18 +7559,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Ваш обзор",
-		"stats": {
-			"title": "Консультации",
-			"period": "Последние 30 дней",
-			"assigned": "Новые",
+		"quiet": {
 			"active": "Активные",
-			"archived": "В архиве",
-			"sentMessages": "Отправлено сообщений"
-		},
-		"circles": {
-			"title": "Ближайшие группы самопомощи",
-			"assignedCounsellors": "Консультантов: {{count}}"
+			"assigned": "Новые (30 дней)"
 		}
 	},
 	"temporaryAccount": {

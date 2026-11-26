@@ -7509,18 +7509,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "ሓፈሻዊ ርእይቶኻ",
-		"stats": {
-			"title": "ምኽሪ",
-			"period": "ዝሓለፉ 30 መዓልታት",
-			"assigned": "ሓደሽቲ",
-			"active": "ንጡፋት",
-			"archived": "ዝተዓቀቡ",
-			"sentMessages": "ዝተላእኩ መልእኽትታት"
-		},
-		"circles": {
-			"title": "ዝቕጽሉ ጉጅለታት ርእሰ-ሓገዝ",
-			"assignedCounsellors": "ጉጅለ ኣማኸርቲ፡ {{count}}"
+		"quiet": {
+			"active": "ንጡፍ",
+			"assigned": "ሓደስቲ ዝተቐበልኩምዎም (30 መዓልቲ)"
 		}
 	},
 	"temporaryAccount": {

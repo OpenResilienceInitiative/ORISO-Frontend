@@ -3274,9 +3274,6 @@
 			}
 		}
 	},
-	"dashboard": {
-		"title": "Dein Überblick"
-	},
 	"temporaryAccount": {
 		"keepDialog": {
 			"title": "Sollen deine Nachrichten bleiben?",
