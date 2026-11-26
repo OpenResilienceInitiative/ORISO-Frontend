@@ -478,7 +478,15 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			display: block;
 			max-height: none;
 			min-height: 0;
-			transition: all 220ms ease;
+
+			// Only the inset moves (expand / dock). An `all` transition also faded
+			// the inherited text colour after a theme switch, so the draft showed
+			// light-theme text on the dark field for 220 ms.
+			transition:
+				top 220ms ease,
+				right 220ms ease,
+				bottom 220ms ease,
+				left 220ms ease;
 
 			@media (prefers-reduced-motion: reduce) {
 				transition: none;
