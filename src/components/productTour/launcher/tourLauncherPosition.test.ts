@@ -6,7 +6,9 @@ import {
 	moveTourLauncherPosition,
 	positionFromBox,
 	readTourLauncherPosition,
+	TOUR_LAUNCHER_BOTTOM_NAV_CLEARANCE,
 	TOUR_LAUNCHER_EDGE_GAP,
+	TOUR_LAUNCHER_FOOTER_CLEARANCE,
 	useTourLauncherPosition,
 	writeTourLauncherPosition
 } from './tourLauncherPosition';
@@ -25,11 +27,11 @@ describe('tour launcher position', () => {
 			y: 60
 		});
 		// Centre in the right/bottom half: distances from those edges.
-		expect(positionFromBox(900, 700, viewport, size)).toEqual({
+		expect(positionFromBox(900, 680, viewport, size)).toEqual({
 			h: 'right',
 			x: 1000 - 900 - 56,
 			v: 'bottom',
-			y: 800 - 700 - 56
+			y: 800 - 680 - 56
 		});
 	});
 
@@ -38,7 +40,8 @@ describe('tour launcher position', () => {
 			h: 'left',
 			x: TOUR_LAUNCHER_EDGE_GAP,
 			v: 'bottom',
-			y: TOUR_LAUNCHER_EDGE_GAP
+			// Above the footer links, not on top of them (FE#2340).
+			y: TOUR_LAUNCHER_EDGE_GAP + TOUR_LAUNCHER_FOOTER_CLEARANCE
 		});
 		const farLeft = { h: 'left', x: 900, v: 'top', y: 700 } as const;
 		expect(
@@ -51,8 +54,27 @@ describe('tour launcher position', () => {
 			h: 'left',
 			x: 390 - 56 - TOUR_LAUNCHER_EDGE_GAP,
 			v: 'top',
-			y: 600 - 56 - TOUR_LAUNCHER_EDGE_GAP
+			// 390 px wide: the bottom navigation is kept free.
+			y:
+				600 -
+				56 -
+				TOUR_LAUNCHER_EDGE_GAP -
+				TOUR_LAUNCHER_BOTTOM_NAV_CLEARANCE
 		});
+	});
+
+	it('stays above the footer on desktop and the bottom navigation on the phone', () => {
+		const dropped = { h: 'left', x: 16, v: 'bottom', y: 0 } as const;
+		expect(clampTourLauncherPosition(dropped, viewport, size).y).toBe(
+			TOUR_LAUNCHER_EDGE_GAP + TOUR_LAUNCHER_FOOTER_CLEARANCE
+		);
+		expect(
+			clampTourLauncherPosition(
+				dropped,
+				{ width: 390, height: 844 },
+				size
+			).y
+		).toBe(TOUR_LAUNCHER_EDGE_GAP + TOUR_LAUNCHER_BOTTOM_NAV_CLEARANCE);
 	});
 
 	it('moves by a keyboard step from where the button is now', () => {
@@ -107,6 +129,24 @@ describe('tour launcher position', () => {
 			v: 'bottom',
 			y: 16
 		});
+	});
+
+	it('keeps a move for this page load when storage reads but cannot write', () => {
+		const pos = { h: 'left', x: 24, v: 'top', y: 80 } as const;
+		const set = vi
+			.spyOn(Storage.prototype, 'setItem')
+			.mockImplementation(() => {
+				throw new Error('quota exceeded');
+			});
+		const reader = renderHook(() => useTourLauncherPosition('quota'));
+		act(() => reader.result.current[1](pos));
+		expect(reader.result.current[0]).toEqual(pos);
+		expect(readTourLauncherPosition('quota')).toEqual(pos);
+		// Once storage takes the write again, it is the source of truth.
+		set.mockRestore();
+		act(() => reader.result.current[1](null));
+		expect(reader.result.current[0]).toBeNull();
+		expect(readTourLauncherPosition('quota')).toBeNull();
 	});
 
 	it('falls back to the default corner when storage throws or holds junk', () => {

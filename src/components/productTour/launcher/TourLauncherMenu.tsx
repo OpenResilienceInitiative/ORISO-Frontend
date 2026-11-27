@@ -78,9 +78,14 @@ const progressOf = (tour: TourDefinition, progress: TourLauncherProgress[]) =>
 		(item) => item.tourId === tour.id && item.tourVersion === tour.version
 	);
 
+/**
+ * The box fixed positioning measures from: without the scrollbars, which
+ * `window.innerWidth` would count. Without a layout (jsdom) it is 0 wide,
+ * then the window size stands in.
+ */
 const viewportBox = (): TourLauncherBox => ({
-	width: window.innerWidth,
-	height: window.innerHeight
+	width: document.documentElement.clientWidth || window.innerWidth,
+	height: document.documentElement.clientHeight || window.innerHeight
 });
 
 const sizeOf = (element: HTMLElement | null): TourLauncherBox => {
@@ -171,6 +176,7 @@ export const TourLauncherMenu = ({
 	const listRef = useRef<HTMLUListElement | null>(null);
 	const dragRef = useRef<DragState | null>(null);
 	const suppressClickRef = useRef(false);
+	const suppressClickTimerRef = useRef<number | undefined>(undefined);
 	const menuId = useId();
 	const moveHintId = useId();
 	const movable = !!onMove;
@@ -183,6 +189,11 @@ export const TourLauncherMenu = ({
 		close();
 		fabRef.current?.focus();
 	}, [close]);
+
+	useEffect(
+		() => () => window.clearTimeout(suppressClickTimerRef.current),
+		[]
+	);
 
 	// Clamp to the viewport on resize: the button is never off-screen.
 	useEffect(() => {
@@ -230,7 +241,7 @@ export const TourLauncherMenu = ({
 		if (!rect.width) return;
 		const overflowLeft = TOUR_LAUNCHER_EDGE_GAP - rect.left;
 		const overflowRight =
-			rect.right - (window.innerWidth - TOUR_LAUNCHER_EDGE_GAP);
+			rect.right - (viewportBox().width - TOUR_LAUNCHER_EDGE_GAP);
 		const shift =
 			overflowLeft > 0
 				? overflowLeft
@@ -270,6 +281,13 @@ export const TourLauncherMenu = ({
 	const onPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
 		const drag = dragRef.current;
 		if (!drag || drag.pointerId !== event.pointerId) return;
+		if (event.buttons === 0) {
+			// The press ended somewhere else (released off the button), so
+			// no pointerup came here: this is a hover, not a drag.
+			dragRef.current = null;
+			if (drag.dragging) setDraft(null);
+			return;
+		}
 		const dx = event.clientX - drag.startX;
 		const dy = event.clientY - drag.startY;
 		if (!drag.dragging && Math.hypot(dx, dy) < TOUR_LAUNCHER_DRAG_THRESHOLD)
@@ -299,7 +317,15 @@ export const TourLauncherMenu = ({
 		if (!drag || drag.pointerId !== event.pointerId) return;
 		dragRef.current = null;
 		if (!drag.dragging) return;
-		suppressClickRef.current = event.type === 'pointerup';
+		if (event.type === 'pointerup') {
+			// The click of this release comes in the same task; a touch drag
+			// sends none, so the flag must not wait for the next activation.
+			suppressClickRef.current = true;
+			window.clearTimeout(suppressClickTimerRef.current);
+			suppressClickTimerRef.current = window.setTimeout(() => {
+				suppressClickRef.current = false;
+			}, 0);
+		}
 		const dx = event.clientX - drag.startX;
 		const dy = event.clientY - drag.startY;
 		const next = positionFromBox(

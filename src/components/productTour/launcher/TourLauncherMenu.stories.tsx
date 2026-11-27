@@ -209,6 +209,8 @@ const drag = (target: HTMLElement, toX: number, toY: number) => {
 				pointerId: 7,
 				pointerType: 'mouse',
 				button: 0,
+				// Held while pressing and moving, released on pointerup.
+				buttons: type === 'pointerup' ? 0 : 1,
 				clientX: x,
 				clientY: y
 			})

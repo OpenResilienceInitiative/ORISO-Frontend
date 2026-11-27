@@ -62,6 +62,15 @@ $tour-launcher-footer-clearance: 40px;
 		bottom: auto;
 	}
 
+	// A moved button anchored to the bottom keeps the same clearance as the
+	// default corner: the script reserves the bottom navigation, the safe
+	// area is only known here.
+	@media (width <= 899px) {
+		&--moved:not(.tourLauncher--top) {
+			margin-bottom: env(safe-area-inset-bottom, 0px);
+		}
+	}
+
 	&--moved .tourLauncher__card {
 		display: flex;
 		flex-direction: column;

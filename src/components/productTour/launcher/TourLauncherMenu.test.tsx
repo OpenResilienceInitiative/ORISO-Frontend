@@ -121,7 +121,11 @@ describe('moving the "?"', () => {
 		render(<Stage onMove={onMove} />);
 		placeFab();
 		fireEvent.pointerDown(fab(), { clientX: 950, clientY: 710 });
-		fireEvent.pointerMove(fab(), { clientX: 953, clientY: 713 });
+		fireEvent.pointerMove(fab(), {
+			clientX: 953,
+			clientY: 713,
+			buttons: 1
+		});
 		fireEvent.pointerUp(fab(), { clientX: 953, clientY: 713 });
 		fireEvent.click(fab());
 		expect(onMove).not.toHaveBeenCalled();
@@ -137,10 +141,18 @@ describe('moving the "?"', () => {
 			clientY: 710,
 			pointerType: 'touch'
 		});
-		fireEvent.pointerMove(fab(), { clientX: 400, clientY: 300 });
+		fireEvent.pointerMove(fab(), {
+			clientX: 400,
+			clientY: 300,
+			buttons: 1
+		});
 		// While dragging the button follows the pointer.
 		expect(root().className).toContain('tourLauncher--dragging');
-		fireEvent.pointerMove(fab(), { clientX: 100, clientY: 100 });
+		fireEvent.pointerMove(fab(), {
+			clientX: 100,
+			clientY: 100,
+			buttons: 1
+		});
 		fireEvent.pointerUp(fab(), { clientX: 100, clientY: 100 });
 		fireEvent.click(fab());
 		// 928 − 850 = 78 from the left, 688 − 610 = 78 from the top.
@@ -157,6 +169,50 @@ describe('moving the "?"', () => {
 		expect(root().className).toContain('tourLauncher--left');
 		expect(root().className).toContain('tourLauncher--top');
 		// The next plain press opens the menu again.
+		fireEvent.click(fab());
+		expect(screen.getByRole('menu')).toBeTruthy();
+	});
+
+	it('does not follow a hover after a press that was released off the button', () => {
+		const onMove = vi.fn();
+		render(<Stage onMove={onMove} />);
+		placeFab();
+		// Pressed, slid off, released elsewhere: no pointerup reaches the FAB.
+		fireEvent.pointerDown(fab(), { clientX: 950, clientY: 710 });
+		// The pointer comes back with no button held.
+		fireEvent.pointerMove(fab(), {
+			clientX: 900,
+			clientY: 650,
+			buttons: 0
+		});
+		fireEvent.pointerMove(fab(), {
+			clientX: 400,
+			clientY: 300,
+			buttons: 0
+		});
+		expect(root().className).not.toContain('tourLauncher--dragging');
+		expect(root().dataset.position).toBe('default');
+		expect(onMove).not.toHaveBeenCalled();
+		fireEvent.click(fab());
+		expect(screen.getByRole('menu')).toBeTruthy();
+	});
+
+	it('opens on the next activation after a drag that sent no click (touch)', async () => {
+		render(<Stage />);
+		placeFab();
+		fireEvent.pointerDown(fab(), {
+			clientX: 950,
+			clientY: 710,
+			pointerType: 'touch'
+		});
+		fireEvent.pointerMove(fab(), {
+			clientX: 100,
+			clientY: 100,
+			buttons: 1
+		});
+		fireEvent.pointerUp(fab(), { clientX: 100, clientY: 100 });
+		// No click follows a touch drag; the next one is a keyboard press.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 		fireEvent.click(fab());
 		expect(screen.getByRole('menu')).toBeTruthy();
 	});
@@ -207,7 +263,8 @@ describe('moving the "?"', () => {
 			window.dispatchEvent(new Event('resize'));
 		});
 		expect(root().style.left).toBe(`${390 - 56 - 8}px`);
-		expect(root().style.top).toBe(`${600 - 56 - 8}px`);
+		// 390 px wide: the bottom navigation (76 px) stays free.
+		expect(root().style.top).toBe(`${600 - 56 - 8 - 76}px`);
 	});
 
 	it('offers "Position zurücksetzen" only after a move, and it resets', () => {
