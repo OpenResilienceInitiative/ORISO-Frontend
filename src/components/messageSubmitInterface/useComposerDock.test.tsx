@@ -114,3 +114,44 @@ it.each([8, 10])(
 		).toBe('');
 	}
 );
+
+it('measures the timeline and composer together when the composer is in flow', () => {
+	vi.stubGlobal(
+		'ResizeObserver',
+		class {
+			observe() {}
+			unobserve() {}
+			disconnect() {}
+		}
+	);
+	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+		function (this: HTMLElement) {
+			const height = this.classList.contains('preview-timeline')
+				? 430
+				: this.classList.contains('textarea__wrapper-send-message')
+					? 100
+					: this.classList.contains('preview-composer')
+						? 140
+						: 148;
+			return { height } as DOMRect;
+		}
+	);
+	const PreviewProbe = () => {
+		const dock = useRef<HTMLDivElement>(null);
+		const timeline = useRef<HTMLDivElement>(null);
+		const height = useComposerDock(dock, timeline);
+		return (
+			<div>
+				<div className="preview-timeline" ref={timeline} />
+				<div className="session">
+					<div className="preview-composer" ref={dock}>
+						<div className="textarea__wrapper-send-message" />
+					</div>
+				</div>
+				<output>{height}</output>
+			</div>
+		);
+	};
+	const view = render(<PreviewProbe />);
+	expect(view.container.querySelector('output')?.textContent).toBe('530');
+});

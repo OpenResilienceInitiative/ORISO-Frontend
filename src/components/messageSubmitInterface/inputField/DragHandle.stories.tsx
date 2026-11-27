@@ -135,7 +135,7 @@ export const KeyboardResize: Story = {
 };
 
 /**
- * T50 (Frank, 06.09.): while a composer is focused ("selected") its field
+ * T50 (Frank, 06.09.): while a composer is focused ("selected") its frame
  * wears the 2 px `primary` border (#597, Frontend#1134) — and the pill on its
  * edge takes THAT colour instead of staying the pale `primary-fixed-dim`
  * on an active field.
@@ -177,9 +177,17 @@ export const OnAFocusedComposer: Story = {
 		const active = toRgb(root.getPropertyValue('--m3-primary'));
 		const pale = toRgb(root.getPropertyValue('--m3-primary-fixed-dim'));
 		await expect(active).not.toBe(pale);
-		// The field really is in its selected state (#597: 2 px border) …
-		await expect(getComputedStyle(field).borderTopWidth).toBe('2px');
-		await expect(getComputedStyle(field).borderTopColor).toBe(active);
+		// The 2 px active border sits on the composer frame. On a phone it
+		// sits on the field instead, so exactly one of them carries it.
+		const frame = field.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const frameStyle = getComputedStyle(frame);
+		const fieldStyle = getComputedStyle(field);
+		const outline =
+			frameStyle.borderTopWidth === '2px' ? frameStyle : fieldStyle;
+		await expect(outline.borderTopWidth).toBe('2px');
+		await expect(outline.borderTopColor).toBe(active);
 		// … and the pill wears the same colour, not the pale one (the
 		// surface fades in over 150 ms).
 		await waitFor(async () => {

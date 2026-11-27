@@ -11,6 +11,11 @@
 
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { transportMarkupToComposerHtml } from '../messageSubmitInterface/transportMarkupToComposerHtml';
+import {
+	buildVisibleToPrefix,
+	parseMessagePrefixes,
+	SUPERVISOR_FEEDBACK_PREFIX
+} from '../message/messageConstants';
 
 /** Longest quote preview rendered inside a message bubble. */
 export const REPLY_QUOTE_PREVIEW_MAX_LENGTH = 200;
@@ -31,6 +36,7 @@ export type ReplyQuoteContext = {
 export type EditContext = {
 	eventId: string;
 	text: string;
+	transportPrefix?: string;
 };
 
 const resolveAuthor = (message: QuotableMessage): string =>
@@ -57,7 +63,22 @@ export const buildReplyQuotePreview = (
 });
 
 /** Edit context — editor HTML, so formatting survives the round trip. */
-export const buildEditContext = (message: QuotableMessage): EditContext => ({
-	eventId: message._id || '',
-	text: transportMarkupToComposerHtml(message.message)
-});
+export const buildEditContext = (message: QuotableMessage): EditContext => {
+	const { visibleToUserIds, isSupervisorFeedback } = parseMessagePrefixes(
+		message.message
+	);
+	const transportPrefix = [
+		visibleToUserIds.length ? buildVisibleToPrefix(visibleToUserIds) : '',
+		isSupervisorFeedback ? SUPERVISOR_FEEDBACK_PREFIX : ''
+	]
+		.filter(Boolean)
+		.join(' ');
+	const context: EditContext = {
+		eventId: message._id || '',
+		text: transportMarkupToComposerHtml(message.message)
+	};
+	if (transportPrefix) {
+		context.transportPrefix = transportPrefix;
+	}
+	return context;
+};

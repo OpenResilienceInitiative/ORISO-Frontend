@@ -53,6 +53,7 @@ import { getMenuDirection } from './inputField/menuDirection';
 import {
 	calculateAutoComposerHeight,
 	clampComposerHeight as clampComposerHeightPure,
+	COMPOSER_MOBILE_BREAKPOINT,
 	FLUSH_CONTEXT_BAR_RESERVE,
 	getEffectiveComposerHeight,
 	getComposerHeightBounds as getComposerHeightBoundsPure,
@@ -137,7 +138,7 @@ import {
 	getAttachmentSizeMBForKB,
 	isSupportedAttachment
 } from './attachmentHelpers';
-import { ContentState, convertToRaw, EditorState } from 'draft-js';
+import { convertToRaw, type EditorState } from 'draft-js';
 import { draftToMarkdown } from 'markdown-draft-js';
 import { escapeMarkdownChars, INPUT_MAX_LENGTH } from './richtextHelpers';
 import {
@@ -190,7 +191,7 @@ import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import { useImagePreviewUrl } from './useImagePreviewUrl';
 import { HIGHLIGHT_SNIPPET_SELECTED_EVENT } from './highlightSnippetEvents';
 import { isMyMessage } from '../session/sessionHelpers';
-import { transportMarkupToComposerHtml } from './transportMarkupToComposerHtml';
+import { buildEditContext, type EditContext } from '../session/replyQuote';
 import type { MessageItem } from '../message/MessageItemComponent';
 import { useKeyboardShortcuts } from '../../features/keyboard-shortcuts/context/KeyboardShortcutsProvider';
 import {
@@ -203,6 +204,8 @@ import {
 } from '../../features/keyboard-shortcuts/utils/match';
 
 import { useGuestRetentionGate } from '../temporaryAccount/useGuestRetentionGate';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 
 type AttachmentUploadControl = Pick<XMLHttpRequest, 'abort'>;
 const VOICE_RECORDING_MAX_DURATION_SEC = 180;
@@ -289,6 +292,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * compact bounds). The phone rests at one line regardless.
 	 */
 	compactHeight?: boolean;
+	/** Message list sharing vertical space with an in-flow composer, such as Activity preview. */
+	inFlowTimelineRef?: React.RefObject<HTMLElement | null>;
 	/**
 	 * T40 (Frank, round 6): dual mode — the composer loses its outer
 	 * frame (border + 24 px radius) and its 16 px inner inset; the field
@@ -338,7 +343,7 @@ export interface MessageSubmitInterfaceComponentProps {
 	 * message's text and the next send edits it in place instead of sending
 	 * a new message.
 	 */
-	editingMessage?: { eventId: string; text: string } | null;
+	editingMessage?: EditContext | null;
 	onCancelEdit?: () => void;
 	mobileUnreadCount?: number;
 	mobileIsScrolledToBottom?: boolean;
@@ -500,6 +505,11 @@ const AudienceModeratorIcon = () => (
 
 const VOICE_RECORDING_MIN_HEIGHT = 144;
 
+const getComposerViewport = () =>
+	typeof window === 'undefined'
+		? { width: 1280, height: 800 }
+		: { width: window.innerWidth, height: window.innerHeight };
+
 export const MessageSubmitInterfaceComponent = ({
 	className,
 	onSendButton,
@@ -517,6 +527,7 @@ export const MessageSubmitInterfaceComponent = ({
 	teamDiscussion = false,
 	feedbackMailIntent = false,
 	compactHeight = false,
+	inFlowTimelineRef,
 	flushCorner,
 	accent = 'default',
 	autoFocusEditor = true,
@@ -568,6 +579,7 @@ export const MessageSubmitInterfaceComponent = ({
 		(event: React.FocusEvent<HTMLDivElement>) => {
 			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
 				clearAutoFocusMark();
+				setIsComposerSelected(false);
 			}
 		},
 		[clearAutoFocusMark]
@@ -656,14 +668,12 @@ export const MessageSubmitInterfaceComponent = ({
 	};
 	const [attachmentUpload, setAttachmentUpload] =
 		useState<AttachmentUploadControl | null>(null);
-	const [editorState, setEditorState] = useState(EditorState.createEmpty());
 	const [composerText, setComposerText] = useState('');
 	const [highlightedSnippet, setHighlightedSnippet] = useState<string | null>(
 		null
 	);
 	const composerRef = useRef<TipTapComposerRef | null>(null);
 	// Rich text mode is permanently on; only the value is needed.
-	const [isRichtextActive] = useState(true);
 	const [isConsultantAbsent, setIsConsultantAbsent] = useState(
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 			activeSession.consultant?.absent
@@ -688,17 +698,51 @@ export const MessageSubmitInterfaceComponent = ({
 	 * the composer's growth — both published as CSS variables (T41).
 	 */
 	const dockedWrapperRef = useRef<HTMLDivElement | null>(null);
-	const composerHostHeight = useComposerDock(dockedWrapperRef);
+	const composerHostHeight = useComposerDock(
+		dockedWrapperRef,
+		inFlowTimelineRef
+	);
 	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
 		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
 		useState(true);
-	const [editingMessageId, setEditingMessageId] = useState<string | null>(
-		null
+	const composerConversationKey = JSON.stringify([
+		activeSession.item.id,
+		targetRoomId ?? resolvedChatSession.matrixRoomId,
+		threadRootId
+	]);
+	const composerConversation = useMemo(
+		() => Symbol(composerConversationKey),
+		[composerConversationKey]
 	);
-	const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
-		typeof window !== 'undefined' ? window.innerWidth <= 899 : false
+	const [keyboardEdit, setKeyboardEdit] = useState<{
+		context: EditContext;
+		conversation: symbol;
+	} | null>(null);
+	const localEdit =
+		keyboardEdit?.conversation === composerConversation
+			? keyboardEdit.context
+			: null;
+	const editingMessageId = localEdit?.eventId ?? null;
+	const activeEdit = editingMessage ?? localEdit;
+	const editTargetEventId = activeEdit?.eventId;
+	const editTransportPrefix = activeEdit?.transportPrefix;
+	const editScope = useMemo(
+		() =>
+			Symbol(`${composerConversation.description}|${editTargetEventId}`),
+		[composerConversation, editTargetEventId]
 	);
+	const currentEditScope = useRef(editScope);
+	useLayoutEffect(() => {
+		currentEditScope.current = editScope;
+		return () => {
+			currentEditScope.current = null;
+		};
+	}, [editScope]);
+	const [composerViewport, setComposerViewport] =
+		useState(getComposerViewport);
+	const isMobileViewport =
+		composerViewport.width <= COMPOSER_MOBILE_BREAKPOINT;
 	const [isExpandedComposer, setIsExpandedComposer] = useState(false);
 	// Inside the Drafts center iframe the embedding page widens the frame.
 	const composerOwnerId = useId();
@@ -734,6 +778,8 @@ export const MessageSubmitInterfaceComponent = ({
 		pointerId: number;
 		startY: number;
 		startHeight: number;
+		previousHeight: number | null;
+		moved: boolean;
 	} | null>(null);
 	const [isAudienceMenuOpen, setIsAudienceMenuOpen] = useState(false);
 	// Only the setter is needed while the audience blur overlay is disabled
@@ -956,7 +1002,6 @@ export const MessageSubmitInterfaceComponent = ({
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
 			try {
-				setEditorState(loadedState);
 				const draftValue = (rawDraft || '').trim();
 				if (draftValue) {
 					// TipTap drafts are saved as HTML now; load raw draft directly to preserve formatting.
@@ -1042,10 +1087,8 @@ export const MessageSubmitInterfaceComponent = ({
 			setComposerText(nextValue);
 			onDraftMessageChange(nextValue);
 			if (isTyping) {
-				isTyping(!nextValue.trim().length);
+				isTyping(!getPlainTextFromComposerValue(nextValue).trim());
 			}
-			const draftContentState = ContentState.createFromText(nextValue);
-			setEditorState(EditorState.createWithContent(draftContentState));
 		},
 		[isTyping, onDraftMessageChange]
 	);
@@ -1109,28 +1152,6 @@ export const MessageSubmitInterfaceComponent = ({
 			setActiveInfo(INFO_TYPES.ABSENT);
 		}
 	}, [activeInfo]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		resizeTextarea();
-		const toolbar: HTMLDivElement | null =
-			document.querySelector('.textarea__toolbar');
-		const richtextToggle: HTMLSpanElement | null = document.querySelector(
-			'.textarea__richtextToggle'
-		);
-		if (isRichtextActive) {
-			toolbar?.classList.add('textarea__toolbar--active');
-			richtextToggle?.classList.add('textarea__richtextToggle--active');
-		} else {
-			toolbar?.classList.remove('textarea__toolbar--active');
-			richtextToggle?.classList.remove(
-				'textarea__richtextToggle--active'
-			);
-		}
-	}, [isRichtextActive]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		resizeTextarea();
-	}, [attachmentSelected]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const removeSelectedAttachment = useCallback(() => {
 		const attachmentInput: any = attachmentInputRef.current;
@@ -1298,7 +1319,6 @@ export const MessageSubmitInterfaceComponent = ({
 		// the editor only if it has a draft of its own. An edit brings its own
 		// text.
 		if (!editingMessage && !editingMessageId) {
-			setEditorState(EditorState.createEmpty());
 			setComposerText('');
 			composerRef.current?.clear();
 		}
@@ -1309,214 +1329,6 @@ export const MessageSubmitInterfaceComponent = ({
 		editingMessage,
 		editingMessageId
 	]);
-
-	const scrollEditorToBottom = useCallback(() => {
-		const textInput: any = textareaInputRef.current;
-		if (!textInput) return;
-
-		// Find all possible scrollable elements
-		const editorContent = textInput.querySelector(
-			'.public-DraftEditor-content'
-		);
-		const editorRoot = textInput.querySelector('.DraftEditor-root');
-		const editorContentDiv = textInput.querySelector(
-			'.public-DraftEditor-content > div'
-		);
-
-		// Function to perform the scroll on all possible elements
-		const doScroll = () => {
-			// Scroll the main editor content
-			if (editorContent) {
-				const scrollHeight = editorContent.scrollHeight;
-				const clientHeight = editorContent.clientHeight;
-				if (scrollHeight > clientHeight) {
-					editorContent.scrollTop = scrollHeight + 1000;
-				}
-			}
-
-			// Scroll the editor root container
-			if (editorRoot) {
-				const scrollHeight = editorRoot.scrollHeight;
-				const clientHeight = editorRoot.clientHeight;
-				if (scrollHeight > clientHeight) {
-					editorRoot.scrollTop = scrollHeight + 1000;
-				}
-			}
-
-			// Scroll the textInput container itself
-			if (textInput.scrollHeight > textInput.clientHeight) {
-				textInput.scrollTop = textInput.scrollHeight + 1000;
-			}
-
-			// Try scrollIntoView on the last element as fallback
-			if (editorContentDiv) {
-				const lastChild = editorContentDiv.lastElementChild;
-				if (lastChild) {
-					lastChild.scrollIntoView({
-						behavior: 'auto',
-						block: 'end',
-						inline: 'nearest'
-					});
-				}
-			}
-		};
-
-		// Scroll immediately
-		doScroll();
-
-		// Scroll after DOM update (requestAnimationFrame) - multiple frames for rich text
-		requestAnimationFrame(() => {
-			doScroll();
-			requestAnimationFrame(() => {
-				doScroll();
-				// Extra frames for rich text mode (Draft.js + toolbar needs more time)
-				if (isRichtextActive) {
-					requestAnimationFrame(() => {
-						doScroll();
-						requestAnimationFrame(() => {
-							doScroll();
-							requestAnimationFrame(() => {
-								doScroll();
-							});
-						});
-					});
-				}
-			});
-		});
-
-		// Multiple delayed scrolls to catch late DOM updates
-		// When rich text is active with toolbar, we need even more aggressive scrolling
-		if (isRichtextActive) {
-			setTimeout(() => doScroll(), 0);
-			setTimeout(() => doScroll(), 10);
-			setTimeout(() => doScroll(), 30);
-			setTimeout(() => doScroll(), 50);
-			setTimeout(() => doScroll(), 100);
-			setTimeout(() => doScroll(), 200);
-			setTimeout(() => doScroll(), 400);
-			setTimeout(() => doScroll(), 600);
-			setTimeout(() => doScroll(), 800);
-			setTimeout(() => doScroll(), 1000);
-		} else {
-			setTimeout(() => doScroll(), 10);
-			setTimeout(() => doScroll(), 50);
-			setTimeout(() => doScroll(), 100);
-		}
-	}, [isRichtextActive]);
-
-	// Auto-scroll when editorState changes (especially for Enter key creating new lines in rich text mode)
-	// This useEffect watches for editorState changes and scrolls, catching cases where
-	// handleEditorChange might not trigger scroll properly (e.g., Enter key creating new lines)
-	// Only needed when rich text formatting is active (Draft.js editor)
-	useEffect(() => {
-		if (editorState && draftLoaded && isRichtextActive) {
-			// Use multiple attempts with longer delays to catch DOM updates at different stages
-			// Enter key especially needs time for Draft.js to render the new line
-			// Rich text mode needs more aggressive scrolling due to Draft.js DOM update delays
-			const timeoutId1 = setTimeout(() => scrollEditorToBottom(), 0);
-			const timeoutId2 = setTimeout(() => scrollEditorToBottom(), 50);
-			const timeoutId3 = setTimeout(() => scrollEditorToBottom(), 150);
-			const timeoutId4 = setTimeout(() => scrollEditorToBottom(), 300);
-			const timeoutId5 = setTimeout(() => scrollEditorToBottom(), 500);
-			const timeoutId6 = setTimeout(() => scrollEditorToBottom(), 700);
-			return () => {
-				clearTimeout(timeoutId1);
-				clearTimeout(timeoutId2);
-				clearTimeout(timeoutId3);
-				clearTimeout(timeoutId4);
-				clearTimeout(timeoutId5);
-				clearTimeout(timeoutId6);
-			};
-		}
-	}, [editorState, draftLoaded, isRichtextActive, scrollEditorToBottom]);
-
-	const resizeTextarea = useCallback(() => {
-		const textInput: any = textareaInputRef.current;
-		if (!textInput) return;
-		// Figma-locked composer uses fixed geometry; avoid runtime inline style overrides.
-		// With an attachment the editor is not mounted at all, and these styles
-		// took the field's bottom edge away.
-		if (composerRef.current || attachmentSelected) {
-			return;
-		}
-
-		// Check if editor is empty - if so, reset to default height
-		const hasText = editorState.getCurrentContent().hasText();
-
-		// default values
-		let textareaMaxHeight;
-		if (window.innerWidth <= 900) {
-			textareaMaxHeight = 118;
-		} else {
-			textareaMaxHeight = 218;
-		}
-		const fileHeight = 48;
-
-		// Default min heights from CSS: mobile 88px, desktop 106px
-		const defaultMinHeight = window.innerWidth <= 900 ? 88 : 106;
-
-		// If editor is empty, force it back to default height
-		if (!hasText) {
-			let textInputStyles = `height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important; min-height: ${defaultMinHeight}px !important; overflow-y: hidden !important;`;
-			const textInputMarginTop = '';
-			const textInputMarginBottom = attachmentSelected
-				? `margin-bottom: ${fileHeight}px !important;`
-				: '';
-			textInputStyles += ` ${textInputMarginTop} ${textInputMarginBottom}`;
-
-			if (attachmentSelected) {
-				textInputStyles += `border-bottom: none !important; border-bottom-right-radius: 0 !important;`;
-			}
-
-			textInput.setAttribute('style', textInputStyles);
-
-			// Force Draft.js containers to reset height
-			const editorContainer = textInput.querySelector('.ProseMirror');
-			if (editorContainer) {
-				editorContainer.setAttribute(
-					'style',
-					`height: ${defaultMinHeight}px !important; max-height: ${defaultMinHeight}px !important;`
-				);
-			}
-			const editorContentDiv = textInput.querySelector('.ProseMirror p');
-			if (editorContentDiv) {
-				editorContentDiv.setAttribute(
-					'style',
-					`height: auto !important; max-height: none !important;`
-				);
-			}
-			return;
-		}
-
-		// If editor has text, allow it to grow normally
-		const textHeight = document.querySelector('.ProseMirror')?.scrollHeight;
-		let textInputMaxHeight = textareaMaxHeight;
-		textInputMaxHeight = attachmentSelected
-			? textInputMaxHeight - fileHeight
-			: textInputMaxHeight;
-
-		const currentInputHeight =
-			textHeight > textInputMaxHeight ? textInputMaxHeight : textHeight;
-
-		// add input styles
-		const currentOverflow =
-			textHeight <= textareaMaxHeight
-				? 'overflow-y: hidden;'
-				: 'overflow-y: scroll;';
-		const textInputMarginTop = '';
-		const textInputMarginBottom = attachmentSelected
-			? `margin-bottom: ${fileHeight}px;`
-			: '';
-		let textInputStyles = `min-height: ${currentInputHeight}px; ${currentOverflow} ${textInputMarginTop} ${textInputMarginBottom}`;
-		textInputStyles = attachmentSelected
-			? textInputStyles +
-				`border-bottom: none; border-bottom-right-radius: 0;`
-			: textInputStyles;
-		textInput?.setAttribute('style', textInputStyles);
-
-		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
-		scrollEditorToBottom();
-	}, [attachmentSelected, editorState, scrollEditorToBottom]);
 
 	// Keep chat input ready for direct typing when opening/changing chats.
 	useEffect(() => {
@@ -1557,6 +1369,10 @@ export const MessageSubmitInterfaceComponent = ({
 				composerRef.current?.resetTextAlign();
 				focusEditorInput();
 			});
+			// The app's initial cursor is not an explicit request to expand the dock.
+			if (composerCardRef.current?.hasAttribute(AUTO_FOCUS_ATTRIBUTE)) {
+				setIsComposerSelected(false);
+			}
 		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
@@ -1667,7 +1483,6 @@ export const MessageSubmitInterfaceComponent = ({
 					});
 				})
 				.then(async () => {
-					setEditorState(EditorState.createEmpty());
 					setComposerText('');
 					composerRef.current?.clear();
 					await clearDraftMessage();
@@ -1723,7 +1538,6 @@ export const MessageSubmitInterfaceComponent = ({
 				setIsRequestInProgress(false);
 				return;
 			}
-			setEditorState(EditorState.createEmpty());
 			setComposerText('');
 			composerRef.current?.clear();
 			/**
@@ -1738,19 +1552,6 @@ export const MessageSubmitInterfaceComponent = ({
 			setIsAudienceMenuOpen(false);
 			const draftCleared = clearDraftMessage();
 			setActiveInfo('');
-			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
-			setTimeout(() => {
-				resizeTextarea();
-			}, 0);
-			setTimeout(() => {
-				resizeTextarea();
-			}, 50);
-			setTimeout(() => {
-				resizeTextarea();
-			}, 100);
-			setTimeout(() => {
-				resizeTextarea();
-			}, 200);
 			// Loading or saving the next draft must not cross the pending
 			// outgoing PATCH → DELETE, even when transport takes over 1200 ms.
 			void Promise.allSettled([
@@ -1763,8 +1564,7 @@ export const MessageSubmitInterfaceComponent = ({
 			onMessageSendSuccess,
 			reloadActiveSession,
 			resolvedChatSession.isMatrixSession,
-			resolvedChatSession.matrixRoomId,
-			resizeTextarea
+			resolvedChatSession.matrixRoomId
 		]
 	);
 
@@ -1795,6 +1595,81 @@ export const MessageSubmitInterfaceComponent = ({
 						clientRoomId: resolvedChatSession.matrixRoomId
 					})
 				: undefined;
+			// The keyboard shortcut and message menu update the same Matrix event
+			// through the same rich-text transport.
+			if (editTargetEventId && !retryOfId) {
+				const notificationId = `message-edit-failed-${editTargetEventId}`;
+				try {
+					if (!clientRoomId) {
+						throw new Error(
+							'Cannot edit message: session has no Matrix room'
+						);
+					}
+					await chatTransportService.editTextMessage({
+						matrixRoomId: clientRoomId,
+						targetEventId: editTargetEventId,
+						message
+					});
+				} catch (error) {
+					setIsRequestInProgress(false);
+					if (currentEditScope.current === editScope) {
+						const title = translate(
+							'message.submit.editFailedTitle'
+						);
+						const text = translate('message.submit.editFailedText');
+						appSnackbarStack.enqueue({
+							id: notificationId,
+							announcement: `${title}. ${text}`,
+							render: ({ dismiss }) => (
+								<M3Snackbar
+									placement="inline"
+									tone="error"
+									message={
+										<>
+											<strong>{title}</strong>
+											<br />
+											{text}
+										</>
+									}
+									onClose={dismiss}
+									closeLabel={translate('app.close')}
+								/>
+							)
+						});
+					}
+					const failure = error instanceof Error ? error : null;
+					void apiPostError({
+						name: failure?.name || 'MatrixMessageEditError',
+						message:
+							failure?.message ||
+							'Failed to edit Matrix chat message',
+						stack: failure?.stack,
+						level: ERROR_LEVEL_WARN
+					});
+					return;
+				}
+				appSnackbarStack.dismiss(notificationId);
+				if (currentEditScope.current !== editScope) {
+					setIsRequestInProgress(false);
+					return;
+				}
+				if (editingMessageId) {
+					onLocalMessageEdit?.(editTargetEventId, message);
+				}
+				if (
+					rawMessage !== undefined &&
+					getTypedMarkdownMessage() !== rawMessage
+				) {
+					setIsRequestInProgress(false);
+					return;
+				}
+				onSendButton?.();
+				setKeyboardEdit(null);
+				handleMessageSendSuccess(preserveComposerOnSuccess);
+				onCancelEdit?.();
+				return;
+			}
+
 			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
 			// go to the supervision side room, never the client-facing room.
 			const asideRouting = resolveAsideTargetRoomId({
@@ -1820,44 +1695,6 @@ export const MessageSubmitInterfaceComponent = ({
 				asideRouting.targetRoomId ||
 				undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
-
-			// Editing (m.replace, #435): replaces the target event's content;
-			// no attachments, prefixes, or reply/thread relations apply.
-			if (editingMessage && !retryOfId) {
-				if (!matrixRoomId) {
-					setIsRequestInProgress(false);
-					apiPostError({
-						name: 'MatrixMessageEditError',
-						message:
-							'Cannot edit message: session has no Matrix room',
-						level: ERROR_LEVEL_WARN
-					}).then();
-					return;
-				}
-				await chatTransportService
-					.editTextMessage({
-						matrixRoomId,
-						targetEventId: editingMessage.eventId,
-						message
-					})
-					.then(() => {
-						onSendButton && onSendButton();
-						handleMessageSendSuccess(preserveComposerOnSuccess);
-						onCancelEdit && onCancelEdit();
-					})
-					.catch((error) => {
-						setIsRequestInProgress(false);
-						apiPostError({
-							name: error?.name || 'MatrixMessageEditError',
-							message:
-								error?.message ||
-								'Failed to edit Matrix chat message',
-							stack: error?.stack,
-							level: ERROR_LEVEL_WARN
-						}).then();
-					});
-				return;
-			}
 
 			const hasTextContent = hasMessageContent(message);
 			// The composer stays mounted across chats, and a running send keeps
@@ -2080,7 +1917,12 @@ export const MessageSubmitInterfaceComponent = ({
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
-			editingMessage,
+			editTargetEventId,
+			editScope,
+			editingMessageId,
+			getTypedMarkdownMessage,
+			onLocalMessageEdit,
+			translate,
 			onCancelEdit,
 			userData?.displayName,
 			userData?.firstName,
@@ -2157,6 +1999,22 @@ export const MessageSubmitInterfaceComponent = ({
 				: isRecordedVoiceSend
 					? ''
 					: composerHtmlToTransportMarkup(currentTypedMessage);
+			// Editing replaces the original event in this pane's room. The
+			// recipient and aside settings apply to newly composed messages.
+			if (editTargetEventId && !retryOfId) {
+				await sendMessage(
+					editTransportPrefix
+						? `${editTransportPrefix} ${message}`
+						: message,
+					null,
+					false,
+					false,
+					undefined,
+					currentTypedMessage,
+					preserveComposerOnSuccess
+				);
+				return;
+			}
 			if (
 				!retryContext &&
 				retainsGroupAudience &&
@@ -2238,35 +2096,6 @@ export const MessageSubmitInterfaceComponent = ({
 			// chatTransportService signature.
 			const isEncrypted = false;
 
-			// Shortcut: edit an existing message via Matrix m.replace
-			if (editingMessageId && !retryOfId) {
-				// The shortcut edits a message from this composer, so it must use
-				// the same explicit side-room target as a normal send. Falling back
-				// directly to the active session here would leak supervision edits
-				// into the client room.
-				const editRoomId = resolvePrimaryRoomId({
-					targetRoomId,
-					clientRoomId: resolvedChatSession.matrixRoomId
-				});
-				if (editRoomId && matrixClientService) {
-					try {
-						await matrixClientService.editMessage(
-							editRoomId,
-							editingMessageId,
-							getPlainTextFromComposerValue(message) || message
-						);
-						onLocalMessageEdit?.(editingMessageId, message);
-					} catch {
-						// Editing failed silently — fall through to clear state
-					}
-				}
-				setEditingMessageId(null);
-				setIsRequestInProgress(false);
-				composerRef.current?.clear();
-				setComposerText('');
-				return;
-			}
-
 			const sendCurrentMessage = () =>
 				sendMessage(
 					message,
@@ -2312,20 +2141,17 @@ export const MessageSubmitInterfaceComponent = ({
 			feedbackMailIntent,
 			teamDiscussion,
 			audienceOptions,
-			editingMessageId,
+			editTargetEventId,
+			editTransportPrefix,
 			getTypedMarkdownMessage,
 			hasMessageContent,
 			askerMessageTransport,
 			currentChatType,
 			isClientUser,
 			isSupervisor,
-			matrixClientService,
-			onLocalMessageEdit,
-			resolvedChatSession,
 			selectedAudienceValues,
 			sendEnquiry,
-			sendMessage,
-			targetRoomId
+			sendMessage
 		]
 	);
 
@@ -2395,7 +2221,6 @@ export const MessageSubmitInterfaceComponent = ({
 				) {
 					return;
 				}
-				setEditorState(EditorState.createEmpty());
 				setComposerText('');
 				composerRef.current?.clear();
 				void clearDraftMessage();
@@ -3874,13 +3699,16 @@ export const MessageSubmitInterfaceComponent = ({
 		!hasMessageContent(composerText) && !attachmentSelected;
 
 	const handleEditLast = useCallback((): boolean => {
-		if (!messages || messages.length === 0) {
+		if (editTargetEventId || !messages?.length) {
 			return false;
 		}
 		const owns = isOwnMessage ?? isMyMessage;
 		for (let i = messages.length - 1; i >= 0; i--) {
 			const msg = messages[i];
-			if (!owns(msg.userId)) {
+			if (
+				!owns(msg.userId) ||
+				(msg.threadRootEventId ?? null) !== (threadRootId ?? null)
+			) {
 				continue;
 			}
 			// Skip deleted (t === 'rm') and aliased (system) messages
@@ -3890,18 +3718,28 @@ export const MessageSubmitInterfaceComponent = ({
 			if (!msg.message?.trim()) {
 				continue;
 			}
-			const composerHtml = transportMarkupToComposerHtml(msg.message);
-			if (!hasMessageContent(composerHtml)) {
+			const edit = buildEditContext(msg);
+			if (!hasMessageContent(edit.text)) {
 				continue;
 			}
-			setEditingMessageId(msg._id);
-			setComposerText(composerHtml);
-			composerRef.current?.setText(composerHtml);
+			setKeyboardEdit({
+				context: edit,
+				conversation: composerConversation
+			});
+			setComposerText(edit.text);
+			composerRef.current?.setText(edit.text);
 			requestAnimationFrame(() => composerRef.current?.focus());
 			return true;
 		}
 		return false;
-	}, [messages, isOwnMessage, hasMessageContent]);
+	}, [
+		messages,
+		isOwnMessage,
+		hasMessageContent,
+		composerConversation,
+		editTargetEventId,
+		threadRootId
+	]);
 
 	const handleCancelEdit = useCallback((): boolean => {
 		if (isEmojiStripOpen) {
@@ -3909,7 +3747,7 @@ export const MessageSubmitInterfaceComponent = ({
 			return true;
 		}
 		if (editingMessageId) {
-			setEditingMessageId(null);
+			setKeyboardEdit(null);
 			setComposerText('');
 			composerRef.current?.clear();
 			requestAnimationFrame(() => composerRef.current?.focus());
@@ -4227,8 +4065,15 @@ export const MessageSubmitInterfaceComponent = ({
 		if (typeof window === 'undefined') {
 			return;
 		}
-		const handleResize = () =>
-			setIsMobileViewport(window.innerWidth <= 899);
+		const handleResize = () => {
+			const viewport = getComposerViewport();
+			setComposerViewport((previous) =>
+				previous.width === viewport.width &&
+				previous.height === viewport.height
+					? previous
+					: viewport
+			);
+		};
 		handleResize();
 		window.addEventListener('resize', handleResize);
 		return () => window.removeEventListener('resize', handleResize);
@@ -4248,21 +4093,59 @@ export const MessageSubmitInterfaceComponent = ({
 		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
+	const isIdleEmptyComposer =
+		isComposerEmpty &&
+		!isComposerSelected &&
+		!isComposerResizing &&
+		!isExpandedComposer &&
+		!isVoiceRecording &&
+		!replyTo &&
+		!editingMessage &&
+		!pendingQuotes?.length &&
+		composerHeight === null;
+
 	const getComposerHeightBounds = useCallback(
-		() =>
+		(
+			viewport = composerViewport,
+			compact = compactHeight || isIdleEmptyComposer
+		) =>
 			getComposerHeightBoundsPure({
-				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight,
-				compact: compactHeight,
+				viewportWidth: viewport.width,
+				viewportHeight: viewport.height,
+				compact,
 				flush: flushCorner !== undefined,
 				hostHeight: composerHostHeight
 			}),
-		[compactHeight, flushCorner, composerHostHeight]
+		[
+			composerViewport,
+			compactHeight,
+			isIdleEmptyComposer,
+			flushCorner,
+			composerHostHeight
+		]
 	);
+
+	// Only geometry constrains a saved manual height. Focusing an idle editor
+	// changes its resting size without altering the existing drag height.
+	const { minHeight: manualMinHeight, maxHeight: manualMaxHeight } =
+		getComposerHeightBounds(composerViewport, compactHeight);
+	useLayoutEffect(() => {
+		setComposerHeight((height) =>
+			height === null
+				? null
+				: clampComposerHeightPure(height, {
+						minHeight: manualMinHeight,
+						maxHeight: manualMaxHeight
+					})
+		);
+	}, [manualMinHeight, manualMaxHeight]);
 
 	const clampComposerHeight = useCallback(
 		(height: number) =>
-			clampComposerHeightPure(height, getComposerHeightBounds()),
+			clampComposerHeightPure(
+				height,
+				getComposerHeightBounds(getComposerViewport())
+			),
 		[getComposerHeightBounds]
 	);
 
@@ -4286,7 +4169,9 @@ export const MessageSubmitInterfaceComponent = ({
 					),
 					getComposerHeightBounds().maxHeight
 				)
-			: effectiveComposerHeight;
+			: isMobileViewport && isComposerSelected && composerHeight === null
+				? Math.max(effectiveComposerHeight || composerMinHeight, 140)
+				: effectiveComposerHeight;
 
 	// A dragged height belongs to one conversation only. Keeping the component
 	// mounted while routing between sessions must not carry that geometry over.
@@ -4316,7 +4201,7 @@ export const MessageSubmitInterfaceComponent = ({
 			? FLUSH_CONTEXT_BAR_RESERVE
 			: 0;
 	useLayoutEffect(() => {
-		if (isExpandedComposer) {
+		if (isExpandedComposer || isComposerResizing) {
 			return;
 		}
 		const input = textareaInputRef.current;
@@ -4359,6 +4244,7 @@ export const MessageSubmitInterfaceComponent = ({
 		flushContextBarReserve,
 		getComposerHeightBounds,
 		isExpandedComposer,
+		isComposerResizing,
 		isMobileViewport
 	]);
 
@@ -4387,11 +4273,15 @@ export const MessageSubmitInterfaceComponent = ({
 				effectiveComposerHeight ||
 				getComposerHeightBounds().minHeight;
 
+			setComposerHeight(startHeight);
 			composerResizeStartRef.current = {
 				pointerId: e.pointerId,
 				startY: e.clientY,
-				startHeight
+				startHeight,
+				previousHeight: composerHeight,
+				moved: false
 			};
+			target.focus({ preventScroll: true });
 			setIsComposerResizing(true);
 
 			try {
@@ -4405,6 +4295,7 @@ export const MessageSubmitInterfaceComponent = ({
 				}
 
 				const deltaY = event.clientY - start.startY;
+				if (deltaY !== 0) start.moved = true;
 				setComposerHeight(
 					clampComposerHeight(start.startHeight - deltaY)
 				);
@@ -4424,6 +4315,19 @@ export const MessageSubmitInterfaceComponent = ({
 				try {
 					target.releasePointerCapture(e.pointerId);
 				} catch {}
+				const start = composerResizeStartRef.current;
+				if (
+					start &&
+					(!start.moved || event?.type === 'pointercancel')
+				) {
+					// The viewport may have shrunk during the drag: the restored height
+					// must fit the current bounds too.
+					setComposerHeight(
+						start.previousHeight === null
+							? null
+							: clampComposerHeight(start.previousHeight)
+					);
+				}
 				composerResizeStartRef.current = null;
 				setIsComposerResizing(false);
 			};
@@ -4434,11 +4338,31 @@ export const MessageSubmitInterfaceComponent = ({
 		},
 		[
 			clampComposerHeight,
+			composerHeight,
 			effectiveComposerHeight,
 			getComposerHeightBounds,
 			setComposerHeight
 		]
 	);
+
+	const selectComposerFromControl = (
+		event:
+			| React.FocusEvent<HTMLDivElement>
+			| React.MouseEvent<HTMLDivElement>
+	) => {
+		// A pointer press on the resize handle focuses the button for keyboard
+		// access. Its ensuing click must also leave the mobile editor at rest.
+		if (
+			isMobileViewport &&
+			(composerResizeStartRef.current ||
+				('detail' in event && event.detail > 0)) &&
+			event.target instanceof Element &&
+			event.target.closest('.dragHandle')
+		) {
+			return;
+		}
+		setIsComposerSelected(true);
+	};
 
 	const handleComposerResizeKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -4558,7 +4482,7 @@ export const MessageSubmitInterfaceComponent = ({
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
 								'textarea__wrapper-send-message--resizing',
-							compactHeight &&
+							(compactHeight || isIdleEmptyComposer) &&
 								'textarea__wrapper-send-message--compact',
 							flushCorner &&
 								'textarea__wrapper-send-message--flush',
@@ -4570,8 +4494,13 @@ export const MessageSubmitInterfaceComponent = ({
 						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onFocusCapture={selectComposerFromControl}
 						onPointerDownCapture={clearAutoFocusMark}
-						onKeyDownCapture={clearAutoFocusMark}
+						onClickCapture={selectComposerFromControl}
+						onKeyDownCapture={() => {
+							clearAutoFocusMark();
+							setIsComposerSelected(true);
+						}}
 						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
@@ -5051,54 +4980,6 @@ export const MessageSubmitInterfaceComponent = ({
 								// Where the closing animation of a waiting room ends
 								// (ORISO-Frontend#1737).
 								data-closing-focal="message-field"
-								onKeyUp={(e) => {
-									resizeTextarea();
-									// Auto-scroll on Enter key or any key press
-									// Enter key especially needs multiple delayed scrolls to catch DOM updates
-									// Rich text mode needs more aggressive scrolling due to Draft.js DOM update delays
-									if (e.key === 'Enter' && isRichtextActive) {
-										// Multiple delayed scrolls for Enter key in rich text mode to ensure DOM has updated
-										setTimeout(
-											() => scrollEditorToBottom(),
-											0
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											50
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											150
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											300
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											500
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											700
-										);
-									} else if (e.key === 'Enter') {
-										// Enter key in non-rich text mode (simpler, less delays needed)
-										setTimeout(
-											() => scrollEditorToBottom(),
-											0
-										);
-										setTimeout(
-											() => scrollEditorToBottom(),
-											50
-										);
-									} else {
-										setTimeout(
-											() => scrollEditorToBottom(),
-											0
-										);
-									}
-								}}
 							>
 								{hasUploadFunctionality && isVoiceRecording && (
 									<VoiceNoteRow
@@ -5347,9 +5228,6 @@ export const MessageSubmitInterfaceComponent = ({
 												!!uploadProgress
 											}
 											maxLength={INPUT_MAX_LENGTH}
-											onFocusChange={
-												setIsComposerSelected
-											}
 											mentionProvider={mentionProvider}
 											isComposerEmpty={isComposerEmpty}
 											onEditLast={handleEditLast}
