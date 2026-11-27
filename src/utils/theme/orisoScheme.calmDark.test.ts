@@ -49,6 +49,12 @@ describe('calm dark mode (FE#1134)', () => {
 						t['--oriso-rail-badge-surface']
 					)
 				).toBeGreaterThanOrEqual(4.5);
+				expect(
+					wcagContrast(
+						t['--oriso-on-live-surface'],
+						t['--oriso-live-surface']
+					)
+				).toBeGreaterThanOrEqual(7);
 				for (const s of surfaces) {
 					expect(
 						wcagContrast(t['--oriso-outline-rest'], t[s])
@@ -63,5 +69,7 @@ describe('calm dark mode (FE#1134)', () => {
 		expect(t['--oriso-rail-badge-surface']).toBe('#ffffff');
 		expect(t['--oriso-card-divider']).toBe('#ffffff');
 		expect(t['--oriso-outline-rest']).toBe(t['--m3-primary-fixed-dim']);
+		expect(t['--oriso-live-surface']).toBe(t['--m3-on-primary-fixed']);
+		expect(t['--oriso-on-live-surface']).toBe(t['--m3-surface']);
 	});
 });

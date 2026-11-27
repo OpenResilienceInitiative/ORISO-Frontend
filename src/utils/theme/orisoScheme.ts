@@ -590,6 +590,16 @@ export const computeOrisoPalette = (
 		// in dark the calm accent fill, so the light digits stay readable.
 		'--oriso-rail-badge-surface':
 			scheme === 'dark' ? tokens['--m3-primary-fixed'] : '#ffffff',
+		// Active Live-Chat tile on the rail: a deep brand tile with light ink.
+		// In dark it must not follow on-primary-fixed, which is light ink there.
+		'--oriso-live-surface':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(10))
+				: tokens['--m3-on-primary-fixed'],
+		'--oriso-on-live-surface':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(90))
+				: tokens['--m3-surface'],
 		'--oriso-app-action': tokens['--m3-primary'],
 		'--oriso-lottie-accent-color': tokens['--m3-primary-fixed-dim'],
 		'--oriso-lottie-secondary-color':

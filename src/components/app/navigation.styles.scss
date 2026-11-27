@@ -789,8 +789,14 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		#930008
 	);
 	--oriso-nav-foreground: var(--m3-secondary, #4c555f);
-	--oriso-nav-on-dark: var(--m3-surface, #fcf9f9);
-	--oriso-nav-live-background: var(--oriso-on-primary-fixed, #410001);
+	--oriso-nav-on-dark: var(
+		--oriso-on-live-surface,
+		var(--m3-surface, #fcf9f9)
+	);
+	--oriso-nav-live-background: var(
+		--oriso-live-surface,
+		var(--oriso-on-primary-fixed, #410001)
+	);
 
 	/* M3 nav bar tokens (mobile bottom bar only) */
 	--oriso-nav-bar-background: var(--m3-surface-container, #f0edee);
