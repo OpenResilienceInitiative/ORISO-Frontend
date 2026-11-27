@@ -22,6 +22,7 @@ import {
 } from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
+import { ConcealedValueInput } from '../form/ConcealedValueInput';
 import { logout } from '../logout/logout';
 import { callManager } from '../../services/CallManager';
 import {
@@ -91,7 +92,7 @@ export const KeyBackupRecoveryDialog = ({
 					<span>
 						{translate('encryption.keyBackup.dialog.keyLabel')}
 					</span>
-					<input
+					<ConcealedValueInput
 						type="text"
 						value={recoveryKey}
 						onChange={(event) => setRecoveryKey(event.target.value)}

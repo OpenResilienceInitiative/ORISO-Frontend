@@ -1063,6 +1063,7 @@ export const Login = () => {
 												id="otp"
 												name="otp"
 												type="text"
+												autoComplete="one-time-code"
 												value={otp}
 												onChange={handleOtpChange}
 												onKeyUp={handleKeyUp}

@@ -1,5 +1,10 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+	ConcealedValueInput,
+	isSecretField
+} from '../form/ConcealedValueInput';
 import './accountSetupField.styles.scss';
 
 /**
@@ -212,6 +217,14 @@ export const AccountSetupField = ({
 	value
 }: AccountSetupFieldProps) => {
 	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
+	const isSecret = isSecretField(type, autoComplete);
+	// Stays on once set, so the show-password toggle (type "text") does not
+	// put the password into the HTML value attribute either (FE#2582).
+	const [concealValue, setConcealValue] = useState(isSecret);
+	if (isSecret && !concealValue) {
+		setConcealValue(true);
+	}
+	const SetupInput = concealValue ? ConcealedValueInput : 'input';
 	// The hint explains what belongs in the field, so it stays while the
 	// message below says whether what is in there works.
 	const describedBy = [
@@ -235,7 +248,7 @@ export const AccountSetupField = ({
 					.filter(Boolean)
 					.join(' ')}
 			>
-				<input
+				<SetupInput
 					readOnly={readOnly}
 					aria-describedby={describedBy || undefined}
 					aria-invalid={state === 'error' || undefined}
