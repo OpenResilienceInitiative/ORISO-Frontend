@@ -146,9 +146,8 @@ export const getSessionRailMarks = ({
  *   `chatStage.switcher.kind.thread`      → "Thread"
  *   `sessionList.toolbar.chips.supervision` → "Supervision"
  *   `sessionList.toolbar.chips.nearby`     → "Mail"
- *   `sessionList.item.sessionType.directLinkVideo` → "Videoanruf"   (FE#1952)
- *   `sessionList.item.sessionType.directLinkAudio` → "Audioanruf"   (FE#1952)
- *   `sessionList.item.sessionType.directLinkChat`  → "Direktlink"   (FE#1952)
+ *   `sessionList.item.sessionType.directInvitationVia` with the medium word
+ *     → "Direkteinladung · Video" / "… · Audio" / "… · Chat"   (FE#2546)
  *   `sessionList.timeline.nextAppointment` → "Nächster Termin: …"
  *   `sessionList.toolbar.chips.unread`     → "Ungelesen"
  */

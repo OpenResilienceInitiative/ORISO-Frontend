@@ -49,7 +49,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	// #597: active border when the session/chat chrome is focused/clicked,
 	// but not when the composer text area is selected.
-	&:focus-within:not(:has(.textarea__wrapper-send-message--selected)) {
+	&:focus-within:not(
+			:has(.textarea__wrapper-send-message--selected),
+			:has(.textarea__wrapper-send-message[data-auto-focused])
+		) {
 		@include breakpoint($fromLarge) {
 			border: 2px solid var(--m3-primary-container, #cc1e1c);
 		}
@@ -389,6 +392,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 11px;
 		font-weight: 500;
 		color: #cc2d4e;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+		}
 	}
 
 	&__robotIncomingSystemTime {
@@ -410,7 +417,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 
 	&__robotIncomingCard {
 		align-self: flex-start;
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid rgba(233, 152, 168, 0.45);
 		border-radius: 14px;
 		padding: 12px 14px;
@@ -432,6 +439,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-weight: 600;
 		line-height: 1.22;
 		color: #1f1f1f;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface, #e4e2e2);
+		}
 	}
 
 	&__robotIncomingCardBody {
@@ -439,6 +450,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 14px;
 		line-height: 1.45;
 		color: #333;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&__robotIncomingCardCta {
@@ -449,6 +464,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		color: #d12e4f;
 		text-decoration: underline;
 		text-underline-offset: 2px;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--oriso-primary-text, var(--m3-primary, #ffb4aa));
+		}
 	}
 
 	&__robotIncomingCardIllustration {
@@ -546,7 +565,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #fff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		animation: robot-typing-wave 0.8s linear infinite;
 	}
 
@@ -582,6 +601,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		line-height: 14px;
 		font-weight: 500;
 		padding-left: 4px;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			color: var(--m3-on-surface-variant, #c4c7c8);
+		}
 	}
 
 	&__inlineTypingBubble {
@@ -590,6 +613,10 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-radius: 20px;
 		border-bottom-left-radius: 2px;
 		display: inline-block;
+
+		html[data-oriso-personal-scheme='dark'] & {
+			background: var(--m3-surface-container-low, #1b1b1c);
+		}
 	}
 
 	&__inlineTypingDots {
@@ -666,7 +693,7 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		font-size: 15px;
 		line-height: 1.4;
 		color: var(--m3-secondary, #4c555f);
-		background-color: #f4f6f9;
+		background-color: var(--m3-surface-container-low, #f4f6f9);
 	}
 
 	&__readOnlyExtend {

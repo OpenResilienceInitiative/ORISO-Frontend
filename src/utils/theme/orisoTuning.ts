@@ -151,6 +151,33 @@ export const INVERTED_NEUTRAL_TONES: NeutralToneLadder = {
 	inverseOnSurface: 10
 };
 
+/**
+ * Ink tones for the personal "high" contrast level. Fills stay the scheme's
+ * own (product decision: the look keeps its surfaces); only text, icons and
+ * borders move toward black (light) or white (dark), so the choice is
+ * visible even where the standard palette already passes 7:1.
+ */
+export const HIGH_CONTRAST_INK_TONES: Record<
+	'light' | 'dark',
+	Pick<
+		NeutralToneLadder,
+		'onSurface' | 'onSurfaceVariant' | 'outline' | 'outlineVariant'
+	>
+> = {
+	light: {
+		onSurface: 0,
+		onSurfaceVariant: 20,
+		outline: 30,
+		outlineVariant: 50
+	},
+	dark: {
+		onSurface: 100,
+		onSurfaceVariant: 92,
+		outline: 80,
+		outlineVariant: 60
+	}
+};
+
 /** Brand family tones for the dark and inverted schemes. */
 export const DARK_BRAND_TONES = {
 	role: 80,

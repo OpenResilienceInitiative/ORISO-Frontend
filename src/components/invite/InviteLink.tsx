@@ -778,8 +778,9 @@ export const InviteLink = () => {
 				modality={directLink.medium === 'VIDEO' ? 'video' : 'audio'}
 				signedIn={directLink.signedIn}
 				deps={{
-					open: (value) =>
+					open: (value, entryWait) =>
 						openDirectLinkConversation(value, {
+							...entryWait,
 							consent: askJoinConsent
 						})
 				}}

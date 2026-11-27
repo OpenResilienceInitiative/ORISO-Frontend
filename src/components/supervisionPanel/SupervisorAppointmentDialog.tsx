@@ -10,9 +10,14 @@
  * Supervision room it was opened from. A supervisor
  * outside the own calendar reach cannot be booked (UserService answers 404):
  * the dialog says so instead of offering a save that must fail.
+ *
+ * Video and phone appointments only where video and audio calls are allowed
+ * in the supervision chat (product owner, 2026-11-25): the Supervision
+ * room's call gates narrow the kinds; with neither, no video or phone
+ * appointment can be made.
  */
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiCreateColleagueAppointment,
@@ -26,11 +31,14 @@ import {
 	entryFromApi,
 	kindToApi
 } from '../calendar/calendarApiMapping';
-import type {
-	AppointmentDraft,
-	CalendarEntry,
-	Colleague
+import {
+	APPOINTMENT_KINDS,
+	type AppointmentDraft,
+	type AppointmentKind,
+	type CalendarEntry,
+	type Colleague
 } from '../calendar/calendarModel';
+import type { CallFeatureGates } from '../call/callFeatureGates';
 import { notifyAppointmentsChanged } from '../sessionsList/timeline/conversationAppointments';
 import { useAppointmentNotice } from '../sessionsList/timeline/useAppointmentNotice';
 
@@ -44,6 +52,12 @@ export interface SupervisorAppointmentDialogProps {
 	 * in it cannot be booked.
 	 */
 	colleagues?: Colleague[];
+	/**
+	 * Which calls the supervision chat allows
+	 * (`resolveSupervisionCallFeatureGates`). Video and phone are offered
+	 * only where allowed; without gates all kinds are offered.
+	 */
+	callGates?: CallFeatureGates;
 	/** Own entries around now, for the conflict note. */
 	entries: CalendarEntry[];
 	now?: Date;
@@ -55,11 +69,24 @@ export interface SupervisorAppointmentDialogProps {
 	onClose: () => void;
 }
 
+/** The kinds the Supervision chat's call gates leave. */
+export const supervisionKinds = (
+	gates?: CallFeatureGates
+): readonly AppointmentKind[] =>
+	gates
+		? APPOINTMENT_KINDS.filter(
+				(kind) =>
+					(kind !== 'video' || gates.video) &&
+					(kind !== 'phone' || gates.audio)
+			)
+		: APPOINTMENT_KINDS;
+
 /** The dialog without data access (Storybook, tests). */
 export const SupervisorAppointmentDialog = ({
 	supervisor,
 	ownerId,
 	colleagues,
+	callGates,
 	entries,
 	now = new Date(),
 	saving = false,
@@ -71,8 +98,19 @@ export const SupervisorAppointmentDialog = ({
 	const { t } = useTranslation();
 	const known = colleagues?.find((c) => c.id === supervisor.id);
 	const unreachable = colleagues !== undefined && !known;
+	const video = callGates?.video;
+	const audio = callGates?.audio;
+	// The gates come as a fresh object each render: depend on the values.
+	const kinds = useMemo(
+		() =>
+			video === undefined || audio === undefined
+				? supervisionKinds()
+				: supervisionKinds({ video, audio }),
+		[video, audio]
+	);
 	const form = useColleagueAppointmentForm({
 		colleagues: known ? [known] : [],
+		kinds,
 		fixedColleague: supervisor,
 		fixedColleagueLabel: t('supervision.appointment.with'),
 		entries,

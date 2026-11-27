@@ -13,7 +13,8 @@ type EditContext = ReturnType<typeof buildEditContext>;
  * offer exactly the same actions with the same transport calls.
  *
  * `onWrite` / `onWriteFailed` report a settled react, un-react or delete,
- * with the room it happened in (the view may have moved on by then); the
+ * with the room it happened in, to the callbacks that were active when the
+ * write began. The view may have moved on by the time these run. The
  * chat ignores them, the preview uses them as its read moment and to show a
  * failure. A reply or edit context never survives a change of
  * `resetKey` (the conversation).
@@ -47,9 +48,11 @@ export const useConversationActions = ({
 
 	const write = useCallback(
 		(request: Promise<unknown>, writtenRoomId: string) => {
+			const onSuccess = onWriteRef.current;
+			const onFailure = onWriteFailedRef.current;
 			request.then(
-				() => onWriteRef.current?.(writtenRoomId),
-				() => onWriteFailedRef.current?.(writtenRoomId)
+				() => onSuccess?.(writtenRoomId),
+				() => onFailure?.(writtenRoomId)
 			);
 		},
 		[]

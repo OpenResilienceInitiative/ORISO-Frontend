@@ -78,6 +78,10 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiRequestMagicLinkLogin } from '../../api/apiRequestMagicLinkLogin';
 import { apiConsumeMagicLinkLogin } from '../../api/apiConsumeMagicLinkLogin';
 import { useSearchParam } from '../../hooks/useSearchParams';
+import {
+	LOGIN_NOTICE_PARAM,
+	isTemporaryAccountDeletedNotice
+} from './temporaryAccountDeletedNotice';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { translateWithFallback } from '../../utils/translationFallback';
 import { budibaseLogout } from '../budibase/budibaseLogout';
@@ -137,6 +141,9 @@ export const Login = () => {
 	const gcid = useSearchParam<string>('gcid');
 	const appointmentSeriesId = useSearchParam<string>('seriesId');
 	const returnTo = useSearchParam<string>('returnTo');
+	const guestAccountWasDeleted = isTemporaryAccountDeletedNotice(
+		useSearchParam<string>(LOGIN_NOTICE_PARAM)
+	);
 	const inviteAgencyId = useSearchParam<string>('aid');
 	const openingGroupInviteEntry = useGroupInviteEntryRedirect();
 	const registrationUrl = buildRegistrationLink(
@@ -820,9 +827,7 @@ export const Login = () => {
 					>
 						<div className="loginForm__headline">
 							<h2>
-								<span data-cipher-at={965}>
-									{translate('login.headline')}
-								</span>
+								<span>{translate('login.headline')}</span>
 							</h2>
 						</div>
 						{accountCreatedLogin && (
@@ -908,7 +913,7 @@ export const Login = () => {
 									}
 									onKeyUp={handleKeyUp}
 									label={
-										<span data-cipher-at={1000}>
+										<span>
 											{activeLoginMethod === 'password'
 												? translate('login.user.label')
 												: translate(
@@ -923,8 +928,6 @@ export const Login = () => {
 									fullWidth
 									autoComplete="username"
 									inputProps={{
-										'data-cipher-input': 855,
-										'data-cipher-length': username.length,
 										'aria-label':
 											activeLoginMethod === 'password'
 												? translate('login.user.label')
@@ -961,7 +964,7 @@ export const Login = () => {
 										onChange={handlePasswordChange}
 										onKeyUp={handleKeyUp}
 										label={
-											<span data-cipher-at={1035}>
+											<span>
 												{translate(
 													'login.password.label'
 												)}
@@ -972,9 +975,6 @@ export const Login = () => {
 										autoComplete="current-password"
 										inputRef={passwordInputRef}
 										inputProps={{
-											'data-cipher-input': 890,
-											'data-cipher-length':
-												password.length,
 											'aria-label': translate(
 												'login.password.label'
 											)
@@ -1052,7 +1052,7 @@ export const Login = () => {
 													className="loginForm__emailHint"
 													type="infoLargeAlternative"
 												>
-													<span data-cipher-at={1080}>
+													<span>
 														{translate(
 															'twoFactorAuth.activate.email.resend.hint'
 														)}
@@ -1067,7 +1067,7 @@ export const Login = () => {
 												onChange={handleOtpChange}
 												onKeyUp={handleKeyUp}
 												label={
-													<span data-cipher-at={1050}>
+													<span>
 														{translate(
 															'twoFactorAuth.activate.otp.input.label.text'
 														)}
@@ -1086,9 +1086,6 @@ export const Login = () => {
 													'aria-label': translate(
 														'twoFactorAuth.activate.otp.input.label.text'
 													),
-													'data-cipher-input': 925,
-													'data-cipher-length':
-														otp.length,
 													'maxLength': OTP_LENGTH,
 													'tabIndex': isOtpRequired
 														? 0
@@ -1129,6 +1126,20 @@ export const Login = () => {
 							)}
 						</div>
 
+						{guestAccountWasDeleted && !showLoginError && (
+							<div
+								role="status"
+								data-cy="login-temporary-account-deleted"
+							>
+								<Text
+									text={translate(
+										'temporaryAccount.signedOutNotice'
+									)}
+									type="infoSmall"
+									className="loginForm__error"
+								/>
+							</div>
+						)}
 						{showLoginError && (
 							<Text
 								text={showLoginError}
@@ -1161,7 +1172,7 @@ export const Login = () => {
 											isRequestInProgress
 								}
 							>
-								<span data-cipher-at={65}>
+								<span>
 									{activeLoginMethod === 'password'
 										? loginButton.label
 										: translate(

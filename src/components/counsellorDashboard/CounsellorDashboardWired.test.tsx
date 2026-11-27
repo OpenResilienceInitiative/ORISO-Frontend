@@ -1,6 +1,6 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import {
 	afterEach,
 	beforeEach,
@@ -10,7 +10,7 @@ import {
 	vi
 } from 'vite-plus/test';
 import { apiGetConsultantStatistics } from '../../api/apiGetConsultantStatistics';
-import { useDirectLinks } from '../conversationCreate/directLink/useDirectLinks';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { CounsellorDashboardWired } from './CounsellorDashboardWired';
 
 vi.mock('react-i18next', () => ({
@@ -20,62 +20,57 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 vi.mock('../../globalState/provider/TenantProvider', () => ({
-	useTenant: () => null
-}));
-vi.mock('../../api/apiGetConsultantSessionList', () => ({
-	apiGetConsultantSessionList: vi.fn(() => Promise.resolve({ sessions: [] }))
+	useTenant: vi.fn(() => null)
 }));
 vi.mock('../../api/apiGetConsultantStatistics', () => ({
 	apiGetConsultantStatistics: vi.fn()
 }));
-vi.mock('../conversationCreate/directLink/useDirectLinks', () => ({
-	useDirectLinks: vi.fn()
-}));
 
-const link = {
-	id: '1',
-	name: 'Sucht',
-	medium: 'CHAT',
-	active: true,
-	url: 'https://example.test/l/1'
-};
-const linksState = (overrides = {}) => ({
-	links: [link],
-	loaded: true,
-	loadFailed: false,
-	reload: vi.fn(),
-	create: vi.fn(),
-	toggle: vi.fn(),
-	...overrides
-});
+const renderWired = () =>
+	render(
+		<CounsellorDashboardWired
+			headline="headline"
+			variant="conversation-nothing-to-do"
+		/>
+	);
 
 afterEach(cleanup);
 beforeEach(() => vi.clearAllMocks());
 
 describe('CounsellorDashboardWired', () => {
-	it('shows no statistics tile until the figures arrive', async () => {
-		vi.mocked(useDirectLinks).mockReturnValue(linksState() as never);
+	it('keeps the empty pane and shows no figures until they arrive', async () => {
 		vi.mocked(apiGetConsultantStatistics).mockReturnValue(
 			new Promise(() => undefined)
 		);
-		render(<CounsellorDashboardWired fallback={<p>fallback</p>} />);
+		renderWired();
 		await screen.findByTestId('counsellor-dashboard');
-		expect(
-			document.querySelector('.counsellorDashboard__stats')
-		).toBeNull();
+		expect(screen.getByText('headline')).toBeTruthy();
+		expect(screen.queryByTestId('counsellor-dashboard-figures')).toBeNull();
 	});
 
-	it('says the links failed to load instead of "all caught up"', async () => {
-		const state = linksState({ links: [], loadFailed: true });
-		vi.mocked(useDirectLinks).mockReturnValue(state as never);
-		vi.mocked(apiGetConsultantStatistics).mockRejectedValue(new Error());
-		render(<CounsellorDashboardWired fallback={<p>fallback</p>} />);
-		const alert = await screen.findByRole('alert');
-		expect(alert.textContent).toContain('directLink.page.loadFailed');
-		expect(screen.queryByText('fallback')).toBeNull();
-		fireEvent.click(
-			screen.getByRole('button', { name: 'groupChat.loadError.retry' })
+	it('shows active and newly taken on, nothing else', async () => {
+		vi.mocked(apiGetConsultantStatistics).mockResolvedValue({
+			numberOfAssignedSessions: 11,
+			numberOfActiveSessions: 5,
+			numberOfSentMessages: 131
+		} as never);
+		renderWired();
+		const figures = await screen.findByTestId(
+			'counsellor-dashboard-figures'
 		);
-		expect(state.reload).toHaveBeenCalledOnce();
+		expect(figures.textContent).toBe(
+			'5dashboard.quiet.active11dashboard.quiet.assigned'
+		);
+		expect(screen.queryByText('131')).toBeNull();
+		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it('asks for no figures where the Träger switched statistics off', async () => {
+		vi.mocked(useTenant).mockReturnValue({
+			settings: { featureStatisticsEnabled: false }
+		} as never);
+		renderWired();
+		await screen.findByTestId('counsellor-dashboard');
+		expect(apiGetConsultantStatistics).not.toHaveBeenCalled();
 	});
 });

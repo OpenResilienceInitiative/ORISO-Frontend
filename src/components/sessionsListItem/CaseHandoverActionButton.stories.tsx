@@ -13,6 +13,7 @@ import {
 } from '../storybookDesignLinks';
 import { CaseHandoverBulkBar } from '../sessionsList/CaseHandoverBulkBar';
 import { SessionCardBody } from './SessionCardBody/SessionCardBody';
+import { paintedContrast } from '../designTokens/textContrastContract';
 import './sessionsListItem.styles.scss';
 
 const labels: CaseHandoverActionLabels = {
@@ -24,12 +25,7 @@ const labels: CaseHandoverActionLabels = {
 	menuLabel: 'Case handover options',
 	selectMultipleTitle: 'Select multiple conversations',
 	selectMultipleDescription:
-		'You can instantly select several cases from the chat history and apply a case handover at once.',
-	confirmSelectionTitle: 'Confirm selection',
-	confirmSelectionDescription:
-		'Proceed with your currently selected items to request a case handover.',
-	deselectTitle: 'Deselect and close',
-	deselectDescription: 'Deselects everything and closes the batch mode.'
+		'You can instantly select several cases from the chat history and apply a case handover at once.'
 };
 
 const shell: React.CSSProperties = {
@@ -153,6 +149,23 @@ export const BatchSelectChecked: Story = {
 		await expect(
 			getComputedStyle(mainSegment(canvasElement)).backgroundColor
 		).toBe(PRIMARY_RGB);
+	}
+};
+
+/**
+ * Dark, hovered: the primary hover fill is the dark-red container, so the
+ * label must switch to the container's own ink (on dev it stayed deep red,
+ * about 1.3:1).
+ */
+export const BatchSelectCheckedDarkHover: Story = {
+	...staticStory('requestAccess', { batchMode: true, selected: true }),
+	globals: { scheme: 'dark', backgrounds: { value: 'dark' } },
+	play: async ({ canvasElement }) => {
+		const segment = mainSegment(canvasElement);
+		await userEvent.hover(segment);
+		await waitFor(() =>
+			expect(paintedContrast(segment)).toBeGreaterThanOrEqual(4.5)
+		);
 	}
 };
 
@@ -291,7 +304,8 @@ export const MenuOpenDefault: Story = {
 	}
 };
 
-export const MenuOpenBatch: Story = {
+/** FE#2040: in selection mode the button has no chevron; it keeps the whole row. */
+export const BatchHasNoMenu: Story = {
 	render: () => (
 		<Frame>
 			<CaseHandoverActionButton
@@ -299,29 +313,17 @@ export const MenuOpenBatch: Story = {
 				state="requestAccess"
 				batchMode
 				selected
-				onConfirmSelection={() => {}}
-				onDeselectAndClose={() => {}}
 			/>
 		</Frame>
 	),
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		// #1158: menu is portalled to document.body so card overflow cannot
-		// clip it — query the body, not the story canvas.
-		const body = within(document.body);
-		await userEvent.click(
-			canvas.getByRole('button', { name: labels.menuLabel })
-		);
-		const confirmItem = await body.findByRole('menuitem', {
-			name: new RegExp(labels.confirmSelectionTitle)
-		});
-		// The shared menu reveal fades in from opacity 0 (160 ms).
-		await waitFor(() => expect(confirmItem).toBeVisible());
 		await expect(
-			body.getByRole('menuitem', {
-				name: new RegExp(labels.deselectTitle)
-			})
-		).toBeVisible();
+			canvas.queryByRole('button', { name: labels.menuLabel })
+		).toBeNull();
+		await expect(
+			canvas.getByRole('checkbox', { name: labels.selectCase })
+		).toBeChecked();
 	}
 };
 
@@ -466,16 +468,15 @@ export const BatchToggleInteraction: Story = {
 		// Clicking the visible label toggles too (whole segment is the target).
 		await userEvent.click(canvas.getByText(labels.selectCase));
 		await expect(checkbox).not.toBeChecked();
-		// Keyboard: Tab reaches the checkbox first, then the menu chevron.
+		// Keyboard: Tab reaches the checkbox; there is no chevron (FE#2040).
 		checkbox.blur();
 		await userEvent.tab();
 		await expect(checkbox).toHaveFocus();
 		await userEvent.keyboard(' ');
 		await expect(checkbox).toBeChecked();
-		await userEvent.tab();
 		await expect(
-			canvas.getByRole('button', { name: labels.menuLabel })
-		).toHaveFocus();
+			canvas.queryByRole('button', { name: labels.menuLabel })
+		).toBeNull();
 	}
 };
 

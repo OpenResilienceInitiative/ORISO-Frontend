@@ -151,6 +151,53 @@ export const VideoReady: Story = {
 	}
 };
 
+/** FE#2542: knocked, waiting on this page until the counsellor lets in. */
+export const VideoWaitingToBeLetIn: Story = {
+	name: 'Video · angeklopft, wartet auf Einlass',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		joining: true,
+		waiting: true,
+		closing: null,
+		onStopWaiting: fn()
+	},
+	play: async ({ canvasElement, canvas, args }) => {
+		const button = gate(canvasElement);
+		await expect(button.getAttribute('data-cy-state')).toBe('queued');
+		await expect(button).toBeDisabled();
+		await expect(button).toHaveTextContent(
+			'Sie werden gleich hereingelassen'
+		);
+		await expect(
+			canvasElement.querySelector('[data-cy="handover-gate-glow"]')
+		).not.toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Nicht mehr warten' })
+		);
+		await expect(args.onStopWaiting).toHaveBeenCalledOnce();
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+/** FE#2542: turned down; the page says so and "Beitreten" knocks again. */
+export const VideoTurnedDown: Story = {
+	name: 'Video · nicht hereingelassen',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', turnedDown: true, closing: null },
+	play: async ({ canvasElement }) => {
+		const button = gate(canvasElement);
+		await waitFor(() =>
+			expect(button.getAttribute('data-cy-state')).toBe('ready')
+		);
+		await expect(button).toHaveTextContent(
+			'Sie wurden nicht hereingelassen'
+		);
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
 export const VideoCameraOff: Story = {
 	name: 'Video · camera off',
 	globals: desktop1440Globals,

@@ -81,4 +81,17 @@ describe('buildEditContext (#978)', () => {
 		expect(edit.text).not.toMatch(RAW_TOKEN_PATTERN);
 		expect(edit.text).toContain('voice-message-123-s10.webm');
 	});
+
+	it('keeps the original visibility and supervision prefix outside the editor', () => {
+		const edit = buildEditContext({
+			_id: '3',
+			message:
+				'[VISIBLE_TO:member-1] [SUPERVISOR_FEEDBACK] <p>Private note</p>'
+		});
+
+		expect(edit.text).toBe('<p>Private note</p>');
+		expect(edit.transportPrefix).toBe(
+			'[VISIBLE_TO:member-1] [SUPERVISOR_FEEDBACK]'
+		);
+	});
 });

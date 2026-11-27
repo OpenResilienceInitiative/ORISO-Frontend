@@ -297,6 +297,7 @@ import {
 	useConversationActions
 } from './useConversationActions';
 import { anonymousGateKeys } from './anonymousGateStorage';
+import { useMatrixTyping } from './useMatrixTyping';
 import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 import {
@@ -325,7 +326,6 @@ interface SessionItemProps {
 	mainTimelineSupplement?: React.ReactNode;
 	mainTimelineSupplementTime?: number;
 	isTyping?: Function;
-	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
@@ -2547,6 +2547,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					: openAddonPanel
 						? 'addon'
 						: null;
+	const sideTypingRoomId =
+		openPanel === 'supervision'
+			? supervisionRoomId
+			: openPanel === 'team' && props.teamDiscussionStatus === 'OPEN'
+				? teamRoomId
+				: null;
+	const handleSideRoomTyping = useMatrixTyping(sideTypingRoomId);
 	const shownChannelId =
 		openPanel === 'supervision'
 			? channelId({ kind: 'supervision' })
@@ -5136,6 +5143,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													appointmentSupervisor
 												}
 												ownerId={userData?.userId ?? ''}
+												callGates={supervisionCallGates}
 												fullScreen={isPhoneLayout}
 												supervisionRoom={
 													supervisionRoomId
@@ -5251,7 +5259,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 				composer={
 					<MessageSubmitInterfaceComponent
-						isTyping={props.isTyping}
+						isTyping={handleSideRoomTyping}
 						placeholder={translate(
 							'supervision.panel.composer.placeholder',
 							{ name: supervisionHeaderName }
@@ -5484,9 +5492,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					) : props.teamDiscussionStatus === 'OPEN' &&
 					  !isRejectedSession ? (
 						<MessageSubmitInterfaceComponent
-							isTyping={(isCleared: boolean) =>
-								props.isTypingInRoom?.(isCleared, teamRoomId)
-							}
+							isTyping={handleSideRoomTyping}
 							placeholder={teamText(
 								'chatStage.panel.team.composer.placeholder'
 							)}

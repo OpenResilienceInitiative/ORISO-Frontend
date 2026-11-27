@@ -96,9 +96,12 @@ import { DirectLinkShareDialog } from '../conversationCreate/directLink/DirectLi
 import { useDirectLinkMedia } from '../directLinks/useDirectLinksAllowed';
 import {
 	MEDIUM_FOR_KIND,
-	type InvitationPreset
+	toOpenLinkPresetState,
+	type InvitationPreset,
+	type OpenLinkPreset
 } from '../directInvitation/invitationModel';
 import { useDirectInvitationSetup } from '../conversationCreate/directLink/DirectLinkCreateCard';
+import { CREATE_CHAT_PATH } from '../app/routePaths';
 import { useDirectLinkTopics } from '../conversationCreate/directLink/useDirectLinkTopics';
 import { invitationErrorEntry } from '../directInvitation/invitationErrorSnackbar';
 import {
@@ -815,6 +818,9 @@ export const CalendarPageWired = () => {
 		setInvitePreset(preset);
 		calendarInvitation.startWithDetails(medium);
 	};
+	/* FE#2510 *2: "Neuer Eintrag" without a date — door A's open link. */
+	const createOpenLink = (preset: OpenLinkPreset) =>
+		navigate(CREATE_CHAT_PATH, { state: toOpenLinkPresetState(preset) });
 
 	const move = async (entry: CalendarEntry, start: Date, end: Date) => {
 		const slot = {
@@ -1454,6 +1460,9 @@ export const CalendarPageWired = () => {
 				inviteMedia={inviteMedia}
 				onInviteNewPerson={
 					consultant && allowGuestInvite ? inviteNewPerson : undefined
+				}
+				onCreateOpenLink={
+					consultant && allowGuestInvite ? createOpenLink : undefined
 				}
 				onMove={consultant ? move : undefined}
 				onCancelAppointment={consultant ? cancel : undefined}

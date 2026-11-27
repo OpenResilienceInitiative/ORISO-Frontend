@@ -29,10 +29,29 @@ import '../conversationCreate/conversationCreate.styles.scss';
  * Someone without a conversation: the calendar's "Neue Person per
  * Direkteinladung …" opens "Chat erstellen" with the slot as appointment
  * and the Art as medium.
+ *
+ * FE#2510 *2 (Frank, 2026-11-24): in "Neuer Eintrag" the date is optional.
+ * "Mit Termin" off creates the open invitation link — no date, valid until
+ * deleted, every person gets their own conversation. The calendar hands the
+ * Art to "Chat erstellen", which asks topic and name and creates the link
+ * as today. "Neuer Eintrag" is the single entry point; the links list has
+ * no "+" of its own.
  */
+/** FE#2510 *2: the remembered "Mit Termin" setting of the story's counsellor. */
+const WITH_DATE_KEY = 'oriso.calendar.newEntryWithDate.me';
+const rememberWithDate = (value: 'on' | 'off' | null) => {
+	try {
+		if (value) window.localStorage.setItem(WITH_DATE_KEY, value);
+		else window.localStorage.removeItem(WITH_DATE_KEY);
+	} catch {
+		// Storage blocked: the default (on) applies.
+	}
+};
+
 const meta: Meta = {
 	title: 'DirectInvitation/One flow — Chat erstellen and calendar',
-	parameters: { layout: 'fullscreen' }
+	parameters: { layout: 'fullscreen' },
+	beforeEach: () => rememberWithDate(null)
 };
 export default meta;
 type Story = StoryObj;
@@ -58,6 +77,7 @@ const CONVERSATIONS = [
 const onSubmit = fn();
 const onSaveAppointment = fn();
 const onInviteNewPerson = fn();
+const onCreateOpenLink = fn();
 const onClose = fn();
 
 /**
@@ -101,6 +121,7 @@ const CalendarTermin = ({
 		allowGuestInvite
 		inviteMedia={inviteMedia}
 		onInviteNewPerson={onInviteNewPerson}
+		onCreateOpenLink={onCreateOpenLink}
 		onSaveAppointment={onSaveAppointment}
 		onSaveBlocker={fn()}
 		onClose={onClose}
@@ -272,6 +293,154 @@ export const CalendarNewPerson: Story = {
 	}
 };
 
+/** Turns "Mit Termin" off and checks what is left: only the Art. */
+const switchToOpenLink = async (root: HTMLElement) => {
+	const dialog = within(root);
+	const withDate = dialog.getByRole('switch', { name: 'Mit Termin' });
+	await expect(withDate).toBeChecked();
+	await userEvent.click(withDate);
+	await expect(withDate).not.toBeChecked();
+	// No date, no conversation: the link makes a new one per person.
+	await expect(sections(root)).toEqual(['kind']);
+	await expect(root).toHaveTextContent('offener Einladungslink');
+	await expect(root).toHaveTextContent('bis Sie ihn löschen');
+	await expect(root).toHaveTextContent('Ein Termin ist optional');
+	return dialog;
+};
+
+/**
+ * FE#2510 *2: "Neuer Eintrag" → Termin, date optional. "Mit Termin" off:
+ * the open invitation link of "Chat erstellen", with the chosen Art.
+ */
+export const CalendarOpenLink: Story = {
+	name: 'Calendar "Neuer Eintrag" · without date = open invitation link · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => {
+		onCreateOpenLink.mockClear();
+		onSaveAppointment.mockClear();
+	},
+	render: () => <CalendarTermin />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = await switchToOpenLink(root);
+		await userEvent.click(dialog.getByRole('button', { name: 'Telefon' }));
+		await userEvent.click(
+			dialog.getByRole('button', { name: 'Weiter zum Einladungslink' })
+		);
+		await expect(onCreateOpenLink).toHaveBeenCalledWith({ kind: 'phone' });
+		await expect(onSaveAppointment).not.toHaveBeenCalled();
+		await expect(window.localStorage.getItem(WITH_DATE_KEY)).toBe('off');
+	}
+};
+
+/**
+ * Back and forth: "Mit Termin" on again shows the month, Beratung and times
+ * as before; nothing typed is lost.
+ */
+export const CalendarOpenLinkFlipBack: Story = {
+	name: 'Calendar "Neuer Eintrag" · "Mit Termin" off and on again · 1440',
+	globals: desktop1440Globals,
+	render: () => <CalendarTermin />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = await switchToOpenLink(root);
+		await userEvent.click(
+			dialog.getByRole('switch', { name: 'Mit Termin' })
+		);
+		await expect(sections(root)).toEqual([
+			'conversation',
+			'slot',
+			'kind',
+			'invite'
+		]);
+		await expect(
+			dialog.getByRole('button', { name: 'Anlegen' })
+		).toBeInTheDocument();
+	}
+};
+
+/**
+ * The counsellor last created an open link: "Neuer Eintrag" opens with
+ * "Mit Termin" off (Frank, 2026-11-24: remember the last setting).
+ */
+export const CalendarOpenLinkRemembered: Story = {
+	name: 'Calendar "Neuer Eintrag" · opens with the last setting (off) · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => {
+		rememberWithDate('off');
+		onSaveAppointment.mockClear();
+	},
+	render: () => <CalendarTermin />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = within(root);
+		const withDate = dialog.getByRole('switch', { name: 'Mit Termin' });
+		await expect(withDate).not.toBeChecked();
+		await expect(sections(root)).toEqual(['kind']);
+		// Switched on and used: the next "Neuer Eintrag" opens with a date.
+		await userEvent.click(withDate);
+		await userEvent.click(
+			dialog.getByRole('combobox', { name: 'Beratung' })
+		);
+		await userEvent.click(
+			await body().findByRole('option', { name: 'mutige_eule' })
+		);
+		await userEvent.click(dialog.getByRole('button', { name: 'Anlegen' }));
+		await expect(onSaveAppointment).toHaveBeenCalled();
+		await expect(window.localStorage.getItem(WITH_DATE_KEY)).toBe('on');
+	}
+};
+
+/** An Art whose medium "Direkteinladung erlauben" does not allow: no link. */
+export const CalendarOpenLinkMediumOff: Story = {
+	name: 'Calendar "Neuer Eintrag" · open link, video not allowed · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => onCreateOpenLink.mockClear(),
+	render: () => <CalendarTermin inviteMedia={['CHAT', 'AUDIO']} />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = await switchToOpenLink(root);
+		const next = dialog.getByRole('button', {
+			name: 'Weiter zum Einladungslink'
+		});
+		await expect(root).toHaveTextContent(
+			'Für diese Art sind Direkteinladungen nicht freigegeben'
+		);
+		await expect(next).toBeDisabled();
+		await userEvent.click(dialog.getByRole('button', { name: 'Chat' }));
+		await expect(next).toBeEnabled();
+	}
+};
+
+/** A selected time slot already is a date: no "Mit Termin" switch. */
+export const CalendarFromSlotNoOpenLink: Story = {
+	name: 'Calendar slot · date known, no open-link switch · 1440',
+	globals: desktop1440Globals,
+	render: () => <CalendarTermin slot={SLOT} />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		await expect(
+			within(root).queryByRole('switch', { name: 'Mit Termin' })
+		).toBeNull();
+	}
+};
+
+/** The open link at phone width: full screen, nothing cut off. */
+export const CalendarOpenLinkPhone: Story = {
+	name: 'Calendar "Neuer Eintrag" · without date = open invitation link · 390',
+	globals: phone390Globals,
+	beforeEach: () => onCreateOpenLink.mockClear(),
+	render: () => <CalendarTermin compact />,
+	play: async () => {
+		const root = await body().findByTestId('calendar-appointment-dialog');
+		const dialog = await switchToOpenLink(root);
+		await userEvent.click(
+			dialog.getByRole('button', { name: 'Weiter zum Einladungslink' })
+		);
+		await expect(onCreateOpenLink).toHaveBeenCalledWith({ kind: 'video' });
+	}
+};
+
 /** The same at phone width: full screen, nothing cut off. */
 export const CalendarFromSlotPhone: Story = {
 	name: 'Calendar slot · invite more people by link · 390',
@@ -360,5 +529,51 @@ export const ChatErstellenFromCalendar: Story = {
 				})
 			)
 		);
+	}
+};
+
+/**
+ * FE#2510 *2, door A after the calendar's open link: the medium comes from
+ * the Art, the Direkteinladung opens with "Mit Termin" off, and the link is
+ * created without an appointment (valid until deleted).
+ */
+export const ChatErstellenOpenLinkFromCalendar: Story = {
+	name: 'Chat erstellen · open link from the calendar, no date · 1440',
+	globals: desktop1440Globals,
+	beforeEach: () => installDirectLinkMockApi(),
+	render: () => (
+		<div className="conversationCreate">
+			<div className="conversationCreate__single">
+				<DirectLinkCreateCard
+					topics={[{ value: '4', label: 'Schulden' }]}
+					agencies={[{ id: 88, topicIds: [4] }]}
+					media={['CHAT', 'AUDIO', 'VIDEO']}
+					onDone={onDone}
+					initialMedium="AUDIO"
+				/>
+			</div>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await expect(
+			canvas.getByRole('button', { name: 'Audioanruf' })
+		).toHaveAttribute('aria-pressed', 'true');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Link erstellen' })
+		);
+		const root = await body().findByTestId('invitation-dialog');
+		await expect(
+			within(root).getByRole('switch', { name: 'Mit Termin' })
+		).not.toBeChecked();
+		await userEvent.click(
+			within(root).getByRole('button', { name: 'Erstellen' })
+		);
+		await waitFor(() => {
+			const post = directLinkMock().requests.find(
+				(r) => r.method === 'POST'
+			)?.body as Record<string, unknown> | undefined;
+			expect(post).toEqual(expect.objectContaining({ medium: 'AUDIO' }));
+			expect(post?.appointment).toBeUndefined();
+		});
 	}
 };

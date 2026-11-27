@@ -68,6 +68,7 @@ import {
 	getConsultantDirectLinkTopicIds
 } from './registrationSteps';
 import { getUrlParameter } from '../../utils/getUrlParameter';
+import { withAgencyLinkReferer } from '../sessionsList/agencyLinkLabel';
 import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
@@ -836,6 +837,14 @@ export const Registration = () => {
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
 				: {}),
+			/* FE#1870: remember that the person came through the agency link,
+			   so the Erstanfrage can be labelled. Only the channel travels. */
+			...withAgencyLinkReferer({
+				aid: inviteAgencyId,
+				agencyId: mergedData.agency?.id,
+				viaConsultantLink: Boolean(preselectedConsultant),
+				viaGroupJoin: Boolean(groupJoin)
+			}),
 			/* Joining a self-help group is not a request for counselling: the
 			   backend assigns the group and opens no enquiry. */
 			...(groupJoin

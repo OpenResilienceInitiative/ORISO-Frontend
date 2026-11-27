@@ -1309,6 +1309,43 @@ describe('MatrixClientService', () => {
 		]);
 	});
 
+	// The homeserver must only ever see ciphertext: no file name, no MIME
+	// type, no plain `url` in the event (replaces the retired Cypress spec
+	// matrix-send-message-privacy, FE#2572).
+	it('uploads a file only as opaque ciphertext and sends the encrypted-file shape', async () => {
+		const uploadContent = vi
+			.fn()
+			.mockResolvedValue({ content_uri: 'mxc://server/file' });
+		const sendMessage = vi.fn().mockResolvedValue({ event_id: '$event' });
+		const { client } = createRefreshableClient({
+			uploadContent,
+			sendMessage
+		});
+		const service = new MatrixClientService();
+		setClient(service, client);
+
+		await service.sendFileMessage(
+			'!room:matrix.localhost',
+			new File(['secret case note'], 'case-note.txt', {
+				type: 'text/plain'
+			})
+		);
+
+		expect(uploadContent).toHaveBeenCalledTimes(1);
+		const [uploaded, uploadOptions] = uploadContent.mock.calls[0];
+		expect(uploaded).toBe('encrypted-blob');
+		expect(uploadOptions).toMatchObject({
+			includeFilename: false,
+			type: 'application/octet-stream'
+		});
+		const content = sendMessage.mock.calls[0][1];
+		expect(content).not.toHaveProperty('url');
+		expect(content.file).toMatchObject({
+			url: 'mxc://server/file',
+			v: 'v2'
+		});
+	});
+
 	it('names a failed token refresh, so a 503 is not just an unknown error', async () => {
 		const uploadContent = vi.fn();
 		const { client } = createRefreshableClient({ uploadContent });
@@ -1379,8 +1416,7 @@ describe('MatrixClientService', () => {
 					event: failedEcho
 				})
 			),
-			cancelPendingEvent,
-			getRoom: () => null
+			cancelPendingEvent
 		});
 		const service = new MatrixClientService();
 		setClient(service, client);
@@ -1717,6 +1753,36 @@ describe('MatrixClientService', () => {
 		await expect(
 			service.sendMessage('!room:example.org', 'Hello after accept')
 		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(sendMessage).not.toHaveBeenCalled();
+	});
+
+	// Same wait for attachments: until the room is synced the SDK cannot
+	// encrypt the event, so nothing is uploaded or sent before that (FE#2572).
+	it('does not upload or send a file before the joined room reaches the client store', async () => {
+		const uploadContent = vi.fn();
+		const sendMessage = vi.fn();
+		const service = new MatrixClientService();
+		(
+			service as unknown as {
+				sendRoomWaitOptions: { waitMs: number; pollIntervalMs: number };
+			}
+		).sendRoomWaitOptions = { waitMs: 30, pollIntervalMs: 10 };
+		setClient(service, {
+			getRoom: () => null,
+			joinRoom: vi
+				.fn()
+				.mockResolvedValue({ roomId: '!room:example.org' }),
+			uploadContent,
+			sendMessage
+		});
+
+		await expect(
+			service.sendFileMessage(
+				'!room:example.org',
+				new File(['note'], 'note.txt', { type: 'text/plain' })
+			)
+		).rejects.toMatchObject({ name: 'MatrixRoomNotSyncedError' });
+		expect(uploadContent).not.toHaveBeenCalled();
 		expect(sendMessage).not.toHaveBeenCalled();
 	});
 

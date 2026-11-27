@@ -35,6 +35,11 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
+vi.mock('./inputField/ComposerFormatMenus', () => ({
+	ComposerSelectionFormatMenu: () => null,
+	SlashFormatList: () => null
+}));
+
 vi.mock('@tiptap/react', () => ({
 	EditorContent: () => null,
 	useEditor: (options: any) => {

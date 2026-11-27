@@ -204,6 +204,33 @@ describe('MatrixLiveEventBridge initialize / timeline binding', () => {
 		expect(JSON.stringify(payload)).not.toContain('secret body');
 	});
 
+	// Call answers carry the SDP of the answering side. No subscriber needs it,
+	// so it must not cross the bridge under any event name (replaces the
+	// retired Cypress spec matrix-live-event-bridge, FE#2572).
+	it('does not forward m.call.answer payloads to any subscriber', () => {
+		bridge.initialize(client as any);
+		const triggerEvent = vi.spyOn(bridge as any, 'triggerEvent');
+
+		client.emit(
+			'Room.timeline',
+			makeEvent({
+				type: 'm.call.answer',
+				content: {
+					call_id: 'call-1',
+					version: 1,
+					answer: { type: 'answer', sdp: 'v=0 secret sdp' }
+				}
+			}),
+			room,
+			false
+		);
+
+		expect(triggerEvent).not.toHaveBeenCalled();
+		expect(receiveCall).not.toHaveBeenCalled();
+		expect(endCall).not.toHaveBeenCalled();
+		expect(endCallIfMatching).not.toHaveBeenCalled();
+	});
+
 	// FE#1435: UserService posts this notice as the accepting counsellor into
 	// the enquiry room, where the agency's other counsellors sit as silent
 	// members (InquiryAcceptanceNoticeDelivery). It is their takeover signal.

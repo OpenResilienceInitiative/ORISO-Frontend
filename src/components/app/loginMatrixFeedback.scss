@@ -1,15 +1,17 @@
 // The same form motion is used by the live login and the Storybook study.
+// Everything here animates opacity and transform only, on one timeline:
+// every letter's delay is its place in the sequence (`--at`, set once).
 .loginTransitionPrototype[data-effect='matrix'],
 .loginForm[data-matrix-phase] {
 	--matrix-primary: var(--m3-primary, #a5000a);
-	--matrix-press: var(--m3-primary-hover, var(--matrix-primary));
-	--matrix-button-edge: color-mix(
-		in srgb,
-		var(--matrix-primary) 72%,
-		var(--m3-on-surface, #1d1a1a)
-	);
-	--matrix-travel-x: 1rem;
-	--matrix-travel-y: 0rem;
+	--login-matrix-turn: calc(300ms * var(--login-matrix-pace, 1));
+	--login-matrix-signs: ui-monospace, 'SF Mono', menlo, consolas, monospace;
+
+	// The curtain sits behind the text, above the card's own background and
+	// the page's light area around it.
+	&:has(> .loginMatrixRain) {
+		isolation: isolate;
+	}
 
 	&:is(
 		[data-phase='loading'],
@@ -23,14 +25,7 @@
 			background: var(--matrix-primary);
 			opacity: 1;
 
-			@media (prefers-reduced-motion: reduce) {
-				transition: none;
-			}
-
 			@media (prefers-reduced-motion: no-preference) {
-				animation: login-matrix-submit-settle 520ms
-					cubic-bezier(0.2, 0.7, 0.2, 1) both;
-
 				&::before {
 					content: '';
 					position: absolute;
@@ -43,106 +38,219 @@
 			}
 		}
 	}
-	&[data-phase='revealing'] {
-		.loginMatrixGlyph[data-encoded],
-		.loginMatrixFieldMask {
-			animation: login-matrix-digit-trail 350ms ease-out both;
+
+	.loginMatrixGlyph,
+	.loginMatrixValue > span,
+	.loginMatrixRain span,
+	[data-matrix-field] {
+		--login-matrix-delay: calc(
+			var(--at, 0) * var(--login-matrix-pace, 1) * 1ms
+		);
+	}
+
+	.loginMatrixGlyph {
+		position: relative;
+
+		> span {
+			animation: login-matrix-letter var(--login-matrix-turn) ease-in-out
+				var(--login-matrix-delay) both;
 		}
-		.loginTransitionPrototype__binary {
-			animation: login-matrix-ink-trail 370ms ease-out both;
+
+		// The digit stands in the word's own box, one even cell per letter:
+		// it never moves, only fades in while the letter fades out.
+		&::after {
+			// Browsers without alternative text for `content` still draw the sign.
+			content: attr(data-digit);
+			content: attr(data-digit) / '';
+			position: absolute;
+			inset-block: 0;
+			inset-inline: -0.5em;
+			font-family: var(--login-matrix-signs);
+			font-size: 0.92em;
+			line-height: normal;
+			text-align: center;
+			font-variant-numeric: tabular-nums;
+			pointer-events: none;
+			transform: translateX(var(--shift, 0));
+			animation: login-matrix-digit var(--login-matrix-turn) ease-in-out
+				var(--login-matrix-delay) both;
 		}
 	}
 
-	.loginMatrixWord {
-		display: inline-block;
+	:is(h1, h2) .loginMatrixGlyph::after {
+		color: var(--matrix-primary);
 	}
-	.loginMatrixGlyph {
-		display: inline-flex;
-		justify-content: center;
-		transition: transform 120ms ease-out;
-		text-align: center;
-		font-variant-numeric: tabular-nums;
-	}
-	input[data-cipher-masked] {
-		color: transparent;
-		-webkit-text-fill-color: transparent;
-		caret-color: transparent;
-	}
-	.loginMatrixFieldMask {
+
+	// What is being sent: the typed name and password fade, and one sign per
+	// character takes their place on the same line.
+	.loginMatrixValue {
+		position: absolute;
 		display: flex;
 		align-items: center;
-		position: absolute;
+		box-sizing: border-box;
 		overflow: hidden;
-		white-space: pre;
 		pointer-events: none;
-		font-variant-numeric: tabular-nums;
-	}
-	[data-binary-icon] {
-		opacity: 0;
-		transition: opacity 150ms ease-out;
-	}
-	[data-binary-outline='field'] fieldset {
-		border-color: transparent;
-	}
+		color: var(--matrix-primary);
+		font-family: var(--login-matrix-signs);
 
-	@media (width < 1200px) {
-		--matrix-travel-x: 0rem;
-		--matrix-travel-y: 1rem;
-	}
-}
+		> span {
+			flex: none;
+			width: 0.62em;
+			text-align: center;
 
-.loginMatrixSheet {
-	position: relative;
-}
-
-.loginMatrixCanvas {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 1;
-	pointer-events: none;
-	color: var(--m3-primary, #a5000a);
-
-	@media (width >= 1200px) {
-		inset-inline-start: auto;
-		width: min(60vw, 100%);
-	}
-}
-
-.loginMatrixCanvas[data-frozen] {
-	--matrix-travel-x: 1rem;
-	--matrix-travel-y: 0rem;
-
-	animation: login-matrix-ink-trail 370ms ease-out both;
-
-	@media (width < 1200px) {
-		--matrix-travel-x: 0rem;
-		--matrix-travel-y: 1rem;
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.loginMatrixCanvas {
-		display: none;
-	}
-}
-
-@keyframes login-matrix-submit-settle {
-	0% {
-		transform: translateY(0.14rem);
-		background-color: var(--matrix-press);
-		box-shadow: 0 0.025rem 0 var(--matrix-button-edge);
+			&::after {
+				// Browsers without alternative text for `content` still draw the sign.
+				content: attr(data-digit);
+				content: attr(data-digit) / '';
+				animation: login-matrix-digit var(--login-matrix-turn)
+					ease-in-out var(--login-matrix-delay) both;
+			}
+		}
 	}
 
-	55% {
-		transform: translateY(-0.035rem);
+	// Each field: the icon becomes a small grid of signs, the outline turns
+	// into short strokes and then into signs running along the same edge.
+	[data-matrix-field] {
+		input {
+			animation: login-matrix-letter var(--login-matrix-turn) ease-in-out
+				calc(var(--value-at, 0) * var(--login-matrix-pace, 1) * 1ms)
+				both;
+		}
+
+		.MuiInputAdornment-positionStart {
+			position: relative;
+
+			> svg {
+				animation: login-matrix-letter var(--login-matrix-turn) ease-in
+					var(--login-matrix-delay) both;
+			}
+
+			&::after {
+				// Browsers without alternative text for `content` still draw the sign.
+				content: attr(data-grid);
+				content: attr(data-grid) / '';
+				position: absolute;
+				inset-block-start: 50%;
+				inset-inline-start: 50%;
+				transform: translate(-50%, -50%);
+				white-space: pre;
+				font: 600 7px/1.05 var(--login-matrix-signs);
+				letter-spacing: 1px;
+				color: var(--matrix-primary);
+				animation: login-matrix-drip calc(var(--login-matrix-turn) * 2)
+					cubic-bezier(0.16, 1, 0.3, 1) var(--login-matrix-delay) both;
+			}
+		}
+
+		> fieldset {
+			animation: login-matrix-letter calc(var(--login-matrix-turn) * 0.8)
+				ease-in var(--login-matrix-delay) both;
+		}
 	}
 
-	100% {
-		transform: translateY(0);
-		background-color: var(--matrix-primary);
-		box-shadow: 0 0.18rem 0 var(--matrix-button-edge);
+	.loginMatrixEdge {
+		--edge-run: calc(640ms * var(--login-matrix-pace, 1));
+
+		position: absolute;
+		overflow: visible;
+		pointer-events: none;
+		color: var(--matrix-primary);
+
+		path {
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1;
+			stroke-dasharray: 1.5 5.5;
+			opacity: 0;
+			animation: login-matrix-strokes var(--edge-run) ease-in-out
+				var(--login-matrix-delay) both;
+		}
+
+		text {
+			font: 500 6px monospace;
+			fill: currentColor;
+			dominant-baseline: central;
+		}
+
+		tspan {
+			opacity: 0;
+			animation: login-matrix-ink calc(var(--login-matrix-turn) * 0.8)
+				ease-out
+				calc(
+					var(--login-matrix-delay) + var(--edge-run) *
+						(0.3 + var(--run) * 0.7)
+				)
+				both;
+		}
+	}
+
+	// Fixed over the light area (measured on submit); strands of signs fall
+	// from the top and rise from the bottom, each at its own speed, until the
+	// answer comes.
+	.loginMatrixRain {
+		position: fixed;
+		z-index: -1;
+		overflow: hidden;
+		contain: strict;
+		pointer-events: none;
+		color: var(--matrix-primary);
+		opacity: 0.3;
+		font: 9px/1 var(--login-matrix-signs);
+
+		> div {
+			position: absolute;
+			inset-inline: 0;
+			display: flex;
+			justify-content: space-between;
+			height: 55%;
+			overflow: hidden;
+		}
+
+		> [data-side='top'] {
+			top: 0;
+			align-items: flex-start;
+			mask-image: linear-gradient(#000 30%, transparent);
+		}
+
+		> [data-side='bottom'] {
+			bottom: 0;
+			align-items: flex-end;
+			mask-image: linear-gradient(transparent, #000 70%);
+		}
+
+		span {
+			writing-mode: vertical-lr;
+			text-orientation: upright;
+			opacity: calc(0.35 + var(--run, 1) * 0.65);
+			animation: login-matrix-fall
+				calc(var(--speed, 4) * var(--login-matrix-pace, 1) * 1s) linear
+				var(--login-matrix-delay) infinite both;
+
+			// The head of the strand is bright, its tail fades.
+			mask-image: linear-gradient(transparent, #000);
+		}
+
+		[data-side='bottom'] span {
+			animation-name: login-matrix-rise;
+			mask-image: linear-gradient(#000, transparent);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		[data-matrix-field] input,
+		.loginMatrixGlyph > span,
+		[data-matrix-field] > fieldset,
+		[data-matrix-field] .MuiInputAdornment-positionStart > svg {
+			animation: none;
+		}
+
+		.loginMatrixGlyph::after,
+		[data-matrix-field] .MuiInputAdornment-positionStart::after,
+		.loginMatrixValue,
+		.loginMatrixRain,
+		.loginMatrixEdge {
+			display: none;
+		}
 	}
 }
 
@@ -158,31 +266,58 @@
 	}
 }
 
-// Only converted digits leave a trail, along the departing sheet's axis.
-@keyframes login-matrix-digit-trail {
-	0% {
-		opacity: 1;
-	}
-
-	55% {
-		text-shadow:
-			calc(-0.24 * var(--matrix-travel-x))
-				calc(-0.24 * var(--matrix-travel-y)) 0
-				color-mix(in srgb, currentColor 34%, transparent),
-			calc(-0.52 * var(--matrix-travel-x))
-				calc(-0.52 * var(--matrix-travel-y)) 0
-				color-mix(in srgb, currentColor 15%, transparent);
-	}
-
-	100% {
-		translate: var(--matrix-travel-x) var(--matrix-travel-y);
+@keyframes login-matrix-letter {
+	to {
 		opacity: 0;
 	}
 }
 
-@keyframes login-matrix-ink-trail {
-	to {
-		transform: translate(var(--matrix-travel-x), var(--matrix-travel-y));
+@keyframes login-matrix-digit {
+	from {
 		opacity: 0;
+	}
+}
+
+@keyframes login-matrix-drip {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -110%);
+	}
+}
+
+@keyframes login-matrix-fall {
+	from {
+		transform: translateY(-100%);
+	}
+
+	to {
+		transform: translateY(var(--fall));
+	}
+}
+
+@keyframes login-matrix-rise {
+	from {
+		transform: translateY(100%);
+	}
+
+	to {
+		transform: translateY(calc(-1 * var(--fall)));
+	}
+}
+
+// Short strokes appear on the edge, then give way to the digits.
+@keyframes login-matrix-strokes {
+	40% {
+		opacity: 0.55;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes login-matrix-ink {
+	to {
+		opacity: 0.6;
 	}
 }

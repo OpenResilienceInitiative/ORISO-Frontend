@@ -419,10 +419,6 @@ export class FakeMatrixService {
 		return notInPractice('Attachments');
 	}
 
-	createDirectMessageRoom(_userId: string): Promise<never> {
-		return notInPractice('Creating rooms');
-	}
-
 	async sendTyping(): Promise<void> {}
 
 	async logout(): Promise<void> {}

@@ -167,12 +167,17 @@ $buttonMaxWidth: 400px;
 		transition: all 0.6s ease;
 
 		&:hover {
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 
 			svg {
+				// Dark: the hover fill is the near-black lowest surface, so the
+				// glyph takes the surface ink (`--oriso-text-high`, dark only).
 				fill: var(
-					--m3-on-secondary,
-					$button-small-icon-background-color-default
+					--oriso-text-high,
+					var(
+						--m3-on-secondary,
+						$button-small-icon-background-color-default
+					)
 				);
 			}
 		}
@@ -274,7 +279,7 @@ $buttonMaxWidth: 400px;
 
 		&--secondary {
 			border-width: 2px;
-			background-color: $white;
+			background-color: var(--m3-surface-container-lowest, #ffffff);
 			color: var(--m3-on-surface, $secondary);
 			border-color: var(--m3-on-surface, $secondary);
 
@@ -301,6 +306,12 @@ $buttonMaxWidth: 400px;
 			&:hover {
 				background-color: var(--m3-primary-hover, $hover-primary);
 				border-color: var(--m3-primary-hover, $hover-primary);
+
+				// Dark: the primary hover fill is a light tone, so the glyph
+				// takes on-primary instead of the surface ink set above.
+				html[data-oriso-personal-scheme='dark'] & svg {
+					fill: var(--m3-on-primary, #690004);
+				}
 			}
 		}
 	}
