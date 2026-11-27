@@ -197,9 +197,12 @@ for (const scenario of [
 			await submit.click();
 			if (phone) {
 				await expect(
-					submit.locator('.loginMatrixGlyph[data-encoded]').first()
+					submit.locator('.loginMatrixGlyph[data-digit]').first()
 				).toBeVisible();
-				await expect(submit).toHaveText(/^[01]+$/);
+				// Digits are decoration: the label stays readable to assistive tech.
+				await expect(submit).toHaveAccessibleName(
+					/anmelden|log ?in|sign in/i
+				);
 			}
 			if (scenario === 'reduced motion')
 				await expect(page.locator('.loginMatrixGlyph')).toHaveCount(0);
@@ -345,7 +348,7 @@ test('rejected code restores the real OTP control and focus for retry', async ({
 	try {
 		await submit.click();
 		await expect(
-			submit.locator('.loginMatrixGlyph[data-encoded]').first()
+			submit.locator('.loginMatrixGlyph[data-digit]').first()
 		).toBeVisible();
 		tokenResponse.open();
 		await expect(page.locator('.loginForm__error')).toBeVisible();

@@ -534,3 +534,271 @@ export const SetupIncomplete: StoryObj = {
 		);
 	}
 };
+
+/**
+ * Sign-in feedback (#2446): the form re-encodes its own text into digits — the
+ * button label first, then heading, labels and hints one after another. The
+ * stub holds the token request for `holdMs` and then rejects it, so the
+ * sequence plays on the real form and the form comes back untouched.
+ * `pace` stretches the whole timeline (4 = four times slower).
+ */
+const HeldSignIn = ({
+	holdMs,
+	pace = 1,
+	reduceMotion = false,
+	children
+}: {
+	holdMs: number;
+	pace?: number;
+	reduceMotion?: boolean;
+	children: React.ReactNode;
+}) => {
+	const [isReady, setIsReady] = React.useState(false);
+	React.useLayoutEffect(() => {
+		const realFetch = window.fetch;
+		const realMatchMedia = window.matchMedia;
+		const root = document.documentElement;
+		root.style.setProperty('--login-matrix-pace', String(pace));
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (!url.includes('/protocol/openid-connect/token'))
+				return realFetch(input as RequestInfo, init);
+			await new Promise((done) => window.setTimeout(done, holdMs));
+			return jsonResponse(401, {
+				error: 'invalid_grant',
+				error_description: 'Invalid user credentials'
+			});
+		}) as typeof window.fetch;
+		if (reduceMotion)
+			window.matchMedia = ((query: string) =>
+				query.includes('prefers-reduced-motion')
+					? ({
+							matches: true,
+							media: query,
+							addEventListener: () => undefined,
+							removeEventListener: () => undefined,
+							addListener: () => undefined,
+							removeListener: () => undefined
+						} as unknown as MediaQueryList)
+					: realMatchMedia(query)) as typeof window.matchMedia;
+		setIsReady(true);
+		return () => {
+			window.fetch = realFetch;
+			window.matchMedia = realMatchMedia;
+			root.style.removeProperty('--login-matrix-pace');
+		};
+	}, [holdMs, pace, reduceMotion]);
+	return isReady ? <>{children}</> : null;
+};
+
+type ReencodeArgs = {
+	holdMs: number;
+	pace: number;
+	reduceMotion: boolean;
+};
+
+const fillIn = async (canvasElement: HTMLElement) => {
+	await userEvent.type(
+		canvasElement.querySelector('#username') as HTMLInputElement,
+		'berater@example.org'
+	);
+	await userEvent.type(
+		canvasElement.querySelector('#passwordInput') as HTMLInputElement,
+		'story-only'
+	);
+};
+
+/** Lets the page's own entrance finish, so only the sign-in feedback moves. */
+const settle = () =>
+	Promise.all(
+		document
+			.getAnimations()
+			.filter(
+				(animation) =>
+					animation.effect?.getComputedTiming().iterations !==
+					Infinity
+			)
+			.map((animation) => animation.finished.catch(() => undefined))
+	);
+
+/** Every line the sequence touches, with its place inside the form. */
+const readLines = (form: HTMLElement) => {
+	const origin = form.getBoundingClientRect();
+	return Array.from(
+		form.querySelectorAll<HTMLElement>(
+			'h2, label, p, .loginForm__actions, .loginForm__register__separator > span, button:not(.loginForm__actions button)'
+		),
+		(node) => {
+			const { x, y, width, height } = node.getBoundingClientRect();
+			return {
+				text: node.innerText,
+				box: [x - origin.x, y - origin.y, width, height]
+			};
+		}
+	).filter(({ text }) => text.trim());
+};
+
+const reencodeStory = (
+	name: string,
+	story: string,
+	args: Partial<ReencodeArgs>,
+	extra: Partial<StoryObj<ReencodeArgs>> = {}
+): StoryObj<ReencodeArgs> => ({
+	name,
+	args: {
+		holdMs: 6000,
+		pace: 1,
+		reduceMotion: false,
+		...args
+	},
+	argTypes: {
+		holdMs: {
+			name: 'Anmeldung antwortet nach (ms)',
+			control: { type: 'range', min: 500, max: 20000, step: 500 }
+		},
+		pace: {
+			name: 'Zeitlupe (1 = normal)',
+			control: { type: 'range', min: 1, max: 8, step: 1 }
+		},
+		reduceMotion: { name: 'Reduzierte Bewegung' }
+	},
+	parameters: {
+		layout: 'fullscreen',
+		docs: { description: { story } }
+	},
+	render: ({ holdMs, pace, reduceMotion }) => (
+		<HeldSignIn
+			key={`${holdMs}-${pace}-${reduceMotion}`}
+			holdMs={holdMs}
+			pace={pace}
+			reduceMotion={reduceMotion}
+		>
+			<LoginScreen />
+		</HeldSignIn>
+	),
+	...extra
+});
+
+export const ReencodeSignIn = reencodeStory(
+	'Anmelden — Text wird umkodiert',
+	'Benutzername und Passwort eingeben und „Anmelden“ drücken. Zuerst werden Name und Passwort zu Zeichen, dann Button-Text und Überschrift, danach die übrigen Wörter an zufälligen Stellen. Jedes Zeichen rattert kurz durch Katakana und Ziffern, bevor es still auf seinem Buchstaben stehen bleibt. Icons werden zu kleinen Zeichenrastern, Feldränder erst zu Strichen, dann zu Zeichen, und über die ganze helle Fläche fallen feine Zeichensträhnen von oben und steigen von unten. Dauert die Anmeldung länger, rattern Wellen weiter durch die Zeichen. Nach „Anmeldung antwortet nach“ lehnt der Stub ab, und das Formular steht wieder genau so da wie vorher.',
+	{ holdMs: 2500 },
+	{
+		play: async ({ canvasElement }) => {
+			const form =
+				canvasElement.querySelector<HTMLElement>('.loginForm')!;
+			const canvas = within(canvasElement);
+			const buttonName = canvas.getByRole('button', {
+				name: /^(Anmelden|Login|Log in|Sign in)$/i
+			});
+			const name = buttonName.textContent;
+			await fillIn(canvasElement);
+			await settle();
+			const before = readLines(form);
+			const visibleBefore = Array.from(
+				form.querySelectorAll('h2, label, button, p'),
+				(node) => [node, node.checkVisibility()] as const
+			);
+			await userEvent.keyboard('{Enter}');
+			// The sequence runs on the real nodes …
+			await waitFor(() =>
+				expect(
+					buttonName.querySelector('.loginMatrixGlyph')
+				).not.toBeNull()
+			);
+			await waitFor(() =>
+				expect(
+					form.querySelector('h2 .loginMatrixGlyph')
+				).not.toBeNull()
+			);
+			// … with no overlay, no canvas and no layout jump.
+			const panel = form.closest('.stageLayout__contentWrapper') ?? form;
+			await expect(panel.querySelector('canvas')).toBeNull();
+			const during = readLines(form);
+			// Under one pixel: splitting a word into letters drops its kerning
+			// pairs, which can widen a line by a fraction of a pixel.
+			for (const [index, line] of before.entries())
+				for (const [side, value] of line.box.entries())
+					await expect(
+						Math.abs((during[index]?.box[side] ?? NaN) - value)
+					).toBeLessThan(1);
+			// The accessible name never changes: digits are decoration.
+			await expect(buttonName).toHaveAccessibleName(name!);
+			// When the request ends, the page is the static page again.
+			await waitFor(
+				() =>
+					expect(form.querySelector('.loginMatrixGlyph')).toBeNull(),
+				{ timeout: 6000 }
+			);
+			const after = readLines(form).filter(({ text }) =>
+				before.some((line) => line.text === text)
+			);
+			await expect(after.map(({ text }) => text)).toEqual(
+				before.map(({ text }) => text)
+			);
+			// The new error message may add a line; every earlier one is back as it was.
+			for (const [node, visible] of visibleBefore)
+				await expect(node.checkVisibility()).toBe(visible);
+			await expect(buttonName).toHaveTextContent(name!);
+		}
+	}
+);
+
+export const ReencodeDark = reencodeStory(
+	'Anmelden — umkodiert, dunkles Theme',
+	'Dieselbe Folge im dunklen Theme. Zeichen übernehmen die Textfarbe des Elements; Überschrift, Feldinhalte und Vorhang die Primärfarbe des Trägers.',
+	{},
+	{ globals: { scheme: 'dark' } }
+);
+
+export const ReencodeEnglish = reencodeStory(
+	'Anmelden — umkodiert, Englisch',
+	'Dieselbe Folge auf Englisch. Die Folge liest den sichtbaren Text, sie kennt keine Übersetzungsschlüssel und funktioniert in jeder Sprache.',
+	{},
+	{ globals: { locale: 'en' } }
+);
+
+export const ReencodePhone = reencodeStory(
+	'Anmelden — umkodiert, Handy',
+	'Dieselbe Folge auf dem Handy, mit „Neu hier?“ und „Zu den Beratungsthemen“. Jede Zeile bleibt an ihrem Platz, die Wortabstände bleiben erhalten.',
+	{ holdMs: 2500 },
+	{
+		globals: { viewport: { value: 'phone390', isRotated: false } },
+		play: (context) => ReencodeSignIn.play!(context)
+	}
+);
+
+export const ReencodeSlowMotion = reencodeStory(
+	'Anmelden — umkodiert, Zeitlupe',
+	'Viermal langsamer: Name und Passwort zuerst, dann Button und Überschrift, dann die übrigen Wörter an zufälligen Stellen, zuletzt Icons, Feldränder und der Zeichenvorhang.',
+	{ holdMs: 15000, pace: 4 }
+);
+
+export const ReencodeLongWait = reencodeStory(
+	'Anmelden — umkodiert, lange Ladezeit',
+	'Die Anmeldung antwortet erst nach 20 Sekunden. Die Animation läuft die ganze Zeit weiter: Wellen rattern durch die stehenden Zeichen, und die Zeichensträhnen laufen über die ganze helle Fläche, bis die Antwort kommt.',
+	{ holdMs: 20000 }
+);
+
+export const ReencodeReducedMotion = reencodeStory(
+	'Anmelden — reduzierte Bewegung',
+	'Mit „Bewegung reduzieren“ bleiben Text und Feldinhalte stehen, ohne Zeichen und ohne Vorhang. Nur der Hinweis „Bitte warten“ erscheint, bis die Anmeldung antwortet.',
+	{ reduceMotion: true },
+	{
+		play: async ({ canvasElement }) => {
+			await fillIn(canvasElement);
+			await userEvent.keyboard('{Enter}');
+			await within(canvasElement).findByRole('status');
+			await expect(
+				canvasElement.querySelector('.loginMatrixGlyph')
+			).toBeNull();
+		}
+	}
+);

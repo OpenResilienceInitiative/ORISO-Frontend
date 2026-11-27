@@ -488,7 +488,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 				margin-bottom: $grid-base;
 			}
 
-			span {
+			> span {
 				line-height: 15px;
 				padding: 0 10px;
 				background: var(--m3-surface-container-lowest, #fff);
