@@ -564,7 +564,7 @@ $profile-footer-justify-content: center !default;
 		}
 
 		.text {
-			color: #6b7280;
+			color: var(--m3-on-surface-variant, #444748);
 			font-size: 14px;
 			line-height: 1.5;
 
@@ -749,7 +749,7 @@ $profile-footer-justify-content: center !default;
 	.notifications__feed__item__time {
 		margin: 0;
 		font-size: 12px;
-		color: #6b7280;
+		color: var(--m3-on-surface-variant, #444748);
 
 		html[data-oriso-personal-scheme='dark'] & {
 			color: var(--m3-on-surface-variant, #c4c7c8);

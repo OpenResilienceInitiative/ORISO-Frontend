@@ -182,9 +182,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			);
 		}
 
-		.sessionsListItem__date {
-			opacity: 0.65;
-		}
+		// FE#1134: the date keeps its full on-surface-variant ink. Fading it
+		// with opacity dropped it to 3.3:1 on the read card (WCAG needs 4.5:1).
 	}
 
 	&:hover {
