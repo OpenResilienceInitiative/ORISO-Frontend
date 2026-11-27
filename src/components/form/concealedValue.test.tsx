@@ -1,7 +1,13 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import { useState } from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	renderHook,
+	screen
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	afterEach,
@@ -14,6 +20,7 @@ import {
 import { OrisoTextField } from './OrisoTextField';
 import { InputField } from '../inputField/InputField';
 import { AccountSetupField } from '../twoFactorAuth/accountSetupDialogChrome';
+import { isSecretField, useConcealedValue } from './ConcealedValueInput';
 import { RecoveryKeyField } from '../profile/EncryptionSettings/RecoveryKeyField';
 
 // FE#2582: React DOM mirrors the value of a controlled input into its HTML
@@ -208,6 +215,67 @@ describe('secret inputs keep typed values out of the HTML (FE#2582)', () => {
 		) as HTMLInputElement;
 		await userEvent.type(input, 'Probe-key');
 		expect(input.value).toBe('Probe-key');
+		expectNotInHtml(input);
+	});
+
+	it('recognizes autocomplete token lists and any letter case', () => {
+		expect(isSecretField('text', 'section-login one-time-code')).toBe(true);
+		expect(isSecretField('text', 'ONE-TIME-CODE')).toBe(true);
+		expect(isSecretField('text', 'shipping  Current-Password')).toBe(true);
+		expect(isSecretField('text', 'section-login username')).toBe(false);
+		expect(isSecretField('text', 'off')).toBe(false);
+		expect(isSecretField('text', undefined)).toBe(false);
+		expect(isSecretField('password', 'off')).toBe(true);
+	});
+
+	it('conceals a prefixed, uppercase one-time-code field', async () => {
+		render(
+			<ControlledTextField
+				type="text"
+				autoComplete="section-login ONE-TIME-CODE"
+			/>
+		);
+		const input = screen.getByLabelText('Secret') as HTMLInputElement;
+		await userEvent.type(input, 'Probe7');
+		expect(input.value).toBe('Probe7');
+		expectNotInHtml(input);
+	});
+
+	it('useConcealedValue latches on and stays on when the type turns to text', () => {
+		const { result, rerender } = renderHook(
+			({ type }: { type: string }) => useConcealedValue(type, 'off'),
+			{ initialProps: { type: 'text' } }
+		);
+		expect(result.current).toBe(false);
+		rerender({ type: 'password' });
+		expect(result.current).toBe(true);
+		rerender({ type: 'text' });
+		expect(result.current).toBe(true);
+	});
+
+	it('uncontrolled: starts from defaultValue without the attribute and stays editable', async () => {
+		const onChange = vi.fn();
+		render(
+			<OrisoTextField
+				label="Secret"
+				type="password"
+				defaultValue="Probe-default"
+				onChange={onChange}
+			/>
+		);
+		const input = screen.getByLabelText('Secret') as HTMLInputElement;
+		expect(input.value).toBe('Probe-default');
+		await userEvent.type(input, 'X');
+		expect(input.value).toBe('Probe-defaultX');
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expectNotInHtml(input);
+	});
+
+	it('uncontrolled without any value: typing is kept', async () => {
+		render(<OrisoTextField label="Secret" type="password" />);
+		const input = screen.getByLabelText('Secret') as HTMLInputElement;
+		await userEvent.type(input, 'Probe');
+		expect(input.value).toBe('Probe');
 		expectNotInHtml(input);
 	});
 });
