@@ -80,6 +80,13 @@ import {
 } from './script/scriptTestSupport';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 import { isPracticeId } from './practiceIds';
+import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
+import {
+	CHROME_LIKE_VOICES,
+	installFakeMedia,
+	installFakeSpeech
+} from './practiceCallMedia.testkit';
+import { callManager } from '../services/CallManager';
 import {
 	LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
 	LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
@@ -141,6 +148,11 @@ vi.mock('react-joyride', async () => {
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
 const LIVE_CHAT = 'consultant-live-chat';
+const GROUP_CIRCLE = 'consultant-group-circle';
+/** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
+/** The counsellor's own Beratungsstellen, as the create entry reads them. */
+const REAL_AGENCIES_URL = /^\/service\/agencies\/(\d+(?:,\d+)*)$/;
+const SECOND_AGENCY = { id: 4712, name: 'Zweite echte Beratungsstelle' };
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
 /** The texts the page's German script shows; the catalogue is the source. */
 const SCRIPT = createTestScript('de');
@@ -173,6 +185,17 @@ const networkFetch = vi.fn(
 				? JSON.parse(body).status
 				: undefined;
 		network.push({ method, url, status });
+		// A real read the create entry needs: the Beratungsstelle's own
+		// settings, without policies, so the Träger's flags decide.
+		const agencyIds =
+			method === 'GET' && REAL_AGENCIES_URL.exec(new URL(url).pathname);
+		if (agencyIds) {
+			const ids = agencyIds[1].split(',').map(Number);
+			return new Response(JSON.stringify(ids.map((id) => ({ id }))), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
 				? new Response('[]', {
@@ -240,6 +263,12 @@ const renderApp = ({
 	practiceArea = true,
 	width = 1440,
 	strictMode = false,
+	/** Gesprächskreise on, and the counsellor may create and start one. */
+	groupCircle = false,
+	/** Only the circle format: the create flow skips its format picker. */
+	circleOnly = false,
+	/** A second Beratungsstelle: the circle settings preselect none. */
+	twoAgencies = false,
 	liveChatViaSidebar = false
 } = {}) => {
 	const settings = {
@@ -251,8 +280,30 @@ const renderApp = ({
 	};
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
-		featureSupervisionEnabled: true
+		featureSupervisionEnabled: true,
+		...(groupCircle && { featureGroupChatV2Enabled: true }),
+		...(circleOnly && {
+			featureInternalGroupChatEnabled: false,
+			featureDirectInviteChatEnabled: false,
+			featureDirectInviteAudioEnabled: false,
+			featureDirectInviteVideoEnabled: false
+		})
 	};
+	const userData = groupCircle
+		? {
+				...counsellor,
+				grantedAuthorities: [
+					...counsellor.grantedAuthorities,
+					'AUTHORIZATION_CREATE_NEW_CHAT'
+				],
+				agencies: twoAgencies
+					? [
+							...counsellor.agencies,
+							{ ...counsellor.agencies[0], ...SECOND_AGENCY }
+						]
+					: counsellor.agencies
+			}
+		: counsellor;
 	setTenantSettings(flags as any);
 	const store = createStore();
 	const routerConfig = RouterConfigConsultant(settings);
@@ -262,7 +313,7 @@ const renderApp = ({
 		[
 			UserDataContext,
 			{
-				userData: { ...counsellor, liveChatViaSidebar },
+				userData: { ...userData, liveChatViaSidebar },
 				setUserData: vi.fn()
 			}
 		],
@@ -276,7 +327,15 @@ const renderApp = ({
 		[
 			ConsultingTypesContext,
 			{
-				consultingTypes: [{ id: 0, isVideoCallAllowed: false }],
+				consultingTypes: [
+					{
+						id: 0,
+						isVideoCallAllowed: false,
+						// Every real consulting type carries it; the circle's
+						// waiting room reads it.
+						groupChat: { isGroupChat: false }
+					}
+				],
 				setConsultingTypes: vi.fn()
 			}
 		],
@@ -711,6 +770,266 @@ const progressWrites = () =>
 const banner = () =>
 	within(screen.getByRole('status', { name: 'practice.banner.title' }));
 
+/**
+ * The Gesprächskreis flow from the settings on (FE#2545): "Erstellen" makes
+ * the circle in memory, the list opens it, the waiting room's start opens the
+ * practice call (D3, revised), the counsellor mutes, turns the camera off,
+ * minimises into the dock, expands and leaves, and the tour completes.
+ * `cameraAllowed: false` refuses camera and microphone like a browser and
+ * offers only network speech voices, so Carimat murmurs instead of speaking;
+ * `endInCall` presses the banner's End while the call is on screen.
+ */
+const createOpenStartAndCall = async (
+	configureIndex: number,
+	{
+		agency,
+		topic,
+		cameraAllowed = true,
+		endInCall = false
+	}: {
+		agency?: string;
+		topic?: boolean;
+		cameraAllowed?: boolean;
+		endInCall?: boolean;
+	} = {}
+) => {
+	// The settings card: what "Erstellen" needs is filled in there, inside
+	// the spotlight; then Next.
+	const card = await expectStep(configureIndex);
+	// What Joyride reports when it shows the tooltip (the mock does not):
+	// the run's progress then names this step.
+	act(() => {
+		joyride!.onEvent({
+			action: 'update',
+			index: configureIndex,
+			lifecycle: 'tooltip',
+			status: 'running',
+			type: 'tooltip'
+		});
+	});
+	expect(joyride!.steps[configureIndex]).toMatchObject({
+		disableFocusTrap: true
+	});
+	expect(joyride!.steps[configureIndex]).not.toHaveProperty(
+		'blockTargetInteraction'
+	);
+	if (topic) {
+		fireEvent.click(
+			within(card!).getByRole('button', {
+				name: 'groupChat.circle.topicLabel'
+			})
+		);
+		fireEvent.click(
+			await screen.findByRole('option', { name: SCRIPT.names.topic })
+		);
+	}
+	if (agency) {
+		fireEvent.mouseDown(within(card!).getByRole('combobox'));
+		fireEvent.click(await screen.findByRole('option', { name: agency }));
+	}
+	// "Erstellen" sits in the card, but waits for its own step: a create
+	// here would leave the settings and stop the run at the next step.
+	const createInCard = document.querySelector<HTMLButtonElement>(
+		'[data-tour-target="groupchat-circle-create"]'
+	)!;
+	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+	expect(createInCard.disabled).toBe(true);
+	fireEvent.click(createInCard);
+	await expectStep(configureIndex);
+	pressNext(configureIndex);
+
+	// The real "Erstellen" of the settings; the circle is made in memory.
+	const settingsIndex = configureIndex + 1;
+	const settings = await expectStep(settingsIndex);
+	await waitFor(() => expect(settings!.hasAttribute('disabled')).toBe(false));
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleCreated, async () => {
+		fireEvent.click(settings!);
+	});
+
+	// Back in the list (no share dialog): the new circle; click it.
+	const open = settingsIndex + 1;
+	await expectStep(open);
+	await waitFor(
+		() => expect(route()).toBe('/sessions/consultant/sessionView'),
+		SLOW
+	);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	const rowSelector = joyride!.steps[open].target;
+	await waitFor(() => {
+		const row = document.querySelector<HTMLElement>(rowSelector);
+		expect(row?.isConnected).toBe(true);
+		expect(row?.textContent).toContain(SCRIPT.names.topic);
+	}, SLOW);
+	await act(async () => {
+		fireEvent.click(document.querySelector<HTMLElement>(rowSelector)!);
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	});
+	await waitFor(
+		() => expect(route()).toMatch(/sessionView\/!practice-4[^/]*\/-2/),
+		SLOW
+	);
+
+	// The real call path is watched: the manager, the socket, the media.
+	const media = installFakeMedia({ granted: cameraAllowed });
+	// Chrome lists network voices too; only a local one may ever speak.
+	const speech = installFakeSpeech({
+		voices: cameraAllowed
+			? CHROME_LIKE_VOICES
+			: CHROME_LIKE_VOICES.filter((voice) => !voice.localService)
+	});
+	const expectOnlyLocalSpeech = () => {
+		expect(
+			speech.spoken.filter((u) => u.voice?.localService !== true)
+		).toEqual([]);
+	};
+	const startCall = vi.spyOn(callManager, 'startCall');
+	const sockets = vi.fn();
+	vi.stubGlobal(
+		'WebSocket',
+		class {
+			constructor(url: string) {
+				sockets(url);
+			}
+		}
+	);
+	const confirm = vi.spyOn(window, 'confirm');
+	const alert = vi.spyOn(window, 'alert');
+	const callAnchor = (name: string) =>
+		document.querySelector<HTMLElement>(`[data-tour-target="${name}"]`);
+	const clickAndWait = (element: HTMLElement) =>
+		act(async () => {
+			fireEvent.click(element);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+	// The waiting room's real "Video-Call starten": it starts the circle in
+	// memory and opens the practice call at once, no second click.
+	const start = await expectStep(open + 1);
+	const startButton = within(start!).getByRole('button', {
+		name: 'videoCall.button.startVideoCall'
+	});
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.circleStarted, async () => {
+		await act(async () => {
+			fireEvent.click(startButton);
+		});
+	});
+	// The audio started inside that click.
+	expect(media.contexts).toHaveLength(1);
+
+	// The stage: the own tile and Carimat; Next.
+	const stage = await expectStep(open + 2);
+	expect(stage!.dataset.tourTarget).toBe(PRACTICE_CALL_TARGETS.stage);
+	expect(route()).toMatch(/sessionView\/!practice-4/);
+	await waitFor(() => expect(media.getUserMedia).toHaveBeenCalledTimes(1));
+	if (cameraAllowed) {
+		await waitFor(() =>
+			expect(
+				within(stage!).getByTestId('practice-call-own-video')
+			).toBeTruthy()
+		);
+	} else {
+		await waitFor(() =>
+			expect(
+				within(stage!).getByTestId('practice-call-no-media')
+			).toBeTruthy()
+		);
+		expect(
+			within(stage!).queryByTestId('practice-call-own-video')
+		).toBeNull();
+	}
+	expect(
+		within(stage!).getByTestId('practice-call-robot-tile').textContent
+	).toContain('practice.callStage.robotName');
+	// Carimat speaks with the local voice, or murmurs without one.
+	if (cameraAllowed) {
+		await waitFor(() => expect(speech.speak).toHaveBeenCalled(), SLOW);
+		expect(stage!.dataset.voice).toBe('speech');
+	} else {
+		await waitFor(() => expect(stage!.dataset.voice).toBe('murmur'), SLOW);
+		expect(speech.speak).not.toHaveBeenCalled();
+	}
+	expectOnlyLocalSpeech();
+	if (endInCall) {
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+		expect(media.allTracksEnded()).toBe(true);
+		expect(media.allAudioClosed()).toBe(true);
+		if (cameraAllowed) expect(speech.cancel).toHaveBeenCalled();
+		expect(startCall).not.toHaveBeenCalled();
+		expect(sockets).not.toHaveBeenCalled();
+		expect(progressWrites()).not.toContain('completed');
+		expectNothingLeftThePracticeWorld();
+		return;
+	}
+	pressNext(open + 2);
+
+	// Mute, camera, minimise: each a click on the real control.
+	const mute = await expectStep(open + 3);
+	await clickAndWait(mute!);
+	expect(mute!.getAttribute('aria-pressed')).toBe('true');
+	const camera = await expectStep(open + 4);
+	await clickAndWait(camera!);
+	expect(camera!.getAttribute('aria-pressed')).toBe('true');
+	if (cameraAllowed) {
+		const [mic, video] = media.tracks;
+		expect([mic.enabled, video.enabled]).toEqual([false, false]);
+	}
+	const minimise = await expectStep(open + 5);
+	await clickAndWait(minimise!);
+
+	// The real dock with Carimat; its way back.
+	const expand = await expectStep(open + 6);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+	expect(
+		callAnchor(PRACTICE_CALL_TARGETS.dock)!.classList.contains(
+			'minimized-call-dock'
+		)
+	).toBe(true);
+	await clickAndWait(expand!);
+
+	// Leave: back in the circle, every track stopped, the audio closed.
+	const leave = await expectStep(open + 7);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.dock)).toBeNull();
+	await clickAndWait(leave!);
+	await expectStep(open + 8);
+	expect(callAnchor(PRACTICE_CALL_TARGETS.stage)).toBeNull();
+	expect(route()).toMatch(/sessionView\/!practice-4/);
+	expect(media.tracks).toHaveLength(cameraAllowed ? 2 : 0);
+	expect(media.allTracksEnded()).toBe(true);
+	expect(media.allAudioClosed()).toBe(true);
+	if (cameraAllowed) expect(speech.cancel).toHaveBeenCalled();
+	expectOnlyLocalSpeech();
+
+	// Nothing of the real call path was touched.
+	expect(media.getUserMedia).toHaveBeenCalledTimes(1);
+	expect(startCall).not.toHaveBeenCalled();
+	expect(callManager.hasActiveCall()).toBe(false);
+	expect(document.querySelector('.element-call-iframe')).toBeNull();
+	expect(sockets).not.toHaveBeenCalled();
+	expect(confirm).not.toHaveBeenCalled();
+	expect(alert).not.toHaveBeenCalled();
+	expect(
+		network.filter(
+			({ url }) =>
+				url.includes('/_matrix') ||
+				url.includes('/service/matrix/calls')
+		)
+	).toEqual([]);
+
+	// Done: completion is written for the circle tour itself, and the
+	// circle never left the page.
+	await finish(open + 8);
+	expect(
+		network.filter(({ url }) => url.includes('/service/users/chat'))
+	).toEqual([]);
+};
+
 describe('practice flows on the real app shell', () => {
 	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
 		const app = renderApp({ strictMode: true });
@@ -901,6 +1220,126 @@ describe('practice flows on the real app shell', () => {
 		const app = renderApp({ practiceArea: false });
 		await app.request(LIVE_CHAT);
 		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it.each([
+		{ twoAgencies: false, agency: undefined, cameraAllowed: true },
+		// Dev: a counsellor of several Beratungsstellen gets none preselected,
+		// and "Erstellen" waits for her choice in the settings card.
+		{ twoAgencies: true, agency: SECOND_AGENCY.name, cameraAllowed: false }
+	])(
+		'Gesprächskreis (FE#2545, two agencies: $twoAgencies, camera allowed: $cameraAllowed): the real create flow makes a practice circle, which is opened and started into the practice call',
+		async ({ twoAgencies, agency, cameraAllowed }) => {
+			const app = renderApp({ groupCircle: true, twoAgencies });
+			// The Help list starts topic tours by request; there is no card.
+			await app.request(GROUP_CIRCLE);
+
+			// 1: an exercise, nothing is real; Next.
+			await expectStep(0);
+			expect(getPracticeSnapshot().status).toBe('active');
+			pressNext(0);
+
+			// 2: the real "Erstellen" of the counsellor's own list; click it.
+			const create = stepIndexOf('groupchat-create-button');
+			const createButton = await expectStep(create);
+			expect(route()).toBe('/sessions/consultant/sessionView');
+			await act(async () => {
+				fireEvent.click(createButton!);
+				await new Promise<void>((resolve) => setTimeout(resolve, 0));
+			});
+
+			// 3: the circle card among the formats; Next.
+			const format = await expectStep(create + 1);
+			expect(format!.dataset.tourTarget).toBe('groupchat-format-circle');
+			pressNext(create + 1);
+
+			// 4: the topic: open the list, pick the practice topic, continue.
+			const picker = await expectStep(create + 2);
+			fireEvent.click(
+				within(picker!).getByRole('button', {
+					name: 'groupChat.circle.topicLabel'
+				})
+			);
+			fireEvent.click(
+				await screen.findByRole('option', { name: SCRIPT.names.topic })
+			);
+			await act(async () => {
+				fireEvent.click(
+					within(picker!).getByRole('button', {
+						name: SCRIPT.names.topic
+					})
+				);
+			});
+
+			if (twoAgencies) {
+				await expectStep(create + 3);
+				expect(
+					document
+						.querySelector(
+							'[data-tour-target="groupchat-circle-create"]'
+						)!
+						.hasAttribute('disabled')
+				).toBe(true);
+			}
+			await createOpenStartAndCall(create + 3, { agency, cameraAllowed });
+		},
+		120000
+	);
+
+	it('Gesprächskreis with only the circle format: the picker steps are skipped and the flow still ends at done', async () => {
+		const app = renderApp({ groupCircle: true, circleOnly: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		pressNext(0);
+
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
+		await act(async () => {
+			fireEvent.click(createButton!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+
+		// No format picker, no topic card: the settings open directly, and
+		// the tour goes on at their card. The topic is picked there.
+		await expectStep(create + 3);
+		expect(
+			document.querySelector(
+				'[data-tour-target="groupchat-format-circle"]'
+			)
+		).toBeNull();
+		expect(
+			document
+				.querySelector('[data-tour-target="groupchat-circle-create"]')!
+				.hasAttribute('disabled')
+		).toBe(true);
+
+		await createOpenStartAndCall(create + 3, { topic: true });
+	}, 120000);
+
+	it('Gesprächskreis: banner End during the practice call stops every track and closes the audio', async () => {
+		const app = renderApp({ groupCircle: true, circleOnly: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		pressNext(0);
+		const create = stepIndexOf('groupchat-create-button');
+		const createButton = await expectStep(create);
+		await act(async () => {
+			fireEvent.click(createButton!);
+			await new Promise<void>((resolve) => setTimeout(resolve, 0));
+		});
+		await createOpenStartAndCall(create + 3, {
+			topic: true,
+			endInCall: true
+		});
+	}, 120000);
+
+	it('Gesprächskreis without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false, groupCircle: true });
+		await app.request(GROUP_CIRCLE);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(6);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});

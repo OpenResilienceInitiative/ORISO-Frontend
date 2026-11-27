@@ -4,6 +4,7 @@ import { getAvailableTours } from '../tourCatalogue';
 import { frontendTours } from '../tourDefinitions';
 import {
 	consultantGroupCircleTour,
+	GROUP_CIRCLE_TOUR_VERSION,
 	isGroupCircleTourAvailable
 } from './groupCircleTour';
 import { itKeepsTheTourContract } from './tourDefinitionContract.testkit';
@@ -13,7 +14,15 @@ const withAgencies = (
 ): UserDataInterface => ({ agencies }) as unknown as UserDataInterface;
 
 describe('consultant-group-circle', () => {
-	itKeepsTheTourContract(consultantGroupCircleTour, 'consultant');
+	itKeepsTheTourContract(
+		consultantGroupCircleTour,
+		'consultant',
+		GROUP_CIRCLE_TOUR_VERSION
+	);
+
+	it('is version 3: the practice rendering (FE#2545) shares id and version, and now ends in the practice call', () => {
+		expect(GROUP_CIRCLE_TOUR_VERSION).toBe(3);
+	});
 
 	const steps = consultantGroupCircleTour.steps;
 

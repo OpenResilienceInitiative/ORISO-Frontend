@@ -145,6 +145,29 @@ const anchorContract: Array<{
 		sourceFile: 'conversationCreate/CreateConversationView.tsx',
 		expected: /tourTarget="groupchat-topic-picker"/
 	},
+	// The Gesprächskreis practice flow (FE#2545).
+	{
+		anchor: 'groupchat-circle-create',
+		sourceFile: 'conversationCreate/circle/CircleSettingsView.tsx'
+	},
+	{
+		// The circle settings card: the configure step's spotlight.
+		anchor: 'groupchat-circle-settings',
+		sourceFile: 'conversationCreate/circle/CircleSettingsView.tsx',
+		expected: /tourTarget="groupchat-circle-settings"/
+	},
+	{
+		// The first group row of the counsellor's own list.
+		anchor: 'groupchat-list-item',
+		sourceFile: 'sessionsListItem/SessionListItemComponent.tsx',
+		expected: /index === 0 \? 'groupchat-list-item'/
+	},
+	{
+		// The moderator's start in the circle's waiting room only.
+		anchor: 'groupchat-start-button',
+		sourceFile: 'groupChat/JoinGroupChatView.tsx',
+		expected: /canStartChat\s*\?\s*'groupchat-start-button'/
+	},
 	// Profile section cards: `tourTarget` in the route files.
 	{
 		anchor: 'profile-public',
@@ -307,6 +330,15 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'profile/ProfileCardList.tsx',
 		expected: /tourTarget=\{element\.tourTarget\}/
+	},
+	{
+		// The waiting room's main action (FE#2545).
+		sourceFile: 'registrationFooter/RegistrationFooter.tsx',
+		expected: /data-tour-target=\{primary\.tourTarget\}/
+	},
+	{
+		sourceFile: 'groupChat/entryRoom/GroupWaitingRoom.tsx',
+		expected: /tourTarget: primaryTourTarget/
 	}
 ];
 

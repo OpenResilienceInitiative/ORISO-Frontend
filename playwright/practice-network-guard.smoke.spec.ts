@@ -1,22 +1,34 @@
 import { expect, test, type Page } from '@playwright/test';
-import { PRACTICE_TOUR_IDS } from '../src/practice/practiceTourIds';
+import {
+	PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	PRACTICE_TOUR_IDS
+} from '../src/practice/practiceTourIds';
 import type { RequestPolicyConfig } from '../src/practice/requestPolicy';
 import {
 	assertRunLeftNothing,
 	banner,
+	CALL_PATH,
+	TTS_HOST,
 	diffStorage,
 	driveAcceptFlow,
+	driveCircleFlow,
 	driveSupervisionFlow,
 	endFromBanner,
 	exactText,
+	expectNoLiveMedia,
 	expectRealEnquiriesFree,
 	finishButton,
+	instrumentCallPath,
 	openThePracticeEnquiry,
 	practiceCard,
 	progressWriteStatuses,
+	readCallProbe,
+	recordSockets,
 	recordTraffic,
 	snapshotStorage,
 	startButton,
+	tourCard,
+	tourStartButton,
 	type FlowRun
 } from './practice-proof';
 
@@ -56,8 +68,31 @@ import {
  * Flow F1 runs with the Team-Besprechung steps when the tenant has them
  * switched on, and without otherwise: the variant is reported as an annotation.
  * Flow F2 is skipped, with a message, when the tenant has no supervision.
+ *
+ * The Gesprächskreis flow (FE#2545) starts from its topic tour card and runs
+ * with Chromium's fake camera and microphone. On top of the claims above it
+ * proves the practice call stays local: no `.element-call-iframe`, no LiveKit
+ * or Element Call socket, no `/service/matrix/calls` or Matrix RTC request,
+ * no notification, getUserMedia called once (by the stage), and after leaving
+ * every track has ended and every AudioContext is closed. It is skipped when
+ * the tenant offers no circles.
  */
 const storageState = process.env.ORISO_TOUR_STORAGE_STATE;
+
+/*
+ * Chromium's fake camera and microphone, granted without a prompt, for the
+ * Gesprächskreis call. Top level because Playwright refuses launch options
+ * inside a describe (they force a new worker); F1 and F2 ask for no media,
+ * so the flags change nothing for them.
+ */
+test.use({
+	launchOptions: {
+		args: [
+			'--use-fake-ui-for-media-stream',
+			'--use-fake-device-for-media-stream'
+		]
+	}
+});
 
 const [ACCEPT_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
 
@@ -127,6 +162,8 @@ interface Flow {
 	drive: (page: Page, run: string) => Promise<FlowRun>;
 	/** Offered only where the Träger switched the feature on. */
 	optional?: boolean;
+	/** A topic tour: started from its "Meine Rundgänge" card, not a practice card. */
+	topicTour?: boolean;
 }
 
 const ACCEPT_FLOW: Flow = {
@@ -142,6 +179,15 @@ const SUPERVISION_FLOW: Flow = {
 	titleKey: 'tour.practiceSupervision.title',
 	drive: driveSupervisionFlow,
 	optional: true
+};
+
+const CIRCLE_FLOW: Flow = {
+	name: 'Gesprächskreis with the practice call',
+	tourId: PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	titleKey: 'tour.groupCircle.title',
+	drive: driveCircleFlow,
+	optional: true,
+	topicTour: true
 };
 
 /** The page is where practice started: the Help page with its practice cards. */
@@ -176,7 +222,9 @@ const provePracticeRun = async (
 	await expect(practiceCard(page, ACCEPT_FLOW.titleKey)).toBeVisible({
 		timeout: 30_000
 	});
-	const card = practiceCard(page, flow.titleKey);
+	const card = flow.topicTour
+		? tourCard(page, flow.titleKey)
+		: practiceCard(page, flow.titleKey);
 	if (flow.optional) {
 		test.skip(
 			(await card.count()) === 0,
@@ -190,7 +238,7 @@ const provePracticeRun = async (
 	// The run window starts at the click on the card: what the app sent before
 	// is ordinary real-mode traffic.
 	const from = traffic.mark();
-	await startButton(card).click();
+	await (flow.topicTour ? tourStartButton(card) : startButton(card)).click();
 	await expect(banner(page)).toBeVisible({ timeout: 30_000 });
 	const walked = await walk(run);
 	// The banner goes when the practice starts to close, while the guard is
@@ -264,6 +312,73 @@ test.describe('practice network guard (T2)', () => {
 			await openThePracticeEnquiry(page);
 			await endFromBanner(page);
 			return { typed: [], finished: false };
+		});
+	});
+
+	test.describe('the Gesprächskreis practice call (FE#2545 D3)', () => {
+		test(`${CIRCLE_FLOW.name}: walked to the end, the call stays local and no media stays live`, async ({
+			page
+		}) => {
+			test.setTimeout(300_000);
+			await instrumentCallPath(page);
+			const sockets = recordSockets(page);
+			const traffic = recordTraffic(page);
+			let from = traffic.mark();
+
+			await provePracticeRun(page, CIRCLE_FLOW, async (run) => {
+				from = traffic.mark();
+				const walked = await CIRCLE_FLOW.drive(page, run);
+				await finishButton(page).click();
+				return { ...walked, finished: true };
+			});
+
+			const ran = traffic.requests.slice(from.requests);
+			expect(
+				ran
+					.filter(
+						(request) =>
+							CALL_PATH.test(request.url) ||
+							(request.url.includes('/_matrix/') &&
+								request.method !== 'GET')
+					)
+					.map(
+						(request) =>
+							`${request.method} ${new URL(request.url).pathname}`
+					),
+				'requests of the real call path'
+			).toEqual([]);
+			expect(
+				sockets.filter((url) => CALL_PATH.test(url)),
+				'LiveKit or Element Call sockets'
+			).toEqual([]);
+			// Carimat's voice stays on the device: no speech service is asked,
+			// and every utterance used a local voice.
+			expect(
+				[
+					...traffic.requests.map((request) => request.url),
+					...sockets
+				].filter((url) => TTS_HOST.test(url)),
+				'requests to a speech or TTS host'
+			).toEqual([]);
+			await expect(page.locator('.element-call-iframe')).toHaveCount(0);
+			const probe = await readCallProbe(page);
+			expect(probe.getUserMedia, 'getUserMedia calls').toBe(1);
+			expect(probe.notifications, 'notifications').toBe(0);
+			expect(
+				probe.spoken.filter((voice) => voice.localService !== true),
+				'utterances with a voice that is not local'
+			).toEqual([]);
+			if (probe.spoken.length > 0) {
+				expect(
+					probe.cancels,
+					'speech cancelled on leave'
+				).toBeGreaterThan(0);
+			}
+			test.info().annotations.push({
+				type: 'carimat-voices',
+				description: JSON.stringify(probe.spoken.slice(0, 3))
+			});
+			await expectNoLiveMedia(page);
 		});
 	});
 });

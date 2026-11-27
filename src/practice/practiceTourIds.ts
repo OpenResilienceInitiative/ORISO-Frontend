@@ -8,6 +8,18 @@ export const PRACTICE_SUPERVISION_TOUR_ID = 'consultant-practice-supervision';
  * the Help list keeps its explanation tour under the same id.
  */
 export const PRACTICE_LIVE_CHAT_TOUR_ID = 'consultant-live-chat';
+/**
+ * FE#2545: the Gesprächskreis topic tour. Where practice is open the
+ * counsellor creates, opens and starts a practice circle; elsewhere the Help
+ * list keeps its explanation tour under the same id.
+ */
+export const PRACTICE_GROUP_CIRCLE_TOUR_ID = 'consultant-group-circle';
+
+/**
+ * The Gesprächskreis flow's settings-card step: "Erstellen" in the card
+ * waits for the next step, which listens for the create (FE#2545).
+ */
+export const PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID = 'configure';
 
 /** The flows with a practice card of their own (Help → Meine Rundgänge). */
 export const PRACTICE_CARD_TOUR_IDS = [
@@ -23,7 +35,8 @@ export const PRACTICE_CARD_TOUR_IDS = [
  */
 export const PRACTICE_TOUR_IDS = [
 	...PRACTICE_CARD_TOUR_IDS,
-	PRACTICE_LIVE_CHAT_TOUR_ID
+	PRACTICE_LIVE_CHAT_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID
 ] as const;
 
 export type PracticeTourId = (typeof PRACTICE_TOUR_IDS)[number];

@@ -68,6 +68,19 @@ export const exactText = (...keys: string[]): RegExp =>
 export const partOfText = (key: string): RegExp =>
 	new RegExp(lookup(key).map(escapeRegExp).join('|'));
 
+/** Like `partOfText`, with every `{{placeholder}}` matching any name. */
+export const partOfTemplate = (key: string): RegExp =>
+	new RegExp(
+		lookup(key)
+			.map((text) =>
+				text
+					.split(/\{\{\s*\w+\s*\}\}/)
+					.map(escapeRegExp)
+					.join('.+?')
+			)
+			.join('|')
+	);
+
 // -------------------------------------------------------------- traffic
 
 export interface RecordedRequest extends RecordedNetworkRequest {
@@ -602,4 +615,308 @@ export const expectRealEnquiriesFree = async (page: Page): Promise<void> => {
 	await expect(page.locator('body')).not.toContainText(
 		partOfText('practiceScript.cast.asker')
 	);
+};
+
+// ------------------------------------------- the Gesprächskreis and its call
+
+/** A topic tour's card in "Meine Rundgänge" (the circle tour has no practice card). */
+export const tourCard = (page: Page, titleKey: string): Locator =>
+	page.locator('li.tourOverview__card', {
+		has: page.getByRole('heading', { name: exactText(titleKey) })
+	});
+
+export const tourStartButton = (card: Locator): Locator =>
+	card.getByRole('button', {
+		name: exactText(
+			'walkthrough.overview.action.start',
+			'walkthrough.overview.action.continue',
+			'walkthrough.overview.action.restart'
+		)
+	});
+
+/** The tooltip shows this step; the circle flow's count depends on the tenant. */
+const expectTitle = (page: Page, titleKey: string) =>
+	expect(tooltip(page).locator('.productTourTooltip__title')).toHaveText(
+		exactText(titleKey),
+		{ timeout: STEP_TIMEOUT }
+	);
+
+const titleIs = async (page: Page, titleKey: string): Promise<boolean> =>
+	exactText(titleKey).test(
+		(await tooltip(page)
+			.locator('.productTourTooltip__title')
+			.innerText()
+			.catch(() => '')) ?? ''
+	);
+
+/**
+ * Instruments the page before the app loads: every getUserMedia call and the
+ * tracks it handed out, every AudioContext, every Notification, and the
+ * voice of every `speechSynthesis.speak` (name, lang, localService) and
+ * every `cancel`. Only names and states are read back; no media leaves the
+ * page.
+ */
+export const instrumentCallPath = (page: Page) =>
+	page.addInitScript(() => {
+		const probe = {
+			getUserMedia: 0,
+			tracks: [] as MediaStreamTrack[],
+			audio: [] as AudioContext[],
+			notifications: 0,
+			spoken: [] as Array<{
+				name: string | null;
+				lang: string | null;
+				localService: boolean | null;
+			}>,
+			cancels: 0
+		};
+		(
+			window as unknown as { __practiceCallProbe: typeof probe }
+		).__practiceCallProbe = probe;
+		const devices = navigator.mediaDevices;
+		if (devices?.getUserMedia) {
+			const original = devices.getUserMedia.bind(devices);
+			devices.getUserMedia = async (constraints) => {
+				probe.getUserMedia += 1;
+				const stream = await original(constraints);
+				probe.tracks.push(...stream.getTracks());
+				return stream;
+			};
+		}
+		const NativeAudioContext = window.AudioContext;
+		if (NativeAudioContext) {
+			window.AudioContext = class extends NativeAudioContext {
+				constructor(options?: AudioContextOptions) {
+					super(options);
+					probe.audio.push(this);
+				}
+			};
+		}
+		const synth = window.speechSynthesis;
+		if (synth) {
+			const speak = synth.speak.bind(synth);
+			const cancel = synth.cancel.bind(synth);
+			synth.speak = (utterance) => {
+				probe.spoken.push({
+					name: utterance.voice?.name ?? null,
+					lang: utterance.voice?.lang ?? null,
+					localService: utterance.voice?.localService ?? null
+				});
+				speak(utterance);
+			};
+			synth.cancel = () => {
+				probe.cancels += 1;
+				cancel();
+			};
+		}
+		const NativeNotification = window.Notification;
+		if (NativeNotification) {
+			const Counted = function (
+				this: Notification,
+				title: string,
+				options?: NotificationOptions
+			) {
+				probe.notifications += 1;
+				return new NativeNotification(title, options);
+			} as unknown as typeof Notification;
+			Object.setPrototypeOf(Counted, NativeNotification);
+			window.Notification = Counted;
+		}
+	});
+
+export interface CallProbe {
+	getUserMedia: number;
+	tracks: Array<{ kind: string; readyState: string }>;
+	audio: string[];
+	notifications: number;
+	/** The voice of every utterance Carimat spoke. */
+	spoken: Array<{
+		name: string | null;
+		lang: string | null;
+		localService: boolean | null;
+	}>;
+	cancels: number;
+}
+
+export const readCallProbe = (page: Page): Promise<CallProbe> =>
+	page.evaluate(() => {
+		const probe = (
+			window as unknown as {
+				__practiceCallProbe: {
+					getUserMedia: number;
+					tracks: MediaStreamTrack[];
+					audio: AudioContext[];
+					notifications: number;
+					spoken: CallProbe['spoken'];
+					cancels: number;
+				};
+			}
+		).__practiceCallProbe;
+		return {
+			getUserMedia: probe.getUserMedia,
+			tracks: probe.tracks.map((track) => ({
+				kind: track.kind,
+				readyState: track.readyState
+			})),
+			audio: probe.audio.map((context) => context.state),
+			notifications: probe.notifications,
+			spoken: probe.spoken,
+			cancels: probe.cancels
+		};
+	});
+
+/** Every track handed out has ended and every AudioContext is closed. */
+export const expectNoLiveMedia = async (page: Page) => {
+	await expect
+		.poll(async () => {
+			const probe = await readCallProbe(page);
+			return [
+				...probe.tracks.map(
+					(track) => `${track.kind}:${track.readyState}`
+				),
+				...probe.audio.map((state) => `audio:${state}`)
+			].filter((state) => !/:(ended|closed)$/.test(state));
+		})
+		.toEqual([]);
+};
+
+/** WebSockets the page opens; a LiveKit or Element Call socket is a failure. */
+export const recordSockets = (page: Page): string[] => {
+	const urls: string[] = [];
+	page.on('websocket', (socket) => urls.push(socket.url()));
+	return urls;
+};
+
+/** A socket or request of the real call path (LiveKit, Element Call, Matrix RTC). */
+export const CALL_PATH =
+	/livekit|element-call|\/service\/matrix\/calls|\/rtc\b|org\.matrix\.msc3401|sfu/i;
+
+/** A speech or text-to-speech service: Carimat's voice must stay on the device. */
+export const TTS_HOST =
+	/texttospeech|speech\.googleapis|translate_tts|\/tts\b|polly\.|cognitiveservices|speech\.microsoft|speech-to-text|elevenlabs/i;
+
+const CIRCLE_STEP = 'tour.groupCircle.step';
+
+/**
+ * The Gesprächskreis practice flow (FE#2545): the real create flow, the
+ * waiting room's start, then the practice call with Chromium's fake camera
+ * and microphone: mute, camera off, minimise into the dock, expand, leave.
+ * Ends on the last step (its button still to press).
+ */
+export const driveCircleFlow = async (page: Page): Promise<FlowRun> => {
+	await expectTitle(page, `${CIRCLE_STEP}.intro.title`);
+	await pressNext(page);
+
+	await expectTitle(page, `${CIRCLE_STEP}.create.title`);
+	await clickTarget(page, 'groupchat-create-button');
+
+	// Format card and topic picker only where the tenant offers formats.
+	await expect(
+		tooltip(page).locator('.productTourTooltip__title')
+	).not.toHaveText(exactText(`${CIRCLE_STEP}.create.title`), {
+		timeout: STEP_TIMEOUT
+	});
+	if (await titleIs(page, `${CIRCLE_STEP}.format.title`)) {
+		await pressNext(page);
+	}
+	const pickTopic = async (scope: Locator) => {
+		await scope
+			.getByRole('button', {
+				name: exactText('groupChat.circle.topicLabel')
+			})
+			.click();
+		await page
+			.getByRole('option', {
+				name: exactText('practiceScript.names.topic')
+			})
+			.click();
+	};
+	if (await titleIs(page, `${CIRCLE_STEP}.topic.title`)) {
+		const picker = target(page, 'groupchat-topic-picker');
+		await pickTopic(picker);
+		await picker
+			.getByRole('button', {
+				name: exactText('practiceScript.names.topic')
+			})
+			.click();
+	}
+
+	// The settings card: topic where still unset, a Beratungsstelle where
+	// none is preselected; then Next.
+	await expectTitle(page, `${CIRCLE_STEP}.practiceConfigure.title`);
+	const card = target(page, 'groupchat-circle-settings');
+	const topicButton = card.getByRole('button', {
+		name: exactText('groupChat.circle.topicLabel')
+	});
+	if (await topicButton.isVisible().catch(() => false)) {
+		await pickTopic(card);
+	}
+	const create = target(page, 'groupchat-circle-create');
+	if (await create.isDisabled()) {
+		await card.getByRole('combobox').first().click();
+		await page.getByRole('option').first().click();
+	}
+	await pressNext(page);
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceSettings.title`);
+	await expect(create).toBeEnabled();
+	await clickTarget(page, 'groupchat-circle-create');
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceOpen.title`);
+	await clickTarget(page, 'groupchat-list-item');
+
+	// The real "Video-Call starten": the circle starts in memory and the
+	// practice call opens in the same click.
+	await expectTitle(page, `${CIRCLE_STEP}.practiceStart.title`);
+	await target(page, 'groupchat-start-button')
+		.getByRole('button', {
+			name: exactText('videoCall.button.startVideoCall')
+		})
+		.or(page.locator('button[data-tour-target="groupchat-start-button"]'))
+		.first()
+		.click();
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceStage.title`);
+	await expect(target(page, 'practice-call-stage')).toBeVisible();
+	// Chromium's fake camera: the own preview plays.
+	await expect(page.getByTestId('practice-call-own-video')).toBeVisible({
+		timeout: STEP_TIMEOUT
+	});
+	await expect(page.getByTestId('practice-call-robot-tile')).toContainText(
+		partOfTemplate('practice.callStage.robotName')
+	);
+	await expect(page.getByTestId('practice-call-caption')).toContainText(
+		partOfTemplate('practice.callStage.line1'),
+		{ timeout: STEP_TIMEOUT }
+	);
+	await expect(page.locator('.element-call-iframe')).toHaveCount(0);
+	await pressNext(page);
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceMute.title`);
+	await clickTarget(page, 'practice-call-mute');
+	await expect(target(page, 'practice-call-mute')).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceCamera.title`);
+	await clickTarget(page, 'practice-call-camera');
+	await expect(page.getByTestId('practice-call-own-video')).toHaveCount(0);
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceMinimise.title`);
+	await clickTarget(page, 'practice-call-minimise');
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceExpand.title`);
+	await expect(target(page, 'practice-call-dock')).toBeVisible();
+	await expect(target(page, 'practice-call-stage')).toHaveCount(0);
+	await clickTarget(page, 'practice-call-expand');
+
+	await expectTitle(page, `${CIRCLE_STEP}.practiceLeave.title`);
+	await clickTarget(page, 'practice-call-leave');
+
+	await expectTitle(page, `${CIRCLE_STEP}.done.title`);
+	await expect(target(page, 'practice-call-stage')).toHaveCount(0);
+	await expect(target(page, 'practice-call-dock')).toHaveCount(0);
+	await expectNoLiveMedia(page);
+	return { typed: [] };
 };

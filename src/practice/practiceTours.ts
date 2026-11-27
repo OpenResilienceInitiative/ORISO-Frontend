@@ -1,5 +1,5 @@
 import { isTourAvailable } from '../components/productTour/tourEngine';
-import type { TourDefinition } from '../components/productTour/types';
+import type { TourDefinition, TourStep } from '../components/productTour/types';
 import {
 	practiceAcceptedSessionRoute,
 	PRACTICE_ENQUIRIES_ROUTE,
@@ -7,12 +7,20 @@ import {
 	PRACTICE_LIVE_CHAT_SETTINGS_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import { PRACTICE_CALL_TARGETS } from './practiceCallTargets';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
 	PRACTICE_SUPERVISION_TOUR_ID
 } from './practiceTourIds';
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
+import {
+	consultantGroupCircleTour,
+	GROUP_CIRCLE_SETTINGS_OPENED,
+	GROUP_CIRCLE_TOUR_VERSION
+} from '../components/productTour/tours/groupCircleTour';
 
 /*
  * The two practice flows, a registry of their own: `frontendTours` feeds the
@@ -251,6 +259,199 @@ export const practiceLiveChatTour: TourDefinition = {
 	]
 };
 
+/** The counsellor's own conversations, where "Erstellen" and circles live. */
+const MY_SESSIONS_ROUTE = '/sessions/consultant/sessionView';
+
+/**
+ * FE#2545: the Gesprächskreis topic tour as a practice flow. The counsellor
+ * creates a circle with the real create flow (topics, co-moderators and the
+ * create itself are answered in memory), opens it from the list and starts
+ * it with the real "Video-Call starten". That opens the practice call (D3,
+ * revised): her own camera as a local preview and Carimat, the platform's
+ * robot, speaking with a local voice; no call is placed. She mutes, turns the camera off, puts the
+ * call into the real dock, brings it back and leaves. Same id and version as
+ * the explanation tour it replaces where practice is open; no card of its
+ * own.
+ */
+/** The practice call needs calls and group video calls switched on. */
+const CIRCLE_CALL_WHEN: TourStep['when'] = [
+	{ flag: 'featureCallsEnabled' },
+	{ flag: 'featureVideoCallsEnabled' },
+	{ flag: 'featureVideoCallsGroupChatsEnabled' }
+];
+
+export const practiceGroupCircleTour: TourDefinition = {
+	id: PRACTICE_GROUP_CIRCLE_TOUR_ID,
+	version: GROUP_CIRCLE_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: consultantGroupCircleTour.titleKey,
+	summaryKey: consultantGroupCircleTour.summaryKey,
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	...(consultantGroupCircleTour.when && {
+		when: consultantGroupCircleTour.when
+	}),
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.intro.title',
+			contentKey: 'tour.groupCircle.step.practiceIntro.intro'
+		},
+		{
+			id: 'create',
+			route: MY_SESSIONS_ROUTE,
+			target: 'groupchat-create-button',
+			placement: 'bottom',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.create.title',
+			contentKey: 'tour.groupCircle.step.practiceCreate.intro'
+		},
+		{
+			// Skipped where only one format is offered: no picker then.
+			id: 'format',
+			target: 'groupchat-format-circle',
+			placement: 'auto',
+			optional: true,
+			titleKey: 'tour.groupCircle.step.format.title',
+			contentKey: 'tour.groupCircle.step.format.intro'
+		},
+		{
+			// Pick a topic, then the topic button opens the settings, which
+			// have no route of their own: the screen announces itself.
+			id: 'topic',
+			target: 'groupchat-topic-picker',
+			placement: 'auto',
+			optional: true,
+			advanceOn: { type: 'event', name: GROUP_CIRCLE_SETTINGS_OPENED },
+			titleKey: 'tour.groupCircle.step.topic.title',
+			contentKey: 'tour.groupCircle.step.practiceTopic.intro'
+		},
+		{
+			// The counsellor fills what "Erstellen" needs, e.g. the
+			// Beratungsstelle when she works for several: the card is the
+			// spotlight, so its fields and their menus stay usable. Its
+			// "Erstellen" is held until `settings`, which waits for the
+			// create: a create here would leave the card and stop the run.
+			id: PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
+			target: 'groupchat-circle-settings',
+			placement: 'right',
+			interactive: true,
+			titleKey: 'tour.groupCircle.step.practiceConfigure.title',
+			contentKey: 'tour.groupCircle.step.practiceConfigure.intro'
+		},
+		{
+			// Back returns to `configure` while "Erstellen" is not ready.
+			id: 'settings',
+			target: 'groupchat-circle-create',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.circleCreated
+			},
+			titleKey: 'tour.groupCircle.step.practiceSettings.title',
+			contentKey: 'tour.groupCircle.step.practiceSettings.intro'
+		},
+		{
+			// Created: the app is back in the list, not in the circle.
+			id: 'open-circle',
+			hideBack: true,
+			route: MY_SESSIONS_ROUTE,
+			target: 'groupchat-list-item',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceOpen.title',
+			contentKey: 'tour.groupCircle.step.practiceOpen.intro'
+		},
+		{
+			// Starts the circle in memory and opens the practice call.
+			id: 'start',
+			target: 'groupchat-start-button',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.circleStarted
+			},
+			titleKey: 'tour.groupCircle.step.practiceStart.title',
+			contentKey: 'tour.groupCircle.step.practiceStart.intro'
+		},
+		{
+			// The circle is running: no way back to the waiting room.
+			// The practice circle meets by video and its agency has no
+			// settings of its own, so the start opens the stage exactly when
+			// these tenant flags are not off (`GroupChatHeader`,
+			// `JoinGroupChatView`). Without them the stage steps are dropped
+			// and the tour ends at `done` instead of stopping the run.
+			id: 'stage',
+			hideBack: true,
+			when: CIRCLE_CALL_WHEN,
+			target: PRACTICE_CALL_TARGETS.stage,
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.practiceStage.title',
+			contentKey: 'tour.groupCircle.step.practiceStage.intro'
+		},
+		{
+			id: 'mute',
+			when: CIRCLE_CALL_WHEN,
+			target: PRACTICE_CALL_TARGETS.mute,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceMute.title',
+			contentKey: 'tour.groupCircle.step.practiceMute.intro'
+		},
+		{
+			id: 'camera',
+			when: CIRCLE_CALL_WHEN,
+			target: PRACTICE_CALL_TARGETS.camera,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceCamera.title',
+			contentKey: 'tour.groupCircle.step.practiceCamera.intro'
+		},
+		{
+			id: 'minimise',
+			when: CIRCLE_CALL_WHEN,
+			target: PRACTICE_CALL_TARGETS.minimise,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceMinimise.title',
+			contentKey: 'tour.groupCircle.step.practiceMinimise.intro'
+		},
+		{
+			// Back would point at the stage, which the dock replaced.
+			id: 'expand',
+			when: CIRCLE_CALL_WHEN,
+			hideBack: true,
+			target: PRACTICE_CALL_TARGETS.expand,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceExpand.title',
+			contentKey: 'tour.groupCircle.step.practiceExpand.intro'
+		},
+		{
+			id: 'leave',
+			when: CIRCLE_CALL_WHEN,
+			hideBack: true,
+			target: PRACTICE_CALL_TARGETS.leave,
+			placement: 'top',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.groupCircle.step.practiceLeave.title',
+			contentKey: 'tour.groupCircle.step.practiceLeave.intro'
+		},
+		{
+			// The call was left: nothing to go back to.
+			id: 'done',
+			hideBack: true,
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.groupCircle.step.done.title',
+			contentKey: 'tour.groupCircle.step.practiceDone.intro'
+		}
+	]
+};
+
 /**
  * Every tour the practice world can host: the card flows and the topic tours
  * that run as practice where it is open. The tour host, the banner and the
@@ -258,7 +459,8 @@ export const practiceLiveChatTour: TourDefinition = {
  */
 export const practiceHostedTours: TourDefinition[] = [
 	...practiceTours,
-	practiceLiveChatTour
+	practiceLiveChatTour,
+	practiceGroupCircleTour
 ];
 
 /**

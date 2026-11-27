@@ -6622,6 +6622,58 @@
 				"done": {
 					"title": "Hazır",
 					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				},
+				"practiceIntro": {
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Bir alıştırma sohbet çemberi oluşturup başlatacaksınız."
+				},
+				"practiceCreate": {
+					"intro": "Yeni bir sohbet başlatmak için danışmanlık listenizde „Oluştur“a tıklayın."
+				},
+				"practiceTopic": {
+					"intro": "„Konu / uzmanlık alanı“ altında alıştırma konusunu seçin, ardından konu düğmesine tıklayın. Ardından ayarlar açılır."
+				},
+				"practiceSettings": {
+					"title": "Çemberi oluştur",
+					"intro": "„Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
+				},
+				"practiceOpen": {
+					"title": "Çemberi aç",
+					"intro": "Alıştırma çemberiniz artık danışmanlık listenizde. Açmak için üzerine tıklayın."
+				},
+				"practiceStart": {
+					"title": "Çemberi başlat",
+					"intro": "Katılımcılar siz başlayana kadar burada bekler. „Görüntülü aramayı başlat“a tıklayın: Çember başlar ve alıştırma araması açılır."
+				},
+				"practiceStage": {
+					"title": "Görüntülü aramanız",
+					"intro": "Solda kendinizi görürsünüz, sağda alıştırma robotu Carimat konuşur. Halka kimin konuştuğunu gösterir. Sizi başka kimse görmez veya duymaz."
+				},
+				"practiceMute": {
+					"title": "Sesi kapat",
+					"intro": "Sesinizi kapatmak için mikrofona tıklayın. İkinci tıklama tekrar açar."
+				},
+				"practiceCamera": {
+					"title": "Kamera",
+					"intro": "Görüntünüzü kapatmak için kameraya tıklayın. Diğerleri o zaman baş harflerinizi görür."
+				},
+				"practiceMinimise": {
+					"title": "Küçült",
+					"intro": "Aramayı küçültmek için buraya tıklayın. Arama sürerken sohbette çalışmaya devam edersiniz."
+				},
+				"practiceExpand": {
+					"title": "Büyük görünüme dön",
+					"intro": "Arama sağ altta devam ediyor. Tekrar büyütmek için buraya tıklayın."
+				},
+				"practiceLeave": {
+					"title": "Aramadan ayrıl",
+					"intro": "Aramadan ayrılmak için kırmızı düğmeye tıklayın. Sonra tekrar çemberdesiniz."
+				},
+				"practiceDone": {
+					"intro": "Tamamlandı: Bir sohbet çemberi oluşturdunuz, görüntülü aramasını başlattınız ve ayrıldınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
+				},
+				"practiceConfigure": {
+					"title": "Danışma merkezi ve tarih",
+					"intro": "Çemberin yapılacağı danışma merkezini ve henüz seçilmediyse konuyu seçin. Tarihi, saati ve süreyi kontrol edin. Alıştırma için gerisini olduğu gibi bırakabilirsiniz. Sonra „Daha ileri“."
 				}
 			}
 		},
@@ -7286,6 +7338,16 @@
 		},
 		"error": {
 			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
+		},
+		"callStage": {
+			"title": "Sohbet çemberi (alıştırma)",
+			"label": "Alıştırma görüntülü araması",
+			"notice": "Alıştırma: Sizi başka kimse görmez veya duymaz. Kamera ve mikrofon bu cihazda kalır.",
+			"noMedia": "Kamera veya mikrofon kullanılamıyor. Alıştırma yine de devam ediyor.",
+			"you": "Siz",
+			"robotName": "{{name}} (alıştırma)",
+			"line1": "Merhaba, ben {{name}}, alıştırma robotu.",
+			"line2": "Sizi başka kimse duymuyor. Aşağıdaki düğmeleri deneyin."
 		}
 	},
 	"counselling": {

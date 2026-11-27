@@ -6537,6 +6537,58 @@
 				"done": {
 					"title": "Ready",
 					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				},
+				"practiceIntro": {
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You create a practice conversation circle and start it."
+				},
+				"practiceCreate": {
+					"intro": "Click \"Create\" in your consultation list to start a new conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choose the practice topic under \"Topic / subject area\", then click the topic button. The settings open next."
+				},
+				"practiceSettings": {
+					"title": "Create the circle",
+					"intro": "Click \"Create\". In the exercise the circle meets by video."
+				},
+				"practiceOpen": {
+					"title": "Open the circle",
+					"intro": "Your practice circle is now in your consultation list. Click it to open it."
+				},
+				"practiceStart": {
+					"title": "Start the circle",
+					"intro": "Participants wait here until you begin. Click \"Start video call\": the circle starts and the practice call opens."
+				},
+				"practiceStage": {
+					"title": "Your video call",
+					"intro": "On the left you see yourself, on the right Carimat, the practice robot, is speaking. The ring shows who is speaking. Nobody else sees or hears you."
+				},
+				"practiceMute": {
+					"title": "Mute",
+					"intro": "Click the microphone to mute yourself. A second click turns it back on."
+				},
+				"practiceCamera": {
+					"title": "Camera",
+					"intro": "Click the camera to turn your picture off. The others then see your initials."
+				},
+				"practiceMinimise": {
+					"title": "Minimise",
+					"intro": "Click here to minimise the call. You can keep working in the chat while the call runs."
+				},
+				"practiceExpand": {
+					"title": "Back to the full view",
+					"intro": "The call keeps running at the bottom right. Click here to open it in full again."
+				},
+				"practiceLeave": {
+					"title": "Leave the call",
+					"intro": "Click the red button to leave the call. You are back in the circle then."
+				},
+				"practiceDone": {
+					"intro": "Done: you created a conversation circle, started its video call and left it again. In a real circle you share the invitation link beforehand so participants can join."
+				},
+				"practiceConfigure": {
+					"title": "Counselling centre and date",
+					"intro": "Choose the counselling centre the circle is held for and, if none is set yet, the topic. Check the date, time and duration. For the exercise you can leave the rest as it is. Then \"Next\"."
 				}
 			}
 		},
@@ -7201,6 +7253,16 @@
 		},
 		"error": {
 			"start": "The practice could not be started. Please try again."
+		},
+		"callStage": {
+			"title": "Conversation circle (practice)",
+			"label": "Practice video call",
+			"notice": "Practice: nobody else sees or hears you. Camera and microphone stay on this device.",
+			"noMedia": "Camera or microphone is not available. The exercise continues anyway.",
+			"you": "You",
+			"robotName": "{{name}} (practice)",
+			"line1": "Hello, I am {{name}}, the practice robot.",
+			"line2": "Nobody else can hear you. Try the buttons below."
 		}
 	},
 	"counselling": {

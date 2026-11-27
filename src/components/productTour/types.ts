@@ -97,6 +97,12 @@ export interface TourStep {
 	 */
 	hideBack?: boolean;
 	/**
+	 * The learner works inside the highlighted area before pressing Next
+	 * (fields, selects whose menus open in a portal), so the tooltip does
+	 * not trap the focus.
+	 */
+	interactive?: boolean;
+	/**
 	 * Variant condition. The step is dropped from the tour when it fails,
 	 * resolved once at start (`resolveTourSteps`).
 	 */

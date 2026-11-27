@@ -34,6 +34,7 @@ import {
 } from './fixtures/practiceScenario';
 import type { ScriptEngine } from './script/ScriptEngine';
 import { createScriptFromI18n } from './script/createScriptFromI18n';
+import { PracticeCallLayer } from './PracticeCallStage';
 
 type Fetch = typeof window.fetch;
 
@@ -373,6 +374,8 @@ export const PracticeSandbox = ({
 						<SessionsDataProvider key={run.generation}>
 							{children}
 						</SessionsDataProvider>
+						{/* What a call button opens while practising (D3). */}
+						<PracticeCallLayer />
 					</NotificationsContext.Provider>
 				</TopicsContext.Provider>
 			</MatrixClientContext.Provider>

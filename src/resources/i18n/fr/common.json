@@ -6622,6 +6622,58 @@
 				"done": {
 					"title": "Prêt",
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Vous créez un cercle de parole d'exercice et le démarrez."
+				},
+				"practiceCreate": {
+					"intro": "Cliquez sur « Créer » dans votre liste de consultations pour lancer une nouvelle conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
+				},
+				"practiceSettings": {
+					"title": "Créer le cercle",
+					"intro": "Cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+				},
+				"practiceOpen": {
+					"title": "Ouvrir le cercle",
+					"intro": "Votre cercle d'exercice figure maintenant dans votre liste de consultations. Cliquez dessus pour l'ouvrir."
+				},
+				"practiceStart": {
+					"title": "Démarrer le cercle",
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo » : le cercle démarre et l'appel d'exercice s'ouvre."
+				},
+				"practiceStage": {
+					"title": "Votre appel vidéo",
+					"intro": "À gauche, vous vous voyez ; à droite, Carimat, le robot d'exercice, parle. L'anneau montre qui parle. Personne d'autre ne vous voit ni ne vous entend."
+				},
+				"practiceMute": {
+					"title": "Couper le micro",
+					"intro": "Cliquez sur le micro pour couper votre son. Un deuxième clic le rallume."
+				},
+				"practiceCamera": {
+					"title": "Caméra",
+					"intro": "Cliquez sur la caméra pour couper votre image. Les autres voient alors vos initiales."
+				},
+				"practiceMinimise": {
+					"title": "Réduire",
+					"intro": "Cliquez ici pour réduire l'appel. Vous continuez à travailler dans le chat pendant l'appel."
+				},
+				"practiceExpand": {
+					"title": "Retour à la grande vue",
+					"intro": "L'appel continue en bas à droite. Cliquez ici pour l'agrandir à nouveau."
+				},
+				"practiceLeave": {
+					"title": "Quitter l'appel",
+					"intro": "Cliquez sur le bouton rouge pour quitter l'appel. Vous êtes alors de retour dans le cercle."
+				},
+				"practiceDone": {
+					"intro": "C'est fait : vous avez créé un cercle de parole, démarré son appel vidéo et l'avez quitté. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+				},
+				"practiceConfigure": {
+					"title": "Centre de conseil et date",
+					"intro": "Choisissez le centre de conseil pour lequel le cercle a lieu et, s'il n'y en a pas encore, le thème. Vérifiez la date, l'heure et la durée. Pour l'exercice, vous pouvez laisser le reste tel quel. Puis « Continuer »."
 				}
 			}
 		},
@@ -7286,6 +7338,16 @@
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
+		},
+		"callStage": {
+			"title": "Cercle de parole (exercice)",
+			"label": "Appel vidéo d'exercice",
+			"notice": "Exercice : personne d'autre ne vous voit ni ne vous entend. La caméra et le micro restent sur cet appareil.",
+			"noMedia": "La caméra ou le micro n'est pas disponible. L'exercice continue quand même.",
+			"you": "Vous",
+			"robotName": "{{name}} (exercice)",
+			"line1": "Bonjour, je suis {{name}}, le robot d'exercice.",
+			"line2": "Personne d'autre ne vous entend. Essayez les boutons en bas."
 		}
 	},
 	"counselling": {

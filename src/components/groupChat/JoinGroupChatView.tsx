@@ -54,6 +54,11 @@ import { useGroupWaitingAdmission } from './waitingAdmission/useGroupWaitingAdmi
 import { markCallAutoJoin } from './waitingAdmission/callAutoJoin';
 import { useAfterDelay } from './waitingAdmission/useAfterDelay';
 import { askCallDevicesWhileWaiting } from './waitingAdmission/askCallDevices';
+import {
+	isPracticeMode,
+	leavePracticeCall,
+	openPracticeCallStage
+} from '../../practice';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -315,6 +320,14 @@ export const JoinGroupChatView = ({
 				? GROUP_CHAT_API.START
 				: GROUP_CHAT_API.JOIN;
 		const pressedIn = { key: location.key, chatId: activeSession.item.id };
+		// Practice (FE#2545 D3): the moderator's start opens the practice
+		// call at once, inside the click (its audio needs the gesture),
+		// while the circle starts in memory. No call is handed over.
+		const practiceCall =
+			groupChatApiCall === GROUP_CHAT_API.START &&
+			Boolean(moderatorCallKind) &&
+			isPracticeMode();
+		if (practiceCall) openPracticeCallStage();
 		return apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => {
 				const stillHere =
@@ -323,7 +336,10 @@ export const JoinGroupChatView = ({
 				if (
 					groupChatApiCall === GROUP_CHAT_API.START &&
 					moderatorCallKind &&
-					stillHere
+					stillHere &&
+					// Practice has no calls (FE#2545 D3): the practice call
+					// stage is already open.
+					!isPracticeMode()
 				)
 					navigate(
 						{
@@ -342,6 +358,7 @@ export const JoinGroupChatView = ({
 				return reloadActiveSession();
 			})
 			.catch((error) => {
+				if (practiceCall) leavePracticeCall();
 				// #1923: the server refuses a banned member with a reason.
 				if (error?.message === FETCH_ERRORS.USER_BANNED_FROM_CHAT) {
 					setRemovedByServer(true);
@@ -508,6 +525,9 @@ export const JoinGroupChatView = ({
 					embedded
 					audience={canStartChat ? 'moderator' : 'participant'}
 					primaryLabel={isAsker ? undefined : buttonItem.label}
+					primaryTourTarget={
+						canStartChat ? 'groupchat-start-button' : undefined
+					}
 					askConsent={isAsker}
 					topicName={
 						isAsker

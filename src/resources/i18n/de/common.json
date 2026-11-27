@@ -6612,6 +6612,58 @@
 				"done": {
 					"title": "Bereit",
 					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Sie legen einen Übungs-Gesprächskreis an und starten ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klicken Sie in Ihrer Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wählen Sie unter „Thema / Fachbereich“ das Übungsthema und klicken Sie dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"title": "Gesprächskreis erstellen",
+					"intro": "Klicken Sie auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"title": "Gesprächskreis öffnen",
+					"intro": "Ihr Übungskreis steht jetzt in Ihrer Beratungsliste. Klicken Sie darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"title": "Gesprächskreis starten",
+					"intro": "Teilnehmende warten hier, bis Sie beginnen. Klicken Sie auf „Video-Call starten“: Der Kreis startet und der Übungs-Call öffnet sich."
+				},
+				"practiceStage": {
+					"title": "Ihr Video-Call",
+					"intro": "Links sehen Sie sich selbst, rechts spricht Carimat, der Übungsroboter. Der Ring zeigt, wer gerade spricht. Niemand sonst sieht oder hört Sie."
+				},
+				"practiceMute": {
+					"title": "Stummschalten",
+					"intro": "Klicken Sie auf das Mikrofon, um sich stummzuschalten. Ein zweiter Klick schaltet es wieder ein."
+				},
+				"practiceCamera": {
+					"title": "Kamera",
+					"intro": "Klicken Sie auf die Kamera, um Ihr Bild auszuschalten. Dann sehen die anderen Ihre Initialen."
+				},
+				"practiceMinimise": {
+					"title": "Verkleinern",
+					"intro": "Klicken Sie hier, um den Call zu verkleinern. So arbeiten Sie im Chat weiter, während der Call läuft."
+				},
+				"practiceExpand": {
+					"title": "Zurück zur großen Ansicht",
+					"intro": "Der Call läuft unten rechts weiter. Klicken Sie hier, um ihn wieder groß zu öffnen."
+				},
+				"practiceLeave": {
+					"title": "Call verlassen",
+					"intro": "Klicken Sie auf den roten Knopf, um den Call zu verlassen. Sie sind dann wieder im Gesprächskreis."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt, den Video-Call gestartet und wieder verlassen. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"title": "Beratungsstelle und Termin",
+					"intro": "Wählen Sie die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keines gesetzt ist, das Thema. Prüfen Sie Datum, Uhrzeit und Dauer. Für die Übung können Sie den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},
@@ -7276,6 +7328,16 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		},
+		"callStage": {
+			"title": "Gesprächskreis (Übung)",
+			"label": "Übungs-Video-Call",
+			"notice": "Übung: Niemand sonst sieht oder hört Sie. Kamera und Mikrofon bleiben auf diesem Gerät.",
+			"noMedia": "Kamera oder Mikrofon sind nicht verfügbar. Die Übung geht trotzdem weiter.",
+			"you": "Sie",
+			"robotName": "{{name}} (Übung)",
+			"line1": "Hallo, ich bin {{name}}, der Übungsroboter.",
+			"line2": "Niemand sonst hört Sie. Probieren Sie die Knöpfe unten aus."
 		}
 	},
 	"counselling": {
