@@ -109,7 +109,11 @@ export const createPracticeWorld = ({
 					play(script.reactionFor({ type: 'supervisor-added' }));
 				}
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
-			}
+			},
+			onCircleCreated: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleCreated),
+			onCircleStarted: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted)
 		}
 	});
 

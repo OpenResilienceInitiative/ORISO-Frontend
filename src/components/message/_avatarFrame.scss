@@ -13,7 +13,10 @@
 
 // Small overlapping avatars retain their footprint and a subtle surface gap.
 @mixin chat-avatar-small-halo(
-	$surface: var(--participant-ring, var(--m3-surface-container-lowest, #ffffff))
+	$surface: var(
+			--participant-ring,
+			var(--m3-surface-container-lowest, #ffffff)
+		)
 ) {
 	box-shadow: 0 0 0 2px $surface;
 }

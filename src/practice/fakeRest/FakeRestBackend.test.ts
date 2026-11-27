@@ -5,12 +5,17 @@ import { createFakeRestBackend } from './FakeRestBackend';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
 import {
 	PRACTICE_AGENCY_ID,
+	PRACTICE_CIRCLE_CHAT_ID,
+	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_ENQUIRY_SESSION_ID,
+	PRACTICE_TOPIC_ID,
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
 import { createTestScript } from '../script/scriptTestSupport';
+import { PracticeBlockedRequestError } from '../networkGuard';
+import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
 const script = createTestScript('de');
@@ -294,6 +299,341 @@ describe('FakeRestBackend', () => {
 		backend.reset();
 
 		expect(backend.getCase().session.status).toBe(1);
+		expect(backend.served).toHaveLength(0);
+	});
+});
+
+describe('FakeRestBackend: the practice Gesprächskreis (FE#2545)', () => {
+	const circlePayload = {
+		topic: 'Übung',
+		startDate: '2026-11-25',
+		startTime: '10:00',
+		duration: 60,
+		agencyId: 4711,
+		hintMessage: 'Willkommen',
+		repetitive: true,
+		repeatCount: 1,
+		chatInterval: 'WEEKLY',
+		modality: 'TEXT',
+		timezone: 'Europe/Berlin',
+		consultantIds: []
+	};
+	const roomsOf = (roomId: string) =>
+		`${endpoints.sessionRooms}?${new URLSearchParams({
+			'roomIds[]': roomId
+		})}`;
+	const create = (backend: ReturnType<typeof backendFor>, v2 = true) =>
+		backend.handle(
+			send(
+				`${endpoints.groupChatBase}${v2 ? 'v2/new' : 'new'}`,
+				'POST',
+				circlePayload
+			)
+		);
+
+	it('offers only the practice topic and the practice colleagues', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+
+		const topics = await json(
+			await backend.handle(new Request(endpoints.agencyTopics))
+		);
+		expect(topics).toEqual([
+			expect.objectContaining({
+				id: PRACTICE_TOPIC_ID,
+				name: script.names.topic
+			})
+		]);
+		const consultants = await json(
+			await backend.handle(
+				new Request(`${endpoints.chatSeriesBase}consultants`)
+			)
+		);
+		expect(
+			consultants.map((c: { consultantId: string }) => c.consultantId)
+		).toEqual([script.cast.colleague.id]);
+	});
+
+	it.each([true, false])(
+		'creates the circle in memory (v2 %s) and lists it in the counsellor sessions',
+		async (v2) => {
+			const onCircleCreated = vi.fn();
+			const backend = backendFor({
+				start: 'groupCircle',
+				hooks: { onCircleCreated }
+			});
+			expect(
+				(await backend.handle(new Request(mySessions)))?.status
+			).toBe(204);
+
+			const created = await json(await create(backend, v2));
+
+			expect(created).toEqual({ matrixRoomId: PRACTICE_CIRCLE_ROOM_ID });
+			expect(onCircleCreated).toHaveBeenCalledWith(
+				PRACTICE_CIRCLE_CHAT_ID
+			);
+			const list = await json(
+				await backend.handle(new Request(mySessions))
+			);
+			expect(list.sessions).toHaveLength(1);
+			expect(list.sessions[0].chat).toMatchObject({
+				id: PRACTICE_CIRCLE_CHAT_ID,
+				matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
+				topic: 'Übung',
+				active: false,
+				subscribed: false,
+				// The practice circle meets by video: its start is a video start.
+				modality: 'VIDEO'
+			});
+		}
+	);
+
+	it('lists the circle as the counsellor own, so the list shows it before anyone joined', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+
+		const list = await json(await backend.handle(new Request(mySessions)));
+
+		expect(list.sessions[0].consultant?.id).toBe(
+			practiceCounsellorFixture().userId
+		);
+	});
+
+	it('offers only the practice colleague to the create screen picker', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+
+		const recipients = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.internalSubsetChat}/recipients?agencyId=4711`
+				)
+			)
+		);
+
+		expect(recipients).toEqual([
+			expect.objectContaining({
+				consultantId: script.cast.colleague.id,
+				agencies: [expect.objectContaining({ id: PRACTICE_AGENCY_ID })]
+			})
+		]);
+	});
+
+	it('answers the circle card and waiting-room reads: members, no dates, no supervisors', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+
+		const members = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}/members`
+				)
+			)
+		);
+		expect(members.members).toEqual([
+			expect.objectContaining({
+				userId: practiceCounsellorFixture().userId,
+				role: 'CONSULTANT'
+			})
+		]);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(
+						`${endpoints.chatSeriesBase}${PRACTICE_CIRCLE_CHAT_ID}/occurrences?limit=1`
+					)
+				)
+			)
+		).toEqual([]);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(
+						`${endpoints.sessionBase}/${PRACTICE_CIRCLE_CHAT_ID}/supervisors`
+					)
+				)
+			)
+		).toEqual([]);
+	});
+
+	it('reads the created circle by room, by chat id and as group info, without an invite token', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+
+		const byRoom = await json(
+			await backend.handle(new Request(roomsOf(PRACTICE_CIRCLE_ROOM_ID)))
+		);
+		expect(byRoom.sessions[0].chat.id).toBe(PRACTICE_CIRCLE_CHAT_ID);
+		// No token, no share dialog: the create flow leaves for the list.
+		expect(byRoom.sessions[0].chat).not.toHaveProperty('inviteToken');
+		const byId = await json(
+			await backend.handle(
+				new Request(`${endpoints.chatRoom}/${PRACTICE_CIRCLE_CHAT_ID}`)
+			)
+		);
+		expect(byId.sessions[0].chat.matrixRoomId).toBe(
+			PRACTICE_CIRCLE_ROOM_ID
+		);
+		const info = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}`
+				)
+			)
+		);
+		expect(info).toEqual({
+			id: PRACTICE_CIRCLE_CHAT_ID,
+			active: false,
+			matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
+			bannedUsers: []
+		});
+	});
+
+	it('starts the circle in memory: active, and the counsellor is in its room', async () => {
+		const onCircleStarted = vi.fn();
+		const backend = backendFor({
+			start: 'groupCircle',
+			hooks: { onCircleStarted }
+		});
+		await create(backend);
+
+		const started = await backend.handle(
+			send(
+				`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}/start`,
+				'PUT'
+			)
+		);
+
+		expect(started?.status).toBe(204);
+		expect(onCircleStarted).toHaveBeenCalledWith(PRACTICE_CIRCLE_CHAT_ID);
+		const byRoom = await json(
+			await backend.handle(new Request(roomsOf(PRACTICE_CIRCLE_ROOM_ID)))
+		);
+		expect(byRoom.sessions[0].chat).toMatchObject({
+			active: true,
+			subscribed: true
+		});
+	});
+
+	it('knows no circle before it was created, and none after a reset', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		const missing = async () => {
+			expect(
+				await backend.handle(
+					send(
+						`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}/start`,
+						'PUT'
+					)
+				)
+			).toBeNull();
+			expect(
+				(
+					await backend.handle(
+						new Request(roomsOf(PRACTICE_CIRCLE_ROOM_ID))
+					)
+				)?.status
+			).toBe(204);
+		};
+		await missing();
+		await create(backend);
+		backend.reset();
+		await missing();
+	});
+
+	it('passes real group chats on', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+		expect(
+			await backend.handle(
+				send(`${endpoints.groupChatBase}4711/start`, 'PUT')
+			)
+		).toBeNull();
+		expect(
+			await backend.handle(new Request(`${endpoints.groupChatBase}4711`))
+		).toBeNull();
+		expect(
+			await backend.handle(new Request(`${endpoints.chatRoom}/4711`))
+		).toBeNull();
+	});
+
+	it('keeps the co-moderator the counsellor picked, in the circle and in its members', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		const colleague = script.cast.colleague;
+		await backend.handle(
+			send(`${endpoints.groupChatBase}v2/new`, 'POST', {
+				...circlePayload,
+				// An id outside the practice cast is never invented into it.
+				consultantIds: [colleague.id, 'real-consultant-4711']
+			})
+		);
+
+		const list = await json(await backend.handle(new Request(mySessions)));
+		expect(list.sessions[0].chat.moderators).toEqual([
+			PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+			colleague.matrixUserId
+		]);
+		const members = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.groupChatBase}${PRACTICE_CIRCLE_CHAT_ID}/members`
+				)
+			)
+		);
+		expect(
+			members.members.map((m: { userId: string }) => m.userId)
+		).toEqual([practiceCounsellorFixture().userId, colleague.id]);
+		expect(members.members[1]).toMatchObject({
+			displayName: colleague.displayName,
+			role: 'CONSULTANT'
+		});
+	});
+
+	it('answers a batched room lookup with both the practice case and the circle', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+		await create(backend);
+		const caseRoom = backend.getCase().session.matrixRoomId;
+
+		const both = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.sessionRooms}?${new URLSearchParams({
+						'roomIds[]': [caseRoom, PRACTICE_CIRCLE_ROOM_ID].join(
+							','
+						)
+					})}`
+				)
+			)
+		);
+
+		expect(
+			both.sessions.map(
+				(item: { session?: { id: number }; chat?: { id: number } }) =>
+					item.chat?.id ?? item.session?.id
+			)
+		).toEqual([backend.getCase().session.id, PRACTICE_CIRCLE_CHAT_ID]);
+	});
+
+	it('refuses the create outside the Gesprächskreis start, where no circle room exists', async () => {
+		const onCircleCreated = vi.fn();
+		const backend = backendFor({ hooks: { onCircleCreated } });
+
+		await expect(create(backend)).rejects.toBeInstanceOf(
+			PracticeBlockedRequestError
+		);
+		expect(onCircleCreated).not.toHaveBeenCalled();
+		expect((await backend.handle(new Request(mySessions)))?.status).toBe(
+			204
+		);
+	});
+
+	it('blocks the create while practice drains instead of passing it on', async () => {
+		const backend = backendFor({ start: 'groupCircle' });
+
+		await expect(
+			backend.handle(
+				send(`${endpoints.groupChatBase}v2/new`, 'POST', circlePayload),
+				undefined,
+				{ practiceAddressedOnly: true }
+			)
+		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 		expect(backend.served).toHaveLength(0);
 	});
 });

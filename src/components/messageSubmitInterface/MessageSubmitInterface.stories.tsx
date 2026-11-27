@@ -10,6 +10,10 @@ import {
 	mockComposerAskerData,
 	storybookGroupRoomMembers
 } from './__storybook__/composerStoryDecorator';
+import {
+	COMPOSER_MAX_VIEWPORT_FRACTION,
+	COMPOSER_MOBILE_BREAKPOINT
+} from './inputField/composerResize';
 import './messageSubmitInterface.styles.scss';
 import '../session/session.styles.scss';
 import { resetTemporaryAccount } from '../temporaryAccount/temporaryAccountStore';
@@ -211,6 +215,335 @@ export const Default: Story = {
 	render: () => <ComposerShell />
 };
 
+/** Empty dock stays compact until a person focuses it, then opens without losing focus to its toolbar. */
+export const CompactEmptyComposer: Story = {
+	name: 'Empty composer expands on focus',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const shell = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			if (!node) throw new Error('composer not mounted');
+			return node;
+		});
+		await waitFor(() =>
+			expect(
+				Math.round(shell.getBoundingClientRect().height)
+			).toBeLessThan(150)
+		);
+		const editor = shell.querySelector<HTMLElement>(
+			'[contenteditable="true"]'
+		)!;
+		await userEvent.click(editor);
+		await waitFor(() =>
+			expect(Math.round(shell.getBoundingClientRect().height)).toBe(196)
+		);
+		expect(
+			shell.classList.contains('textarea__wrapper-send-message--selected')
+		).toBe(true);
+		const handle = shell.querySelector<HTMLButtonElement>('.dragHandle')!;
+		handle.focus();
+		await waitFor(() => expect(document.activeElement).toBe(handle));
+		expect(
+			shell.classList.contains('textarea__wrapper-send-message--selected')
+		).toBe(true);
+	}
+};
+
+async function expectCompactFirstDrag(
+	canvasElement: HTMLElement,
+	pointerType: 'mouse' | 'touch'
+) {
+	const shell = await waitFor(() => {
+		const node = canvasElement.querySelector<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		);
+		if (!node) throw new Error('composer not mounted');
+		return node;
+	});
+	await waitFor(() =>
+		expect(shell.getBoundingClientRect().height).toBeLessThan(150)
+	);
+	const initial = shell.getBoundingClientRect().height;
+	const handle = shell.querySelector<HTMLButtonElement>('.dragHandle')!;
+	handle.dispatchEvent(
+		new PointerEvent('pointerdown', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType,
+			button: 0,
+			clientY: 100
+		})
+	);
+	if (pointerType === 'touch') {
+		await waitFor(() => {
+			expect(handle).toHaveClass('dragHandle--touched');
+			expect(handle).toHaveFocus();
+		});
+	}
+	await waitFor(() =>
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial)
+		).toBeLessThan(2)
+	);
+	if (pointerType === 'mouse') {
+		const session = shell.closest<HTMLElement>('.session')!;
+		expect(getComputedStyle(shell).borderTopColor).not.toBe(
+			getComputedStyle(session).borderTopColor
+		);
+	}
+	document.dispatchEvent(
+		new PointerEvent('pointermove', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType,
+			clientY: 80
+		})
+	);
+	await waitFor(() =>
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial - 20)
+		).toBeLessThan(2)
+	);
+	document.dispatchEvent(
+		new PointerEvent('pointerup', {
+			bubbles: true,
+			pointerId: 1,
+			pointerType
+		})
+	);
+	await waitFor(() => {
+		expect(shell).not.toHaveClass(
+			'textarea__wrapper-send-message--resizing'
+		);
+		expect(
+			Math.abs(shell.getBoundingClientRect().height - initial - 20)
+		).toBeLessThan(2);
+	});
+}
+
+/** A first drag starts from the visible compact height without focusing both borders. */
+export const CompactComposerFirstDrag: Story = {
+	name: 'First drag starts at compact height',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		await expectCompactFirstDrag(canvasElement, 'mouse');
+	}
+};
+
+export const CompactComposerFirstTouchDrag: Story = {
+	name: 'First touch drag starts at compact height',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		expect(window.innerWidth).toBeLessThanOrEqual(
+			COMPOSER_MOBILE_BREAKPOINT
+		);
+		await expectCompactFirstDrag(canvasElement, 'touch');
+	}
+};
+
+function ComposerFrameFixture() {
+	const [flush, setFlush] = React.useState(true);
+
+	return (
+		<>
+			<button type="button" onClick={() => setFlush(false)}>
+				Use framed composer
+			</button>
+			<ComposerShell
+				compactHeight
+				autoFocusEditor={false}
+				flushCorner={flush ? 'bottom-left' : undefined}
+			/>
+		</>
+	);
+}
+
+export const CompactComposerFrameChange: Story = {
+	name: 'Framed composer reclamps a manual height',
+	globals: desktop1440Globals,
+	render: () => <ComposerFrameFixture />,
+	play: async ({ canvasElement }) => {
+		const shell = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			if (!node) throw new Error('composer not mounted');
+			return node;
+		});
+		shell.querySelector<HTMLButtonElement>('.dragHandle')!.focus();
+		await userEvent.keyboard('{Home}');
+		await waitFor(() =>
+			expect(
+				Number.parseFloat(
+					shell.style.getPropertyValue('--composer-height')
+				)
+			).toBeLessThan(138)
+		);
+		await userEvent.click(
+			within(canvasElement).getByRole('button', {
+				name: 'Use framed composer'
+			})
+		);
+		await waitFor(() =>
+			expect(shell.style.getPropertyValue('--composer-height')).toBe(
+				'138px'
+			)
+		);
+	}
+};
+
+/** A handle click without movement must not pin the compact height. */
+export const CompactHandleClickThenFocus: Story = {
+	name: 'Handle click still allows focus expansion',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const shell = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message'
+			);
+			if (!node) throw new Error('composer not mounted');
+			return node;
+		});
+		await waitFor(() =>
+			expect(shell.getBoundingClientRect().height).toBeLessThan(150)
+		);
+		const handle = shell.querySelector<HTMLButtonElement>('.dragHandle')!;
+		await userEvent.click(handle);
+		const editor = shell.querySelector<HTMLElement>(
+			'[contenteditable="true"]'
+		)!;
+		await userEvent.click(editor);
+		await waitFor(() =>
+			expect(Math.round(shell.getBoundingClientRect().height)).toBe(196)
+		);
+	}
+};
+
+export const CompactComposerAfterViewportResize: Story = {
+	name: 'Mobile composer reclamps a manual height after rotation',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const browser = await import('@vitest/browser/context').catch(
+			() => null
+		);
+		if (!browser) return;
+
+		const initialWidth = window.innerWidth;
+		const initialHeight = window.innerHeight;
+		const handle = await within(canvasElement).findByRole('button', {
+			name: /ziehen, um den editor zu vergrößern/i
+		});
+		const shell = handle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const readHeight = () =>
+			Math.round(shell.getBoundingClientRect().height);
+		const landscapeHeight = 390;
+		const viewportCap = Math.round(
+			landscapeHeight * COMPOSER_MAX_VIEWPORT_FRACTION
+		);
+
+		handle.dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
+		);
+		await waitFor(() => expect(readHeight()).toBeGreaterThan(viewportCap));
+
+		try {
+			await browser.page.viewport(844, landscapeHeight);
+			await waitFor(() => {
+				expect(window.innerHeight).toBe(landscapeHeight);
+				expect(readHeight()).toBeLessThanOrEqual(viewportCap);
+			});
+		} finally {
+			await browser.page.viewport(initialWidth, initialHeight);
+		}
+	}
+};
+
+export const CompactHandleTapThenFocus: Story = {
+	name: 'Mobile handle tap keeps the composer compact until editor focus',
+	globals: phone390Globals,
+	render: () => <ComposerShell autoFocusEditor={false} />,
+	play: async ({ canvasElement }) => {
+		const handle = await within(canvasElement).findByRole('button', {
+			name: /ziehen, um den editor zu vergrößern/i
+		});
+		const shell = handle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
+		const readHeight = () =>
+			Math.round(shell.getBoundingClientRect().height);
+		const initialHeight = readHeight();
+
+		await userEvent.pointer([
+			{ keys: '[TouchA>]', target: handle },
+			{ keys: '[/TouchA]' }
+		]);
+		expect(shell.style.getPropertyValue('--composer-height')).toBe('');
+		expect(readHeight()).toBe(initialHeight);
+
+		await userEvent.click(
+			shell.querySelector<HTMLElement>('[contenteditable="true"]')!
+		);
+		await waitFor(() =>
+			expect(readHeight()).toBeGreaterThan(initialHeight)
+		);
+	}
+};
+
+/** App-placed cursor must not paint the enclosing session as user-focused. */
+export const AutomaticFocusKeepsSessionUnfocused: Story = {
+	name: 'Automatic focus keeps session unfocused',
+	globals: desktop1440Globals,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const shell = await waitFor(() => {
+			const node = canvasElement.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message[data-auto-focused]'
+			);
+			if (!node) throw new Error('automatic focus not established');
+			return node;
+		});
+		const session = shell.closest<HTMLElement>('.session')!;
+		// Let the existing border-color transition settle; the first frame is the rest color.
+		await new Promise((resolve) => setTimeout(resolve, 250));
+		expect(shell.contains(document.activeElement)).toBe(true);
+		expect(
+			shell.classList.contains('textarea__wrapper-send-message--selected')
+		).toBe(false);
+		const expected = getComputedStyle(document.documentElement)
+			.getPropertyValue('--oriso-primary-fixed-dim')
+			.trim();
+		const swatch = document.createElement('span');
+		swatch.style.color = expected;
+		document.body.appendChild(swatch);
+		const restingColor = getComputedStyle(swatch).color;
+		swatch.remove();
+		await waitFor(() =>
+			expect(getComputedStyle(session).borderTopColor).toBe(restingColor)
+		);
+		await userEvent.click(session);
+		await waitFor(() => expect(document.activeElement).toBe(session));
+		const activeSwatch = document.createElement('span');
+		activeSwatch.style.color = getComputedStyle(document.documentElement)
+			.getPropertyValue('--m3-primary-container')
+			.trim();
+		document.body.appendChild(activeSwatch);
+		const activeColor = getComputedStyle(activeSwatch).color;
+		activeSwatch.remove();
+		await waitFor(() =>
+			expect(getComputedStyle(session).borderTopColor).toBe(activeColor)
+		);
+	}
+};
+
 /**
  * Where the closing animation of every waiting room ends (ORISO-Frontend#1737).
  * The rooms find it by this mark alone, so the composer has to keep carrying it
@@ -256,7 +589,7 @@ export const DesktopBottomAnchored: Story = {
 	},
 	render: () => <ComposerShell />,
 	play: async ({ canvasElement }) => {
-		await expectComposerBottomInset(canvasElement, 0);
+		await expectComposerBottomInset(canvasElement, 16);
 	}
 };
 
@@ -503,6 +836,9 @@ export const SessionHeightReset: Story = {
 		const dragHandle = await canvas.findByRole('button', {
 			name: /ziehen, um den editor zu vergrößern/i
 		});
+		const originalShell = dragHandle.closest<HTMLElement>(
+			'.textarea__wrapper-send-message'
+		)!;
 		dragHandle.focus();
 		// Dispatch on the handle rather than via `userEvent.keyboard`, which
 		// sends to whatever holds focus. The composer's editor takes focus back
@@ -513,14 +849,11 @@ export const SessionHeightReset: Story = {
 		dragHandle.dispatchEvent(
 			new KeyboardEvent('keydown', { key: 'End', bubbles: true })
 		);
-		await waitFor(() => {
-			const shell = canvasElement.querySelector<HTMLElement>(
-				'.textarea__wrapper-send-message'
-			);
-			expect(shell?.getBoundingClientRect().height || 0).toBeGreaterThan(
-				196
-			);
-		});
+		await waitFor(() =>
+			expect(
+				originalShell.getBoundingClientRect().height
+			).toBeGreaterThan(196)
+		);
 
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Gespräch wechseln' })
@@ -529,9 +862,14 @@ export const SessionHeightReset: Story = {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'
 			);
-			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
-				196
-			);
+			if (!shell)
+				throw new Error(
+					'composer not mounted after conversation switch'
+				);
+			expect(shell).toBe(originalShell);
+			expect(
+				Math.round(shell.getBoundingClientRect().height)
+			).toBeLessThan(150);
 		});
 	}
 };

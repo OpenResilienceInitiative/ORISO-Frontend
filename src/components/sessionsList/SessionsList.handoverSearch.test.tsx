@@ -14,7 +14,6 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import {
 	afterEach,
@@ -329,7 +328,8 @@ beforeEach(() => {
 		{
 			code: 'ABSENCE',
 			label: 'Planned absence',
-			clientConsentRequired: false
+			clientConsentRequired: false,
+			explanationLevel: 'REQUIRED'
 		}
 	]);
 });
@@ -708,7 +708,7 @@ describe('case-handover search — people (FE#1725)', () => {
 			const text = listText(view);
 			expect(text).toContain('Paged client 154');
 			expect(text).toContain('caseHandover.list.awaitingApproval');
-			expect(text).toContain('caseHandover.list.accessDenied');
+			expect(text).toContain('caseHandover.batch.selectCase');
 		});
 		// The roster and named selection each need current checks for these two rows.
 		expect(
@@ -835,7 +835,7 @@ describe('case-handover search — people (FE#1725)', () => {
 
 		handoverStatusById[12] = 'DENIED';
 		await act(async () => finishStatusRead(handoverStatusOf(12)));
-		expect(listText(view)).toContain('caseHandover.list.accessDenied');
+		expect(listText(view)).toContain('caseHandover.batch.selectCase');
 	});
 
 	it('refreshes a targeted ordinary row outside the search results', async () => {
@@ -907,7 +907,7 @@ describe('case-handover search — people (FE#1725)', () => {
 		expect(listText(view)).not.toContain('caseHandover.list.accessGranted');
 		handoverStatusById[12] = 'DENIED';
 		await act(async () => finishStatusRead(handoverStatusOf(12)));
-		expect(listText(view)).toContain('caseHandover.list.accessDenied');
+		expect(listText(view)).toContain('caseHandover.batch.selectCase');
 	});
 
 	it('keeps the refreshed pending state when a pre-mutation named page arrives late', async () => {
@@ -939,7 +939,7 @@ describe('case-handover search — people (FE#1725)', () => {
 		fireEvent.click(personRowsNamed('Patty B.')[0]);
 		await waitFor(() => {
 			expect(receiveNamed).toBeTypeOf('function');
-			expect(listText(view)).toContain('caseHandover.list.requestAccess');
+			expect(listText(view)).toContain('caseHandover.batch.selectCase');
 		});
 		expect(http.getHandoverStatus).not.toHaveBeenCalled();
 
@@ -959,7 +959,7 @@ describe('case-handover search — people (FE#1725)', () => {
 			receiveNamed({ sessions: [beforeMutation], total: 1 })
 		);
 		expect(listText(view)).toContain('caseHandover.list.awaitingApproval');
-		expect(listText(view)).not.toContain('caseHandover.list.requestAccess');
+		expect(listText(view)).not.toContain('caseHandover.batch.selectCase');
 		expect(http.getHandoverStatus.mock.calls).toEqual([[17]]);
 	});
 
@@ -1987,74 +1987,50 @@ const caseCheckbox = (view: ReturnType<typeof render>, client: string) =>
 		name: 'caseHandover.batch.selectCase'
 	});
 
-const startBatchModeOn = async (
+/** The reason step in the right pane (FE#2040), named by the batch title. */
+const handoverPane = () =>
+	screen.getByRole('region', { name: 'caseHandover.batch.title' });
+const queryHandoverPane = () =>
+	screen.queryByRole('region', { name: 'caseHandover.batch.title' });
+
+const selectCases = async (
 	view: ReturnType<typeof render>,
-	client: string
+	clients: string[]
 ) => {
-	const card = await waitFor(() => {
-		const node = caseCard(view, client);
-		expect(
-			within(node!).getByRole('button', {
-				name: 'caseHandover.menu.label'
-			})
-		).toBeTruthy();
-		return node!;
-	});
-	fireEvent.click(
-		within(card).getByRole('button', { name: 'caseHandover.menu.label' })
-	);
-	fireEvent.click(
-		await screen.findByRole('menuitem', {
-			name: /caseHandover\.menu\.selectMultiple\.title/
-		})
-	);
+	for (const client of clients) {
+		await waitFor(() => expect(caseCheckbox(view, client)).toBeTruthy());
+		fireEvent.click(caseCheckbox(view, client));
+	}
 };
 
-const bulkBar = () =>
-	screen.getByRole('region', { name: 'caseHandover.bulkBar.label' });
-
-describe('case-handover selection — bulk bar (FE#1725)', () => {
-	it('shows a sticky bar with the count and opens the wizard for all selected cases', async () => {
+describe('case-handover selection — reason in the right pane (FE#2040)', () => {
+	it('loads the reason step for all selected cases as soon as one is selected, without a pop-up or bottom bar', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
+		expect(queryHandoverPane()).toBeNull();
 
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		await selectCases(view, ['Client eleven']);
+		expect(handoverPane().textContent).toContain(
+			'caseHandover.batch.selectedCount:1'
 		);
-		for (const client of [
-			'Client eleven',
-			'Client twelve',
-			'Client thirteen'
-		]) {
-			await waitFor(() =>
-				expect(caseCheckbox(view, client)).toBeTruthy()
-			);
-			fireEvent.click(caseCheckbox(view, client));
-		}
+		expect(
+			within(handoverPane()).getAllByRole('radio').length
+		).toBeGreaterThan(0);
 
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:3'
-		);
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
-
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
-		expect(wizard.textContent).toContain(
+		await selectCases(view, ['Client twelve', 'Client thirteen']);
+		expect(handoverPane().textContent).toContain(
 			'caseHandover.batch.selectedCount:3'
 		);
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(
+			screen.queryByRole('region', { name: 'caseHandover.bulkBar.label' })
+		).toBeNull();
 	});
 
-	it('starts with every case unselected and marks granted or pending cases instead of offering them', async () => {
+	it('shows found cases unselected at once and marks granted or pending cases instead of offering them', async () => {
 		handoverStatusById = { 12: 'PENDING', 13: 'GRANTED' };
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
 
 		await waitFor(() =>
 			expect(
@@ -2075,21 +2051,13 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 				within(caseCard(view, client)!).queryByRole('checkbox')
 			).toBeNull();
 		}
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:0'
-		);
+		expect(queryHandoverPane()).toBeNull();
 	});
 
 	it('keeps the selection when the search changes, so cases from several searches add up', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		for (const client of ['Client eleven', 'Client twelve']) {
-			await waitFor(() =>
-				expect(caseCheckbox(view, client)).toBeTruthy()
-			);
-			fireEvent.click(caseCheckbox(view, client));
-		}
+		await selectCases(view, ['Client eleven', 'Client twelve']);
 
 		type('marge');
 		await waitFor(() =>
@@ -2104,44 +2072,23 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		).toBe(false);
 		fireEvent.click(caseCheckbox(view, 'Client twentyone'));
 
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:3'
-		);
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
-		expect(wizard.textContent).toContain(
+		expect(handoverPane().textContent).toContain(
 			'caseHandover.batch.selectedCount:3'
 		);
 	});
 
-	it('cancels batch mode from the bar and clears the selection', async () => {
+	it('clears the selection from the pane and leaves the cases selectable', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
+		await selectCases(view, ['Client eleven']);
 
 		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.cancel'
+			within(handoverPane()).getByRole('button', {
+				name: 'caseHandover.batch.clearSelection'
 			})
 		);
 
-		expect(
-			screen.queryByRole('region', { name: 'caseHandover.bulkBar.label' })
-		).toBeNull();
-		expect(
-			within(caseCard(view, 'Client eleven')!).queryByRole('checkbox')
-		).toBeNull();
-		await startBatchModeOn(view, 'Client eleven');
+		expect(queryHandoverPane()).toBeNull();
 		await waitFor(() =>
 			expect(
 				(caseCheckbox(view, 'Client eleven') as HTMLInputElement)
@@ -2150,32 +2097,20 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		);
 	});
 
-	it('explains in the wizard when no reasons are available instead of a dead Next button', async () => {
+	it('explains in the pane when no reasons are available instead of a dead submit button', async () => {
 		http.getHandoverReasons.mockResolvedValue([]);
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
+		await selectCases(view, ['Client eleven']);
 
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
 		await waitFor(() =>
-			expect(wizard.textContent).toContain(
+			expect(handoverPane().textContent).toContain(
 				'caseHandover.curtain.reason.empty'
 			)
 		);
 		expect(
-			within(wizard).queryByRole('button', {
-				name: 'caseHandover.curtain.next'
+			within(handoverPane()).queryByRole('button', {
+				name: 'caseHandover.submit'
 			})
 		).toBeNull();
 	});
@@ -2184,45 +2119,35 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		http.getHandoverReasons.mockRejectedValueOnce(new Error('500'));
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
+		await selectCases(view, ['Client eleven']);
 
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
 		await waitFor(() =>
-			expect(wizard.textContent).toContain(
+			expect(handoverPane().textContent).toContain(
 				'caseHandover.curtain.reason.loadFailed'
 			)
 		);
-		expect(wizard.textContent).not.toContain(
+		expect(handoverPane().textContent).not.toContain(
 			'caseHandover.curtain.reason.empty'
 		);
 		fireEvent.click(
-			within(wizard).getByRole('button', {
+			within(handoverPane()).getByRole('button', {
 				name: 'caseHandover.curtain.reason.retry'
 			})
 		);
 		await waitFor(() =>
-			expect(wizard.textContent).toContain('Planned absence')
+			expect(handoverPane().textContent).toContain('Planned absence')
 		);
-		expect(wizard.textContent).not.toContain(
+		expect(handoverPane().textContent).not.toContain(
 			'caseHandover.curtain.reason.loadFailed'
 		);
 	});
 
-	it('drops the active-scope text results kept by batch mode when "Archive only" is switched on', async () => {
+	it('drops the active-scope text results kept for the selection when "Archive only" is switched on', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
+		await waitFor(() =>
+			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		);
 		fireEvent.click(
 			screen.getByRole('button', {
 				name: 'sessionList.toolbar.search.removeSelectedPerson'
@@ -2250,60 +2175,10 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		);
 	});
 
-	it('closes the wizard with Escape like Cancel, keeping the selection', async () => {
+	it('X in selection mode keeps only the selected case next to the normal list', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
-		await waitFor(() =>
-			expect(wizard.contains(document.activeElement)).toBe(true)
-		);
-
-		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
-
-		await waitFor(() =>
-			expect(
-				screen.queryByRole('dialog', {
-					name: 'caseHandover.batch.title'
-				})
-			).toBeNull()
-		);
-		await waitFor(() =>
-			expect(document.activeElement).toBe(
-				within(bulkBar()).getByRole('button', {
-					name: 'caseHandover.bulkBar.continue'
-				})
-			)
-		);
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:1'
-		);
-	});
-
-	it('X in batch mode keeps only the selected case next to the normal list', async () => {
-		const view = await ready(renderList());
-		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		await waitFor(() =>
-			expect(bulkBar().textContent).toContain(
-				'caseHandover.bulkBar.selected:1'
-			)
-		);
+		await selectCases(view, ['Client eleven']);
 
 		fireEvent.click(
 			screen.getByRole('button', {
@@ -2320,12 +2195,12 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		expect(text).not.toContain('Client thirteen');
 		expect(text).not.toContain('Client fourteen');
 		expect(listItems(view)).toHaveLength(2);
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:1'
+		expect(handoverPane().textContent).toContain(
+			'caseHandover.batch.selectedCount:1'
 		);
 	});
 
-	it('moves focus to the enabled Cancel when every selected case succeeds', async () => {
+	it('sends one request for all selected cases with the shared reason and closes the pane when all succeed', async () => {
 		http.requestBatch.mockImplementation(async (operations: any[]) =>
 			operations.map((operation) => ({
 				sessionId: operation.sessionId,
@@ -2340,127 +2215,38 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 		);
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
-		await waitFor(() =>
-			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-		);
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
-			})
-		);
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
-		fireEvent.click(await within(wizard).findByRole('radio'));
-		fireEvent.click(
-			within(wizard).getByRole('button', {
-				name: 'caseHandover.curtain.next'
-			})
-		);
-		fireEvent.change(within(wizard).getByRole('textbox'), {
+		await selectCases(view, ['Client eleven', 'Client twelve']);
+
+		fireEvent.click(await within(handoverPane()).findByRole('radio'));
+		fireEvent.change(within(handoverPane()).getByRole('textbox'), {
 			target: { value: 'Covering a planned absence' }
 		});
 		fireEvent.click(
-			within(wizard).getByRole('button', { name: 'caseHandover.submit' })
+			within(handoverPane()).getByRole('button', {
+				name: 'caseHandover.submit'
+			})
 		);
 
-		await waitFor(() =>
-			expect(
-				screen.queryByRole('dialog', {
-					name: 'caseHandover.batch.title'
-				})
-			).toBeNull()
-		);
-		await waitFor(() =>
-			expect(document.activeElement).toBe(
-				within(bulkBar()).getByRole('button', {
-					name: 'caseHandover.bulkBar.cancel'
-				})
-			)
-		);
-		expect(document.activeElement).not.toBe(document.body);
+		await waitFor(() => expect(http.requestBatch).toHaveBeenCalledTimes(1));
+		const [operations, , explanation] = http.requestBatch.mock.calls[0];
+		expect(operations as any[]).toHaveLength(2);
+		expect(explanation).toBe('Covering a planned absence');
+		await waitFor(() => expect(queryHandoverPane()).toBeNull());
 	});
 
-	it('keeps Tab and Shift+Tab inside the open wizard', async () => {
-		// jsdom has no layout; tabbable treats elements without client rects
-		// as hidden, so give every element one for this keyboard test.
-		const rects = vi
-			.spyOn(HTMLElement.prototype, 'getClientRects')
-			.mockReturnValue([{}] as unknown as DOMRectList);
-		const user = userEvent.setup();
-		try {
-			const view = await ready(renderList());
-			await listPattysSpringfieldCases(view);
-			await startBatchModeOn(view, 'Client eleven');
-			await waitFor(() =>
-				expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
-			);
-			fireEvent.click(caseCheckbox(view, 'Client eleven'));
-			fireEvent.click(
-				within(bulkBar()).getByRole('button', {
-					name: 'caseHandover.bulkBar.continue'
-				})
-			);
-			const wizard = await screen.findByRole('dialog', {
-				name: 'caseHandover.batch.title'
-			});
-			await waitFor(() =>
-				expect(wizard.contains(document.activeElement)).toBe(true)
-			);
-
-			for (let step = 0; step < 12; step++) {
-				await user.tab();
-				expect(wizard.contains(document.activeElement)).toBe(true);
-			}
-			for (let step = 0; step < 12; step++) {
-				await user.tab({ shift: true });
-				expect(wizard.contains(document.activeElement)).toBe(true);
-			}
-		} finally {
-			rects.mockRestore();
-		}
-	});
-
-	it('moves keyboard focus into the wizard and back to Continue when it closes', async () => {
+	it('names each case on its select button and offers no chevron menu while selecting', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
-		await startBatchModeOn(view, 'Client eleven');
 		await waitFor(() =>
 			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
 		);
 		expect(
 			caseCheckbox(view, 'Client eleven').getAttribute('aria-describedby')
 		).toBeTruthy();
-		fireEvent.click(caseCheckbox(view, 'Client eleven'));
-		fireEvent.click(
-			within(bulkBar()).getByRole('button', {
-				name: 'caseHandover.bulkBar.continue'
+		expect(
+			within(caseCard(view, 'Client eleven')!).queryByRole('button', {
+				name: 'caseHandover.menu.label'
 			})
-		);
-
-		const wizard = await screen.findByRole('dialog', {
-			name: 'caseHandover.batch.title'
-		});
-		await waitFor(() =>
-			expect(wizard.contains(document.activeElement)).toBe(true)
-		);
-		fireEvent.click(
-			within(wizard).getByRole('button', {
-				name: 'caseHandover.batch.cancel'
-			})
-		);
-
-		await waitFor(() =>
-			expect(document.activeElement).toBe(
-				within(bulkBar()).getByRole('button', {
-					name: 'caseHandover.bulkBar.continue'
-				})
-			)
-		);
-		expect(bulkBar().textContent).toContain(
-			'caseHandover.bulkBar.selected:1'
-		);
+		).toBeNull();
 	});
 });

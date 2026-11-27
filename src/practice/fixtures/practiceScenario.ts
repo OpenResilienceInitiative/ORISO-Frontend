@@ -13,6 +13,7 @@ import {
 } from '../../components/erstantwort/erstantwortPayload';
 import {
 	PRACTICE_AGENCY_ID,
+	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_ENQUIRY_SESSION_ID,
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
@@ -29,9 +30,14 @@ import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 
 /**
  * F1 starts with an open enquiry, F2 with an already accepted case, the
- * Live-Chat tour (FE#2545) with a waiting anonymous live chat.
+ * Live-Chat tour (FE#2545) with a waiting anonymous live chat, the
+ * Gesprächskreis tour (FE#2545) with no circle yet: the counsellor creates it.
  */
-export type PracticeStart = 'enquiry' | 'acceptedCase' | 'liveChat';
+export type PracticeStart =
+	| 'enquiry'
+	| 'acceptedCase'
+	| 'liveChat'
+	| 'groupCircle';
 
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
 
@@ -242,7 +248,19 @@ export const createPracticeScenario = ({
 				name: script.names.supervisionRoom,
 				members: [memberOf(cast.supervisor), counsellorMember],
 				messages: []
-			}
+			},
+			// The room of the circle the counsellor creates; the REST side
+			// names it only once the circle exists.
+			...(start === 'groupCircle'
+				? [
+						{
+							roomId: PRACTICE_CIRCLE_ROOM_ID,
+							name: script.names.topic,
+							members: [counsellorMember],
+							messages: []
+						}
+					]
+				: [])
 		]
 	};
 };

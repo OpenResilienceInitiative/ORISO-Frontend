@@ -36,7 +36,8 @@ export const findComposerHost = (from: Element | null): HTMLElement | null =>
 	(from?.closest(COMPOSER_HOST_SELECTOR) as HTMLElement | null) ?? null;
 
 export const useComposerDock = (
-	wrapperRef: RefObject<HTMLElement | null>
+	wrapperRef: RefObject<HTMLElement | null>,
+	inFlowTimelineRef?: RefObject<HTMLElement | null>
 ): number => {
 	const [hostHeight, setHostHeight] = useState(0);
 	const theme = useTheme();
@@ -51,9 +52,10 @@ export const useComposerDock = (
 		let observedTimeline: HTMLElement | null = null;
 		const measure = () => {
 			const dock = Math.round(wrapper.getBoundingClientRect().height);
-			const timeline = host.querySelector<HTMLElement>(
-				COMPOSER_TIMELINE_SELECTOR
-			);
+			const inFlowTimeline = inFlowTimelineRef?.current;
+			const timeline =
+				inFlowTimeline ??
+				host.querySelector<HTMLElement>(COMPOSER_TIMELINE_SELECTOR);
 			// Review (CodeRabbit): the timeline is the number the composer's
 			// cap is derived from, and it can change on its own — a banner
 			// appearing above it shortens it while the host and the docked
@@ -65,8 +67,18 @@ export const useComposerDock = (
 				observedTimeline = timeline;
 				observer.observe(timeline);
 			}
+			// In a flex-flow preview the messages shrink as the composer grows.
+			// The bounds apply to the card, not its surrounding padding or bars.
+			const card = inFlowTimeline
+				? wrapper.querySelector<HTMLElement>(
+						'.textarea__wrapper-send-message'
+					)
+				: null;
 			const shared = Math.round(
-				(timeline ?? host).getBoundingClientRect().height
+				(timeline ?? host).getBoundingClientRect().height +
+					(inFlowTimeline
+						? (card ?? wrapper).getBoundingClientRect().height
+						: 0)
 			);
 			host.style.setProperty('--composer-dock-height', `${dock}px`);
 			host.style.setProperty('--composer-host-height', `${shared}px`);
@@ -111,7 +123,7 @@ export const useComposerDock = (
 			host.style.removeProperty('--composer-dock-height');
 			host.style.removeProperty('--composer-host-height');
 		};
-	}, [wrapperRef, noticeGap]);
+	}, [wrapperRef, inFlowTimelineRef, noticeGap]);
 
 	return hostHeight;
 };

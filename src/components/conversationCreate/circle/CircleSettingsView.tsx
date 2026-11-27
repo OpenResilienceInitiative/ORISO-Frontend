@@ -44,6 +44,13 @@ import {
 	saveCircleDefaults
 } from './circleDefaults';
 import { GuestAccountModeSelect } from '../../guestAccountMode/GuestAccountModeSelect';
+import { emitTourEvent } from '../../productTour/tourEvents';
+import { GROUP_CIRCLE_SETTINGS_OPENED } from '../../productTour/tours/groupCircleTour';
+import { usePracticeTourAtStep } from '../../../practice/usePracticeTourProgress';
+import {
+	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID
+} from '../../../practice/practiceTourIds';
 import type { GuestAccountMode } from '../../guestAccountMode/guestAccountMode';
 import '../../groupChat/createChat.styles.scss';
 
@@ -212,6 +219,15 @@ export const CircleSettingsView = ({
 		);
 	}, [activeLanguages]);
 
+	// The screen has no route of its own; a tour waiting for it (the
+	// Gesprächskreis practice flow, FE#2545) hears it open instead.
+	useEffect(() => {
+		if (!isEditMode) {
+			emitTourEvent(GROUP_CIRCLE_SETTINGS_OPENED);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- once per opening
+	}, []);
+
 	// Re-sync the schedule and author content when the counsellor switches
 	// agency, so the fields reflect the last saved configuration of the newly
 	// selected agency (Figma: defaults are per agency). Skipped on the initial
@@ -248,9 +264,16 @@ export const CircleSettingsView = ({
 		seriesFields.repeatCount >= 1 &&
 		seriesFields.repeatCount <= 365 &&
 		!isSubmitting;
+	// The Gesprächskreis practice flow (FE#2545) lets the counsellor fill
+	// this card on one step and create on the next, which waits for it.
+	const isCreateHeldByPracticeTour = usePracticeTourAtStep(
+		PRACTICE_GROUP_CIRCLE_TOUR_ID,
+		PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID
+	);
+	const canCreate = isReady && !isCreateHeldByPracticeTour;
 
 	const handleCreate = () => {
-		if (!isReady || selectedAgency === null) {
+		if (!canCreate || selectedAgency === null) {
 			return;
 		}
 		submit(
@@ -407,6 +430,7 @@ export const CircleSettingsView = ({
 			<div className="circleSettings__columns">
 				<FormatCard
 					className="circleSettings__card"
+					tourTarget="groupchat-circle-settings"
 					title={translate('groupChat.circle.title')}
 					subtitle={translate('groupChat.circle.subtitle')}
 					avatar={<CircleIcon />}
@@ -419,9 +443,10 @@ export const CircleSettingsView = ({
 						) : undefined
 					}
 				>
-					{/* Desktop picks the topic on screen 1; edit mode enters here
-					    directly, so the row must be reachable then too. */}
-					{(compact || isEditMode) && topicRow}
+					{/* Desktop picks the topic on screen 1; edit mode, and a
+					    single format that skips screen 1 (FE#2545), enter
+					    here without one, so the row must be reachable then. */}
+					{(compact || isEditMode || !prefill?.topic) && topicRow}
 					{agencyOptions.length > 1 && (
 						<OrisoSelect
 							id="circleAgency"
@@ -551,12 +576,13 @@ export const CircleSettingsView = ({
 					)}
 					<button
 						type="button"
+						data-tour-target="groupchat-circle-create"
 						className={`circleSettings__createButton${
-							isReady
+							canCreate
 								? ' circleSettings__createButton--primary'
 								: ''
 						}`}
-						disabled={!isReady}
+						disabled={!canCreate}
 						onClick={handleCreate}
 					>
 						<AddCircleIcon aria-hidden />

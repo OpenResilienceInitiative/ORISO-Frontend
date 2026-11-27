@@ -2097,7 +2097,11 @@
 			},
 			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
 			"retry": "Réessayer",
+			"editFailedTitle": "Impossible d’enregistrer la modification",
+			"editFailedText": "Votre texte est toujours dans l’éditeur. Réessayez.",
 			"toolbar": {
+				"selectionFormats": "Mettre en forme la sélection",
+				"slashFormats": "Commandes de mise en forme",
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
 				"more": "Plus d'outils",
@@ -2798,6 +2802,7 @@
 				"notJoined": "Lecture seule jusqu’à la confirmation de votre adhésion et le chargement du salon.",
 				"supervisorNoComposer": "En tant que superviseur·e, vous pouvez réagir ici, mais pas écrire.",
 				"teamClosed": "Le chat d’équipe est fermé.",
+				"threadsDisabled": "Les réponses dans un fil ne sont pas disponibles ici.",
 				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
 				"hiddenNotYours": "Cette conversation ne fait pas partie de vos dossiers ; l’activité ne l’affiche donc pas ici.",
 				"hiddenNotJoined": "Vous n’avez pas rejoint cette conversation ; l’activité ne l’affiche donc pas ici.",
@@ -4229,7 +4234,8 @@
 			"selectCase": "Sélectionner le dossier",
 			"selectedCount": "{{count}} sélectionné(s)",
 			"start": "Sélectionner plusieurs dossiers",
-			"title": "Demande d'accès groupée"
+			"title": "Demande d'accès groupée",
+			"clearSelection": "Annuler la sélection"
 		},
 		"consent": {
 			"title": "Une personne consultante demande l'accès à cette conversation",
@@ -4276,7 +4282,9 @@
 			"required": "Choisissez un motif et ajoutez une explication."
 		},
 		"explanation": {
-			"placeholder": "Décrivez le motif"
+			"placeholder": "Décrivez le motif",
+			"optional": "Justification (facultative)",
+			"required": "Justification (obligatoire)"
 		},
 		"eyebrow": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 		"hidden": {
@@ -4286,6 +4294,7 @@
 			"accessDenied": "Accès refusé",
 			"accessGranted": "Accès autorisé",
 			"awaitingApproval": "En attente d'autorisation",
+			"awaitingApprovalShort": "Demandé",
 			"hiddenPreview": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 			"requestAccess": "Demander l'accès"
 		},
@@ -6613,6 +6622,38 @@
 				"done": {
 					"title": "Prêt",
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Vous créez un cercle de parole d'exercice et le démarrez."
+				},
+				"practiceCreate": {
+					"intro": "Cliquez sur « Créer » dans votre liste de consultations pour lancer une nouvelle conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
+				},
+				"practiceSettings": {
+					"title": "Créer le cercle",
+					"intro": "Cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+				},
+				"practiceOpen": {
+					"title": "Ouvrir le cercle",
+					"intro": "Votre cercle d'exercice figure maintenant dans votre liste de consultations. Cliquez dessus pour l'ouvrir."
+				},
+				"practiceStart": {
+					"title": "Démarrer le cercle",
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo »."
+				},
+				"practiceCall": {
+					"title": "Appel vidéo",
+					"intro": "Dans un vrai cercle, vous démarrez ici l'appel vidéo. Cliquez dessus : dans l'exercice, vous voyez seulement ce qui se passe, sans caméra ni micro."
+				},
+				"practiceDone": {
+					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+				},
+				"practiceConfigure": {
+					"title": "Centre de conseil et date",
+					"intro": "Choisissez le centre de conseil pour lequel le cercle a lieu et, s'il n'y en a pas encore, le thème. Vérifiez la date, l'heure et la durée. Pour l'exercice, vous pouvez laisser le reste tel quel. Puis « Continuer »."
 				}
 			}
 		},
@@ -7277,6 +7318,11 @@
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
+		},
+		"callStart": {
+			"title": "Appel vidéo (exercice)",
+			"description": "C'est ici que démarre l'appel vidéo de votre cercle. Dans l'exercice, sans caméra ni micro.",
+			"close": "Compris"
 		}
 	},
 	"counselling": {
@@ -7542,18 +7588,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Votre aperçu",
-		"stats": {
-			"title": "Consultations",
-			"period": "30 derniers jours",
-			"assigned": "Nouvelles prises en charge",
+		"quiet": {
 			"active": "Actives",
-			"archived": "Archivées",
-			"sentMessages": "Messages envoyés"
-		},
-		"circles": {
-			"title": "Prochains groupes d’entraide",
-			"assignedCounsellors": "Équipe de conseil : {{count}}"
+			"assigned": "Nouvellement prises en charge (30 jours)"
 		}
 	},
 	"temporaryAccount": {
@@ -7627,7 +7664,12 @@
 			},
 			"linkFailedTitle": "Lien d'invitation non créé",
 			"linkFailedAfterAppointment": "Le rendez-vous est enregistré, mais pas le lien d'invitation. Veuillez réessayer.",
-			"appointmentSaved": "Le rendez-vous est enregistré."
+			"appointmentSaved": "Le rendez-vous est enregistré.",
+			"openLink": {
+				"action": "Continuer vers le lien d'invitation",
+				"hint": "Sans date, vous créez un lien d'invitation ouvert : chaque personne qui l'ouvre obtient sa propre conversation. Le lien reste valable jusqu'à ce que vous le supprimiez. Ensuite, vous choisissez son thème et son nom.",
+				"mediumOff": "Les invitations directes ne sont pas autorisées pour ce type. Choisissez un autre type."
+			}
 		},
 		"overview": {
 			"title": "Rendez-vous et invitations directes",
@@ -7704,6 +7746,7 @@
 			"validUntil": "Le nouveau lien pour le rendez-vous est valable jusqu’au {{date}} :"
 		},
 		"fromCalendar": "Rendez-vous du calendrier : {{range}}. Choisissez le thème et le média, puis créez l'invitation directe.",
+		"fromCalendarOpenLink": "Depuis le calendrier : lien d'invitation ouvert sans date.",
 		"fromCalendarPopup": "Rendez-vous du calendrier : {{range}}"
 	},
 	"calendar": {

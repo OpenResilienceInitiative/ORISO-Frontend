@@ -88,11 +88,6 @@ const completeAndSubmitRequest = async (
 		})
 	);
 	fireEvent.click(await screen.findByRole('radio'));
-	fireEvent.click(
-		screen.getByRole('button', {
-			name: 'caseHandover.curtain.next'
-		})
-	);
 	fireEvent.change(screen.getByRole('textbox'), {
 		target: { value: explanation }
 	});
@@ -111,7 +106,8 @@ describe('CaseHandoverCurtain request lifecycle', () => {
 			{
 				code: 'SUPERVISION',
 				label: 'Supervision',
-				clientConsentRequired: false
+				clientConsentRequired: false,
+				explanationLevel: 'REQUIRED'
 			}
 		]);
 	});

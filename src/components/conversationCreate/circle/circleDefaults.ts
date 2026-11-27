@@ -1,5 +1,6 @@
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { GroupChatAuthorContentDraft } from '../../groupChat/groupChatAuthorContent';
+import { isPracticeMode } from '../../../practice/practiceMode';
 
 /**
  * Persistence for the Gesprächskreis settings (Figma flow 8482-30552):
@@ -101,7 +102,9 @@ export const saveCircleDefaults = (
 	agencyId: number | null,
 	defaults: CircleDefaults
 ): void => {
-	if (agencyId === null) {
+	// A practice circle (FE#2545) must not become the real next default:
+	// practice state lives in memory only.
+	if (agencyId === null || isPracticeMode()) {
 		return;
 	}
 	const storage = getStorage();

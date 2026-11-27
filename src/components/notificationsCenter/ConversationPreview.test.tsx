@@ -84,7 +84,13 @@ const composer = vi.hoisted(() => ({ props: null as any }));
 vi.mock('../messageSubmitInterface/messageSubmitInterfaceComponent', () => ({
 	MessageSubmitInterfaceComponent: (props: any) => {
 		composer.props = props;
-		return <div data-testid="chat-composer" />;
+		return (
+			<div data-testid="chat-composer">
+				<button type="button" onClick={props.onMobileNavigateBottom}>
+					Scroll to newest
+				</button>
+			</div>
+		);
 	}
 }));
 // jsdom has no layout, so focus-trap finds no tabbable node in an overlay.
@@ -1047,6 +1053,66 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 		);
 	});
 
+	it('scrolls the preview timeline when the composer jumps to the newest message', () => {
+		conversation();
+		open();
+		const list = screen.getByTestId('conversation-preview');
+		Object.defineProperty(list, 'scrollHeight', { value: 1200 });
+		list.scrollTop = 100;
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Scroll to newest' })
+		);
+
+		expect(list.scrollTop).toBe(1200);
+	});
+
+	it.each([
+		{ roomId: '!other:matrix.example', threadRootId: null },
+		{ roomId: ROOM, threadRootId: '$theirs' }
+	])(
+		'scopes late send feedback when switching to $roomId / $threadRootId',
+		async (next) => {
+			conversation();
+			const onConversationRead = vi.fn();
+			const renderRoom = (
+				roomId: string,
+				threadRootId?: string | null
+			) => (
+				<MessageContextShell>
+					<ConversationPreview
+						roomId={roomId}
+						threadRootId={threadRootId}
+						access={{ capabilities: capabilities() }}
+						onConversationRead={onConversationRead}
+					/>
+				</MessageContextShell>
+			);
+			const preview = render(renderRoom(ROOM));
+			const original = composer.props;
+			preview.rerender(renderRoom(next.roomId, next.threadRootId));
+
+			act(() => original.onSendError());
+			expect(screen.queryByRole('alert')).toBeNull();
+
+			act(() => composer.props.onSendError());
+			await act(async () => original.handleMessageSendSuccess());
+			expect(screen.getByRole('alert').textContent).toBe(t('sendFailed'));
+			expect(screen.queryByRole('status')).toBeNull();
+			expect(onConversationRead).toHaveBeenCalledWith(ROOM);
+		}
+	);
+
+	it('does not offer room actions when the locally opened thread is disabled', () => {
+		conversation();
+		open({
+			openedThreadRootId: '$theirs',
+			access: { capabilities: capabilities({ threadReply: false }) }
+		});
+		expect(screen.getByText('Von Lisa')).toBeTruthy();
+		expect(screen.queryByTestId('chat-composer')).toBeNull();
+	});
+
 	it('offers reply, edit and delete on own messages — nothing that leaves the Timeline', () => {
 		conversation();
 		const { container } = open();
@@ -1209,6 +1275,45 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 		);
 	});
 
+	it('keeps a failed reaction out of a thread opened after the action began', async () => {
+		conversation([
+			matrixEvent({
+				id: '$r1',
+				sender: LISA,
+				type: 'm.reaction',
+				content: {
+					'm.relates_to': {
+						rel_type: 'm.annotation',
+						event_id: '$theirs',
+						key: '👍'
+					}
+				}
+			})
+		]);
+		let rejectReaction = () => {};
+		transport.sendReaction.mockReturnValueOnce(
+			new Promise((_, reject) => {
+				rejectReaction = () => reject(new Error('403'));
+			})
+		);
+		const preview = (threadRootId?: string) => (
+			<MessageContextShell>
+				<ConversationPreview
+					roomId={ROOM}
+					threadRootId={threadRootId}
+					access={{ capabilities: capabilities() }}
+				/>
+			</MessageContextShell>
+		);
+		const { container, rerender } = render(preview());
+		fireEvent.click(
+			container.querySelector('.messageItem__reactionPill') as HTMLElement
+		);
+		rerender(preview('$theirs'));
+		await act(async () => rejectReaction());
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
 	it('supervisor: reacts through the menu’s quick reactions, no composer', () => {
 		conversation();
 		const { container } = open({
@@ -1269,7 +1374,8 @@ describe('ConversationPreview (#1824): writable through the chat rows and compos
 
 	it.each([
 		['notJoined', 'notJoined'],
-		['teamClosed', 'teamClosed']
+		['teamClosed', 'teamClosed'],
+		['threadsDisabled', 'threadsDisabled']
 	] as const)('%s: explains why', (reason, key) => {
 		conversation();
 		open({ access: { capabilities: readOnly(reason) } });

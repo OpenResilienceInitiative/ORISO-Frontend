@@ -2118,7 +2118,11 @@
 			},
 			"loadError": "Der Chat-Eingabebereich konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
 			"retry": "Erneut versuchen",
+			"editFailedTitle": "Änderung konnte nicht gespeichert werden",
+			"editFailedText": "Ihr Text bleibt im Editor. Versuchen Sie es erneut.",
 			"toolbar": {
+				"selectionFormats": "Auswahl formatieren",
+				"slashFormats": "Formatbefehle",
 				"openTools": "Zurück zu allen Werkzeugen",
 				"closeTools": "Zu den kompakten Werkzeugen wechseln",
 				"more": "Weitere Werkzeuge",
@@ -2819,6 +2823,7 @@
 				"notJoined": "Nur lesen, bis Ihr Beitritt bestätigt und der Raum geladen ist.",
 				"supervisorNoComposer": "Als Supervisor:in können Sie hier reagieren, aber nicht schreiben.",
 				"teamClosed": "Der Team-Chat ist geschlossen.",
+				"threadsDisabled": "Antworten im Thread sind hier nicht möglich.",
 				"curtained": "Dieser Fall ist für Sie gerade nicht einsehbar.",
 				"hiddenNotYours": "Diese Unterhaltung gehört nicht zu Ihren Fällen. Darum zeigt die Aktivität sie hier nicht.",
 				"hiddenNotJoined": "Sie sind dieser Unterhaltung nicht beigetreten. Darum zeigt die Aktivität sie hier nicht.",
@@ -4244,12 +4249,13 @@
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
-			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
+			"required": "Wählen Sie mindestens einen Fall und einen Grund; ist die Begründung Pflicht, ergänzen Sie sie.",
 			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
-			"selectCase": "Fall auswählen",
+			"selectCase": "Auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
-			"title": "Mehrfach-Zugriffsanfrage"
+			"title": "Mehrfach-Zugriffsanfrage",
+			"clearSelection": "Auswahl aufheben"
 		},
 		"consent": {
 			"sender": "Carimat",
@@ -4293,10 +4299,12 @@
 		"error": {
 			"failed": "Die Zugriffsanfrage konnte nicht gesendet werden.",
 			"forbidden": "Sie dürfen für diesen Fall keinen Zugriff anfragen.",
-			"required": "Wählen Sie einen Grund und ergänzen Sie eine Begründung."
+			"required": "Wählen Sie einen Grund. Für diesen Grund ist eine Begründung Pflicht."
 		},
 		"explanation": {
-			"placeholder": "Begründung beschreiben"
+			"placeholder": "Begründung beschreiben",
+			"optional": "Begründung (optional)",
+			"required": "Begründung (Pflicht)"
 		},
 		"eyebrow": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 		"hidden": {
@@ -4306,6 +4314,7 @@
 			"accessDenied": "Zugriff abgelehnt",
 			"accessGranted": "Zugriff freigegeben",
 			"awaitingApproval": "Warten auf Freigabe",
+			"awaitingApprovalShort": "Angefragt",
 			"hiddenPreview": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 			"requestAccess": "Zugriff anfragen"
 		},
@@ -6603,6 +6612,38 @@
 				"done": {
 					"title": "Bereit",
 					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Sie legen einen Übungs-Gesprächskreis an und starten ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klicken Sie in Ihrer Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wählen Sie unter „Thema / Fachbereich“ das Übungsthema und klicken Sie dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"title": "Gesprächskreis erstellen",
+					"intro": "Klicken Sie auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"title": "Gesprächskreis öffnen",
+					"intro": "Ihr Übungskreis steht jetzt in Ihrer Beratungsliste. Klicken Sie darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"title": "Gesprächskreis starten",
+					"intro": "Teilnehmende warten hier, bis Sie beginnen. Klicken Sie auf „Video-Call starten“."
+				},
+				"practiceCall": {
+					"title": "Video-Call",
+					"intro": "Im echten Gesprächskreis starten Sie hier den Video-Call. Klicken Sie darauf: In der Übung sehen Sie nur, was passiert, ohne Kamera und Mikrofon."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"title": "Beratungsstelle und Termin",
+					"intro": "Wählen Sie die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keines gesetzt ist, das Thema. Prüfen Sie Datum, Uhrzeit und Dauer. Für die Übung können Sie den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},
@@ -7267,6 +7308,11 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		},
+		"callStart": {
+			"title": "Video-Call (Übung)",
+			"description": "Hier startet jetzt der Video-Call für Ihren Gesprächskreis. In der Übung ohne Kamera und Mikrofon.",
+			"close": "Verstanden"
 		}
 	},
 	"counselling": {
@@ -7532,18 +7578,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Ihr Überblick",
-		"stats": {
-			"title": "Beratungen",
-			"period": "Letzte 30 Tage",
-			"assigned": "Neu übernommen",
+		"quiet": {
 			"active": "Aktiv",
-			"archived": "Archiviert",
-			"sentMessages": "Gesendete Nachrichten"
-		},
-		"circles": {
-			"title": "Nächste Gesprächskreise",
-			"assignedCounsellors": "Beratungsteam: {{count}}"
+			"assigned": "Neu übernommen (30 Tage)"
 		}
 	},
 	"temporaryAccount": {
@@ -7617,7 +7654,12 @@
 			},
 			"linkFailedTitle": "Einladungslink nicht erstellt",
 			"linkFailedAfterAppointment": "Der Termin ist angelegt, der Einladungslink aber nicht. Bitte versuchen Sie es erneut.",
-			"appointmentSaved": "Der Termin ist angelegt."
+			"appointmentSaved": "Der Termin ist angelegt.",
+			"openLink": {
+				"action": "Weiter zum Einladungslink",
+				"hint": "Ohne Termin entsteht ein offener Einladungslink: Jede Person, die ihn öffnet, bekommt ein eigenes Gespräch. Der Link gilt, bis Sie ihn löschen. Im nächsten Schritt wählen Sie Thema und Namen.",
+				"mediumOff": "Für diese Art sind Direkteinladungen nicht freigegeben. Wählen Sie eine andere Art."
+			}
 		},
 		"overview": {
 			"title": "Termine & Direkteinladungen",
@@ -7694,6 +7736,7 @@
 			"validUntil": "Der neue Link zum Termin gilt bis {{date}}:"
 		},
 		"fromCalendar": "Termin aus dem Kalender: {{range}}. Wählen Sie Thema und Medium, dann erstellen Sie die Direkteinladung.",
+		"fromCalendarOpenLink": "Aus dem Kalender: offener Einladungslink ohne Termin.",
 		"fromCalendarPopup": "Termin aus dem Kalender: {{range}}"
 	},
 	"calendar": {

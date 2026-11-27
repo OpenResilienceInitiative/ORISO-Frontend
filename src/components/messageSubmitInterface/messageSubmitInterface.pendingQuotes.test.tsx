@@ -25,6 +25,7 @@ import {
 } from '../../globalState';
 import { apiPutDearchive, apiSendMatrixAttachmentMessage } from '../../api';
 import { chatTransportService } from '../../services/chatTransportService';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
@@ -34,6 +35,7 @@ const mocks = vi.hoisted(() => ({
 	translate: (key: string) => key,
 	composerClear: vi.fn(),
 	typeDraft: (_text: string) => {},
+	startLastEdit: () => false,
 	dropFiles: (_files: File[]) => {},
 	matrixService: { getClient: () => null },
 	draftEnabled: true
@@ -108,6 +110,7 @@ vi.mock('./TipTapComposer', async () => {
 			const valueRef = react.useRef('');
 			valueRef.current = props.value ?? '';
 			mocks.typeDraft = props.onChange;
+			mocks.startLastEdit = props.onEditLast;
 			mocks.dropFiles = props.onFilesSelected;
 			react.useImperativeHandle(ref, () => ({
 				getHTML: () => valueRef.current,
@@ -240,7 +243,10 @@ beforeEach(() => {
 		revokeObjectURL: vi.fn()
 	});
 });
-afterEach(() => cleanup());
+afterEach(() => {
+	cleanup();
+	appSnackbarStack.clear();
+});
 
 describe('sending queued passage quotes (PR #2232 review)', () => {
 	it('sends the quotes together with the typed text (unchanged)', async () => {
@@ -356,6 +362,111 @@ describe('sending queued passage quotes (PR #2232 review)', () => {
 		);
 		expect(onSendPendingQuotes).not.toHaveBeenCalled();
 		expect(screen.getByText(/marked passage/)).toBeTruthy();
+	});
+
+	it('keeps a failed keyboard edit in its side room and retries with formatting', async () => {
+		const onLocalMessageEdit = vi.fn();
+		const roomId = '!supervision:example.org';
+		const editTextMessage = vi
+			.spyOn(chatTransportService, 'editTextMessage')
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockResolvedValueOnce({ success: true, event_id: '$replacement' });
+		render(
+			<Composer
+				messages={[
+					{
+						_id: '$edited',
+						message:
+							'[VISIBLE_TO:supervisor-1] [SUPERVISOR_FEEDBACK] old text',
+						messageDate: null,
+						messageTime: '',
+						displayName: '',
+						username: '',
+						userId: 'counsellor',
+						isNotRead: false,
+						t: null,
+						rid: roomId
+					}
+				]}
+				isOwnMessage={() => true}
+				targetRoomId={roomId}
+				onLocalMessageEdit={onLocalMessageEdit}
+			/>
+		);
+		act(() => {
+			expect(mocks.startLastEdit()).toBe(true);
+		});
+		const message = '<p><strong>corrected text</strong></p>';
+		expect(draftText()).toBe('<p>old text</p>');
+		const encoded = `[VISIBLE_TO:supervisor-1] [SUPERVISOR_FEEDBACK] ${message}`;
+		act(() => mocks.typeDraft(message));
+		await clickSend();
+		expect(editTextMessage).toHaveBeenCalledWith({
+			matrixRoomId: roomId,
+			targetEventId: '$edited',
+			message: encoded
+		});
+		expect(appSnackbarStack.getSnapshot()[0]?.announcement).toContain(
+			'message.submit.editFailedTitle'
+		);
+		expect(draftText()).toBe(message);
+		expect(onLocalMessageEdit).not.toHaveBeenCalled();
+
+		await clickSend();
+		expect(editTextMessage).toHaveBeenCalledTimes(2);
+		expect(onLocalMessageEdit).toHaveBeenCalledWith('$edited', encoded);
+		expect(draftText()).toBe('');
+		expect(appSnackbarStack.getSnapshot()).toHaveLength(0);
+	});
+
+	it('edits the latest own reply in this thread through its original room', async () => {
+		const matrixRoomId = session.item.matrixRoomId;
+		const ownMessage = {
+			messageDate: null,
+			messageTime: '',
+			displayName: '',
+			username: '',
+			userId: 'counsellor',
+			isNotRead: false,
+			t: null,
+			rid: matrixRoomId
+		};
+		const editTextMessage = vi
+			.spyOn(chatTransportService, 'editTextMessage')
+			.mockResolvedValue({ success: true, event_id: '$replacement' });
+		render(
+			<Composer
+				messages={[
+					{
+						...ownMessage,
+						_id: '$reply',
+						threadRootEventId: '$thread',
+						message: 'a reply in the thread'
+					},
+					{
+						...ownMessage,
+						_id: '$main',
+						message: 'a newer main-room message'
+					}
+				]}
+				isOwnMessage={() => true}
+				threadRootId="$thread"
+				isSupervisor
+				supervisionRoomId="!side:example.org"
+			/>
+		);
+		act(() => {
+			expect(mocks.startLastEdit()).toBe(true);
+		});
+		expect(draftText()).toContain('a reply in the thread');
+		const message = '<p><em>Corrected reply</em></p>';
+		act(() => mocks.typeDraft(message));
+		await clickSend();
+		expect(editTextMessage).toHaveBeenCalledWith({
+			matrixRoomId,
+			targetEventId: '$reply',
+			message
+		});
 	});
 
 	const archived = {

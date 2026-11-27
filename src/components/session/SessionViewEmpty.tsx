@@ -21,8 +21,8 @@ export const SessionViewEmpty = () => {
 	const { getSessionListViewState } = useSessionListViewState();
 	const { ready, visibleSessionCount } = getSessionListViewState(type);
 	const showSelectMessage = ready && visibleSessionCount > 0;
-	/* #1795: a counsellor's "Gespräche" shows her overview while nothing is
-	   selected, once she has a direct link. Erstanfragen stays as it is. */
+	/* #1795: a counsellor's "Gespräche" adds two of her figures to the empty
+	   pane while nothing is selected. Erstanfragen stays as it is. */
 	const showDashboard =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		Boolean(userData) &&
@@ -32,26 +32,24 @@ export const SessionViewEmpty = () => {
 		mobileListView();
 	}, []);
 
+	const headline = translate(
+		showSelectMessage ? 'session.empty' : 'session.emptyAllCaughtUp'
+	);
+	const variant = showSelectMessage
+		? 'conversation-history'
+		: 'conversation-nothing-to-do';
 	const empty = (
 		<div className="session session--empty">
 			<EmptyState
 				className="session__emptyState"
-				headline={translate(
-					showSelectMessage
-						? 'session.empty'
-						: 'session.emptyAllCaughtUp'
-				)}
-				variant={
-					showSelectMessage
-						? 'conversation-history'
-						: 'conversation-nothing-to-do'
-				}
+				headline={headline}
+				variant={variant}
 			/>
 		</div>
 	);
 
 	return showDashboard ? (
-		<CounsellorDashboardWired fallback={empty} />
+		<CounsellorDashboardWired headline={headline} variant={variant} />
 	) : (
 		empty
 	);

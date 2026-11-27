@@ -8,7 +8,11 @@ import '../message/message.styles.scss';
 const meta = {
 	title: 'Chat/Messages/Inline typing indicator',
 	component: InlineTypingIndicator,
-	args: { name: 'Alex', userId: '@alex:oriso.invalid', label: 'Alex schreibt …' }
+	args: {
+		name: 'Alex',
+		userId: '@alex:oriso.invalid',
+		label: 'Alex schreibt …'
+	}
 } satisfies Meta<typeof InlineTypingIndicator>;
 export default meta;
 type Story = StoryObj<typeof meta>;

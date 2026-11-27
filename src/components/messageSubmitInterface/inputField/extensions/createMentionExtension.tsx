@@ -2,7 +2,7 @@ import { Editor, Range, ReactRenderer } from '@tiptap/react';
 import Mention from '@tiptap/extension-mention';
 import { PluginKey } from '@tiptap/pm/state';
 import { exitSuggestion, SuggestionOptions } from '@tiptap/suggestion';
-import { computePosition, flip, offset, shift } from '@floating-ui/dom';
+import { composerSuggestionPosition } from './composerSuggestionPosition';
 import {
 	MentionDirectoryState,
 	MentionList,
@@ -95,6 +95,8 @@ const insertMentionsBefore = (
 	});
 };
 
+export const mentionSuggestionKey = new PluginKey('mentionSuggestion');
+
 /**
  * Configures the TipTap Mention extension with a Slack-like suggestion popup.
  * Candidates come from the injected provider (agency consultants + room
@@ -102,11 +104,11 @@ const insertMentionsBefore = (
  * layer can serialize m.mentions.
  */
 export const createMentionExtension = (provider: MentionProvider) => {
-	// Mention would make up its own key, and exitSuggestion needs to know it.
-	const pluginKey = new PluginKey('mentionSuggestion');
 	const suggestion: Omit<SuggestionOptions, 'editor'> = {
 		char: '@',
-		pluginKey,
+		...composerSuggestionPosition,
+		dismissOnOutsideClick: false,
+		pluginKey: mentionSuggestionKey,
 		items: ({ query }) =>
 			filterMentionCandidates(
 				provider.getCandidates(query),
@@ -116,6 +118,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 		render: () => {
 			let component: ReactRenderer<MentionListRef> | null = null;
 			let popup: HTMLDivElement | null = null;
+			let unmountPopup: (() => void) | undefined;
 			// Always the newest: the range grows with every typed character.
 			let editor: Editor | null = null;
 			let range: Range | null = null;
@@ -134,7 +137,7 @@ export const createMentionExtension = (provider: MentionProvider) => {
 
 			const close = () => {
 				if (editor) {
-					exitSuggestion(editor.view, pluginKey);
+					exitSuggestion(editor.view, mentionSuggestionKey);
 				}
 			};
 
@@ -170,28 +173,6 @@ export const createMentionExtension = (provider: MentionProvider) => {
 				}
 			};
 
-			const reposition = (clientRect: (() => DOMRect | null) | null) => {
-				if (!popup || !clientRect) {
-					return;
-				}
-				const rect = clientRect();
-				if (!rect) {
-					return;
-				}
-				const virtualEl = { getBoundingClientRect: () => rect };
-				computePosition(virtualEl as any, popup, {
-					placement: 'top-start',
-					middleware: [offset(6), flip(), shift({ padding: 8 })]
-				}).then(({ x, y, placement }) => {
-					if (popup) {
-						popup.style.left = `${x}px`;
-						popup.style.top = `${y}px`;
-						// The corner facing the @ goes square, like a speech bubble.
-						popup.dataset.placement = placement;
-					}
-				});
-			};
-
 			return {
 				onStart: (props) => {
 					editor = props.editor;
@@ -213,16 +194,26 @@ export const createMentionExtension = (provider: MentionProvider) => {
 					});
 					popup = document.createElement('div');
 					popup.className = 'mentionList__popup';
-					popup.style.position = 'absolute';
-					popup.style.zIndex = '80';
+					popup.style.position = 'fixed';
+					popup.style.visibility = 'hidden';
+					popup.style.width = 'max-content';
 					popup.appendChild(component.element);
-					document.body.appendChild(popup);
+					const mountedPopup = popup;
+					unmountPopup = props.mount(mountedPopup, {
+						onPosition: ({ x, y, placement }) => {
+							Object.assign(mountedPopup.style, {
+								left: `${x}px`,
+								top: `${y}px`,
+								visibility: ''
+							});
+							mountedPopup.dataset.placement = placement;
+						}
+					});
 					document.addEventListener(
 						'pointerdown',
 						onPointerDownOutside,
 						true
 					);
-					reposition(props.clientRect ?? null);
 				},
 				onUpdate: (props) => {
 					range = props.range;
@@ -235,7 +226,6 @@ export const createMentionExtension = (provider: MentionProvider) => {
 						notInChatLabel: provider.notInChatLabel,
 						...statusProps()
 					});
-					reposition(props.clientRect ?? null);
 				},
 				onKeyDown: (props) => {
 					if (props.event.key === 'Escape') {
@@ -262,7 +252,8 @@ export const createMentionExtension = (provider: MentionProvider) => {
 						onPointerDownOutside,
 						true
 					);
-					popup?.remove();
+					unmountPopup?.();
+					unmountPopup = undefined;
 					popup = null;
 					component?.destroy();
 					component = null;

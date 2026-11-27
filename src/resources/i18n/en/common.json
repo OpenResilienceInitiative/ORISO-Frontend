@@ -2103,7 +2103,11 @@
 			},
 			"loadError": "The chat input could not be loaded. Please try again.",
 			"retry": "Try again",
+			"editFailedTitle": "Could not save the edit",
+			"editFailedText": "Your text is still in the editor. Try again.",
 			"toolbar": {
+				"selectionFormats": "Format selection",
+				"slashFormats": "Formatting commands",
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
 				"more": "More tools",
@@ -2795,6 +2799,7 @@
 				"notJoined": "Read only until your join is confirmed and the room has loaded.",
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
 				"teamClosed": "The team chat is closed.",
+				"threadsDisabled": "Thread replies are not available here.",
 				"curtained": "This case is not visible to you right now.",
 				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
 				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",
@@ -4190,12 +4195,13 @@
 		"batch": {
 			"cancel": "Close selection",
 			"confirm": "Request selected",
-			"required": "Select at least one case, one reason, and an explanation.",
+			"required": "Select at least one case and a reason, and add an explanation where it is required.",
 			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
-			"selectCase": "Select case",
+			"selectCase": "Select",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
-			"title": "Batch access request"
+			"title": "Batch access request",
+			"clearSelection": "Clear selection"
 		},
 		"consent": {
 			"sender": "Carimat",
@@ -4239,10 +4245,12 @@
 		"error": {
 			"failed": "The access request could not be sent.",
 			"forbidden": "You are not eligible to request access to this case.",
-			"required": "Select a reason and add an explanation."
+			"required": "Select a reason. This reason requires an explanation."
 		},
 		"explanation": {
-			"placeholder": "Describe the reason"
+			"placeholder": "Describe the reason",
+			"optional": "Explanation (optional)",
+			"required": "Explanation (required)"
 		},
 		"eyebrow": "Information hidden until request is approved",
 		"hidden": {
@@ -4252,6 +4260,7 @@
 			"accessDenied": "Access denied",
 			"accessGranted": "Access granted",
 			"awaitingApproval": "Awaiting approval",
+			"awaitingApprovalShort": "Requested",
 			"hiddenPreview": "Information hidden until request is approved",
 			"requestAccess": "Request access"
 		},
@@ -6528,6 +6537,38 @@
 				"done": {
 					"title": "Ready",
 					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				},
+				"practiceIntro": {
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You create a practice conversation circle and start it."
+				},
+				"practiceCreate": {
+					"intro": "Click \"Create\" in your consultation list to start a new conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choose the practice topic under \"Topic / subject area\", then click the topic button. The settings open next."
+				},
+				"practiceSettings": {
+					"title": "Create the circle",
+					"intro": "Click \"Create\". In the exercise the circle meets by video."
+				},
+				"practiceOpen": {
+					"title": "Open the circle",
+					"intro": "Your practice circle is now in your consultation list. Click it to open it."
+				},
+				"practiceStart": {
+					"title": "Start the circle",
+					"intro": "Participants wait here until you begin. Click \"Start video call\"."
+				},
+				"practiceCall": {
+					"title": "Video call",
+					"intro": "In a real circle you start the video call here. Click it: in the exercise you only see what happens, without camera or microphone."
+				},
+				"practiceDone": {
+					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
+				},
+				"practiceConfigure": {
+					"title": "Counselling centre and date",
+					"intro": "Choose the counselling centre the circle is held for and, if none is set yet, the topic. Check the date, time and duration. For the exercise you can leave the rest as it is. Then \"Next\"."
 				}
 			}
 		},
@@ -7192,6 +7233,11 @@
 		},
 		"error": {
 			"start": "The practice could not be started. Please try again."
+		},
+		"callStart": {
+			"title": "Video call (practice)",
+			"description": "This is where the video call for your circle starts. In the exercise, without camera or microphone.",
+			"close": "Got it"
 		}
 	},
 	"counselling": {
@@ -7457,18 +7503,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Your overview",
-		"stats": {
-			"title": "Counselling",
-			"period": "Last 30 days",
-			"assigned": "Newly taken on",
+		"quiet": {
 			"active": "Active",
-			"archived": "Archived",
-			"sentMessages": "Messages sent"
-		},
-		"circles": {
-			"title": "Upcoming self-help circles",
-			"assignedCounsellors": "Counselling team: {{count}}"
+			"assigned": "Newly taken on (30 days)"
 		}
 	},
 	"temporaryAccount": {
@@ -7542,7 +7579,12 @@
 			},
 			"linkFailedTitle": "Invitation link not created",
 			"linkFailedAfterAppointment": "The appointment is saved, but the invitation link is not. Please try again.",
-			"appointmentSaved": "The appointment is saved."
+			"appointmentSaved": "The appointment is saved.",
+			"openLink": {
+				"action": "Continue to invitation link",
+				"hint": "Without a date you create an open invitation link: everyone who opens it gets their own conversation. The link stays valid until you delete it. Next you choose its topic and name.",
+				"mediumOff": "Direct invitations are not enabled for this type. Choose another type."
+			}
 		},
 		"overview": {
 			"title": "Appointments & direct invitations",
@@ -7619,6 +7661,7 @@
 			"validUntil": "The new link to the appointment works until {{date}}:"
 		},
 		"fromCalendar": "Appointment from the calendar: {{range}}. Choose topic and medium, then create the direct invitation.",
+		"fromCalendarOpenLink": "From the calendar: open invitation link without a date.",
 		"fromCalendarPopup": "Appointment from the calendar: {{range}}"
 	},
 	"calendar": {

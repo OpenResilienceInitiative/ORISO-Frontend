@@ -2097,7 +2097,11 @@
 			},
 			"loadError": "Sohbet giriş alanı yüklenemedi. Lütfen tekrar deneyin.",
 			"retry": "Tekrar dene",
+			"editFailedTitle": "Değişiklik kaydedilemedi",
+			"editFailedText": "Metniniz düzenleyicide duruyor. Tekrar deneyin.",
 			"toolbar": {
+				"selectionFormats": "Seçili metni biçimlendir",
+				"slashFormats": "Biçimlendirme komutları",
 				"openTools": "Tüm araçlara geri dön",
 				"closeTools": "Kompakt araçlara geç",
 				"more": "Diğer araçlar",
@@ -2798,6 +2802,7 @@
 				"notJoined": "Katılımınız onaylanana ve oda yüklenene kadar salt okunur.",
 				"supervisorNoComposer": "Süpervizör olarak burada tepki verebilirsiniz ama yazamazsınız.",
 				"teamClosed": "Ekip sohbeti kapandı.",
+				"threadsDisabled": "Burada konu içinde yanıt verilemez.",
 				"curtained": "Bu vaka şu anda sizin için görünür değil.",
 				"hiddenNotYours": "Bu görüşme sizin vakalarınızdan biri değil; bu yüzden etkinlik burada göstermiyor.",
 				"hiddenNotJoined": "Bu görüşmeye katılmadınız; bu yüzden etkinlik burada göstermiyor.",
@@ -4229,7 +4234,8 @@
 			"selectCase": "Vaka seç",
 			"selectedCount": "{{count}} tanesi seçildi",
 			"start": "Birden fazla vaka seç",
-			"title": "Toplu erişim talebi"
+			"title": "Toplu erişim talebi",
+			"clearSelection": "Seçimi kaldır"
 		},
 		"consent": {
 			"title": "Bir danışman bu görüşmeye erişim istiyor",
@@ -4276,7 +4282,9 @@
 			"required": "Bir neden seçin ve bir açıklama ekleyin."
 		},
 		"explanation": {
-			"placeholder": "Gerekçeyi açıklayın"
+			"placeholder": "Gerekçeyi açıklayın",
+			"optional": "Açıklama (isteğe bağlı)",
+			"required": "Açıklama (zorunlu)"
 		},
 		"eyebrow": "Talep onaylanana kadar bilgiler gizli kalır",
 		"hidden": {
@@ -4286,6 +4294,7 @@
 			"accessDenied": "Erişim reddedildi",
 			"accessGranted": "Erişim verildi",
 			"awaitingApproval": "Onay bekleniyor",
+			"awaitingApprovalShort": "İstendi",
 			"hiddenPreview": "Talep onaylanana kadar bilgiler gizli kalır",
 			"requestAccess": "Erişim talep et"
 		},
@@ -6613,6 +6622,38 @@
 				"done": {
 					"title": "Hazır",
 					"intro": "Sohbet çemberleriniz danışmanlık listenizde görünür. Orada açar, ayarları düzenler ve bağlantıyı yeniden paylaşırsınız."
+				},
+				"practiceIntro": {
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Bir alıştırma sohbet çemberi oluşturup başlatacaksınız."
+				},
+				"practiceCreate": {
+					"intro": "Yeni bir sohbet başlatmak için danışmanlık listenizde „Oluştur“a tıklayın."
+				},
+				"practiceTopic": {
+					"intro": "„Konu / uzmanlık alanı“ altında alıştırma konusunu seçin, ardından konu düğmesine tıklayın. Ardından ayarlar açılır."
+				},
+				"practiceSettings": {
+					"title": "Çemberi oluştur",
+					"intro": "„Oluştur“a tıklayın. Alıştırmada çember görüntülü buluşur."
+				},
+				"practiceOpen": {
+					"title": "Çemberi aç",
+					"intro": "Alıştırma çemberiniz artık danışmanlık listenizde. Açmak için üzerine tıklayın."
+				},
+				"practiceStart": {
+					"title": "Çemberi başlat",
+					"intro": "Katılımcılar siz başlayana kadar burada bekler. „Görüntülü aramayı başlat“a tıklayın."
+				},
+				"practiceCall": {
+					"title": "Görüntülü arama",
+					"intro": "Gerçek bir çemberde görüntülü aramayı burada başlatırsınız. Tıklayın: alıştırmada yalnızca ne olduğunu görürsünüz, kamera ve mikrofon olmadan."
+				},
+				"practiceDone": {
+					"intro": "Tamamlandı: Bir sohbet çemberi oluşturup başlattınız. Gerçek bir çemberde katılımcılar gelebilsin diye davet bağlantısını önceden paylaşırsınız."
+				},
+				"practiceConfigure": {
+					"title": "Danışma merkezi ve tarih",
+					"intro": "Çemberin yapılacağı danışma merkezini ve henüz seçilmediyse konuyu seçin. Tarihi, saati ve süreyi kontrol edin. Alıştırma için gerisini olduğu gibi bırakabilirsiniz. Sonra „Daha ileri“."
 				}
 			}
 		},
@@ -7277,6 +7318,11 @@
 		},
 		"error": {
 			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
+		},
+		"callStart": {
+			"title": "Görüntülü arama (alıştırma)",
+			"description": "Çemberinizin görüntülü araması burada başlar. Alıştırmada kamera ve mikrofon olmadan.",
+			"close": "Anladım"
 		}
 	},
 	"counselling": {
@@ -7542,18 +7588,9 @@
 		}
 	},
 	"dashboard": {
-		"title": "Genel bakışınız",
-		"stats": {
-			"title": "Danışmanlıklar",
-			"period": "Son 30 gün",
-			"assigned": "Yeni üstlenilen",
+		"quiet": {
 			"active": "Aktif",
-			"archived": "Arşivlenen",
-			"sentMessages": "Gönderilen mesajlar"
-		},
-		"circles": {
-			"title": "Yaklaşan öz yardım grupları",
-			"assignedCounsellors": "Danışman ekibi: {{count}}"
+			"assigned": "Yeni devralınan (30 gün)"
 		}
 	},
 	"temporaryAccount": {
@@ -7627,7 +7664,12 @@
 			},
 			"linkFailedTitle": "Davet bağlantısı oluşturulmadı",
 			"linkFailedAfterAppointment": "Randevu kaydedildi, ancak davet bağlantısı oluşturulmadı. Lütfen tekrar deneyin.",
-			"appointmentSaved": "Randevu kaydedildi."
+			"appointmentSaved": "Randevu kaydedildi.",
+			"openLink": {
+				"action": "Davet bağlantısına devam et",
+				"hint": "Tarih olmadan açık bir davet bağlantısı oluşturursunuz: bağlantıyı açan herkes kendi görüşmesini alır. Bağlantı siz silene kadar geçerlidir. Sonraki adımda konusunu ve adını seçersiniz.",
+				"mediumOff": "Bu tür için doğrudan davetler etkin değil. Başka bir tür seçin."
+			}
 		},
 		"overview": {
 			"title": "Randevular ve doğrudan davetler",
@@ -7704,6 +7746,7 @@
 			"validUntil": "Randevunun yeni bağlantısı {{date}} tarihine kadar geçerli:"
 		},
 		"fromCalendar": "Takvimden randevu: {{range}}. Konu ve ortamı seçin, ardından doğrudan daveti oluşturun.",
+		"fromCalendarOpenLink": "Takvimden: tarihsiz açık davet bağlantısı.",
 		"fromCalendarPopup": "Takvimden randevu: {{range}}"
 	},
 	"calendar": {

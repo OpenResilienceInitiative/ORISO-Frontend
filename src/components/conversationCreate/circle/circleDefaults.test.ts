@@ -1,5 +1,9 @@
 // @vitest-environment oriso-jsdom
-import { beforeEach, describe, expect, it } from 'vite-plus/test';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
+import {
+	enterPracticeMode,
+	exitPracticeMode
+} from '../../../practice/practiceMode';
 import {
 	buildInitialAuthorContent,
 	getGeneralRules,
@@ -67,6 +71,24 @@ describe('circle defaults persistence', () => {
 			series: { ...defaults.series, duration: 30 }
 		});
 		expect(loadCircleDefaults(7)?.series.duration).toBe(30);
+	});
+
+	describe('while practising (FE#2545)', () => {
+		afterEach(() => exitPracticeMode());
+
+		it('keeps a practice circle out of the real defaults', () => {
+			saveCircleDefaults(7, defaults);
+			enterPracticeMode({ tourId: 'consultant-group-circle' });
+			saveCircleDefaults(7, {
+				...defaults,
+				series: { ...defaults.series, duration: 30 }
+			});
+			saveCircleDefaults(8, defaults);
+			exitPracticeMode();
+
+			expect(loadCircleDefaults(7)?.series.duration).toBe(90);
+			expect(loadCircleDefaults(8)).toBeNull();
+		});
 	});
 
 	it('ignores missing agency and corrupt payloads', () => {

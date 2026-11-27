@@ -177,6 +177,20 @@ describe('"Neuer Eintrag" with a colleague (FE#2305)', () => {
 		);
 	});
 
+	it('keeps all four kinds and video as default outside Supervision', () => {
+		const onSave = open();
+		fireEvent.click(withColleague());
+		fireEvent.change(screen.getByLabelText('calendar.dialog.colleague'), {
+			target: { value: 'kai' }
+		});
+		for (const kind of ['video', 'phone', 'onsite', 'chat'])
+			expect(
+				screen.getByRole('button', { name: `calendar.kinds.${kind}` })
+			).toBeTruthy();
+		fireEvent.click(screen.getByTestId('calendar-appointment-save'));
+		expect(onSave.mock.calls[0][0].kind).toBe('video');
+	});
+
 	it('moves through the switch with the arrow keys', () => {
 		open();
 		const [conversation, colleague] = within(

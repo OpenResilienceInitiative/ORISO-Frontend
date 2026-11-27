@@ -57,6 +57,16 @@ export const readShowGrips = (ownerId: string): boolean =>
 export const writeShowGrips = (ownerId: string, show: boolean) =>
 	write(key(ownerId, 'grips'), show ? 'on' : 'off');
 
+/**
+ * FE#2510 *2: "Neuer Eintrag" → Termin opens with the "Mit Termin" setting
+ * the counsellor last used (Frank, 2026-11-24). On by default.
+ */
+export const readNewEntryWithDate = (ownerId: string): boolean =>
+	read(key(ownerId, 'newEntryWithDate')) !== 'off';
+
+export const writeNewEntryWithDate = (ownerId: string, withDate: boolean) =>
+	write(key(ownerId, 'newEntryWithDate'), withDate ? 'on' : 'off');
+
 /** How many recently shown colleagues get their own pill. */
 export const MAX_RECENT_COLLEAGUES = 5;
 /** Without a history, the first colleagues of the list fill the pills. */
