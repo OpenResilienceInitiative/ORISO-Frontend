@@ -2824,6 +2824,33 @@
 				},
 				"done": {
 					"intro": "Deine Gesprächskreise erscheinen in deiner Beratungsliste. Dort öffnest du sie, bearbeitest die Einstellungen und teilst den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du legst einen Übungs-Gesprächskreis an und startest ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klick in deiner Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wähl unter „Thema / Fachbereich“ das Übungsthema und klick dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"intro": "Klick auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"intro": "Dein Übungskreis steht jetzt in deiner Beratungsliste. Klick darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"intro": "Teilnehmende warten hier, bis du beginnst. Klick auf „Video-Call starten“."
+				},
+				"practiceCall": {
+					"intro": "Im echten Gesprächskreis startest du hier den Video-Call. Klick darauf: In der Übung siehst du nur, was passiert, ohne Kamera und Mikrofon."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Du hast einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilst du vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"intro": "Wähl die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keins gesetzt ist, das Thema. Prüf Datum, Uhrzeit und Dauer. Für die Übung kannst du den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},
@@ -3135,6 +3162,9 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."
+		},
+		"callStart": {
+			"description": "Hier startet jetzt der Video-Call für deinen Gesprächskreis. In der Übung ohne Kamera und Mikrofon."
 		}
 	},
 	"counselling": {

@@ -6622,6 +6622,38 @@
 				"done": {
 					"title": "Prêt",
 					"intro": "Vos cercles de parole apparaissent dans votre liste de consultations. Ouvrez-les pour modifier les réglages ou repartager le lien."
+				},
+				"practiceIntro": {
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n'est envoyé ni enregistré. Vous créez un cercle de parole d'exercice et le démarrez."
+				},
+				"practiceCreate": {
+					"intro": "Cliquez sur « Créer » dans votre liste de consultations pour lancer une nouvelle conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choisissez le sujet d'exercice sous « Sujet / domaine spécialisé », puis cliquez sur le bouton du sujet. Les réglages s'ouvrent ensuite."
+				},
+				"practiceSettings": {
+					"title": "Créer le cercle",
+					"intro": "Cliquez sur « Créer ». Dans l'exercice, le cercle se réunit en vidéo."
+				},
+				"practiceOpen": {
+					"title": "Ouvrir le cercle",
+					"intro": "Votre cercle d'exercice figure maintenant dans votre liste de consultations. Cliquez dessus pour l'ouvrir."
+				},
+				"practiceStart": {
+					"title": "Démarrer le cercle",
+					"intro": "Les participant·es attendent ici que vous commenciez. Cliquez sur « Démarrer un appel vidéo »."
+				},
+				"practiceCall": {
+					"title": "Appel vidéo",
+					"intro": "Dans un vrai cercle, vous démarrez ici l'appel vidéo. Cliquez dessus : dans l'exercice, vous voyez seulement ce qui se passe, sans caméra ni micro."
+				},
+				"practiceDone": {
+					"intro": "C'est fait : vous avez créé et démarré un cercle de parole. Dans un vrai cercle, vous partagez d'abord le lien d'invitation pour que les participant·es puissent venir."
+				},
+				"practiceConfigure": {
+					"title": "Centre de conseil et date",
+					"intro": "Choisissez le centre de conseil pour lequel le cercle a lieu et, s'il n'y en a pas encore, le thème. Vérifiez la date, l'heure et la durée. Pour l'exercice, vous pouvez laisser le reste tel quel. Puis « Continuer »."
 				}
 			}
 		},
@@ -7286,6 +7318,11 @@
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
+		},
+		"callStart": {
+			"title": "Appel vidéo (exercice)",
+			"description": "C'est ici que démarre l'appel vidéo de votre cercle. Dans l'exercice, sans caméra ni micro.",
+			"close": "Compris"
 		}
 	},
 	"counselling": {

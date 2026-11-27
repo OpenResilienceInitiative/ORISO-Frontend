@@ -34,6 +34,7 @@ import {
 } from './fixtures/practiceScenario';
 import type { ScriptEngine } from './script/ScriptEngine';
 import { createScriptFromI18n } from './script/createScriptFromI18n';
+import { PracticeCallStartDialog } from './practiceCallStart';
 
 type Fetch = typeof window.fetch;
 
@@ -373,6 +374,8 @@ export const PracticeSandbox = ({
 						<SessionsDataProvider key={run.generation}>
 							{children}
 						</SessionsDataProvider>
+						{/* What a call button does while practising (D3). */}
+						<PracticeCallStartDialog />
 					</NotificationsContext.Provider>
 				</TopicsContext.Provider>
 			</MatrixClientContext.Provider>

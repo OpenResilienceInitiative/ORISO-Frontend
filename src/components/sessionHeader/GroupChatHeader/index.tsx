@@ -41,6 +41,7 @@ import { ManagePeopleDialog } from '../../managePeople/ManagePeopleDialog';
 import { createInternalChatPeopleSource } from '../../managePeople/internalChatPeopleSource';
 import { canInviteToInternalChat } from './internalChatInvite';
 import { GroupCallStartRequest } from './GroupCallStartRequest';
+import { isPracticeMode, simulatePracticeCallStart } from '../../../practice';
 
 // Width of the title row taken by the type pill (incl. "+" button), the flex
 // gaps and a minimum for the room title; the avatar stack gets the rest.
@@ -213,6 +214,11 @@ export const GroupChatHeader = ({
 
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
+		// Practice (FE#2545 D3): a simulated start, no media and no call.
+		if (isPracticeMode()) {
+			simulatePracticeCallStart();
+			return;
+		}
 		// console.log("═══════════════════════════════════════════════");
 		// console.log("🎬 GROUP CALL BUTTON CLICKED (GroupChatHeader)!");
 		// console.log("═══════════════════════════════════════════════");

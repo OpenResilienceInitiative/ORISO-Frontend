@@ -91,3 +91,7 @@ export const PRACTICE_ENQUIRY_SESSION_ID = practiceNumericId(1);
 export const PRACTICE_MAIN_ROOM_ID = practiceMatrixId('!', '1');
 export const PRACTICE_TEAM_ROOM_ID = practiceMatrixId('!', '2');
 export const PRACTICE_SUPERVISION_ROOM_ID = practiceMatrixId('!', '3');
+/* The Gesprächskreis the practice flow creates (FE#2545): a group chat id of
+   its own, never the case's, and its own room. */
+export const PRACTICE_CIRCLE_CHAT_ID = practiceNumericId(2);
+export const PRACTICE_CIRCLE_ROOM_ID = practiceMatrixId('!', '4');

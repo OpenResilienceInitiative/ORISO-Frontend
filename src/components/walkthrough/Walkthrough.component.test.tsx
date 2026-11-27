@@ -715,7 +715,8 @@ describe('Walkthrough', () => {
 				expect(store.get(practiceTourProgressAtom)).toEqual({
 					tourId: 'consultant-practice-accept',
 					stepIndex: 0,
-					stepCount: 6
+					stepCount: 6,
+					stepId: 'nav-enquiries'
 				})
 			);
 
@@ -731,7 +732,8 @@ describe('Walkthrough', () => {
 			expect(store.get(practiceTourProgressAtom)).toEqual({
 				tourId: 'consultant-practice-accept',
 				stepIndex: 5,
-				stepCount: 6
+				stepCount: 6,
+				stepId: 'done'
 			});
 		});
 

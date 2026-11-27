@@ -1,19 +1,26 @@
 import type { UserDataInterface } from '../../globalState/interfaces';
 import {
 	STATUS_ACTIVE,
-	STATUS_ENQUIRY
+	STATUS_ENQUIRY,
+	type GroupChatItemInterface
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	counsellorAsSessionConsultant,
 	createPracticeScenario,
+	createPracticeTopic,
 	type PracticeCaseState,
 	type PracticeStart
 } from '../fixtures/practiceScenario';
-import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
+import {
+	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+	type PracticePerson
+} from '../fixtures/practiceCast';
 import {
 	isPracticeId,
 	isPracticeRoomId,
 	PRACTICE_AGENCY_ID,
+	PRACTICE_CIRCLE_CHAT_ID,
+	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
@@ -28,12 +35,21 @@ import type {
 	IUserDraftFeedResponse,
 	IUserDraftItem
 } from '../../api/apiUserDrafts';
+import type { groupChatSettings } from '../../api/apiGroupChatSettings';
+import { GROUP_CHAT_API } from '../../api/apiPutGroupChat';
+import type { InternalChatColleague } from '../../components/conversationCreate/internal/loadInternalChatColleagues';
+import { PracticeBlockedRequestError } from '../networkGuard';
+import { redactUrl } from '../requestPolicy';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
 	onSupervisorAdded?: (
 		supervisor: UserService.Schemas.SessionSupervisorResponseDTO
 	) => void;
+	/** The practice Gesprächskreis was created (FE#2545). */
+	onCircleCreated?: (chatId: number) => void;
+	/** Its moderator started it (FE#2545). */
+	onCircleStarted?: (chatId: number) => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -85,6 +101,12 @@ type Route = {
 	viewWide?: true;
 	/** Practice drafts and their shared index may finish during teardown. */
 	duringDrain?: (request: ParsedRequest) => boolean;
+	/**
+	 * A write only practice makes, with no practice id in its URL. What the
+	 * fake does not answer (while draining, or `null` from `handle`) is
+	 * blocked, never passed on to the real backend.
+	 */
+	practiceOnlyWrite?: true;
 	handle: (
 		request: ParsedRequest,
 		match: RegExpMatchArray
@@ -167,6 +189,10 @@ export const createFakeRestBackend = ({
 	let practiceCase: PracticeCaseState;
 	let drafts: Map<string, IUserDraftItem>;
 	let supervisorSeq: number;
+	/** The Gesprächskreis the counsellor created in this run (FE#2545). */
+	let circle: GroupChatItemInterface | null;
+	/** The colleagues picked as its co-moderators: practice cast only. */
+	let coModerators: PracticePerson[];
 	const served: ServedRequest[] = [];
 
 	const reset = () => {
@@ -178,6 +204,8 @@ export const createFakeRestBackend = ({
 		}).practiceCase;
 		drafts = new Map();
 		supervisorSeq = 0;
+		circle = null;
+		coModerators = [];
 		served.length = 0;
 	};
 	reset();
@@ -192,17 +220,103 @@ export const createFakeRestBackend = ({
 	const isLiveChat = () =>
 		practiceCase.session.registrationType === 'ANONYMOUS';
 
-	const sessionList = (status: number, anonymous = false) =>
+	const caseListed = (status: number, anonymous: boolean) =>
 		practiceCase.session.status === status &&
 		// Waiting live chats come from their own queue endpoint.
-		(status !== STATUS_ENQUIRY || isLiveChat() === anonymous)
+		(status !== STATUS_ENQUIRY || isLiveChat() === anonymous);
+
+	/**
+	 * A created circle sits in the counsellor's own sessions (FE#2545); the
+	 * list shows a not-yet-joined circle only to its owner.
+	 */
+	const circleItem = () => ({
+		chat: circle!,
+		consultant: counsellorAsSessionConsultant(counsellor)
+	});
+
+	const sessionList = (status: number, anonymous = false) => {
+		const sessions: unknown[] = [
+			...(caseListed(status, anonymous) ? [listItem()] : []),
+			...(status === STATUS_ACTIVE && circle ? [circleItem()] : [])
+		];
+		// SAFETY: a practice fixture; the list renderer reads only the fields
+		// set here, and the items come from listItem() / circleItem().
+		return sessions.length
 			? ok({
-					sessions: [listItem()],
+					sessions,
 					offset: 0,
-					count: 1,
-					total: 1
-				} satisfies UserService.Schemas.ConsultantSessionListResponseDTO)
+					count: sessions.length,
+					total: sessions.length
+				} as UserService.Schemas.ConsultantSessionListResponseDTO)
 			: noContent();
+	};
+
+	/** Who the create screen offers as co-moderators. */
+	const practiceColleagues = (): PracticePerson[] => [script.cast.colleague];
+
+	const isCircle = (id: string) =>
+		!!circle && Number(id) === circle.id && isPracticeId(id);
+
+	/**
+	 * "Erstellen" in the circle settings: the circle exists in memory only. It
+	 * keeps what the counsellor set, except the medium: the practice circle
+	 * meets by video, so the flow can show the moderator's video start. No
+	 * invite token: the share dialog would offer a link that leads nowhere.
+	 */
+	const createCircle = (settings: Partial<groupChatSettings> | null) => {
+		coModerators = practiceColleagues().filter((person) =>
+			(settings?.consultantIds ?? []).includes(person.id)
+		);
+		const topic = createPracticeTopic(script.names.topic);
+		const createdAt = new Date(now()).toISOString();
+		// SAFETY: an in-memory practice circle; every field the circle views
+		// read is set below, the rest stays at the DTO's optional default.
+		circle = {
+			id: PRACTICE_CIRCLE_CHAT_ID,
+			matrixRoomId: PRACTICE_CIRCLE_ROOM_ID,
+			conversationType: 'SELF_HELP',
+			topic: settings?.topic || topic.name,
+			startDate: settings?.startDate || createdAt.slice(0, 10),
+			startTime: settings?.startTime || createdAt.slice(11, 16),
+			duration: settings?.duration ?? 60,
+			repetitive: settings?.repetitive ?? true,
+			repeatCount: settings?.repeatCount ?? 1,
+			chatInterval: settings?.chatInterval ?? 'WEEKLY',
+			modality: 'VIDEO',
+			timezone: settings?.timezone,
+			hintMessage: settings?.hintMessage ?? '',
+			sourceLanguage: settings?.sourceLanguage,
+			hintMessageTranslations: settings?.hintMessageTranslations,
+			groupChatRulesTranslations: settings?.groupChatRulesTranslations,
+			consultingType: practiceCase.session.consultingType,
+			assignedAgencies: [
+				// SAFETY: the practice agency; it carries every field the circle
+				// settings and the agency chip read.
+				{
+					id: PRACTICE_AGENCY_ID,
+					name: script.names.agency,
+					postcode: '00000',
+					city: '',
+					description: '',
+					teamAgency: true,
+					offline: false,
+					consultingType: practiceCase.session.consultingType
+				} as AgencyService.Schemas.AgencyResponseDTO
+			],
+			active: false,
+			subscribed: false,
+			messagesRead: true,
+			messageDate: Math.floor(now() / 1000),
+			lastMessage: '',
+			createdAt,
+			moderators: [
+				PRACTICE_COUNSELLOR_MATRIX_USER_ID,
+				...coModerators.map((person) => person.matrixUserId)
+			]
+		} as GroupChatItemInterface;
+		hooks.onCircleCreated?.(circle.id);
+		return ok({ matrixRoomId: circle.matrixRoomId });
+	};
 
 	const roomList = () =>
 		({
@@ -275,9 +389,146 @@ export const createFakeRestBackend = ({
 				if (!roomIds.length || !roomIds.every(isPracticeRoomId)) {
 					return null;
 				}
-				return roomIds.includes(practiceCase.session.matrixRoomId)
-					? ok(roomList())
-					: noContent();
+				const sessions = [
+					...(roomIds.includes(practiceCase.session.matrixRoomId)
+						? roomList().sessions
+						: []),
+					...(circle && roomIds.includes(circle.matrixRoomId)
+						? [circleItem()]
+						: [])
+				];
+				return sessions.length ? ok({ sessions }) : noContent();
+			}
+		},
+		// The Gesprächskreis flow (FE#2545): topics and co-moderators of the
+		// create screen, the create itself, and the circle's own reads.
+		{
+			method: 'GET',
+			path: at(endpoints.agencyTopics),
+			viewWide: true,
+			handle: () => {
+				const topic = createPracticeTopic(script.names.topic);
+				return ok([
+					{ id: topic.id, name: topic.name }
+				] satisfies AgencyService.Schemas.AgencyTopicsDTO[]);
+			}
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.chatSeriesBase, 'consultants'),
+			viewWide: true,
+			handle: () =>
+				ok(
+					practiceColleagues().map((person) => ({
+						consultantId: person.id,
+						firstName: person.firstName,
+						lastName: person.lastName,
+						displayName: person.displayName,
+						username: person.username
+					}))
+				)
+		},
+		{
+			// The create screen's colleague picker: practice colleagues only.
+			method: 'GET',
+			path: at(endpoints.internalSubsetChat, '/recipients'),
+			viewWide: true,
+			handle: () =>
+				ok(
+					practiceColleagues().map((person) => ({
+						consultantId: person.id,
+						displayName: person.displayName,
+						agencies: [
+							{
+								id: PRACTICE_AGENCY_ID,
+								name: script.names.agency
+							}
+						]
+					})) satisfies InternalChatColleague[]
+				)
+		},
+		{
+			method: 'POST',
+			path: at(
+				endpoints.groupChatBase,
+				`(?:${escapeRegExp(GROUP_CHAT_API.CREATEV2)}|${escapeRegExp(GROUP_CHAT_API.CREATE)})`
+			),
+			viewWide: true,
+			practiceOnlyWrite: true,
+			// The circle room is seeded only for the Gesprächskreis start.
+			handle: async ({ body }) =>
+				start === 'groupCircle' ? createCircle(await body()) : null
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.chatRoom, `/${PRACTICE_ID_SEGMENT}`),
+			handle: (_request, [, id]) =>
+				isCircle(id) ? ok({ sessions: [circleItem()] }) : null
+		},
+		{
+			method: 'GET',
+			path: at(endpoints.groupChatBase, PRACTICE_ID_SEGMENT),
+			handle: (_request, [, id]) =>
+				isCircle(id)
+					? ok({
+							id: circle!.id,
+							active: circle!.active,
+							matrixRoomId: circle!.matrixRoomId,
+							bannedUsers: []
+						})
+					: null
+		},
+		{
+			// The circle's moderator, read by its card and waiting room.
+			method: 'GET',
+			path: at(endpoints.groupChatBase, `${PRACTICE_ID_SEGMENT}/members`),
+			handle: (_request, [, id]) =>
+				isCircle(id)
+					? ok({
+							members: [
+								{
+									userId: counsellor.userId,
+									username: counsellor.userName,
+									displayName:
+										counsellorAsSessionConsultant(
+											counsellor
+										).displayName,
+									role: 'CONSULTANT' as const
+								},
+								...coModerators.map((person) => ({
+									userId: person.id,
+									username: person.username,
+									displayName: person.displayName,
+									role: 'CONSULTANT' as const
+								}))
+							]
+						} satisfies UserService.Schemas.ChatMembersResponseDTO)
+					: null
+		},
+		{
+			// A single meeting: no series dates.
+			method: 'GET',
+			path: at(
+				endpoints.chatSeriesBase,
+				`${PRACTICE_ID_SEGMENT}/occurrences`
+			),
+			handle: (_request, [, id]) => (isCircle(id) ? ok([]) : null)
+		},
+		{
+			// "Video-Call starten" in the waiting room: the circle opens and
+			// its moderator is in. No call starts; the flow only shows its button.
+			method: 'PUT',
+			path: at(
+				endpoints.groupChatBase,
+				`${PRACTICE_ID_SEGMENT}${escapeRegExp(GROUP_CHAT_API.START)}`
+			),
+			handle: (_request, [, id]) => {
+				if (!isCircle(id)) return null;
+				if (!circle!.active) {
+					circle = { ...circle!, active: true, subscribed: true };
+					hooks.onCircleStarted?.(circle.id);
+				}
+				return noContent();
 			}
 		},
 		{
@@ -362,7 +613,9 @@ export const createFakeRestBackend = ({
 					? ok(
 							practiceCase.supervisors satisfies UserService.Schemas.SessionSupervisorResponseDTO[]
 						)
-					: null
+					: isCircle(id)
+						? ok([])
+						: null
 		},
 		{
 			method: 'POST',
@@ -546,17 +799,28 @@ export const createFakeRestBackend = ({
 	return {
 		async handle(input, init, options = {}) {
 			const request = parseRequest(input, init);
+			const block = (): never => {
+				throw new PracticeBlockedRequestError({
+					method: request.method,
+					url: redactUrl(request.url.href),
+					channel: 'fetch',
+					reason: 'default-deny'
+				});
+			};
 			for (const route of routes) {
 				if (route.method !== request.method) continue;
+				const match = request.url.pathname.match(route.path);
+				if (!match) continue;
 				if (
 					route.viewWide &&
 					options.practiceAddressedOnly &&
 					!route.duringDrain?.(request)
-				)
+				) {
+					if (route.practiceOnlyWrite) block();
 					continue;
-				const match = request.url.pathname.match(route.path);
-				if (!match) continue;
+				}
 				const response = await route.handle(request, match);
+				if (!response && route.practiceOnlyWrite) block();
 				if (response) {
 					served.push({
 						method: request.method,

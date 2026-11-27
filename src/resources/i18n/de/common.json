@@ -6612,6 +6612,38 @@
 				"done": {
 					"title": "Bereit",
 					"intro": "Ihre Gesprächskreise erscheinen in Ihrer Beratungsliste. Dort öffnen Sie sie, bearbeiten die Einstellungen und teilen den Link erneut."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Sie legen einen Übungs-Gesprächskreis an und starten ihn."
+				},
+				"practiceCreate": {
+					"intro": "Klicken Sie in Ihrer Beratungsliste auf „Erstellen“, um eine neue Unterhaltung anzulegen."
+				},
+				"practiceTopic": {
+					"intro": "Wählen Sie unter „Thema / Fachbereich“ das Übungsthema und klicken Sie dann auf den Themen-Button. Danach öffnen sich die Einstellungen."
+				},
+				"practiceSettings": {
+					"title": "Gesprächskreis erstellen",
+					"intro": "Klicken Sie auf „Erstellen“. In der Übung trifft sich der Kreis per Video."
+				},
+				"practiceOpen": {
+					"title": "Gesprächskreis öffnen",
+					"intro": "Ihr Übungskreis steht jetzt in Ihrer Beratungsliste. Klicken Sie darauf, um ihn zu öffnen."
+				},
+				"practiceStart": {
+					"title": "Gesprächskreis starten",
+					"intro": "Teilnehmende warten hier, bis Sie beginnen. Klicken Sie auf „Video-Call starten“."
+				},
+				"practiceCall": {
+					"title": "Video-Call",
+					"intro": "Im echten Gesprächskreis starten Sie hier den Video-Call. Klicken Sie darauf: In der Übung sehen Sie nur, was passiert, ohne Kamera und Mikrofon."
+				},
+				"practiceDone": {
+					"intro": "Geschafft: Sie haben einen Gesprächskreis angelegt und gestartet. Im echten Kreis teilen Sie vorher den Einladungs-Link, damit Teilnehmende kommen."
+				},
+				"practiceConfigure": {
+					"title": "Beratungsstelle und Termin",
+					"intro": "Wählen Sie die Beratungsstelle, für die der Kreis stattfindet, und, falls noch keines gesetzt ist, das Thema. Prüfen Sie Datum, Uhrzeit und Dauer. Für die Übung können Sie den Rest so lassen. Dann „Weiter“."
 				}
 			}
 		},
@@ -7276,6 +7308,11 @@
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		},
+		"callStart": {
+			"title": "Video-Call (Übung)",
+			"description": "Hier startet jetzt der Video-Call für Ihren Gesprächskreis. In der Übung ohne Kamera und Mikrofon.",
+			"close": "Verstanden"
 		}
 	},
 	"counselling": {

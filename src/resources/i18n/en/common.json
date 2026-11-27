@@ -6537,6 +6537,38 @@
 				"done": {
 					"title": "Ready",
 					"intro": "Your conversation circles appear in your consultation list. Open them there to edit the settings or share the link again."
+				},
+				"practiceIntro": {
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You create a practice conversation circle and start it."
+				},
+				"practiceCreate": {
+					"intro": "Click \"Create\" in your consultation list to start a new conversation."
+				},
+				"practiceTopic": {
+					"intro": "Choose the practice topic under \"Topic / subject area\", then click the topic button. The settings open next."
+				},
+				"practiceSettings": {
+					"title": "Create the circle",
+					"intro": "Click \"Create\". In the exercise the circle meets by video."
+				},
+				"practiceOpen": {
+					"title": "Open the circle",
+					"intro": "Your practice circle is now in your consultation list. Click it to open it."
+				},
+				"practiceStart": {
+					"title": "Start the circle",
+					"intro": "Participants wait here until you begin. Click \"Start video call\"."
+				},
+				"practiceCall": {
+					"title": "Video call",
+					"intro": "In a real circle you start the video call here. Click it: in the exercise you only see what happens, without camera or microphone."
+				},
+				"practiceDone": {
+					"intro": "Done: you created and started a conversation circle. In a real circle you share the invitation link beforehand so participants can join."
+				},
+				"practiceConfigure": {
+					"title": "Counselling centre and date",
+					"intro": "Choose the counselling centre the circle is held for and, if none is set yet, the topic. Check the date, time and duration. For the exercise you can leave the rest as it is. Then \"Next\"."
 				}
 			}
 		},
@@ -7201,6 +7233,11 @@
 		},
 		"error": {
 			"start": "The practice could not be started. Please try again."
+		},
+		"callStart": {
+			"title": "Video call (practice)",
+			"description": "This is where the video call for your circle starts. In the exercise, without camera or microphone.",
+			"close": "Got it"
 		}
 	},
 	"counselling": {

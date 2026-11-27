@@ -22,11 +22,17 @@ import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
 	practiceAcceptTour,
+	practiceGroupCircleTour,
 	practiceHostedTours,
 	practiceLiveChatTour,
 	practiceSupervisionTour,
 	practiceTours
 } from './practiceTours';
+import {
+	consultantGroupCircleTour,
+	GROUP_CIRCLE_SETTINGS_OPENED,
+	GROUP_CIRCLE_TOUR_VERSION
+} from '../components/productTour/tours/groupCircleTour';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
@@ -320,6 +326,168 @@ describe('practiceSupervisionTour (flow F2)', () => {
 	});
 });
 
+describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
+	const tour = practiceGroupCircleTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+
+	it('runs under the explanation tour id and version, without a card', () => {
+		expect(tour.id).toBe(consultantGroupCircleTour.id);
+		expect(tour.version).toBe(GROUP_CIRCLE_TOUR_VERSION);
+		expect(tour.version).toBe(consultantGroupCircleTour.version);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+		expect(tour.when).toEqual(consultantGroupCircleTour.when);
+	});
+
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+	});
+
+	it('creates, opens and starts a circle, then shows the call button', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['create', 'groupchat-create-button'],
+			['format', 'groupchat-format-circle'],
+			['topic', 'groupchat-topic-picker'],
+			['configure', 'groupchat-circle-settings'],
+			['settings', 'groupchat-circle-create'],
+			['open-circle', 'groupchat-list-item'],
+			['start', 'groupchat-start-button'],
+			['call', 'groupchat-call-button'],
+			['done', '']
+		]);
+	});
+
+	it('advances on the learner action: click, event, event, click, event, event', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			['create', { type: 'click' }],
+			['topic', { type: 'event', name: GROUP_CIRCLE_SETTINGS_OPENED }],
+			[
+				'settings',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCreated }
+			],
+			['open-circle', { type: 'click' }],
+			[
+				'start',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleStarted }
+			],
+			[
+				'call',
+				{ type: 'event', name: PRACTICE_TOUR_EVENTS.circleCallStarted }
+			]
+		]);
+	});
+
+	it('goes on when the call button was used: the simulated start, no call (D3)', () => {
+		expect(step('call').target).toBe('groupchat-call-button');
+		expect(step('call').advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.circleCallStarted
+		});
+	});
+
+	it('lets the counsellor fill the settings card before "Erstellen", and go back to it', () => {
+		const configure = step('configure');
+		expect(configure.advanceOn).toBeUndefined();
+		expect(configure.interactive).toBe(true);
+		expect(configure.optional).toBeFalsy();
+		// "Erstellen" stays disabled without a Beratungsstelle: Back must
+		// bring the counsellor to the card again.
+		expect(step('settings').hideBack).toBeFalsy();
+		const ids = tour.steps.map((s) => s.id);
+		expect(ids.indexOf('configure') + 1).toBe(ids.indexOf('settings'));
+	});
+
+	it('keeps the format card and topic picker optional, like the explanation tour', () => {
+		expect(tour.steps.filter((s) => s.optional).map((s) => s.id)).toEqual([
+			'format',
+			'topic'
+		]);
+	});
+
+	it('offers no Back after an action that cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'open-circle',
+			'call'
+		]);
+	});
+
+	it.each([
+		'featureCallsEnabled',
+		'featureVideoCallsEnabled',
+		'featureVideoCallsGroupChatsEnabled'
+	])(
+		'drops the call step where %s is off: the header then shows no video button for the practice circle',
+		(flag) => {
+			const ids = resolveTourSteps(tour, {
+				flags: { [flag]: false }
+			}).map((s) => s.id);
+			expect(ids).not.toContain('call');
+			expect(ids.slice(-2)).toEqual(['start', 'done']);
+		}
+	);
+
+	it('keeps the call step while video calls in group chats are on or unset', () => {
+		expect(
+			resolveTourSteps(tour, { flags: {} }).map((s) => s.id)
+		).toContain('call');
+		expect(
+			resolveTourSteps(tour, {
+				flags: {
+					featureCallsEnabled: true,
+					featureVideoCallsEnabled: true,
+					featureVideoCallsGroupChatsEnabled: true
+				}
+			}).map((s) => s.id)
+		).toContain('call');
+	});
+
+	it('starts in the counsellor sessions, where "Erstellen" lives', () => {
+		expect(step('create').route).toBe('/sessions/consultant/sessionView');
+		expect(step('open-circle').route).toBe(
+			'/sessions/consultant/sessionView'
+		);
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it('ships its copy in every full locale and a sparse du-form overlay', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		keysOf(tour).forEach((key) => {
+			const de = resolveKey(deTranslations, key) as string;
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(de);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
+	});
+});
+
 describe('practiceLiveChatTour (FE#2545)', () => {
 	const step = (id: string) =>
 		practiceLiveChatTour.steps.find((s) => s.id === id)!;
@@ -437,7 +605,11 @@ describe('practice tour wiring', () => {
 	it.each(practiceHostedTours.map((t) => [t.id, t] as const))(
 		'%s: every event step waits for a named practice event',
 		(_id, tour) => {
-			const known = Object.values(PRACTICE_TOUR_EVENTS) as string[];
+			const known = [
+				...Object.values(PRACTICE_TOUR_EVENTS),
+				// Emitted by the circle settings themselves (FE#2545).
+				GROUP_CIRCLE_SETTINGS_OPENED
+			] as string[];
 			tour.steps
 				.filter((s) => s.advanceOn?.type === 'event')
 				.forEach((step) => {

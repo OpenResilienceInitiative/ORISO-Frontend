@@ -50,7 +50,8 @@ describe('practice tour progress', () => {
 		expect(reader.result.current).toEqual({
 			tourId: 'consultant-practice-accept',
 			stepIndex: 0,
-			stepCount: 4
+			stepCount: 4,
+			stepId: 'a'
 		});
 	});
 
@@ -96,6 +97,17 @@ describe('practice tour progress', () => {
 		const { reader } = setup(practiceTour([]));
 
 		expect(reader.result.current).toBeNull();
+	});
+
+	it('names the step on screen, and none once Next left it', () => {
+		const { reporter, reader } = setup(practiceTour(['a', 'b', 'c']));
+
+		act(() => reporter.result.current('step_viewed', step('b')));
+		expect(reader.result.current?.stepId).toBe('b');
+
+		act(() => reporter.result.current('step_completed', step('b')));
+		expect(reader.result.current?.stepIndex).toBe(1);
+		expect(reader.result.current?.stepId).toBeUndefined();
 	});
 
 	it('does not track anything without a tour', () => {
