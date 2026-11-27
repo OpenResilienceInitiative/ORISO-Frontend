@@ -1,5 +1,9 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+	ConcealedValueInput,
+	useConcealedValue
+} from '../form/ConcealedValueInput';
 import './accountSetupField.styles.scss';
 
 /**
@@ -212,6 +216,8 @@ export const AccountSetupField = ({
 	value
 }: AccountSetupFieldProps) => {
 	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
+	const concealValue = useConcealedValue(type, autoComplete);
+	const SetupInput = concealValue ? ConcealedValueInput : 'input';
 	// The hint explains what belongs in the field, so it stays while the
 	// message below says whether what is in there works.
 	const describedBy = [
@@ -235,7 +241,7 @@ export const AccountSetupField = ({
 					.filter(Boolean)
 					.join(' ')}
 			>
-				<input
+				<SetupInput
 					readOnly={readOnly}
 					aria-describedby={describedBy || undefined}
 					aria-invalid={state === 'error' || undefined}

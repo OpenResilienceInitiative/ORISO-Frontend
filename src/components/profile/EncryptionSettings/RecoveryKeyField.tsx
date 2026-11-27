@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { OrisoTextField } from '../../form/OrisoTextField';
+import { ConcealedValueInput } from '../../form/ConcealedValueInput';
 
 interface RecoveryKeyFieldProps {
 	disabled?: boolean;
@@ -24,6 +25,8 @@ export const RecoveryKeyField = ({
 				'spellCheck': false,
 				'data-cy': 'recovery-key-input'
 			}}
+			// The recovery key is a secret: keep it out of the HTML (FE#2582).
+			InputProps={{ inputComponent: ConcealedValueInput }}
 			value={value}
 			disabled={disabled}
 			onChange={(event) => onChange(event.target.value)}

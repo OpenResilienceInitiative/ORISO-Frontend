@@ -143,3 +143,25 @@ describe('Login keeps the language of the login screen (#1844)', () => {
 		expect(apiPatchUserData).not.toHaveBeenCalled();
 	});
 });
+
+describe('Login keeps the typed password out of the page HTML (FE#2582)', () => {
+	it('signs in with the typed password while the input carries no value attribute', async () => {
+		signIn('de', 'de');
+		const password = document.querySelector(
+			'#passwordInput'
+		) as HTMLInputElement;
+		expect(password.value).toBe('secret');
+		expect(password.getAttribute('value') ?? '').not.toContain('secret');
+		expect(document.documentElement.outerHTML).not.toContain(
+			'value="secret"'
+		);
+		await waitFor(() =>
+			expect(autoLogin).toHaveBeenCalledWith(
+				expect.objectContaining({
+					username: 'counsellor@example.org',
+					password: 'secret'
+				})
+			)
+		);
+	});
+});
