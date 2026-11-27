@@ -269,6 +269,19 @@ describe('resolvePreviewCapabilities (#1824: one row per room type)', () => {
 		});
 	});
 
+	it('keeps a direct thread preview read-only when threads are disabled', () => {
+		expect(
+			resolve(
+				counsellor({ channelKind: 'thread', threadsEnabled: false })
+			)
+		).toMatchObject({
+			composer: false,
+			react: false,
+			manageOwn: false,
+			contentHidden: false
+		});
+	});
+
 	it('thread: thread reply and react, nothing else', () => {
 		expect(resolve(counsellor({ channelKind: 'thread' }))).toMatchObject({
 			composer: true,

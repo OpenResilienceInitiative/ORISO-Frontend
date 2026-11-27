@@ -22,7 +22,7 @@ describe('session header and timeline layout', () => {
 		const scss = sessionStyles();
 
 		expect(scss).toMatch(
-			/&:focus-within:not\(:has\(\.textarea__wrapper-send-message--selected\)\)\s*\{[\s\S]*?border:\s*2px solid var\(--m3-primary-container/
+			/&:focus-within:not\([\s\S]*?:has\(\.textarea__wrapper-send-message--selected\),[\s\S]*?:has\(\.textarea__wrapper-send-message\[data-auto-focused\]\)[\s\S]*?border:\s*2px solid var\(--m3-primary-container/
 		);
 	});
 });

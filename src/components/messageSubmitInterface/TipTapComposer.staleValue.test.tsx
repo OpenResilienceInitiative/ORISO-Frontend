@@ -39,6 +39,11 @@ const mocks = vi.hoisted(() => {
 	return { editor, options: null as any };
 });
 
+vi.mock('./inputField/ComposerFormatMenus', () => ({
+	ComposerSelectionFormatMenu: () => null,
+	SlashFormatList: () => null
+}));
+
 vi.mock('@tiptap/react', () => ({
 	EditorContent: () => null,
 	useEditor: (options: any) => {
