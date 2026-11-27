@@ -74,6 +74,26 @@ describe('FakeRestBackend', () => {
 		);
 	});
 
+	it('answers the deleted-asker placeholders of "Meine Beratungen" and "Archiv" with none (FE#2545)', async () => {
+		const backend = backendFor();
+
+		for (const url of [
+			endpoints.consultantDeletedAskerSessions,
+			`${endpoints.consultantDeletedAskerSessions}?archived=true`
+		]) {
+			expect(await json(await backend.handle(new Request(url)))).toEqual(
+				[]
+			);
+		}
+		// The archive of the list is the practice archive: empty.
+		const archive = await backend.handle(
+			new Request(
+				`${endpoints.myMessagesBase}archive?count=15&filter=all&offset=0`
+			)
+		);
+		expect(archive?.status).toBe(204);
+	});
+
 	it('passes real ids and unknown endpoints on instead of answering them', async () => {
 		const backend = backendFor();
 
@@ -178,6 +198,11 @@ describe('FakeRestBackend', () => {
 			expect.objectContaining({
 				consultantId: script.cast.supervisor.id,
 				displayName: script.cast.supervisor.displayName
+			}),
+			// The one the Supervision tour switches to (FE#2545).
+			expect.objectContaining({
+				consultantId: script.cast.secondSupervisor.id,
+				displayName: script.cast.secondSupervisor.displayName
 			})
 		]);
 		expect(
@@ -635,5 +660,591 @@ describe('FakeRestBackend: the practice Gesprächskreis (FE#2545)', () => {
 			)
 		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 		expect(backend.served).toHaveLength(0);
+	});
+});
+
+describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
+	const calendar = endpoints.calendarBase;
+	const appointments = endpoints.sessionAppointments(ID);
+	const slot = {
+		startTime: '2026-11-26T09:00:00.000Z',
+		endTime: '2026-11-26T10:00:00.000Z',
+		kind: 'VIDEO'
+	};
+	const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+	const accepted = (hooks = {}) =>
+		backendFor({ start: 'acceptedCase', hooks });
+
+	it('answers every read of the calendar page from memory, never with real data', async () => {
+		const backend = accepted();
+		const read = (url: string) =>
+			backend.handle(new Request(url)).then(json);
+
+		expect(await read(`${calendar}/entries?${week}`)).toEqual([]);
+		expect(await read(`${calendar}/colleagues`)).toMatchObject({
+			colleagues: []
+		});
+		expect(await read(`${calendar}/auto-accept`)).toEqual({
+			colleagueIds: []
+		});
+		expect(await read(`${calendar}/sync`)).toEqual({
+			feedUrl: '',
+			importConfigured: false
+		});
+		expect(await read(`${calendar}/consultation-hours`)).toMatchObject({
+			autoAccept: false
+		});
+		expect(await read(`${calendar}/consultation-hours/once`)).toEqual([]);
+		expect((await read(`${calendar}/working-hours`)).windows).toHaveLength(
+			5
+		);
+		expect(await read(`${calendar}/proposals`)).toEqual({
+			sent: [],
+			received: []
+		});
+		expect(await read(endpoints.directLinks)).toEqual([]);
+		expect(await read(endpoints.upcomingAppointments)).toEqual([]);
+	});
+
+	it('blocks the calendar settings and Sperrzeit saves while practice drains instead of passing them on', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				windows: [],
+				autoAccept: true
+			}),
+			send(`${calendar}/blockers`, 'POST', {
+				startTime: slot.startTime,
+				endTime: slot.endTime
+			})
+		]) {
+			await expect(
+				backend.handle(request, undefined, {
+					practiceAddressedOnly: true
+				})
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		}
+		expect(backend.served).toHaveLength(0);
+	});
+
+	it('enters, moves and cancels an appointment of the practice conversation, and tells the run', async () => {
+		const onAppointmentCreated = vi.fn();
+		const onAppointmentCancelled = vi.fn();
+		const backend = accepted({
+			onAppointmentCreated,
+			onAppointmentCancelled
+		});
+
+		const created = await json(
+			await backend.handle(send(appointments, 'POST', slot))
+		);
+		expect(created).toMatchObject({
+			sessionId: ID,
+			startTime: slot.startTime,
+			status: 'SCHEDULED',
+			kind: 'VIDEO'
+		});
+		expect(created.id).toMatch(/^practice-appointment-/);
+		expect(onAppointmentCreated).toHaveBeenCalledWith(created.id);
+
+		const [entry] = await json(
+			await backend.handle(new Request(`${calendar}/entries?${week}`))
+		);
+		expect(entry).toMatchObject({
+			id: created.id,
+			type: 'APPOINTMENT',
+			sessionId: ID,
+			title: script.cast.asker.username
+		});
+		// Outside the range: not listed.
+		expect(
+			await json(
+				await backend.handle(
+					new Request(
+						`${calendar}/entries?from=${encodeURIComponent('2026-12-01T00:00:00.000Z')}&to=${encodeURIComponent('2026-12-08T00:00:00.000Z')}`
+					)
+				)
+			)
+		).toEqual([]);
+
+		const moved = await json(
+			await backend.handle(
+				send(`${appointments}/${created.id}`, 'PUT', {
+					startTime: '2026-11-27T09:00:00.000Z',
+					endTime: '2026-11-27T10:00:00.000Z'
+				})
+			)
+		);
+		expect(moved.startTime).toBe('2026-11-27T09:00:00.000Z');
+
+		await json(
+			await backend.handle(
+				send(`${appointments}/${created.id}/cancel`, 'POST')
+			)
+		);
+		expect(onAppointmentCancelled).toHaveBeenCalledWith(created.id);
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+
+	it('makes a Terminlink for a practice appointment that leads nowhere', async () => {
+		const onInvitationCreated = vi.fn();
+		const backend = accepted({ onInvitationCreated });
+		const { id } = await json(
+			await backend.handle(send(appointments, 'POST', slot))
+		);
+
+		const link = await json(
+			await backend.handle(
+				send(endpoints.sessionDirectInvitations(ID), 'POST', {
+					appointmentId: id,
+					medium: 'VIDEO',
+					validityAfterEndMinutes: 60,
+					accessMode: 'GUESTS_ONLY',
+					knock: true
+				})
+			)
+		);
+		expect(link).toMatchObject({
+			medium: 'VIDEO',
+			sessionId: ID,
+			accessMode: 'GUESTS_ONLY',
+			appointment: { id, startTime: slot.startTime }
+		});
+		expect(new URL(link.url).hostname).toBe('practice.invalid');
+		expect(onInvitationCreated).toHaveBeenCalledWith(id);
+
+		// Not for an appointment it does not hold.
+		const none = await backend.handle(
+			send(endpoints.sessionDirectInvitations(ID), 'POST', {
+				appointmentId: 'practice-appointment-99'
+			})
+		);
+		expect(none?.status).toBe(204);
+		expect(onInvitationCreated).toHaveBeenCalledTimes(1);
+	});
+
+	it('enters and removes a Sperrzeit in memory', async () => {
+		const onBlockerCreated = vi.fn();
+		const backend = accepted({ onBlockerCreated });
+		const [blocker] = await json(
+			await backend.handle(
+				send(`${calendar}/blockers`, 'POST', {
+					start: '2026-11-26T12:00:00.000Z',
+					end: '2026-11-26T13:00:00.000Z'
+				})
+			)
+		);
+		expect(blocker).toMatchObject({ type: 'BLOCKER', allDay: false });
+		expect(blocker.id).toMatch(/^practice-blocker-/);
+		expect(onBlockerCreated).toHaveBeenCalledWith(blocker.id);
+
+		const removed = await backend.handle(
+			send(`${calendar}/blockers/${blocker.id}`, 'DELETE')
+		);
+		expect(removed?.status).toBe(204);
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+
+	it('tells the run once automatic confirmation is switched on in the Sprechstunden', async () => {
+		const onAutoAcceptOn = vi.fn();
+		const backend = accepted({ onAutoAcceptOn });
+		const hours = {
+			windows: [{ weekday: 2, start: '10:00', end: '12:00' }],
+			noticeDays: 1,
+			slotMinutes: 60
+		};
+
+		await backend.handle(
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				...hours,
+				autoAccept: false
+			})
+		);
+		expect(onAutoAcceptOn).not.toHaveBeenCalled();
+		const saved = await json(
+			await backend.handle(
+				send(`${calendar}/consultation-hours`, 'PUT', {
+					...hours,
+					autoAccept: true
+				})
+			)
+		);
+		expect(saved.autoAccept).toBe(true);
+		expect(onAutoAcceptOn).toHaveBeenCalledTimes(1);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${calendar}/consultation-hours`)
+				)
+			)
+		).toMatchObject({ autoAccept: true });
+	});
+
+	it('passes real ids on: a real conversation, blocker or appointment is never answered', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(endpoints.sessionAppointments(4711), 'POST', slot),
+			send(`${appointments}/a-real-one/cancel`, 'POST'),
+			send(`${calendar}/blockers/4711`, 'DELETE'),
+			send(endpoints.sessionDirectInvitations(4711), 'POST', {})
+		]) {
+			expect(await backend.handle(request)).toBeNull();
+		}
+	});
+
+	it('starts empty again on reset', async () => {
+		const backend = accepted();
+		await backend.handle(send(appointments, 'POST', slot));
+		backend.reset();
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+});
+
+describe('FakeRestBackend: the Supervision topic tour (FE#2545)', () => {
+	const supervisorsUrl = `${endpoints.sessionBase}/${ID}/supervisors`;
+	const colleagues = `${endpoints.calendarBase}/colleagues`;
+	const meetings = `${endpoints.calendarBase}/colleague-appointments`;
+	const slot = {
+		start: '2026-11-26T09:00:00.000Z',
+		end: '2026-11-26T10:00:00.000Z'
+	};
+	const acceptCase = (backend: ReturnType<typeof backendFor>) =>
+		backend.handle(send(`${endpoints.sessionBase}/new/${ID}`, 'PUT'));
+	const supervisorsOf = async (backend: ReturnType<typeof backendFor>) =>
+		json(await backend.handle(new Request(supervisorsUrl)));
+
+	it('starts on the open enquiry, without a supervisor', async () => {
+		const backend = backendFor({ start: 'supervision' });
+
+		expect(backend.getCase().session.status).toBe(1);
+		expect(await supervisorsOf(backend)).toEqual([]);
+		const feed = await json(
+			await backend.handle(new Request(registeredFeed))
+		);
+		expect(feed.sessions[0].session.supervision).toBeUndefined();
+	});
+
+	it('attaches the practice standing supervisor on accept, like the real accept does', async () => {
+		const onStandingSupervisorAssigned = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onStandingSupervisorAssigned }
+		});
+
+		await acceptCase(backend);
+
+		const supervisors = await supervisorsOf(backend);
+		expect(supervisors).toEqual([
+			expect.objectContaining({
+				sessionId: ID,
+				supervisorConsultantId: script.cast.supervisor.id,
+				supervisorMatrixUserId: script.cast.supervisor.matrixUserId,
+				matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID
+			})
+		]);
+		expect(supervisors[0].id).toBeLessThan(0);
+		expect(onStandingSupervisorAssigned).toHaveBeenCalledOnce();
+		// The list row carries the supervision marker (chip and row icon).
+		const mine = await json(await backend.handle(new Request(mySessions)));
+		expect(mine.sessions[0].session.supervision).toEqual({
+			supervisedByMe: false,
+			supervisorConsultantIds: [script.cast.supervisor.id],
+			supervisorDisplayNames: [script.cast.supervisor.displayName]
+		});
+		// A second accept attaches nobody twice.
+		await acceptCase(backend);
+		expect(await supervisorsOf(backend)).toHaveLength(1);
+		expect(onStandingSupervisorAssigned).toHaveBeenCalledOnce();
+	});
+
+	it('attaches nobody on accept in the other flows', async () => {
+		const backend = backendFor({ start: 'enquiry' });
+		await acceptCase(backend);
+		expect(await supervisorsOf(backend)).toEqual([]);
+	});
+
+	it('offers the second practice supervisor and replaces the first in memory, in the same side room', async () => {
+		const onSupervisorReplaced = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorReplaced }
+		});
+		await acceptCase(backend);
+		const [robin] = await supervisorsOf(backend);
+
+		const directory = await json(
+			await backend.handle(
+				new Request(
+					`${endpoints.agencyConsultants}?agencyId=${PRACTICE_AGENCY_ID}`
+				)
+			)
+		);
+		expect(
+			directory
+				.filter((consultant: any) => consultant.isSupervisor)
+				.map((consultant: any) => consultant.consultantId)
+		).toEqual([script.cast.supervisor.id, script.cast.secondSupervisor.id]);
+
+		const replaced = await json(
+			await backend.handle(
+				send(`${supervisorsUrl}/${robin.id}`, 'PUT', {
+					supervisorConsultantId: script.cast.secondSupervisor.id,
+					notes: 'Urlaubsvertretung',
+					notifyClient: true
+				})
+			)
+		);
+
+		expect(replaced).toMatchObject({
+			supervisorConsultantId: script.cast.secondSupervisor.id,
+			supervisorMatrixUserId: script.cast.secondSupervisor.matrixUserId,
+			matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
+			notes: 'Urlaubsvertretung'
+		});
+		expect(replaced.id).toBeLessThan(0);
+		expect(await supervisorsOf(backend)).toEqual([replaced]);
+		expect(onSupervisorReplaced).toHaveBeenCalledWith(robin, replaced);
+		const mine = await json(await backend.handle(new Request(mySessions)));
+		expect(
+			mine.sessions[0].session.supervision.supervisorDisplayNames
+		).toEqual([script.cast.secondSupervisor.displayName]);
+	});
+
+	it('replaces nobody with a person who is not a practice supervisor, and passes real ids on', async () => {
+		const onSupervisorReplaced = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorReplaced }
+		});
+		await acceptCase(backend);
+		const [robin] = await supervisorsOf(backend);
+
+		expect(
+			(
+				await backend.handle(
+					send(`${supervisorsUrl}/${robin.id}`, 'PUT', {
+						supervisorConsultantId: 'a-real-consultant'
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(
+			await backend.handle(
+				send(`${endpoints.sessionBase}/4711/supervisors/1`, 'PUT', {
+					supervisorConsultantId: script.cast.secondSupervisor.id
+				})
+			)
+		).toBeNull();
+		expect(await supervisorsOf(backend)).toEqual([robin]);
+		expect(onSupervisorReplaced).not.toHaveBeenCalled();
+	});
+
+	it('names the case supervisors as the calendar reach, nobody before', async () => {
+		const backend = backendFor({ start: 'supervision' });
+		expect(
+			(await json(await backend.handle(new Request(colleagues))))
+				.colleagues
+		).toEqual([]);
+
+		await acceptCase(backend);
+
+		expect(
+			(await json(await backend.handle(new Request(colleagues))))
+				.colleagues
+		).toEqual([
+			{
+				id: script.cast.supervisor.id,
+				displayName: script.cast.supervisor.displayName,
+				agencyName: script.names.agency,
+				relation: 'SAME_AGENCY',
+				internalChat: true
+			}
+		]);
+	});
+
+	it('books an appointment with the case supervisor in memory, without an internal chat, and tells the run', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		const entry = await json(
+			await backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'PHONE'
+				})
+			)
+		);
+
+		expect(entry).toMatchObject({
+			type: 'APPOINTMENT',
+			...slot,
+			kind: 'PHONE',
+			colleagueId: script.cast.supervisor.id,
+			colleagueName: script.cast.supervisor.displayName,
+			colleagueStatus: 'PENDING'
+		});
+		expect(entry.id).toMatch(/^practice-/);
+		// No private chat of the two: the notice goes to the supervision room only.
+		expect(entry.chatId ?? null).toBeNull();
+		expect(entry.matrixRoomId ?? null).toBeNull();
+		expect(onSupervisorAppointmentBooked).toHaveBeenCalledWith(entry);
+		const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.calendarBase}/entries?${week}`)
+				)
+			)
+		).toEqual([entry]);
+		// Not an appointment with the advice seeker.
+		expect(
+			await json(
+				await backend.handle(
+					new Request(endpoints.upcomingAppointments)
+				)
+			)
+		).toEqual([]);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(endpoints.sessionAppointments(ID))
+				)
+			)
+		).toEqual([]);
+	});
+
+	it('books nothing with somebody who does not supervise the practice case', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		expect(
+			(
+				await backend.handle(
+					send(meetings, 'POST', {
+						colleagueId: 'a-real-colleague',
+						...slot,
+						kind: 'VIDEO'
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(onSupervisorAppointmentBooked).not.toHaveBeenCalled();
+	});
+
+	it('keeps the supervisor appointment out of the enquiry appointment writes', async () => {
+		const onAppointmentCancelled = vi.fn();
+		const onInvitationCreated = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onAppointmentCancelled, onInvitationCreated }
+		});
+		await acceptCase(backend);
+		const robins = await json(
+			await backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'VIDEO'
+				})
+			)
+		);
+		const enquiryAppointments = endpoints.sessionAppointments(ID);
+
+		expect(
+			await backend.handle(
+				send(`${enquiryAppointments}/${robins.id}`, 'PUT', {
+					startTime: '2026-11-27T09:00:00.000Z',
+					endTime: '2026-11-27T10:00:00.000Z'
+				})
+			)
+		).toBeNull();
+		expect(
+			await backend.handle(
+				send(`${enquiryAppointments}/${robins.id}/cancel`, 'POST')
+			)
+		).toBeNull();
+		expect(
+			(
+				await backend.handle(
+					send(endpoints.sessionDirectInvitations(ID), 'POST', {
+						appointmentId: robins.id
+					})
+				)
+			)?.status
+		).toBe(204);
+		expect(onAppointmentCancelled).not.toHaveBeenCalled();
+		expect(onInvitationCreated).not.toHaveBeenCalled();
+		const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.calendarBase}/entries?${week}`)
+				)
+			)
+		).toEqual([robins]);
+	});
+
+	it('blocks the supervisor appointment POST while the practice drains, so it never reaches the real backend', async () => {
+		const onSupervisorAppointmentBooked = vi.fn();
+		const backend = backendFor({
+			start: 'supervision',
+			hooks: { onSupervisorAppointmentBooked }
+		});
+		await acceptCase(backend);
+
+		await expect(
+			backend.handle(
+				send(meetings, 'POST', {
+					colleagueId: script.cast.supervisor.id,
+					...slot,
+					kind: 'VIDEO'
+				}),
+				undefined,
+				{ practiceAddressedOnly: true }
+			)
+		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		expect(onSupervisorAppointmentBooked).not.toHaveBeenCalled();
+		// Reads that are not the practice's still go to the real backend.
+		expect(
+			await backend.handle(new Request(colleagues), undefined, {
+				practiceAddressedOnly: true
+			})
+		).toBeNull();
+	});
+
+	it('starts without supervisor and appointment again on reset', async () => {
+		const backend = backendFor({ start: 'supervision' });
+		await acceptCase(backend);
+		await backend.handle(
+			send(meetings, 'POST', {
+				colleagueId: script.cast.supervisor.id,
+				...slot,
+				kind: 'VIDEO'
+			})
+		);
+		backend.reset();
+		expect(await supervisorsOf(backend)).toEqual([]);
+		expect(backend.getCase().session.status).toBe(1);
 	});
 });

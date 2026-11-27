@@ -23,6 +23,11 @@ export interface TourOverviewCarouselProps {
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
 	/** The enclosing Help card supplies the overview heading. */
 	embedded?: boolean;
+	/**
+	 * The i18n key of why a tour cannot start here (e.g. the window is too
+	 * narrow for its practice); the card then shows it instead of a start.
+	 */
+	unavailableHintKey?: (tour: TourDefinition) => string | undefined;
 }
 
 /**
@@ -58,7 +63,8 @@ export const TourOverviewCarousel = ({
 	audience,
 	loadProgress,
 	onStartTour,
-	embedded = false
+	embedded = false,
+	unavailableHintKey
 }: TourOverviewCarouselProps) => {
 	const { t: translate } = useTranslation();
 	const [progress, setProgress] = useState<
@@ -135,6 +141,7 @@ export const TourOverviewCarousel = ({
 					{eligibleTours.map((tour) => {
 						const status = statusFor(tour);
 						const mode = actionForStatus(status);
+						const hintKey = unavailableHintKey?.(tour);
 						return (
 							<li
 								className={`tourOverview__card${embedded ? ' tourOverview__card--compact' : ''}`}
@@ -163,9 +170,15 @@ export const TourOverviewCarousel = ({
 												? BUTTON_TYPES.SECONDARY
 												: BUTTON_TYPES.PRIMARY
 									}}
+									disabled={!!hintKey}
 									buttonHandle={() => onStartTour(tour, mode)}
 									className="tourOverview__action"
 								/>
+								{hintKey && (
+									<p className="tourOverview__hint">
+										{translate(hintKey)}
+									</p>
+								)}
 							</li>
 						);
 					})}

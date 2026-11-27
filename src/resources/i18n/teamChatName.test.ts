@@ -61,14 +61,4 @@ describe('team chat name (ORISO-Frontend#2207)', () => {
 			at(deCommon, 'notifications.center.preview.teamClosed')
 		).not.toMatch(/teamberatung/i);
 	});
-
-	it('quotes the real button label in the practice tour', () => {
-		const button = at(deCommon, 'enquiry.teamDiscussion.open') as string;
-		expect(
-			at(deCommon, 'tour.practiceAccept.step.openTeam.intro')
-		).toContain(`„${button}“`);
-		expect(
-			at(deInformalCommon, 'tour.practiceAccept.step.openTeam.intro')
-		).toContain(`„${button}“`);
-	});
 });

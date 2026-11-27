@@ -205,7 +205,7 @@ describe('SessionMenu calls and practice mode (no calls)', () => {
 	it.each([false, true])(
 		'offers no call control while practising (callsInMenu %s)',
 		(callsInMenu) => {
-			enterPracticeMode({ tourId: 'consultant-practice-accept' });
+			enterPracticeMode({ tourId: 'consultant-walkthrough' });
 
 			render(<Menu callsInMenu={callsInMenu} />);
 
@@ -229,7 +229,7 @@ describe('SessionMenu calls and practice mode (no calls)', () => {
 		render(<Menu />);
 		expect(callControls().length).toBeGreaterThan(0);
 
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 
 		expect(callControls()).toHaveLength(0);
 	});

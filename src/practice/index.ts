@@ -11,9 +11,11 @@ export {
 	endPractice,
 	enterPracticeMode,
 	exitPracticeMode,
+	getPracticeSnapshot,
 	holdPracticeExit,
 	isPracticeMode,
 	onPracticeExit
 } from './practiceMode';
 export { PracticeBlockedRequestError } from './networkGuard';
+export { PRACTICE_SUPERVISION_TOUR_ID } from './practiceTourIds';
 export { simulatePracticeCallStart } from './practiceCallStart';

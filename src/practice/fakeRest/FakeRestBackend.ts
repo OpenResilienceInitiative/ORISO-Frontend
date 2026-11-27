@@ -18,14 +18,19 @@ import {
 import {
 	isPracticeId,
 	isPracticeRoomId,
+	practiceStringId,
 	PRACTICE_AGENCY_ID,
+	PRACTICE_MATRIX_SERVER,
 	PRACTICE_CIRCLE_CHAT_ID,
 	PRACTICE_CIRCLE_ROOM_ID,
 	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
-	PRACTICE_TEAM_ROOM_ID
+	PRACTICE_TEAM_ROOM_ID,
+	PRACTICE_TOPIC_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import { PracticeBlockedRequestError } from '../networkGuard';
+import { isSafeMethod, redactUrl } from '../requestPolicy';
 import { isPracticeDraftScope } from '../practiceDraftScopes';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -38,8 +43,25 @@ import type {
 import type { groupChatSettings } from '../../api/apiGroupChatSettings';
 import { GROUP_CHAT_API } from '../../api/apiPutGroupChat';
 import type { InternalChatColleague } from '../../components/conversationCreate/internal/loadInternalChatColleagues';
-import { PracticeBlockedRequestError } from '../networkGuard';
-import { redactUrl } from '../requestPolicy';
+import type {
+	BlockerCreateDTO,
+	CalendarColleaguesDTO,
+	ColleagueAppointmentCreateDTO,
+	CalendarConsultationHoursDTO,
+	CalendarConsultationOnceDTO,
+	CalendarEntryDTO,
+	CalendarSyncDTO,
+	CalendarWorkingHoursDTO
+} from '../../api/apiCalendar';
+import type {
+	SessionAppointment,
+	SessionAppointmentSlot
+} from '../../api/apiSessionAppointments';
+import type {
+	DirectLinkDTO,
+	SessionDirectInvitationBody
+} from '../../api/apiDirectLinks';
+import type { AddSupervisorRequest } from '../../api/apiAddSessionSupervisor';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -50,6 +72,28 @@ export interface FakeRestHooks {
 	onCircleCreated?: (chatId: number) => void;
 	/** Its moderator started it (FE#2545). */
 	onCircleStarted?: (chatId: number) => void;
+	/** The practice calendar (FE#2545): an appointment was entered. */
+	onAppointmentCreated?: (appointmentId: string) => void;
+	/** A Terminlink was made for an appointment. */
+	onInvitationCreated?: (appointmentId: string) => void;
+	onAppointmentCancelled?: (appointmentId: string) => void;
+	onBlockerCreated?: (blockerId: string) => void;
+	/** The Sprechstunden were saved with automatic confirmation on. */
+	onAutoAcceptOn?: () => void;
+	/**
+	 * The Supervision tour (FE#2545): the accept attached the practice
+	 * standing supervisor, as the real accept does (#2386).
+	 */
+	onStandingSupervisorAssigned?: (
+		supervisor: UserService.Schemas.SessionSupervisorResponseDTO
+	) => void;
+	/** "Wechseln" in "Supervisor verwalten": one supervisor took over. */
+	onSupervisorReplaced?: (
+		from: UserService.Schemas.SessionSupervisorResponseDTO,
+		to: UserService.Schemas.SessionSupervisorResponseDTO
+	) => void;
+	/** "Termin mit Supervisor:in vereinbaren" was saved. */
+	onSupervisorAppointmentBooked?: (entry: CalendarEntryDTO) => void;
 }
 
 export interface FakeRestBackendOptions {
@@ -62,7 +106,11 @@ export interface FakeRestBackendOptions {
 }
 
 export interface HandleOptions {
-	/** Answer only requests addressed to a practice id or room. */
+	/**
+	 * Answer only requests addressed to a practice id or room. A view-wide
+	 * practice write then rejects with `PracticeBlockedRequestError` instead
+	 * of reaching the real backend.
+	 */
 	practiceAddressedOnly?: boolean;
 }
 
@@ -139,16 +187,22 @@ const pathOf = (endpoint: string) =>
 const at = (endpoint: string, suffix = '') =>
 	new RegExp(`^${escapeRegExp(pathOf(endpoint))}${suffix}$`);
 
-/** An endpoint that takes a session id, which must be a practice id. */
-const atSession = (endpoint: (sessionId: number) => string) => {
+/**
+ * An endpoint that takes a session id, which must be a practice id, plus an
+ * optional regex suffix.
+ */
+const atSession = (endpoint: (sessionId: number) => string, suffix = '') => {
 	const marker = String(Number.MAX_SAFE_INTEGER);
 	const [before, after] = pathOf(endpoint(Number.MAX_SAFE_INTEGER)).split(
 		marker
 	);
 	return new RegExp(
-		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}$`
+		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}${suffix}$`
 	);
 };
+
+/** A practice string id (`practice-…`) as a path segment. */
+const PRACTICE_STRING_SEGMENT = '(practice-[A-Za-z0-9._-]+)';
 
 const parseRequest = (
 	input: RequestInfo | URL,
@@ -191,6 +245,10 @@ export const createFakeRestBackend = ({
 	let supervisorSeq: number;
 	/** The Gesprächskreis the counsellor created in this run (FE#2545). */
 	let circle: GroupChatItemInterface | null;
+	/** The practice calendar (FE#2545): own appointments and Sperrzeiten. */
+	let calendar: CalendarEntryDTO[];
+	let consultationHours: Required<CalendarConsultationHoursDTO>;
+	let calendarSeq: number;
 	/** The colleagues picked as its co-moderators: practice cast only. */
 	let coModerators: PracticePerson[];
 	const served: ServedRequest[] = [];
@@ -205,6 +263,16 @@ export const createFakeRestBackend = ({
 		drafts = new Map();
 		supervisorSeq = 0;
 		circle = null;
+		calendar = [];
+		// Bookable Tuesday mornings, confirmed by hand: the flow switches
+		// automatic confirmation on.
+		consultationHours = {
+			windows: [{ weekday: 2, start: '10:00', end: '12:00' }],
+			autoAccept: false,
+			noticeDays: 1,
+			slotMinutes: 60
+		};
+		calendarSeq = 0;
 		coModerators = [];
 		served.length = 0;
 	};
@@ -326,6 +394,127 @@ export const createFakeRestBackend = ({
 	const isCase = (id: string) =>
 		Number(id) === practiceCase.session.id && isPracticeId(id);
 
+	/* ---------------- Supervision of the practice case ---------------- */
+
+	/** The practice people who may supervise; nobody real is ever one. */
+	const practiceSupervisors = (): PracticePerson[] => [
+		script.cast.supervisor,
+		script.cast.secondSupervisor
+	];
+	const supervisorPerson = (consultantId: string | undefined) =>
+		practiceSupervisors().find((person) => person.id === consultantId);
+
+	const supervisorFor = (
+		person: PracticePerson,
+		notes: string | null
+	): UserService.Schemas.SessionSupervisorResponseDTO => ({
+		id: -++supervisorSeq,
+		sessionId: practiceCase.session.id,
+		supervisorConsultantId: person.id,
+		supervisorUsername: person.username,
+		supervisorMatrixUserId: person.matrixUserId,
+		addedByConsultantId: counsellor.userId,
+		addedDate: new Date(now()).toISOString(),
+		// ADR-008: one side room per case, whoever supervises it.
+		matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
+		notes
+	});
+
+	/**
+	 * The supervisors and the list marker (ADR-008) the session list reads:
+	 * the "Supervision" chip and the round icon of the row.
+	 */
+	const setSupervisors = (
+		supervisors: UserService.Schemas.SessionSupervisorResponseDTO[]
+	) => {
+		const people = supervisors.flatMap((s) => {
+			const person = supervisorPerson(s.supervisorConsultantId);
+			return person ? [person] : [];
+		});
+		const { supervision: _marker, ...session } = practiceCase.session;
+		practiceCase = {
+			...practiceCase,
+			supervisors,
+			session: people.length
+				? {
+						...session,
+						supervision: {
+							supervisedByMe: false,
+							supervisorConsultantIds: people.map((p) => p.id),
+							supervisorDisplayNames: people.map(
+								(p) => p.displayName
+							)
+						}
+					}
+				: session
+		};
+	};
+
+	/**
+	 * "Wechseln" (#2494 *6): one server step that keeps the side room. Only
+	 * the other practice supervisor can take over; nobody is notified, the
+	 * advice seeker included, whatever `notifyClient` says.
+	 */
+	const replaceSupervisor = (
+		supervisorId: string,
+		body:
+			| (Pick<AddSupervisorRequest, 'supervisorConsultantId'> & {
+					notes?: string | null;
+			  })
+			| null
+	) => {
+		const from = practiceCase.supervisors.find(
+			(s) => s.id === Number(supervisorId)
+		);
+		const person = supervisorPerson(body?.supervisorConsultantId);
+		if (
+			!from ||
+			!person ||
+			practiceCase.supervisors.some(
+				(s) => s.supervisorConsultantId === person.id
+			)
+		) {
+			return noContent();
+		}
+		const to = supervisorFor(person, body?.notes ?? null);
+		setSupervisors(
+			practiceCase.supervisors.map((s) => (s === from ? to : s))
+		);
+		hooks.onSupervisorReplaced?.(from, to);
+		return ok(to);
+	};
+
+	/**
+	 * "Termin mit Supervisor:in vereinbaren" (FE#2494): with a supervisor of
+	 * the practice case only. No private chat of the two exists in practice,
+	 * so the entry names none and the dialog's notice goes to the supervision
+	 * room alone. Nothing reaches a real calendar.
+	 */
+	const bookWithSupervisor = (body: ColleagueAppointmentCreateDTO | null) => {
+		const person = practiceCase.supervisors.some(
+			(s) => s.supervisorConsultantId === body?.colleagueId
+		)
+			? supervisorPerson(body?.colleagueId)
+			: undefined;
+		if (!person || !body?.start || !body.end) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('appointment'),
+			type: 'APPOINTMENT',
+			start: body.start,
+			end: body.end,
+			ownerId: counsellor.userId,
+			kind: body.kind ?? 'VIDEO',
+			title: person.displayName,
+			movable: false,
+			colleagueId: person.id,
+			colleagueName: person.displayName,
+			colleagueStatus: 'PENDING'
+		};
+		calendar = [...calendar, entry];
+		hooks.onSupervisorAppointmentBooked?.(entry);
+		return ok(entry);
+	};
+
 	/** Registered (F1) or live chat (FE#2545): the same accept, in memory. */
 	const accept = (id: string) => {
 		if (!isCase(id)) return null;
@@ -344,12 +533,387 @@ export const createFakeRestBackend = ({
 					status: 'ARCHIVED'
 				}
 			};
+			// The Supervision tour: the server attaches the counsellor's
+			// standing supervisor inside the accept (#2386). In practice that
+			// is Robin, set up "beforehand" by nobody: it is an exercise.
+			const standing =
+				start === 'supervision' && !practiceCase.supervisors.length
+					? supervisorFor(script.cast.supervisor, null)
+					: null;
+			if (standing) setSupervisors([standing]);
 			hooks.onEnquiryAccepted?.(practiceCase.session.id);
+			if (standing) hooks.onStandingSupervisorAssigned?.(standing);
 		}
 		return noContent();
 	};
 
+	/* ---------------- The practice calendar (FE#2545) ---------------- */
+
+	const calendarId = (kind: 'appointment' | 'blocker' | 'invitation') =>
+		practiceStringId(kind, ++calendarSeq);
+
+	const isCalendarEntry = (id: string, type: CalendarEntryDTO['type']) =>
+		isPracticeId(id) &&
+		calendar.some((entry) => entry.id === id && entry.type === type);
+
+	const asAppointment = (entry: CalendarEntryDTO): SessionAppointment => ({
+		id: entry.id,
+		sessionId: practiceCase.session.id,
+		startTime: entry.start,
+		endTime: entry.end,
+		status: 'SCHEDULED',
+		kind: entry.kind,
+		counterpart: {
+			username: practiceCase.user.username,
+			displayName: practiceCase.user.displayName
+		}
+	});
+
+	/** With the advice seeker; one with the supervisor has a colleague. */
+	const appointments = () =>
+		calendar.filter(
+			(entry) => entry.type === 'APPOINTMENT' && !entry.colleagueId
+		);
+
+	/**
+	 * One appointment with the advice seeker of the practice case; never the
+	 * supervisor's (FE#2545), which the enquiry routes must not move, cancel
+	 * or invite to.
+	 */
+	const enquiryAppointment = (id: string | undefined) =>
+		id !== undefined && isPracticeId(id)
+			? appointments().find(
+					(entry) =>
+						entry.id === id &&
+						entry.sessionId === practiceCase.session.id
+				)
+			: undefined;
+
+	/** Entries that overlap [from, to); without a range, all of them. */
+	const entriesIn = (url: URL) => {
+		const from = Date.parse(url.searchParams.get('from') || '');
+		const to = Date.parse(url.searchParams.get('to') || '');
+		return calendar.filter(
+			(entry) =>
+				(Number.isNaN(to) || Date.parse(entry.start) < to) &&
+				(Number.isNaN(from) || Date.parse(entry.end) > from)
+		);
+	};
+
+	const createAppointment = (slot: SessionAppointmentSlot | null) => {
+		if (!slot?.startTime || !slot.endTime) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('appointment'),
+			type: 'APPOINTMENT',
+			start: slot.startTime,
+			end: slot.endTime,
+			ownerId: counsellor.userId,
+			kind: slot.kind ?? 'VIDEO',
+			title: practiceCase.user.username,
+			sessionId: practiceCase.session.id,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onAppointmentCreated?.(entry.id);
+		return ok(asAppointment(entry));
+	};
+
+	const moveEntry = (
+		id: string,
+		type: CalendarEntryDTO['type'],
+		start?: string,
+		end?: string
+	) => {
+		const known =
+			type === 'APPOINTMENT'
+				? !!enquiryAppointment(id)
+				: isCalendarEntry(id, type);
+		if (!known || !start || !end) return null;
+		calendar = calendar.map((entry) =>
+			entry.id === id ? { ...entry, start, end } : entry
+		);
+		return calendar.find((entry) => entry.id === id)!;
+	};
+
+	/**
+	 * "Weitere Personen per Link einladen": the link exists in memory only
+	 * and points at a reserved host, so a copied practice link leads nowhere.
+	 */
+	const createInvitation = (body: SessionDirectInvitationBody | null) => {
+		const appointment = enquiryAppointment(body?.appointmentId);
+		if (!appointment) return noContent();
+		const id = calendarId('invitation');
+		const medium = body?.medium ?? 'VIDEO';
+		const validity = body?.validityAfterEndMinutes ?? 1440;
+		hooks.onInvitationCreated?.(appointment.id);
+		return ok({
+			id: calendarSeq,
+			token: id,
+			url: `https://${PRACTICE_MATRIX_SERVER}/${id}`,
+			name: null,
+			topicId: PRACTICE_TOPIC_ID,
+			topicName: script.names.topic,
+			agencyId: PRACTICE_AGENCY_ID,
+			medium,
+			temporary: true,
+			active: true,
+			admission: body?.knock === false ? 'DIRECT' : 'KNOCK',
+			createDate: new Date(now()).toISOString(),
+			appointment: {
+				id: appointment.id,
+				startTime: appointment.start,
+				endTime: appointment.end,
+				status: 'SCHEDULED'
+			},
+			validityAfterEndMinutes: validity,
+			expiresAt: new Date(
+				Date.parse(appointment.end) + validity * 60_000
+			).toISOString(),
+			expired: false,
+			accessMode: body?.accessMode ?? 'BOTH',
+			knock: body?.knock !== false,
+			sessionId: practiceCase.session.id,
+			joinsExistingSession: true
+		} satisfies DirectLinkDTO);
+	};
+
+	const createBlocker = (body: BlockerCreateDTO | null) => {
+		if (!body?.start || !body.end) return noContent();
+		const entry: CalendarEntryDTO = {
+			id: calendarId('blocker'),
+			type: 'BLOCKER',
+			start: body.start,
+			end: body.end,
+			ownerId: counsellor.userId,
+			allDay: body.allDay === true,
+			title: body.note || null,
+			movable: true
+		};
+		calendar = [...calendar, entry];
+		hooks.onBlockerCreated?.(entry.id);
+		return ok([entry]);
+	};
+
+	const calendarPath = (suffix: string) => at(endpoints.calendarBase, suffix);
+
 	const routes: Route[] = [
+		// The practice calendar (FE#2545). Its reads would show the real
+		// calendar, links and colleagues; its writes stay in memory.
+		{
+			method: 'GET',
+			path: calendarPath('/entries'),
+			viewWide: true,
+			handle: ({ url }) => ok(entriesIn(url))
+		},
+		{
+			// Only the supervisors of the practice case (the Supervision
+			// tour's appointment, FE#2545); otherwise no colleagues, so their
+			// calendars and auto-accept stay out.
+			method: 'GET',
+			path: calendarPath('/colleagues'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					visibilityScope: 'AGENCY',
+					showAskerUsernames: false,
+					colleagues: practiceCase.supervisors
+						.map((s) => supervisorPerson(s.supervisorConsultantId))
+						.filter((person): person is PracticePerson => !!person)
+						.map((person) => ({
+							id: person.id,
+							displayName: person.displayName,
+							agencyName: script.names.agency,
+							relation: 'SAME_AGENCY' as const,
+							internalChat: true
+						}))
+				} satisfies CalendarColleaguesDTO)
+		},
+		{
+			method: 'POST',
+			path: calendarPath('/colleague-appointments'),
+			viewWide: true,
+			handle: async ({ body }) => bookWithSupervisor(await body())
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/colleagues/[^/]+/entries'),
+			viewWide: true,
+			handle: () => ok([])
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/auto-accept'),
+			viewWide: true,
+			handle: () => ok({ colleagueIds: [] })
+		},
+		{
+			// No feed and no import: the practice calendar is not synced.
+			method: 'GET',
+			path: calendarPath('/sync'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					feedUrl: '',
+					importConfigured: false
+				} satisfies CalendarSyncDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			handle: () => ok(consultationHours)
+		},
+		{
+			method: 'PUT',
+			path: calendarPath('/consultation-hours'),
+			viewWide: true,
+			practiceOnlyWrite: true,
+			handle: async ({ body }) => {
+				// SAFETY: the practice consultation-hours editor sends this DTO;
+				// the windows check below rejects anything else.
+				const next = (await body()) as CalendarConsultationHoursDTO;
+				if (!next || !Array.isArray(next.windows)) return noContent();
+				const wasOn = consultationHours.autoAccept;
+				consultationHours = {
+					windows: next.windows,
+					autoAccept: next.autoAccept ?? consultationHours.autoAccept,
+					noticeDays: next.noticeDays ?? consultationHours.noticeDays,
+					slotMinutes:
+						next.slotMinutes ?? consultationHours.slotMinutes
+				};
+				if (consultationHours.autoAccept && !wasOn) {
+					hooks.onAutoAcceptOn?.();
+				}
+				return ok(consultationHours);
+			}
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/consultation-hours/once'),
+			viewWide: true,
+			handle: () => ok([] satisfies CalendarConsultationOnceDTO[])
+		},
+		{
+			// Monday to Friday, nine to five.
+			method: 'GET',
+			path: calendarPath('/working-hours'),
+			viewWide: true,
+			handle: () =>
+				ok({
+					windows: [1, 2, 3, 4, 5].map((weekday) => ({
+						weekday,
+						start: '09:00',
+						end: '17:00'
+					})),
+					holidayRegion: null,
+					exceptions: []
+				} satisfies CalendarWorkingHoursDTO)
+		},
+		{
+			method: 'GET',
+			path: calendarPath('/proposals'),
+			viewWide: true,
+			handle: () => ok({ sent: [], received: [] })
+		},
+		{
+			method: 'POST',
+			path: calendarPath('/blockers'),
+			viewWide: true,
+			practiceOnlyWrite: true,
+			handle: async ({ body }) => createBlocker(await body())
+		},
+		{
+			method: 'PUT',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: async ({ body }, [, id]) => {
+				const slot = await body();
+				const moved = moveEntry(id, 'BLOCKER', slot?.start, slot?.end);
+				return moved ? ok([moved]) : null;
+			}
+		},
+		{
+			method: 'DELETE',
+			path: calendarPath(`/blockers/${PRACTICE_STRING_SEGMENT}`),
+			handle: (_request, [, id]) => {
+				if (!isCalendarEntry(id, 'BLOCKER')) return null;
+				calendar = calendar.filter((entry) => entry.id !== id);
+				return noContent();
+			}
+		},
+		{
+			method: 'GET',
+			path: atSession(endpoints.sessionAppointments),
+			handle: (_request, [, id]) =>
+				isCase(id) ? ok(appointments().map(asAppointment)) : null
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionAppointments),
+			handle: async ({ body }, [, id]) =>
+				isCase(id) ? createAppointment(await body()) : null
+		},
+		{
+			method: 'PUT',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}`
+			),
+			handle: async ({ body }, [, id, appointmentId]) => {
+				if (!isCase(id)) return null;
+				// SAFETY: only the practice reschedule dialog posts here, with
+				// a slot it built itself; moveEntry ignores a missing one.
+				const slot = (await body()) as SessionAppointmentSlot | null;
+				const moved = moveEntry(
+					appointmentId,
+					'APPOINTMENT',
+					slot?.startTime,
+					slot?.endTime
+				);
+				return moved ? ok(asAppointment(moved)) : null;
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(
+				endpoints.sessionAppointments,
+				`/${PRACTICE_STRING_SEGMENT}/cancel`
+			),
+			handle: (_request, [, id, appointmentId]) => {
+				const entry = isCase(id)
+					? enquiryAppointment(appointmentId)
+					: undefined;
+				if (!entry) return null;
+				calendar = calendar.filter((e) => e.id !== appointmentId);
+				hooks.onAppointmentCancelled?.(appointmentId);
+				return ok({ ...asAppointment(entry), status: 'CANCELLED' });
+			}
+		},
+		{
+			method: 'POST',
+			path: atSession(endpoints.sessionDirectInvitations),
+			handle: async ({ body }, [, id]) =>
+				isCase(id)
+					? createInvitation(
+							// SAFETY: the practice invite dialog posts a
+							// SessionDirectInvitationBody; unknown ids find no appointment.
+							(await body()) as SessionDirectInvitationBody | null
+						)
+					: null
+		},
+		{
+			// "Links ohne Termin": the practice world has none.
+			method: 'GET',
+			path: at(endpoints.directLinks),
+			viewWide: true,
+			handle: () => ok([] satisfies DirectLinkDTO[])
+		},
+		{
+			// The session list's "next appointments": the practice ones only.
+			method: 'GET',
+			path: at(endpoints.upcomingAppointments),
+			viewWide: true,
+			handle: () => ok(appointments().map(asAppointment))
+		},
 		{
 			method: 'GET',
 			path: at(endpoints.consultantEnquiriesBase, 'registered'),
@@ -373,6 +937,15 @@ export const createFakeRestBackend = ({
 			path: at(endpoints.myMessagesBase, 'archive'),
 			viewWide: true,
 			handle: () => noContent()
+		},
+		{
+			// FE#2545: the placeholders of deleted advice seekers in "Meine
+			// Beratungen" and "Archiv" (with `?archived=true`). The practice
+			// world has none; the real ones stay out of the practice lists.
+			method: 'GET',
+			path: at(endpoints.consultantDeletedAskerSessions),
+			viewWide: true,
+			handle: () => ok([])
 		},
 		{
 			method: 'GET',
@@ -626,33 +1199,35 @@ export const createFakeRestBackend = ({
 			handle: async (request, [, id]) => {
 				if (!isCase(id)) return null;
 				const body = await request.body();
+				const person = supervisorPerson(body?.supervisorConsultantId);
 				if (
-					body?.supervisorConsultantId !== script.cast.supervisor.id
+					!person ||
+					practiceCase.supervisors.some(
+						(s) => s.supervisorConsultantId === person.id
+					)
 				) {
-					// Only the practice supervisor exists here; nothing else is added.
+					// Only the practice supervisors exist here; nothing else is added.
 					return noContent();
 				}
-				const supervisor: UserService.Schemas.SessionSupervisorResponseDTO =
-					{
-						id: -++supervisorSeq,
-						sessionId: practiceCase.session.id,
-						supervisorConsultantId: script.cast.supervisor.id,
-						supervisorUsername: script.cast.supervisor.username,
-						supervisorMatrixUserId:
-							script.cast.supervisor.matrixUserId,
-						addedByConsultantId: counsellor.userId,
-						addedDate: new Date(now()).toISOString(),
-						matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
-						notes:
-							typeof body.notes === 'string' ? body.notes : null
-					};
-				practiceCase = {
-					...practiceCase,
-					supervisors: [...practiceCase.supervisors, supervisor]
-				};
+				const supervisor = supervisorFor(
+					person,
+					typeof body.notes === 'string' ? body.notes : null
+				);
+				setSupervisors([...practiceCase.supervisors, supervisor]);
 				hooks.onSupervisorAdded?.(supervisor);
 				return ok(supervisor);
 			}
+		},
+		{
+			method: 'PUT',
+			path: at(
+				endpoints.sessionBase,
+				`/${PRACTICE_ID_SEGMENT}/supervisors/${PRACTICE_ID_SEGMENT}`
+			),
+			handle: async (request, [, id, supervisorId]) =>
+				isCase(id)
+					? replaceSupervisor(supervisorId, await request.body())
+					: null
 		},
 		{
 			method: 'GET',
@@ -660,17 +1235,17 @@ export const createFakeRestBackend = ({
 			handle: ({ url }) =>
 				Number(url.searchParams.get('agencyId')) === PRACTICE_AGENCY_ID
 					? ok(
-							[script.cast.colleague, script.cast.supervisor].map(
-								(person) => ({
-									consultantId: person.id,
-									firstName: person.firstName,
-									lastName: person.lastName,
-									displayName: person.displayName,
-									username: person.username,
-									isSupervisor:
-										person.id === script.cast.supervisor.id
-								})
-							) satisfies UserService.Schemas.ConsultantResponseDTO[]
+							[
+								script.cast.colleague,
+								...practiceSupervisors()
+							].map((person) => ({
+								consultantId: person.id,
+								firstName: person.firstName,
+								lastName: person.lastName,
+								displayName: person.displayName,
+								username: person.username,
+								isSupervisor: !!supervisorPerson(person.id)
+							})) satisfies UserService.Schemas.ConsultantResponseDTO[]
 						)
 					: null
 		},
@@ -816,7 +1391,14 @@ export const createFakeRestBackend = ({
 					options.practiceAddressedOnly &&
 					!route.duringDrain?.(request)
 				) {
-					if (route.practiceOnlyWrite) block();
+					// A view-wide practice write carries no practice id, so
+					// forwarding it would reach the real backend. A route with
+					// `duringDrain` already decides which requests are its own.
+					if (
+						route.practiceOnlyWrite ||
+						(!route.duringDrain && !isSafeMethod(request.method))
+					)
+						block();
 					continue;
 				}
 				const response = await route.handle(request, match);

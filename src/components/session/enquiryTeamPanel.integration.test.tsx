@@ -1446,7 +1446,7 @@ it.each(['case change', 'case round trip', 'account change', 'unmount'])(
 	20000
 );
 it('keeps practice enquiries free of the new real rejection command', async () => {
-	enterPracticeMode({ tourId: 'consultant-practice-accept' });
+	enterPracticeMode({ tourId: 'consultant-walkthrough' });
 	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { id: -4711 });
 	await screen.findByRole('button', { name: 'enquiry.acceptButton.known' });
 	expect(

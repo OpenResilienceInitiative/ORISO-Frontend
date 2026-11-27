@@ -29,15 +29,19 @@ import type { ScriptEngine } from '../script/ScriptEngine';
 import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 
 /**
- * F1 starts with an open enquiry, F2 with an already accepted case, the
- * Live-Chat tour (FE#2545) with a waiting anonymous live chat, the
- * Gesprächskreis tour (FE#2545) with no circle yet: the counsellor creates it.
+ * F1 starts with an open enquiry, the Kalender tour (FE#2545) with an
+ * already accepted case, the Live-Chat tour (FE#2545) with a waiting
+ * anonymous live chat, the Gesprächskreis tour (FE#2545) with no circle yet:
+ * the counsellor creates it. The Supervision tour (FE#2545) starts on the
+ * same open enquiry as F1; its accept also attaches the practice standing
+ * supervisor, as the real accept does (#2386).
  */
 export type PracticeStart =
 	| 'enquiry'
 	| 'acceptedCase'
 	| 'liveChat'
-	| 'groupCircle';
+	| 'groupCircle'
+	| 'supervision';
 
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
 

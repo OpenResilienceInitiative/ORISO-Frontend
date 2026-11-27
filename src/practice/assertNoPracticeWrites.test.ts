@@ -10,7 +10,7 @@ const TUTORIAL_PROGRESS_URL = `${USER_SERVICE}/service/users/tutorials/progress`
 const TOKEN_URL =
 	'https://auth.oriso.test/auth/realms/online-beratung/protocol/openid-connect/token';
 const MATRIX = 'https://matrix.oriso.test/_matrix/client/v3';
-const TOUR_ID = 'consultant-practice-accept';
+const TOUR_ID = 'consultant-walkthrough';
 
 const config = {
 	allowedTourIds: [TOUR_ID],
@@ -112,7 +112,10 @@ describe('assertNoPracticeWrites (what the browser really sent)', () => {
 
 	it('fails for the progress of another tour, and for a body that was not captured', () => {
 		expect(
-			findPracticeWrites([progress('consultant-walkthrough')], config)
+			findPracticeWrites(
+				[progress('consultant-mail-counselling')],
+				config
+			)
 		).toEqual([
 			{
 				method: 'PUT',
@@ -192,13 +195,21 @@ describe('assertNoPracticeWrites: the live-chat heartbeat (FE#2545)', () => {
 	it('passes for a bodyless heartbeat POST as Playwright records it (postData null)', () => {
 		expect(
 			findPracticeWrites(
-				[
-					{ method: 'POST', url: HEARTBEAT_URL, postData: null },
-					{ method: 'POST', url: HEARTBEAT_URL }
-				],
+				[{ method: 'POST', url: HEARTBEAT_URL, postData: null }],
 				withHeartbeat
 			)
 		).toEqual([]);
+	});
+
+	it('rejects a heartbeat whose body was not captured (postData omitted)', () => {
+		expect(
+			findPracticeWrites(
+				[{ method: 'POST', url: HEARTBEAT_URL }],
+				withHeartbeat
+			)
+		).toEqual([
+			{ method: 'POST', url: HEARTBEAT_URL, reason: 'body-rejected' }
+		]);
 	});
 
 	it('still fails for the heartbeat when the run does not allow it', () => {

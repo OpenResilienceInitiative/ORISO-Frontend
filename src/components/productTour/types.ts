@@ -42,8 +42,16 @@ export interface TourCondition {
 	equals?: boolean;
 }
 
-/** One condition, or a list that must all hold. */
-export type TourWhen = TourCondition | TourCondition[];
+/**
+ * Any one of several AND lists (FE#2545: "a supervision chat allows audio
+ * or video"). Still data only, so ORISO-Admin can read it.
+ */
+export interface TourAnyOf {
+	anyOf: TourCondition[][];
+}
+
+/** One condition, a list that must all hold, or any one of several lists. */
+export type TourWhen = TourCondition | TourCondition[] | TourAnyOf;
 
 /** Values a tour's conditions are resolved against, once when it starts. */
 export interface TourResolveContext {

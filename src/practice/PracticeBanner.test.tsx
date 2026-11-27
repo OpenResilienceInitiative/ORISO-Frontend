@@ -43,7 +43,7 @@ vi.mock('react-i18next', async () => {
 	return { useTranslation: () => ({ t, i18n: { language: 'de' } }) };
 });
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const tours: TourDefinition[] = [
 	{
 		id: ACCEPT,

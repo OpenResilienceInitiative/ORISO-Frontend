@@ -41,6 +41,7 @@ import {
 	readNewEntryWithDate,
 	writeNewEntryWithDate
 } from './calendarPreferences';
+import { isPracticeMode } from '../../practice/practiceMode';
 
 const DEFAULT_HOUR = 10;
 
@@ -160,8 +161,10 @@ export const useCalendarInvitationForm = ({
 		},
 		onClose,
 		onOpenLink: onCreateOpenLink,
-		onWithAppointmentUsed: (withDate) =>
-			writeNewEntryWithDate(ownerId, withDate)
+		onWithAppointmentUsed: (withDate) => {
+			// A practice run leaves no trace in this browser.
+			if (!isPracticeMode()) writeNewEntryWithDate(ownerId, withDate);
+		}
 	});
 
 	return {

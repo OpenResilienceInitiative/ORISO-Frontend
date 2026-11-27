@@ -21,7 +21,7 @@ import { enterPracticeMode, exitPracticeMode } from './practiceMode';
 import type { PracticeWorld } from './practiceWorld';
 import { createPracticeTestI18n } from './script/scriptTestSupport';
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const SUPERVISION = 'consultant-practice-supervision';
 const counsellor = practiceCounsellorFixture();
 let world: PracticeWorld | null = null;
@@ -79,11 +79,12 @@ describe('PracticeSandboxSlot', () => {
 		);
 	});
 
-	it('starts the Supervision tour on the already accepted case', () => {
+	it('starts the Supervision tour on the open enquiry whose accept brings the standing supervisor (FE#2545)', () => {
 		renderSlot(SUPERVISION);
 
-		expect(world?.start).toBe('acceptedCase');
-		expect(world?.rest.getCase().session.status).toBe(2);
+		expect(world?.start).toBe('supervision');
+		expect(world?.rest.getCase().session.status).toBe(1);
+		expect(world?.rest.getCase().supervisors).toEqual([]);
 	});
 
 	it('gives every new run fresh fixtures (a restart is end + enter on the same guard)', async () => {

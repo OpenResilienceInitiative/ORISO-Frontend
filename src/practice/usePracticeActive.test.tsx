@@ -18,7 +18,7 @@ describe('usePracticeActive', () => {
 		const { result } = renderHook(() => usePracticeActive());
 		expect(result.current).toBe(false);
 
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 		expect(result.current).toBe(true);
 
 		act(() => exitPracticeMode());
@@ -26,7 +26,7 @@ describe('usePracticeActive', () => {
 	});
 
 	it('stays true while practice drains, until the guard is off', async () => {
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		enterPracticeMode({ tourId: 'consultant-walkthrough' });
 		const { result } = renderHook(() => usePracticeActive());
 
 		let ended: Promise<void> = Promise.resolve();

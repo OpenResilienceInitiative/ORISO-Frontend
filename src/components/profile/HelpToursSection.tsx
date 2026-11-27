@@ -3,7 +3,6 @@ import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Headline } from '../headline/Headline';
 import { TourOverviewSection } from '../productTour/TourOverviewSection';
-import { PracticeOverviewSection } from '../../practice/PracticeOverviewSection';
 import {
 	AUTHORITIES,
 	hasUserAuthority,
@@ -15,8 +14,9 @@ import './helpTours.styles.scss';
 
 /**
  * One Help card owns the learning preferences and every manual learning
- * option. Counsellors also get the auto-start switch and the practice area;
- * every role gets the "?" launcher switch and its own tours.
+ * option. Counsellors also get the auto-start switch; every role gets the "?"
+ * launcher switch and its own tours. The practice runs from the tour cards
+ * themselves (FE#2545: the Einführung absorbed the last practice card).
  */
 export const HelpToursSection = () => {
 	const { t: translate } = useTranslation();
@@ -36,7 +36,6 @@ export const HelpToursSection = () => {
 			{isConsultant && <EnableWalkthrough embedded />}
 			<TourLauncherSwitch />
 			<TourOverviewSection embedded />
-			{isConsultant && <PracticeOverviewSection embedded />}
 		</div>
 	);
 };

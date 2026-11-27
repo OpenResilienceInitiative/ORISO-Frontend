@@ -58,7 +58,7 @@ describe('startRoomCall', () => {
 	});
 
 	it('starts nothing, asks for no device and says nothing while practising', async () => {
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		enterPracticeMode({ tourId: 'consultant-walkthrough' });
 
 		await startRoomCall({
 			roomId: CLIENT_ROOM,

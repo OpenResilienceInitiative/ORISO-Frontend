@@ -1,7 +1,13 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { UserDataContext, useTenant } from '../../globalState';
+import { useMediaQuery } from 'react-responsive';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext,
+	useTenant
+} from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
@@ -9,7 +15,8 @@ import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
 import {
 	consultantWalkthroughTour,
-	frontendTours
+	frontendTours,
+	INTRO_PRACTICE_POINTER_CONTENT_KEY
 } from '../productTour/tourDefinitions';
 import {
 	activeTourIdAtom,
@@ -26,7 +33,13 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import { isPracticeCardTourId } from '../../practice/practiceTourIds';
+import {
+	isPracticeTourId,
+	PRACTICE_CALENDAR_TOUR_ID
+} from '../../practice/practiceTourIds';
+import { COMPACT_MAX_WIDTH } from '../calendar/calendarViews';
+import { useDirectLinksAvailability } from '../directLinks/useDirectLinksAllowed';
+import { directInviteFlagsFor } from '../conversationCreate/directLink/directLinkAvailability';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
@@ -45,6 +58,25 @@ const isCurrentVersionFinished = (
 	);
 
 /**
+ * FE#2545: the watch-only Einführung ends with a pointer to its practice
+ * where the practice area is open to this counsellor, also on a phone ("on a
+ * computer, …"). Only the last step's text changes; the step count stays.
+ */
+const withPracticePointer = (
+	steps: TourStep[],
+	pointToPractice: boolean
+): TourStep[] =>
+	pointToPractice && steps.length
+		? [
+				...steps.slice(0, -1),
+				{
+					...steps[steps.length - 1],
+					contentKey: INTRO_PRACTICE_POINTER_CONTENT_KEY
+				}
+			]
+		: steps;
+
+/**
  * Frontend tour host. Renders whichever tour the Help → Tours list requested;
  * without a request, it auto-starts the consultant walkthrough only while the
  * counsellor's own switch is on and the current tour version is neither
@@ -52,23 +84,37 @@ const isCurrentVersionFinished = (
  */
 export const Walkthrough = () => {
 	const settings = useAppConfig();
-	const viewport = useResponsive();
+	const viewport = {
+		...useResponsive(),
+		// The calendar's own breakpoint: compact up to and including it.
+		beyondCompactCalendar: useMediaQuery({
+			minWidth: COMPACT_MAX_WIDTH + 1
+		})
+	};
 	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
 
 	const tenantSettings = useTenant()?.settings;
-	// A practice tour is hosted only by deliberate request, and only where
-	// the practice area is open to this counsellor; the auto-run
-	// below stays hard-wired to the intro tour. A topic tour with a practice
-	// rendering (FE#2545) runs it there and its explanation tour elsewhere.
+	// A practice rendering is hosted only by deliberate request, and only
+	// where the practice area is open to this counsellor and the window fits;
+	// the auto-run below stays hard-wired to the watch-only Einführung, so
+	// practice mode never starts on its own (first-login dialogs keep their
+	// writes). A tour with a practice rendering (the Einführung and topic
+	// tours, FE#2545) runs its watch-only rendering elsewhere; one that exists
+	// only as practice (Supervision) runs nothing elsewhere.
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
 	const practiceCandidate =
 		launchRequest && practiceOpenFor(launchRequest.tourId)
 			? practiceHostedTours.find(
-					(tour) => tour.id === launchRequest.tourId
+					(tour) =>
+						tour.id === launchRequest.tourId &&
+						// A topic tour whose practice this tenant cannot offer
+						// (Supervision without one-on-one supervision, FE#2545)
+						// never runs as an empty practice.
+						isPracticeTourOffered(tour, { ...tenantSettings })
 				)
 			: undefined;
 	// The rendering (practice or explanation) is chosen once per launch
@@ -97,16 +143,43 @@ export const Walkthrough = () => {
 	const practiceTour = choosesPractice ? practiceCandidate : undefined;
 	const lostPracticeRun =
 		!!launchRequest && choosesPractice && !practiceCandidate;
+	// The Kalender tour's Terminlink step follows what the calendar offers:
+	// the media "Direkteinladung erlauben" leaves this counsellor, agency
+	// restrictions included (`useDirectLinkMedia` in `CalendarPageWired`).
+	// The run waits for that answer once per launch request; a later refresh
+	// (the calendar's own) does not interrupt it.
+	const resolvesInviteMedia =
+		launchRequest?.tourId === PRACTICE_CALENDAR_TOUR_ID &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const inviteMedia = useDirectLinksAvailability(resolvesInviteMedia);
+	const [inviteMediaSeenFor, setInviteMediaSeenFor] =
+		useState<typeof launchRequest>(null);
+	// Remembered during render (React's "adjust state on prop change"), so
+	// the run does not wait one extra commit for an effect.
+	if (
+		resolvesInviteMedia &&
+		inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest
+	) {
+		setInviteMediaSeenFor(launchRequest);
+	}
+	const awaitsInviteMedia =
+		resolvesInviteMedia &&
+		!inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest;
 	const requestedTour =
-		launchRequest && !lostPracticeRun
+		launchRequest && !lostPracticeRun && !awaitsInviteMedia
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
+	// A tour that exists only as practice (Supervision since FE#2545 dropped
+	// its explanation) has nothing to run outside it.
+	const practiceOnlyRequest =
+		!!launchRequest &&
+		isPracticeTourId(launchRequest.tourId) &&
+		!frontendTours.some((tour) => tour.id === launchRequest.tourId);
 	const unavailablePracticeRequest =
-		lostPracticeRun ||
-		(!!launchRequest &&
-			isPracticeCardTourId(launchRequest.tourId) &&
-			!practiceOpenFor(launchRequest.tourId));
+		lostPracticeRun || (practiceOnlyRequest && !practiceCandidate);
 	useEffect(() => {
 		if (unavailablePracticeRequest) {
 			// Resizing may end an active practice run. Widening the window
@@ -184,9 +257,19 @@ export const Walkthrough = () => {
 					isPracticeRun &&
 					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
-						: resolveTourSteps(activeTour, {
-								flags: { ...tenantSettings }
-							})
+						: withPracticePointer(
+								resolveTourSteps(activeTour, {
+									flags: {
+										...tenantSettings,
+										...(resolvesInviteMedia &&
+											directInviteFlagsFor(
+												inviteMedia.media
+											))
+									}
+								}),
+								activeTour === consultantWalkthroughTour &&
+									canUsePractice(settings, userData)
+							)
 			}
 		};
 	}
@@ -252,7 +335,7 @@ export const Walkthrough = () => {
 				setLaunchRequest(null);
 			}
 		},
-		[setLaunchRequest]
+		[setLaunchRequest, setAutoRunState]
 	);
 
 	if (!settings.enableWalkthrough || !runTour || !runTour.steps.length) {

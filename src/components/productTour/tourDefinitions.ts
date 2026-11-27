@@ -14,13 +14,34 @@ import { consultantTimelineTour } from './tours/timelineTour';
 import { consultantVideoCallTour } from './tours/videoCallTour';
 
 /**
+ * FE#2545: the Einführung is version 2 (PO: a reworked tour shows as new, a
+ * completion of version 1 does not count). Where practice can run, a
+ * deliberate start runs its practice rendering (`practiceIntroTour`) under
+ * the same id and version.
+ */
+export const INTRO_TOUR_VERSION = 2;
+
+/**
+ * FE#2545 (PO): where the practice area is open, the last step of the
+ * watch-only Einführung ends with one sentence pointing to the practice
+ * (Help → Tours). The host swaps this content in for that step only; the
+ * definition keeps the plain text, so ORISO-Admin and the catalogue see one
+ * step list.
+ */
+export const INTRO_PRACTICE_POINTER_CONTENT_KEY =
+	'walkthrough.step.6.introWithPractice';
+
+/**
  * Direct migration of the legacy intro.js consultant walkthrough: same five
  * steps, same i18n keys, same route behavior. Targets are semantic
- * `data-tour-target` anchors instead of the removed styling classes.
+ * `data-tour-target` anchors instead of the removed styling classes. Since
+ * FE#2545 this is the watch-only Einführung: the auto-start after login, and
+ * the fallback where the practice cannot run (phone, a window below the
+ * practice width, practice area off).
  */
 export const consultantWalkthroughTour: TourDefinition = {
 	id: 'consultant-walkthrough',
-	version: 1,
+	version: INTRO_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
 	titleKey: 'walkthrough.introduction.title',

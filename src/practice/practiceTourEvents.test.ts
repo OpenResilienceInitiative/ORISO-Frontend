@@ -17,7 +17,17 @@ describe('practice tour events', () => {
 			circleCreated: 'practice:circle-created',
 			circleStarted: 'practice:circle-started',
 			circleCallStarted: 'practice:circle-call-started',
-			liveChatAvailable: 'practice:live-chat-available'
+			liveChatAvailable: 'practice:live-chat-available',
+			calendarAppointmentCreated: 'practice:calendar-appointment-created',
+			calendarInvitationCreated: 'practice:calendar-invitation-created',
+			calendarAppointmentCancelled:
+				'practice:calendar-appointment-cancelled',
+			calendarBlockerCreated: 'practice:calendar-blocker-created',
+			calendarAutoAcceptOn: 'practice:calendar-auto-accept-on',
+			supervisionMessageSent: 'practice:supervision-message-sent',
+			supervisorReplaced: 'practice:supervisor-replaced',
+			supervisorAppointmentBooked:
+				'practice:supervisor-appointment-booked'
 		});
 	});
 

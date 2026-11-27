@@ -83,6 +83,8 @@ export interface M3DialogProps {
 	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
 	'id'?: string;
 	'data-testid'?: string;
+	/** Product-tour anchor on the dialog surface. */
+	'data-tour-target'?: string;
 }
 
 /**
@@ -126,7 +128,8 @@ export const M3Dialog = ({
 	className,
 	motion,
 	id,
-	'data-testid': testId
+	'data-testid': testId,
+	'data-tour-target': tourTarget
 }: M3DialogProps) => {
 	const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 	const bottomSheet = motion === 'bottom-sheet';
@@ -196,7 +199,8 @@ export const M3Dialog = ({
 					bottomSheet && open && 'm3Dialog__surface--open'
 				),
 				'style': fullScreen ? undefined : { maxWidth: `${width}px` },
-				'data-testid': testId
+				'data-testid': testId,
+				'data-tour-target': tourTarget
 			}}
 		>
 			{sharedScope && (

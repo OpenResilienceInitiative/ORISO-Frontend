@@ -17,7 +17,7 @@ import {
 /**
  * Helpers of the T2 proof (`practice-network-guard.smoke.spec.ts`): what the
  * browser sent, what the browser stored, and the real controls a counsellor
- * uses to walk the two practice flows. Not a spec: Playwright only runs
+ * uses to walk the practice flows. Not a spec: Playwright only runs
  * `*.spec.ts`, so this file can be imported by the spec and by a dry run.
  *
  * Texts come from the i18n catalogues (de, de@informal, en), so the proof
@@ -337,20 +337,6 @@ const clickTarget = async (page: Page, name: string) => {
 	await target(page, name).click();
 };
 
-/** The practice card of a flow on the Help page (title = its tour title key). */
-export const practiceCard = (page: Page, titleKey: string): Locator =>
-	page.locator('li.practiceCards__card', {
-		has: page.getByRole('heading', { name: exactText(titleKey) })
-	});
-
-export const startButton = (card: Locator): Locator =>
-	card.getByRole('button', {
-		name: exactText(
-			'practice.cards.action.start',
-			'practice.cards.action.restart'
-		)
-	});
-
 /**
  * The tooltip shows this step (by its title and "Step n of N"); returns N.
  * `total` pins N once it is known from step 1.
@@ -406,36 +392,35 @@ export const typedText = (run: string, what: string) =>
 export interface FlowRun {
 	/** Everything typed into the practice: none of it may be sent. */
 	typed: string[];
-	/** Flow F1 only: whether the Träger's Team-Besprechung steps were present. */
-	withTeam?: boolean;
 }
 
-const ACCEPT_STEP = 'tour.practiceAccept.step';
+const INTRO_STEP = 'walkthrough.practice.step';
+const introTitle = (key: string) => `${INTRO_STEP}.${key}.title`;
+
+/** The Einführung's step count as practice (FE#2545). */
+export const INTRO_PRACTICE_STEPS = 9;
 
 /**
- * Flow F1, steps 1 and 2: the Anfragen link in the navigation, then the
- * practice enquiry in the real list. Returns the step count: eight with the
- * Träger's Team-Besprechung steps, six without.
+ * The Einführung as practice (FE#2545), steps 1 to 3: the welcome, the real
+ * Anfragen list with the practice enquiry only, then a click on it.
  */
-export const openThePracticeEnquiry = async (page: Page): Promise<number> => {
-	const total = await expectStep(
-		page,
-		`${ACCEPT_STEP}.navEnquiries.title`,
-		1
-	);
-	expect([6, 8]).toContain(total);
-	await clickTarget(page, 'nav-enquiries');
+export const openThePracticeEnquiry = async (page: Page): Promise<void> => {
+	const total = await expectStep(page, introTitle('intro'), 1);
+	expect(total).toBe(INTRO_PRACTICE_STEPS);
 	await pressNext(page);
 
-	await expectStep(page, `${ACCEPT_STEP}.openEnquiry.title`, 2, total);
+	await expectStep(page, introTitle('enquiries'), 2, total);
+	await expect(target(page, 'consultant-enquiries-list')).toBeVisible();
 	// Only the practice enquiry: no real row is mixed in.
 	const rows = page.locator('[data-cy="session-list-item"]');
 	await expect(rows).toHaveCount(1);
 	await expect(rows.first()).toContainText(
 		partOfText('practiceScript.cast.asker')
 	);
+	await pressNext(page);
+
+	await expectStep(page, introTitle('openEnquiry'), 3, total);
 	await clickTarget(page, 'enquiry-list-item');
-	return total;
 };
 
 /** "End practice" in the banner. */
@@ -445,113 +430,170 @@ export const endFromBanner = (page: Page) =>
 		.click();
 
 /**
- * Flow F1 from the first tooltip to the last (spec 3.3), with the real
- * controls. The variant is the tenant's, so it is read from the step count and
- * reported.
+ * The Einführung as practice from the first tooltip to the last, with the
+ * real controls: the Anfragen list, the practice enquiry opened and
+ * accepted, a first reply (the script answers), "Meine Beratungen", "Archiv".
  */
-export const driveAcceptFlow = async (
+export const driveIntroFlow = async (
 	page: Page,
 	run: string
 ): Promise<FlowRun> => {
 	const typed: string[] = [];
-	const total = await openThePracticeEnquiry(page);
-	const withTeam = total === 8;
+	const total = INTRO_PRACTICE_STEPS;
+	await openThePracticeEnquiry(page);
 
-	if (withTeam) {
-		await expectStep(page, `${ACCEPT_STEP}.openTeam.title`, 3, total);
-		await clickTarget(page, 'enquiry-team-button');
-		await expectStep(page, `${ACCEPT_STEP}.teamReply.title`, 4, total);
-		const panel = target(page, 'team-discussion-panel');
-		await expect(panel).toContainText(
-			partOfText('practiceScript.colleague.teamMessage')
-		);
-		const note = typedText(run, 'team');
-		typed.push(note);
-		await typeAndSend(panel, note);
-	}
-
-	const accept = withTeam ? 5 : 3;
-	await expectStep(page, `${ACCEPT_STEP}.accept.title`, accept, total);
+	await expectStep(page, introTitle('accept'), 4, total);
 	await clickTarget(page, 'enquiry-accept-button');
 
-	await expectStep(
-		page,
-		`${ACCEPT_STEP}.firstAnswer.title`,
-		accept + 1,
-		total
-	);
+	await expectStep(page, introTitle('reply'), 5, total);
 	await expect(mainPane(page)).toContainText(
 		partOfText('practiceScript.asker.firstMessage'),
 		{ timeout: STEP_TIMEOUT }
 	);
-	await pressNext(page);
-
-	await expectStep(page, `${ACCEPT_STEP}.reply.title`, accept + 2, total);
 	const reply = typedText(run, 'reply');
 	typed.push(reply);
 	await expect(target(page, 'session-composer')).toBeVisible();
 	await typeAndSend(mainPane(page), reply);
+
+	await expectStep(page, introTitle('answered'), 6, total);
 	await expect(mainPane(page)).toContainText(
 		partOfText('practiceScript.asker.reply'),
 		{ timeout: STEP_TIMEOUT }
 	);
+	await pressNext(page);
 
-	await expectStep(page, `${ACCEPT_STEP}.done.title`, accept + 3, total);
-	return { typed, withTeam };
+	await expectStep(page, introTitle('mySessions'), 7, total);
+	await expect(target(page, 'consultant-sessions-list')).toContainText(
+		partOfText('practiceScript.cast.asker')
+	);
+	await pressNext(page);
+
+	await expectStep(page, introTitle('archive'), 8, total);
+	await expect(target(page, 'sessions-archive-tab')).toBeVisible();
+	await pressNext(page);
+
+	await expectStep(page, introTitle('done'), total, total);
+	return { typed };
 };
 
-/** Flow F2 from the first tooltip to the last (spec 3.4): four steps. */
+/**
+ * A tour's card in Help → Rundgänge (FE#2545: there are no practice cards
+ * any more; the Einführung and Supervision run as practice from theirs).
+ */
+export const topicTourCard = (page: Page, titleKey: string): Locator =>
+	page.locator('li.tourOverview__card', {
+		has: page.getByRole('heading', { name: exactText(titleKey) })
+	});
+
+export const topicStartButton = (card: Locator): Locator =>
+	card.getByRole('button', {
+		name: exactText(
+			'walkthrough.overview.action.start',
+			'walkthrough.overview.action.restart',
+			'walkthrough.overview.action.continue'
+		)
+	});
+
+const SUPERVISION_STEP = 'tour.supervision.step';
+
+/**
+ * The Supervision topic tour (FE#2545) from the first tooltip to the last:
+ * accept the practice enquiry (Robin comes along), chip, row icon, a message
+ * in the side room, Robin swapped for Kim, and, where the supervision chat
+ * allows a call, a phone appointment with the supervisor. 12 steps, 11
+ * without the appointment.
+ */
 export const driveSupervisionFlow = async (
 	page: Page,
 	run: string
 ): Promise<FlowRun> => {
 	const typed: string[] = [];
-	const step = 'tour.practiceSupervision.step';
+	const title = (key: string) => `${SUPERVISION_STEP}.${key}.title`;
 
-	const total = await expectStep(page, `${step}.addSupervisor.title`, 1);
-	expect(total).toBe(4);
-	await expect(mainPane(page)).toContainText(
-		partOfText('practiceScript.counsellor.acceptedCaseMessage'),
-		{ timeout: STEP_TIMEOUT }
+	const total = await expectStep(page, title('intro'), 1);
+	expect([11, 12]).toContain(total);
+	await pressNext(page);
+
+	await expectStep(page, title('openEnquiry'), 2, total);
+	const rows = page.locator('[data-cy="session-list-item"]');
+	await expect(rows).toHaveCount(1);
+	await clickTarget(page, 'enquiry-list-item');
+
+	await expectStep(page, title('accept'), 3, total);
+	await clickTarget(page, 'enquiry-accept-button');
+
+	await expectStep(page, title('assigned'), 4, total);
+	await pressNext(page);
+
+	await expectStep(page, title('find'), 5, total);
+	await expect(target(page, 'sessions-supervision-chip')).toHaveAttribute(
+		'data-cy',
+		'sessions-list-chip-supervision'
 	);
-	// The real "+": pick the supervisor, give the reason, confirm.
-	await clickTarget(page, 'session-supervisor-add');
-	await page.getByRole('combobox').click();
-	await page
-		.getByRole('option', {
-			name: partOfText('practiceScript.cast.supervisor')
-		})
-		.click();
-	const reason = typedText(run, 'reason');
-	typed.push(reason);
-	await page
-		.getByPlaceholder(
-			partOfText('sessionHeader.supervisor.modal.reasonPlaceholder')
-		)
-		.fill(reason);
-	await page
-		.getByRole('button', {
-			name: exactText('sessionHeader.supervisor.modal.addButton')
-		})
-		.click();
+	await pressNext(page);
 
-	await expectStep(page, `${step}.supervisorReply.title`, 2, total);
+	await expectStep(page, title('openPanel'), 6, total);
+	await clickTarget(page, 'session-supervision-indicator');
+
+	await expectStep(page, title('write'), 7, total);
 	const panel = target(page, 'supervision-panel');
+	const note = typedText(run, 'supervision');
+	typed.push(note);
+	await typeAndSend(panel, note);
 	await expect(panel).toContainText(
 		partOfText('practiceScript.supervisor.reply'),
-		{
-			timeout: STEP_TIMEOUT
-		}
+		{ timeout: STEP_TIMEOUT }
 	);
 	await expect(mainPane(page)).not.toContainText(
 		partOfText('practiceScript.supervisor.reply')
 	);
+
+	await expectStep(page, title('sameAccess'), 8, total);
 	await pressNext(page);
 
-	await expectStep(page, `${step}.standingAssignment.title`, 3, total);
+	// "+" ("Supervisor verwalten") → "Wechseln" at Robin → Kim → reason → confirm.
+	await expectStep(page, title('change'), 9, total);
+	await clickTarget(page, 'session-supervisor-add');
+	const dialog = page.getByTestId('manage-people-dialog');
+	await dialog
+		.locator('.managePeople__action', {
+			hasText: exactText('managePeople.replace.action')
+		})
+		.first()
+		.click();
+	await dialog
+		.locator('.managePeople__candidate', {
+			hasText: partOfText('practiceScript.cast.secondSupervisor')
+		})
+		.click();
+	const reason = typedText(run, 'reason');
+	typed.push(reason);
+	await dialog
+		.getByPlaceholder(
+			partOfText('managePeople.supervision.reasonPlaceholder')
+		)
+		.fill(reason);
+	await dialog.locator('.managePeople__action--primary').click();
+	await expect(dialog).toBeHidden({ timeout: STEP_TIMEOUT });
+
+	await expectStep(page, title('calls'), 10, total);
 	await pressNext(page);
 
-	await expectStep(page, `${step}.done.title`, 4, total);
+	if (total === 12) {
+		await expectStep(page, title('appointment'), 11, total);
+		await clickTarget(page, 'supervision-panel-menu');
+		await clickTarget(page, 'supervision-book-appointment');
+		const booking = target(page, 'supervision-appointment-dialog');
+		await expect(booking).toBeVisible();
+		await expect(
+			booking.getByTestId('supervision-appointment-unreachable')
+		).toHaveCount(0);
+		await booking.locator('[data-cy="calendar-dialog-kind-phone"]').click();
+		await booking.getByTestId('calendar-appointment-save').click();
+		await expect(booking).toBeHidden({ timeout: STEP_TIMEOUT });
+	}
+
+	await expectStep(page, title('done'), total, total);
 	return { typed };
 };
 

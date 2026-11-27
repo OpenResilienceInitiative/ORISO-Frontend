@@ -3623,7 +3623,8 @@
 		"cast": {
 			"asker": "Sam Muster (Übung)",
 			"colleague": "Alex (Übung)",
-			"supervisor": "Robin (Übung)"
+			"supervisor": "Robin (Übung)",
+			"secondSupervisor": "Kim (Übung)"
 		},
 		"asker": {
 			"firstMessage": "Guten Tag, ich habe eine allgemeine Frage zu Ihrem Angebot. Wie läuft eine Beratung bei Ihnen ab, und wie schnell bekomme ich eine Antwort? Vielen Dank.",
@@ -5665,6 +5666,7 @@
 			},
 			"6": {
 				"intro": "Im Profilbereich können Sie persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Ihres Urlaubs aktivieren, Ihr Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen.",
+				"introWithPractice": "Im Profilbereich können Sie persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Ihres Urlaubs aktivieren, Ihr Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen. <br /><br /> Am Computer können Sie das unter Hilfe → Rundgänge auch üben.",
 				"title": "Profil"
 			},
 			"done": "Fertig",
@@ -5700,6 +5702,46 @@
 			"hint": {
 				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
 				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
+			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Einführung",
+					"intro": "Willkommen! In dieser Übung lernen Sie Ihren Arbeitsbereich an einer erfundenen Anfrage kennen, nichts wird gesendet oder gespeichert."
+				},
+				"enquiries": {
+					"title": "Anfragen",
+					"intro": "Hier stehen alle offenen Anfragen, die noch niemand angenommen hat, und Ihr ganzes Team sieht diese Liste. Die ältesten stehen oben, damit die zuerst eingegangenen nicht warten."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf und lesen Sie, worum es geht."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und Ihr Team sieht sie nicht mehr in der Liste."
+				},
+				"reply": {
+					"title": "Erste Antwort schreiben",
+					"intro": "Die Anfrage gehört jetzt Ihnen: Oben sehen Sie die automatische Erstantwort und die erste Nachricht. Schreiben Sie eine kurze Antwort und senden Sie sie ab."
+				},
+				"answered": {
+					"title": "Die Antwort ist da",
+					"intro": "Die ratsuchende Person hat Ihnen geantwortet. So geht die Beratung im Chat weiter."
+				},
+				"mySessions": {
+					"title": "Meine Beratungen",
+					"intro": "Hier finden Sie alle Anfragen, die Sie angenommen haben, jetzt auch die Übungsanfrage. Der zuletzt bearbeitete Verlauf steht oben."
+				},
+				"archive": {
+					"title": "Archiv",
+					"intro": "Ruhende Unterhaltungen können Sie archivieren: Sie werden nicht gelöscht, sondern stehen unter „Archiv“. Schreibt jemand wieder, kommt die Unterhaltung zurück in Ihre Liste."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie haben eine Anfrage angenommen und beantwortet. Weitere Rundgänge finden Sie im Profil unter „Hilfe“, mit der Schaltfläche unten beenden Sie die Übung."
+				}
 			}
 		}
 	},
@@ -6488,66 +6530,6 @@
 				}
 			}
 		},
-		"practiceAccept": {
-			"title": "Übung: Anfrage annehmen",
-			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"navEnquiries": {
-					"title": "Anfragen öffnen",
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen finden Sie hier unter „Anfragen“."
-				},
-				"openEnquiry": {
-					"title": "Anfrage öffnen",
-					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
-				},
-				"openTeam": {
-					"title": "Team-Chat öffnen",
-					"intro": "Bei Ihnen ist der Team-Chat aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Team-Chat öffnen“."
-				},
-				"teamReply": {
-					"title": "Im Team antworten",
-					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird der Team-Chat geschlossen."
-				},
-				"accept": {
-					"title": "Anfrage annehmen",
-					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für Ihr Team nicht mehr in der Liste."
-				},
-				"firstAnswer": {
-					"title": "Erstantwort und erste Nachricht",
-					"intro": "Die Anfrage gehört jetzt Ihnen. Im Chat sehen Sie die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
-				},
-				"reply": {
-					"title": "Erste Antwort schreiben",
-					"intro": "Schreiben Sie der ratsuchenden Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
-				},
-				"done": {
-					"title": "Geschafft!",
-					"intro": "Gut gemacht: Sie haben eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beenden Sie die Übung."
-				}
-			}
-		},
-		"practiceSupervision": {
-			"title": "Übung: Supervision hinzufügen",
-			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
-			"step": {
-				"addSupervisor": {
-					"title": "Supervisor:in hinzufügen",
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus, nennen Sie kurz den Grund und bestätigen Sie."
-				},
-				"supervisorReply": {
-					"title": "Antwort der Supervision",
-					"intro": "Ihre Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten sehen nur Sie beide — die ratsuchende Person sieht sie nicht."
-				},
-				"standingAssignment": {
-					"title": "Feste Zuordnung",
-					"intro": "Hat Ihre Administration Ihnen eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür müssen Sie nichts tun."
-				},
-				"done": {
-					"title": "Geschafft!",
-					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Hilfe",
 			"title": "Rundgänge",
@@ -6582,6 +6564,60 @@
 				"done": {
 					"title": "Kurz gesagt",
 					"intro": "Eigene Fälle bieten Sie in der Beratung über „+“ → „Beratung übergeben“ an. Fälle von Kolleg:innen fragen Sie über die Personensuche an. Den Stand finden Sie im Zeitstrahl."
+				}
+			}
+		},
+		"supervision": {
+			"title": "Supervision",
+			"summary": "Wo Sie Ihre Supervisor:in finden, ihr schreiben, sie wechseln und einen Termin mit ihr vereinbaren.",
+			"step": {
+				"intro": {
+					"title": "Supervision: vorher eingerichtet",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Im echten Betrieb richtet Ihre Administration vorab im Admin-Bereich eine feste Supervisor:in für Sie ein – fragen Sie sie, wenn Sie mehr wissen möchten."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“. Die Anfrage wird damit zu Ihrer Beratung."
+				},
+				"assigned": {
+					"title": "Supervision automatisch dabei",
+					"intro": "Mit dem Annehmen ist Ihre feste Supervisor:in Robin (Übung) automatisch dazugekommen. Dafür müssen Sie nichts tun."
+				},
+				"find": {
+					"title": "Supervision in der Liste",
+					"intro": "Der Filter „Supervision“ zeigt nur Ihre Fälle mit Supervision. In der Zeile eines solchen Falls steht ein rundes Supervisions-Symbol."
+				},
+				"openPanel": {
+					"title": "Supervision öffnen",
+					"intro": "Klicken Sie in der Zeile der Übungsberatung auf das runde Supervisions-Symbol. Es öffnet den Supervisions-Chat neben der Beratung."
+				},
+				"write": {
+					"title": "An die Supervision schreiben",
+					"intro": "Schreiben Sie Robin (Übung) hier eine kurze Nachricht und senden Sie sie ab. Diesen Chat sehen nur Sie beide, nicht die ratsuchende Person."
+				},
+				"sameAccess": {
+					"title": "Gleicher Einblick",
+					"intro": "Robin hat geantwortet. Unter den eigenen supervidierten Fällen sieht Ihre Supervisor:in diesen Fall genauso wie Sie."
+				},
+				"change": {
+					"title": "Supervisor:in wechseln",
+					"intro": "Klicken Sie auf „+“ („Supervisor verwalten“) und bei Robin (Übung) auf „Wechseln“; wählen Sie Kim (Übung), nennen Sie kurz den Grund und bestätigen Sie. In der Übung wird dabei niemand benachrichtigt."
+				},
+				"calls": {
+					"title": "Anrufe in der Supervision",
+					"intro": "Ihr Träger kann im Supervisions-Chat Audio- und Videoanrufe erlauben, auch wenn sie mit Ratsuchenden ausgeschaltet sind. Das legt die Administration fest; in der Übung wird nicht angerufen."
+				},
+				"appointment": {
+					"title": "Termin mit der Supervision",
+					"intro": "Öffnen Sie im Supervisions-Chat ⋮ und wählen Sie „Termin mit Supervisor:in vereinbaren“. Wählen Sie „Video“ oder „Telefon“ und speichern Sie; der Termin bleibt in der Übung."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie kennen jetzt die wichtigsten Wege der Supervision. Mit der Schaltfläche unten beenden Sie die Übung."
 				}
 			}
 		},
@@ -6716,6 +6752,34 @@
 				"links": {
 					"title": "Links ohne Termin",
 					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				},
+				"practiceIntro": {
+					"title": "Kalender üben",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Sie tragen Termine, einen Terminlink und eine Sperrzeit ein und schalten die automatische Bestätigung ein."
+				},
+				"practiceAppointment": {
+					"title": "Termin eintragen",
+					"intro": "Klicken Sie auf „Neu“, wählen Sie unter „Beratung“ die erfundene ratsuchende Person und klicken Sie auf „Anlegen“. „Weitere Personen per Link einladen“ bleibt diesmal aus."
+				},
+				"practiceInvitation": {
+					"title": "Terminlink anlegen",
+					"intro": "Öffnen Sie noch einmal „Neu“, wählen Sie dieselbe Person, schalten Sie „Weitere Personen per Link einladen“ ein und klicken Sie auf „Anlegen“. Der Link, den Sie danach sehen, ist ein Übungslink und führt nirgendwohin."
+				},
+				"practiceCancel": {
+					"title": "Termin absagen",
+					"intro": "Unter „Als Nächstes“ stehen Ihre neuen Termine. Klicken Sie einen an, wählen Sie „Absagen“ und bestätigen Sie."
+				},
+				"practiceBlocker": {
+					"title": "Sperrzeit eintragen",
+					"intro": "In einer Sperrzeit kann niemand bei Ihnen buchen. Öffnen Sie „Neu“, wechseln Sie zum Reiter „Sperrzeit“ und klicken Sie auf „Eintragen“."
+				},
+				"practiceAutoAccept": {
+					"title": "Automatisch bestätigen",
+					"intro": "Öffnen Sie ⋮ und dort „Sprechstunden“, schalten Sie „Buchungen automatisch bestätigen“ ein und klicken Sie auf „Sprechstunden speichern“. Dann sind Buchungen in Ihren Sprechstunden sofort fest."
+				},
+				"practiceDone": {
+					"title": "Geschafft",
+					"intro": "Sie haben Termine und einen Terminlink angelegt, einen Termin abgesagt, eine Sperrzeit eingetragen und Buchungen automatisch bestätigt. Im echten Kalender erfährt die ratsuchende Person von jedem Termin im Chat."
 				}
 			}
 		},
@@ -7291,20 +7355,8 @@
 			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
-				"supervision": "Eine Supervisor:in auswählen und einer Beratung hinzufügen."
-			},
-			"title": "Übungsbereich",
-			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
-			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
-			"badge": "Übung",
 			"phoneHint": "Bitte üben Sie am Computer.",
-			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung.",
-			"action": {
-				"start": "Übung starten",
-				"restart": "Noch einmal üben"
-			}
+			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung."
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."

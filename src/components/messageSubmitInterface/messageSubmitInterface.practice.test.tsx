@@ -194,7 +194,7 @@ describe('composer media controls and practice mode (no voice, no attachments)',
 	});
 
 	it('offers none of them while practising', () => {
-		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		enterPracticeMode({ tourId: 'consultant-walkthrough' });
 
 		const { container } = render(<Composer />);
 
@@ -207,7 +207,7 @@ describe('composer media controls and practice mode (no voice, no attachments)',
 		const { container } = render(<Composer />);
 		expect(screen.getByRole('button', VOICE)).toBeTruthy();
 
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 
 		expect(screen.queryByRole('button', VOICE)).toBeNull();
 		expect(container.querySelector('input[type="file"]')).toBeNull();

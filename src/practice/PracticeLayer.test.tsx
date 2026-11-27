@@ -28,14 +28,14 @@ describe('PracticeLayer', () => {
 				<Probe />
 			</PracticeLayer>
 		);
-		expect(getTourHostHooks('consultant-practice-accept')).toBeDefined();
+		expect(getTourHostHooks('consultant-walkthrough')).toBeDefined();
 		expect(
 			getTourHostHooks('consultant-practice-supervision')
 		).toBeDefined();
 
 		unmount();
 
-		expect(getTourHostHooks('consultant-practice-accept')).toBeUndefined();
+		expect(getTourHostHooks('consultant-walkthrough')).toBeUndefined();
 		expect(
 			getTourHostHooks('consultant-practice-supervision')
 		).toBeUndefined();
@@ -68,7 +68,7 @@ describe('PracticeLayer', () => {
 		);
 		expect(screen.getByTestId('probe').textContent).toBe('false');
 
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 
 		expect(screen.getByTestId('probe').textContent).toBe('true');
 	});
@@ -85,7 +85,7 @@ describe('PracticeLayer', () => {
 			</PracticeLayer>
 		);
 
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 		act(() => exitPracticeMode());
 
 		expect(mounted).toHaveBeenCalledTimes(1);
@@ -97,7 +97,7 @@ describe('PracticeLayer', () => {
 				<Probe />
 			</PracticeLayer>
 		);
-		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
+		act(() => enterPracticeMode({ tourId: 'consultant-walkthrough' }));
 
 		unmount();
 		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));

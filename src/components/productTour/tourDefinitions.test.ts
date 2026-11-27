@@ -9,7 +9,8 @@ import trTranslations from '../../resources/i18n/tr/common.json';
 import {
 	consultantMailCounsellingTour,
 	consultantWalkthroughTour,
-	frontendTours
+	frontendTours,
+	INTRO_PRACTICE_POINTER_CONTENT_KEY
 } from './tourDefinitions';
 
 const resolveKey = (bundle: object, key: string): unknown =>
@@ -33,9 +34,28 @@ const resolvesWithFallback = (bundle: object, key: string): boolean =>
 	typeof resolveKey(deTranslations, key) === 'string';
 
 describe('consultantWalkthroughTour', () => {
+	it.each(bundledLocales)(
+		'resolves the practice pointer of the last step in %s (FE#2545)',
+		(_locale, bundle) => {
+			expect(
+				resolvesWithFallback(bundle, INTRO_PRACTICE_POINTER_CONTENT_KEY)
+			).toBe(true);
+		}
+	);
+
+	it('keeps the plain text in the pointer and adds one sentence (de)', () => {
+		const plain = resolveKey(deTranslations, 'walkthrough.step.6.intro');
+		expect(
+			resolveKey(deTranslations, INTRO_PRACTICE_POINTER_CONTENT_KEY)
+		).toBe(
+			`${plain} <br /><br /> Am Computer können Sie das unter Hilfe → Rundgänge auch üben.`
+		);
+	});
+
 	it('migrates the five legacy walkthrough steps in order', () => {
 		expect(consultantWalkthroughTour.id).toBe('consultant-walkthrough');
-		expect(consultantWalkthroughTour.version).toBe(1);
+		// FE#2545: version 2, with the practice Einführung (shows as new).
+		expect(consultantWalkthroughTour.version).toBe(2);
 		expect(consultantWalkthroughTour.surface).toBe('frontend');
 		expect(consultantWalkthroughTour.audiences).toEqual(['consultant']);
 		expect(consultantWalkthroughTour.steps).toHaveLength(5);

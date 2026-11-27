@@ -23,19 +23,19 @@ const HostRequest = () => {
 };
 
 /**
- * Practice mode on, a run at step 3 of 6, and an "app" behind the banner so
+ * Practice mode on, a run of the Einführung at step 3 of 9, and an "app" behind the banner so
  * its elevation and its contrast against real content are visible.
  */
 const Stage = () => {
 	const store = useMemo(() => {
 		const created = createStore();
 		created.set(practiceTourProgressAtom, {
-			tourId: 'consultant-practice-accept',
+			tourId: 'consultant-walkthrough',
 			stepIndex: 2,
-			stepCount: 6
+			stepCount: 9
 		});
 		created.set(tourLaunchRequestAtom, {
-			tourId: 'consultant-practice-accept',
+			tourId: 'consultant-walkthrough',
 			mode: 'start',
 			requestedAt: 1
 		});
@@ -91,10 +91,8 @@ export const Desktop: Story = {
 		});
 		const controls = within(banner);
 		await expect(banner).toBeVisible();
-		await expect(
-			controls.getByText('Übung: Anfrage annehmen')
-		).toBeVisible();
-		await expect(controls.getByText(/Schritt 3 von 6/)).toBeVisible();
+		await expect(controls.getByText('Einführung')).toBeVisible();
+		await expect(controls.getByText(/Schritt 3 von 9/)).toBeVisible();
 		await expect(
 			controls.getByText(/Übungsfall, keine echten Daten/)
 		).toBeVisible();
@@ -157,7 +155,7 @@ export const Restart: Story = {
 		// the fixtures (Organisms/PracticeFlow runs the whole chain).
 		await expect(
 			canvas.getByRole('status', { name: 'Tour host request' })
-		).toHaveTextContent('restart consultant-practice-accept');
+		).toHaveTextContent('restart consultant-walkthrough');
 		await expect(isPracticeMode()).toBe(true);
 	}
 };

@@ -1,6 +1,13 @@
 import type { TourDefinition } from '../types';
 
 /**
+ * Version 2 (FE#2545): where the practice area is open the tour runs as a
+ * practice flow (`practiceCalendarTour`) under this id and version, so the
+ * Help list shows one status for both renderings.
+ */
+export const CALENDAR_TOUR_VERSION = 2;
+
+/**
  * FE#2341: the counsellor calendar, watch-only. "+ Neu", the view switch
  * and ⋮ are explained on their buttons; the dialog and menus they open sit
  * above the tour layer. The view switch has two renderings (digits on wide
@@ -10,7 +17,7 @@ import type { TourDefinition } from '../types';
  */
 export const consultantCalendarTour: TourDefinition = {
 	id: 'consultant-calendar',
-	version: 1,
+	version: CALENDAR_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
 	titleKey: 'tour.calendar.title',

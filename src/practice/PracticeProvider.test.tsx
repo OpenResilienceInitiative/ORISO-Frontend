@@ -21,7 +21,7 @@ import { PracticeBlockedRequestError } from './networkGuard';
 import { exitPracticeMode, isPracticeMode } from './practiceMode';
 import { PracticeProvider, usePractice } from './PracticeProvider';
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const SUPERVISION = 'consultant-practice-supervision';
 
 const Probe = ({ tourId = ACCEPT }: { tourId?: string }) => {
@@ -168,7 +168,7 @@ describe('PracticeProvider and usePractice', () => {
 		});
 
 		expect(() =>
-			result.current.enter({ tourId: 'consultant-walkthrough' })
+			result.current.enter({ tourId: 'consultant-mail-counselling' })
 		).toThrow(/practice tour/i);
 
 		expect(result.current.state).toBe('inactive');

@@ -26,7 +26,7 @@ import {
 import { registerPracticeRestartHandler } from './practiceRestart';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 
-const ACCEPT = 'consultant-practice-accept';
+const ACCEPT = 'consultant-walkthrough';
 const SUPERVISION = 'consultant-practice-supervision';
 
 const progressBody = (tourId: string) =>
@@ -52,12 +52,13 @@ describe('practice mode (module-level core)', () => {
 		globalThis.fetch = originalFetch;
 	});
 
-	it('knows the two practice flows of the spec and the Live-Chat and Gesprächskreis tours (FE#2545)', () => {
+	it('knows the two practice flows of the spec and the Live-Chat, Gesprächskreis and Kalender tours (FE#2545)', () => {
 		expect([...PRACTICE_TOUR_IDS]).toEqual([
 			ACCEPT,
 			SUPERVISION,
 			'consultant-live-chat',
-			'consultant-group-circle'
+			'consultant-group-circle',
+			'consultant-calendar'
 		]);
 	});
 
@@ -104,7 +105,7 @@ describe('practice mode (module-level core)', () => {
 
 	it('refuses an unknown tour id and installs nothing (fail closed)', () => {
 		expect(() =>
-			enterPracticeMode({ tourId: 'consultant-walkthrough' })
+			enterPracticeMode({ tourId: 'consultant-mail-counselling' })
 		).toThrow(/practice tour/i);
 		expect(() => enterPracticeMode({ tourId: '' })).toThrow();
 		expect(isPracticeMode()).toBe(false);
@@ -151,7 +152,7 @@ describe('practice mode (module-level core)', () => {
 			await expect(
 				globalThis.fetch(endpoints.tutorialProgress, {
 					method: 'PUT',
-					body: progressBody('consultant-walkthrough')
+					body: progressBody('consultant-mail-counselling')
 				})
 			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 		});

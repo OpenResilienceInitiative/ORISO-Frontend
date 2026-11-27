@@ -29,7 +29,7 @@ describe('versionedTourProgressRepository', () => {
 					finishStep = () => resolve({} as any);
 				})
 		);
-		const scope = { tourId: 'consultant-practice-accept', tourVersion: 1 };
+		const scope = { tourId: 'consultant-walkthrough', tourVersion: 1 };
 		const step = versionedTourProgressRepository.saveProgress({
 			...scope,
 			status: 'in_progress'
@@ -53,7 +53,7 @@ describe('versionedTourProgressRepository', () => {
 					finishStep = () => resolve({} as any);
 				})
 		);
-		const scope = { tourId: 'consultant-practice-accept', tourVersion: 1 };
+		const scope = { tourId: 'consultant-walkthrough', tourVersion: 1 };
 		const step = versionedTourProgressRepository.saveProgress({
 			...scope,
 			status: 'in_progress',
@@ -79,7 +79,7 @@ describe('versionedTourProgressRepository', () => {
 		vi.mocked(apiUpsertTutorialProgress).mockRejectedValueOnce(
 			new Error('offline')
 		);
-		const scope = { tourId: 'consultant-practice-accept', tourVersion: 1 };
+		const scope = { tourId: 'consultant-walkthrough', tourVersion: 1 };
 		const step = versionedTourProgressRepository.saveProgress({
 			...scope,
 			status: 'in_progress'
@@ -97,7 +97,7 @@ describe('versionedTourProgressRepository', () => {
 	});
 	it('persists progress through the versioned userservice api', async () => {
 		await versionedTourProgressRepository.saveProgress({
-			tourId: 'consultant-walkthrough',
+			tourId: 'consultant-mail-counselling',
 			tourVersion: 1,
 			status: 'in_progress',
 			currentStepId: 'enquiries'
@@ -105,7 +105,7 @@ describe('versionedTourProgressRepository', () => {
 
 		expect(apiUpsertTutorialProgress).toHaveBeenCalledWith({
 			surface: 'frontend',
-			tourId: 'consultant-walkthrough',
+			tourId: 'consultant-mail-counselling',
 			tourVersion: 1,
 			status: 'in_progress',
 			currentStepId: 'enquiries'
@@ -115,7 +115,7 @@ describe('versionedTourProgressRepository', () => {
 	it('reads the frontend-surface progress list', async () => {
 		vi.mocked(apiGetTutorialProgress).mockResolvedValueOnce([
 			{
-				tourId: 'consultant-walkthrough',
+				tourId: 'consultant-mail-counselling',
 				tourVersion: 1,
 				surface: 'frontend',
 				status: 'completed'
@@ -126,7 +126,7 @@ describe('versionedTourProgressRepository', () => {
 
 		expect(apiGetTutorialProgress).toHaveBeenCalledWith('frontend');
 		expect(items[0]).toMatchObject({
-			tourId: 'consultant-walkthrough',
+			tourId: 'consultant-mail-counselling',
 			tourVersion: 1,
 			status: 'completed'
 		});
@@ -139,7 +139,7 @@ describe('versionedTourProgressRepository', () => {
 
 		await expect(
 			versionedTourProgressRepository.saveProgress({
-				tourId: 'consultant-walkthrough',
+				tourId: 'consultant-mail-counselling',
 				tourVersion: 1,
 				status: 'completed'
 			})

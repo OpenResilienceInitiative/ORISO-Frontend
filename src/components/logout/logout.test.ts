@@ -232,7 +232,7 @@ describe('logout storage sweep (#1071)', () => {
 		const startPractice = async () => {
 			const practice = await import('../../practice/practiceMode');
 			practice.enterPracticeMode({
-				tourId: 'consultant-practice-accept'
+				tourId: 'consultant-walkthrough'
 			});
 			started.push(practice.exitPracticeMode);
 			return practice;

@@ -18,7 +18,7 @@ const step = (id: string) => ({
 });
 
 const practiceTour = (ids: string[]): TourDefinition => ({
-	id: 'consultant-practice-accept',
+	id: 'consultant-walkthrough',
 	version: 1,
 	surface: 'frontend',
 	audiences: ['consultant'],
@@ -48,7 +48,7 @@ describe('practice tour progress', () => {
 		const { reader } = setup(practiceTour(['a', 'b', 'c', 'd']));
 
 		expect(reader.result.current).toEqual({
-			tourId: 'consultant-practice-accept',
+			tourId: 'consultant-walkthrough',
 			stepIndex: 0,
 			stepCount: 4,
 			stepId: 'a'
@@ -87,7 +87,7 @@ describe('practice tour progress', () => {
 	it('does not track a tour that is not a practice tour', () => {
 		const { reader } = setup({
 			...practiceTour(['a']),
-			id: 'consultant-walkthrough'
+			id: 'consultant-mail-counselling'
 		});
 
 		expect(reader.result.current).toBeNull();

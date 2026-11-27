@@ -99,6 +99,11 @@ export class PracticeRoom extends PracticeEmitter {
 		this.currentState.members[userId] = entry;
 	}
 
+	removeMember(userId: string): void {
+		this.members.delete(userId);
+		delete this.currentState.members[userId];
+	}
+
 	getMember(userId: string): PracticeRoomMember | null {
 		return this.members.get(userId) ?? null;
 	}
@@ -425,6 +430,49 @@ export class FakeMatrixService {
 
 	stopAndCleanup(): void {}
 
+	/**
+	 * A supervisor added by hand (FE#2545): joins the side room, as on the
+	 * server; whoever is already in it stays.
+	 */
+	addMember(
+		roomId: string,
+		member: { userId: string; displayName: string }
+	): void {
+		const room = this.client.getRoom(roomId);
+		if (!room) {
+			throw new Error(`Unknown practice room ${roomId}`);
+		}
+		room.addMember(member.userId, member.displayName);
+	}
+
+	/**
+	 * A supervisor swap (FE#2545): the new supervisor continues the side
+	 * room, the previous one leaves it, as on the server (#2494 *6).
+	 */
+	replaceMember(
+		roomId: string,
+		fromUserId: string,
+		to: { userId: string; displayName: string }
+	): void {
+		const room = this.client.getRoom(roomId);
+		if (!room) {
+			throw new Error(`Unknown practice room ${roomId}`);
+		}
+		room.removeMember(fromUserId);
+		room.addMember(to.userId, to.displayName);
+	}
+
+	/**
+	 * A notice the server posts in the counsellor's name (FE#2545: the swap
+	 * notice). It is not the counsellor writing, so no practice reaction or
+	 * tour event follows it.
+	 */
+	postServerNotice(roomId: string, body: string): MatrixEvent {
+		return this.append(roomId, this.client.getUserId(), textOf(body), {
+			fromServer: true
+		});
+	}
+
 	/** Scripted messages from the cast (asker, colleague, supervisor). */
 	appendMessage(roomId: string, sender: string, body: string): MatrixEvent {
 		return this.append(roomId, sender, textOf(body));
@@ -433,7 +481,8 @@ export class FakeMatrixService {
 	private append(
 		roomId: string,
 		sender: string,
-		content: Record<string, any>
+		content: Record<string, any>,
+		{ fromServer = false }: { fromServer?: boolean } = {}
 	): MatrixEvent {
 		const room = this.client.getRoom(roomId);
 		if (!room) {
@@ -444,7 +493,7 @@ export class FakeMatrixService {
 		const data = { liveEvent: true, timeline: room.getLiveTimeline() };
 		this.client.emit('Room.timeline', event, room, false, false, data);
 		room.emit('Room.timeline', event, room, false, false, data);
-		if (sender === this.client.getUserId()) {
+		if (!fromServer && sender === this.client.getUserId()) {
 			this.onCounsellorMessage?.(roomId, String(content.body ?? ''), {
 				isEdit: content['m.relates_to']?.rel_type === 'm.replace'
 			});

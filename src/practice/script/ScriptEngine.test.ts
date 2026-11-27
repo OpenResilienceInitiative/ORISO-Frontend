@@ -5,7 +5,7 @@ import {
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
-import { practiceAcceptTour, practiceSupervisionTour } from '../practiceTours';
+import { practiceIntroTour, practiceSupervisionTour } from '../practiceTours';
 import {
 	createScriptEngine,
 	PRACTICE_SCRIPT_VERSION,
@@ -55,6 +55,23 @@ describe('ScriptEngine', () => {
 			sender: PRACTICE_CAST.supervisor.matrixUserId,
 			body: SPEC_DE.supervisorReply
 		});
+	});
+
+	it("answers the counsellor's message in the supervision room the same way (FE#2545)", () => {
+		const script = createTestScript('de');
+
+		expect(
+			script.reactionFor({ type: 'counsellor-supervision-message' })
+		).toEqual(script.reactionFor(supervisorAdded));
+	});
+
+	it('casts a second practice supervisor to swap to (FE#2545)', () => {
+		const script = createTestScript('de');
+
+		expect(script.cast.secondSupervisor.displayName).toBe('Kim (Übung)');
+		expect(script.cast.secondSupervisor.matrixUserId).not.toBe(
+			script.cast.supervisor.matrixUserId
+		);
 	});
 
 	it('hands out the approved German texts and cast names verbatim', () => {
@@ -183,9 +200,14 @@ describe('ScriptEngine', () => {
 		expect(createTestScript('de').scriptVersion).toBe(
 			PRACTICE_SCRIPT_VERSION
 		);
-		// A script change bumps the tour version: move both together.
-		expect(practiceAcceptTour.version).toBe(PRACTICE_SCRIPT_VERSION);
-		expect(practiceSupervisionTour.version).toBe(PRACTICE_SCRIPT_VERSION);
+		// A script change bumps the tour versions: move them together.
+		// FE#2545: the Einführung (which absorbed F1) and Supervision went to
+		// version 2 on their own (PO: reworked tours show as new); the script
+		// did not change.
+		expect(practiceIntroTour.version).toBe(PRACTICE_SCRIPT_VERSION + 1);
+		expect(practiceSupervisionTour.version).toBe(
+			PRACTICE_SCRIPT_VERSION + 1
+		);
 	});
 
 	describe.each(PRACTICE_SCRIPT_LOCALES)('locale %s', (locale) => {

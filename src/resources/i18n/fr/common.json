@@ -3602,7 +3602,8 @@
 		"cast": {
 			"asker": "Sam Muster (exercice)",
 			"colleague": "Alex (exercice)",
-			"supervisor": "Robin (exercice)"
+			"supervisor": "Robin (exercice)",
+			"secondSupervisor": "Kim (exercice)"
 		},
 		"asker": {
 			"firstMessage": "Bonjour, j’ai une question générale sur votre offre. Comment se déroule un accompagnement chez vous, et sous quel délai puis-je espérer une réponse ? Merci d’avance.",
@@ -5648,6 +5649,7 @@
 			},
 			"6": {
 				"intro": "Dans la zone de profil, vous pouvez gérer les informations personnelles et publiques, activer le message d'absence pendant vos vacances, modifier votre mot de passe et utiliser de nombreuses autres fonctions (comme la configuration de l'authentification à deux facteurs).",
+				"introWithPractice": "Dans la zone de profil, vous pouvez gérer les informations personnelles et publiques, activer le message d'absence pendant vos vacances, modifier votre mot de passe et utiliser de nombreuses autres fonctions (comme la configuration de l'authentification à deux facteurs). <br /><br /> Sur un ordinateur, vous pouvez aussi vous exercer sous Aide → Visites guidées.",
 				"title": "Profil"
 			},
 			"done": "Prêt",
@@ -5683,6 +5685,46 @@
 			"hint": {
 				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
 				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
+			}
+		},
+		"practice": {
+			"step": {
+				"intro": {
+					"title": "Visite d’introduction",
+					"intro": "Bienvenue ! Dans cet exercice, vous découvrez votre espace de travail avec une demande inventée ; rien n’est envoyé ni enregistré."
+				},
+				"enquiries": {
+					"title": "Demandes",
+					"intro": "Vous trouvez ici toutes les demandes ouvertes que personne n’a encore acceptées, et toute votre équipe voit cette liste. Les plus anciennes sont en haut, pour que les premières arrivées n’attendent pas."
+				},
+				"openEnquiry": {
+					"title": "Ouvrir la demande",
+					"intro": "Une demande d’exercice attend dans la liste. Cliquez dessus et lisez de quoi il s’agit."
+				},
+				"accept": {
+					"title": "Accepter la demande",
+					"intro": "Cliquez sur « Accepter la demande » : la demande passe dans « Mes consultations » et votre équipe ne la voit plus dans la liste."
+				},
+				"reply": {
+					"title": "Écrire la première réponse",
+					"intro": "La demande est à vous maintenant : en haut, vous voyez la première réponse automatique et le premier message. Écrivez une courte réponse et envoyez-la."
+				},
+				"answered": {
+					"title": "La réponse est arrivée",
+					"intro": "La personne qui demande conseil vous a répondu. C’est ainsi que la consultation se poursuit dans le chat."
+				},
+				"mySessions": {
+					"title": "Mes consultations",
+					"intro": "Vous trouvez ici toutes les demandes que vous avez acceptées, désormais aussi la demande d’exercice. La conversation traitée en dernier est en haut."
+				},
+				"archive": {
+					"title": "Archives",
+					"intro": "Vous pouvez archiver les conversations inactives : elles ne sont pas supprimées, mais rangées dans « Archives ». Si quelqu’un écrit à nouveau, la conversation revient dans votre liste."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Vous avez accepté une demande et y avez répondu. D’autres visites se trouvent dans votre profil sous « Aide » ; le bouton ci-dessous termine l’exercice."
+				}
 			}
 		}
 	},
@@ -6498,66 +6540,6 @@
 				}
 			}
 		},
-		"practiceAccept": {
-			"title": "Exercice : accepter une demande",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
-			"step": {
-				"navEnquiries": {
-					"title": "Ouvrir les demandes",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous trouverez ici, sous « Demandes », les nouvelles demandes."
-				},
-				"openEnquiry": {
-					"title": "Ouvrir la demande",
-					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
-				},
-				"openTeam": {
-					"title": "Ouvrir le chat d’équipe",
-					"intro": "Le chat d’équipe est activé chez vous : il permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir le chat d’équipe »."
-				},
-				"teamReply": {
-					"title": "Répondre à l’équipe",
-					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, le chat d’équipe se ferme."
-				},
-				"accept": {
-					"title": "Accepter la demande",
-					"intro": "Cliquez sur « Accepter la demande » : elle passe dans « Mes consultations » et disparaît de la liste de votre équipe."
-				},
-				"firstAnswer": {
-					"title": "Première réponse et premier message",
-					"intro": "La demande est maintenant la vôtre. Dans le chat, vous voyez la première réponse automatique et le premier message de la personne qui cherche conseil."
-				},
-				"reply": {
-					"title": "Écrire votre première réponse",
-					"intro": "Écrivez une courte réponse à cette personne et envoyez-la. Elle reste dans l’exercice et n’est enregistrée nulle part."
-				},
-				"done": {
-					"title": "Bravo !",
-					"intro": "Bien joué : vous avez accepté une demande et y avez répondu. Terminez l’exercice avec le bouton ci-dessous."
-				}
-			}
-		},
-		"practiceSupervision": {
-			"title": "Exercice : ajouter un·e superviseur·e",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
-			"step": {
-				"addSupervisor": {
-					"title": "Ajouter un·e superviseur·e",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + », choisissez le ou la superviseur·e, indiquez brièvement le motif et confirmez."
-				},
-				"supervisorReply": {
-					"title": "Réponse du ou de la superviseur·e",
-					"intro": "Votre superviseur·e a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
-				},
-				"standingAssignment": {
-					"title": "Attribution fixe",
-					"intro": "Si votre administration vous a attribué un·e superviseur·e fixe, il ou elle est ajouté·e automatiquement quand vous acceptez une demande. Vous n’avez rien à faire."
-				},
-				"done": {
-					"title": "Bravo !",
-					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Aide",
 			"title": "Visites guidées",
@@ -6592,6 +6574,60 @@
 				"done": {
 					"title": "En bref",
 					"intro": "Proposez vos dossiers dans la consultation via « + » → « Transférer la consultation ». Demandez ceux de vos collègues via la recherche de personnes. Suivez l'état dans la chronologie."
+				}
+			}
+		},
+		"supervision": {
+			"title": "Supervision",
+			"summary": "Où trouver votre superviseur·e, lui écrire, en changer et prendre rendez-vous avec lui ou elle.",
+			"step": {
+				"intro": {
+					"title": "Supervision : configurée à l’avance",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. En situation réelle, votre administration vous attribue à l’avance un·e superviseur·e fixe dans l’espace d’administration – demandez-lui si vous voulez en savoir plus."
+				},
+				"openEnquiry": {
+					"title": "Ouvrir la demande",
+					"intro": "Une demande d’exercice attend dans la liste. Cliquez dessus pour l’ouvrir."
+				},
+				"accept": {
+					"title": "Accepter la demande",
+					"intro": "Cliquez sur « Accepter la demande ». La demande devient alors votre consultation."
+				},
+				"assigned": {
+					"title": "Supervision ajoutée automatiquement",
+					"intro": "En acceptant, votre superviseur·e fixe Robin (exercice) a été ajouté·e automatiquement. Vous n’avez rien à faire."
+				},
+				"find": {
+					"title": "La supervision dans la liste",
+					"intro": "Le filtre « Supervision » n’affiche que vos cas avec supervision. La ligne d’un tel cas porte une icône de supervision ronde."
+				},
+				"openPanel": {
+					"title": "Ouvrir la supervision",
+					"intro": "Cliquez sur l’icône de supervision ronde dans la ligne de la consultation d’exercice. Elle ouvre le chat de supervision à côté de la consultation."
+				},
+				"write": {
+					"title": "Écrire à la supervision",
+					"intro": "Écrivez ici un court message à Robin (exercice) et envoyez-le. Vous seuls voyez ce chat, pas la personne qui demande conseil."
+				},
+				"sameAccess": {
+					"title": "La même vue",
+					"intro": "Robin a répondu. Dans ses propres cas supervisés, votre superviseur·e voit ce cas comme vous."
+				},
+				"change": {
+					"title": "Changer de superviseur·e",
+					"intro": "Cliquez sur « + » (« Gérer les superviseurs ») puis sur « Remplacer » à côté de Robin (exercice) ; choisissez Kim (exercice), indiquez brièvement la raison et confirmez. Personne n’est averti pendant l’exercice."
+				},
+				"calls": {
+					"title": "Appels en supervision",
+					"intro": "Votre organisme peut autoriser les appels audio et vidéo dans le chat de supervision, même s’ils sont désactivés avec les personnes qui demandent conseil. L’administration en décide ; personne n’est appelé pendant l’exercice."
+				},
+				"appointment": {
+					"title": "Rendez-vous avec la supervision",
+					"intro": "Ouvrez ⋮ dans le chat de supervision et choisissez « Prendre rendez-vous avec le ou la superviseur·e ». Choisissez « Vidéo » ou « Téléphone » et enregistrez ; le rendez-vous reste dans l’exercice."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Vous connaissez maintenant les principaux chemins de la supervision. Le bouton ci-dessous termine l’exercice."
 				}
 			}
 		},
@@ -6726,6 +6762,34 @@
 				"links": {
 					"title": "Liens sans rendez-vous",
 					"intro": "Vos liens directs se trouvent désormais ici dans la liste : copiez-les, partagez-les en QR code ou modifiez-les."
+				},
+				"practiceIntro": {
+					"title": "S’exercer au calendrier",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous ajoutez des rendez-vous, un lien de rendez-vous et une plage bloquée, puis activez la confirmation automatique."
+				},
+				"practiceAppointment": {
+					"title": "Ajouter un rendez-vous",
+					"intro": "Cliquez sur « Nouveau », choisissez la personne fictive sous « Consultation » et cliquez sur « Créer ». Laissez « Inviter d’autres personnes par lien » désactivé cette fois."
+				},
+				"practiceInvitation": {
+					"title": "Créer un lien de rendez-vous",
+					"intro": "Rouvrez « Nouveau », choisissez la même personne, activez « Inviter d’autres personnes par lien » et cliquez sur « Créer ». Le lien affiché ensuite est un lien d’exercice et ne mène nulle part."
+				},
+				"practiceCancel": {
+					"title": "Annuler un rendez-vous",
+					"intro": "Vos nouveaux rendez-vous figurent sous « À venir ». Cliquez sur l’un d’eux, choisissez « Annuler le rendez-vous » et confirmez."
+				},
+				"practiceBlocker": {
+					"title": "Ajouter une plage bloquée",
+					"intro": "Pendant une plage bloquée, personne ne peut réserver chez vous. Ouvrez « Nouveau », passez à l’onglet « Plage bloquée » et cliquez sur « Bloquer »."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirmer automatiquement",
+					"intro": "Ouvrez ⋮, puis « Heures de consultation », activez « Confirmer les réservations automatiquement » et cliquez sur « Enregistrer les heures de consultation ». Les réservations dans vos heures de consultation sont alors fermes tout de suite."
+				},
+				"practiceDone": {
+					"title": "Terminé",
+					"intro": "Vous avez ajouté des rendez-vous et un lien de rendez-vous, annulé un rendez-vous, ajouté une plage bloquée et confirmé les réservations automatiquement. Dans le vrai calendrier, la personne est informée de chaque rendez-vous dans le chat."
 				}
 			}
 		},
@@ -7301,20 +7365,8 @@
 			"moveHandle": "Déplacer le bandeau (flèches du clavier)"
 		},
 		"cards": {
-			"summary": {
-				"accept": "Accepter une demande et rédiger une première réponse.",
-				"supervision": "Choisir une personne de supervision et l’ajouter à un entretien."
-			},
-			"title": "Espace d'exercice",
-			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
-			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",
-			"badge": "Exercice",
 			"phoneHint": "Merci de vous exercer sur un ordinateur.",
-			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice.",
-			"action": {
-				"start": "Commencer l'exercice",
-				"restart": "S'exercer à nouveau"
-			}
+			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice."
 		},
 		"error": {
 			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
