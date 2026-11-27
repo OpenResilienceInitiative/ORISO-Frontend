@@ -4301,6 +4301,7 @@
 			"accessDenied": "В доступе отказано",
 			"accessGranted": "Доступ разрешён",
 			"awaitingApproval": "Ожидает одобрения",
+			"awaitingApprovalShort": "Запрошено",
 			"hiddenPreview": "Информация остаётся скрытой, пока запрос не будет одобрен",
 			"requestAccess": "Запросить доступ"
 		},

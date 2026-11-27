@@ -1539,7 +1539,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// FE#2040: in selection mode the "Select case" button spans the whole
 		// row under avatar and text, so it is an easy target, not squeezed.
-		&--select {
+		&--select,
+		&--wide {
 			display: flex;
 			flex: 1 1 auto;
 			width: 100%;

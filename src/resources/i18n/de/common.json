@@ -4251,7 +4251,7 @@
 			"confirm": "Auswahl anfragen",
 			"required": "Wählen Sie mindestens einen Fall und einen Grund; ist die Begründung Pflicht, ergänzen Sie sie.",
 			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
-			"selectCase": "Fall auswählen",
+			"selectCase": "Auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
 			"title": "Mehrfach-Zugriffsanfrage",
@@ -4314,6 +4314,7 @@
 			"accessDenied": "Zugriff abgelehnt",
 			"accessGranted": "Zugriff freigegeben",
 			"awaitingApproval": "Warten auf Freigabe",
+			"awaitingApprovalShort": "Angefragt",
 			"hiddenPreview": "Informationen bleiben verborgen, bis die Anfrage freigegeben ist",
 			"requestAccess": "Zugriff anfragen"
 		},

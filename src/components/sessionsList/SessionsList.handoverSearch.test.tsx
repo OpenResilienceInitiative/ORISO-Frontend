@@ -2234,7 +2234,7 @@ describe('case-handover selection — reason in the right pane (FE#2040)', () =>
 		await waitFor(() => expect(queryHandoverPane()).toBeNull());
 	});
 
-	it('names each case on its select button and moves focus to the pane from "Confirm selection"', async () => {
+	it('names each case on its select button and offers no chevron menu while selecting', async () => {
 		const view = await ready(renderList());
 		await listPattysSpringfieldCases(view);
 		await waitFor(() =>
@@ -2243,19 +2243,10 @@ describe('case-handover selection — reason in the right pane (FE#2040)', () =>
 		expect(
 			caseCheckbox(view, 'Client eleven').getAttribute('aria-describedby')
 		).toBeTruthy();
-		await selectCases(view, ['Client eleven']);
-
-		fireEvent.click(
-			within(caseCard(view, 'Client eleven')!).getByRole('button', {
+		expect(
+			within(caseCard(view, 'Client eleven')!).queryByRole('button', {
 				name: 'caseHandover.menu.label'
 			})
-		);
-		fireEvent.click(
-			await screen.findByRole('menuitem', { name: /confirmSelection/ })
-		);
-
-		await waitFor(() =>
-			expect(document.activeElement).toBe(handoverPane())
-		);
+		).toBeNull();
 	});
 });

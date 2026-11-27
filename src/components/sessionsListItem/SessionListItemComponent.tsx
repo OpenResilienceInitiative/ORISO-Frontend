@@ -186,8 +186,6 @@ export interface SessionListItemProps {
 	caseHandoverSelected?: boolean;
 	onCaseHandoverSelect?: (sessionId: number) => void;
 	onCaseHandoverBatchStart?: () => void;
-	onCaseHandoverBatchConfirm?: () => void;
-	onCaseHandoverBatchClose?: () => void;
 	/**
 	 * Label of the room's next appointment (ADR-021). Set: a grey clock circle
 	 * joins the avatar stack. Timeline prototype only until it ships.
@@ -254,8 +252,6 @@ export const SessionListItemComponent = ({
 	caseHandoverSelected = false,
 	onCaseHandoverSelect,
 	onCaseHandoverBatchStart,
-	onCaseHandoverBatchConfirm,
-	onCaseHandoverBatchClose,
 	upcomingAppointment,
 	upcomingAppointmentModality,
 	appointmentAction,
@@ -1973,6 +1969,9 @@ export const SessionListItemComponent = ({
 									awaitingApproval: translate(
 										'caseHandover.list.awaitingApproval'
 									),
+									awaitingApprovalShort: translate(
+										'caseHandover.list.awaitingApprovalShort'
+									),
 									accessGranted: translate(
 										'caseHandover.list.accessGranted'
 									),
@@ -1990,18 +1989,6 @@ export const SessionListItemComponent = ({
 									),
 									selectMultipleDescription: translate(
 										'caseHandover.menu.selectMultiple.description'
-									),
-									confirmSelectionTitle: translate(
-										'caseHandover.menu.confirmSelection.title'
-									),
-									confirmSelectionDescription: translate(
-										'caseHandover.menu.confirmSelection.description'
-									),
-									deselectTitle: translate(
-										'caseHandover.menu.deselect.title'
-									),
-									deselectDescription: translate(
-										'caseHandover.menu.deselect.description'
 									)
 								}}
 								state={caseHandoverActionState}
@@ -2025,8 +2012,6 @@ export const SessionListItemComponent = ({
 									)
 								}
 								onSelectMultiple={onCaseHandoverBatchStart}
-								onConfirmSelection={onCaseHandoverBatchConfirm}
-								onDeselectAndClose={onCaseHandoverBatchClose}
 							/>
 						) : undefined
 					}
