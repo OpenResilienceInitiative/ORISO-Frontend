@@ -5641,12 +5641,13 @@
 				"not_started": "Nicht gestartet",
 				"in_progress": "In Bearbeitung",
 				"completed": "Abgeschlossen",
-				"skipped": "Übersprungen"
+				"skipped": "Übersprungen",
+				"completedOn": "Abgeschlossen am {{date}}"
 			},
 			"action": {
 				"start": "Starten",
 				"continue": "Fortsetzen",
-				"restart": "Neu starten"
+				"restart": "Nochmal starten"
 			}
 		},
 		"step": {
@@ -5703,7 +5704,8 @@
 			"hint": {
 				"on": "An: Der Knopf „?“ unten rechts öffnet Ihre Rundgänge. Solange ein Gespräch offen ist, ist er ausgeblendet.",
 				"off": "Aus: Der Knopf „?“ ist ausgeblendet. Ihre Rundgänge finden Sie weiterhin hier."
-			}
+			},
+			"autoHide": "Der Knopf „?“ blendet sich von selbst aus, solange ein Gespräch offen ist, ein Rundgang läuft oder die Anrufleiste zu sehen ist."
 		}
 	},
 	"banner": {
@@ -6556,7 +6558,13 @@
 			"title": "Rundgänge",
 			"open": "Rundgänge öffnen",
 			"close": "Rundgänge schließen",
-			"manage": "Rundgänge verwalten"
+			"manage": "Rundgänge verwalten",
+			"hide": "Hilfe-Button ausblenden",
+			"hideConfirm": "Ausblenden?",
+			"hideWhere": "Wieder einblenden unter Hilfe → Rundgänge",
+			"resetPosition": "Position zurücksetzen",
+			"dragHint": "Ziehen zum Verschieben",
+			"moveHint": "Ziehen oder Alt + Pfeiltasten zum Verschieben"
 		},
 		"caseHandover": {
 			"title": "Fälle übergeben",

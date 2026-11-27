@@ -47,6 +47,14 @@ export const TourLauncherSwitch = () => {
 				<Text text={stateLabel} type="standard" />
 			</div>
 			<Text text={hint} type="standard" className="tertiary" />
+			{/* When the "?" steps aside on its own (FE#2545). */}
+			<div data-cy="tour-launcher-autohide">
+				<Text
+					text={translate('walkthrough.launcherSwitch.autoHide')}
+					type="standard"
+					className="tertiary"
+				/>
+			</div>
 		</div>
 	);
 };

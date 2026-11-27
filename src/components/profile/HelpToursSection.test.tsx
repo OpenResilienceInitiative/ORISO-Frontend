@@ -31,6 +31,10 @@ import { ProfileCardList } from './ProfileCardList';
 import { profileRoutesHelp } from './profileHelp.routes';
 import { PracticeCards } from '../../practice/PracticeCards';
 import { practiceTours } from '../../practice/practiceTours';
+import {
+	consultantMailCounsellingTour,
+	consultantWalkthroughTour
+} from '../productTour/tourDefinitions';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', async () => {
@@ -265,6 +269,72 @@ describe('Help learning card', () => {
 				)
 			).toBeNull()
 		);
+	});
+
+	it('says next to the switch when the "?" hides itself', async () => {
+		renderHelp({ authorities: [AUTHORITIES.ASKER_DEFAULT] });
+		const preference = (
+			await screen.findByRole('switch', {
+				name: 'Rundgang-Knopf anzeigen'
+			})
+		).closest<HTMLElement>('[data-testid="tour-launcher-switch"]')!;
+		expect(
+			within(preference).getByText(
+				'Der Knopf „?“ blendet sich von selbst aus, solange ein Gespräch offen ist, ein Rundgang läuft oder die Anrufleiste zu sehen ist.'
+			)
+		).toBeTruthy();
+	});
+
+	it('marks completed tours with a check mark and the date, and offers "Nochmal starten"', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (input: Request) =>
+				String(input.url).includes('/tutorials/progress')
+					? new Response(
+							JSON.stringify([
+								{
+									tourId: consultantWalkthroughTour.id,
+									tourVersion:
+										consultantWalkthroughTour.version,
+									surface: 'frontend',
+									status: 'completed',
+									completedAt: '2026-07-07T10:00:00Z'
+								},
+								{
+									tourId: consultantMailCounsellingTour.id,
+									tourVersion:
+										consultantMailCounsellingTour.version,
+									surface: 'frontend',
+									status: 'completed'
+								}
+							]),
+							{
+								status: 200,
+								headers: { 'content-type': 'application/json' }
+							}
+						)
+					: new Response('[]', { status: 200 })
+			)
+		);
+		renderHelp({ practiceArea: false });
+		const dated = await screen.findByText('Abgeschlossen am 7. Juli 2026');
+		const datedCard = dated.closest('li')!;
+		expect(
+			within(datedCard).getByTestId('tour-completed-icon')
+		).toBeTruthy();
+		expect(
+			within(datedCard).getByRole('button', { name: 'Nochmal starten' })
+		).toBeTruthy();
+		const undatedCard = screen
+			.getByRole('heading', { name: 'Mail-Beratung' })
+			.closest('li')!;
+		expect(within(undatedCard).getByText('Abgeschlossen')).toBeTruthy();
+		expect(
+			within(undatedCard).getByTestId('tour-completed-icon')
+		).toBeTruthy();
+		expect(
+			screen.queryByRole('button', { name: 'Neu starten' })
+		).toBeNull();
 	});
 
 	it('offers only the introduction when the practice release flag is off', async () => {

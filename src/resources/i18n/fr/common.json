@@ -5621,12 +5621,13 @@
 				"not_started": "Non commencée",
 				"in_progress": "En cours",
 				"completed": "Terminée",
-				"skipped": "Ignorée"
+				"skipped": "Ignorée",
+				"completedOn": "Terminée le {{date}}"
 			},
 			"action": {
 				"start": "Démarrer",
 				"continue": "Reprendre",
-				"restart": "Recommencer"
+				"restart": "Relancer"
 			}
 		},
 		"step": {
@@ -5683,7 +5684,8 @@
 			"hint": {
 				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
 				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
-			}
+			},
+			"autoHide": "Le bouton « ? » se masque tout seul tant qu’une conversation est ouverte, qu’une visite guidée est en cours ou que la barre d’appel est affichée."
 		}
 	},
 	"consultingTypes": {
@@ -6564,7 +6566,13 @@
 			"title": "Visites guidées",
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
-			"manage": "Gérer les visites guidées"
+			"manage": "Gérer les visites guidées",
+			"hide": "Masquer le bouton d’aide",
+			"hideConfirm": "Masquer ?",
+			"hideWhere": "Le réafficher sous Aide → Visites guidées",
+			"resetPosition": "Réinitialiser la position",
+			"dragHint": "Glisser pour déplacer",
+			"moveHint": "Glisser ou appuyer sur Alt + flèches pour déplacer"
 		},
 		"caseHandover": {
 			"title": "Transférer des dossiers",

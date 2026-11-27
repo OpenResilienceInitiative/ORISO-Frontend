@@ -22,14 +22,18 @@ import {
 	TenantContext
 } from '../../globalState';
 import { config } from '../../resources/scripts/config';
-import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
+import {
+	consultantMailCounsellingTour,
+	consultantWalkthroughTour
+} from '../productTour/tourDefinitions';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 
-type ProgressFixture = Pick<
+type ProgressFixture = (Pick<
 	ITutorialProgressItem,
 	'tourId' | 'tourVersion' | 'surface' | 'status'
->[];
+> &
+	Pick<Partial<ITutorialProgressItem>, 'completedAt'>)[];
 
 interface StageOptions {
 	/** Platform master switch (`settings.enableWalkthrough`). */
@@ -375,7 +379,7 @@ export const OnWithCompletedTour: Story = {
 		...desktop.parameters,
 		docs: {
 			description: {
-				story: 'The completed intro does not start again on its own. The list offers "Neu starten" instead.'
+				story: 'The completed intro does not start again on its own. The list offers "Nochmal starten" instead.'
 			}
 		}
 	},
@@ -383,6 +387,9 @@ export const OnWithCompletedTour: Story = {
 		await expect(
 			await canvas.findByText('Abgeschlossen')
 		).toBeInTheDocument();
+		await expect(
+			canvas.getByRole('button', { name: 'Nochmal starten' })
+		).toBeVisible();
 	}
 };
 
@@ -565,5 +572,114 @@ export const AdviceSeeker: Story = {
 		await expect(
 			canvas.queryByRole('button', { name: 'Übung starten' })
 		).toBeNull();
+	}
+};
+
+const LAUNCHER_SWITCH = 'Rundgang-Knopf anzeigen';
+const AUTO_HIDE =
+	'Der Knopf „?“ blendet sich von selbst aus, solange ein Gespräch offen ist, ein Rundgang läuft oder die Anrufleiste zu sehen ist.';
+const HIDDEN_KEY = 'oriso.tourLauncher.hidden.sb-counsellor';
+
+/** FE#2545: hidden from the "?" menu; Help is where it comes back. */
+export const Hidden: Story = {
+	name: '"?" hidden · switch off · desktop',
+	...desktop,
+	render: renderStage({ ownSwitch: false }),
+	beforeEach: () => {
+		window.localStorage.setItem(HIDDEN_KEY, 'true');
+		return () => window.localStorage.removeItem(HIDDEN_KEY);
+	},
+	parameters: {
+		...desktop.parameters,
+		docs: {
+			description: {
+				story: 'After "Hilfe-Button ausblenden" in the "?" menu the switch here is off. One sentence says when the "?" also hides on its own. The tours stay listed.'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		const toggle = await canvas.findByRole('switch', {
+			name: LAUNCHER_SWITCH
+		});
+		await expect(toggle).not.toBeChecked();
+		const preference = within(
+			toggle.closest(
+				'[data-testid="tour-launcher-switch"]'
+			) as HTMLElement
+		);
+		await expect(preference.getByText(AUTO_HIDE)).toBeVisible();
+		await expect(
+			await canvas.findByRole('heading', { name: 'Mail-Beratung' })
+		).toBeVisible();
+		// Switching it on brings the "?" back.
+		await userEvent.click(toggle);
+		await waitFor(() => expect(toggle).toBeChecked());
+		await expect(window.localStorage.getItem(HIDDEN_KEY)).toBeNull();
+		await expect(preference.getByText(AUTO_HIDE)).toBeVisible();
+	}
+};
+
+/** A screenshot state of `Hidden`, without switching back on. */
+export const HiddenStill: Story = {
+	name: '"?" hidden · switch off (screenshot) · desktop',
+	...desktop,
+	render: renderStage({ ownSwitch: false }),
+	beforeEach: Hidden.beforeEach,
+	play: async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole('switch', { name: LAUNCHER_SWITCH })
+		).not.toBeChecked();
+		await expect(canvas.getByText(AUTO_HIDE)).toBeVisible();
+	}
+};
+
+export const CompletedTours: Story = {
+	name: 'Completed tours with dates · desktop',
+	...desktop,
+	render: renderStage({
+		ownSwitch: false,
+		progress: [
+			{
+				tourId: consultantWalkthroughTour.id,
+				tourVersion: consultantWalkthroughTour.version,
+				surface: 'frontend',
+				status: 'completed',
+				completedAt: '2026-07-07T10:00:00Z'
+			},
+			{
+				tourId: consultantMailCounsellingTour.id,
+				tourVersion: consultantMailCounsellingTour.version,
+				surface: 'frontend',
+				status: 'completed'
+			}
+		]
+	}),
+	parameters: {
+		...desktop.parameters,
+		docs: {
+			description: {
+				story: 'FE#2545: a completed tour shows a check mark and "Abgeschlossen am <Datum>" (only "Abgeschlossen" without a date from the server), and "Nochmal starten".'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		const dated = await canvas.findByText('Abgeschlossen am 7. Juli 2026');
+		await expect(dated).toBeVisible();
+		const datedCard = within(dated.closest('li') as HTMLElement);
+		await expect(
+			datedCard.getByTestId('tour-completed-icon')
+		).toBeInTheDocument();
+		await expect(
+			datedCard.getByRole('button', { name: 'Nochmal starten' })
+		).toBeVisible();
+		const undatedCard = within(
+			canvas
+				.getByRole('heading', { name: 'Mail-Beratung' })
+				.closest('li') as HTMLElement
+		);
+		await expect(undatedCard.getByText('Abgeschlossen')).toBeVisible();
+		await expect(
+			undatedCard.getByTestId('tour-completed-icon')
+		).toBeInTheDocument();
 	}
 };
