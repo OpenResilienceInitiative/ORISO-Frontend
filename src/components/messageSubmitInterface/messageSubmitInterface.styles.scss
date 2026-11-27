@@ -5,7 +5,8 @@ $message-submit-interface-textarea-box-shadow: inset 0 2px 0 0
 $navWidth: $grid-base-twelve;
 $contentWidthSmall: 100vw;
 $contentWidth: calc((100vw - #{$navWidth}) / 12 * 8);
-$inputBorder: 1px solid #ffb4aa; // Figma M3 outline
+$inputBorder: 1px solid
+	var(--oriso-outline-rest, var(--m3-primary-fixed-dim, #ffb4aa)); // Figma M3 outline
 $inputBorderActive: 1px solid #cc1e1c; // Figma active outline
 $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 

@@ -111,7 +111,33 @@ export const LIGHT_NEUTRAL_TONES: NeutralToneLadder = {
 	inverseOnSurface: 95
 };
 
+/**
+ * Dark scheme surfaces (FE#1134, Frank 28 Nov 2026): no near-black. The chat
+ * sat on tone 4 (#0e0e0f) because the light scheme puts it on white, the
+ * lowest container; in dark that read like a high-contrast mode. The ladder
+ * starts at tone 11 and keeps the M3 order lowest <= surface <= low <= ... .
+ * High contrast keeps the deep ladder below.
+ */
 export const DARK_NEUTRAL_TONES: NeutralToneLadder = {
+	surface: 12,
+	onSurface: 90,
+	surfaceContainerLowest: 11,
+	surfaceContainerLow: 14,
+	surfaceContainer: 16,
+	surfaceContainerHigh: 19,
+	surfaceContainerHighest: 23,
+	surfaceDim: 11,
+	surfaceBright: 26,
+	surfaceVariant: 30,
+	onSurfaceVariant: 80,
+	outline: 60,
+	outlineVariant: 30,
+	inverseSurface: 90,
+	inverseOnSurface: 20
+};
+
+/** The previous deep-black dark ladder, kept for dark + high contrast. */
+export const DARK_DEEP_NEUTRAL_TONES: NeutralToneLadder = {
 	surface: 6,
 	onSurface: 90,
 	surfaceContainerLowest: 4,
@@ -176,6 +202,24 @@ export const HIGH_CONTRAST_INK_TONES: Record<
 		outline: 80,
 		outlineVariant: 60
 	}
+};
+
+/**
+ * The calm accent of the dark scheme (FE#1134). In light, the brand's pale
+ * rose (`primary-fixed`, tone 90) is a soft fill on white. M3 keeps fixed
+ * roles identical in every scheme, so on black the same rose turned into the
+ * loudest thing on screen and read like an active state. Its dark
+ * counterpart is the Figma stage tone #281715 (`M3/sys/light/on-background`,
+ * the Admin sidebar and the sign-in stage): the brand hue at tone 10 with
+ * chroma 11.4; `fillDim` is the one step lighter fill that carries text
+ * (`primary-fixed-dim`). `mid` is the calm accent for resting outlines and
+ * handles (at least 3:1 on every dark surface); `ink` is the text on fills.
+ */
+export const DARK_CALM_ACCENT = {
+	fill: { chroma: 11.4, tone: 10 },
+	fillDim: { chroma: 16, tone: 20 },
+	mid: { chroma: 20, tone: 55 },
+	ink: 90
 };
 
 /** Brand family tones for the dark and inverted schemes. */

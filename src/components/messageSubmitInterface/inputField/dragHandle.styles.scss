@@ -40,7 +40,10 @@
 		width: 57px;
 		height: 4px;
 		border-radius: 24px;
-		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		background: var(
+			--oriso-outline-rest,
+			var(--m3-primary-fixed-dim, #ffb4aa)
+		);
 		transition:
 			background-color 150ms ease,
 			transform 150ms ease;

@@ -26,6 +26,8 @@ import {
 	CONTRAST_AA,
 	HOVER_TONE_SHIFT,
 	DARK_BRAND_TONES,
+	DARK_CALM_ACCENT,
+	DARK_DEEP_NEUTRAL_TONES,
 	DARK_NEUTRAL_TONES,
 	DEFAULT_SIGNAL,
 	HIGH_CONTRAST_INK_TONES,
@@ -238,6 +240,27 @@ const darkBrandFamily = (palette: TonalPalette): BrandFamily => {
 	};
 };
 
+/**
+ * The dark scheme's brand family with the calm accent (FE#1134): the soft
+ * fills take the stage tone instead of the pale rose and their ink turns
+ * light. Outlines get their own muted rose (`--oriso-outline-rest`).
+ */
+const calmDarkBrandFamily = (palette: TonalPalette): BrandFamily => {
+	const tone = (chroma: number, t: number) =>
+		hex(Hct.from(palette.hue, Math.min(chroma, palette.chroma), t).toInt());
+	const ink = hex(palette.tone(DARK_CALM_ACCENT.ink));
+	return {
+		...darkBrandFamily(palette),
+		fixed: tone(DARK_CALM_ACCENT.fill.chroma, DARK_CALM_ACCENT.fill.tone),
+		fixedDim: tone(
+			DARK_CALM_ACCENT.fillDim.chroma,
+			DARK_CALM_ACCENT.fillDim.tone
+		),
+		onFixed: ink,
+		onFixedVariant: ink
+	};
+};
+
 interface AccentFamily {
 	role: string;
 	onRole: string;
@@ -364,7 +387,11 @@ export const computeOrisoPalette = (
 		brandContainer
 	);
 	const brand =
-		scheme === 'light' ? stageBrand : darkBrandFamily(primaryPalette);
+		scheme === 'light'
+			? stageBrand
+			: scheme === 'dark'
+				? calmDarkBrandFamily(primaryPalette)
+				: darkBrandFamily(primaryPalette);
 
 	const secondaryPalette = accentSeed
 		? harmonizedAccentPalette(accentSeed, primarySeed)
@@ -397,7 +424,9 @@ export const computeOrisoPalette = (
 		scheme === 'light'
 			? LIGHT_NEUTRAL_TONES
 			: scheme === 'dark'
-				? DARK_NEUTRAL_TONES
+				? contrast === 'high'
+					? DARK_DEEP_NEUTRAL_TONES
+					: DARK_NEUTRAL_TONES
 				: INVERTED_NEUTRAL_TONES;
 	const neutralTones =
 		contrast === 'high' && scheme !== 'inverted'
@@ -423,7 +452,11 @@ export const computeOrisoPalette = (
 		'--m3-primary-fixed': brand.fixed,
 		// Dedicated focus/outline accent: keep it dark enough to stay visible
 		// on the light brand surfaces that use it for keyboard focus.
-		'--m3-primary-outline': brand.onFixedVariant,
+		// Dark keeps its own deep tone here: the calm family's ink is light.
+		'--m3-primary-outline':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(30))
+				: brand.onFixedVariant,
 		'--m3-primary-fixed-dim': brand.fixedDim,
 		'--m3-on-primary-fixed': brand.onFixed,
 		'--m3-on-primary-fixed-variant': brand.onFixedVariant,
@@ -534,6 +567,29 @@ export const computeOrisoPalette = (
 						tokens['--m3-on-primary-container']
 				}
 			: topicTagTokens(brand)),
+		// Resting card dividers: white hairlines on the light grey page; in dark
+		// a quiet neutral instead of a white line (FE#1134).
+		'--oriso-card-divider':
+			scheme === 'light' ? '#ffffff' : tokens['--m3-outline-variant'],
+		// Resting accent outlines and handles: the pale rose in light; in dark
+		// a muted rose that still keeps 3:1 on every surface (FE#1134).
+		'--oriso-outline-rest':
+			scheme === 'dark'
+				? hex(
+						Hct.from(
+							primaryPalette.hue,
+							Math.min(
+								DARK_CALM_ACCENT.mid.chroma,
+								primaryPalette.chroma
+							),
+							DARK_CALM_ACCENT.mid.tone
+						).toInt()
+					)
+				: tokens['--m3-primary-fixed-dim'],
+		// Counter dots on the desktop rail: white with brand digits in light;
+		// in dark the calm accent fill, so the light digits stay readable.
+		'--oriso-rail-badge-surface':
+			scheme === 'dark' ? tokens['--m3-primary-fixed'] : '#ffffff',
 		'--oriso-app-action': tokens['--m3-primary'],
 		'--oriso-lottie-accent-color': tokens['--m3-primary-fixed-dim'],
 		'--oriso-lottie-secondary-color':

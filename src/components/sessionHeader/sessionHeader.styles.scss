@@ -107,7 +107,11 @@ $room-header-back-gap: 8px;
 		width: $room-header-back-size;
 		height: $room-header-back-size;
 		border-radius: 50%;
-		background: rgba(255, 209, 209, 0.6);
+		background: color-mix(
+			in srgb,
+			var(--m3-primary-fixed, #ffd1d1) 60%,
+			transparent
+		);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -546,9 +550,13 @@ $room-header-back-gap: 8px;
 	}
 
 	&__supervisionButton {
-		border: 1px solid #ffd1d1;
-		background: rgba(255, 209, 209, 0.3);
-		color: #1c1b1f;
+		border: 1px solid var(--m3-primary-fixed, #ffd1d1);
+		background: color-mix(
+			in srgb,
+			var(--m3-primary-fixed, #ffd1d1) 30%,
+			transparent
+		);
+		color: var(--m3-on-surface, #1c1b1f);
 		border-radius: 12px;
 		padding: 4px 12px;
 		font-size: 14px;
