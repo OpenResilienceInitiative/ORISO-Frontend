@@ -47,16 +47,18 @@ vi.mock('../form/OrisoDatePicker', () => ({
 		/>
 	)
 }));
+/* Like the real picker, the time field commits its text again on blur. */
+const commitTime =
+	(onChange?: (value: Dayjs | null) => void) =>
+	(e: { target: { value: string } }) =>
+		onChange?.(e.target.value ? dayjs(e.target.value, 'HH:mm') : null);
 vi.mock('../form/OrisoTimePicker', () => ({
 	OrisoTimePicker: ({ label, value, onChange }: PickerProps) => (
 		<input
 			aria-label={label}
 			value={value ? value.format('HH:mm') : ''}
-			onChange={(e) =>
-				onChange?.(
-					e.target.value ? dayjs(e.target.value, 'HH:mm') : null
-				)
-			}
+			onChange={commitTime(onChange)}
+			onBlur={commitTime(onChange)}
 		/>
 	)
 }));
@@ -155,6 +157,33 @@ describe('InvitationDialog (#2252)', () => {
 			expect(onSubmit).toHaveBeenCalledWith(
 				expect.objectContaining({
 					appointment: { start: local(5, 16), end: local(5, 17) }
+				})
+			);
+		});
+
+		it('leaving Beginn unchanged keeps a custom Ende (#2358)', async () => {
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			setField('date', '2026-11-05');
+			setTime('start', 16);
+			setTime('end', 18);
+			fireEvent.blur(screen.getByLabelText(`${SLOT}.start`));
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(5, 16), end: local(5, 18) }
+				})
+			);
+		});
+
+		it('late in the evening the default is tomorrow 10:00 and can be created (#2358)', async () => {
+			vi.setSystemTime(new Date(2026, 10, 3, 22, 45));
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(4, 10), end: local(4, 11) }
 				})
 			);
 		});
