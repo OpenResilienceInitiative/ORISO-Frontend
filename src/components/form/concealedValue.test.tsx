@@ -3,10 +3,18 @@ import * as React from 'react';
 import { useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vite-plus/test';
 import { OrisoTextField } from './OrisoTextField';
 import { InputField } from '../inputField/InputField';
 import { AccountSetupField } from '../twoFactorAuth/accountSetupDialogChrome';
+import { RecoveryKeyField } from '../profile/EncryptionSettings/RecoveryKeyField';
 
 // FE#2582: React DOM mirrors the value of a controlled input into its HTML
 // `value` attribute, so a typed password ended up readable in the page HTML.
@@ -21,13 +29,16 @@ const expectNotInHtml = (input: HTMLInputElement) => {
 const ControlledTextField = ({
 	type = 'password',
 	autoComplete,
-	filter
+	filter,
+	initialValue = ''
 }: {
 	type?: string;
 	autoComplete?: string;
 	filter?: (value: string) => string;
+	initialValue?: string;
 }) => {
-	const [value, setValue] = useState('');
+	const [value, setValue] = useState(initialValue);
+	const [, setRenders] = useState(0);
 	const [visible, setVisible] = useState(false);
 	return (
 		<>
@@ -48,6 +59,9 @@ const ControlledTextField = ({
 			</button>
 			<button type="button" onClick={() => setValue('')}>
 				clear
+			</button>
+			<button type="button" onClick={() => setRenders((n) => n + 1)}>
+				rerender
 			</button>
 			<output data-testid="state">{value.length}</output>
 		</>
@@ -84,8 +98,22 @@ const SetupOtpField = () => {
 	);
 };
 
+const RecoveryKey = () => {
+	const [key, setKey] = useState('');
+	return <RecoveryKeyField value={key} onChange={setKey} />;
+};
+
 describe('secret inputs keep typed values out of the HTML (FE#2582)', () => {
-	afterEach(cleanup);
+	let consoleError: ReturnType<typeof vi.spyOn>;
+	beforeEach(() => {
+		consoleError = vi.spyOn(console, 'error');
+	});
+	afterEach(() => {
+		// No controlled/uncontrolled switch, ref or key warnings from React/MUI.
+		expect(consoleError).not.toHaveBeenCalled();
+		consoleError.mockRestore();
+		cleanup();
+	});
 
 	it('OrisoTextField type=password: typed text is in .value, not in the attribute', async () => {
 		render(<ControlledTextField />);
@@ -154,6 +182,32 @@ describe('secret inputs keep typed values out of the HTML (FE#2582)', () => {
 		const input = screen.getByLabelText('Code') as HTMLInputElement;
 		await userEvent.type(input, 'Probe1');
 		expect(input.value).toBe('Probe1');
+		expectNotInHtml(input);
+	});
+
+	it('shows a value the parent starts with, without putting it in the HTML', () => {
+		render(<ControlledTextField initialValue="Probe-initial" />);
+		const input = screen.getByLabelText('Secret') as HTMLInputElement;
+		expect(input.value).toBe('Probe-initial');
+		expectNotInHtml(input);
+	});
+
+	it('matches the parent state again on the next render after a DOM-only change', async () => {
+		render(<ControlledTextField />);
+		const input = screen.getByLabelText('Secret') as HTMLInputElement;
+		await userEvent.type(input, 'Probe');
+		input.value = 'changed-outside-react';
+		fireEvent.click(screen.getByText('rerender'));
+		expect(input.value).toBe('Probe');
+	});
+
+	it('RecoveryKeyField keeps the recovery key out of the HTML', async () => {
+		render(<RecoveryKey />);
+		const input = document.querySelector(
+			'[data-cy="recovery-key-input"]'
+		) as HTMLInputElement;
+		await userEvent.type(input, 'Probe-key');
+		expect(input.value).toBe('Probe-key');
 		expectNotInHtml(input);
 	});
 });

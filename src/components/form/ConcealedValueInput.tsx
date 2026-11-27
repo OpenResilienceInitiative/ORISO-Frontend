@@ -47,13 +47,16 @@ export const ConcealedValueInput = forwardRef<
 		[]
 	);
 
+	// Runs after every commit, not only when the value changed: a DOM-only
+	// change (form.reset(), a rejected keystroke) must not leave the field
+	// showing something other than the parent's state.
 	useLayoutEffect(() => {
 		committedValue.current = nextValue;
 		const node = nodeRef.current;
 		if (node && node.value !== nextValue) {
 			node.value = nextValue;
 		}
-	}, [nextValue]);
+	});
 
 	const handleChange = useCallback(
 		(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +64,9 @@ export const ConcealedValueInput = forwardRef<
 			// A controlled input snaps back when the parent rejects a
 			// keystroke. React flushes the parent's update before this
 			// microtask, so whatever value it committed is the one to show.
+			// This assumes the parent sets its state synchronously in
+			// onChange; a parent that updates later (debounce, await) would
+			// see its keystroke undone until that update arrives.
 			queueMicrotask(() => {
 				const node = nodeRef.current;
 				if (node && node.value !== committedValue.current) {
