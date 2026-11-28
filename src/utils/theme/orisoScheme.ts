@@ -672,6 +672,16 @@ export const computeOrisoPalette = (
 	}
 
 	Object.assign(tokens, {
+		// Text on the fixed fill (FE#1134). Light keeps the current inks; in
+		// dark the fill turned deep, so both take the fill's own ink.
+		'--oriso-fixed-accent-ink':
+			scheme === 'dark'
+				? tokens['--m3-on-primary-fixed-variant']
+				: tokens['--m3-primary-container'],
+		'--oriso-fixed-quiet-ink':
+			scheme === 'dark'
+				? tokens['--m3-on-primary-fixed-variant']
+				: tokens['--m3-on-secondary-fixed-variant'],
 		'--oriso-primary-fixed': tokens['--m3-primary-fixed'],
 		'--oriso-primary-fixed-dim': tokens['--m3-primary-fixed-dim'],
 		'--oriso-on-primary-fixed': tokens['--m3-on-primary-fixed'],
@@ -713,10 +723,6 @@ export const computeOrisoPalette = (
 			scheme === 'dark' ? tokens['--m3-primary-fixed'] : '#ffffff',
 		// Active Live-Chat tile on the rail: a deep brand tile with light ink.
 		// In dark it must not follow on-primary-fixed, which is light ink there.
-		// Mentions sit on the fixed fill: brand container ink in light, the
-		// fill's own ink in dark (FE#1134).
-		'--oriso-mention-ink':
-			scheme === 'dark' ? brand.onFixedVariant : brand.container,
 		// Ink on the deep brand tile (Live-Chat tile, chosen calendar kind).
 		'--oriso-deep-brand-ink':
 			scheme === 'dark' ? hex(primaryPalette.tone(90)) : '#ffffff',

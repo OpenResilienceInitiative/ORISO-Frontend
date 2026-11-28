@@ -213,18 +213,20 @@ describe('calm dark mode (FE#1134)', () => {
 			).toBeGreaterThanOrEqual(7);
 		});
 
-		it('keeps mentions and the deep brand tile readable in dark', () => {
+		it('keeps text on the fixed fill and the deep brand tile readable in dark', () => {
 			for (const seed of Object.values(seeds)) {
 				for (const darkBrand of ['counterpart', 'original'] as const) {
 					const t = computeOrisoPalette(seed, 'dark', 'standard', {
 						darkBrand
 					}).tokens;
-					expect(
-						wcagContrast(
-							t['--oriso-mention-ink'],
-							t['--m3-primary-fixed']
-						)
-					).toBeGreaterThanOrEqual(4.5);
+					for (const ink of [
+						'--oriso-fixed-accent-ink',
+						'--oriso-fixed-quiet-ink'
+					]) {
+						expect(
+							wcagContrast(t[ink], t['--m3-primary-fixed'])
+						).toBeGreaterThanOrEqual(4.5);
+					}
 					expect(
 						wcagContrast(
 							t['--oriso-deep-brand-ink'],
@@ -234,9 +236,19 @@ describe('calm dark mode (FE#1134)', () => {
 				}
 			}
 			const light = computeOrisoPalette(seeds.platform, 'light').tokens;
-			expect(light['--oriso-mention-ink']).toBe(
-				light['--m3-primary-container']
-			);
+			for (const level of ['standard', 'medium', 'high'] as const) {
+				const l = computeOrisoPalette(
+					seeds.platform,
+					'light',
+					level
+				).tokens;
+				expect(l['--oriso-fixed-accent-ink']).toBe(
+					l['--m3-primary-container']
+				);
+				expect(l['--oriso-fixed-quiet-ink']).toBe(
+					l['--m3-on-secondary-fixed-variant']
+				);
+			}
 			expect(light['--oriso-deep-brand-ink']).toBe('#ffffff');
 		});
 
