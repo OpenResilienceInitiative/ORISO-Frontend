@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { NewEntryDialog } from './NewEntryDialog';
+import { nextMonday } from './AbsenceForm';
 
 dayjs.extend(customParseFormat);
 
@@ -302,6 +303,7 @@ describe('NewEntryDialog — planned absence tab (ORISO-Frontend#2303)', () => {
 		});
 		fireEvent.click(screen.getByTestId('calendar-absence-save'));
 		expect(onSaveAbsence).toHaveBeenCalledWith({
+			kind: 'dated',
 			start: '2026-12-21',
 			end: '2027-01-03',
 			message: 'Im Urlaub'
@@ -322,11 +324,20 @@ describe('NewEntryDialog — planned absence tab (ORISO-Frontend#2303)', () => {
 		).toBe(true);
 	});
 
-	it('warns about own appointments inside the range and does not cancel them (Frank 2026-11-17)', () => {
+	it('lists own appointments and Gesprächskreise inside the range as cancelled (#2500)', () => {
 		const onSaveAbsence = vi.fn();
 		open({
 			initialTab: 'absence',
-			entries: [APPOINTMENT_INSIDE],
+			entries: [
+				APPOINTMENT_INSIDE,
+				{
+					...APPOINTMENT_INSIDE,
+					id: 'g1',
+					type: 'group',
+					kind: undefined,
+					title: 'Gesprächskreis Trauer'
+				}
+			],
 			onSaveAbsence
 		});
 		fireEvent.change(screen.getByLabelText('calendar.absence.from'), {
@@ -335,9 +346,48 @@ describe('NewEntryDialog — planned absence tab (ORISO-Frontend#2303)', () => {
 		fireEvent.change(screen.getByLabelText('calendar.absence.until'), {
 			target: { value: '2027-01-03' }
 		});
-		const warning = screen.getByTestId('calendar-absence-conflicts');
-		expect(warning.textContent).toContain('mutige_eule');
-		fireEvent.click(screen.getByTestId('calendar-absence-save'));
+		const warning = screen.getByTestId('calendar-absence-warning');
+		expect(warning.textContent).toContain(
+			'calendar.absence.warning.cancel'
+		);
+		const affected = screen.getByTestId('calendar-absence-conflicts');
+		expect(affected.textContent).toContain('mutige_eule');
+		expect(affected.textContent).toContain('Gesprächskreis Trauer');
+		const save = screen.getByTestId('calendar-absence-save');
+		expect(save.textContent).toBe('calendar.absence.saveAndCancel');
+		fireEvent.click(save);
 		expect(onSaveAbsence).toHaveBeenCalledTimes(1);
+	});
+
+	it('saves an absence without dates as the weekly one, from today (#2500)', () => {
+		const onSaveAbsence = vi.fn();
+		open({ initialTab: 'absence', onSaveAbsence });
+		fireEvent.click(
+			within(
+				screen.getByTestId('calendar-absence-kind-weekly')
+			).getByRole('radio')
+		);
+		expect(screen.queryByLabelText('calendar.absence.from')).toBeNull();
+		expect(
+			screen.getByTestId('calendar-absence-warning').textContent
+		).toContain('calendar.absence.warning.weekly');
+		fireEvent.click(screen.getByTestId('calendar-absence-save'));
+		expect(onSaveAbsence).toHaveBeenCalledWith({
+			kind: 'weekly',
+			start: dayjs(NOW).format('YYYY-MM-DD'),
+			message: ''
+		});
+	});
+
+	it('runs the weekly absence up to the next Monday', () => {
+		expect(nextMonday(dayjs('2026-11-14')).format('YYYY-MM-DD')).toBe(
+			'2026-11-16'
+		); // Saturday
+		expect(nextMonday(dayjs('2026-11-15')).format('YYYY-MM-DD')).toBe(
+			'2026-11-16'
+		); // Sunday
+		expect(nextMonday(dayjs('2026-11-16')).format('YYYY-MM-DD')).toBe(
+			'2026-11-23'
+		); // Monday: the week ahead
 	});
 });

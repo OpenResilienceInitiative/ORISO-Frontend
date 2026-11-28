@@ -6325,7 +6325,9 @@
 			"back": "Retour",
 			"confirm": "Compris",
 			"loading": "Chargement du texte juridique…",
-			"loadError": { "text": "Le texte juridique n'a pas pu être chargé. Veuillez réessayer plus tard." },
+			"loadError": {
+				"text": "Le texte juridique n'a pas pu être chargé. Veuillez réessayer plus tard."
+			},
 			"missing": {
 				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
 				"link": "Vers l'adresse enregistrée"
@@ -8390,9 +8392,28 @@
 			"messageHint": "Les personnes qui demandent conseil voient ce message mais peuvent toujours vous écrire.",
 			"effect": "Après le dernier jour, vous êtes automatiquement de nouveau présent·e. La même absence figure dans votre profil.",
 			"save": "Enregistrer l'absence",
-			"conflicts": "{{count}} rendez-vous tombent pendant cette période. Ils sont maintenus – annulez-les ou déplacez-les vous-même si nécessaire.",
-			"conflicts_one": "{{count}} rendez-vous tombe pendant cette période. Il est maintenu – annulez-le ou déplacez-le vous-même si nécessaire.",
-			"saved": "Absence enregistrée. Elle figure aussi dans votre profil."
+			"saved": "Absence enregistrée. Elle figure aussi dans votre profil.",
+			"kind": {
+				"label": "Type d'absence",
+				"dated": "Avec dates",
+				"datedHint": "Du premier au dernier jour.",
+				"weekly": "Sans dates (prolongée chaque semaine)",
+				"weeklyHint": "Jusqu'au {{date}}, puis une semaine de plus chaque lundi, jusqu'à ce que vous y mettiez fin."
+			},
+			"warning": {
+				"title": "À l'enregistrement :",
+				"cancel": "Tous les rendez-vous de cette période sont annulés.",
+				"circles": "Vous êtes retiré(e) des cercles de discussion.",
+				"notify": "Les personnes qui demandent conseil sont informées.",
+				"weekly": "L'absence se prolonge d'une semaine chaque lundi, jusqu'à ce que vous y mettiez fin."
+			},
+			"affected": "Concernés : {{appointments}} et {{circles}}.",
+			"affectedAppointments": "{{count}} rendez-vous",
+			"affectedAppointments_one": "{{count}} rendez-vous",
+			"affectedCircles": "{{count}} cercles de discussion",
+			"affectedCircles_one": "{{count}} cercle de discussion",
+			"noneAffected": "Aucun rendez-vous ni cercle de discussion dans cette période.",
+			"saveAndCancel": "Enregistrer et annuler les rendez-vous"
 		},
 		"meeting": {
 			"accept": "Accepter",

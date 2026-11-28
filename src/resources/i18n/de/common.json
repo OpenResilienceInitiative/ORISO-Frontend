@@ -8382,9 +8382,28 @@
 			"messageHint": "Ratsuchende sehen diese Nachricht, können Ihnen aber weiterhin schreiben.",
 			"effect": "Nach dem letzten Tag sind Sie automatisch wieder anwesend. Dieselbe Abwesenheit steht in Ihrem Profil.",
 			"save": "Abwesenheit eintragen",
-			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sagen Sie sie bei Bedarf selbst ab oder verschieben Sie sie.",
-			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sagen Sie ihn bei Bedarf selbst ab oder verschieben Sie ihn.",
-			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil."
+			"saved": "Abwesenheit eingetragen. Sie steht auch in Ihrem Profil.",
+			"kind": {
+				"label": "Art der Abwesenheit",
+				"dated": "Mit Datum",
+				"datedHint": "Von einem ersten bis zu einem letzten Tag.",
+				"weekly": "Ohne Datum (verlängert sich wöchentlich)",
+				"weeklyHint": "Bis {{date}}, danach jeden Montag eine weitere Woche, bis Sie sie beenden."
+			},
+			"warning": {
+				"title": "Beim Speichern:",
+				"cancel": "Alle Termine in diesem Zeitraum werden abgesagt.",
+				"circles": "Aus Gesprächskreisen werden Sie ausgetragen.",
+				"notify": "Ratsuchende werden benachrichtigt.",
+				"weekly": "Die Abwesenheit verlängert sich jeden Montag um eine Woche, bis Sie sie beenden."
+			},
+			"affected": "Betroffen: {{appointments}} und {{circles}}.",
+			"affectedAppointments": "{{count}} Termine",
+			"affectedAppointments_one": "{{count}} Termin",
+			"affectedCircles": "{{count}} Gesprächskreise",
+			"affectedCircles_one": "{{count}} Gesprächskreis",
+			"noneAffected": "In diesem Zeitraum liegen keine Termine und keine Gesprächskreise.",
+			"saveAndCancel": "Speichern und Termine absagen"
 		},
 		"meeting": {
 			"accept": "Annehmen",

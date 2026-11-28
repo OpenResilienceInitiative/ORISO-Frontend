@@ -86,6 +86,7 @@ describe('CalendarPage — planned absence from "Neuer Eintrag" (#2303)', () => 
 		});
 		fireEvent.click(screen.getByTestId('calendar-absence-save'));
 		expect(onSaveAbsence).toHaveBeenCalledWith({
+			kind: 'dated',
 			start: '2026-12-21',
 			end: '2027-01-03',
 			message: ''

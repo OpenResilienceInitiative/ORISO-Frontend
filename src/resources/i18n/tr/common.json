@@ -6325,7 +6325,9 @@
 			"back": "Geri",
 			"confirm": "Anladım",
 			"loading": "Yasal metin yükleniyor…",
-			"loadError": { "text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin." },
+			"loadError": {
+				"text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin."
+			},
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"
@@ -8390,9 +8392,28 @@
 			"messageHint": "Danışanlar bu mesajı görür ama size yine de yazabilir.",
 			"effect": "Son günden sonra otomatik olarak yeniden mevcut olursunuz. Aynı yokluk profilinizde de görünür.",
 			"save": "Yokluğu kaydet",
-			"conflicts": "Bu dönemde {{count}} randevu var. Randevular yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
-			"conflicts_one": "Bu dönemde {{count}} randevu var. Randevu yerinde kalır – gerekirse kendiniz iptal edin veya erteleyin.",
-			"saved": "Yokluk kaydedildi. Profilinizde de görünür."
+			"saved": "Yokluk kaydedildi. Profilinizde de görünür.",
+			"kind": {
+				"label": "Yokluk türü",
+				"dated": "Tarihli",
+				"datedHint": "İlk günden son güne kadar.",
+				"weekly": "Tarihsiz (her hafta uzar)",
+				"weeklyHint": "{{date}} tarihine kadar, ardından siz bitirene kadar her pazartesi bir hafta daha."
+			},
+			"warning": {
+				"title": "Kaydettiğinizde:",
+				"cancel": "Bu süredeki tüm randevular iptal edilir.",
+				"circles": "Sohbet çemberlerinden çıkarılırsınız.",
+				"notify": "Danışanlar bilgilendirilir.",
+				"weekly": "Yokluk, siz bitirene kadar her pazartesi bir hafta uzar."
+			},
+			"affected": "Etkilenen: {{appointments}} ve {{circles}}.",
+			"affectedAppointments": "{{count}} randevu",
+			"affectedAppointments_one": "{{count}} randevu",
+			"affectedCircles": "{{count}} sohbet çemberi",
+			"affectedCircles_one": "{{count}} sohbet çemberi",
+			"noneAffected": "Bu sürede randevu veya sohbet çemberi yok.",
+			"saveAndCancel": "Kaydet ve randevuları iptal et"
 		},
 		"meeting": {
 			"accept": "Kabul et",

@@ -8307,9 +8307,28 @@
 			"messageHint": "Advice seekers see this message but can still write to you.",
 			"effect": "After the last day you are present again automatically. The same absence shows in your profile.",
 			"save": "Add absence",
-			"conflicts": "{{count}} appointments fall in this period. They stay in place – cancel or move them yourself if needed.",
-			"conflicts_one": "{{count}} appointment falls in this period. It stays in place – cancel or move it yourself if needed.",
-			"saved": "Absence added. It also shows in your profile."
+			"saved": "Absence added. It also shows in your profile.",
+			"kind": {
+				"label": "Kind of absence",
+				"dated": "With dates",
+				"datedHint": "From a first to a last day.",
+				"weekly": "Without dates (extends weekly)",
+				"weeklyHint": "Until {{date}}, then one more week every Monday until you end it."
+			},
+			"warning": {
+				"title": "When you save:",
+				"cancel": "All appointments in this period are cancelled.",
+				"circles": "You are taken off conversation circles.",
+				"notify": "Advice seekers are notified.",
+				"weekly": "The absence extends every Monday by one week until you end it."
+			},
+			"affected": "Affected: {{appointments}} and {{circles}}.",
+			"affectedAppointments": "{{count}} appointments",
+			"affectedAppointments_one": "{{count}} appointment",
+			"affectedCircles": "{{count}} conversation circles",
+			"affectedCircles_one": "{{count}} conversation circle",
+			"noneAffected": "No appointments or conversation circles fall in this period.",
+			"saveAndCancel": "Save and cancel appointments"
 		},
 		"meeting": {
 			"accept": "Accept",

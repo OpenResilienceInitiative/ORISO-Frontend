@@ -4219,6 +4219,43 @@ $cal-new-pill-hover: #4b4f51;
 		margin: 0;
 		padding-left: 18px;
 	}
+
+	/* #2500: the rules of the warning, then what they affect. */
+	ul + p,
+	ul + div {
+		margin-top: 8px;
+	}
+}
+
+.calendarAbsence__warningTitle {
+	font-weight: 600;
+}
+
+/* #2500: "Mit Datum" or "Ohne Datum", each with a line on what it means. */
+.calendarAbsence__kinds {
+	gap: 4px;
+
+	.MuiFormControlLabel-root {
+		align-items: flex-start;
+		margin-left: -8px;
+	}
+
+	.MuiRadio-root {
+		padding: 6px 8px;
+	}
+}
+
+.calendarAbsence__kindText {
+	display: flex;
+	flex-direction: column;
+	padding-top: 7px;
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+.calendarAbsence__kindHint {
+	color: var(--m3-on-surface-variant, #49454f);
+	font-size: 14px;
 }
 
 /* Full dates do not fit two side by side on a phone. */
