@@ -798,7 +798,7 @@
 	&__empty,
 	&__emptyDetail {
 		padding: 24px;
-		color: #6b7280;
+		color: var(--m3-on-surface-variant, #444748);
 
 		html[data-oriso-personal-scheme='dark'] & {
 			color: var(--m3-on-surface-variant, #c4c7c8);
