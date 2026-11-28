@@ -54,18 +54,26 @@ Legacy root docs may still exist for historical context, but new documentation s
 
 ## Knowledge Graph
 
-This repo has an Understand-Anything graph at:
+The generated Understand-Anything graph (`knowledge-graph.json`, `meta.json`, `fingerprints.json`) is not committed to this repository. ORISO-Docs builds it and publishes it as a signed release asset. The hand-written summaries in `.understand-anything/*.md` stay here.
+
+- Browse it: [understand.oriso.org](https://understand.oriso.org/)
+- Fetch it locally:
 
 ```bash
-.understand-anything/knowledge-graph.json
+mkdir -p /tmp/ua && cd /tmp/ua
+curl -fsSLO https://github.com/OpenResilienceInitiative/ORISO-Docs/releases/download/ua-graph-latest/ORISO-Frontend.tar.gz
+gh attestation verify ORISO-Frontend.tar.gz --repo OpenResilienceInitiative/ORISO-Docs \
+  --signer-workflow OpenResilienceInitiative/ORISO-Docs/.github/workflows/ua-graph-refresh.yml
+tar -xzf ORISO-Frontend.tar.gz   # unpacks to ORISO-Frontend/.understand-anything/
 ```
 
-To open the graph dashboard:
+Before relying on it, compare `gitCommitHash` in `meta.json` with `origin/dev`.
+
+To open the fetched graph in a local dashboard:
 
 ```bash
-PROJECT_DIR="$(pwd)"
 cd "$UNDERSTAND_ANYTHING_DASHBOARD"
-GRAPH_DIR="$PROJECT_DIR" pnpm exec vite --host 127.0.0.1
+GRAPH_DIR=/tmp/ua/ORISO-Frontend pnpm exec vite --host 127.0.0.1
 ```
 
 Set `UNDERSTAND_ANYTHING_DASHBOARD` to your local Understand-Anything `packages/dashboard` directory before running the command.
@@ -76,10 +84,4 @@ Find the access token in the terminal output after the dashboard starts. Use the
 http://127.0.0.1:5173/?token=<token>
 ```
 
-Auto-update is enabled for this repo through `.understand-anything/config.json`. The equivalent Understand-Anything setup command is:
-
-```bash
-/understand . --auto-update
-```
-
-In an environment that supports the Understand-Anything auto-update hook, the graph is updated after commits. If the hook is not available or the graph looks stale after meaningful project changes, rebuild it manually by running the Understand-Anything skill again for this repo, or use `/understand . --full` if your agent environment exposes the slash command.
+Local regeneration (`/understand . --full`) still works, but its output is git-ignored. Do not commit it; the published graph is the shared one.
