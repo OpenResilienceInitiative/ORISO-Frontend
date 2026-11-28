@@ -5,14 +5,18 @@ import {
 	useContext,
 	useLayoutEffect,
 	useMemo,
-	useState
+	useState,
+	useSyncExternalStore
 } from 'react';
 import { getI18n, I18nContext } from 'react-i18next';
 import type { UserDataInterface } from '../globalState/interfaces';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
 import { SessionsDataProvider } from '../globalState/provider/SessionsDataProvider';
 import { TopicsContext } from '../globalState/provider/TopicsProvider';
-import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
+import {
+	NotificationsContext,
+	type NotificationFeedItem
+} from '../globalState/provider/NotificationsProvider';
 import type { MatrixClientService } from '../services/matrixClientService';
 import {
 	getMatrixClientService,
@@ -265,6 +269,9 @@ export const usePracticeSandbox = (): PracticeSandboxApi => {
 
 const noop = () => undefined;
 const resolved = () => Promise.resolve();
+const NO_FEED: NotificationFeedItem[] = [];
+const noFeed = () => NO_FEED;
+const subscribeToNothing = () => noop;
 
 export interface PracticeSandboxProps {
 	/** The real logged-in counsellor; practice fixtures borrow only identity. */
@@ -333,28 +340,42 @@ export const PracticeSandbox = ({
 	const api = useMemo(() => ({ world, restart }), [world, restart]);
 	// Toasts stay; feed entries would outlive practice in the real centre, and
 	// the real Zeitstrahl (asker names, links to real cases) stays out of view.
+	// The Zeitstrahl tour shows the practice world's own entries instead
+	// (FE#2545): reading them changes that memory only.
 	const notifications = useContext(NotificationsContext);
-	const practiceNotifications = useMemo(
-		() =>
-			notifications && {
-				...notifications,
-				addEventNotification: noop,
-				notificationFeed: [],
-				unreadNotificationCount: 0,
-				serverUnreadTotal: 0,
-				hasUnreadNotifications: false,
-				visibleUnreadCount: 0,
-				hiddenUnreadInLoadedPages: 0,
-				hasOlderNotifications: false,
-				refreshNotificationFeed: noop,
-				loadOlderNotifications: resolved,
-				markNotificationAsRead: noop,
-				markNotificationsReadConfirmed: resolved,
-				markAllNotificationsAsRead: noop,
-				clearNotificationFeed: noop
-			},
-		[notifications]
+	const practiceFeed = useSyncExternalStore(
+		world.timeline?.subscribe ?? subscribeToNothing,
+		world.timeline?.getFeed ?? noFeed
 	);
+	const practiceNotifications = useMemo(() => {
+		if (!notifications) return notifications;
+		const timeline = world.timeline;
+		const unread = practiceFeed.filter((item) => !item.readAt).length;
+		return {
+			...notifications,
+			addEventNotification: noop,
+			notificationFeed: practiceFeed,
+			unreadNotificationCount: unread,
+			serverUnreadTotal: unread,
+			hasUnreadNotifications: unread > 0,
+			visibleUnreadCount: unread,
+			hiddenUnreadInLoadedPages: 0,
+			hasOlderNotifications: false,
+			isMarkingAllRead: false,
+			isClearingFeed: false,
+			refreshNotificationFeed: noop,
+			loadOlderNotifications: resolved,
+			markNotificationAsRead: timeline ? timeline.markRead : noop,
+			markNotificationsReadConfirmed: timeline
+				? (ids: string[]) => {
+						ids.forEach(timeline.markRead);
+						return Promise.resolve();
+					}
+				: resolved,
+			markAllNotificationsAsRead: timeline ? timeline.markAllRead : noop,
+			clearNotificationFeed: noop
+		};
+	}, [notifications, practiceFeed, world]);
 	const matrixContext = useMemo(
 		() => ({
 			matrixClientService: asService(world),

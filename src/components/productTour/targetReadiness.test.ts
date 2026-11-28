@@ -90,4 +90,51 @@ describe('bringTargetIntoView', () => {
 	it('ignores a missing target', () => {
 		expect(() => bringTargetIntoView(null)).not.toThrow();
 	});
+
+	/**
+	 * FE#2545: on a 1440 px desktop the Zeitstrahl's chip row is wider than
+	 * its 376 px scroller, so "Alle als gelesen markieren" sits inside the
+	 * window but cut off by the row. The spotlight would light an invisible
+	 * button; the row is scrolled first, at once, because the scroller
+	 * animates (`scroll-behavior: smooth`) and the spotlight is measured
+	 * right after.
+	 */
+	const scroller = (rect: Partial<DOMRect>, overflowX: string) => {
+		const element = document.createElement('div');
+		element.style.overflowX = overflowX;
+		element.getBoundingClientRect = () =>
+			({ top: 80, bottom: 150, ...rect }) as DOMRect;
+		Object.defineProperty(element, 'scrollWidth', { value: 496 });
+		Object.defineProperty(element, 'clientWidth', { value: 376 });
+		document.body.appendChild(element);
+		return element;
+	};
+
+	it('scrolls a chip row at once when it cuts the target off', () => {
+		const row = scroller({ left: 97, right: 473 }, 'auto');
+		const element = target({ top: 92, bottom: 140, left: 545, right: 593 });
+		row.appendChild(element);
+		bringTargetIntoView(element);
+		expect(element.scrollIntoView).toHaveBeenCalledWith({
+			block: 'nearest',
+			inline: 'nearest',
+			behavior: 'instant'
+		});
+	});
+
+	it('leaves a target alone that its scrolling row shows in full', () => {
+		const row = scroller({ left: 97, right: 473 }, 'auto');
+		const element = target({ top: 92, bottom: 140, left: 377, right: 425 });
+		row.appendChild(element);
+		bringTargetIntoView(element);
+		expect(element.scrollIntoView).not.toHaveBeenCalled();
+	});
+
+	it('does not scroll a container that only hides its overflow', () => {
+		const row = scroller({ left: 97, right: 473 }, 'hidden');
+		const element = target({ top: 92, bottom: 140, left: 545, right: 593 });
+		row.appendChild(element);
+		bringTargetIntoView(element);
+		expect(element.scrollIntoView).not.toHaveBeenCalled();
+	});
 });

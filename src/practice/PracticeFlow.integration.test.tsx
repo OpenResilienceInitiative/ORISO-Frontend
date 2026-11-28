@@ -38,6 +38,8 @@ import { NavigationBar } from '../components/app/NavigationBar';
 import { LiveChatAvailability } from '../components/profile/LiveChatAvailability';
 import { Header } from '../components/header/Header';
 import { RouterConfigConsultant } from '../components/app/RouterConfig';
+import { CalendarPageWired } from '../components/calendar/CalendarPageWired';
+import { NotificationsCenter } from '../components/notificationsCenter/NotificationsCenter';
 import { Walkthrough } from '../components/walkthrough/Walkthrough';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
@@ -67,7 +69,8 @@ import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
 import { PracticeOverviewSection } from './PracticeOverviewSection';
-import { practiceTours } from './practiceTours';
+import { practiceCalendarTour, practiceTours } from './practiceTours';
+import { COMPACT_MAX_WIDTH } from '../components/calendar/calendarViews';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
@@ -142,6 +145,10 @@ const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
 const LIVE_CHAT = 'consultant-live-chat';
 const GROUP_CIRCLE = 'consultant-group-circle';
+const CALENDAR = 'consultant-calendar';
+const CALENDAR_ROUTE = '/booking/events';
+const TIMELINE = 'consultant-timeline';
+const TIMELINE_ROUTE = '/notifications';
 /** The counsellor's real Beratungsstelle (the fixture's), read by the shell. */
 /** The counsellor's own Beratungsstellen, as the create entry reads them. */
 const REAL_AGENCIES_URL = /^\/service\/agencies\/(\d+(?:,\d+)*)$/;
@@ -167,6 +174,8 @@ interface NetworkCall {
 	status?: string;
 }
 const network: NetworkCall[] = [];
+/** The Beratungsstelle's own settings in its real read; none by default. */
+let realAgencySettings: Record<string, unknown> | undefined;
 const networkFetch = vi.fn(
 	async (input: RequestInfo | URL, init?: RequestInit) => {
 		const request = input instanceof Request ? input : null;
@@ -184,10 +193,20 @@ const networkFetch = vi.fn(
 			method === 'GET' && REAL_AGENCIES_URL.exec(new URL(url).pathname);
 		if (agencyIds) {
 			const ids = agencyIds[1].split(',').map(Number);
-			return new Response(JSON.stringify(ids.map((id) => ({ id }))), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			});
+			return new Response(
+				JSON.stringify(
+					ids.map((id) => ({
+						id,
+						...(realAgencySettings && {
+							settings: realAgencySettings
+						})
+					}))
+				),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
 		}
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
@@ -219,6 +238,11 @@ const realMatrixService = new Proxy(
 				/^(send|set|join|invite|leave|redact|create)/.test(key)
 			) {
 				realMatrixWrites.push(key);
+			}
+			// A subscription (`onClientChange`, …) hands back its unsubscribe,
+			// as the real service does; effects return it.
+			if (typeof key === 'string' && /^on[A-Z]/.test(key)) {
+				return () => () => undefined;
 			}
 			return () => null;
 		}
@@ -391,8 +415,16 @@ const renderApp = ({
 										}
 									/>
 									<Route
+										path={CALENDAR_ROUTE.slice(1)}
+										element={<CalendarPageWired />}
+									/>
+									<Route
 										path={SETTINGS_ROUTE.slice(1)}
 										element={<LiveChatAvailability />}
+									/>
+									<Route
+										path={TIMELINE_ROUTE.slice(1)}
+										element={<NotificationsCenter />}
 									/>
 									<Route
 										path="*"
@@ -443,6 +475,7 @@ const renderApp = ({
 beforeEach(async () => {
 	joyride = null;
 	network.length = 0;
+	realAgencySettings = undefined;
 	realMatrixWrites.length = 0;
 	storageWrites.length = 0;
 	networkFetch.mockClear();
@@ -892,6 +925,67 @@ const createOpenStartAndCall = async (
 	).toEqual([]);
 };
 
+/** The open "Neuer Eintrag" dialog (or another calendar dialog) by test id. */
+const calendarDialog = async (testId: string): Promise<HTMLElement> => {
+	let dialog: HTMLElement | null = null;
+	await waitFor(() => {
+		dialog = document.querySelector<HTMLElement>(
+			`[data-testid="${testId}"]`
+		);
+		expect(dialog, testId).not.toBeNull();
+	}, SLOW);
+	return dialog!;
+};
+
+/**
+ * "Neuer Eintrag" on the real calendar: the practice advice seeker is the
+ * one conversation to choose; optionally with "Weitere Personen per Link
+ * einladen" on. Saved with the dialog's own button.
+ */
+const createPracticeAppointment = async (
+	createButton: HTMLElement,
+	{ inviteOthers = false } = {}
+) => {
+	await act(async () => {
+		fireEvent.click(createButton);
+	});
+	const dialog = await calendarDialog('calendar-appointment-dialog');
+	fireEvent.mouseDown(within(dialog).getByRole('combobox'));
+	fireEvent.click(
+		await screen.findByRole('option', {
+			name: SCRIPT.cast.asker.username
+		})
+	);
+	if (inviteOthers) {
+		fireEvent.click(
+			within(dialog).getByRole('switch', {
+				name: 'directInvitation.dialog.inviteOthers'
+			})
+		);
+	}
+	await act(async () => {
+		fireEvent.click(
+			within(dialog).getByTestId('calendar-appointment-save')
+		);
+	});
+};
+
+/**
+ * Nothing of the calendar exercise reached the real calendar or links, from
+ * the practice start (`from`, an index into `network`) on. The navigation's
+ * own real proposal count before the start is not practice.
+ */
+const expectCalendarStayedInPractice = (from: number) =>
+	expect(
+		network
+			.slice(from)
+			.filter(({ url }) =>
+				/\/calendar\b|\/appointments\b|direct-invitations|directlinks/.test(
+					url
+				)
+			)
+	).toEqual([]);
+
 describe('practice flows on the real app shell', () => {
 	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
 		const app = renderApp({ strictMode: true });
@@ -1185,6 +1279,309 @@ describe('practice flows on the real app shell', () => {
 		await app.request(GROUP_CIRCLE);
 		await expectStep(0);
 		expect(joyride!.steps).toHaveLength(6);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('Kalender (FE#2545): a practice appointment, a Terminlink, a cancel, a Sperrzeit and automatic confirmation, all through the real calendar', async () => {
+		const app = renderApp();
+		// The Help list starts topic tours by request; there is no card.
+		await app.request(CALENDAR);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		const practiceStart = network.length;
+		pressNext(0);
+
+		// 2: "Neuer Eintrag": an appointment with the practice advice seeker.
+		const appointment = stepIndexOf('calendar-create');
+		const create = await expectStep(appointment);
+		expect(route()).toBe(CALENDAR_ROUTE);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAppointmentCreated,
+			() => createPracticeAppointment(create!)
+		);
+
+		// 3: again, now with "Weitere Personen per Link einladen": the
+		// Terminlink is made in memory and its share dialog opens.
+		const invitation = await expectStep(appointment + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarInvitationCreated,
+			() => createPracticeAppointment(invitation!, { inviteOthers: true })
+		);
+		const share = await calendarDialog('direct-link-share-dialog');
+		// The practice link points at a reserved host: it leads nowhere.
+		expect(
+			within(share).getByDisplayValue(/^https:\/\/practice\.invalid\//)
+		).toBeTruthy();
+		fireEvent.click(
+			within(share).getByRole('button', { name: 'app.close' })
+		);
+
+		// 4: "Als Nächstes" lists both; one is cancelled from its menu.
+		const cancel = stepIndexOf('calendar-upcoming');
+		const upcoming = await expectStep(cancel);
+		const row = await waitFor(() => {
+			const found = upcoming!.querySelector<HTMLElement>(
+				'[data-cy^="calendar-upcoming-practice-appointment-"]'
+			);
+			expect(found).not.toBeNull();
+			return found!;
+		}, SLOW);
+		expect(row.textContent).toContain(SCRIPT.cast.asker.username);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled,
+			async () => {
+				fireEvent.click(row);
+				fireEvent.click(
+					await waitFor(() => {
+						const item = document.querySelector<HTMLElement>(
+							'[data-cy="calendar-entry-cancel"]'
+						);
+						expect(item).not.toBeNull();
+						return item!;
+					})
+				);
+				await act(async () => {
+					fireEvent.click(
+						await screen.findByTestId('calendar-cancel-confirm')
+					);
+				});
+			}
+		);
+
+		// 5: "Neuer Eintrag" again, tab "Sperrzeit".
+		const blocker = await expectStep(cancel + 1);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarBlockerCreated,
+			async () => {
+				await act(async () => {
+					fireEvent.click(blocker!);
+				});
+				fireEvent.click(
+					await screen.findByRole('tab', {
+						name: 'calendar.dialog.tabs.blocker'
+					})
+				);
+				const dialog = await calendarDialog('calendar-blocker-dialog');
+				await act(async () => {
+					fireEvent.click(
+						within(dialog).getByTestId('calendar-blocker-save')
+					);
+				});
+			}
+		);
+
+		// 6: ⋮ → Sprechstunden: "Buchungen automatisch bestätigen" on, saved.
+		const settings = await expectStep(stepIndexOf('calendar-settings'));
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn,
+			async () => {
+				fireEvent.click(settings!);
+				fireEvent.click(
+					await screen.findByText('calendar.consultationHours.title')
+				);
+				const dialog = await calendarDialog(
+					'calendar-consultation-hours-dialog'
+				);
+				const autoAccept = within(dialog).getByTestId(
+					'consultation-hours-auto-accept'
+				);
+				fireEvent.click(
+					autoAccept.querySelector('input') ?? autoAccept
+				);
+				await act(async () => {
+					fireEvent.click(
+						within(dialog).getByTestId('consultation-hours-save')
+					);
+				});
+			}
+		);
+
+		// Done: completion is written for the calendar tour itself, and
+		// nothing of the exercise reached the real calendar.
+		await finish(stepIndexOf('calendar-settings') + 1);
+		expectCalendarStayedInPractice(practiceStart);
+	}, 120000);
+
+	it('Kalender where the Beratungsstelle allows no video invitation: the Terminlink step is left out, as the calendar offers none', async () => {
+		// The Träger allows it (unset); the agency's own setting does not.
+		realAgencySettings = { featureDirectInviteVideoEnabled: false };
+		const app = renderApp();
+		await app.request(CALENDAR);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+
+		const appointment = stepIndexOf('calendar-create');
+		expect(
+			joyride!.steps[appointment + 1].target,
+			'no invitation step after the appointment'
+		).toBe('[data-tour-target="calendar-upcoming"]');
+		expect(joyride!.steps).toHaveLength(
+			practiceCalendarTour.steps.length - 1
+		);
+	});
+
+	it.each([900, COMPACT_MAX_WIDTH])(
+		'Kalender at %i px, where the calendar is compact and has no "Als Nächstes": the explanation tour runs instead',
+		async (width) => {
+			const app = renderApp({ width });
+			await app.request(CALENDAR);
+			await expectStep(0);
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(getPracticeNetworkGuard()).toBeFalsy();
+		}
+	);
+
+	it('Kalender without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(CALENDAR);
+		await expectStep(0);
+		expect(joyride!.steps).toHaveLength(7);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeFalsy();
+	});
+
+	it('Zeitstrahl (FE#2545): the newest entry opens and is read, the rest is marked read, another entry opens its conversation, and the practice draft is found, continued and sent', async () => {
+		const app = renderApp();
+		await app.request(TIMELINE);
+
+		// 1: an exercise, nothing is real; Next.
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		const practiceStart = network.length;
+		pressNext(0);
+
+		// 2: the Zeitstrahl with the practice entries and the draft. The
+		// newest entry, the advice seeker's reply, is open and read; Next.
+		await expectStep(1);
+		expect(route()).toBe(TIMELINE_ROUTE);
+		const cards = () =>
+			[
+				...document.querySelectorAll<HTMLElement>(
+					'.notificationsCenter__card'
+				)
+			].map((card) => ({
+				target: card.getAttribute('data-tour-target'),
+				unread: !!card.querySelector('.notificationsCenter__cardUnread')
+			}));
+		await waitFor(
+			() =>
+				expect(
+					cards(),
+					document.querySelector('.notificationsCenter__list')
+						?.textContent ?? ''
+				).toEqual([
+					{ target: 'timeline-draft-entry', unread: false },
+					{ target: null, unread: false },
+					{ target: 'timeline-entry', unread: false },
+					{ target: null, unread: true }
+				]),
+			SLOW
+		);
+		await waitFor(
+			() =>
+				expect(textOf('.notificationsCenter__detail')).toContain(
+					SCRIPT.texts.askerReply
+				),
+			SLOW
+		);
+		pressNext(1);
+
+		// 3: "Alle als gelesen markieren" reads the team-chat entry too.
+		const markAll = await expectStep(2);
+		await act(async () => {
+			fireEvent.click(markAll!);
+		});
+		await waitFor(() =>
+			expect(cards().every(({ unread }) => !unread)).toBe(true)
+		);
+
+		// 4: the accept entry: its conversation shows beside the list,
+		// under a bar with "Chat öffnen".
+		const entry = await expectStep(3);
+		await act(async () => {
+			fireEvent.click(entry!);
+		});
+		await waitFor(() => {
+			expect(entry!.className).toContain(
+				'notificationsCenter__card--active'
+			);
+			expect(textOf('.notificationsCenter__detail')).toContain(
+				SCRIPT.texts.acceptedCaseCounsellorMessage
+			);
+		}, SLOW);
+
+		// 5: the "Entwürfe" chip: only the draft is left.
+		const chip = await expectStep(4);
+		await act(async () => {
+			fireEvent.click(chip!);
+		});
+		await waitFor(() =>
+			expect(cards()).toEqual([
+				{ target: 'timeline-draft-entry', unread: false }
+			])
+		);
+
+		// 6: the draft entry; its detail names "Chat öffnen".
+		const draft = await expectStep(5);
+		await act(async () => {
+			fireEvent.click(draft!);
+		});
+
+		// 7: "Chat öffnen" opens the practice conversation with the draft.
+		const open = await expectStep(6);
+		expect(open!.textContent).toContain('notifications.center.open');
+		await act(async () => {
+			fireEvent.click(open!);
+		});
+		await waitFor(
+			() =>
+				expect(route()).toMatch(
+					/sessionView\/(!|%21)practice-1[^?]*\?draftScopeKey=/
+				),
+			SLOW
+		);
+
+		// 8: the composer holds the draft; it is continued and sent.
+		await expectStep(7);
+		const composer = () => document.querySelector('.chatStage__mainPane');
+		await waitFor(
+			() =>
+				expect(liveEditor(composer)?.getText()).toContain(
+					SCRIPT.texts.counsellorDraft
+				),
+			SLOW
+		);
+		const addition = 'Melden Sie sich gern wieder.';
+		await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
+			typeAndSend(composer, addition)
+		);
+		await waitFor(
+			() => expect(textOf('.chatStage__mainPane')).toContain(addition),
+			SLOW
+		);
+
+		// 9: done. Completion is the one write, and nothing of the exercise
+		// (entries, read states, the draft) reached the real feed or drafts.
+		await finish(8);
+		expect(
+			network
+				.slice(practiceStart)
+				.filter(({ url }) =>
+					/\/service\/users\/drafts|notifications/.test(url)
+				)
+		).toEqual([]);
+	}, 120000);
+
+	it('Zeitstrahl without the practice area: the explanation tour runs on the real page', async () => {
+		const app = renderApp({ practiceArea: false });
+		await app.request(TIMELINE);
+		await expectStep(0);
+		expect(joyride!.steps.map(({ target }) => target)).toContain(
+			'[data-tour-target="timeline-page"]'
+		);
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});

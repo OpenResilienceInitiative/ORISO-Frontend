@@ -86,6 +86,24 @@ describe('PracticeSandboxSlot', () => {
 		expect(world?.rest.getCase().session.status).toBe(2);
 	});
 
+	it('starts the Zeitstrahl tour on the accepted case with its timeline entries and draft (FE#2545)', async () => {
+		renderSlot('consultant-timeline');
+
+		expect(world?.start).toBe('timeline');
+		expect(world?.rest.getCase().session.status).toBe(2);
+		expect(world?.timeline?.unreadCount()).toBe(2);
+		const drafts = await window.fetch(
+			new Request(`${endpoints.userDrafts}?page=0&perPage=200`)
+		);
+		expect((await drafts.json()).items).toHaveLength(1);
+	});
+
+	it('gives the other tours no practice timeline', () => {
+		renderSlot(SUPERVISION);
+
+		expect(world?.timeline).toBeNull();
+	});
+
 	it('gives every new run fresh fixtures (a restart is end + enter on the same guard)', async () => {
 		renderSlot(ACCEPT);
 		await window.fetch(

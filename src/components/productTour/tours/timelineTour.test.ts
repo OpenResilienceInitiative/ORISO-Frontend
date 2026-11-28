@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { getAvailableTours } from '../tourCatalogue';
 import { frontendTopicTours } from '../tourDefinitions';
-import { consultantTimelineTour } from './timelineTour';
+import { consultantTimelineTour, TIMELINE_TOUR_VERSION } from './timelineTour';
 import { itKeepsTheTourContract } from './tourDefinitionContract.testkit';
 
 describe('consultant-timeline', () => {
-	itKeepsTheTourContract(consultantTimelineTour, 'consultant');
+	itKeepsTheTourContract(
+		consultantTimelineTour,
+		'consultant',
+		TIMELINE_TOUR_VERSION
+	);
+
+	it('is version 2: the practice rendering (FE#2545) shares id and version', () => {
+		expect(TIMELINE_TOUR_VERSION).toBe(2);
+	});
 
 	it('walks the timeline first, then the drafts', () => {
 		expect(consultantTimelineTour.steps.map((step) => step.id)).toEqual([

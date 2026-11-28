@@ -9,18 +9,27 @@ import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
 import { usePractice } from './PracticeProvider';
 import { registerPracticeRestartHandler } from './practiceRestart';
 import {
+	PRACTICE_CALENDAR_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
-	PRACTICE_SUPERVISION_TOUR_ID
+	PRACTICE_SUPERVISION_TOUR_ID,
+	PRACTICE_TIMELINE_TOUR_ID
 } from './practiceTourIds';
 
 /**
- * F2 starts on the already accepted case, the Live-Chat tour on a waiting
- * live chat, the Gesprächskreis tour before its circle exists, F1 on the
- * open enquiry.
+ * F2 starts on the already accepted case, and so does the Kalender tour (its
+ * appointments need a conversation of the counsellor's own); the Live-Chat
+ * tour on a waiting live chat, the Gesprächskreis tour before its circle
+ * exists, the Zeitstrahl tour on the accepted case with its timeline entries
+ * and one unsent draft, F1 on the open enquiry.
  */
 const startOf = (tourId: string | null): PracticeStart => {
-	if (tourId === PRACTICE_SUPERVISION_TOUR_ID) return 'acceptedCase';
+	if (
+		tourId === PRACTICE_SUPERVISION_TOUR_ID ||
+		tourId === PRACTICE_CALENDAR_TOUR_ID
+	)
+		return 'acceptedCase';
+	if (tourId === PRACTICE_TIMELINE_TOUR_ID) return 'timeline';
 	if (tourId === PRACTICE_LIVE_CHAT_TOUR_ID) return 'liveChat';
 	if (tourId === PRACTICE_GROUP_CIRCLE_TOUR_ID) return 'groupCircle';
 	return 'enquiry';

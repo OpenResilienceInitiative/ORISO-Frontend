@@ -62,6 +62,31 @@ const anchorContract: Array<{
 		expected: /'timeline-mark-all-read'/
 	},
 	{
+		// FE#2545: the newest card besides the shown one and the drafts, and
+		// the draft cards (filled list only, never the icon rail).
+		anchor: 'timeline-entry',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected:
+			/isTimelineDraftId\(item\.id\)\s*\?\s*'timeline-draft-entry'\s*:\s*item\.id === otherEntryId\s*\?\s*'timeline-entry'/
+	},
+	{
+		anchor: 'timeline-draft-entry',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /'timeline-draft-entry'/
+	},
+	{
+		// The drafts family chip, passed to FilterChip's tourTarget.
+		anchor: 'timeline-chip-drafts',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /kind\.id === 'drafts'\s*\?\s*'timeline-chip-drafts'/
+	},
+	{
+		// "Chat öffnen" of an entry's detail (no inline conversation).
+		anchor: 'timeline-open-action',
+		sourceFile: 'notificationsCenter/NotificationsCenter.tsx',
+		expected: /data-tour-target="timeline-open-action"/
+	},
+	{
 		anchor: 'sessions-drafts-chip',
 		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
 		expected: /tourTarget: 'sessions-drafts-chip'/
@@ -233,6 +258,14 @@ const anchorContract: Array<{
 	{
 		anchor: 'calendar-links',
 		sourceFile: 'calendar/CalendarLinksSection.tsx'
+	},
+	{
+		// "Als Nächstes" (FE#2545, the practice cancel step): both of its
+		// renderings, the future zone and the narrow column's list.
+		anchor: 'calendar-upcoming',
+		sourceFile: 'calendar/CalendarSidebar.tsx',
+		expected:
+			/data-tour-target="calendar-upcoming"[\s\S]*data-tour-target="calendar-upcoming"/
 	},
 	{
 		anchor: 'supervision-panel',

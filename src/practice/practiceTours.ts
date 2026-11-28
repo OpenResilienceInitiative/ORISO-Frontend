@@ -9,12 +9,19 @@ import {
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_CALENDAR_TOUR_ID,
 	PRACTICE_GROUP_CIRCLE_CONFIGURE_STEP_ID,
 	PRACTICE_GROUP_CIRCLE_TOUR_ID,
 	PRACTICE_LIVE_CHAT_TOUR_ID,
-	PRACTICE_SUPERVISION_TOUR_ID
+	PRACTICE_SUPERVISION_TOUR_ID,
+	PRACTICE_TIMELINE_TOUR_ID
 } from './practiceTourIds';
 import { LIVE_CHAT_TOUR_VERSION } from '../components/productTour/tours/liveChatTour';
+import { CALENDAR_TOUR_VERSION } from '../components/productTour/tours/calendarTour';
+import {
+	consultantTimelineTour,
+	TIMELINE_TOUR_VERSION
+} from '../components/productTour/tours/timelineTour';
 import {
 	consultantGroupCircleTour,
 	GROUP_CIRCLE_SETTINGS_OPENED,
@@ -398,6 +405,231 @@ export const practiceGroupCircleTour: TourDefinition = {
 	]
 };
 
+/** "Meine Termine", where the calendar tour runs. */
+const CALENDAR_ROUTE = '/booking/events';
+
+/**
+ * FE#2545: the Kalender topic tour as a practice flow, on the real calendar
+ * with the practice advice seeker's conversation. The counsellor enters an
+ * appointment, a second one with a Terminlink, cancels one, enters a
+ * Sperrzeit and switches automatic confirmation on in the Sprechstunden.
+ * Every write is answered in memory. The dialogs sit above the tour layer,
+ * so each step points at the button that opens one, says what to do in it
+ * and waits for the saved result. Same id and version as the explanation
+ * tour it replaces where practice is open; no card of its own.
+ */
+export const practiceCalendarTour: TourDefinition = {
+	id: PRACTICE_CALENDAR_TOUR_ID,
+	version: CALENDAR_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: 'tour.calendar.title',
+	summaryKey: 'tour.calendar.summary',
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.calendar.step.practiceIntro.title',
+			contentKey: 'tour.calendar.step.practiceIntro.intro'
+		},
+		{
+			id: 'appointment',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+			},
+			titleKey: 'tour.calendar.step.practiceAppointment.title',
+			contentKey: 'tour.calendar.step.practiceAppointment.intro'
+		},
+		{
+			// "Weitere Personen per Link einladen" takes the Art's medium;
+			// the step needs the default Art, video, to be invitable.
+			id: 'invitation',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			when: { flag: 'featureDirectInviteVideoEnabled' },
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+			},
+			titleKey: 'tour.calendar.step.practiceInvitation.title',
+			contentKey: 'tour.calendar.step.practiceInvitation.intro'
+		},
+		{
+			// The entry's menu and the confirmation are dialogs as well.
+			id: 'cancel',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-upcoming',
+			placement: 'auto',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+			},
+			titleKey: 'tour.calendar.step.practiceCancel.title',
+			contentKey: 'tour.calendar.step.practiceCancel.intro'
+		},
+		{
+			// After the cancellation, which cannot be undone: no Back.
+			id: 'blocker',
+			hideBack: true,
+			route: CALENDAR_ROUTE,
+			target: 'calendar-create',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarBlockerCreated
+			},
+			titleKey: 'tour.calendar.step.practiceBlocker.title',
+			contentKey: 'tour.calendar.step.practiceBlocker.intro'
+		},
+		{
+			// ⋮ → Sprechstunden; colleagues' automatic confirmation needs
+			// colleagues, which the practice world does not have.
+			id: 'auto-accept',
+			route: CALENDAR_ROUTE,
+			target: 'calendar-settings',
+			placement: 'bottom',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn
+			},
+			titleKey: 'tour.calendar.step.practiceAutoAccept.title',
+			contentKey: 'tour.calendar.step.practiceAutoAccept.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.calendar.step.practiceDone.title',
+			contentKey: 'tour.calendar.step.practiceDone.intro'
+		}
+	]
+};
+
+/** The Zeitstrahl, where the timeline tour works until the draft opens. */
+const TIMELINE_ROUTE = '/notifications';
+
+/**
+ * FE#2545: the Zeitstrahl und Entwürfe topic tour as a practice flow, on the
+ * real Zeitstrahl with the practice world's entries: a new message from the
+ * practice advice seeker, a read accept, a new team-chat message and one
+ * unsent draft to the advice seeker. The Zeitstrahl opens the newest entry
+ * (and reads it, as on every desktop); the counsellor marks the rest read
+ * with the real button, opens the accept entry (its conversation shows
+ * beside the list), filters for drafts, opens the draft, continues it in the
+ * conversation and sends it. Every read state and the draft live in memory;
+ * the message goes to the practice room only. Same id and version as the
+ * explanation tour it replaces where practice is open; no card of its own.
+ */
+export const practiceTimelineTour: TourDefinition = {
+	id: PRACTICE_TIMELINE_TOUR_ID,
+	version: TIMELINE_TOUR_VERSION,
+	surface: 'frontend',
+	audiences: ['consultant'],
+	titleKey: consultantTimelineTour.titleKey,
+	summaryKey: consultantTimelineTour.summaryKey,
+	dismissible: false,
+	requiredTargetPolicy: 'stop',
+	steps: [
+		{
+			id: 'intro',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.timeline.step.practiceIntro.title',
+			contentKey: 'tour.timeline.step.practiceIntro.intro'
+		},
+		{
+			id: 'timeline',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-page',
+			placement: 'center',
+			titleKey: 'tour.timeline.step.timeline.title',
+			contentKey: 'tour.timeline.step.practiceTimeline.intro'
+		},
+		{
+			// The Zeitstrahl opened and read its newest entry, the advice
+			// seeker's reply; the team-chat entry is still unread.
+			id: 'mark-all-read',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-mark-all-read',
+			placement: 'bottom',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.timeline.step.markAllRead.title',
+			contentKey: 'tour.timeline.step.practiceMarkAllRead.intro'
+		},
+		{
+			// The newest entry besides the shown one and the drafts: the
+			// accept. A click shows its conversation beside the list.
+			id: 'open-entry',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-entry',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.timeline.step.practiceOpenEntry.title',
+			contentKey: 'tour.timeline.step.practiceOpenEntry.intro'
+		},
+		{
+			// The counsellor's display filter can hide the chip; the draft
+			// entry stays in the list either way.
+			id: 'drafts-filter',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-chip-drafts',
+			placement: 'bottom',
+			optional: true,
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.timeline.step.practiceDraftsFilter.title',
+			contentKey: 'tour.timeline.step.practiceDraftsFilter.intro'
+		},
+		{
+			id: 'open-draft',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-draft-entry',
+			placement: 'right',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.timeline.step.practiceOpenDraft.title',
+			contentKey: 'tour.timeline.step.practiceOpenDraft.intro'
+		},
+		{
+			// "Chat öffnen" of the draft's detail: the conversation opens
+			// with the draft in its composer.
+			id: 'continue',
+			route: TIMELINE_ROUTE,
+			target: 'timeline-open-action',
+			placement: 'left',
+			advanceOn: { type: 'click' },
+			titleKey: 'tour.timeline.step.practiceContinue.title',
+			contentKey: 'tour.timeline.step.practiceContinue.intro'
+		},
+		{
+			// The conversation is open; Back would leave the draft half-way.
+			id: 'send',
+			hideBack: true,
+			target: 'session-composer',
+			placement: 'top',
+			advanceOn: {
+				type: 'event',
+				name: PRACTICE_TOUR_EVENTS.messageSent
+			},
+			titleKey: 'tour.timeline.step.practiceSend.title',
+			contentKey: 'tour.timeline.step.practiceSend.intro'
+		},
+		{
+			id: 'done',
+			target: '',
+			placement: 'center',
+			titleKey: 'tour.timeline.step.practiceDone.title',
+			contentKey: 'tour.timeline.step.practiceDone.intro'
+		}
+	]
+};
+
 /**
  * Every tour the practice world can host: the card flows and the topic tours
  * that run as practice where it is open. The tour host, the banner and the
@@ -406,7 +638,9 @@ export const practiceGroupCircleTour: TourDefinition = {
 export const practiceHostedTours: TourDefinition[] = [
 	...practiceTours,
 	practiceLiveChatTour,
-	practiceGroupCircleTour
+	practiceGroupCircleTour,
+	practiceCalendarTour,
+	practiceTimelineTour
 ];
 
 /**

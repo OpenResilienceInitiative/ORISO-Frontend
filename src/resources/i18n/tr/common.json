@@ -3618,7 +3618,8 @@
 			"greeting": "Talebiniz bize ulaştı. Bir danışman en kısa sürede size dönüş yapacak."
 		},
 		"counsellor": {
-			"acceptedCaseMessage": "Merhaba, mesajınız için teşekkürler. Danışmanlık burada yazılı ve gizli olarak yürütülür."
+			"acceptedCaseMessage": "Merhaba, mesajınız için teşekkürler. Danışmanlık burada yazılı ve gizli olarak yürütülür.",
+			"draft": "Süreçle ilgili sorunuzu memnuniyetle yanıtlıyorum: Bize yazıyorsunuz, biz de genellikle iki iş günü içinde yanıt veriyoruz."
 		},
 		"names": {
 			"agency": "Alıştırma danışma merkezi",
@@ -6735,6 +6736,34 @@
 				"links": {
 					"title": "Randevusuz bağlantılar",
 					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
+				},
+				"practiceIntro": {
+					"title": "Takvim alıştırması",
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Randevular, bir randevu bağlantısı ve engellenmiş zaman girecek, otomatik onayı açacaksınız."
+				},
+				"practiceAppointment": {
+					"title": "Randevu gir",
+					"intro": "„Yeni“ye tıklayın, „Danışmanlık“ altında kurgusal kişiyi seçin ve „Oluştur“a tıklayın. „Bağlantıyla başka kişileri davet et“ bu sefer kapalı kalsın."
+				},
+				"practiceInvitation": {
+					"title": "Randevu bağlantısı oluştur",
+					"intro": "„Yeni“yi tekrar açın, aynı kişiyi seçin, „Bağlantıyla başka kişileri davet et“i açın ve „Oluştur“a tıklayın. Ardından gördüğünüz bağlantı bir alıştırma bağlantısıdır ve hiçbir yere gitmez."
+				},
+				"practiceCancel": {
+					"title": "Randevuyu iptal et",
+					"intro": "Yeni randevularınız „Sıradaki“ altında listelenir. Birine tıklayın, „Randevuyu iptal et“i seçin ve onaylayın."
+				},
+				"practiceBlocker": {
+					"title": "Engellenmiş zaman gir",
+					"intro": "Engellenmiş zamanda kimse sizden randevu alamaz. „Yeni“yi açın, „Engellenmiş zaman“ sekmesine geçin ve „Ekle“ye tıklayın."
+				},
+				"practiceAutoAccept": {
+					"title": "Otomatik onayla",
+					"intro": "⋮ menüsünü, ardından „Görüşme saatleri“ni açın, „Rezervasyonları otomatik onayla“yı açın ve „Görüşme saatlerini kaydet“e tıklayın. Böylece görüşme saatlerinizdeki rezervasyonlar hemen kesinleşir."
+				},
+				"practiceDone": {
+					"title": "Tamamlandı",
+					"intro": "Randevular ve bir randevu bağlantısı oluşturdunuz, bir randevuyu iptal ettiniz, engellenmiş zaman girdiniz ve rezervasyonları otomatik onayladınız. Gerçek takvimde kişi her randevuyu sohbette öğrenir."
 				}
 			}
 		},
@@ -6810,6 +6839,40 @@
 				"draftsCenter": {
 					"title": "Tüm taslaklar",
 					"intro": "Tüm taslaklar burada, sohbet ve konu başına kayıtlı. Yazmaya devam etmek için bir taslağı açın ya da silin."
+				},
+				"practiceIntro": {
+					"title": "Alıştırma: zaman akışı ve taslaklar",
+					"intro": "Bu bir alıştırmadır: Tüm kişiler uydurmadır, hiçbir şey gönderilmez veya kaydedilmez. Zaman akışındaki yeni kayıtları okur, okundu olarak işaretler ve gönderilmemiş bir taslağı tamamlarsınız."
+				},
+				"practiceTimeline": {
+					"intro": "Solda sohbetlerinizden gelen olaylar, yeniler bir noktayla; sağda seçilen kaydın sohbeti. Zaman akışı en yeni kaydı zaten açtı, bu yüzden okundu sayılır."
+				},
+				"practiceOpenEntry": {
+					"title": "Bir kaydı açın",
+					"intro": "“Talep kabul edildi” kaydına tıklayın: Sağda kaydın ait olduğu sohbeti görürsünüz."
+				},
+				"practiceMarkAllRead": {
+					"intro": "Ekip sohbetinden gelen kayıt henüz okunmadı. “Tümünü okundu işaretle” düğmesine tıklayın: Sohbetlerinizdeki mesajlar değişmez."
+				},
+				"practiceDraftsFilter": {
+					"title": "Taslakları filtreleyin",
+					"intro": "“Taslaklar” filtresine tıklayın: Zaman akışı yalnızca gönderilmemiş mesajlarınızı gösterir."
+				},
+				"practiceOpenDraft": {
+					"title": "Taslağı bulun",
+					"intro": "“Taslak kaydedildi” öğesine tıklayın. Gönderilmemiş mesajlar kaybolmaz, her sohbet için saklanır."
+				},
+				"practiceContinue": {
+					"title": "Yazmaya devam edin",
+					"intro": "“Sohbeti aç” düğmesine tıklayın: Sohbet açılır ve taslağınız giriş alanında hazırdır."
+				},
+				"practiceSend": {
+					"title": "Taslağı gönderin",
+					"intro": "İsterseniz metni tamamlayın ve “Mesaj gönder” düğmesine tıklayın. Alıştırmada mesaj yalnızca uydurma kişiye ulaşır."
+				},
+				"practiceDone": {
+					"title": "Tamamlandı",
+					"intro": "Yeni kayıtları okudunuz, okundu olarak işaretlediniz, birini açtınız ve bir taslağı tamamladınız. Gerçek zaman akışında böylece tüm sohbetlerinizde neyin yeni olduğunu bir bakışta görürsünüz."
 				}
 			}
 		},

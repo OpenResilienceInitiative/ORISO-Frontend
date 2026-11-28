@@ -1,6 +1,14 @@
 import type { TourDefinition } from '../types';
 
 /**
+ * Version 2 (FE#2545): where the practice area is open the tour runs as a
+ * practice flow (`practiceTimelineTour`) under this id and version, so the
+ * Help list shows one status for both renderings. The bump shows the
+ * reworked tour as new.
+ */
+export const TIMELINE_TOUR_VERSION = 2;
+
+/**
  * FE#2342: The timeline and drafts for counsellors. Difference-first: one
  * timeline replaces scattered notifications, and unsent drafts are kept per
  * conversation and collected on one page. Watch-only. Filters and
@@ -11,7 +19,7 @@ import type { TourDefinition } from '../types';
  */
 export const consultantTimelineTour: TourDefinition = {
 	id: 'consultant-timeline',
-	version: 1,
+	version: TIMELINE_TOUR_VERSION,
 	surface: 'frontend',
 	audiences: ['consultant'],
 	titleKey: 'tour.timeline.title',

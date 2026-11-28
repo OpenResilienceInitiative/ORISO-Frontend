@@ -1,7 +1,11 @@
 // @vitest-environment oriso-jsdom
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { createFakeRestBackend } from './FakeRestBackend';
+import {
+	createFakeRestBackend,
+	PRACTICE_TIMELINE_DRAFT_SCOPE
+} from './FakeRestBackend';
+import { practiceAcceptedSessionRoute } from '../practiceRoutes';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
 import {
 	PRACTICE_AGENCY_ID,
@@ -635,5 +639,336 @@ describe('FakeRestBackend: the practice Gesprächskreis (FE#2545)', () => {
 			)
 		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 		expect(backend.served).toHaveLength(0);
+	});
+});
+
+describe('FakeRestBackend: the practice calendar (FE#2545)', () => {
+	const calendar = endpoints.calendarBase;
+	const appointments = endpoints.sessionAppointments(ID);
+	const slot = {
+		startTime: '2026-11-26T09:00:00.000Z',
+		endTime: '2026-11-26T10:00:00.000Z',
+		kind: 'VIDEO'
+	};
+	const week = `from=${encodeURIComponent('2026-11-23T00:00:00.000Z')}&to=${encodeURIComponent('2026-11-30T00:00:00.000Z')}`;
+	const accepted = (hooks = {}) =>
+		backendFor({ start: 'acceptedCase', hooks });
+
+	it('answers every read of the calendar page from memory, never with real data', async () => {
+		const backend = accepted();
+		const read = (url: string) =>
+			backend.handle(new Request(url)).then(json);
+
+		expect(await read(`${calendar}/entries?${week}`)).toEqual([]);
+		expect(await read(`${calendar}/colleagues`)).toMatchObject({
+			colleagues: []
+		});
+		expect(await read(`${calendar}/auto-accept`)).toEqual({
+			colleagueIds: []
+		});
+		expect(await read(`${calendar}/sync`)).toEqual({
+			feedUrl: '',
+			importConfigured: false
+		});
+		expect(await read(`${calendar}/consultation-hours`)).toMatchObject({
+			autoAccept: false
+		});
+		expect(await read(`${calendar}/consultation-hours/once`)).toEqual([]);
+		expect((await read(`${calendar}/working-hours`)).windows).toHaveLength(
+			5
+		);
+		expect(await read(`${calendar}/proposals`)).toEqual({
+			sent: [],
+			received: []
+		});
+		expect(await read(endpoints.directLinks)).toEqual([]);
+		expect(await read(endpoints.upcomingAppointments)).toEqual([]);
+	});
+
+	it('blocks the calendar settings and Sperrzeit saves while practice drains instead of passing them on', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				windows: [],
+				autoAccept: true
+			}),
+			send(`${calendar}/blockers`, 'POST', {
+				startTime: slot.startTime,
+				endTime: slot.endTime
+			})
+		]) {
+			await expect(
+				backend.handle(request, undefined, {
+					practiceAddressedOnly: true
+				})
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		}
+		expect(backend.served).toHaveLength(0);
+	});
+
+	it('enters, moves and cancels an appointment of the practice conversation, and tells the run', async () => {
+		const onAppointmentCreated = vi.fn();
+		const onAppointmentCancelled = vi.fn();
+		const backend = accepted({
+			onAppointmentCreated,
+			onAppointmentCancelled
+		});
+
+		const created = await json(
+			await backend.handle(send(appointments, 'POST', slot))
+		);
+		expect(created).toMatchObject({
+			sessionId: ID,
+			startTime: slot.startTime,
+			status: 'SCHEDULED',
+			kind: 'VIDEO'
+		});
+		expect(created.id).toMatch(/^practice-appointment-/);
+		expect(onAppointmentCreated).toHaveBeenCalledWith(created.id);
+
+		const [entry] = await json(
+			await backend.handle(new Request(`${calendar}/entries?${week}`))
+		);
+		expect(entry).toMatchObject({
+			id: created.id,
+			type: 'APPOINTMENT',
+			sessionId: ID,
+			title: script.cast.asker.username
+		});
+		// Outside the range: not listed.
+		expect(
+			await json(
+				await backend.handle(
+					new Request(
+						`${calendar}/entries?from=${encodeURIComponent('2026-12-01T00:00:00.000Z')}&to=${encodeURIComponent('2026-12-08T00:00:00.000Z')}`
+					)
+				)
+			)
+		).toEqual([]);
+
+		const moved = await json(
+			await backend.handle(
+				send(`${appointments}/${created.id}`, 'PUT', {
+					startTime: '2026-11-27T09:00:00.000Z',
+					endTime: '2026-11-27T10:00:00.000Z'
+				})
+			)
+		);
+		expect(moved.startTime).toBe('2026-11-27T09:00:00.000Z');
+
+		await json(
+			await backend.handle(
+				send(`${appointments}/${created.id}/cancel`, 'POST')
+			)
+		);
+		expect(onAppointmentCancelled).toHaveBeenCalledWith(created.id);
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+
+	it('makes a Terminlink for a practice appointment that leads nowhere', async () => {
+		const onInvitationCreated = vi.fn();
+		const backend = accepted({ onInvitationCreated });
+		const { id } = await json(
+			await backend.handle(send(appointments, 'POST', slot))
+		);
+
+		const link = await json(
+			await backend.handle(
+				send(endpoints.sessionDirectInvitations(ID), 'POST', {
+					appointmentId: id,
+					medium: 'VIDEO',
+					validityAfterEndMinutes: 60,
+					accessMode: 'GUESTS_ONLY',
+					knock: true
+				})
+			)
+		);
+		expect(link).toMatchObject({
+			medium: 'VIDEO',
+			sessionId: ID,
+			accessMode: 'GUESTS_ONLY',
+			appointment: { id, startTime: slot.startTime }
+		});
+		expect(new URL(link.url).hostname).toBe('practice.invalid');
+		expect(onInvitationCreated).toHaveBeenCalledWith(id);
+
+		// Not for an appointment it does not hold.
+		const none = await backend.handle(
+			send(endpoints.sessionDirectInvitations(ID), 'POST', {
+				appointmentId: 'practice-appointment-99'
+			})
+		);
+		expect(none?.status).toBe(204);
+		expect(onInvitationCreated).toHaveBeenCalledTimes(1);
+	});
+
+	it('enters and removes a Sperrzeit in memory', async () => {
+		const onBlockerCreated = vi.fn();
+		const backend = accepted({ onBlockerCreated });
+		const [blocker] = await json(
+			await backend.handle(
+				send(`${calendar}/blockers`, 'POST', {
+					start: '2026-11-26T12:00:00.000Z',
+					end: '2026-11-26T13:00:00.000Z'
+				})
+			)
+		);
+		expect(blocker).toMatchObject({ type: 'BLOCKER', allDay: false });
+		expect(blocker.id).toMatch(/^practice-blocker-/);
+		expect(onBlockerCreated).toHaveBeenCalledWith(blocker.id);
+
+		const removed = await backend.handle(
+			send(`${calendar}/blockers/${blocker.id}`, 'DELETE')
+		);
+		expect(removed?.status).toBe(204);
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+
+	it('tells the run once automatic confirmation is switched on in the Sprechstunden', async () => {
+		const onAutoAcceptOn = vi.fn();
+		const backend = accepted({ onAutoAcceptOn });
+		const hours = {
+			windows: [{ weekday: 2, start: '10:00', end: '12:00' }],
+			noticeDays: 1,
+			slotMinutes: 60
+		};
+
+		await backend.handle(
+			send(`${calendar}/consultation-hours`, 'PUT', {
+				...hours,
+				autoAccept: false
+			})
+		);
+		expect(onAutoAcceptOn).not.toHaveBeenCalled();
+		const saved = await json(
+			await backend.handle(
+				send(`${calendar}/consultation-hours`, 'PUT', {
+					...hours,
+					autoAccept: true
+				})
+			)
+		);
+		expect(saved.autoAccept).toBe(true);
+		expect(onAutoAcceptOn).toHaveBeenCalledTimes(1);
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${calendar}/consultation-hours`)
+				)
+			)
+		).toMatchObject({ autoAccept: true });
+	});
+
+	it('passes real ids on: a real conversation, blocker or appointment is never answered', async () => {
+		const backend = accepted();
+		for (const request of [
+			send(endpoints.sessionAppointments(4711), 'POST', slot),
+			send(`${appointments}/a-real-one/cancel`, 'POST'),
+			send(`${calendar}/blockers/4711`, 'DELETE'),
+			send(endpoints.sessionDirectInvitations(4711), 'POST', {})
+		]) {
+			expect(await backend.handle(request)).toBeNull();
+		}
+	});
+
+	it('starts empty again on reset', async () => {
+		const backend = accepted();
+		await backend.handle(send(appointments, 'POST', slot));
+		backend.reset();
+		expect(
+			await json(
+				await backend.handle(new Request(`${calendar}/entries?${week}`))
+			)
+		).toEqual([]);
+	});
+});
+
+describe('FakeRestBackend: the practice timeline (FE#2545)', () => {
+	const scope = `scope:${PRACTICE_MAIN_ROOM_ID}|thread:main`;
+	const list = `${endpoints.userDrafts}?page=0&perPage=200`;
+	const single = `${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent(scope)}`;
+	const now = () => Date.parse('2026-11-25T10:00:00Z');
+	const timeline = () => backendFor({ start: 'timeline', now });
+
+	it('starts on the accepted case with one unsent practice draft to the advice seeker', async () => {
+		const backend = timeline();
+		expect(backend.getCase().session.status).toBe(2);
+		const { items } = await json(await backend.handle(new Request(list)));
+		expect(items).toEqual([
+			{
+				scopeKey: scope,
+				text: script.texts.counsellorDraft,
+				actionPath: practiceAcceptedSessionRoute(),
+				title: script.cast.asker.displayName,
+				sourceSessionId: PRACTICE_ENQUIRY_SESSION_ID,
+				roomRef: PRACTICE_MAIN_ROOM_ID,
+				threadRootId: null,
+				updatedAt: '2026-11-25T09:55:00.000Z'
+			}
+		]);
+		expect(PRACTICE_TIMELINE_DRAFT_SCOPE).toBe(scope);
+		expect(
+			await json(await backend.handle(new Request(single)))
+		).toMatchObject({ text: script.texts.counsellorDraft });
+	});
+
+	it('continues and discards the draft in memory only', async () => {
+		const backend = timeline();
+		await backend.handle(
+			send(
+				`${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scope)}`,
+				'PATCH',
+				{ text: `${script.texts.counsellorDraft} Gern.` }
+			)
+		);
+		expect(
+			await json(await backend.handle(new Request(single)))
+		).toMatchObject({
+			text: `${script.texts.counsellorDraft} Gern.`,
+			// Stamped on save, as the server does: the Zeitstrahl sorts by it.
+			updatedAt: '2026-11-25T10:00:00.000Z'
+		});
+		await backend.handle(
+			send(
+				`${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scope)}`,
+				'DELETE'
+			)
+		);
+		expect(
+			(await json(await backend.handle(new Request(list)))).items
+		).toEqual([]);
+		backend.reset();
+		expect(
+			(await json(await backend.handle(new Request(list)))).items
+		).toHaveLength(1);
+	});
+
+	it('seeds no draft for the other starts, and keeps the event feed empty for the real provider', async () => {
+		for (const start of [
+			'enquiry',
+			'acceptedCase',
+			'liveChat',
+			'groupCircle'
+		] as const) {
+			const backend = backendFor({ start });
+			expect(
+				(await json(await backend.handle(new Request(list)))).items
+			).toEqual([]);
+		}
+		const { items, unreadCount } = await json(
+			await timeline().handle(
+				new Request(`${endpoints.eventNotifications}?page=0&perPage=20`)
+			)
+		);
+		expect(items).toEqual([]);
+		expect(unreadCount).toBe(0);
 	});
 });

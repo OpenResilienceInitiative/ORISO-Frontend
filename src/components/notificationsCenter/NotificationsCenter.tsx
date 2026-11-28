@@ -113,7 +113,7 @@ import { useTimelineFeed } from './useTimelineFeed';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { useActivityTimeline } from './useActivityTimeline';
 import { useActivityPreviewHydration } from './useActivityPreviewHydration';
-import { toNonEmbeddedPath } from './timelineDrafts';
+import { isTimelineDraftId, toNonEmbeddedPath } from './timelineDrafts';
 import { isDirectLinkCallRoom } from '../directLinkEntry/directLinkEntryFlow';
 import { callManager } from '../../services/CallManager';
 import { startRoomCall } from '../call/startRoomCall';
@@ -912,6 +912,13 @@ export const NotificationsCenter = () => {
 				? 'notifications.center.preview.hiddenNotJoined'
 				: 'notifications.center.preview.hiddenNotYours';
 	const canOpenShown = canOpenSelected && hiddenReason !== 'sessionUnknown';
+	// FE#2545: the newest entry besides the shown one and the drafts, where
+	// the Zeitstrahl practice tour opens a second conversation.
+	const otherEntryId =
+		filteredFeed.find(
+			(item) =>
+				item.id !== activeNotificationId && !isTimelineDraftId(item.id)
+		)?.id ?? null;
 
 	if (notificationFeed.length === 0) {
 		if (isSinglePane) {
@@ -1043,6 +1050,12 @@ export const NotificationsCenter = () => {
 										)
 									}
 									data-cy={`timeline-chip-${kind.id}`}
+									// The Zeitstrahl practice tour (FE#2545).
+									tourTarget={
+										kind.id === 'drafts'
+											? 'timeline-chip-drafts'
+											: undefined
+									}
 								/>
 							))}
 							<button
@@ -1286,6 +1299,15 @@ export const NotificationsCenter = () => {
 												? 'notificationsCenter__card--active'
 												: ''
 										}`}
+										// FE#2545: the practice tour opens
+										// another entry, then the draft.
+										data-tour-target={
+											isTimelineDraftId(item.id)
+												? 'timeline-draft-entry'
+												: item.id === otherEntryId
+													? 'timeline-entry'
+													: undefined
+										}
 										onClick={() => openNotification(item)}
 									>
 										<span className="notificationsCenter__cardIconColumn">
@@ -1715,6 +1737,7 @@ export const NotificationsCenter = () => {
 											<button
 												type="button"
 												className="notificationsCenter__openButton"
+												data-tour-target="timeline-open-action"
 												onClick={handleOpenAction}
 											>
 												{opensCalendar ? (

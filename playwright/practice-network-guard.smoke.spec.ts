@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { PRACTICE_TOUR_IDS } from '../src/practice/practiceTourIds';
+import {
+	PRACTICE_TIMELINE_TOUR_ID,
+	PRACTICE_TOUR_IDS
+} from '../src/practice/practiceTourIds';
 import type { RequestPolicyConfig } from '../src/practice/requestPolicy';
 import {
 	assertRunLeftNothing,
@@ -7,9 +10,11 @@ import {
 	diffStorage,
 	driveAcceptFlow,
 	driveSupervisionFlow,
+	driveTimelineFlow,
 	endFromBanner,
 	exactText,
 	expectRealEnquiriesFree,
+	expectRealTimelineFree,
 	finishButton,
 	openThePracticeEnquiry,
 	practiceCard,
@@ -17,6 +22,8 @@ import {
 	recordTraffic,
 	snapshotStorage,
 	startButton,
+	tourCard,
+	tourStartButton,
 	type FlowRun
 } from './practice-proof';
 
@@ -56,6 +63,8 @@ import {
  * Flow F1 runs with the Team-Besprechung steps when the tenant has them
  * switched on, and without otherwise: the variant is reported as an annotation.
  * Flow F2 is skipped, with a message, when the tenant has no supervision.
+ * Flow F3 (Zeitstrahl und Entwürfe, FE#2545) starts from its own tour card,
+ * not a practice card, and afterwards also checks the real Zeitstrahl.
  */
 const storageState = process.env.ORISO_TOUR_STORAGE_STATE;
 
@@ -127,6 +136,10 @@ interface Flow {
 	drive: (page: Page, run: string) => Promise<FlowRun>;
 	/** Offered only where the Träger switched the feature on. */
 	optional?: boolean;
+	/** A hosted tour: its own tour card starts the practice (FE#2545). */
+	hosted?: boolean;
+	/** One more check of the real app after the run. */
+	afterRun?: (page: Page) => Promise<void>;
 }
 
 const ACCEPT_FLOW: Flow = {
@@ -142,6 +155,15 @@ const SUPERVISION_FLOW: Flow = {
 	titleKey: 'tour.practiceSupervision.title',
 	drive: driveSupervisionFlow,
 	optional: true
+};
+
+const TIMELINE_FLOW: Flow = {
+	name: 'F3 Zeitstrahl und Entwürfe',
+	tourId: PRACTICE_TIMELINE_TOUR_ID,
+	titleKey: 'tour.timeline.title',
+	drive: driveTimelineFlow,
+	hosted: true,
+	afterRun: expectRealTimelineFree
 };
 
 /** The page is where practice started: the Help page with its practice cards. */
@@ -176,7 +198,9 @@ const provePracticeRun = async (
 	await expect(practiceCard(page, ACCEPT_FLOW.titleKey)).toBeVisible({
 		timeout: 30_000
 	});
-	const card = practiceCard(page, flow.titleKey);
+	const card = flow.hosted
+		? tourCard(page, flow.titleKey)
+		: practiceCard(page, flow.titleKey);
 	if (flow.optional) {
 		test.skip(
 			(await card.count()) === 0,
@@ -190,7 +214,7 @@ const provePracticeRun = async (
 	// The run window starts at the click on the card: what the app sent before
 	// is ordinary real-mode traffic.
 	const from = traffic.mark();
-	await startButton(card).click();
+	await (flow.hosted ? tourStartButton(card) : startButton(card)).click();
 	await expect(banner(page)).toBeVisible({ timeout: 30_000 });
 	const walked = await walk(run);
 	// The banner goes when the practice starts to close, while the guard is
@@ -227,6 +251,7 @@ const provePracticeRun = async (
 	).toEqual([]);
 
 	await expectRealEnquiriesFree(page);
+	await flow.afterRun?.(page);
 };
 
 test.describe('practice network guard (T2)', () => {
@@ -239,7 +264,7 @@ test.describe('practice network guard (T2)', () => {
 	// One account, one practice at a time.
 	test.describe.configure({ mode: 'default' });
 
-	for (const flow of [ACCEPT_FLOW, SUPERVISION_FLOW]) {
+	for (const flow of [ACCEPT_FLOW, SUPERVISION_FLOW, TIMELINE_FLOW]) {
 		test(`${flow.name}: walked to the end, nothing leaves the page and nothing stays behind`, async ({
 			page
 		}) => {

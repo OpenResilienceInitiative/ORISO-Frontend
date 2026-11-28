@@ -3604,7 +3604,8 @@
 			"greeting": "Your request has reached us. A counsellor will get back to you."
 		},
 		"counsellor": {
-			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential."
+			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential.",
+			"draft": "I am happy to answer your question about how it works: you write to us, and we usually reply within two working days."
 		},
 		"names": {
 			"agency": "Practice agency",
@@ -6652,6 +6653,34 @@
 				"links": {
 					"title": "Links without an appointment",
 					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				},
+				"practiceIntro": {
+					"title": "Practise the calendar",
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You add appointments, an appointment link and blocked time, and switch automatic confirmation on."
+				},
+				"practiceAppointment": {
+					"title": "Add an appointment",
+					"intro": "Click \"New\", choose the fictional help seeker under \"Conversation\" and click \"Add\". Leave \"Invite more people by link\" off this time."
+				},
+				"practiceInvitation": {
+					"title": "Create an appointment link",
+					"intro": "Open \"New\" again, choose the same person, switch \"Invite more people by link\" on and click \"Add\". The link you see afterwards is a practice link and leads nowhere."
+				},
+				"practiceCancel": {
+					"title": "Cancel an appointment",
+					"intro": "Your new appointments are listed under \"Up next\". Click one, choose \"Cancel appointment\" and confirm."
+				},
+				"practiceBlocker": {
+					"title": "Add blocked time",
+					"intro": "Nobody can book you during blocked time. Open \"New\", switch to the \"Blocked time\" tab and click \"Block\"."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirm automatically",
+					"intro": "Open ⋮, then \"Consultation hours\", switch \"Confirm bookings automatically\" on and click \"Save consultation hours\". Bookings in your consultation hours are then fixed at once."
+				},
+				"practiceDone": {
+					"title": "Done",
+					"intro": "You added appointments and an appointment link, cancelled one, added blocked time and confirmed bookings automatically. In the real calendar the help seeker learns about every appointment in the chat."
 				}
 			}
 		},
@@ -6727,6 +6756,40 @@
 				"draftsCenter": {
 					"title": "All drafts",
 					"intro": "All drafts are listed here, saved per chat and thread. Open a draft to keep writing, or delete it."
+				},
+				"practiceIntro": {
+					"title": "Practice: timeline and drafts",
+					"intro": "This is a practice run: all people are made up, nothing is sent or saved. You read new timeline entries, mark them as read and finish a draft you left unsent."
+				},
+				"practiceTimeline": {
+					"intro": "On the left are the events from your chats, new ones with a dot; on the right the conversation of the selected entry. The timeline has already opened the newest entry, so it counts as read."
+				},
+				"practiceOpenEntry": {
+					"title": "Open an entry",
+					"intro": "Click “Request accepted”: on the right you see the conversation the entry belongs to."
+				},
+				"practiceMarkAllRead": {
+					"intro": "The team chat entry is still unread. Click “Mark all as read”: the messages in your chats stay as they are."
+				},
+				"practiceDraftsFilter": {
+					"title": "Filter for drafts",
+					"intro": "Click the “Drafts” filter: the timeline then shows only your unsent messages."
+				},
+				"practiceOpenDraft": {
+					"title": "Find the draft",
+					"intro": "Click “Draft saved”. Unsent messages are not lost; they are kept per chat."
+				},
+				"practiceContinue": {
+					"title": "Keep writing",
+					"intro": "Click “Open chat”: the conversation opens with your draft already in the input field."
+				},
+				"practiceSend": {
+					"title": "Send the draft",
+					"intro": "Add to the text if you like and click “Send message”. In practice the message only reaches the made-up person."
+				},
+				"practiceDone": {
+					"title": "Done",
+					"intro": "You read new entries, marked them as read, opened one and finished a draft. In the real timeline this shows you at a glance what is new in all your chats."
 				}
 			}
 		},

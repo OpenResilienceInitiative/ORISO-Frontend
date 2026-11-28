@@ -36,6 +36,8 @@ export interface ScriptTexts {
 	supervisorReply: string;
 	erstantwortGreeting: string;
 	acceptedCaseCounsellorMessage: string;
+	/** The counsellor's unsent practice draft to the asker (FE#2545). */
+	counsellorDraft: string;
 }
 
 export interface ScriptNames {
@@ -102,7 +104,8 @@ export const createScriptEngine = ({
 		erstantwortGreeting: t('practiceScript.erstantwort.greeting'),
 		acceptedCaseCounsellorMessage: t(
 			'practiceScript.counsellor.acceptedCaseMessage'
-		)
+		),
+		counsellorDraft: t('practiceScript.counsellor.draft')
 	};
 	const names: ScriptNames = {
 		agency: t('practiceScript.names.agency'),

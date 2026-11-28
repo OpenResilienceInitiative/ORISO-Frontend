@@ -556,6 +556,169 @@ export const driveSupervisionFlow = async (
 };
 
 /**
+ * A normal tour card on the Help page. A hosted tour (FE#2545: Kalender,
+ * Zeitstrahl) has no practice card: its own card starts it, and with the
+ * practice area open it runs as an exercise.
+ */
+export const tourCard = (page: Page, titleKey: string): Locator =>
+	page.locator('li.tourOverview__card:not(.practiceCards__card)', {
+		has: page.getByRole('heading', { name: exactText(titleKey) })
+	});
+
+export const tourStartButton = (card: Locator): Locator =>
+	card.getByRole('button', {
+		name: exactText(
+			'walkthrough.overview.action.start',
+			'walkthrough.overview.action.continue',
+			'walkthrough.overview.action.restart'
+		)
+	});
+
+const TIMELINE_STEP = 'tour.timeline.step';
+
+const timelineCards = (page: Page) =>
+	page.locator('.notificationsCenter__card');
+
+const timelineDetail = (page: Page) =>
+	page.locator('.notificationsCenter__detail');
+
+/**
+ * The Zeitstrahl und Entwürfe exercise (FE#2545) from the first tooltip to
+ * the last, with the real controls: the practice entries and the practice
+ * draft on the real Zeitstrahl, "Alle als gelesen markieren", one entry, the
+ * "Entwürfe" chip, the draft, "Chat öffnen", and the send button of the
+ * practice conversation. Nine steps; eight when the account's display filter
+ * hides the "Entwürfe" chip (that step is optional).
+ */
+export const driveTimelineFlow = async (
+	page: Page,
+	run: string
+): Promise<FlowRun> => {
+	const typed: string[] = [];
+	const total = await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceIntro.title`,
+		1
+	);
+	expect([8, 9]).toContain(total);
+	const withDraftsChip = total === 9;
+	await pressNext(page);
+
+	await expectStep(page, `${TIMELINE_STEP}.timeline.title`, 2, total);
+	await expect(target(page, 'timeline-page')).toBeVisible();
+	// Only the practice entries and the practice draft: no real one is mixed in.
+	await expect(target(page, 'timeline-draft-entry')).toBeVisible({
+		timeout: STEP_TIMEOUT
+	});
+	if (withDraftsChip) {
+		await expect(timelineCards(page)).toHaveCount(4);
+	}
+	// On a desktop the newest entry opens and is read: the seeker's reply.
+	await expect(timelineDetail(page)).toContainText(
+		partOfText('practiceScript.asker.reply'),
+		{ timeout: STEP_TIMEOUT }
+	);
+	await pressNext(page);
+
+	await expectStep(page, `${TIMELINE_STEP}.markAllRead.title`, 3, total);
+	await clickTarget(page, 'timeline-mark-all-read');
+	await expect(page.locator('.notificationsCenter__cardUnread')).toHaveCount(
+		0
+	);
+
+	await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceOpenEntry.title`,
+		4,
+		total
+	);
+	await clickTarget(page, 'timeline-entry');
+	await expect(timelineDetail(page)).toContainText(
+		partOfText('practiceScript.counsellor.acceptedCaseMessage'),
+		{ timeout: STEP_TIMEOUT }
+	);
+
+	let step = 5;
+	if (withDraftsChip) {
+		await expectStep(
+			page,
+			`${TIMELINE_STEP}.practiceDraftsFilter.title`,
+			step,
+			total
+		);
+		await clickTarget(page, 'timeline-chip-drafts');
+		await expect(timelineCards(page)).toHaveCount(1);
+		step += 1;
+	}
+
+	await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceOpenDraft.title`,
+		step,
+		total
+	);
+	await clickTarget(page, 'timeline-draft-entry');
+
+	await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceContinue.title`,
+		step + 1,
+		total
+	);
+	await expect(target(page, 'timeline-open-action')).toHaveText(
+		exactText('notifications.center.open')
+	);
+	await clickTarget(page, 'timeline-open-action');
+
+	await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceSend.title`,
+		step + 2,
+		total
+	);
+	// The composer of the practice conversation holds the practice draft.
+	await expect(target(page, 'session-composer')).toContainText(
+		partOfText('practiceScript.counsellor.draft'),
+		{ timeout: STEP_TIMEOUT }
+	);
+	const more = typedText(run, 'draft');
+	typed.push(more);
+	await typeAndSend(mainPane(page), ` ${more}`);
+	await expect(mainPane(page)).toContainText(more, {
+		timeout: STEP_TIMEOUT
+	});
+
+	await expectStep(
+		page,
+		`${TIMELINE_STEP}.practiceDone.title`,
+		step + 3,
+		total
+	);
+	return { typed };
+};
+
+/**
+ * After the Zeitstrahl exercise: the real Zeitstrahl, opened through the
+ * real navigation, shows no practice entry and not the practice draft.
+ */
+export const expectRealTimelineFree = async (page: Page): Promise<void> => {
+	await clickTarget(page, 'nav-activity');
+	await expect(target(page, 'timeline-page')).toBeVisible({
+		timeout: STEP_TIMEOUT
+	});
+	await page
+		.waitForLoadState('networkidle', { timeout: 15_000 })
+		.catch(() => {});
+	await page.waitForTimeout(3000);
+	await expect(target(page, 'timeline-page')).not.toContainText(
+		partOfText('practiceScript.counsellor.draft')
+	);
+	await expect(target(page, 'timeline-page')).not.toContainText(
+		partOfText('practiceScript.cast.asker')
+	);
+};
+
+/**
  * After the practice: the real Anfragen list, opened through the real
  * navigation, carries no practice id, no practice row and no practice name.
  */

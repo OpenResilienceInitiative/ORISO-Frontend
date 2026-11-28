@@ -2903,6 +2903,27 @@
 				},
 				"links": {
 					"intro": "Deine Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du trägst Termine, einen Terminlink und eine Sperrzeit ein und schaltest die automatische Bestätigung ein."
+				},
+				"practiceAppointment": {
+					"intro": "Klicke auf „Neu“, wähle unter „Beratung“ die erfundene ratsuchende Person und klicke auf „Anlegen“. „Weitere Personen per Link einladen“ bleibt diesmal aus."
+				},
+				"practiceInvitation": {
+					"intro": "Öffne noch einmal „Neu“, wähle dieselbe Person, schalte „Weitere Personen per Link einladen“ ein und klicke auf „Anlegen“. Der Link, den du danach siehst, ist ein Übungslink und führt nirgendwohin."
+				},
+				"practiceCancel": {
+					"intro": "Unter „Als Nächstes“ stehen deine neuen Termine. Klicke einen an, wähle „Absagen“ und bestätige."
+				},
+				"practiceBlocker": {
+					"intro": "In einer Sperrzeit kann niemand bei dir buchen. Öffne „Neu“, wechsle zum Reiter „Sperrzeit“ und klicke auf „Eintragen“."
+				},
+				"practiceAutoAccept": {
+					"intro": "Öffne ⋮ und dort „Sprechstunden“, schalte „Buchungen automatisch bestätigen“ ein und klicke auf „Sprechstunden speichern“. Dann sind Buchungen in deinen Sprechstunden sofort fest."
+				},
+				"practiceDone": {
+					"intro": "Du hast Termine und einen Terminlink angelegt, einen Termin abgesagt, eine Sperrzeit eingetragen und Buchungen automatisch bestätigt. Im echten Kalender erfährt die ratsuchende Person von jedem Termin im Chat."
 				}
 			}
 		},
@@ -2957,6 +2978,33 @@
 				},
 				"draftsCenter": {
 					"intro": "Hier stehen alle Entwürfe, gespeichert pro Chat und Thread. Öffne einen Entwurf, um weiterzuschreiben, oder lösche ihn."
+				},
+				"practiceIntro": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Du liest neue Einträge im Zeitstrahl, markierst sie als gelesen und schreibst einen liegengebliebenen Entwurf zu Ende."
+				},
+				"practiceTimeline": {
+					"intro": "Links die Ereignisse aus deinen Chats, neue mit einem Punkt, rechts das Gespräch zum gewählten Eintrag. Den neuesten Eintrag hat der Zeitstrahl schon geöffnet, damit gilt er als gelesen."
+				},
+				"practiceOpenEntry": {
+					"intro": "Klicke auf „Anfrage angenommen“: Rechts siehst du das Gespräch, zu dem der Eintrag gehört."
+				},
+				"practiceMarkAllRead": {
+					"intro": "Der Eintrag aus dem Team-Chat ist noch ungelesen. Klicke auf „Alle als gelesen markieren“: Die Nachrichten in den Chats bleiben davon unberührt."
+				},
+				"practiceDraftsFilter": {
+					"intro": "Klicke auf den Filter „Entwürfe“: Der Zeitstrahl zeigt dann nur deine ungesendeten Nachrichten."
+				},
+				"practiceOpenDraft": {
+					"intro": "Klicke auf „Entwurf gespeichert“. Ungesendete Nachrichten gehen nicht verloren, sie bleiben pro Chat gespeichert."
+				},
+				"practiceContinue": {
+					"intro": "Klicke auf „Chat öffnen“: Das Gespräch öffnet sich, und dein Entwurf steht schon im Eingabefeld."
+				},
+				"practiceSend": {
+					"intro": "Ergänze den Text, wenn du möchtest, und klicke auf „Nachricht senden“. In der Übung erreicht die Nachricht nur die erfundene Person."
+				},
+				"practiceDone": {
+					"intro": "Du hast neue Einträge gelesen, als gelesen markiert, einen geöffnet und einen Entwurf zu Ende geschrieben. Im echten Zeitstrahl siehst du so auf einen Blick, was in all deinen Chats neu ist."
 				}
 			}
 		},
