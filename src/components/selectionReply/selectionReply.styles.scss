@@ -726,22 +726,27 @@ $selection-reply-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 }
 
-// The passage while it is being answered, and after a jump back to it.
-// `primary-fixed` is too pale on the grey client bubble; the dim tone reads.
+// Outgoing bubbles use the inverse of their own fill and ink in dark.
+.messageItem__message--myMessage {
+	--oriso-highlight-fill: var(--oriso-own-highlight-fill, #ffb4aa);
+	--oriso-highlight-ink: var(--oriso-own-highlight-ink, #410001);
+}
+
+// Passages being answered, thread roots, and passages reached by a jump.
 ::highlight(oriso-selection-reply-active) {
-	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
-	color: var(--m3-on-primary-fixed, #410001);
+	background-color: var(--oriso-highlight-fill, #ffb4aa);
+	color: var(--oriso-highlight-ink, #410001);
 }
 
 // The passage a thread was started on, on the thread's root message.
 ::highlight(oriso-selection-reply-thread) {
-	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
-	color: var(--m3-on-primary-fixed, #410001);
+	background-color: var(--oriso-highlight-fill, #ffb4aa);
+	color: var(--oriso-highlight-ink, #410001);
 }
 
 ::highlight(oriso-selection-reply-jump) {
-	background-color: var(--m3-primary-fixed-dim, #ffb4aa);
-	color: var(--m3-on-primary-fixed, #410001);
+	background-color: var(--oriso-highlight-fill, #ffb4aa);
+	color: var(--oriso-highlight-ink, #410001);
 }
 
 .messageItem__message--jumpTarget {

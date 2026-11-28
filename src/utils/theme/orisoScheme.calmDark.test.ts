@@ -66,6 +66,38 @@ describe('calm dark mode (FE#1134)', () => {
 		}
 	);
 
+	it('keeps standalone dark highlights visible and their text readable', () => {
+		for (const level of ['standard', 'medium', 'high'] as const) {
+			const t = computeOrisoPalette(seeds.platform, 'dark', level).tokens;
+			const fill = t['--oriso-highlight-fill'];
+			expect(
+				wcagContrast(fill, t['--m3-surface-container-high'])
+			).toBeGreaterThanOrEqual(3);
+			expect(
+				wcagContrast(t['--oriso-highlight-ink'], fill)
+			).toBeGreaterThanOrEqual(4.5);
+			expect(t['--oriso-lottie-accent-color']).toBe(
+				t['--oriso-outline-rest']
+			);
+		}
+	});
+
+	it.each(['#a5000a', '#f2c200', '#d8c4f0'])(
+		'keeps highlights readable on an outgoing Original bubble for %s',
+		(primary) => {
+			const t = computeOrisoPalette({ primary }, 'dark', 'standard', {
+				darkBrand: 'original'
+			}).tokens;
+			const fill = t['--oriso-own-highlight-fill'];
+			expect(
+				wcagContrast(fill, t['--m3-primary-fixed'])
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				wcagContrast(t['--oriso-own-highlight-ink'], fill)
+			).toBeGreaterThanOrEqual(4.5);
+		}
+	);
+
 	it('leaves the light rail badge and outlines as they were', () => {
 		const t = computeOrisoPalette(seeds.platform, 'light').tokens;
 		expect(t['--oriso-rail-badge-surface']).toBe('#ffffff');
@@ -211,6 +243,37 @@ describe('calm dark mode (FE#1134)', () => {
 					blue['--m3-primary-fixed']
 				)
 			).toBeGreaterThanOrEqual(7);
+		});
+
+		it('keeps Original red in high contrast when white ink makes it readable', () => {
+			const t = computeOrisoPalette(seeds.platform, 'dark', 'high', {
+				darkBrand: 'original'
+			}).tokens;
+			expect(t['--m3-primary-fixed']).toBe(seeds.platform.primary);
+			expect(t['--m3-on-primary-fixed']).toBe('#ffffff');
+			expect(t['--oriso-stage-brand']).toBe(seeds.platform.primary);
+		});
+
+		it('uses the accepted fallback on the desktop stage and phone hero in dark high', () => {
+			const t = computeOrisoPalette(
+				{ primary: '#777777' },
+				'dark',
+				'high',
+				{
+					darkBrand: 'original'
+				}
+			).tokens;
+			expect(t['--oriso-stage-brand']).toBe(t['--m3-primary-fixed']);
+			expect(t['--oriso-stage-hero']).toBe(t['--m3-primary-fixed']);
+			expect(t['--oriso-stage-hero-on']).toBe(t['--m3-on-primary-fixed']);
+			for (const stop of ['', '-container', '-edge']) {
+				expect(
+					wcagContrast(
+						t['--oriso-stage-brand-on'],
+						t[`--oriso-stage-brand${stop}`]
+					)
+				).toBeGreaterThanOrEqual(7);
+			}
 		});
 
 		it('keeps text on the fixed fill and the deep brand tile readable in dark', () => {

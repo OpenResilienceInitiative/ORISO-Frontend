@@ -207,6 +207,7 @@
 		"postcss-normalize": "^10.0.1",
 		"postcss-preset-env": "^7.2.3",
 		"postcss-safe-parser": "^6.0.0",
+		"postcss-scss": "^4.0.9",
 		"prettier-eslint-cli": "^8.0.1",
 		"sass": "^1.70.0",
 		"sass-loader": "^14.0.0",

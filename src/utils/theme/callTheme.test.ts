@@ -169,6 +169,7 @@ const TEXT_PAIRS: [string, string][] = [
 const UI_PAIRS: [string, string][] = [
 	['--cpd-color-icon-primary', '--cpd-color-bg-canvas-default'],
 	['--cpd-color-icon-secondary', '--cpd-color-bg-canvas-default'],
+	['--cpd-color-icon-accent-tertiary', '--cpd-color-bg-subtle-primary'],
 	['--cpd-color-icon-on-solid-primary', '--cpd-color-bg-action-primary-rest'],
 	// A focus ring nobody can see is the same as no focus ring.
 	['--cpd-color-border-focused', '--cpd-color-bg-canvas-default'],
@@ -194,6 +195,23 @@ describe.each(['dark', 'light'] as const)('contrast in %s', (scheme) => {
 	it.each(UI_PAIRS)('%s on %s reaches 3.0', (fg, bg) => {
 		expect(wcagContrast(at(fg), at(bg))).toBeGreaterThanOrEqual(3);
 	});
+});
+
+it('keeps the dark subtle accent border visible on the raised call surface', () => {
+	const css = buildCallThemeCss(SEED);
+	for (const level of ['standard', 'medium', 'high'] as const) {
+		expect(
+			wcagContrast(
+				readToken(
+					css,
+					'dark',
+					'--cpd-color-border-accent-subtle',
+					level
+				),
+				readToken(css, 'dark', '--cpd-color-bg-subtle-primary', level)
+			)
+		).toBeGreaterThanOrEqual(3);
+	}
 });
 
 describe.each([

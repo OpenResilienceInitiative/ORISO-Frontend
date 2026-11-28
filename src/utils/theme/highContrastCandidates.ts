@@ -270,12 +270,24 @@ export const computeHighContrastTokens = (
 	mirror(tokens, ['--m3-primary-fixed', '--oriso-primary-fixed'], own);
 	mirror(
 		tokens,
-		['--m3-primary-fixed-dim', '--oriso-primary-fixed-dim'],
+		[
+			'--m3-primary-fixed-dim',
+			'--oriso-primary-fixed-dim',
+			'--oriso-outline-rest',
+			'--oriso-lottie-accent-color',
+			'--oriso-highlight-fill',
+			'--oriso-own-highlight-fill'
+		],
 		ownDim
 	);
 	mirror(
 		tokens,
-		['--m3-on-primary-fixed', '--oriso-on-primary-fixed'],
+		[
+			'--m3-on-primary-fixed',
+			'--oriso-on-primary-fixed',
+			'--oriso-highlight-ink',
+			'--oriso-own-highlight-ink'
+		],
 		onSurface
 	);
 	mirror(

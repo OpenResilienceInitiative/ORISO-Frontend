@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, it } from 'vite-plus/test';
 import { computeOrisoPalette } from './orisoScheme';
+import { wcagContrast } from './wcagContrast';
 import {
 	collectConsumedM3Tokens,
 	deltaE2000,
@@ -244,38 +245,41 @@ describe('dark scheme preserves the grayish identity', () => {
 });
 
 describe('entry-stage brand colours', () => {
-	it.each(['#a5000a', '#1c4f8f', '#f8e71c'])(
-		'keeps the %s artwork and its controls stable across display settings unless dark goes calm',
+	it.each(['#a5000a', '#1c4f8f', '#f8e71c', '#0b66c3', '#777777'])(
+		'keeps the %s light artwork and uses a readable dark Original stage',
 		(primary) => {
-			const roles = [
-				'--oriso-stage-brand',
-				'--oriso-stage-brand-on',
-				'--oriso-stage-brand-container',
-				'--oriso-stage-brand-edge'
-			];
+			const role = '--oriso-stage-brand';
+			const stops = [role, role + '-container', role + '-edge'];
 			const light = computeOrisoPalette({ primary }, 'light').tokens;
-			expect(light[roles[0]]).toBe(primary);
-			// Light keeps the artwork for every contrast level; dark keeps it
-			// when the person chooses the original brand colour (FE#1134).
-			// The calm dark counterpart is covered in orisoScheme.calmDark.test.
-			for (const [scheme, darkBrand] of [
-				['light', undefined],
-				['dark', 'original']
+			expect(light[role]).toBe(primary);
+			for (const [level, minimum] of [
+				['standard', 4.5],
+				['medium', 5.5],
+				['high', 7]
 			] as const) {
-				for (const contrast of [
-					'standard',
-					'medium',
-					'high'
-				] as const) {
-					const { tokens } = computeOrisoPalette(
-						{ primary },
-						scheme,
-						contrast,
-						{ darkBrand }
-					);
-					for (const role of roles)
-						expect(tokens[role]).toBe(light[role]);
+				const lightLevel = computeOrisoPalette(
+					{ primary },
+					'light',
+					level
+				).tokens;
+				for (const stop of [...stops, role + '-on']) {
+					expect(lightLevel[stop]).toBe(light[stop]);
 				}
+				const dark = computeOrisoPalette({ primary }, 'dark', level, {
+					darkBrand: 'original'
+				}).tokens;
+				expect(dark[role]).toBe(dark['--m3-primary-fixed']);
+				for (const stop of stops) {
+					expect(
+						wcagContrast(dark[role + '-on'], dark[stop])
+					).toBeGreaterThanOrEqual(minimum);
+				}
+				expect(
+					wcagContrast(
+						dark['--oriso-stage-hero-on'],
+						dark['--oriso-stage-hero']
+					)
+				).toBeGreaterThanOrEqual(minimum);
 			}
 		}
 	);

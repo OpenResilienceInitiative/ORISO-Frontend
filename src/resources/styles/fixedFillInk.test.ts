@@ -1,13 +1,8 @@
 // @vitest-environment node
 
-/**
- * Guard for text on the fixed brand fill (FE#1134). In dark the fill is the
- * calm counterpart (a deep tone), so inks that only work on the pale light
- * fill turn unreadable there (1.2:1 for the side-panel chip, 1.8:1 for
- * mentions). Text on `primary-fixed` must use an ink that follows the fill.
- */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { parse } from 'postcss-scss';
 import { describe, expect, it } from 'vite-plus/test';
 
 const scssFiles = (dir: string): string[] =>
@@ -17,42 +12,86 @@ const scssFiles = (dir: string): string[] =>
 		return name.endsWith('.scss') ? [path] : [];
 	});
 
-const FIXED_FILL =
-	/background(?:-color)?:\s*var\(--(?:m3|oriso)-primary-fixed[,)]/;
-// Inks that stay dark in every scheme and therefore fail on the dark fill.
+const BACKGROUND = /^background(?:-color)?$/;
+const FIXED_FILL = /^var\(--(?:m3|oriso)-primary-fixed[,)]/;
 const FIXED_ONLY_INK =
-	/^\s*color:\s*var\(--m3-(?:primary-container|on-secondary-fixed-variant)[,)]/;
+	/^var\(--m3-(?:primary-container|on-secondary-fixed-variant)[,)]/;
+const FOREGROUND = /^(?:color|(?:border|outline)(?:-[\w-]+)?|fill|stroke)$/;
+const FIRST_ROLE = /var\(\s*(--[\w-]+)/;
+const FIXED_DIM = /^--(?:m3|oriso)-primary-fixed-dim$/;
 
-/** The declarations of the innermost block around a line. */
-const blockAround = (lines: string[], index: number): string[] => {
-	let start = index;
-	for (let depth = 0; start > 0; start -= 1) {
-		depth += (lines[start].match(/}/g) ?? []).length;
-		depth -= (lines[start].match(/{/g) ?? []).length;
-		if (depth < 0) break;
-	}
-	let end = index;
-	for (let depth = 0; end < lines.length - 1; end += 1) {
-		depth += (lines[end].match(/{/g) ?? []).length;
-		depth -= (lines[end].match(/}/g) ?? []).length;
-		if (depth < 0) break;
-	}
-	return lines.slice(start + 1, end);
+const contrastOffenders = (scss: string): number[] => {
+	const lines: number[] = [];
+	parse(scss).walkDecls((decl) => {
+		const isBackground = BACKGROUND.test(decl.prop);
+		const parent = decl.parent;
+		const incompatibleInk =
+			isBackground &&
+			FIXED_FILL.test(decl.value) &&
+			parent?.nodes.some(
+				(sibling) =>
+					sibling.type === 'decl' &&
+					sibling.prop === 'color' &&
+					FIXED_ONLY_INK.test(sibling.value)
+			);
+		const standaloneHighlight =
+			isBackground &&
+			parent?.type === 'rule' &&
+			parent.selector.includes('::highlight(');
+		const fixedDimForeground =
+			(FOREGROUND.test(decl.prop) || standaloneHighlight) &&
+			FIXED_DIM.test(decl.value.match(FIRST_ROLE)?.[1] ?? '');
+		if ((incompatibleInk || fixedDimForeground) && decl.source) {
+			lines.push(decl.source.start.line);
+		}
+	});
+	return lines;
 };
 
-describe('text on the fixed brand fill', () => {
-	it('uses an ink that follows the fill into dark mode', () => {
-		const offenders = scssFiles('src').flatMap((file) => {
-			const lines = readFileSync(file, 'utf8').split('\n');
-			return lines.flatMap((line, index) =>
-				FIXED_FILL.test(line) &&
-				blockAround(lines, index).some((decl) =>
-					FIXED_ONLY_INK.test(decl)
-				)
-					? [`${relative(process.cwd(), file)}:${index + 1}`]
-					: []
-			);
-		});
+describe('fixed brand fill contrast', () => {
+	it('checks only direct declarations of a rule', () => {
+		expect(
+			contrastOffenders(`
+			.chip {
+				background: var(--m3-primary-fixed);
+				.label {
+					background: var(--m3-on-primary-container);
+					color: var(--m3-primary-container);
+				}
+			}
+		`)
+		).toEqual([]);
+		expect(
+			contrastOffenders(`
+			.chip {
+				background: var(--m3-primary-fixed);
+				color: var(--m3-primary-container);
+			}
+		`)
+		).toEqual([3]);
+	});
+
+	it('allows fixed-dim fills and fallbacks while rejecting standalone foregrounds', () => {
+		expect(
+			contrastOffenders(`
+			.chip {
+				background: var(--m3-primary-fixed-dim);
+				color: var(--m3-on-primary-fixed);
+				border-color: var(--oriso-outline-rest, var(--m3-primary-fixed-dim));
+			}
+			.outline { border: 1px solid var(--m3-primary-fixed-dim); }
+			.icon { color: var(--oriso-primary-fixed-dim); }
+			::highlight(hit) { background-color: var(--m3-primary-fixed-dim); }
+		`)
+		).toEqual([7, 8, 9]);
+	});
+
+	it('keeps fixed-dim on fills and uses readable ink on fixed brand fills', () => {
+		const offenders = scssFiles('src').flatMap((file) =>
+			contrastOffenders(readFileSync(file, 'utf8')).map(
+				(line) => `${relative(process.cwd(), file)}:${line}`
+			)
+		);
 		expect(offenders).toEqual([]);
 	});
 });

@@ -72,11 +72,12 @@ describe('enhanced contrast scheme', () => {
 		// instead of 4–6) and the new --oriso-card-divider, --oriso-outline-rest
 		// --oriso-rail-badge-surface, --oriso-(on-)live-surface and
 		// --oriso-stage-hero(-on), --oriso-fixed-accent-ink, --oriso-fixed-quiet-ink, --oriso-deep-brand-ink.
-		// Apart from those new roles, light and inverted are unchanged.
+		// Passage highlight roles apply in every scheme. Dark Lottie accents
+		// follow the resting outline.
 		expect(
 			createHash('sha256').update(JSON.stringify(standards)).digest('hex')
 		).toBe(
-			'1d43bc6cafb1dd945efddfae087292d4dab55241409884aae099a2a6b57e870d'
+			'ec8247a22060ad2f2766a89c464d7a8bc104f1b0416bfc7ddfd95f8314e72dd9'
 		);
 	});
 

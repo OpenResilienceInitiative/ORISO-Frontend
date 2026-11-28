@@ -23,7 +23,7 @@
 		var(--m3-primary-fixed, #ffdad5)
 	);
 	--pennant-on-accent: var(--oriso-topic-tag-fg, #930008);
-	--pennant-edge: var(--m3-primary-fixed-dim, #ffb4aa);
+	--pennant-edge: var(--oriso-outline-rest, #ffb4aa);
 
 	border: 1px solid var(--pennant-edge);
 	border-top: 0;
