@@ -334,6 +334,19 @@ const calmDarkBrandFamily = (
 	};
 };
 
+/** Stage gradient around a dark fill: lighter top, darker edge. */
+const calmStage = (fill: string, ink: string) => {
+	const h = Hct.fromInt(argbFromHex(fill));
+	const at = (tone: number) =>
+		hex(Hct.from(h.hue, h.chroma, Math.min(96, Math.max(4, tone))).toInt());
+	return {
+		role: fill,
+		onRole: ink,
+		container: at(h.tone + DARK_CALM_ACCENT.stageStep),
+		edge: at(h.tone - DARK_CALM_ACCENT.stageStep)
+	};
+};
+
 interface AccentFamily {
 	role: string;
 	onRole: string;
@@ -464,20 +477,29 @@ export const computeOrisoPalette = (
 		primaryPalette,
 		brandContainer
 	);
+	const darkFill = darkAccentFill(
+		primarySeed,
+		primaryPalette,
+		options.darkBrand,
+		primaryDarkSeed
+	);
 	const brand =
 		scheme === 'light'
 			? stageBrand
 			: scheme === 'dark'
-				? calmDarkBrandFamily(
-						primaryPalette,
-						darkAccentFill(
-							primarySeed,
-							primaryPalette,
-							options.darkBrand,
-							primaryDarkSeed
-						)
-					)
+				? calmDarkBrandFamily(primaryPalette, darkFill)
 				: darkBrandFamily(primaryPalette);
+	// The sign-in and entry stages follow the dark choice too (FE#1134): the
+	// calm counterpart as a gradient around the fill, or the original brand.
+	const stage =
+		scheme === 'dark' && options.darkBrand !== 'original'
+			? calmStage(darkFill, brand.onFixed)
+			: {
+					role: stageBrand.role,
+					onRole: stageBrand.onRole,
+					container: stageBrand.container,
+					edge: stageBrand.hover
+				};
 
 	const secondaryPalette = accentSeed
 		? harmonizedAccentPalette(accentSeed, primarySeed)
@@ -526,10 +548,10 @@ export const computeOrisoPalette = (
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
 		// The entry artwork keeps the tenant's brand across display modes.
-		'--oriso-stage-brand': stageBrand.role,
-		'--oriso-stage-brand-on': stageBrand.onRole,
-		'--oriso-stage-brand-container': stageBrand.container,
-		'--oriso-stage-brand-edge': stageBrand.hover,
+		'--oriso-stage-brand': stage.role,
+		'--oriso-stage-brand-on': stage.onRole,
+		'--oriso-stage-brand-container': stage.container,
+		'--oriso-stage-brand-edge': stage.edge,
 		'--oriso-primary-text': brand.text,
 		'--oriso-primary-text-hover': brand.textHover,
 		'--oriso-primary-text-on-fixed': textOnFixed(brand),

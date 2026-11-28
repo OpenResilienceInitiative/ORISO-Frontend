@@ -223,6 +223,8 @@ export const DARK_CALM_ACCENT = {
 	fill: { chroma: 24, tone: 25 },
 	/** Tone step from the fill to `fixed-dim`, away from the ink. */
 	dimStep: 7,
+	/** Tone step of the stage gradient (container above, edge below). */
+	stageStep: 10,
 	mid: { chroma: 20, tone: 55 },
 	ink: 90
 };

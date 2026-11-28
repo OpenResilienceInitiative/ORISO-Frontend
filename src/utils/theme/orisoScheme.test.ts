@@ -245,7 +245,7 @@ describe('dark scheme preserves the grayish identity', () => {
 
 describe('entry-stage brand colours', () => {
 	it.each(['#a5000a', '#1c4f8f', '#f8e71c'])(
-		'keeps the %s artwork and its controls stable across display settings',
+		'keeps the %s artwork and its controls stable across display settings unless dark goes calm',
 		(primary) => {
 			const roles = [
 				'--oriso-stage-brand',
@@ -255,7 +255,13 @@ describe('entry-stage brand colours', () => {
 			];
 			const light = computeOrisoPalette({ primary }, 'light').tokens;
 			expect(light[roles[0]]).toBe(primary);
-			for (const scheme of ['light', 'dark'] as const) {
+			// Light keeps the artwork for every contrast level; dark keeps it
+			// when the person chooses the original brand colour (FE#1134).
+			// The calm dark counterpart is covered in orisoScheme.calmDark.test.
+			for (const [scheme, darkBrand] of [
+				['light', undefined],
+				['dark', 'original']
+			] as const) {
 				for (const contrast of [
 					'standard',
 					'medium',
@@ -264,7 +270,8 @@ describe('entry-stage brand colours', () => {
 					const { tokens } = computeOrisoPalette(
 						{ primary },
 						scheme,
-						contrast
+						contrast,
+						{ darkBrand }
 					);
 					for (const role of roles)
 						expect(tokens[role]).toBe(light[role]);

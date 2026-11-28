@@ -143,6 +143,31 @@ describe('calm dark mode (FE#1134)', () => {
 			}
 		);
 
+		it('turns the sign-in stage calm in dark and keeps it red with original', () => {
+			const calm = computeOrisoPalette(seeds.platform, 'dark').tokens;
+			const original = computeOrisoPalette(
+				seeds.platform,
+				'dark',
+				'standard',
+				{
+					darkBrand: 'original'
+				}
+			).tokens;
+			const light = computeOrisoPalette(seeds.platform, 'light').tokens;
+			expect(calm['--oriso-stage-brand']).toBe('#59302b');
+			expect(
+				wcagContrast(
+					calm['--oriso-stage-brand-on'],
+					calm['--oriso-stage-brand']
+				)
+			).toBeGreaterThanOrEqual(7);
+			for (const role of ['', '-on', '-container', '-edge']) {
+				expect(original[`--oriso-stage-brand${role}`]).toBe(
+					light[`--oriso-stage-brand${role}`]
+				);
+			}
+		});
+
 		it('lets the original choice change nothing outside dark', () => {
 			for (const scheme of ['light', 'inverted'] as const) {
 				expect(
