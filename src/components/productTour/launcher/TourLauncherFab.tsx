@@ -4,6 +4,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { UserDataContext, useTenant } from '../../../globalState';
 import { useAppConfig } from '../../../hooks/useAppConfig';
+import { useCounsellorAgencyFormats } from '../../../hooks/useCounsellorAgencyFormats';
 import {
 	useFloatingSurfaces,
 	useRegisterFloatingSurface
@@ -68,13 +69,23 @@ export const TourLauncherFab = () => {
 	const [progress, setProgress] = useState<TourLauncherProgress[]>([]);
 
 	const audience = audienceForUser(userData);
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(audience === 'consultant');
 	const tours = useMemo(
 		() =>
 			getAvailableTours(frontendTours, audience, {
 				flags: { ...tenantSettings },
-				userData
+				userData,
+				agencyFormats,
+				agencyFormatsReady: !agencyFormatsLoading
 			}),
-		[audience, tenantSettings, userData]
+		[
+			audience,
+			tenantSettings,
+			userData,
+			agencyFormats,
+			agencyFormatsLoading
+		]
 	);
 
 	const shown = shouldShowTourLauncher({

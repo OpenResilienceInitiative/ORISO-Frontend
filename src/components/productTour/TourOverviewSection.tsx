@@ -15,6 +15,8 @@ import { canUsePractice } from '../../practice/practiceAccess';
 import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceSupervisionTour } from '../../practice/practiceTours';
+import { PRACTICE_SUPERVISION_TOUR_ID } from '../../practice/practiceTourIds';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 
 /**
  * FE#2545: "Supervision" exists only as practice. Its card sits after
@@ -55,15 +57,29 @@ export const TourOverviewSection = ({
 	const { untilM: isPhone, fromXL: isWideDesktop } = useResponsive();
 	const tenantSettings = useTenant()?.settings;
 	const audience = audienceForUser(userData);
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(audience === 'consultant');
 	const practiceOpen = canUsePractice(settings, userData);
 	const tours = useMemo(() => {
 		const flags = { ...tenantSettings };
 		return getAvailableTours(
 			withPracticeOnlyTopicTours(frontendTours, practiceOpen, flags),
 			audience,
-			{ flags, userData }
+			{
+				flags,
+				userData,
+				agencyFormats,
+				agencyFormatsReady: !agencyFormatsLoading
+			}
 		);
-	}, [audience, practiceOpen, tenantSettings, userData]);
+	}, [
+		audience,
+		practiceOpen,
+		tenantSettings,
+		userData,
+		agencyFormats,
+		agencyFormatsLoading
+	]);
 
 	// The practice needs the desktop width (as the practice cards): below it
 	// the card stays, with the hint instead of a start.
@@ -83,7 +99,17 @@ export const TourOverviewSection = ({
 	);
 
 	const loadProgress = useCallback(
-		() => versionedTourProgressRepository.getProgress(),
+		() =>
+			versionedTourProgressRepository
+				.getProgress()
+				.then((items) =>
+					items.map((item) =>
+						item.tourId === PRACTICE_SUPERVISION_TOUR_ID &&
+						item.status === 'in_progress'
+							? { ...item, status: 'not_started' as const }
+							: item
+					)
+				),
 		[]
 	);
 

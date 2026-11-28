@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -31,8 +32,14 @@ import { ProfileCardList } from './ProfileCardList';
 import { profileRoutesHelp } from './profileHelp.routes';
 import { PracticeCards } from '../../practice/PracticeCards';
 import { practiceTours } from '../../practice/practiceTours';
+import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
+import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn()
+}));
 vi.mock('react-i18next', async () => {
 	const { makeTranslate } = await import(
 		'../../practice/practiceTestTranslate'
@@ -48,6 +55,8 @@ interface HelpScenario {
 	authorities?: string[];
 	supervision?: boolean;
 	oneOnOne?: boolean;
+	circleEnabled?: boolean;
+	agencies?: Array<{ id: number; name: string }>;
 }
 let savedPreference = false;
 
@@ -58,7 +67,9 @@ const renderHelp = ({
 	platformTours = true,
 	authorities = [AUTHORITIES.CONSULTANT_DEFAULT],
 	supervision = true,
-	oneOnOne = true
+	oneOnOne = true,
+	circleEnabled = false,
+	agencies = []
 }: HelpScenario = {}) => {
 	const store = createStore();
 	const settings = {
@@ -71,6 +82,7 @@ const renderHelp = ({
 		const userData = {
 			userId: 'help-user',
 			grantedAuthorities: authorities,
+			agencies,
 			isWalkThroughEnabled: ownSwitch
 		};
 		const elements = profileRoutesHelp(settings as never)
@@ -106,7 +118,9 @@ const renderHelp = ({
 												featureSupervisionEnabled:
 													supervision,
 												featureSupervisionOneOnOneChatsEnabled:
-													oneOnOne
+													oneOnOne,
+												featureSelfHelpGroupsEnabled:
+													circleEnabled
 											}
 										}
 									} as never
@@ -131,6 +145,8 @@ const renderHelp = ({
 
 beforeEach(() => {
 	savedPreference = false;
+	resetCounsellorAgencyFormatsForTests();
+	vi.mocked(apiGetAgenciesByIds).mockResolvedValue([]);
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async (input: Request) => {
@@ -147,6 +163,8 @@ beforeEach(() => {
 
 afterEach(() => {
 	cleanup();
+	resetCounsellorAgencyFormatsForTests();
+	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 });
 
@@ -312,6 +330,57 @@ describe('Help learning card', () => {
 				mode: 'start'
 			});
 		}
+	});
+
+	it('hides the circle tour until the fetched agency format permits it', async () => {
+		let finish: (value: any[]) => void = () => {};
+		vi.mocked(apiGetAgenciesByIds).mockImplementation(
+			() => new Promise((resolve) => (finish = resolve))
+		);
+		renderHelp({
+			circleEnabled: true,
+			agencies: [{ id: 1, name: 'Practice agency' }]
+		});
+		await waitFor(() =>
+			expect(apiGetAgenciesByIds).toHaveBeenCalledWith([1])
+		);
+		expect(
+			screen.queryByRole('heading', { name: 'Gesprächskreis anlegen' })
+		).toBeNull();
+
+		await act(async () =>
+			finish([
+				{ id: 1, settings: { featureSelfHelpGroupsEnabled: false } }
+			])
+		);
+		expect(
+			screen.queryByRole('heading', { name: 'Gesprächskreis anlegen' })
+		).toBeNull();
+	});
+
+	it('offers Start for an interrupted memory-only Supervision tour', async () => {
+		vi.spyOn(
+			versionedTourProgressRepository,
+			'getProgress'
+		).mockResolvedValue([
+			{
+				tourId: 'consultant-practice-supervision',
+				tourVersion: 2,
+				surface: 'frontend',
+				status: 'in_progress',
+				currentStepId: 'supervisor-swap'
+			}
+		]);
+		renderHelp();
+		const card = (
+			await screen.findByRole('heading', { name: 'Supervision' })
+		).closest('li')!;
+		await waitFor(() =>
+			expect(
+				within(card).getByRole('button', { name: 'Starten' })
+			).toBeTruthy()
+		);
+		expect(within(card).getByText('Nicht gestartet')).toBeTruthy();
 	});
 
 	it('saves the subordinate auto-start preference while manual options stay available', async () => {

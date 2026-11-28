@@ -32,11 +32,14 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import {
 	isPracticeCardTourId,
 	isPracticeTourId,
-	PRACTICE_CALENDAR_TOUR_ID
+	PRACTICE_CALENDAR_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID
 } from '../../practice/practiceTourIds';
+import { isGroupCircleTourAvailable } from '../productTour/tours/groupCircleTour';
 import { COMPACT_MAX_WIDTH } from '../calendar/calendarViews';
 import { useDirectLinksAvailability } from '../directLinks/useDirectLinksAllowed';
 import { directInviteFlagsFor } from '../conversationCreate/directLink/directLinkAvailability';
@@ -75,6 +78,12 @@ export const Walkthrough = () => {
 	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
+	const [renderingChoice, setRenderingChoice] = useState<{
+		request: NonNullable<typeof launchRequest>;
+		practice: boolean;
+	} | null>(null);
+	const choiceIsCurrent =
+		!!launchRequest && renderingChoice?.request === launchRequest;
 
 	const tenantSettings = useTenant()?.settings;
 	// A practice tour is hosted only by deliberate request, and only where
@@ -85,15 +94,35 @@ export const Walkthrough = () => {
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
+	const resolvesCircleFormats =
+		launchRequest?.tourId === PRACTICE_GROUP_CIRCLE_TOUR_ID &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		practiceOpenFor(PRACTICE_GROUP_CIRCLE_TOUR_ID);
+	const circleFormats = useCounsellorAgencyFormats(resolvesCircleFormats);
+	const awaitsCircleFormats =
+		resolvesCircleFormats && !choiceIsCurrent && circleFormats.isLoading;
+	const circlePracticeDenied =
+		resolvesCircleFormats &&
+		!awaitsCircleFormats &&
+		!(choiceIsCurrent && renderingChoice?.practice) &&
+		!isGroupCircleTourAvailable({
+			flags: { ...tenantSettings },
+			agencyFormats: circleFormats.agencies,
+			agencyFormatsReady: !circleFormats.isLoading
+		});
 	const practiceCandidate =
-		launchRequest && practiceOpenFor(launchRequest.tourId)
+		launchRequest &&
+		practiceOpenFor(launchRequest.tourId) &&
+		!awaitsCircleFormats
 			? practiceHostedTours.find(
 					(tour) =>
 						tour.id === launchRequest.tourId &&
 						// A topic tour whose practice this tenant cannot offer
 						// (Supervision without one-on-one supervision, FE#2545)
 						// never runs as an empty practice.
-						isPracticeTourOffered(tour, { ...tenantSettings })
+						isPracticeTourOffered(tour, { ...tenantSettings }) &&
+						(tour.id !== PRACTICE_GROUP_CIRCLE_TOUR_ID ||
+							!circlePracticeDenied)
 				)
 			: undefined;
 	// The rendering (practice or explanation) is chosen once per launch
@@ -101,20 +130,19 @@ export const Walkthrough = () => {
 	// not swap in a practice run, and narrowing it during practice ends the
 	// run (below) instead of swapping in the explanation, like the card
 	// flows. Widening again does not restart it from the stale request.
-	const [renderingChoice, setRenderingChoice] = useState<{
-		request: NonNullable<typeof launchRequest>;
-		practice: boolean;
-	} | null>(null);
-	const choiceIsCurrent =
-		!!launchRequest && renderingChoice?.request === launchRequest;
 	useEffect(() => {
-		if (launchRequest && !choiceIsCurrent) {
+		if (launchRequest && !choiceIsCurrent && !awaitsCircleFormats) {
 			setRenderingChoice({
 				request: launchRequest,
 				practice: !!practiceCandidate
 			});
 		}
-	}, [launchRequest, choiceIsCurrent, practiceCandidate]);
+	}, [
+		launchRequest,
+		choiceIsCurrent,
+		practiceCandidate,
+		awaitsCircleFormats
+	]);
 	const choosesPractice =
 		choiceIsCurrent && renderingChoice
 			? renderingChoice.practice
@@ -147,7 +175,11 @@ export const Walkthrough = () => {
 		!inviteMedia.ready &&
 		inviteMediaSeenFor !== launchRequest;
 	const requestedTour =
-		launchRequest && !lostPracticeRun && !awaitsInviteMedia
+		launchRequest &&
+		!lostPracticeRun &&
+		!awaitsInviteMedia &&
+		!awaitsCircleFormats &&
+		!circlePracticeDenied
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
@@ -159,6 +191,7 @@ export const Walkthrough = () => {
 		!frontendTours.some((tour) => tour.id === launchRequest.tourId);
 	const unavailablePracticeRequest =
 		lostPracticeRun ||
+		circlePracticeDenied ||
 		(practiceOnlyRequest && !practiceCandidate) ||
 		(!!launchRequest &&
 			isPracticeCardTourId(launchRequest.tourId) &&

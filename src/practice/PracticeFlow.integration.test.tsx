@@ -1518,6 +1518,17 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeNetworkGuard()).toBeFalsy();
 	});
 
+	it('does not start a stale circle request when the fetched agency disables circles', async () => {
+		realAgencySettings = { featureSelfHelpGroupsEnabled: false };
+		const app = renderApp({ groupCircle: true });
+		await app.request(GROUP_CIRCLE);
+		await waitFor(() =>
+			expect(app.store.get(tourLaunchRequestAtom)).toBeNull()
+		);
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(joyride).toBeNull();
+	});
+
 	it('Kalender (FE#2545): a practice appointment, a Terminlink, a cancel, a Sperrzeit and automatic confirmation, all through the real calendar', async () => {
 		const app = renderApp();
 		// The Help list starts topic tours by request; there is no card.
