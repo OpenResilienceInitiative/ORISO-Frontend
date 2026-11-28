@@ -22,20 +22,29 @@ export const GROUP_CIRCLE_SETTINGS_OPENED = 'group-circle:settings-opened';
  * The tour is offered exactly when the create flow offers the circle
  * format: `featureSelfHelpGroupsEnabled ?? featureGroupChatV2Enabled ===
  * true` (unset = OFF), refined by the counsellor's agencies. Agency
- * settings come from the user data when present; without them the
- * Träger's answer stands, as in `getConversationFormatAvailability`.
+ * settings come from the fetched agency response when supplied by the host.
+ * Without an agency response, the Träger's answer stands, as in
+ * `getConversationFormatAvailability`.
  */
 export const isGroupCircleTourAvailable = ({
 	flags,
-	userData
+	userData,
+	agencyFormats,
+	agencyFormatsReady
 }: TourAvailabilityContext): boolean =>
-	getConversationFormatAvailability(
-		{ settings: (flags ?? {}) as NonNullable<FormatTenant>['settings'] },
-		(userData?.agencies ?? []).map((agency) => ({
-			id: agency.id,
-			settings: agency.settings
-		}))
-	).circle;
+	agencyFormatsReady === false
+		? false
+		: getConversationFormatAvailability(
+				{
+					settings: (flags ??
+						{}) as NonNullable<FormatTenant>['settings']
+				},
+				agencyFormats ??
+					(userData?.agencies ?? []).map((agency) => ({
+						id: agency.id,
+						settings: agency.settings
+					}))
+			).circle;
 
 /**
  * FE#2341: creating a Gesprächskreis, watch-only. The create button, the

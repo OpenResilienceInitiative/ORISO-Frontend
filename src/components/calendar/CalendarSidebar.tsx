@@ -604,6 +604,7 @@ export const CalendarSidebar = ({
 					ref={zoneRef}
 					className="calendarSide__future"
 					data-cy="calendar-upcoming"
+					data-tour-target="calendar-upcoming"
 				>
 					<FutureZone
 						entries={futureEntries}
@@ -647,6 +648,7 @@ export const CalendarSidebar = ({
 						<ul
 							className="calendarSide__list"
 							data-cy="calendar-upcoming"
+							data-tour-target="calendar-upcoming"
 						>
 							{upcoming.map((entry) => (
 								<li

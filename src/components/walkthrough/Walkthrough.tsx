@@ -1,7 +1,13 @@
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { UserDataContext, useTenant } from '../../globalState';
+import { useMediaQuery } from 'react-responsive';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext,
+	useTenant
+} from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useResponsive } from '../../hooks/useResponsive';
 import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
@@ -26,7 +32,17 @@ import type {
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
-import { isPracticeCardTourId } from '../../practice/practiceTourIds';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
+import {
+	isPracticeCardTourId,
+	isPracticeTourId,
+	PRACTICE_CALENDAR_TOUR_ID,
+	PRACTICE_GROUP_CIRCLE_TOUR_ID
+} from '../../practice/practiceTourIds';
+import { isGroupCircleTourAvailable } from '../productTour/tours/groupCircleTour';
+import { COMPACT_MAX_WIDTH } from '../calendar/calendarViews';
+import { useDirectLinksAvailability } from '../directLinks/useDirectLinksAllowed';
+import { directInviteFlagsFor } from '../conversationCreate/directLink/directLinkAvailability';
 import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
 import { practiceHostedTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
@@ -52,23 +68,61 @@ const isCurrentVersionFinished = (
  */
 export const Walkthrough = () => {
 	const settings = useAppConfig();
-	const viewport = useResponsive();
+	const viewport = {
+		...useResponsive(),
+		// The calendar's own breakpoint: compact up to and including it.
+		beyondCompactCalendar: useMediaQuery({
+			minWidth: COMPACT_MAX_WIDTH + 1
+		})
+	};
 	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
+	const [renderingChoice, setRenderingChoice] = useState<{
+		request: NonNullable<typeof launchRequest>;
+		practice: boolean;
+	} | null>(null);
+	const choiceIsCurrent =
+		!!launchRequest && renderingChoice?.request === launchRequest;
 
 	const tenantSettings = useTenant()?.settings;
 	// A practice tour is hosted only by deliberate request, and only where
 	// the practice area is open to this counsellor; the auto-run
 	// below stays hard-wired to the intro tour. A topic tour with a practice
-	// rendering (FE#2545) runs it there and its explanation tour elsewhere.
+	// rendering runs it there; one that exists only as practice (Supervision,
+	// FE#2545) runs nothing elsewhere.
 	const practiceOpenFor = (tourId: string) =>
 		canUsePractice(settings, userData) &&
 		canStartPracticeTourInViewport(tourId, viewport);
+	const resolvesCircleFormats =
+		launchRequest?.tourId === PRACTICE_GROUP_CIRCLE_TOUR_ID &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		practiceOpenFor(PRACTICE_GROUP_CIRCLE_TOUR_ID);
+	const circleFormats = useCounsellorAgencyFormats(resolvesCircleFormats);
+	const awaitsCircleFormats =
+		resolvesCircleFormats && !choiceIsCurrent && circleFormats.isLoading;
+	const circlePracticeDenied =
+		resolvesCircleFormats &&
+		!awaitsCircleFormats &&
+		!(choiceIsCurrent && renderingChoice?.practice) &&
+		!isGroupCircleTourAvailable({
+			flags: { ...tenantSettings },
+			agencyFormats: circleFormats.agencies,
+			agencyFormatsReady: !circleFormats.isLoading
+		});
 	const practiceCandidate =
-		launchRequest && practiceOpenFor(launchRequest.tourId)
+		launchRequest &&
+		practiceOpenFor(launchRequest.tourId) &&
+		!awaitsCircleFormats
 			? practiceHostedTours.find(
-					(tour) => tour.id === launchRequest.tourId
+					(tour) =>
+						tour.id === launchRequest.tourId &&
+						// A topic tour whose practice this tenant cannot offer
+						// (Supervision without one-on-one supervision, FE#2545)
+						// never runs as an empty practice.
+						isPracticeTourOffered(tour, { ...tenantSettings }) &&
+						(tour.id !== PRACTICE_GROUP_CIRCLE_TOUR_ID ||
+							!circlePracticeDenied)
 				)
 			: undefined;
 	// The rendering (practice or explanation) is chosen once per launch
@@ -76,20 +130,19 @@ export const Walkthrough = () => {
 	// not swap in a practice run, and narrowing it during practice ends the
 	// run (below) instead of swapping in the explanation, like the card
 	// flows. Widening again does not restart it from the stale request.
-	const [renderingChoice, setRenderingChoice] = useState<{
-		request: NonNullable<typeof launchRequest>;
-		practice: boolean;
-	} | null>(null);
-	const choiceIsCurrent =
-		!!launchRequest && renderingChoice?.request === launchRequest;
 	useEffect(() => {
-		if (launchRequest && !choiceIsCurrent) {
+		if (launchRequest && !choiceIsCurrent && !awaitsCircleFormats) {
 			setRenderingChoice({
 				request: launchRequest,
 				practice: !!practiceCandidate
 			});
 		}
-	}, [launchRequest, choiceIsCurrent, practiceCandidate]);
+	}, [
+		launchRequest,
+		choiceIsCurrent,
+		practiceCandidate,
+		awaitsCircleFormats
+	]);
 	const choosesPractice =
 		choiceIsCurrent && renderingChoice
 			? renderingChoice.practice
@@ -97,13 +150,49 @@ export const Walkthrough = () => {
 	const practiceTour = choosesPractice ? practiceCandidate : undefined;
 	const lostPracticeRun =
 		!!launchRequest && choosesPractice && !practiceCandidate;
+	// The Kalender tour's Terminlink step follows what the calendar offers:
+	// the media "Direkteinladung erlauben" leaves this counsellor, agency
+	// restrictions included (`useDirectLinkMedia` in `CalendarPageWired`).
+	// The run waits for that answer once per launch request; a later refresh
+	// (the calendar's own) does not interrupt it.
+	const resolvesInviteMedia =
+		launchRequest?.tourId === PRACTICE_CALENDAR_TOUR_ID &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const inviteMedia = useDirectLinksAvailability(resolvesInviteMedia);
+	const [inviteMediaSeenFor, setInviteMediaSeenFor] =
+		useState<typeof launchRequest>(null);
+	// Remembered during render (React's "adjust state on prop change"), so
+	// the run does not wait one extra commit for an effect.
+	if (
+		resolvesInviteMedia &&
+		inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest
+	) {
+		setInviteMediaSeenFor(launchRequest);
+	}
+	const awaitsInviteMedia =
+		resolvesInviteMedia &&
+		!inviteMedia.ready &&
+		inviteMediaSeenFor !== launchRequest;
 	const requestedTour =
-		launchRequest && !lostPracticeRun
+		launchRequest &&
+		!lostPracticeRun &&
+		!awaitsInviteMedia &&
+		!awaitsCircleFormats &&
+		!circlePracticeDenied
 			? (practiceTour ??
 				frontendTours.find((tour) => tour.id === launchRequest.tourId))
 			: undefined;
+	// A tour that exists only as practice (the cards, and Supervision since
+	// FE#2545 dropped its explanation) has nothing to run outside it.
+	const practiceOnlyRequest =
+		!!launchRequest &&
+		isPracticeTourId(launchRequest.tourId) &&
+		!frontendTours.some((tour) => tour.id === launchRequest.tourId);
 	const unavailablePracticeRequest =
 		lostPracticeRun ||
+		circlePracticeDenied ||
+		(practiceOnlyRequest && !practiceCandidate) ||
 		(!!launchRequest &&
 			isPracticeCardTourId(launchRequest.tourId) &&
 			!practiceOpenFor(launchRequest.tourId));
@@ -185,7 +274,11 @@ export const Walkthrough = () => {
 					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
 						: resolveTourSteps(activeTour, {
-								flags: { ...tenantSettings }
+								flags: {
+									...tenantSettings,
+									...(resolvesInviteMedia &&
+										directInviteFlagsFor(inviteMedia.media))
+								}
 							})
 			}
 		};
@@ -252,7 +345,7 @@ export const Walkthrough = () => {
 				setLaunchRequest(null);
 			}
 		},
-		[setLaunchRequest]
+		[setLaunchRequest, setAutoRunState]
 	);
 
 	if (!settings.enableWalkthrough || !runTour || !runTour.steps.length) {

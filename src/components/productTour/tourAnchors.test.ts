@@ -235,6 +235,14 @@ const anchorContract: Array<{
 		sourceFile: 'calendar/CalendarLinksSection.tsx'
 	},
 	{
+		// "Als Nächstes" (FE#2545, the practice cancel step): both of its
+		// renderings, the future zone and the narrow column's list.
+		anchor: 'calendar-upcoming',
+		sourceFile: 'calendar/CalendarSidebar.tsx',
+		expected:
+			/data-tour-target="calendar-upcoming"[\s\S]*data-tour-target="calendar-upcoming"/
+	},
+	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/
@@ -285,6 +293,30 @@ const anchorContract: Array<{
 	{
 		anchor: 'settings-display',
 		sourceFile: '../features/menu-effects/MenuEffectsSettings.tsx'
+	},
+	// FE#2545: the Supervision topic tour.
+	{
+		anchor: 'sessions-supervision-chip',
+		sourceFile: 'sessionsList/SessionsListToolbar.tsx',
+		expected: /tourTarget: 'sessions-supervision-chip'/
+	},
+	{
+		anchor: 'session-supervision-indicator',
+		sourceFile: 'sessionsListItem/SupervisionIconButton.tsx'
+	},
+	{
+		anchor: 'supervision-panel-menu',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /menuTourTarget="supervision-panel-menu"/
+	},
+	{
+		anchor: 'supervision-book-appointment',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /'tourTarget': 'supervision-book-appointment'/
+	},
+	{
+		anchor: 'supervision-appointment-dialog',
+		sourceFile: 'supervisionPanel/SupervisorAppointmentDialog.tsx'
 	}
 ];
 
@@ -305,6 +337,18 @@ const passThroughContract: Array<{ sourceFile: string; expected: RegExp }> = [
 	{
 		sourceFile: 'displayFilter/FilterChip.tsx',
 		expected: /data-tour-target=\{tourTarget\}/
+	},
+	{
+		// The Supervision ⋮ and its rows (FE#2545).
+		sourceFile: 'chatStage/PanelCallActions.tsx',
+		expected:
+			/data-tour-target=\{menuTourTarget\}[\s\S]*data-tour-target=\{item\.tourTarget\}/
+	},
+	{
+		// Scoped to the `PaperProps` block: the anchor must land on the
+		// dialog surface, not only on the prop binding near the top.
+		sourceFile: 'm3Dialog/M3Dialog.tsx',
+		expected: /PaperProps=\{\{[\s\S]*?'data-tour-target': tourTarget\s*\}\}/
 	},
 	{
 		// The toolbar binds each chip's configured anchor to the shared chip.

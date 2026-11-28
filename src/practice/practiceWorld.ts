@@ -13,9 +13,52 @@ import {
 	type PracticeStart
 } from './fixtures/practiceScenario';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
-import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import {
+	emitPracticeEvent as emitToTour,
+	PRACTICE_TOUR_EVENTS,
+	type PracticeTourEventName
+} from './practiceTourEvents';
+import { getPracticeSnapshot } from './practiceMode';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import { PRACTICE_MAIN_ROOM_ID, PRACTICE_TEAM_ROOM_ID } from './practiceIds';
+import {
+	SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED,
+	type SupervisorReplacedNotice
+} from '../components/message/supervisorReplacedNotice';
+import {
+	PRACTICE_MAIN_ROOM_ID,
+	PRACTICE_SUPERVISION_ROOM_ID,
+	PRACTICE_TEAM_ROOM_ID
+} from './practiceIds';
+
+/**
+ * The side-room notice the server posts after a supervisor swap (#2494 *6,
+ * `SessionSupervisorFacade.buildReplacedNoticeBody`): names and the reason,
+ * with the server's German fallback. The app words it in the reader's
+ * language (`supervisorReplacedNotice.ts`). Built locally; nothing is sent.
+ */
+/** What the server posts (`parseSupervisorReplacedNotice` reads it). */
+interface SupervisorReplacedPayload extends SupervisorReplacedNotice {
+	type: typeof SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED;
+	title: string;
+	description: string;
+}
+
+const supervisorReplacedNoticeBody = (
+	previousName: string,
+	newName: string,
+	reason?: string | null
+) => {
+	const notice: SupervisorReplacedPayload = {
+		type: SYSTEM_NOTIFICATION_SUPERVISOR_REPLACED,
+		previousName,
+		newName,
+		title: 'Supervision gewechselt',
+		description: `${newName} supervidiert diesen Chat jetzt anstelle von ${previousName}.`
+	};
+	const trimmedReason = reason?.trim();
+	if (trimmedReason) notice.reason = trimmedReason;
+	return `${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify(notice)}`;
+};
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {
@@ -48,9 +91,24 @@ export const createPracticeWorld = ({
 		start,
 		now: now()
 	});
+	// The run this world belongs to (none outside practice mode). A save
+	// still underway when the run restarts must not move the new run's tour,
+	// the same run check as the simulated call start and the live chat.
+	const currentRunId = () => {
+		const snapshot = getPracticeSnapshot();
+		return snapshot.status === 'inactive' ? null : snapshot.session.runId;
+	};
+	const runId = currentRunId();
+	const emitPracticeEvent = (name: PracticeTourEventName) => {
+		if (runId === null || currentRunId() === runId) {
+			emitToTour(name);
+		}
+	};
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
 	let supervisorAnswered = false;
+	/** The Supervision tour: Robin answers the counsellor's first message. */
+	let supervisionAnswered = false;
 
 	const play = (reaction: ScriptReaction | null) => {
 		if (reaction) {
@@ -75,6 +133,29 @@ export const createPracticeWorld = ({
 			}
 			if (roomId === PRACTICE_TEAM_ROOM_ID) {
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.teamMessageSent);
+				return;
+			}
+			if (roomId === PRACTICE_SUPERVISION_ROOM_ID) {
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisionMessageSent);
+				if (supervisionAnswered || supervisorAnswered) return;
+				supervisionAnswered = true;
+				const reaction = script.reactionFor({
+					type: 'counsellor-supervision-message'
+				});
+				// The reply comes from whoever supervises the case now.
+				const supervisor = rest
+					.getCase()
+					.supervisors.find((s) => s.supervisorMatrixUserId);
+				queueMicrotask(() =>
+					play(
+						reaction && supervisor?.supervisorMatrixUserId
+							? {
+									...reaction,
+									sender: supervisor.supervisorMatrixUserId
+								}
+							: reaction
+					)
+				);
 				return;
 			}
 			if (
@@ -103,17 +184,89 @@ export const createPracticeWorld = ({
 		hooks: {
 			onEnquiryAccepted: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted),
-			onSupervisorAdded: () => {
+			onSupervisorAdded: (added) => {
+				const person = [
+					script.cast.supervisor,
+					script.cast.secondSupervisor
+				].find(({ id }) => id === added.supervisorConsultantId);
+				// Robin is seeded for the standing-supervisor flow; anyone
+				// added by hand (Kim) joins the side room too.
+				if (person) {
+					matrix.addMember(PRACTICE_SUPERVISION_ROOM_ID, {
+						userId: person.matrixUserId,
+						displayName: person.displayName
+					});
+				}
 				if (!supervisorAnswered) {
 					supervisorAnswered = true;
-					play(script.reactionFor({ type: 'supervisor-added' }));
+					const reaction = script.reactionFor({
+						type: 'supervisor-added'
+					});
+					play(
+						reaction && person
+							? { ...reaction, sender: person.matrixUserId }
+							: reaction
+					);
 				}
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
 			},
 			onCircleCreated: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleCreated),
 			onCircleStarted: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted)
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted),
+			onAppointmentCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+				),
+			onInvitationCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+				),
+			onAppointmentCancelled: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+				),
+			onBlockerCreated: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarBlockerCreated),
+			onAutoAcceptOn: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn),
+			onSupervisorReplaced: (from, to) => {
+				const supervisors = [
+					script.cast.supervisor,
+					script.cast.secondSupervisor
+				];
+				const previous = supervisors.find(
+					({ id }) => id === from.supervisorConsultantId
+				);
+				const person = supervisors.find(
+					({ id }) => id === to.supervisorConsultantId
+				);
+				if (from.supervisorMatrixUserId && person) {
+					matrix.replaceMember(
+						PRACTICE_SUPERVISION_ROOM_ID,
+						from.supervisorMatrixUserId,
+						{
+							userId: person.matrixUserId,
+							displayName: person.displayName
+						}
+					);
+				}
+				if (previous && person) {
+					matrix.postServerNotice(
+						PRACTICE_SUPERVISION_ROOM_ID,
+						supervisorReplacedNoticeBody(
+							previous.displayName,
+							person.displayName,
+							to.notes
+						)
+					);
+				}
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorReplaced);
+			},
+			onSupervisorAppointmentBooked: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.supervisorAppointmentBooked
+				)
 		}
 	});
 

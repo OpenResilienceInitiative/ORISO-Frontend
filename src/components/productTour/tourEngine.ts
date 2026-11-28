@@ -38,8 +38,14 @@ const conditionHolds = (
 ): boolean =>
 	(ctx.flags?.[condition.flag] !== false) === (condition.equals ?? true);
 
-const whenHolds = (when: TourWhen | undefined, ctx: TourResolveContext) =>
-	when === undefined || [when].flat().every((c) => conditionHolds(c, ctx));
+const allHold = (conditions: TourCondition[], ctx: TourResolveContext) =>
+	conditions.every((c) => conditionHolds(c, ctx));
+
+const whenHolds = (when: TourWhen | undefined, ctx: TourResolveContext) => {
+	if (when === undefined) return true;
+	if ('anyOf' in when) return when.anyOf.some((all) => allHold(all, ctx));
+	return allHold([when].flat(), ctx);
+};
 
 /** Tour-level condition only; steps are not looked at. */
 export const isTourAvailable = (

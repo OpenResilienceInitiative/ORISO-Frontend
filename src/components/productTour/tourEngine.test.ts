@@ -653,6 +653,38 @@ describe('resolveTourSteps', () => {
 		expect(resolveTourSteps(tour(steps), {})).toHaveLength(1);
 	});
 
+	it('keeps an anyOf step when any one of its lists holds (FE#2545)', () => {
+		const video = { flag: 'featureVideoCallsEnabled' };
+		const audio = { flag: 'featureAudioCallsEnabled' };
+		const steps = [
+			step('call', {
+				anyOf: [
+					[team, video],
+					[team, audio]
+				]
+			})
+		];
+		const ids = (flags: Record<string, boolean>) =>
+			resolveTourSteps(tour(steps), { flags }).map((s) => s.id);
+
+		expect(ids({})).toEqual(['call']);
+		expect(ids({ featureVideoCallsEnabled: false })).toEqual(['call']);
+		expect(ids({ featureAudioCallsEnabled: false })).toEqual(['call']);
+		expect(
+			ids({
+				featureVideoCallsEnabled: false,
+				featureAudioCallsEnabled: false
+			})
+		).toEqual([]);
+		expect(ids({ featureTeamDiscussionEnabled: false })).toEqual([]);
+	});
+
+	it('treats an empty anyOf as never holding', () => {
+		expect(resolveTourSteps(tour([step('x', { anyOf: [] })]), {})).toEqual(
+			[]
+		);
+	});
+
 	it('returns no steps when the tour-level condition fails', () => {
 		const supervision = { flag: 'featureSupervisionEnabled' };
 		const t = tour([step('a')], supervision);

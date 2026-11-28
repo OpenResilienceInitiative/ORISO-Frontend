@@ -9,6 +9,38 @@ import { tourLaunchRequestAtom } from './tourLaunchState';
 import { versionedTourProgressRepository } from './versionedTourProgressRepository';
 import type { TourDefinition } from './types';
 import type { TourStartMode } from './TourOverviewCarousel';
+import { useAppConfig } from '../../hooks/useAppConfig';
+import { useResponsive } from '../../hooks/useResponsive';
+import { canUsePractice } from '../../practice/practiceAccess';
+import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
+import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
+import { practiceSupervisionTour } from '../../practice/practiceTours';
+import { PRACTICE_SUPERVISION_TOUR_ID } from '../../practice/practiceTourIds';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
+
+/**
+ * FE#2545: "Supervision" exists only as practice. Its card sits after
+ * "Fälle übergeben", only where the practice area is open to the counsellor
+ * and the tenant can offer it (one-on-one supervision on); elsewhere it is
+ * hidden, as a flow the counsellor can do nothing about.
+ */
+const withPracticeOnlyTopicTours = (
+	tours: TourDefinition[],
+	practiceOpen: boolean,
+	flags: Parameters<typeof isPracticeTourOffered>[1]
+): TourDefinition[] => {
+	if (
+		!practiceOpen ||
+		!isPracticeTourOffered(practiceSupervisionTour, flags)
+	) {
+		return tours;
+	}
+	const after = tours.findIndex(
+		(tour) => tour.id === 'consultant-case-handover'
+	);
+	const at = after === -1 ? tours.length : after + 1;
+	return [...tours.slice(0, at), practiceSupervisionTour, ...tours.slice(at)];
+};
 
 /**
  * Help → Rundgänge: the introduction first (counsellors), then the topic
@@ -21,19 +53,63 @@ export const TourOverviewSection = ({
 }) => {
 	const requestTourLaunch = useSetAtom(tourLaunchRequestAtom);
 	const { userData } = useContext(UserDataContext);
+	const settings = useAppConfig();
+	const { untilM: isPhone, fromXL: isWideDesktop } = useResponsive();
 	const tenantSettings = useTenant()?.settings;
 	const audience = audienceForUser(userData);
-	const tours = useMemo(
-		() =>
-			getAvailableTours(frontendTours, audience, {
-				flags: { ...tenantSettings },
-				userData
-			}),
-		[audience, tenantSettings, userData]
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(audience === 'consultant');
+	const practiceOpen = canUsePractice(settings, userData);
+	const tours = useMemo(() => {
+		const flags = { ...tenantSettings };
+		return getAvailableTours(
+			withPracticeOnlyTopicTours(frontendTours, practiceOpen, flags),
+			audience,
+			{
+				flags,
+				userData,
+				agencyFormats,
+				agencyFormatsReady: !agencyFormatsLoading
+			}
+		);
+	}, [
+		audience,
+		practiceOpen,
+		tenantSettings,
+		userData,
+		agencyFormats,
+		agencyFormatsLoading
+	]);
+
+	// The practice needs the desktop width (as the practice cards): below it
+	// the card stays, with the hint instead of a start.
+	const unavailableHintKey = useCallback(
+		(tour: TourDefinition): string | undefined => {
+			if (tour !== practiceSupervisionTour) return undefined;
+			return canStartPracticeTourInViewport(tour.id, {
+				fromL: !isPhone,
+				fromXL: isWideDesktop
+			})
+				? undefined
+				: isPhone
+					? 'practice.cards.phoneHint'
+					: 'practice.cards.windowHint';
+		},
+		[isPhone, isWideDesktop]
 	);
 
 	const loadProgress = useCallback(
-		() => versionedTourProgressRepository.getProgress(),
+		() =>
+			versionedTourProgressRepository
+				.getProgress()
+				.then((items) =>
+					items.map((item) =>
+						item.tourId === PRACTICE_SUPERVISION_TOUR_ID &&
+						item.status === 'in_progress'
+							? { ...item, status: 'not_started' as const }
+							: item
+					)
+				),
 		[]
 	);
 
@@ -55,6 +131,7 @@ export const TourOverviewSection = ({
 			audience={audience ?? 'consultant'}
 			loadProgress={loadProgress}
 			onStartTour={handleStartTour}
+			unavailableHintKey={unavailableHintKey}
 		/>
 	);
 };

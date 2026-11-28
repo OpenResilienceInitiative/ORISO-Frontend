@@ -277,7 +277,7 @@ describe('ProductTourAdapter', () => {
 		);
 	});
 
-	it('does not write completed progress when F2 supervisor controls are absent', async () => {
+	it('does not write completed progress when the supervisor controls are absent', async () => {
 		const writes: string[] = [];
 		vi.stubGlobal(
 			'fetch',
@@ -287,8 +287,16 @@ describe('ProductTourAdapter', () => {
 			})
 		);
 		const ended = vi.fn();
+		// From the swap on: "+" is missing, two centred steps follow (the
+		// appointment variant is left out, as a tenant without calls has it).
+		const fromChange = practiceSupervisionTour.steps.slice(
+			practiceSupervisionTour.steps.findIndex((s) => s.id === 'change')
+		);
 		renderAdapter({
-			tour: practiceSupervisionTour,
+			tour: {
+				...practiceSupervisionTour,
+				steps: fromChange.filter((s) => s.id !== 'appointment')
+			},
 			targetTimeoutMs: 20,
 			onEnd: ended,
 			onTerminalStatus: (progress) =>

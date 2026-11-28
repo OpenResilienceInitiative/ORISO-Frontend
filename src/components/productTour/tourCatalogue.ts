@@ -4,6 +4,7 @@ import {
 	hasUserAuthority
 } from '../../globalState/helpers/stateHelpers';
 import type { UserDataInterface } from '../../globalState/interfaces';
+import type { AgencyFormatSource } from '../conversationCreate/formatAvailability';
 import { isTourAvailable } from './tourEngine';
 import type { TourAudience, TourDefinition } from './types';
 
@@ -16,6 +17,9 @@ export interface TourAvailabilityContext {
 	/** Tenant settings; unset flags count as ON (`TourCondition`). */
 	flags?: Record<string, unknown>;
 	userData?: UserDataInterface;
+	/** Resolved agency format settings, shared with the create flow. */
+	agencyFormats?: AgencyFormatSource[];
+	agencyFormatsReady?: boolean;
 }
 
 /**

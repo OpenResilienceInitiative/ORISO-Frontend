@@ -500,58 +500,124 @@ export const driveAcceptFlow = async (
 	return { typed, withTeam };
 };
 
-/** Flow F2 from the first tooltip to the last (spec 3.4): four steps. */
+/**
+ * A topic tour's card in Help → Rundgänge (FE#2545: Supervision has no
+ * practice card any more; it runs as practice from its topic card).
+ */
+export const topicTourCard = (page: Page, titleKey: string): Locator =>
+	page.locator('li.tourOverview__card:not(.practiceCards__card)', {
+		has: page.getByRole('heading', { name: exactText(titleKey) })
+	});
+
+export const topicStartButton = (card: Locator): Locator =>
+	card.getByRole('button', {
+		name: exactText(
+			'walkthrough.overview.action.start',
+			'walkthrough.overview.action.restart',
+			'walkthrough.overview.action.continue'
+		)
+	});
+
+const SUPERVISION_STEP = 'tour.supervision.step';
+
+/**
+ * The Supervision topic tour (FE#2545) from the first tooltip to the last:
+ * accept the practice enquiry (Robin comes along), chip, row icon, a message
+ * in the side room, Robin swapped for Kim, and, where the supervision chat
+ * allows a call, a phone appointment with the supervisor. 12 steps, 11
+ * without the appointment.
+ */
 export const driveSupervisionFlow = async (
 	page: Page,
 	run: string
 ): Promise<FlowRun> => {
 	const typed: string[] = [];
-	const step = 'tour.practiceSupervision.step';
+	const title = (key: string) => `${SUPERVISION_STEP}.${key}.title`;
 
-	const total = await expectStep(page, `${step}.addSupervisor.title`, 1);
-	expect(total).toBe(4);
-	await expect(mainPane(page)).toContainText(
-		partOfText('practiceScript.counsellor.acceptedCaseMessage'),
-		{ timeout: STEP_TIMEOUT }
+	const total = await expectStep(page, title('intro'), 1);
+	expect([11, 12]).toContain(total);
+	await pressNext(page);
+
+	await expectStep(page, title('openEnquiry'), 2, total);
+	const rows = page.locator('[data-cy="session-list-item"]');
+	await expect(rows).toHaveCount(1);
+	await clickTarget(page, 'enquiry-list-item');
+
+	await expectStep(page, title('accept'), 3, total);
+	await clickTarget(page, 'enquiry-accept-button');
+
+	await expectStep(page, title('assigned'), 4, total);
+	await pressNext(page);
+
+	await expectStep(page, title('find'), 5, total);
+	await expect(target(page, 'sessions-supervision-chip')).toHaveAttribute(
+		'data-cy',
+		'sessions-list-chip-supervision'
 	);
-	// The real "+": pick the supervisor, give the reason, confirm.
-	await clickTarget(page, 'session-supervisor-add');
-	await page.getByRole('combobox').click();
-	await page
-		.getByRole('option', {
-			name: partOfText('practiceScript.cast.supervisor')
-		})
-		.click();
-	const reason = typedText(run, 'reason');
-	typed.push(reason);
-	await page
-		.getByPlaceholder(
-			partOfText('sessionHeader.supervisor.modal.reasonPlaceholder')
-		)
-		.fill(reason);
-	await page
-		.getByRole('button', {
-			name: exactText('sessionHeader.supervisor.modal.addButton')
-		})
-		.click();
+	await pressNext(page);
 
-	await expectStep(page, `${step}.supervisorReply.title`, 2, total);
+	await expectStep(page, title('openPanel'), 6, total);
+	await clickTarget(page, 'session-supervision-indicator');
+
+	await expectStep(page, title('write'), 7, total);
 	const panel = target(page, 'supervision-panel');
+	const note = typedText(run, 'supervision');
+	typed.push(note);
+	await typeAndSend(panel, note);
 	await expect(panel).toContainText(
 		partOfText('practiceScript.supervisor.reply'),
-		{
-			timeout: STEP_TIMEOUT
-		}
+		{ timeout: STEP_TIMEOUT }
 	);
 	await expect(mainPane(page)).not.toContainText(
 		partOfText('practiceScript.supervisor.reply')
 	);
+
+	await expectStep(page, title('sameAccess'), 8, total);
 	await pressNext(page);
 
-	await expectStep(page, `${step}.standingAssignment.title`, 3, total);
+	// "+" ("Supervisor verwalten") → "Wechseln" at Robin → Kim → reason → confirm.
+	await expectStep(page, title('change'), 9, total);
+	await clickTarget(page, 'session-supervisor-add');
+	const dialog = page.getByTestId('manage-people-dialog');
+	await dialog
+		.locator('.managePeople__action', {
+			hasText: exactText('managePeople.replace.action')
+		})
+		.first()
+		.click();
+	await dialog
+		.locator('.managePeople__candidate', {
+			hasText: partOfText('practiceScript.cast.secondSupervisor')
+		})
+		.click();
+	const reason = typedText(run, 'reason');
+	typed.push(reason);
+	await dialog
+		.getByPlaceholder(
+			partOfText('managePeople.supervision.reasonPlaceholder')
+		)
+		.fill(reason);
+	await dialog.locator('.managePeople__action--primary').click();
+	await expect(dialog).toBeHidden({ timeout: STEP_TIMEOUT });
+
+	await expectStep(page, title('calls'), 10, total);
 	await pressNext(page);
 
-	await expectStep(page, `${step}.done.title`, 4, total);
+	if (total === 12) {
+		await expectStep(page, title('appointment'), 11, total);
+		await clickTarget(page, 'supervision-panel-menu');
+		await clickTarget(page, 'supervision-book-appointment');
+		const booking = target(page, 'supervision-appointment-dialog');
+		await expect(booking).toBeVisible();
+		await expect(
+			booking.getByTestId('supervision-appointment-unreachable')
+		).toHaveCount(0);
+		await booking.locator('[data-cy="calendar-dialog-kind-phone"]').click();
+		await booking.getByTestId('calendar-appointment-save').click();
+		await expect(booking).toBeHidden({ timeout: STEP_TIMEOUT });
+	}
+
+	await expectStep(page, title('done'), total, total);
 	return { typed };
 };
 

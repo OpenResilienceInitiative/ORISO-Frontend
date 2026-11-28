@@ -70,6 +70,8 @@ export interface PanelCallActionsProps {
 	 * when those fold in too.
 	 */
 	'menuItems'?: PanelMenuItem[];
+	/** Product-tour anchor on the ⋮ trigger (FE#2545: Supervision tour). */
+	'menuTourTarget'?: string;
 	'data-cy'?: string;
 }
 
@@ -79,6 +81,8 @@ export interface PanelMenuItem {
 	'title': string;
 	'onClick': () => void;
 	'data-cy'?: string;
+	/** Product-tour anchor on the menu row. */
+	'tourTarget'?: string;
 }
 
 const glyphFor = (kind: PanelCallKind) =>
@@ -93,6 +97,7 @@ export const PanelCallActions = ({
 	width = null,
 	phone = false,
 	menuItems = [],
+	menuTourTarget,
 	'data-cy': dataCy = 'panel-call-actions'
 }: PanelCallActionsProps) => {
 	const state = resolvePanelCallActions({
@@ -212,6 +217,7 @@ export const PanelCallActions = ({
 				aria-expanded={open}
 				aria-controls={open ? menuId : undefined}
 				data-cy="panel-call-menu-trigger"
+				data-tour-target={menuTourTarget}
 				onClick={() => setOpen((value) => !value)}
 			>
 				<MenuVerticalIcon aria-hidden="true" />
@@ -248,6 +254,7 @@ export const PanelCallActions = ({
 							icon={item.icon}
 							title={item.title}
 							data-cy={item['data-cy']}
+							data-tour-target={item.tourTarget}
 							onClick={() => {
 								closeAndRefocus();
 								item.onClick();

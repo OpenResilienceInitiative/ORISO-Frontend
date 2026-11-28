@@ -3602,7 +3602,8 @@
 		"cast": {
 			"asker": "Sam Muster (alıştırma)",
 			"colleague": "Alex (alıştırma)",
-			"supervisor": "Robin (alıştırma)"
+			"supervisor": "Robin (alıştırma)",
+			"secondSupervisor": "Kim (alıştırma)"
 		},
 		"asker": {
 			"firstMessage": "Merhaba, sunduğunuz hizmet hakkında genel bir sorum var. Danışmanlık sizde nasıl işliyor ve yanıtı ne kadar çabuk alabilirim? Teşekkür ederim.",
@@ -6325,7 +6326,9 @@
 			"back": "Geri",
 			"confirm": "Anladım",
 			"loading": "Yasal metin yükleniyor…",
-			"loadError": { "text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin." },
+			"loadError": {
+				"text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin."
+			},
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"
@@ -6539,28 +6542,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Alıştırma: Süpervizör ekleme",
-			"summary": "Korumalı alıştırma alanında bir danışmanlığa süpervizör eklemeyi deneyin. Tüm kişiler ve içerikler kurgusaldır.",
-			"step": {
-				"addSupervisor": {
-					"title": "Süpervizör ekleyin",
-					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin, nedenini kısaca yazın ve onaylayın."
-				},
-				"supervisorReply": {
-					"title": "Süpervizörün yanıtı",
-					"intro": "Süpervizörünüz yan sohbette yanıt verdi. Bu mesajları yalnızca ikiniz görürsünüz, danışan göremez."
-				},
-				"standingAssignment": {
-					"title": "Sabit atama",
-					"intro": "Yöneticiniz size sabit bir süpervizör atadıysa, bir talebi kabul ettiğinizde süpervizör otomatik olarak eklenir. Sizin bir şey yapmanız gerekmez."
-				},
-				"done": {
-					"title": "Tebrikler!",
-					"intro": "Bir süpervizör eklediniz ve yanıtını okudunuz. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Yardım",
 			"title": "Turlar",
@@ -6601,6 +6582,60 @@
 				"done": {
 					"title": "Kısaca",
 					"intro": "Kendi vakalarınızı danışmanlıkta „+“ → „Danışmanlığı devret“ ile önerin. Meslektaşlarınızın vakalarını kişi aramasıyla talep edin. Durumu zaman çizelgesinde izleyin."
+				}
+			}
+		},
+		"supervision": {
+			"title": "Süpervizyon",
+			"summary": "Süpervizörünüzü nerede bulacağınız, ona nasıl yazacağınız, onu nasıl değiştireceğiniz ve onunla nasıl randevu alacağınız.",
+			"step": {
+				"intro": {
+					"title": "Süpervizyon: önceden kurulur",
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Gerçek kullanımda yönetiminiz Yönetim alanında size önceden sabit bir süpervizör atar – daha fazlasını öğrenmek isterseniz onlara sorun."
+				},
+				"openEnquiry": {
+					"title": "Talebi açın",
+					"intro": "Listede bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
+				},
+				"accept": {
+					"title": "Talebi kabul edin",
+					"intro": "“Sorguyu kabul et” düğmesine tıklayın. Talep böylece sizin danışmanlığınız olur."
+				},
+				"assigned": {
+					"title": "Süpervizyon otomatik eklendi",
+					"intro": "Kabul ettiğinizde sabit süpervizörünüz Robin (alıştırma) otomatik olarak eklendi. Bunun için bir şey yapmanız gerekmez."
+				},
+				"find": {
+					"title": "Listede süpervizyon",
+					"intro": "“Süpervizyon” filtresi yalnızca süpervizyonlu vakalarınızı gösterir. Böyle bir vakanın satırında yuvarlak bir süpervizyon simgesi bulunur."
+				},
+				"openPanel": {
+					"title": "Süpervizyonu açın",
+					"intro": "Alıştırma danışmanlığının satırındaki yuvarlak süpervizyon simgesine tıklayın. Danışmanlığın yanında süpervizyon sohbetini açar."
+				},
+				"write": {
+					"title": "Süpervizyona yazın",
+					"intro": "Burada Robin’e (alıştırma) kısa bir mesaj yazıp gönderin. Bu sohbeti yalnızca siz ikiniz görürsünüz, danışan görmez."
+				},
+				"sameAccess": {
+					"title": "Aynı görünüm",
+					"intro": "Robin yanıt verdi. Süpervizörünüz kendi süpervize ettiği vakalarda bu vakayı sizinle aynı şekilde görür."
+				},
+				"change": {
+					"title": "Süpervizörü değiştirin",
+					"intro": "“+” (“Süpervizörleri Yönet”) ve Robin (alıştırma) yanında “Değiştir”e tıklayın; Kim’i (alıştırma) seçin, kısaca nedenini yazın ve onaylayın. Alıştırmada kimseye bildirim gitmez."
+				},
+				"calls": {
+					"title": "Süpervizyonda aramalar",
+					"intro": "Kurumunuz, danışanlarla kapalı olsa bile süpervizyon sohbetinde sesli ve görüntülü aramalara izin verebilir. Buna yönetim karar verir; alıştırmada kimse aranmaz."
+				},
+				"appointment": {
+					"title": "Süpervizyonla randevu",
+					"intro": "Süpervizyon sohbetinde ⋮ menüsünü açın ve “Süpervizörle randevu al”ı seçin. “Görüntülü” veya “Telefon”u seçip kaydedin; randevu alıştırmada kalır."
+				},
+				"done": {
+					"title": "Tebrikler!",
+					"intro": "Artık süpervizyonun temel yollarını biliyorsunuz. Aşağıdaki düğmeyle alıştırmayı bitirirsiniz."
 				}
 			}
 		},
@@ -6735,6 +6770,34 @@
 				"links": {
 					"title": "Randevusuz bağlantılar",
 					"intro": "Doğrudan bağlantılarınız artık burada, listede: kopyalayın, QR kod olarak paylaşın veya düzenleyin."
+				},
+				"practiceIntro": {
+					"title": "Takvim alıştırması",
+					"intro": "Bu bir alıştırmadır: Tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Randevular, bir randevu bağlantısı ve engellenmiş zaman girecek, otomatik onayı açacaksınız."
+				},
+				"practiceAppointment": {
+					"title": "Randevu gir",
+					"intro": "„Yeni“ye tıklayın, „Danışmanlık“ altında kurgusal kişiyi seçin ve „Oluştur“a tıklayın. „Bağlantıyla başka kişileri davet et“ bu sefer kapalı kalsın."
+				},
+				"practiceInvitation": {
+					"title": "Randevu bağlantısı oluştur",
+					"intro": "„Yeni“yi tekrar açın, aynı kişiyi seçin, „Bağlantıyla başka kişileri davet et“i açın ve „Oluştur“a tıklayın. Ardından gördüğünüz bağlantı bir alıştırma bağlantısıdır ve hiçbir yere gitmez."
+				},
+				"practiceCancel": {
+					"title": "Randevuyu iptal et",
+					"intro": "Yeni randevularınız „Sıradaki“ altında listelenir. Birine tıklayın, „Randevuyu iptal et“i seçin ve onaylayın."
+				},
+				"practiceBlocker": {
+					"title": "Engellenmiş zaman gir",
+					"intro": "Engellenmiş zamanda kimse sizden randevu alamaz. „Yeni“yi açın, „Engellenmiş zaman“ sekmesine geçin ve „Ekle“ye tıklayın."
+				},
+				"practiceAutoAccept": {
+					"title": "Otomatik onayla",
+					"intro": "⋮ menüsünü, ardından „Görüşme saatleri“ni açın, „Rezervasyonları otomatik onayla“yı açın ve „Görüşme saatlerini kaydet“e tıklayın. Böylece görüşme saatlerinizdeki rezervasyonlar hemen kesinleşir."
+				},
+				"practiceDone": {
+					"title": "Tamamlandı",
+					"intro": "Randevular ve bir randevu bağlantısı oluşturdunuz, bir randevuyu iptal ettiniz, engellenmiş zaman girdiniz ve rezervasyonları otomatik onayladınız. Gerçek takvimde kişi her randevuyu sohbette öğrenir."
 				}
 			}
 		},
@@ -7311,8 +7374,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
-				"supervision": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin."
+				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın."
 			},
 			"title": "Alıştırma alanı",
 			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",

@@ -114,6 +114,30 @@ describe('consultant-group-circle', () => {
 			).toBe(true);
 		});
 
+		it('uses fetched agency policies before offering the tour', () => {
+			const context = {
+				flags: { featureSelfHelpGroupsEnabled: true },
+				userData: withAgencies([{ id: 1 }]),
+				agencyFormats: [
+					{ id: 1, settings: { featureSelfHelpGroupsEnabled: false } }
+				],
+				agencyFormatsReady: true
+			};
+			expect(isGroupCircleTourAvailable(context)).toBe(false);
+			expect(
+				getAvailableTours(frontendTours, 'consultant', context).map(
+					(tour) => tour.id
+				)
+			).not.toContain('consultant-group-circle');
+			expect(
+				isGroupCircleTourAvailable({
+					...context,
+					agencyFormats: [{ id: 1 }],
+					agencyFormatsReady: false
+				})
+			).toBe(false);
+		});
+
 		it('is registered, so the Help list and launcher drop it when off', () => {
 			const ids = (flags: Record<string, unknown>) =>
 				getAvailableTours(frontendTours, 'consultant', { flags }).map(

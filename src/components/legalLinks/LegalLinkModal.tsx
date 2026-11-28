@@ -78,12 +78,11 @@ export const LegalLinkModal = ({
 		data: departmentLegal,
 		loading: agencyLoading,
 		error: agencyError
-	} =
-		useDepartmentLegal(
-			isAgency ? agencyId : null,
-			isAgency ? topicId : null,
-			{ enabled: isAgency }
-		);
+	} = useDepartmentLegal(
+		isAgency ? agencyId : null,
+		isAgency ? topicId : null,
+		{ enabled: isAgency }
+	);
 	/* Agency-scope: the department's published document by kind, falling back
 	   to the tenant text — same rationale as `DepartmentLegalSection`'s consent
 	   variant, so a Beratungsstelle without its own text still gets the

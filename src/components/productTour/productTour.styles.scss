@@ -181,6 +181,13 @@
 			width: 100%;
 		}
 	}
+
+	&__hint {
+		margin: 0;
+		font-size: $font-size-secondary;
+		line-height: $line-height-primary;
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
 }
 
 // The Help learning card owns the outer shell. Its launch options fit that

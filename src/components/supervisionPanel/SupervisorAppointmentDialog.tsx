@@ -119,6 +119,11 @@ export const SupervisorAppointmentDialog = ({
 		onSave,
 		onClose
 	});
+	// The practice banner stays usable over the dialog (FE#2545), as over
+	// "Supervisor verwalten"; outside practice there is no such element.
+	const practiceControls = document.querySelector<HTMLElement>(
+		'[data-practice-controls]'
+	);
 	const actions = unreachable
 		? [{ label: t('app.close'), onClick: onClose, primary: true }]
 		: form.actions.map((action) =>
@@ -135,6 +140,8 @@ export const SupervisorAppointmentDialog = ({
 		<M3Dialog
 			open
 			data-testid="supervision-appointment-dialog"
+			data-tour-target="supervision-appointment-dialog"
+			reachableOutside={practiceControls}
 			title={t('supervision.appointment.title')}
 			description={t('supervision.appointment.description')}
 			icon={form.icon}

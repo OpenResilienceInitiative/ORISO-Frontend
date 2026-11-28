@@ -42,10 +42,11 @@ type Story = StoryObj<typeof meta>;
 export const NotStarted: Story = {
 	name: 'Not started · desktop',
 	play: async ({ canvas, args }) => {
+		// F1 only: Supervision is a topic tour in Rundgänge (FE#2545).
 		const cards = await canvas.findAllByRole('listitem');
-		await expect(cards).toHaveLength(2);
+		await expect(cards).toHaveLength(1);
 		// Every card says it is practice.
-		await expect(canvas.getAllByText('Übung')).toHaveLength(2);
+		await expect(canvas.getAllByText('Übung')).toHaveLength(1);
 
 		await userEvent.click(
 			canvas.getAllByRole('button', { name: 'Übung starten' })[0]
@@ -66,11 +67,6 @@ export const CompletedAndInterrupted: Story = {
 					tourId: 'consultant-practice-accept',
 					tourVersion: 1,
 					status: 'completed'
-				},
-				{
-					tourId: 'consultant-practice-supervision',
-					tourVersion: 1,
-					status: 'in_progress'
 				}
 			]),
 		onStartTour: fn()
@@ -78,13 +74,12 @@ export const CompletedAndInterrupted: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'A finished flow shows "Abgeschlossen" and is offered again ("Noch einmal üben"). An interrupted one starts from the beginning.'
+				story: 'A finished flow shows "Abgeschlossen" and is offered again ("Noch einmal üben"). An interrupted one starts from the beginning (`Interrupted`).'
 			}
 		}
 	},
 	play: async ({ canvas, args }) => {
 		await expect(await canvas.findByText('Abgeschlossen')).toBeVisible();
-		await expect(canvas.getByText('Nicht gestartet')).toBeVisible();
 		await expect(canvas.queryByText('In Bearbeitung')).toBeNull();
 		await expect(
 			canvas.queryByRole('button', { name: /fortsetzen/i })
@@ -100,18 +95,28 @@ export const CompletedAndInterrupted: Story = {
 	}
 };
 
-export const SupervisionHidden: Story = {
-	name: 'Supervision switched off · desktop',
-	args: { tours: practiceTours.slice(0, 1) },
+export const Interrupted: Story = {
+	name: 'Interrupted · desktop',
+	args: {
+		loadProgress: () =>
+			Promise.resolve<Progress>([
+				{
+					tourId: 'consultant-practice-accept',
+					tourVersion: 1,
+					status: 'in_progress'
+				}
+			])
+	},
 	parameters: {
 		docs: {
 			description: {
-				story: 'When the Träger switched Supervision off, its card is hidden, not greyed. The wired section (`Organisms/PracticeOverviewSection`) does the filtering from the tenant settings.'
+				story: 'Practice state lives in memory only: an interrupted flow is "Nicht gestartet" again and starts from the beginning. Supervision has no card any more; it is the topic tour "Supervision" in Rundgänge (FE#2545).'
 			}
 		}
 	},
 	play: async ({ canvas }) => {
-		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
+		await expect(await canvas.findByText('Nicht gestartet')).toBeVisible();
+		await expect(canvas.queryByText('In Bearbeitung')).toBeNull();
 		await expect(canvas.queryByText(/Supervision/)).toBeNull();
 	}
 };
@@ -123,7 +128,7 @@ export const PhoneHint: Story = {
 	play: async ({ canvas, args }) => {
 		await canvas.findAllByRole('listitem');
 		const hints = canvas.getAllByText('Bitte üben Sie am Computer.');
-		await expect(hints).toHaveLength(2);
+		await expect(hints).toHaveLength(1);
 		for (const button of canvas.getAllByRole('button', {
 			name: 'Übung starten'
 		})) {

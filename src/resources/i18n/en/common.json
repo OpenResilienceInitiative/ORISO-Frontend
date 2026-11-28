@@ -3588,7 +3588,8 @@
 		"cast": {
 			"asker": "Sam Muster (practice)",
 			"colleague": "Alex (practice)",
-			"supervisor": "Robin (practice)"
+			"supervisor": "Robin (practice)",
+			"secondSupervisor": "Kim (practice)"
 		},
 		"asker": {
 			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
@@ -6456,28 +6457,6 @@
 				}
 			}
 		},
-		"practiceSupervision": {
-			"title": "Practice: Add a supervisor",
-			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
-			"step": {
-				"addSupervisor": {
-					"title": "Add a supervisor",
-					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
-				},
-				"supervisorReply": {
-					"title": "The supervisor’s reply",
-					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
-				},
-				"standingAssignment": {
-					"title": "Fixed assignment",
-					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
-				},
-				"done": {
-					"title": "Well done!",
-					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
-				}
-			}
-		},
 		"launcher": {
 			"eyebrow": "Help",
 			"title": "Tours",
@@ -6518,6 +6497,60 @@
 				"done": {
 					"title": "In short",
 					"intro": "Offer your own cases in the consultation via \"+\" → \"Hand over consultation\". Request colleagues' cases through the people search. Follow the status in the timeline."
+				}
+			}
+		},
+		"supervision": {
+			"title": "Supervision",
+			"summary": "Where to find your supervisor, write to them, change them and book an appointment with them.",
+			"step": {
+				"intro": {
+					"title": "Supervision: set up beforehand",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. In real use, your administrator sets up a fixed supervisor for you in the Admin area beforehand – ask them if you want to know more."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it to open it."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”. The request then becomes your consultation."
+				},
+				"assigned": {
+					"title": "Supervision added automatically",
+					"intro": "By accepting, your fixed supervisor Robin (practice) joined automatically. You do not need to do anything."
+				},
+				"find": {
+					"title": "Supervision in the list",
+					"intro": "The “Supervision” filter shows only your cases with supervision. The row of such a case shows a round supervision icon."
+				},
+				"openPanel": {
+					"title": "Open the supervision",
+					"intro": "Click the round supervision icon in the row of the practice consultation. It opens the supervision chat next to the consultation."
+				},
+				"write": {
+					"title": "Write to your supervisor",
+					"intro": "Write Robin (practice) a short message here and send it. Only the two of you see this chat, not the advice seeker."
+				},
+				"sameAccess": {
+					"title": "The same view",
+					"intro": "Robin has replied. Under their own supervised cases, your supervisor sees this case just as you do."
+				},
+				"change": {
+					"title": "Change the supervisor",
+					"intro": "Click “+” (“Manage Supervisors”) and “Replace” next to Robin (practice); choose Kim (practice), give a short reason and confirm. Nobody is notified in practice."
+				},
+				"calls": {
+					"title": "Calls in supervision",
+					"intro": "Your organisation can allow audio and video calls in the supervision chat, even where they are off with advice seekers. The administration decides this; nobody is called in practice."
+				},
+				"appointment": {
+					"title": "An appointment with your supervisor",
+					"intro": "Open ⋮ in the supervision chat and choose “Book an appointment with the supervisor”. Choose “Video” or “Phone” and save; the appointment stays in practice."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You now know the main paths of supervision. Use the button below to end the practice."
 				}
 			}
 		},
@@ -6652,6 +6685,34 @@
 				"links": {
 					"title": "Links without an appointment",
 					"intro": "Your direct links now live here in the list: copy them, share them as a QR code or edit them."
+				},
+				"practiceIntro": {
+					"title": "Practise the calendar",
+					"intro": "This is an exercise: all people are fictional, nothing is sent or saved. You add appointments, an appointment link and blocked time, and switch automatic confirmation on."
+				},
+				"practiceAppointment": {
+					"title": "Add an appointment",
+					"intro": "Click \"New\", choose the fictional help seeker under \"Conversation\" and click \"Add\". Leave \"Invite more people by link\" off this time."
+				},
+				"practiceInvitation": {
+					"title": "Create an appointment link",
+					"intro": "Open \"New\" again, choose the same person, switch \"Invite more people by link\" on and click \"Add\". The link you see afterwards is a practice link and leads nowhere."
+				},
+				"practiceCancel": {
+					"title": "Cancel an appointment",
+					"intro": "Your new appointments are listed under \"Up next\". Click one, choose \"Cancel appointment\" and confirm."
+				},
+				"practiceBlocker": {
+					"title": "Add blocked time",
+					"intro": "Nobody can book you during blocked time. Open \"New\", switch to the \"Blocked time\" tab and click \"Block\"."
+				},
+				"practiceAutoAccept": {
+					"title": "Confirm automatically",
+					"intro": "Open ⋮, then \"Consultation hours\", switch \"Confirm bookings automatically\" on and click \"Save consultation hours\". Bookings in your consultation hours are then fixed at once."
+				},
+				"practiceDone": {
+					"title": "Done",
+					"intro": "You added appointments and an appointment link, cancelled one, added blocked time and confirmed bookings automatically. In the real calendar the help seeker learns about every appointment in the chat."
 				}
 			}
 		},
@@ -7228,8 +7289,7 @@
 		},
 		"cards": {
 			"summary": {
-				"accept": "Accept an enquiry and write a first reply.",
-				"supervision": "Choose a supervisor and add them to a counselling session."
+				"accept": "Accept an enquiry and write a first reply."
 			},
 			"title": "Practice area",
 			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",

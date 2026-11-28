@@ -1,6 +1,7 @@
 // @vitest-environment oriso-jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -31,12 +32,18 @@ import { ProfileCardList } from './ProfileCardList';
 import { profileRoutesHelp } from './profileHelp.routes';
 import { PracticeCards } from '../../practice/PracticeCards';
 import { practiceTours } from '../../practice/practiceTours';
+import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
+import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import {
 	consultantMailCounsellingTour,
 	consultantWalkthroughTour
 } from '../productTour/tourDefinitions';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn()
+}));
 vi.mock('react-i18next', async () => {
 	const { makeTranslate } = await import(
 		'../../practice/practiceTestTranslate'
@@ -51,6 +58,9 @@ interface HelpScenario {
 	platformTours?: boolean;
 	authorities?: string[];
 	supervision?: boolean;
+	oneOnOne?: boolean;
+	circleEnabled?: boolean;
+	agencies?: Array<{ id: number; name: string }>;
 }
 let savedPreference = false;
 
@@ -60,7 +70,10 @@ const renderHelp = ({
 	practiceArea = true,
 	platformTours = true,
 	authorities = [AUTHORITIES.CONSULTANT_DEFAULT],
-	supervision = true
+	supervision = true,
+	oneOnOne = true,
+	circleEnabled = false,
+	agencies = []
 }: HelpScenario = {}) => {
 	const store = createStore();
 	const settings = {
@@ -73,6 +86,7 @@ const renderHelp = ({
 		const userData = {
 			userId: 'help-user',
 			grantedAuthorities: authorities,
+			agencies,
 			isWalkThroughEnabled: ownSwitch
 		};
 		const elements = profileRoutesHelp(settings as never)
@@ -106,7 +120,11 @@ const renderHelp = ({
 										tenant: {
 											settings: {
 												featureSupervisionEnabled:
-													supervision
+													supervision,
+												featureSupervisionOneOnOneChatsEnabled:
+													oneOnOne,
+												featureSelfHelpGroupsEnabled:
+													circleEnabled
 											}
 										}
 									} as never
@@ -131,6 +149,8 @@ const renderHelp = ({
 
 beforeEach(() => {
 	savedPreference = false;
+	resetCounsellorAgencyFormatsForTests();
+	vi.mocked(apiGetAgenciesByIds).mockResolvedValue([]);
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async (input: Request) => {
@@ -147,6 +167,8 @@ beforeEach(() => {
 
 afterEach(() => {
 	cleanup();
+	resetCounsellorAgencyFormatsForTests();
+	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
 });
 
@@ -177,9 +199,10 @@ describe('Help learning card', () => {
 			/>
 		);
 		await screen.findAllByRole('button', { name: 'Übung starten' });
+		// F1 only: Supervision is a topic tour since FE#2545.
 		expect(
 			screen.getAllByText(/Alle Personen und Inhalte sind erfunden\./)
-		).toHaveLength(2);
+		).toHaveLength(1);
 		cleanup();
 		renderHelp();
 		await screen.findAllByRole('button', { name: 'Übung starten' });
@@ -208,7 +231,11 @@ describe('Help learning card', () => {
 		).toBeTruthy();
 		expect(
 			content.getAllByRole('button', { name: 'Übung starten' })
-		).toHaveLength(2);
+		).toHaveLength(1);
+		// FE#2545: Supervision is a topic tour, no "Übung:" card any more.
+		expect(
+			content.getByRole('heading', { name: 'Supervision' })
+		).toBeTruthy();
 		// The introduction plus every topic tour of the role, one row each;
 		// the topic packages add more rows, so only the floor is fixed here.
 		expect(
@@ -346,6 +373,10 @@ describe('Help learning card', () => {
 		expect(
 			screen.queryByRole('heading', { name: 'Übungsbereich' })
 		).toBeNull();
+		// Supervision exists only as practice (FE#2545).
+		expect(
+			screen.queryByRole('heading', { name: 'Supervision' })
+		).toBeNull();
 	});
 
 	it('starts the introduction and each exercise by hand with auto-start off', async () => {
@@ -358,11 +389,7 @@ describe('Help learning card', () => {
 				'Übung starten',
 				'consultant-practice-accept'
 			],
-			[
-				'Übung: Supervision hinzufügen',
-				'Übung starten',
-				'consultant-practice-supervision'
-			]
+			['Supervision', 'Starten', 'consultant-practice-supervision']
 		]) {
 			const tile = screen
 				.getByRole('heading', { name: heading })
@@ -373,6 +400,57 @@ describe('Help learning card', () => {
 				mode: 'start'
 			});
 		}
+	});
+
+	it('hides the circle tour until the fetched agency format permits it', async () => {
+		let finish: (value: any[]) => void = () => {};
+		vi.mocked(apiGetAgenciesByIds).mockImplementation(
+			() => new Promise((resolve) => (finish = resolve))
+		);
+		renderHelp({
+			circleEnabled: true,
+			agencies: [{ id: 1, name: 'Practice agency' }]
+		});
+		await waitFor(() =>
+			expect(apiGetAgenciesByIds).toHaveBeenCalledWith([1])
+		);
+		expect(
+			screen.queryByRole('heading', { name: 'Gesprächskreis anlegen' })
+		).toBeNull();
+
+		await act(async () =>
+			finish([
+				{ id: 1, settings: { featureSelfHelpGroupsEnabled: false } }
+			])
+		);
+		expect(
+			screen.queryByRole('heading', { name: 'Gesprächskreis anlegen' })
+		).toBeNull();
+	});
+
+	it('offers Start for an interrupted memory-only Supervision tour', async () => {
+		vi.spyOn(
+			versionedTourProgressRepository,
+			'getProgress'
+		).mockResolvedValue([
+			{
+				tourId: 'consultant-practice-supervision',
+				tourVersion: 2,
+				surface: 'frontend',
+				status: 'in_progress',
+				currentStepId: 'supervisor-swap'
+			}
+		]);
+		renderHelp();
+		const card = (
+			await screen.findByRole('heading', { name: 'Supervision' })
+		).closest('li')!;
+		await waitFor(() =>
+			expect(
+				within(card).getByRole('button', { name: 'Starten' })
+			).toBeTruthy()
+		);
+		expect(within(card).getByText('Nicht gestartet')).toBeTruthy();
 	});
 
 	it('saves the subordinate auto-start preference while manual options stay available', async () => {
@@ -391,23 +469,33 @@ describe('Help learning card', () => {
 		).toBe(true);
 	});
 
-	it('hides supervision when the tenant switched it off', async () => {
-		renderHelp({ supervision: false });
-		await screen.findByRole('button', { name: 'Übung starten' });
-		expect(
-			screen.queryByRole('heading', {
-				name: 'Übung: Supervision hinzufügen'
-			})
-		).toBeNull();
-	});
+	it.each([{ supervision: false }, { oneOnOne: false }])(
+		'hides the Supervision card where the tenant cannot offer its practice: %j',
+		async (scenario) => {
+			renderHelp(scenario);
+			await screen.findByRole('button', { name: 'Übung starten' });
+			expect(
+				screen.queryByRole('heading', { name: 'Supervision' })
+			).toBeNull();
+		}
+	);
 
 	it.each([
-		{ width: 1199, acceptDisabled: false, supervisionDisabled: true },
-		{ width: 1200, acceptDisabled: false, supervisionDisabled: false },
-		{ width: 390, acceptDisabled: true, supervisionDisabled: true }
+		{
+			width: 1199,
+			acceptDisabled: false,
+			supervisionHint:
+				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
+		},
+		{ width: 1200, acceptDisabled: false, supervisionHint: null },
+		{
+			width: 390,
+			acceptDisabled: true,
+			supervisionHint: 'Bitte üben Sie am Computer.'
+		}
 	])(
 		'preserves the practice viewport gates at $width px',
-		async ({ width, acceptDisabled, supervisionDisabled }) => {
+		async ({ width, acceptDisabled, supervisionHint }) => {
 			renderHelp({ width });
 			await screen.findAllByRole('button', { name: 'Übung starten' });
 			const disabled = (name: string) =>
@@ -417,9 +505,26 @@ describe('Help learning card', () => {
 					).getByRole('button') as HTMLButtonElement
 				).disabled;
 			expect(disabled('Übung: Anfrage annehmen')).toBe(acceptDisabled);
-			expect(disabled('Übung: Supervision hinzufügen')).toBe(
-				supervisionDisabled
-			);
+			// FE#2545: the Supervision topic tour exists only as practice;
+			// below its width its card shows the hint and cannot start.
+			const supervision = screen
+				.getByRole('heading', { name: 'Supervision' })
+				.closest('li')!;
+			expect(disabled('Supervision')).toBe(supervisionHint !== null);
+			if (supervisionHint) {
+				expect(
+					within(supervision).getByText(supervisionHint)
+				).toBeTruthy();
+			} else {
+				expect(
+					supervision.querySelector('.tourOverview__hint')
+				).toBeNull();
+			}
+			expect(
+				screen.queryByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
+			).toBeNull();
 		}
 	);
 

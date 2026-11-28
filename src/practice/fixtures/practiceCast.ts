@@ -1,6 +1,10 @@
 import { practiceUserId } from '../practiceIds';
 
-export type PracticePersonKey = 'asker' | 'colleague' | 'supervisor';
+export type PracticePersonKey =
+	| 'asker'
+	| 'colleague'
+	| 'supervisor'
+	| 'secondSupervisor';
 
 /** What never changes between runs and languages. */
 export interface PracticePersonIdentity {
@@ -41,6 +45,13 @@ export const PRACTICE_CAST = {
 		username: 'robin-uebung',
 		firstName: 'Robin',
 		matrixUserId: practiceUserId('supervisor')
+	},
+	/** The one the Supervision tour switches to (FE#2545). */
+	secondSupervisor: {
+		id: 'practice-supervisor-2',
+		username: 'kim-uebung',
+		firstName: 'Kim',
+		matrixUserId: practiceUserId('supervisor-2')
 	}
 } as const satisfies Record<PracticePersonKey, PracticePersonIdentity>;
 

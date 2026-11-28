@@ -82,16 +82,18 @@ A missing required control interrupts the run without a terminal progress
 write; it cannot fall through to the explanations and record completion.
 Regular tours keep their existing missing-target skip policy. Proof:
 `ProductTourAdapter.component.test.tsx` records the progress HTTP boundary for
-F2 with absent controls, and `tourEngine.test.ts` covers a disappearing target.
+the Supervision tour with absent controls, and `tourEngine.test.ts` covers a disappearing target.
 
-**Window size.** F1 starts in the real controls' `fromL` layout; F2 needs
-`fromXL`, where the real supervisor plus is interactive. A narrower F2 card
-explains that the browser window needs widening, and the tour host rejects a
-stale launch request too. Resizing below the supported range discards that
-request, so widening the window requires another deliberate Start. The phone
-hint and F1's existing range are preserved.
-Proof: `PracticeOverviewSection.test.tsx` checks 1199/1200 and F1 at 1024;
-`PracticeFlow.integration.test.tsx` checks the actual host boundary.
+**Window size.** F1 starts in the real controls' `fromL` layout; the
+Supervision tour needs `fromXL`, where the real supervisor plus is
+interactive. Narrower, its Help card shows the window hint and cannot start
+(there is no explanation tour). Resizing a
+practice run below its range ends it, so widening the window requires another
+deliberate Start. The phone hint and F1's existing range are preserved.
+Proof: `PracticeOverviewSection.test.tsx` checks F1 at 1024;
+`HelpToursSection.test.tsx` checks the Supervision card hint at 1199 and
+390; `PracticeFlow.integration.test.tsx` checks the Supervision boundary at
+1199/1200.
 
 **Restart.** The banner asks the tour host for a new run of the same tour. The
 host ends and re-enters on the running guard; the re-enter runs the restart
@@ -112,7 +114,7 @@ case views get the fake Matrix service, the practice sessions store, topics and
 notifications. Its `fetch` patch is page-wide, so the shell's requests for
 practice endpoints are answered from memory too. The shell around it stays on
 the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks F1 (both
-variants) and F2 through the real navigation bar, header, banner and tour host.
+variants) and the topic tours through the real navigation bar, header, banner and tour host.
 
 **Permanent controls.** The banner uses a page-level portal and the theme's
 tooltip layer, above the supervisor dialog's modal layer. The picker and banner
@@ -158,9 +160,58 @@ closes with one button; the tour advances on `practice:circle-call-started`.
 Proof: `practiceCallStart.test.tsx`, `GroupChatHeader/practiceCallGuard.test.tsx`
 and the two Gesprächskreis runs in `PracticeFlow.integration.test.tsx`.
 
-Decided (Frank, 2026-11-25, FE#2545): the real heartbeat is allowlisted, so a
-counsellor who is really live-chat available stays in the real queue while
-practising. Open decisions (Frank): a real incoming call cannot be answered while practising (end
+**Kalender in practice (FE#2545).** The Kalender topic tour runs on the
+real "Meine Termine" with the accepted practice case as the counsellor's
+one conversation. The counsellor enters an appointment, a second one with
+"Weitere Personen per Link einladen" (the Terminlink points at the reserved
+host `practice.invalid`), cancels one from "Als Nächstes", enters a
+Sperrzeit and switches "Buchungen automatisch bestätigen" on in the
+Sprechstunden. The fake backend answers every read of the page (entries,
+proposals, colleagues (none), auto-accept, sync, Sprechstunden and one-offs,
+working hours, direct links, upcoming appointments) and keeps every write in
+memory; the appointment notices go to the practice room. No allowlist entry
+was added. Real reads that stay real: the counsellor's own agency settings
+(`/service/agencies/<ids>`, they decide "Direkteinladung erlauben" and are
+cached page-wide) and static assets. Known limit: the navigation's proposal
+count takes the practice calendar's count (0) and keeps it after the exit
+until its next load (at most a minute). Proof: the calendar tests in
+`FakeRestBackend.test.ts`, the Kalender run in
+`PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
+Calendar`.
+
+**Supervision in practice (FE#2545).** The Supervision topic tour (Help →
+Rundgänge → "Supervision") runs under the id of the old card F2,
+`consultant-practice-supervision`, so no new id needs the UserService
+allowlist, at version 2 (PO, 25 Nov): it shows as new for everyone, also
+for counsellors who completed "Übung: Supervision hinzufügen". It exists
+only as practice: no practice card and no explanation tour.
+`TourOverviewSection` adds its card after "Fälle übergeben" where the
+practice area is open and the tenant can offer it; below `fromXL` the card
+shows `practice.cards.windowHint` (phone: `phoneHint`) instead of a start,
+and where supervision or one-on-one supervision is off the card is hidden.
+A stale launch request for it is cleared and runs nothing. The
+practice start `supervision` is the open enquiry; its accept attaches the
+standing supervisor Robin (Übung), as the server does for a standing
+assignment, and the side room stays closed until the counsellor opens it
+from the row icon. The counsellor finds the case by the "Supervision" chip,
+writes in the side room (Robin answers from the script), swaps Robin for
+Kim (Übung) with the real "Supervisor verwalten" dialog (`PUT
+…/supervisors/{id}`, answered in memory, no notification to anyone, no
+MSC4268 key share) and, where a supervision chat
+allows a call (`resolveSupervisionCallFeatureGates`, the step's `anyOf`
+condition), books a phone or video appointment with the supervisor from the
+panel ⋮ (`POST /calendar/colleague-appointments` in memory; the notice goes
+to the practice side room). No allowlist entry was added. After the swap
+the practice world posts the server's swap notice into the practice side
+room, locally in FakeMatrix: the same `[SYSTEM_NOTIFICATION]` payload type
+`SUPERVISOR_REPLACED` with names and reason, drawn by the real message
+chrome (`supervisorReplacedNotice.ts`, "Supervision gewechselt").
+Proof: the Supervision tests in `FakeRestBackend.test.ts`,
+`practiceWorld.test.ts`, `practiceTours.test.ts`, the two Supervision runs
+in `PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow
+› Supervision`.
+
+Open decisions (Frank): a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
 
 ## Proof on Dev (T2)
@@ -199,8 +250,10 @@ the card click to the end of the practice:
    snapshot before the start (differences are reported as key names, never values);
 4. the real Anfragen list afterwards holds no practice id or name.
 
-Runs: F1 to the end, F1 ended half way from the banner, F2 to the end (skipped
-with a message when the tenant has no supervision). F1 has eight steps with the
+Runs: F1 to the end, F1 ended half way from the banner, the Supervision topic
+tour to the end from its topic card (skipped with a message when the tenant has
+no supervision; 12 steps with the appointment, 11 where the supervision chat
+allows no call). F1 has eight steps with the
 Träger's Team-Besprechung and six without; the run reports which variant the
 tenant has, so the other one needs a tenant with the other setting. The run marks
 the account's practice tours as completed (the one allowed write): use a test
