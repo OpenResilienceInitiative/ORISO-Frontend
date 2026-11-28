@@ -1298,13 +1298,18 @@ export const CalendarPageWired = () => {
 	 * for these days. The profile and the calendar both read it back.
 	 */
 	const saveAbsence = (draft: AbsenceDraft) =>
-		apiSetAbsence(true, draft.message, {
-			start: draft.start,
-			end: draft.end
-		})
+		apiSetAbsence(
+			true,
+			draft.message,
+			// #2500: an absence without dates is stored without days; the weekly
+			// extension and the cancelling are UserService's.
+			draft.kind === 'dated'
+				? { start: draft.start, end: draft.end }
+				: undefined
+		)
 			.then(() => reloadUserData?.())
 			.then(() => reloadEntries());
-	const absence =
+	const absence: Partial<AbsenceDraft> | undefined =
 		consultant && (userData?.absenceStart || userData?.absenceEnd)
 			? {
 					start: userData.absenceStart ?? undefined,
@@ -1312,7 +1317,11 @@ export const CalendarPageWired = () => {
 					message: userData.absenceMessage ?? ''
 				}
 			: consultant
-				? { message: userData?.absenceMessage ?? '' }
+				? {
+						// #2500: an absence switched on without days is the weekly one.
+						kind: userData?.absent ? 'weekly' : undefined,
+						message: userData?.absenceMessage ?? ''
+					}
 				: undefined;
 
 	// CalendarPage shows only the colleagues switched on.

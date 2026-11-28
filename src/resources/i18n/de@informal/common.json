@@ -3438,9 +3438,14 @@
 			"description": "Wähle die Tage, an denen du abwesend bist. Ratsuchende sehen in dieser Zeit deine Abwesenheitsnachricht.",
 			"messageHint": "Ratsuchende sehen diese Nachricht, können dir aber weiterhin schreiben.",
 			"effect": "Nach dem letzten Tag bist du automatisch wieder anwesend. Dieselbe Abwesenheit steht in deinem Profil.",
-			"conflicts": "In diesem Zeitraum liegen {{count}} Termine. Sie bleiben bestehen – sag sie bei Bedarf selbst ab oder verschiebe sie.",
-			"conflicts_one": "In diesem Zeitraum liegt {{count}} Termin. Er bleibt bestehen – sag ihn bei Bedarf selbst ab oder verschiebe ihn.",
-			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil."
+			"saved": "Abwesenheit eingetragen. Sie steht auch in deinem Profil.",
+			"kind": {
+				"weeklyHint": "Bis {{date}}, danach jeden Montag eine weitere Woche, bis du sie beendest."
+			},
+			"warning": {
+				"circles": "Aus Gesprächskreisen wirst du ausgetragen.",
+				"weekly": "Die Abwesenheit verlängert sich jeden Montag um eine Woche, bis du sie beendest."
+			}
 		},
 		"freeTimes": {
 			"description": "Hier buchst du selbst einen Termin bei {{name}}."
