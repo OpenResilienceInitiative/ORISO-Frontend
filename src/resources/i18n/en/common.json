@@ -12,6 +12,11 @@
 			"medium": "Medium",
 			"high": "High"
 		},
+		"darkBrandLabel": "Brand colour in dark mode",
+		"darkBrand": {
+			"counterpart": "Calm",
+			"original": "Original"
+		},
 		"schemeLabel": "Colour scheme",
 		"scheme": {
 			"system": "System",

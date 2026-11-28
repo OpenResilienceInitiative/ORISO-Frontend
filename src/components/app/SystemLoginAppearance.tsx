@@ -6,6 +6,7 @@ import {
 	THEME_APPLIED_EVENT
 } from '../../utils/theme/applyTenantTheme';
 import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
+import { readDeviceDarkBrand } from '../../features/personal-display/preferences';
 
 const routeMarker = 'data-oriso-system-login';
 const darkMarker = 'data-oriso-login-dark';
@@ -32,7 +33,16 @@ export function SystemLoginAppearance() {
 				const seeds = resolveTenantSeeds(theming) ?? {
 					primary: '#a5000a'
 				};
-				const { tokens } = computeOrisoPalette(seeds, 'dark');
+				// The sign-in page follows the device's last dark-brand choice
+				// (FE#1134): calm counterpart or the original brand colour.
+				const { tokens } = computeOrisoPalette(
+					seeds,
+					'dark',
+					'standard',
+					{
+						darkBrand: readDeviceDarkBrand()
+					}
+				);
 				const properties = {
 					...tokens,
 					'--oriso-input-error': 'var(--m3-error)',

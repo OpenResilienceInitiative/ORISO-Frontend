@@ -18,6 +18,7 @@ import {
 } from '../../utils/authenticatedTenant';
 import {
 	DEFAULT_DISPLAY,
+	DEVICE_DARK_BRAND_KEY,
 	DisplayPreferences,
 	displayStorageKey,
 	parseDisplayPreferences
@@ -138,6 +139,7 @@ export const PersonalDisplayProvider = ({
 		)
 			return;
 		try {
+			window.localStorage.setItem(DEVICE_DARK_BRAND_KEY, value.darkBrand);
 			if (key) {
 				window.localStorage.setItem(key, JSON.stringify(value));
 				setTemporary(undefined);

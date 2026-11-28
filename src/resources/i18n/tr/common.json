@@ -12,6 +12,11 @@
 			"medium": "Orta",
 			"high": "Yüksek"
 		},
+		"darkBrandLabel": "Karanlık modda marka rengi",
+		"darkBrand": {
+			"counterpart": "Sakin",
+			"original": "Orijinal"
+		},
 		"schemeLabel": "Renk düzeni",
 		"scheme": {
 			"system": "Sistem",
@@ -6323,7 +6328,9 @@
 			"back": "Geri",
 			"confirm": "Anladım",
 			"loading": "Yasal metin yükleniyor…",
-			"loadError": { "text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin." },
+			"loadError": {
+				"text": "Yasal metin yüklenemedi. Lütfen daha sonra tekrar deneyin."
+			},
 			"missing": {
 				"text": "Bu hizmet için burada bir hukuki metin tanımlanmamış.",
 				"link": "Tanımlı adrese git"

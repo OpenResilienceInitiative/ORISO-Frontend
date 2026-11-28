@@ -13,13 +13,14 @@ import {
 export const TenantThemingLoader = () => {
 	const {
 		scheme,
-		preferences: { textSize, contrast }
+		preferences: { textSize, contrast, darkBrand }
 	} = usePersonalDisplay();
 	const location = useLocation();
 	const isLoadingTheme = useTenantTheming({
 		scheme,
 		textSize,
 		contrast,
+		darkBrand,
 		location
 	});
 	// During a sign-in the login handover screen already covers everything;
