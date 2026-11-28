@@ -240,8 +240,9 @@ export const Asker: Story = {
 		await expectEveryIconDrawn(canvasElement, [
 			'/sessions/user/view',
 			'/notifications',
-			'/profile',
+			// "Meine Termine" comes before "Mein Profil" for advice seekers too.
 			'/booking/events',
+			'/profile',
 			'/tools'
 		]);
 	}

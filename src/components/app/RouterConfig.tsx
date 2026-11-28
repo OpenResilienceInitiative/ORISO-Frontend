@@ -148,6 +148,17 @@ export const RouterConfigUser = (
 				}
 			},
 			{
+				condition: (userData) =>
+					showAppointmentsMenuItem(userData, hasAssignedConsultant),
+				to: '/booking/events',
+				icon: CalendarIconOutline,
+				iconFilled: CalendarIconFilled,
+				navSlot: 'row' as const,
+				titleKeys: {
+					large: 'navigation.booking.events'
+				}
+			},
+			{
 				// Invite guests used to mint Anonymous-<ts> handles; this item
 				// was hidden for that prefix. Guests now get animal User-IDs,
 				// so the rail item is always shown. Do not restore a username
@@ -159,17 +170,6 @@ export const RouterConfigUser = (
 				navSlot: 'row' as const,
 				titleKeys: {
 					large: 'navigation.myProfile'
-				}
-			},
-			{
-				condition: (userData) =>
-					showAppointmentsMenuItem(userData, hasAssignedConsultant),
-				to: '/booking/events',
-				icon: CalendarIconOutline,
-				iconFilled: CalendarIconFilled,
-				navSlot: 'row' as const,
-				titleKeys: {
-					large: 'navigation.booking.events'
 				}
 			},
 			{
@@ -301,6 +301,7 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 					large: 'navigation.activity'
 				}
 			},
+			// Frank 2026-11-25: "Meine Termine" sits directly below "Zeitstrahl".
 			// Drafts moved into the individual sections — it is no longer a
 			// top-level rail item (Frank feedback 2026-07-19). The `/drafts`
 			// route + DraftsCenter page below remain reachable from sections.

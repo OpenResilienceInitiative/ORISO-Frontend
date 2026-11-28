@@ -32,7 +32,8 @@ import {
 	UPDATE_SESSIONS,
 	UserDataContext,
 	useTenant,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	TopicsContext
 } from '../../globalState';
 import {
 	ListItemInterface,
@@ -193,6 +194,8 @@ import { DeletedAskerListItem } from './DeletedAskerListItem';
 import {
 	buildDeletedAskerRows,
 	type DeletedAskerRow,
+	deletedAskerTopicName,
+	listGroupEdges,
 	placeDeletedAskerRows
 } from './deletedAskerRows';
 import {
@@ -1800,7 +1803,8 @@ export const SessionsList = ({
 			isActive({
 				groupId: session?.item?.matrixRoomId,
 				rid: session?.rid,
-				sessionId: session?.item?.id
+				sessionId: session?.item?.id,
+				chatId: session?.isGroup ? session?.item?.id : undefined
 			}),
 		[isActive]
 	);
@@ -2214,6 +2218,7 @@ export const SessionsList = ({
 		sessionToolbarSelectedPeople.length > 0 ||
 		!!sessionToolbarSelectedAgency ||
 		!!sessionToolbarSelectedTopic;
+	const allTopics = useContext(TopicsContext)?.topics;
 	const deletedAskerPlacement = useMemo(() => {
 		if (!showDeletedAskerRows || toolbarNarrowsList) {
 			return { before: [], trailing: [] };
@@ -2231,7 +2236,8 @@ export const SessionsList = ({
 				sessionId: raw.session.id,
 				lastInteraction: getLastInteractionTimestamp(
 					buildExtendedSession(raw, groupIdFromParam)
-				)
+				),
+				topic: deletedAskerTopicName(raw, allTopics)
 			}));
 		const shownSessionIds = new Set<number>(
 			sortedSessions
@@ -2248,6 +2254,7 @@ export const SessionsList = ({
 			totalItems > currentOffset + SESSION_COUNT
 		);
 	}, [
+		allTopics,
 		archivedDeletedAskerIds,
 		currentOffset,
 		deletedAskerPlaceholders,
@@ -2260,6 +2267,22 @@ export const SessionsList = ({
 		toolbarNarrowsList,
 		totalItems
 	]);
+	// One outline over conversations and deleted cards (Frank, 2026-11-25).
+	const groupEdges = useMemo(
+		() =>
+			listGroupEdges(
+				deletedAskerPlacement,
+				sortedSessions.map(isSessionListItemActive),
+				(row) =>
+					location.pathname === deletedAskerPath(row.formerSessionId)
+			),
+		[
+			deletedAskerPlacement,
+			isSessionListItemActive,
+			location.pathname,
+			sortedSessions
+		]
+	);
 	const handleCaseHandoverSelect = useCallback(
 		(sessionId: number) => {
 			// The outcome effect resets the selection to the submitted set; a
@@ -3284,6 +3307,10 @@ export const SessionsList = ({
 													)
 												}
 												onOpen={openDeletedAsker}
+												grouped={!isRail}
+												edges={groupEdges.rows.get(
+													row.key
+												)}
 											/>
 										)
 									)}
@@ -3341,24 +3368,12 @@ export const SessionsList = ({
 												}
 												index={index}
 												isBeforeActive={
-													!!sortedSessions[
-														index + 1
-													] &&
-													isSessionListItemActive(
-														sortedSessions[
-															index + 1
-														]
-													)
+													groupEdges.sessions[index]
+														?.isBeforeActive
 												}
 												isAfterActive={
-													!!sortedSessions[
-														index - 1
-													] &&
-													isSessionListItemActive(
-														sortedSessions[
-															index - 1
-														]
-													)
+													groupEdges.sessions[index]
+														?.isAfterActive
 												}
 												grouped={!isRail}
 												upcomingAppointment={upcomingLabelOf(
@@ -3376,22 +3391,12 @@ export const SessionsList = ({
 													timelineSettings.pastDate
 												}
 												isGroupStart={
-													index === 0 ||
-													isSessionListItemActive(
-														sortedSessions[
-															index - 1
-														]
-													)
+													groupEdges.sessions[index]
+														?.isGroupStart ?? true
 												}
 												isGroupEnd={
-													index ===
-														sortedSessions.length -
-															1 ||
-													isSessionListItemActive(
-														sortedSessions[
-															index + 1
-														]
-													)
+													groupEdges.sessions[index]
+														?.isGroupEnd ?? true
 												}
 												caseHandoverBatchMode={
 													caseHandoverBatchMode
@@ -3432,6 +3437,8 @@ export const SessionsList = ({
 									deletedAskerPath(row.formerSessionId)
 								}
 								onOpen={openDeletedAsker}
+								grouped={!isRail}
+								edges={groupEdges.rows.get(row.key)}
 							/>
 						))}
 

@@ -14,6 +14,7 @@ import './authenticatedApp.styles.scss';
 export function NavigationStoryShell({
 	role,
 	liveChatViaSidebar = true,
+	hasAssignedConsultant = false,
 	tenantSettings,
 	appointmentFeatureEnabled,
 	languageOptions,
@@ -25,6 +26,8 @@ export function NavigationStoryShell({
 }: Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> & {
 	role: 'consultant' | 'asker';
 	liveChatViaSidebar?: boolean;
+	/** Show the advice seeker's calendar once a counsellor is assigned. */
+	hasAssignedConsultant?: boolean;
 	/** Träger settings for the story tenant. */
 	tenantSettings?: Record<string, unknown>;
 	/** Shows the "Meine Termine" rail entry. */
@@ -37,8 +40,8 @@ export function NavigationStoryShell({
 		const settings = { ...config, ...storybookSettings };
 		return role === 'consultant'
 			? RouterConfigConsultant(settings)
-			: RouterConfigUser(settings, false);
-	}, [role]);
+			: RouterConfigUser(settings, hasAssignedConsultant);
+	}, [role, hasAssignedConsultant]);
 
 	return (
 		<NavigationStoryProviders

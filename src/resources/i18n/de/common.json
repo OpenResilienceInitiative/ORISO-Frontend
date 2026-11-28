@@ -4986,7 +4986,8 @@
 			"title": "Gelöschte:r Ratsuchende:r",
 			"hint": "Dieser Chat wurde gelöscht. Persönliche Daten und Nachrichten sind nicht mehr verfügbar.",
 			"preview": "Chat wurde gelöscht",
-			"previewArchived": "Gelöscht · im Archiv"
+			"previewArchived": "Gelöscht · im Archiv",
+			"topicUnknown": "gelöscht"
 		}
 	},
 	"statusOverlay": {

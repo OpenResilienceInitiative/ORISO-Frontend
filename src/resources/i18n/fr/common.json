@@ -4966,7 +4966,8 @@
 			"title": "Personne en quête de conseil supprimée",
 			"hint": "Ce chat a été supprimé. Les données personnelles et les messages ne sont plus disponibles.",
 			"preview": "Le chat a été supprimé",
-			"previewArchived": "Supprimé · aux archives"
+			"previewArchived": "Supprimé · aux archives",
+			"topicUnknown": "supprimé"
 		}
 	},
 	"statusOverlay": {

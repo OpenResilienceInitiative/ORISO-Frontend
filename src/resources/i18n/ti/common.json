@@ -4940,7 +4940,8 @@
 			"title": "ዝተሰረዘ ደላዪ ምኽሪ",
 			"hint": "እዚ ቻት ተሰሪዙ። ውልቃዊ ሓበሬታን መልእኽትታትን ድሕሪ ሕጂ ኣይርከቡን።",
 			"preview": "ቻት ተሰሪዙ",
-			"previewArchived": "ተሰሪዙ · ኣብ መዝገብ"
+			"previewArchived": "ተሰሪዙ · ኣብ መዝገብ",
+			"topicUnknown": "ተሰሪዙ"
 		}
 	},
 	"statusOverlay": {

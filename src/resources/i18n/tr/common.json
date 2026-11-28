@@ -4966,7 +4966,8 @@
 			"title": "Silinmiş danışan",
 			"hint": "Bu sohbet silindi. Kişisel veriler ve mesajlar artık mevcut değil.",
 			"preview": "Sohbet silindi",
-			"previewArchived": "Silindi · arşivde"
+			"previewArchived": "Silindi · arşivde",
+			"topicUnknown": "silindi"
 		}
 	},
 	"statusOverlay": {
