@@ -55,6 +55,23 @@ export interface OrisoSeeds {
 	accent?: string;
 	/** Optional signal/error colour; Oriso default tones when unset. */
 	signal?: string;
+	/**
+	 * Optional Träger override for the dark accent fill (FE#1134). Unset, the
+	 * engine computes the calm dark counterpart from `primary`. An override
+	 * that cannot carry readable ink is ignored like a too-pale seed.
+	 */
+	primaryDark?: string;
+}
+
+/**
+ * How the dark scheme paints brand fills (FE#1134): `counterpart` is the calm
+ * dark counterpart of the brand colour (computed, or the Träger override);
+ * `original` keeps the brand colour itself, e.g. ORISO red.
+ */
+export type DarkBrandMode = 'counterpart' | 'original';
+
+export interface OrisoPaletteOptions {
+	darkBrand?: DarkBrandMode;
 }
 
 export interface OrisoPaletteResult {
@@ -240,21 +257,77 @@ const darkBrandFamily = (palette: TonalPalette): BrandFamily => {
 	};
 };
 
+/** Light or dark ink for a fill, whichever reads better (brand hue). */
+const inkOnFill = (palette: TonalPalette, fill: string): string => {
+	const best = (a: string, b: string) =>
+		wcagContrast(a, fill) >= wcagContrast(b, fill) ? a : b;
+	const tinted = best(
+		hex(palette.tone(DARK_CALM_ACCENT.ink)),
+		hex(palette.tone(10))
+	);
+	// Mid-tone brands (e.g. a medium blue) need plain white or black.
+	return wcagContrast(tinted, fill) >= CONTRAST_AA
+		? tinted
+		: best('#ffffff', '#000000');
+};
+
 /**
- * The dark scheme's brand family with the calm accent (FE#1134): the soft
- * fills take the stage tone instead of the pale rose and their ink turns
- * light. Outlines get their own muted rose (`--oriso-outline-rest`).
+ * The dark accent fill as token logic (FE#1134): the computed calm
+ * counterpart of the brand colour (`DARK_CALM_ACCENT.fill` on the brand hue),
+ * the Träger's `primaryDark` override, or with `original` the brand colour
+ * itself. A candidate that cannot carry AA ink falls back to the computed
+ * counterpart, so a bad override never makes text unreadable.
  */
-const calmDarkBrandFamily = (palette: TonalPalette): BrandFamily => {
-	const tone = (chroma: number, t: number) =>
-		hex(Hct.from(palette.hue, Math.min(chroma, palette.chroma), t).toInt());
-	const ink = hex(palette.tone(DARK_CALM_ACCENT.ink));
+export const darkAccentFill = (
+	primarySeed: string,
+	palette: TonalPalette,
+	mode: DarkBrandMode = 'counterpart',
+	override?: string
+): string => {
+	const computed = hex(
+		Hct.from(
+			palette.hue,
+			Math.min(DARK_CALM_ACCENT.fill.chroma, palette.chroma),
+			DARK_CALM_ACCENT.fill.tone
+		).toInt()
+	);
+	const candidate = mode === 'original' ? primarySeed : override;
+	if (!candidate) return computed;
+	const fill = candidate.toLowerCase();
+	return wcagContrast(inkOnFill(palette, fill), fill) >= CONTRAST_AA
+		? fill
+		: computed;
+};
+
+/**
+ * The dark scheme's brand family around one accent fill (FE#1134): the soft
+ * fills take that fill instead of the pale rose, the ink follows the fill,
+ * and `fixed-dim` is one step away from the ink so text on it stays legible.
+ * Outlines get their own muted rose (`--oriso-outline-rest`).
+ */
+const calmDarkBrandFamily = (
+	palette: TonalPalette,
+	fill: string
+): BrandFamily => {
+	const ink = inkOnFill(palette, fill);
+	const fillHct = Hct.fromInt(argbFromHex(fill));
+	const awayFromInk =
+		wcagContrast(ink, '#000000') > wcagContrast(ink, '#ffffff') ? -1 : 1;
 	return {
 		...darkBrandFamily(palette),
-		fixed: tone(DARK_CALM_ACCENT.fill.chroma, DARK_CALM_ACCENT.fill.tone),
-		fixedDim: tone(
-			DARK_CALM_ACCENT.fillDim.chroma,
-			DARK_CALM_ACCENT.fillDim.tone
+		fixed: fill,
+		fixedDim: hex(
+			Hct.from(
+				fillHct.hue,
+				fillHct.chroma,
+				Math.min(
+					96,
+					Math.max(
+						4,
+						fillHct.tone + awayFromInk * DARK_CALM_ACCENT.dimStep
+					)
+				)
+			).toInt()
 		),
 		onFixed: ink,
 		onFixedVariant: ink
@@ -360,9 +433,14 @@ const harmonizedAccentPalette = (
 export const computeOrisoPalette = (
 	seeds: OrisoSeeds,
 	scheme: OrisoSchemeName,
-	contrast: ContrastLevel = 'standard'
+	contrast: ContrastLevel = 'standard',
+	options: OrisoPaletteOptions = {}
 ): OrisoPaletteResult => {
 	const primarySeed = normalizeHex(seeds.primary, 'primary');
+	const primaryDarkSeed =
+		seeds.primaryDark === undefined
+			? undefined
+			: normalizeHex(seeds.primaryDark, 'primaryDark');
 	const accentSeed =
 		seeds.accent === undefined
 			? undefined
@@ -390,7 +468,15 @@ export const computeOrisoPalette = (
 		scheme === 'light'
 			? stageBrand
 			: scheme === 'dark'
-				? calmDarkBrandFamily(primaryPalette)
+				? calmDarkBrandFamily(
+						primaryPalette,
+						darkAccentFill(
+							primarySeed,
+							primaryPalette,
+							options.darkBrand,
+							primaryDarkSeed
+						)
+					)
 				: darkBrandFamily(primaryPalette);
 
 	const secondaryPalette = accentSeed

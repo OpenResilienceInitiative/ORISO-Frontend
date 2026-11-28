@@ -68,14 +68,14 @@ describe('enhanced contrast scheme', () => {
 		);
 		// The added brand roles and updated illustration stroke have separate tests.
 		// SHA-256 of the ordered maps. FE#1134 changed only the dark roles: calm
-		// dark accent (#281715 stage tone), lifted dark surfaces (tone 11–12
+		// dark accent (computed counterpart, #59302b for ORISO red), lifted dark surfaces (tone 11–12
 		// instead of 4–6) and the new --oriso-card-divider, --oriso-outline-rest
 		// --oriso-rail-badge-surface and --oriso-(on-)live-surface roles.
 		// Apart from those new roles, light and inverted are unchanged.
 		expect(
 			createHash('sha256').update(JSON.stringify(standards)).digest('hex')
 		).toBe(
-			'31f90a552fdc7ee450c595a6f9ac0b3f2ddc439d1f82a580db49e59ec5aac396'
+			'fdb7c9d0c136c9aecd9cd9bdd93ba7d42bb007e117b4f64b4f8ba89592d39fa3'
 		);
 	});
 

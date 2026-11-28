@@ -208,16 +208,21 @@ export const HIGH_CONTRAST_INK_TONES: Record<
  * The calm accent of the dark scheme (FE#1134). In light, the brand's pale
  * rose (`primary-fixed`, tone 90) is a soft fill on white. M3 keeps fixed
  * roles identical in every scheme, so on black the same rose turned into the
- * loudest thing on screen and read like an active state. Its dark
- * counterpart is the Figma stage tone #281715 (`M3/sys/light/on-background`,
- * the Admin sidebar and the sign-in stage): the brand hue at tone 10 with
- * chroma 11.4; `fillDim` is the one step lighter fill that carries text
- * (`primary-fixed-dim`). `mid` is the calm accent for resting outlines and
- * handles (at least 3:1 on every dark surface); `ink` is the text on fills.
+ * loudest thing on screen and read like an active state.
+ *
+ * Token logic (Frank, 2026-11-28): the dark counterpart is computed from the
+ * brand colour, `fill` on the brand hue (ORISO red gives the muted wine-red
+ * #59302b), unless the Träger sets `primaryDark`, or the person chooses the
+ * original brand colour. The Admin stage tone #281715 (Figma
+ * `M3/sys/light/on-background`) is the darker alternative at chroma 11.4,
+ * tone 10. `dimStep` places `primary-fixed-dim` one step further from the
+ * ink; `mid` is the calm accent for resting outlines and handles (at least
+ * 3:1 on every dark surface); `ink` is the text tone on fills.
  */
 export const DARK_CALM_ACCENT = {
-	fill: { chroma: 11.4, tone: 10 },
-	fillDim: { chroma: 16, tone: 20 },
+	fill: { chroma: 24, tone: 25 },
+	/** Tone step from the fill to `fixed-dim`, away from the ink. */
+	dimStep: 7,
 	mid: { chroma: 20, tone: 55 },
 	ink: 90
 };

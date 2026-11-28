@@ -30,7 +30,7 @@ import {
 	resetTenantPalette,
 	resetThemePreviewPalette
 } from './theme/applyTenantTheme';
-import type { ContrastLevel } from './theme/orisoScheme';
+import type { ContrastLevel, DarkBrandMode } from './theme/orisoScheme';
 import { captureHeadLook } from './tenantHeadLook';
 
 const getOrCreateHeadNode = (
@@ -100,6 +100,7 @@ interface TenantThemeOptions {
 	scheme?: 'light' | 'dark';
 	textSize?: number;
 	contrast?: ContrastLevel;
+	darkBrand?: DarkBrandMode;
 	location?: Pick<Location, 'pathname' | 'search'>;
 	ownsPalette?: boolean;
 }
@@ -108,6 +109,7 @@ const useTenantTheming = ({
 	scheme,
 	textSize = 100,
 	contrast = 'standard',
+	darkBrand = 'counterpart',
 	location = window.location,
 	ownsPalette = true
 }: TenantThemeOptions = {}) => {
@@ -179,13 +181,15 @@ const useTenantTheming = ({
 				theming,
 				document.documentElement,
 				personal ? scheme : undefined,
-				appliedContrast
+				appliedContrast,
+				personal ? darkBrand : undefined
 			)
 		)
 			resetTenantPalette();
 	}, [
 		paletteSource,
 		scheme,
+		darkBrand,
 		tenantScope,
 		previewSearch,
 		personal,
