@@ -865,6 +865,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	const renderOtpInput = (labelKey: string) => (
 		<AccountSetupField
 			key={`otp-${labelKey}`}
+			autoComplete="one-time-code"
 			autoFocus
 			errorMessage={errorKey ? translate(errorKey) : ''}
 			id="two-factor-setup-otp"

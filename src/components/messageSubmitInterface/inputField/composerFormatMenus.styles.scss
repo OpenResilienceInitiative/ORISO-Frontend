@@ -1,0 +1,54 @@
+.composerFormatMenu {
+	position: fixed;
+	z-index: 4600;
+	width: max-content;
+	max-width: calc(100vw - 16px);
+	box-sizing: border-box;
+	padding: 6px;
+	border-radius: 12px;
+	background: var(--m3-surface-container-lowest, #fff);
+	box-shadow:
+		0 4px 8px 3px rgba(0, 0, 0, 0.08),
+		0 1px 3px rgba(0, 0, 0, 0.2);
+
+	&__toolbar {
+		display: flex;
+		gap: 2px;
+	}
+
+	&--slash {
+		max-height: var(--composer-suggestion-height, none);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	&__list {
+		display: grid;
+		gap: 2px;
+		min-width: 190px;
+
+		[aria-selected='true'] {
+			color: var(--m3-on-primary-fixed, #410002);
+			background: var(--m3-primary-fixed, #ffdad5);
+
+			.composerFormatMenu__shortcut {
+				color: inherit;
+			}
+		}
+	}
+
+	&__shortcut {
+		margin-inline-start: auto;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		white-space: nowrap;
+	}
+
+	@media (pointer: coarse) {
+		.composerToolbar__button,
+		.composerToolbar__menuItem {
+			min-width: 44px;
+			min-height: 44px;
+		}
+	}
+}

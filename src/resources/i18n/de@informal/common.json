@@ -2022,7 +2022,7 @@
 			"action": {
 				"start": "Starten",
 				"continue": "Fortsetzen",
-				"restart": "Neu starten"
+				"restart": "Nochmal starten"
 			}
 		},
 		"step": {

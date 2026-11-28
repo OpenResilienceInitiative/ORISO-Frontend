@@ -35,18 +35,21 @@
 		"@storybook/addon-designs": "^12.0.0",
 		"@storybook/addon-mcp": "11.0.0-beta.5",
 		"@storybook/react-vite": "11.0.0-beta.5",
-		"@tiptap/extension-color": "^3.20.1",
-		"@tiptap/extension-highlight": "^3.20.1",
-		"@tiptap/extension-link": "^3.20.1",
-		"@tiptap/extension-mention": "^3.27.2",
-		"@tiptap/extension-placeholder": "^3.20.1",
-		"@tiptap/extension-task-item": "^3.27.2",
-		"@tiptap/extension-task-list": "^3.27.2",
-		"@tiptap/extension-text-align": "^3.20.1",
-		"@tiptap/extension-underline": "^3.20.1",
-		"@tiptap/react": "^3.20.1",
-		"@tiptap/starter-kit": "^3.20.1",
-		"@tiptap/suggestion": "^3.27.2",
+		"@tiptap/core": "^3.34.0",
+		"@tiptap/extension-bubble-menu": "^3.34.0",
+		"@tiptap/extension-color": "^3.34.0",
+		"@tiptap/extension-highlight": "^3.34.0",
+		"@tiptap/extension-link": "^3.34.0",
+		"@tiptap/extension-mention": "^3.34.0",
+		"@tiptap/extension-placeholder": "^3.34.0",
+		"@tiptap/extension-task-item": "^3.34.0",
+		"@tiptap/extension-task-list": "^3.34.0",
+		"@tiptap/extension-text-align": "^3.34.0",
+		"@tiptap/extension-underline": "^3.34.0",
+		"@tiptap/pm": "^3.34.0",
+		"@tiptap/react": "^3.34.0",
+		"@tiptap/starter-kit": "^3.34.0",
+		"@tiptap/suggestion": "^3.34.0",
 		"@vector-im/compound-design-tokens": "^6.3.0",
 		"@vector-im/compound-web": "^8.2.5",
 		"@vitejs/plugin-react": "6.3.0",
@@ -400,6 +403,77 @@
 						{
 							"selector": "JSXOpeningElement[name.name='NativeSelect']",
 							"message": "MUI NativeSelect opens the browser's own option list. Use OrisoSelect from src/components/form/."
+						}
+					]
+				}
+			},
+			{
+				"files": [
+					"src/components/{enquiry,notificationsCenter,session,chatStage}/**/*.{js,jsx,ts,tsx}"
+				],
+				"excludedFiles": [
+					"**/*.{test,spec,stories}.{js,jsx,ts,tsx}",
+					"**/{__tests__,__mocks__,__storybook__}/**"
+				],
+				"rules": {
+					"no-restricted-imports": [
+						"error",
+						{
+							"patterns": [
+								{
+									"group": [
+										"antd/*",
+										"@ant-design/*"
+									],
+									"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+								},
+								{
+									"group": [
+										"@tiptap/*",
+										"@draft-js-plugins/*",
+										"draft-js",
+										"prosemirror-*",
+										"**/messageSubmitInterface/TipTapComposer",
+										"**/messageSubmitInterface/TipTapComposer.*",
+										"**/messageSubmitInterface/inputField/extensions/**"
+									],
+									"message": "Use MessageSubmitInterfaceComponent for message composition."
+								}
+							],
+							"paths": [
+								{
+									"name": "antd",
+									"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+								}
+							]
+						}
+					],
+					"no-restricted-syntax": [
+						"error",
+						"WithStatement",
+						{
+							"selector": "JSXOpeningElement[name.name=/^(select|option|textarea)$/]",
+							"message": "Raw <select>/<option>/<textarea> is drawn by the browser and never matches the design. Use OrisoSelect / OrisoMultiSelect / OrisoTextarea from src/components/form/."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'][value.value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'] > JSXExpressionContainer > Literal[value=/^(checkbox|radio)$/]",
+							"message": "Raw <input type=\"checkbox|radio\"> is drawn by the browser. Use M3Checkbox, or MUI RadioGroup + FormControlLabel + Radio."
+						},
+						{
+							"selector": "JSXOpeningElement[name.name='NativeSelect']",
+							"message": "MUI NativeSelect opens the browser's own option list. Use OrisoSelect from src/components/form/."
+						},
+						{
+							"selector": "JSXAttribute[name.name=/^contenteditable$/i]",
+							"message": "Use MessageSubmitInterfaceComponent for editable message content."
+						},
+						{
+							"selector": ":matches(ImportExpression > Literal.source, CallExpression[callee.name='require'] > Literal.arguments)[value=/^(@tiptap\\u002F|@draft-js-plugins\\u002F|draft-js($|\\u002F)|prosemirror-)|(^|\\u002F)messageSubmitInterface\\u002F(TipTapComposer($|\\.)|inputField\\u002Fextensions\\u002F)/]",
+							"message": "Use MessageSubmitInterfaceComponent for message composition."
 						}
 					]
 				}

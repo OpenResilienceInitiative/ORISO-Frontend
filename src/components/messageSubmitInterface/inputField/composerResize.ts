@@ -74,7 +74,7 @@ export const getEffectiveComposerHeight = (
 	minHeight: number
 ): number | null => {
 	if (manualHeight !== null) {
-		return Math.max(manualHeight, autoHeight || minHeight);
+		return Math.max(manualHeight, autoHeight || 0);
 	}
 	if (!autoHeight || autoHeight <= minHeight) {
 		return null;

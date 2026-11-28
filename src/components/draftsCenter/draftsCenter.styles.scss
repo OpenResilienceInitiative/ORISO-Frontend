@@ -21,7 +21,7 @@
 
 .draftsCenter__subtitle {
 	margin: 0;
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #444748);
 	font-size: 16px;
 	line-height: 1.2;
 
@@ -117,7 +117,7 @@
 }
 
 .draftsCenter__listItemTime {
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #444748);
 	font-size: 12px;
 	white-space: nowrap;
 
@@ -250,7 +250,7 @@
 
 .draftsCenter__empty {
 	padding: 24px;
-	color: #6b7280;
+	color: var(--m3-on-surface-variant, #444748);
 
 	html[data-oriso-personal-scheme='dark'] & {
 		color: var(--m3-on-surface-variant, #c4c7c8);

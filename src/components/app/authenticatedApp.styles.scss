@@ -265,9 +265,22 @@ a {
 			max-width: 100%;
 			min-width: 0;
 			overflow-x: hidden;
-			transition: all 0.3s ease;
+
+			// Animate the pane's size only. Colours follow the theme at once like
+			// every other surface: an `all` transition faded the pane's text and
+			// fill for 300 ms after a theme switch, so the composer showed
+			// light-theme text on the dark field.
+			transition:
+				width 0.3s ease,
+				max-width 0.3s ease,
+				flex-basis 0.3s ease,
+				margin 0.3s ease;
 			flex: 1 0 100%;
 			background-color: var(--m3-surface-container-high, #eae7e8);
+
+			@media (prefers-reduced-motion: reduce) {
+				transition: none;
+			}
 
 			@include breakpoint($fromLarge) {
 				width: 100%; /* Use full available width */

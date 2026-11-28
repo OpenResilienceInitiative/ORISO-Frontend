@@ -32,14 +32,10 @@ const labels: CaseHandoverActionLabels = {
 	awaitingApproval: 'Wartet auf Freigabe',
 	accessGranted: 'Zugriff erteilt',
 	accessDenied: 'Zugriff abgelehnt',
-	selectCase: 'Fall auswählen',
+	selectCase: 'Auswählen',
 	menuLabel: 'Optionen für die Fallübergabe',
 	selectMultipleTitle: 'Mehrere Unterhaltungen auswählen',
-	selectMultipleDescription: '',
-	confirmSelectionTitle: 'Auswahl bestätigen',
-	confirmSelectionDescription: '',
-	deselectTitle: 'Auswahl aufheben und schließen',
-	deselectDescription: ''
+	selectMultipleDescription: ''
 };
 
 type DemoCase = { id: number; name: string; state: CaseHandoverActionState };

@@ -47,16 +47,18 @@ vi.mock('../form/OrisoDatePicker', () => ({
 		/>
 	)
 }));
+/* Like the real picker, the time field commits its text again on blur. */
+const commitTime =
+	(onChange?: (value: Dayjs | null) => void) =>
+	(e: { target: { value: string } }) =>
+		onChange?.(e.target.value ? dayjs(e.target.value, 'HH:mm') : null);
 vi.mock('../form/OrisoTimePicker', () => ({
 	OrisoTimePicker: ({ label, value, onChange }: PickerProps) => (
 		<input
 			aria-label={label}
 			value={value ? value.format('HH:mm') : ''}
-			onChange={(e) =>
-				onChange?.(
-					e.target.value ? dayjs(e.target.value, 'HH:mm') : null
-				)
-			}
+			onChange={commitTime(onChange)}
+			onBlur={commitTime(onChange)}
 		/>
 	)
 }));
@@ -129,6 +131,61 @@ describe('InvitationDialog (#2252)', () => {
 				appointment: { start: local(5, 14), end: local(5, 15) },
 				link: { validityMinutes: 1440, access: 'both', knock: true }
 			});
+		});
+
+		it('"Mit Termin" preselects today at the next half hour, one hour long (#2358)', () => {
+			/* NOW is 12:00 on the 3rd. */
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			const value = (name: string) =>
+				(screen.getByLabelText(`${SLOT}.${name}`) as HTMLInputElement)
+					.value;
+			expect(value('date')).toBe('2026-11-03');
+			expect(value('start')).toBe('12:30');
+			expect(value('end')).toBe('13:30');
+		});
+
+		it('setting Beginn moves Ende to Beginn + 1 h (#2358)', async () => {
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			setField('date', '2026-11-05');
+			setTime('start', 16);
+			expect(
+				(screen.getByLabelText(`${SLOT}.end`) as HTMLInputElement).value
+			).toBe('17:00');
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(5, 16), end: local(5, 17) }
+				})
+			);
+		});
+
+		it('leaving Beginn unchanged keeps a custom Ende (#2358)', async () => {
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			setField('date', '2026-11-05');
+			setTime('start', 16);
+			setTime('end', 18);
+			fireEvent.blur(screen.getByLabelText(`${SLOT}.start`));
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(5, 16), end: local(5, 18) }
+				})
+			);
+		});
+
+		it('late in the evening the default is tomorrow 10:00 and can be created (#2358)', async () => {
+			vi.setSystemTime(new Date(2026, 10, 3, 22, 45));
+			open();
+			toggle(`${KEYS}.withAppointment`);
+			await click(`${KEYS}.createAction`);
+			expect(onSubmit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					appointment: { start: local(4, 10), end: local(4, 11) }
+				})
+			);
 		});
 
 		it.each([

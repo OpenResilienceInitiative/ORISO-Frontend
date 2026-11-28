@@ -335,3 +335,21 @@ describe('Login e-mail code: resend link (#1338)', () => {
 		).toBeTruthy();
 	});
 });
+
+describe('Login one-time code stays out of the page HTML (FE#2582)', () => {
+	it('sends the typed code without a value attribute or React warnings', async () => {
+		const consoleError = vi.spyOn(console, 'error');
+		const { container } = await reachEmailCodeStep();
+		const code = container.querySelector<HTMLInputElement>('#otp')!;
+		expect(code.getAttribute('autocomplete')).toBe('one-time-code');
+		fireEvent.change(code, { target: { value: '654321' } });
+		expect(code.value).toBe('654321');
+		expect(code.getAttribute('value') ?? '').not.toContain('654321');
+		expect(container.innerHTML).not.toContain('654321');
+		// Stays pending: this test is about the field, not the session.
+		vi.mocked(autoLogin).mockReturnValueOnce(new Promise(() => {}));
+		fireEvent.keyUp(code, { key: 'Enter' });
+		expect(vi.mocked(autoLogin).mock.calls[1][0].otp).toBe('654321');
+		expect(consoleError).not.toHaveBeenCalled();
+	});
+});

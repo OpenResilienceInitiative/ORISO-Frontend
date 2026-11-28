@@ -2097,7 +2097,11 @@
 			},
 			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
 			"retry": "Réessayer",
+			"editFailedTitle": "Impossible d’enregistrer la modification",
+			"editFailedText": "Votre texte est toujours dans l’éditeur. Réessayez.",
 			"toolbar": {
+				"selectionFormats": "Mettre en forme la sélection",
+				"slashFormats": "Commandes de mise en forme",
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
 				"more": "Plus d'outils",
@@ -2798,6 +2802,7 @@
 				"notJoined": "Lecture seule jusqu’à la confirmation de votre adhésion et le chargement du salon.",
 				"supervisorNoComposer": "En tant que superviseur·e, vous pouvez réagir ici, mais pas écrire.",
 				"teamClosed": "Le chat d’équipe est fermé.",
+				"threadsDisabled": "Les réponses dans un fil ne sont pas disponibles ici.",
 				"curtained": "Ce dossier ne vous est pas visible pour le moment.",
 				"hiddenNotYours": "Cette conversation ne fait pas partie de vos dossiers ; l’activité ne l’affiche donc pas ici.",
 				"hiddenNotJoined": "Vous n’avez pas rejoint cette conversation ; l’activité ne l’affiche donc pas ici.",
@@ -4290,6 +4295,7 @@
 			"accessDenied": "Accès refusé",
 			"accessGranted": "Accès autorisé",
 			"awaitingApproval": "En attente d'autorisation",
+			"awaitingApprovalShort": "Demandé",
 			"hiddenPreview": "Les informations restent masquées jusqu'à ce que la demande soit acceptée",
 			"requestAccess": "Demander l'accès"
 		},
@@ -5616,12 +5622,13 @@
 				"not_started": "Non commencée",
 				"in_progress": "En cours",
 				"completed": "Terminée",
-				"skipped": "Ignorée"
+				"skipped": "Ignorée",
+				"completedOn": "Terminée le {{date}}"
 			},
 			"action": {
 				"start": "Démarrer",
 				"continue": "Reprendre",
-				"restart": "Recommencer"
+				"restart": "Relancer"
 			}
 		},
 		"step": {
@@ -5678,7 +5685,8 @@
 			"hint": {
 				"on": "Activé : le bouton « ? » en bas à droite ouvre vos visites guidées. Il est masqué tant qu’une conversation est ouverte.",
 				"off": "Désactivé : le bouton « ? » est masqué. Vous retrouvez toujours vos visites guidées ici."
-			}
+			},
+			"autoHide": "Le bouton « ? » se masque tout seul tant qu’une conversation est ouverte, qu’une visite guidée est en cours ou que la barre d’appel est affichée."
 		}
 	},
 	"consultingTypes": {
@@ -6318,6 +6326,9 @@
 			"back": "Retour",
 			"confirm": "Compris",
 			"loading": "Chargement du texte juridique…",
+			"loadError": {
+				"text": "Le texte juridique n'a pas pu être chargé. Veuillez réessayer plus tard."
+			},
 			"missing": {
 				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
 				"link": "Vers l'adresse enregistrée"
@@ -6536,7 +6547,13 @@
 			"title": "Visites guidées",
 			"open": "Ouvrir les visites guidées",
 			"close": "Fermer les visites guidées",
-			"manage": "Gérer les visites guidées"
+			"manage": "Gérer les visites guidées",
+			"hide": "Masquer le bouton d’aide",
+			"hideConfirm": "Masquer ?",
+			"hideWhere": "Le réafficher sous Aide → Visites guidées",
+			"resetPosition": "Réinitialiser la position",
+			"dragHint": "Glisser pour déplacer",
+			"moveHint": "Glisser ou appuyer sur Alt + flèches pour déplacer"
 		},
 		"caseHandover": {
 			"title": "Transférer des dossiers",

@@ -74,12 +74,15 @@ export const LegalLinkModal = ({
 		rawLabel
 	);
 	const isAgency = scope === 'agency';
-	const { data: departmentLegal, loading: agencyLoading } =
-		useDepartmentLegal(
-			isAgency ? agencyId : null,
-			isAgency ? topicId : null,
-			{ enabled: isAgency }
-		);
+	const {
+		data: departmentLegal,
+		loading: agencyLoading,
+		error: agencyError
+	} = useDepartmentLegal(
+		isAgency ? agencyId : null,
+		isAgency ? topicId : null,
+		{ enabled: isAgency }
+	);
 	/* Agency-scope: the department's published document by kind, falling back
 	   to the tenant text — same rationale as `DepartmentLegalSection`'s consent
 	   variant, so a Beratungsstelle without its own text still gets the
@@ -155,6 +158,34 @@ export const LegalLinkModal = ({
 					)}
 					data-testid="legal-loading"
 				/>
+			) : isAgency && agencyError && !departmentLegal ? (
+				/* A failed request is not "no text configured": the agency may well have
+				   its own document, so neither the carrier text nor the "none stored"
+				   note is shown as if it were the answer. */
+				<div
+					className="legalLinkModal__missing"
+					data-testid="legal-load-error"
+					role="alert"
+				>
+					<p>
+						{translate(
+							'legal.modal.loadError.text',
+							'Der Rechtstext konnte nicht geladen werden. Bitte versuchen Sie es später erneut.'
+						)}
+					</p>
+					{url && (
+						<p>
+							<LegalFullTextLink
+								url={url}
+								label={translate(
+									'legal.modal.missing.link',
+									'Zur hinterlegten Adresse'
+								)}
+								onNavigate={onClose}
+							/>
+						</p>
+					)}
+				</div>
 			) : content ? (
 				/* A published legal text gets the reading surface, not a wall of
 				   text: chapter chips, in-place scrolling and a fullscreen mode,

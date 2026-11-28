@@ -64,8 +64,26 @@ import './directInvitation.styles.scss';
 
 const SLOT = 'sessionList.timeline.appointment.dialog';
 const KEYS = 'directInvitation.dialog';
-const DEFAULT_HOUR = 10;
 const DEFAULT_MINUTES = 60;
+const LATE_FALLBACK_HOUR = 10;
+/** #2358: wheel and arrow keys on a time field move it by half an hour. */
+const TIME_STEP_MINUTES = 30;
+
+/**
+ * #2358: a new appointment starts today, at the next half hour that is
+ * still ahead ("Mit Termin" preselects today instead of tomorrow 10:00).
+ * A new appointment never wraps midnight, so when that hour would not end
+ * today (from 22:30), it falls back to tomorrow 10:00 as before.
+ */
+const nextHalfHour = (now?: Date) => {
+	const base = dayjs(now);
+	const start = base
+		.startOf('hour')
+		.add(base.minute() < 30 ? 30 : 60, 'minute');
+	return start.add(DEFAULT_MINUTES, 'minute').isSame(base, 'day')
+		? start
+		: base.add(1, 'day').startOf('day').hour(LATE_FALLBACK_HOUR);
+};
 /** The "Beratung" choice that hands over to a Direkteinladung. */
 const NEW_PERSON = 'new-person';
 
@@ -265,7 +283,7 @@ export const useInvitationForm = ({
 	const slotKnown = Boolean(known.slot && initial.start && initial.end);
 	const initialStart = initial.start
 		? dayjs(initial.start)
-		: dayjs(now).add(1, 'day').hour(DEFAULT_HOUR).minute(0);
+		: nextHalfHour(now);
 	/* FE#2510 *2: the calendar's date is optional; without it, the open link. */
 	const offersOpenLink =
 		!isInvitation && Boolean(onOpenLink) && mode === 'create' && !slotKnown;
@@ -291,6 +309,16 @@ export const useInvitationForm = ({
 			? dayjs(initial.end)
 			: initialStart.add(DEFAULT_MINUTES, 'minute')
 	);
+	/* #2358: setting Beginn moves Ende to Beginn + 1 h. An Ende before
+	   Beginn is still refused on submit ("order"). The time field also
+	   commits its unchanged value on blur; that must keep a custom Ende. */
+	const changeStartTime = (next: Dayjs | null) => {
+		const moved = next?.format('HH:mm') !== startTime?.format('HH:mm');
+		setStartTime(next);
+		if (next && moved) {
+			setEndTime(next.add(DEFAULT_MINUTES, 'minute'));
+		}
+	};
 	const [kind, setKind] = useState<AppointmentKind>(
 		initial.kind ?? DEFAULT_APPOINTMENT_KIND
 	);
@@ -613,7 +641,8 @@ export const useInvitationForm = ({
 							label={t(`${SLOT}.start`)}
 							ampm={false}
 							value={startTime}
-							onChange={setStartTime}
+							onChange={changeStartTime}
+							stepMinutes={TIME_STEP_MINUTES}
 							cancelLabel={t('app.cancel')}
 						/>
 						<OrisoTimePicker
@@ -621,6 +650,7 @@ export const useInvitationForm = ({
 							ampm={false}
 							value={endTime}
 							onChange={setEndTime}
+							stepMinutes={TIME_STEP_MINUTES}
 							cancelLabel={t('app.cancel')}
 						/>
 					</div>

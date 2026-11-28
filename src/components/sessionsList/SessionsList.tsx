@@ -2273,12 +2273,6 @@ export const SessionsList = ({
 		},
 		[caseHandoverBatch.submitting]
 	);
-	const caseHandoverPaneRef = useRef<HTMLElement | null>(null);
-	/** The chevron's "Confirm selection": jump to the reason step on the right. */
-	const handleFocusCaseHandoverPane = useCallback(() => {
-		setCaseHandoverBatchSummary('');
-		caseHandoverPaneRef.current?.focus();
-	}, []);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
 		// close() would drop the operation ids while the request still runs on
 		// the server; the outcome would be lost and a retry would not be idempotent.
@@ -2373,8 +2367,6 @@ export const SessionsList = ({
 		<section
 			className="sessionsList__caseHandoverPane"
 			aria-label={translate('caseHandover.batch.title')}
-			ref={caseHandoverPaneRef}
-			tabIndex={-1}
 			data-cy="case-handover-pane"
 		>
 			<CaseHandoverCurtainView
@@ -3418,12 +3410,6 @@ export const SessionsList = ({
 														''
 													);
 												}}
-												onCaseHandoverBatchConfirm={
-													handleFocusCaseHandoverPane
-												}
-												onCaseHandoverBatchClose={
-													handleCloseCaseHandoverBatch
-												}
 											/>
 										</div>
 									</ActiveSessionProvider>

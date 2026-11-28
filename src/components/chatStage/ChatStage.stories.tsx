@@ -2130,16 +2130,21 @@ export const PhoneComposerGrowsWhileTyping: Story = {
 			canvasElement.querySelector('[data-cy="channel-switcher"]')
 		).toBeNull();
 		// Clear through the TipTap handle on the DOM node (synthetic Backspace
-		// does not reach ProseMirror) → back to one line.
+		// does not reach ProseMirror). Focus still holds the composer open:
+		// an empty phone composer grows when it is clicked and stays open
+		// until the person leaves it.
 		(editor as any).editor?.commands.clearContent(true);
 		await waitFor(() =>
-			expect(shell.getBoundingClientRect().height).toBeLessThanOrEqual(
+			expect(shell.getBoundingClientRect().height).toBeGreaterThan(
 				oneLine + 8
 			)
 		);
-		// Blur → collapsed again: FAB back.
+		// Blur → one line again, and the FAB comes back.
 		(document.activeElement as HTMLElement | null)?.blur();
 		await waitFor(() => {
+			expect(shell.getBoundingClientRect().height).toBeLessThanOrEqual(
+				110
+			);
 			expect(
 				canvasElement.querySelector('[data-cy="channel-switcher"]')
 			).not.toBeNull();

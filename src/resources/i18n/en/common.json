@@ -1849,6 +1849,9 @@
 			"back": "Back",
 			"confirm": "Got it",
 			"loading": "Loading the legal text …",
+			"loadError": {
+				"text": "The legal text could not be loaded. Please try again later."
+			},
 			"missing": {
 				"text": "No legal text has been provided here for this service.",
 				"link": "Open the configured address"
@@ -2103,7 +2106,11 @@
 			},
 			"loadError": "The chat input could not be loaded. Please try again.",
 			"retry": "Try again",
+			"editFailedTitle": "Could not save the edit",
+			"editFailedText": "Your text is still in the editor. Try again.",
 			"toolbar": {
+				"selectionFormats": "Format selection",
+				"slashFormats": "Formatting commands",
 				"openTools": "Back to full editor tools",
 				"closeTools": "Switch to compact tools",
 				"more": "More tools",
@@ -2795,6 +2802,7 @@
 				"notJoined": "Read only until your join is confirmed and the room has loaded.",
 				"supervisorNoComposer": "As supervisor you can react here, but not write.",
 				"teamClosed": "The team chat is closed.",
+				"threadsDisabled": "Thread replies are not available here.",
 				"curtained": "This case is not visible to you right now.",
 				"hiddenNotYours": "This conversation is not one of your cases, so Activity does not show it here.",
 				"hiddenNotJoined": "You have not joined this conversation, so Activity does not show it here.",
@@ -4193,7 +4201,7 @@
 			"confirm": "Request selected",
 			"required": "Select at least one case and a reason, and add an explanation where it is required.",
 			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
-			"selectCase": "Select case",
+			"selectCase": "Select",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
 			"title": "Batch access request",
@@ -4256,6 +4264,7 @@
 			"accessDenied": "Access denied",
 			"accessGranted": "Access granted",
 			"awaitingApproval": "Awaiting approval",
+			"awaitingApprovalShort": "Requested",
 			"hiddenPreview": "Information hidden until request is approved",
 			"requestAccess": "Request access"
 		},
@@ -5581,12 +5590,13 @@
 				"not_started": "Not started",
 				"in_progress": "In progress",
 				"completed": "Completed",
-				"skipped": "Skipped"
+				"skipped": "Skipped",
+				"completedOn": "Completed on {{date}}"
 			},
 			"action": {
 				"start": "Start",
 				"continue": "Continue",
-				"restart": "Restart"
+				"restart": "Start again"
 			}
 		},
 		"step": {
@@ -5643,7 +5653,8 @@
 			"hint": {
 				"on": "On: the “?” button in the bottom-right corner opens your tours. It is hidden while a conversation is open.",
 				"off": "Off: the “?” button is hidden. You can still find your tours here."
-			}
+			},
+			"autoHide": "The “?” button hides itself while a conversation is open, a tour is running or the call bar is showing."
 		}
 	},
 	"anonymousChat": {
@@ -6451,7 +6462,13 @@
 			"title": "Tours",
 			"open": "Open tours",
 			"close": "Close tours",
-			"manage": "Manage tours"
+			"manage": "Manage tours",
+			"hide": "Hide help button",
+			"hideConfirm": "Hide?",
+			"hideWhere": "Show it again under Help → Tours",
+			"resetPosition": "Reset position",
+			"dragHint": "Drag to move",
+			"moveHint": "Drag or press Alt + arrow keys to move"
 		},
 		"caseHandover": {
 			"title": "Handing over cases",
