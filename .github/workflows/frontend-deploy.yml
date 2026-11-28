@@ -89,7 +89,7 @@ jobs:
                   [ "$HAS_FINGERPRINT" = "true" ] || echo "::warning::DEPLOY_SSH_FINGERPRINT is not set in '$TARGET'; the server's host key is not verified."
 
             - name: Run deploy-frontend-dev.sh on the server
-              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
               with:
                   host: ${{ secrets.DEPLOY_SSH_HOST }}
                   username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
@@ -154,7 +154,7 @@ jobs:
                   [ "$HAS_FINGERPRINT" = "true" ] || echo "::warning::DEPLOY_SSH_FINGERPRINT is not set in 'development'; the server's host key is not verified."
 
             - name: Restart storybook-frontend and storybook-admin
-              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
               with:
                   host: ${{ secrets.DEPLOY_SSH_HOST }}
                   username: ${{ secrets.DEPLOY_SSH_USER || 'root' }}
@@ -187,7 +187,7 @@ jobs:
         environment: production
         steps:
             - name: Deploy to production server
-              uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+              uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
               with:
                   host: ${{ secrets.PROD_SSH_HOST }}
                   username: ${{ secrets.PROD_SSH_USER }}
