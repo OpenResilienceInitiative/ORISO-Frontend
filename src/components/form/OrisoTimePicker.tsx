@@ -17,6 +17,7 @@ import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
 import { OrisoTextField } from './OrisoTextField';
 import {
 	orisoDateTimeColors,
+	orisoFieldIconButtonSx,
 	orisoPickerTypography,
 	orisoTimePickerDialogSx
 } from './orisoDateTimeDesign';
@@ -44,6 +45,11 @@ export interface OrisoTimePickerProps {
 	 * trigger is a split button rather than an input.
 	 */
 	renderTrigger?: (openDialog: () => void) => React.ReactNode;
+	/**
+	 * #2358: arrow up/down on the focused field and the mouse wheel over it
+	 * move the time by this many minutes. Off when not set.
+	 */
+	stepMinutes?: number;
 }
 
 const DIAL_SIZE = 256;
@@ -324,7 +330,8 @@ export const OrisoTimePicker = ({
 	okLabel,
 	placeholder,
 	id,
-	renderTrigger
+	renderTrigger,
+	stepMinutes
 }: OrisoTimePickerProps) => {
 	const { t } = useTranslation();
 	const resolvedTitle = dialogTitle ?? t('form.timePicker.dialogTitle');
@@ -347,6 +354,28 @@ export const OrisoTimePicker = ({
 	React.useEffect(() => {
 		setInputText(value ? value.format(displayFormat) : '');
 	}, [value, displayFormat]);
+
+	/* #2358: step from the shown time by `stepMinutes`. */
+	const step = (direction: 1 | -1) => {
+		if (!stepMinutes || disabled || !value) return;
+		onChange?.(value.add(direction * stepMinutes, 'minute').second(0));
+	};
+	const [inputEl, setInputEl] = React.useState<HTMLInputElement | null>(null);
+	React.useEffect(() => {
+		if (!inputEl || !stepMinutes || disabled || !value) return undefined;
+		/* Not passive: the wheel steps the time instead of scrolling the page. */
+		const onWheel = (event: WheelEvent) => {
+			if (event.deltaY === 0) return;
+			event.preventDefault();
+			onChange?.(
+				value
+					.add((event.deltaY < 0 ? 1 : -1) * stepMinutes, 'minute')
+					.second(0)
+			);
+		};
+		inputEl.addEventListener('wheel', onWheel, { passive: false });
+		return () => inputEl.removeEventListener('wheel', onWheel);
+	}, [inputEl, stepMinutes, disabled, value, onChange]);
 
 	const openDialog = () => {
 		const base = value ?? dayjs().hour(12).minute(0);
@@ -449,9 +478,18 @@ export const OrisoTimePicker = ({
 					fullWidth={fullWidth}
 					onChange={(event) => setInputText(event.target.value)}
 					onBlur={(event) => commitInput(event.target.value)}
+					inputRef={setInputEl}
 					onKeyDown={(event) => {
 						if (event.key === 'Enter') {
 							commitInput(inputText);
+						}
+						if (
+							stepMinutes &&
+							(event.key === 'ArrowUp' ||
+								event.key === 'ArrowDown')
+						) {
+							event.preventDefault();
+							step(event.key === 'ArrowUp' ? 1 : -1);
 						}
 					}}
 					InputProps={{
@@ -462,9 +500,7 @@ export const OrisoTimePicker = ({
 									edge="end"
 									disabled={disabled}
 									onClick={openDialog}
-									sx={{
-										color: orisoDateTimeColors.onSurfaceVariant
-									}}
+									sx={orisoFieldIconButtonSx}
 								>
 									<ScheduleIcon />
 								</IconButton>

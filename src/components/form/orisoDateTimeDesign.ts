@@ -80,3 +80,16 @@ export const orisoTimePickerDialogSx = {
 		maxWidth: '360px'
 	}
 } as const;
+
+/**
+ * #2358: the clock and calendar icon in a date/time field. M3 icon button:
+ * on-surface-variant ink with an 8 % state layer on hover, so the global
+ * MuiIconButton hover (white ink) cannot turn it white on light grey.
+ */
+export const orisoFieldIconButtonSx = {
+	'color': orisoDateTimeColors.onSurfaceVariant,
+	'&:hover': {
+		color: orisoDateTimeColors.onSurfaceVariant,
+		backgroundColor: `color-mix(in srgb, ${orisoDateTimeColors.onSurfaceVariant} 8%, transparent)`
+	}
+} as const;

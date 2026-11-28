@@ -8,7 +8,7 @@ import { OrisoTextField } from './OrisoTextField';
 import { OrisoCalendar } from './OrisoCalendar';
 import {
 	orisoCalendarContainerSx,
-	orisoDateTimeColors
+	orisoFieldIconButtonSx
 } from './orisoDateTimeDesign';
 
 dayjs.extend(customParseFormat);
@@ -150,9 +150,7 @@ export const OrisoDatePicker = ({
 										) as HTMLElement
 									)
 								}
-								sx={{
-									color: orisoDateTimeColors.onSurfaceVariant
-								}}
+								sx={orisoFieldIconButtonSx}
 							>
 								<CalendarTodayOutlinedIcon />
 							</IconButton>
