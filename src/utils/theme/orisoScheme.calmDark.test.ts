@@ -175,6 +175,71 @@ describe('calm dark mode (FE#1134)', () => {
 			}
 		});
 
+		it('keeps the stage ink readable on every gradient stop', () => {
+			for (const seed of [
+				...Object.values(seeds),
+				{ primary: '#a5000a', primaryDark: '#777777' },
+				{ primary: '#a5000a', primaryDark: '#d8c4f0' }
+			]) {
+				const t = computeOrisoPalette(seed, 'dark').tokens;
+				for (const stop of ['', '-container', '-edge']) {
+					expect(
+						wcagContrast(
+							t['--oriso-stage-brand-on'],
+							t[`--oriso-stage-brand${stop}`]
+						)
+					).toBeGreaterThanOrEqual(4.5);
+				}
+			}
+		});
+
+		it('drops an override or original colour that misses the level threshold', () => {
+			const grey = { primary: '#a5000a', primaryDark: '#777777' };
+			expect(
+				computeOrisoPalette(grey, 'dark').tokens['--m3-primary-fixed']
+			).toBe('#777777');
+			for (const level of ['medium', 'high'] as const) {
+				const t = computeOrisoPalette(grey, 'dark', level).tokens;
+				expect(t['--m3-primary-fixed']).not.toBe('#777777');
+			}
+			const blue = computeOrisoPalette(seeds.blue, 'dark', 'high', {
+				darkBrand: 'original'
+			}).tokens;
+			expect(
+				wcagContrast(
+					blue['--m3-on-primary-fixed'],
+					blue['--m3-primary-fixed']
+				)
+			).toBeGreaterThanOrEqual(7);
+		});
+
+		it('keeps mentions and the deep brand tile readable in dark', () => {
+			for (const seed of Object.values(seeds)) {
+				for (const darkBrand of ['counterpart', 'original'] as const) {
+					const t = computeOrisoPalette(seed, 'dark', 'standard', {
+						darkBrand
+					}).tokens;
+					expect(
+						wcagContrast(
+							t['--oriso-mention-ink'],
+							t['--m3-primary-fixed']
+						)
+					).toBeGreaterThanOrEqual(4.5);
+					expect(
+						wcagContrast(
+							t['--oriso-deep-brand-ink'],
+							t['--oriso-live-surface']
+						)
+					).toBeGreaterThanOrEqual(7);
+				}
+			}
+			const light = computeOrisoPalette(seeds.platform, 'light').tokens;
+			expect(light['--oriso-mention-ink']).toBe(
+				light['--m3-primary-container']
+			);
+			expect(light['--oriso-deep-brand-ink']).toBe('#ffffff');
+		});
+
 		it('lets the original choice change nothing outside dark', () => {
 			for (const scheme of ['light', 'inverted'] as const) {
 				expect(

@@ -140,6 +140,10 @@ export const PersonalDisplayProvider = ({
 			return;
 		try {
 			window.localStorage.setItem(DEVICE_DARK_BRAND_KEY, value.darkBrand);
+		} catch {
+			// Only the sign-in page reads this; the personal save goes on.
+		}
+		try {
 			if (key) {
 				window.localStorage.setItem(key, JSON.stringify(value));
 				setTemporary(undefined);

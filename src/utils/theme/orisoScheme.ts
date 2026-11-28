@@ -275,14 +275,16 @@ const inkOnFill = (palette: TonalPalette, fill: string): string => {
  * The dark accent fill as token logic (FE#1134): the computed calm
  * counterpart of the brand colour (`DARK_CALM_ACCENT.fill` on the brand hue),
  * the Träger's `primaryDark` override, or with `original` the brand colour
- * itself. A candidate that cannot carry AA ink falls back to the computed
- * counterpart, so a bad override never makes text unreadable.
+ * itself. A candidate whose best ink misses the contrast level's threshold
+ * (4.5, 5.5 or 7) falls back to the computed counterpart, so neither an
+ * override nor the original colour can make text unreadable.
  */
 export const darkAccentFill = (
 	primarySeed: string,
 	palette: TonalPalette,
 	mode: DarkBrandMode = 'counterpart',
-	override?: string
+	override?: string,
+	threshold: number = CONTRAST_AA
 ): string => {
 	const computed = hex(
 		Hct.from(
@@ -294,7 +296,7 @@ export const darkAccentFill = (
 	const candidate = mode === 'original' ? primarySeed : override;
 	if (!candidate) return computed;
 	const fill = candidate.toLowerCase();
-	return wcagContrast(inkOnFill(palette, fill), fill) >= CONTRAST_AA
+	return wcagContrast(inkOnFill(palette, fill), fill) >= threshold
 		? fill
 		: computed;
 };
@@ -339,12 +341,16 @@ const calmStage = (fill: string, ink: string) => {
 	const h = Hct.fromInt(argbFromHex(fill));
 	const at = (tone: number) =>
 		hex(Hct.from(h.hue, h.chroma, Math.min(96, Math.max(4, tone))).toInt());
-	return {
-		role: fill,
-		onRole: ink,
-		container: at(h.tone + DARK_CALM_ACCENT.stageStep),
-		edge: at(h.tone - DARK_CALM_ACCENT.stageStep)
+	// The stage text sits on every part of the gradient: step back toward the
+	// fill until the ink still reaches AA on that stop.
+	const stop = (direction: 1 | -1) => {
+		for (let step = DARK_CALM_ACCENT.stageStep; step > 0; step -= 1) {
+			const colour = at(h.tone + direction * step);
+			if (wcagContrast(ink, colour) >= CONTRAST_AA) return colour;
+		}
+		return fill;
 	};
+	return { role: fill, onRole: ink, container: stop(1), edge: stop(-1) };
 };
 
 interface AccentFamily {
@@ -481,7 +487,8 @@ export const computeOrisoPalette = (
 		primarySeed,
 		primaryPalette,
 		options.darkBrand,
-		primaryDarkSeed
+		primaryDarkSeed,
+		contrast === 'high' ? 7 : contrast === 'medium' ? 5.5 : CONTRAST_AA
 	);
 	const brand =
 		scheme === 'light'
@@ -706,6 +713,13 @@ export const computeOrisoPalette = (
 			scheme === 'dark' ? tokens['--m3-primary-fixed'] : '#ffffff',
 		// Active Live-Chat tile on the rail: a deep brand tile with light ink.
 		// In dark it must not follow on-primary-fixed, which is light ink there.
+		// Mentions sit on the fixed fill: brand container ink in light, the
+		// fill's own ink in dark (FE#1134).
+		'--oriso-mention-ink':
+			scheme === 'dark' ? brand.onFixedVariant : brand.container,
+		// Ink on the deep brand tile (Live-Chat tile, chosen calendar kind).
+		'--oriso-deep-brand-ink':
+			scheme === 'dark' ? hex(primaryPalette.tone(90)) : '#ffffff',
 		'--oriso-live-surface':
 			scheme === 'dark'
 				? hex(primaryPalette.tone(10))

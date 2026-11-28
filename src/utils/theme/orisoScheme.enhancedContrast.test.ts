@@ -71,12 +71,12 @@ describe('enhanced contrast scheme', () => {
 		// dark accent (computed counterpart, #59302b for ORISO red), lifted dark surfaces (tone 11–12
 		// instead of 4–6) and the new --oriso-card-divider, --oriso-outline-rest
 		// --oriso-rail-badge-surface, --oriso-(on-)live-surface and
-		// --oriso-stage-hero(-on) roles.
+		// --oriso-stage-hero(-on), --oriso-mention-ink and --oriso-deep-brand-ink.
 		// Apart from those new roles, light and inverted are unchanged.
 		expect(
 			createHash('sha256').update(JSON.stringify(standards)).digest('hex')
 		).toBe(
-			'23b8d8c1e862f5293ddfaeee1ef93454393223c376b8d42f4e238c0f8b44d943'
+			'e2a94e95b80532437cf84dda0941b47101901d296ab5b8821c89573eeb8591d0'
 		);
 	});
 
