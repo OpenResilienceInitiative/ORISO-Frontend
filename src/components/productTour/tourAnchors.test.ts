@@ -235,6 +235,14 @@ const anchorContract: Array<{
 		sourceFile: 'calendar/CalendarLinksSection.tsx'
 	},
 	{
+		// "Als Nächstes" (FE#2545, the practice cancel step): both of its
+		// renderings, the future zone and the narrow column's list.
+		anchor: 'calendar-upcoming',
+		sourceFile: 'calendar/CalendarSidebar.tsx',
+		expected:
+			/data-tour-target="calendar-upcoming"[\s\S]*data-tour-target="calendar-upcoming"/
+	},
+	{
 		anchor: 'supervision-panel',
 		sourceFile: 'session/SessionItemComponent.tsx',
 		expected: /data-tour-target="supervision-panel"/

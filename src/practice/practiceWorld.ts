@@ -13,7 +13,12 @@ import {
 	type PracticeStart
 } from './fixtures/practiceScenario';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
-import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
+import {
+	emitPracticeEvent as emitToTour,
+	PRACTICE_TOUR_EVENTS,
+	type PracticeTourEventName
+} from './practiceTourEvents';
+import { getPracticeSnapshot } from './practiceMode';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import { PRACTICE_MAIN_ROOM_ID, PRACTICE_TEAM_ROOM_ID } from './practiceIds';
 
@@ -48,6 +53,19 @@ export const createPracticeWorld = ({
 		start,
 		now: now()
 	});
+	// The run this world belongs to (none outside practice mode). A save
+	// still underway when the run restarts must not move the new run's tour,
+	// the same run check as the simulated call start and the live chat.
+	const currentRunId = () => {
+		const snapshot = getPracticeSnapshot();
+		return snapshot.status === 'inactive' ? null : snapshot.session.runId;
+	};
+	const runId = currentRunId();
+	const emitPracticeEvent = (name: PracticeTourEventName) => {
+		if (runId === null || currentRunId() === runId) {
+			emitToTour(name);
+		}
+	};
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
 	let supervisorAnswered = false;
@@ -113,7 +131,23 @@ export const createPracticeWorld = ({
 			onCircleCreated: () =>
 				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleCreated),
 			onCircleStarted: () =>
-				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted)
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.circleStarted),
+			onAppointmentCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+				),
+			onInvitationCreated: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+				),
+			onAppointmentCancelled: () =>
+				emitPracticeEvent(
+					PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+				),
+			onBlockerCreated: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarBlockerCreated),
+			onAutoAcceptOn: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn)
 		}
 	});
 

@@ -6727,6 +6727,34 @@
 				"links": {
 					"title": "Links ohne Termin",
 					"intro": "Ihre Direktlinks liegen jetzt hier in der Liste: kopieren, als QR-Code teilen oder bearbeiten."
+				},
+				"practiceIntro": {
+					"title": "Kalender üben",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Sie tragen Termine, einen Terminlink und eine Sperrzeit ein und schalten die automatische Bestätigung ein."
+				},
+				"practiceAppointment": {
+					"title": "Termin eintragen",
+					"intro": "Klicken Sie auf „Neu“, wählen Sie unter „Beratung“ die erfundene ratsuchende Person und klicken Sie auf „Anlegen“. „Weitere Personen per Link einladen“ bleibt diesmal aus."
+				},
+				"practiceInvitation": {
+					"title": "Terminlink anlegen",
+					"intro": "Öffnen Sie noch einmal „Neu“, wählen Sie dieselbe Person, schalten Sie „Weitere Personen per Link einladen“ ein und klicken Sie auf „Anlegen“. Der Link, den Sie danach sehen, ist ein Übungslink und führt nirgendwohin."
+				},
+				"practiceCancel": {
+					"title": "Termin absagen",
+					"intro": "Unter „Als Nächstes“ stehen Ihre neuen Termine. Klicken Sie einen an, wählen Sie „Absagen“ und bestätigen Sie."
+				},
+				"practiceBlocker": {
+					"title": "Sperrzeit eintragen",
+					"intro": "In einer Sperrzeit kann niemand bei Ihnen buchen. Öffnen Sie „Neu“, wechseln Sie zum Reiter „Sperrzeit“ und klicken Sie auf „Eintragen“."
+				},
+				"practiceAutoAccept": {
+					"title": "Automatisch bestätigen",
+					"intro": "Öffnen Sie ⋮ und dort „Sprechstunden“, schalten Sie „Buchungen automatisch bestätigen“ ein und klicken Sie auf „Sprechstunden speichern“. Dann sind Buchungen in Ihren Sprechstunden sofort fest."
+				},
+				"practiceDone": {
+					"title": "Geschafft",
+					"intro": "Sie haben Termine und einen Terminlink angelegt, einen Termin abgesagt, eine Sperrzeit eingetragen und Buchungen automatisch bestätigt. Im echten Kalender erfährt die ratsuchende Person von jedem Termin im Chat."
 				}
 			}
 		},

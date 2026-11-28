@@ -22,6 +22,7 @@ import { PRACTICE_CARD_TOUR_IDS, PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
 	isPracticeTourAvailable,
 	practiceAcceptTour,
+	practiceCalendarTour,
 	practiceGroupCircleTour,
 	practiceHostedTours,
 	practiceLiveChatTour,
@@ -33,6 +34,10 @@ import {
 	GROUP_CIRCLE_SETTINGS_OPENED,
 	GROUP_CIRCLE_TOUR_VERSION
 } from '../components/productTour/tours/groupCircleTour';
+import {
+	CALENDAR_TOUR_VERSION,
+	consultantCalendarTour
+} from '../components/productTour/tours/calendarTour';
 
 const resolveKey = (bundle: object, key: string): unknown =>
 	key.split('.').reduce<any>((node, part) => node?.[part], bundle);
@@ -472,6 +477,163 @@ describe('practiceGroupCircleTour (FE#2545, Gesprächskreis anlegen)', () => {
 					).toBe('string');
 				});
 			});
+		keysOf(tour).forEach((key) => {
+			const de = resolveKey(deTranslations, key) as string;
+			const informal = resolveKey(deInformalTranslations, key);
+			if (informal !== undefined) {
+				expect(informal, `${key} duplicates de`).not.toBe(de);
+			}
+			if (/\b(Sie|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihnen)\b/.test(de)) {
+				expect(
+					typeof informal,
+					`${key} is formal in de but has no du-form`
+				).toBe('string');
+			}
+		});
+	});
+});
+
+describe('practiceCalendarTour (FE#2545, Kalender)', () => {
+	const tour = practiceCalendarTour;
+	const step = (id: string) => tour.steps.find((s) => s.id === id)!;
+
+	it('runs under the explanation tour id and version, without a card', () => {
+		expect(tour.id).toBe(consultantCalendarTour.id);
+		expect(tour.version).toBe(CALENDAR_TOUR_VERSION);
+		expect(tour.version).toBe(consultantCalendarTour.version);
+		expect(practiceTours).not.toContain(tour);
+		expect(practiceHostedTours).toContain(tour);
+	});
+
+	it('is a guided flow: not dismissible, a missing required control stops it', () => {
+		expect(tour.dismissible).toBe(false);
+		expect(tour.requiredTargetPolicy).toBe('stop');
+	});
+
+	it('enters an appointment and a Terminlink, cancels one, enters a Sperrzeit and switches automatic confirmation on', () => {
+		expect(tour.steps.map((s) => [s.id, s.target])).toEqual([
+			['intro', ''],
+			['appointment', 'calendar-create'],
+			['invitation', 'calendar-create'],
+			['cancel', 'calendar-upcoming'],
+			['blocker', 'calendar-create'],
+			['auto-accept', 'calendar-settings'],
+			['done', '']
+		]);
+	});
+
+	it('waits for each saved result in the practice world, never for a click on the button', () => {
+		expect(
+			tour.steps
+				.filter((s) => s.advanceOn)
+				.map((s) => [s.id, s.advanceOn])
+		).toEqual([
+			[
+				'appointment',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAppointmentCreated
+				}
+			],
+			[
+				'invitation',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarInvitationCreated
+				}
+			],
+			[
+				'cancel',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAppointmentCancelled
+				}
+			],
+			[
+				'blocker',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarBlockerCreated
+				}
+			],
+			[
+				'auto-accept',
+				{
+					type: 'event',
+					name: PRACTICE_TOUR_EVENTS.calendarAutoAcceptOn
+				}
+			]
+		]);
+	});
+
+	it('offers no Back after the cancellation, which cannot be undone', () => {
+		expect(tour.steps.filter((s) => s.hideBack).map((s) => s.id)).toEqual([
+			'blocker'
+		]);
+	});
+
+	it('works on "Meine Termine" throughout', () => {
+		tour.steps
+			.filter((s) => s.target)
+			.forEach((s) => expect(s.route).toBe('/booking/events'));
+	});
+
+	it('drops the Terminlink step where the Träger switched video invitations off', () => {
+		const ids = (flags: Record<string, unknown>) =>
+			stepIds(resolveTourSteps(tour, { flags }));
+		expect(ids({})).toContain('invitation');
+		expect(ids({ featureDirectInviteVideoEnabled: false })).toEqual([
+			'intro',
+			'appointment',
+			'cancel',
+			'blocker',
+			'auto-accept',
+			'done'
+		]);
+		expect(step('appointment').when).toBeUndefined();
+	});
+
+	it('says up front that this is an exercise and nothing is real', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(tour.steps[0].contentKey)).toMatch(
+			/Übung.*erfunden.*nichts wird gesendet oder gespeichert/
+		);
+	});
+
+	it('names the real controls in its German copy', () => {
+		const de = (key: string) => resolveKey(deTranslations, key) as string;
+		expect(de(step('invitation').contentKey)).toContain(
+			resolveKey(deTranslations, 'directInvitation.dialog.inviteOthers')
+		);
+		expect(de(step('cancel').contentKey)).toContain(
+			resolveKey(deTranslations, 'calendar.upcoming')
+		);
+		expect(de(step('auto-accept').contentKey)).toContain(
+			resolveKey(deTranslations, 'calendar.consultationHours.autoAccept')
+		);
+	});
+
+	it('ships its copy in every full locale, two sentences at most, and a sparse du-form overlay', () => {
+		bundledLocales
+			.filter(([locale]) => locale !== 'de@informal')
+			.forEach(([locale, bundle]) => {
+				keysOf(tour).forEach((key) => {
+					expect(
+						typeof resolveKey(bundle, key),
+						`missing ${locale} key ${key}`
+					).toBe('string');
+				});
+			});
+		bundledLocales.forEach(([locale, bundle]) =>
+			tour.steps.forEach((s) => {
+				const text = resolveKey(bundle, s.contentKey);
+				if (typeof text !== 'string') return;
+				expect(
+					text.split(/(?<=[.!?。።])\s+/).filter(Boolean).length,
+					`${locale} ${s.contentKey}`
+				).toBeLessThanOrEqual(2);
+			})
+		);
 		keysOf(tour).forEach((key) => {
 			const de = resolveKey(deTranslations, key) as string;
 			const informal = resolveKey(deInformalTranslations, key);

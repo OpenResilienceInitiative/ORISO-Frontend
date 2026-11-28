@@ -158,7 +158,26 @@ closes with one button; the tour advances on `practice:circle-call-started`.
 Proof: `practiceCallStart.test.tsx`, `GroupChatHeader/practiceCallGuard.test.tsx`
 and the two Gesprächskreis runs in `PracticeFlow.integration.test.tsx`.
 
-Decided (Frank, 2026-11-25, FE#2545): the real heartbeat is allowlisted, so a
+**Kalender in practice (FE#2545).** The Kalender topic tour runs on the
+real "Meine Termine" with the accepted practice case as the counsellor's
+one conversation. The counsellor enters an appointment, a second one with
+"Weitere Personen per Link einladen" (the Terminlink points at the reserved
+host `practice.invalid`), cancels one from "Als Nächstes", enters a
+Sperrzeit and switches "Buchungen automatisch bestätigen" on in the
+Sprechstunden. The fake backend answers every read of the page (entries,
+proposals, colleagues (none), auto-accept, sync, Sprechstunden and one-offs,
+working hours, direct links, upcoming appointments) and keeps every write in
+memory; the appointment notices go to the practice room. No allowlist entry
+was added. Real reads that stay real: the counsellor's own agency settings
+(`/service/agencies/<ids>`, they decide "Direkteinladung erlauben" and are
+cached page-wide) and static assets. Known limit: the navigation's proposal
+count takes the practice calendar's count (0) and keeps it after the exit
+until its next load (at most a minute). Proof: the calendar tests in
+`FakeRestBackend.test.ts`, the Kalender run in
+`PracticeFlow.integration.test.tsx` and the story `Organisms/PracticeFlow ›
+Calendar`.
+
+, so a
 counsellor who is really live-chat available stays in the real queue while
 practising. Open decisions (Frank): a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
