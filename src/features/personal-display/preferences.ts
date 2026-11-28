@@ -16,9 +16,6 @@ export const DARK_BRAND_OPTIONS: readonly DarkBrandMode[] = [
 	'original'
 ];
 
-export const parseDarkBrand = (value: unknown): DarkBrandMode =>
-	value === 'original' ? 'original' : 'counterpart';
-
 /**
  * The last dark-brand choice on this device, without any identity, so the
  * sign-in page (before anyone is known) can follow it.
@@ -27,9 +24,9 @@ export const DEVICE_DARK_BRAND_KEY = 'oriso.dark-brand.v1';
 
 export const readDeviceDarkBrand = (): DarkBrandMode => {
 	try {
-		return parseDarkBrand(
-			window.localStorage.getItem(DEVICE_DARK_BRAND_KEY)
-		);
+		return window.localStorage.getItem(DEVICE_DARK_BRAND_KEY) === 'original'
+			? 'original'
+			: 'counterpart';
 	} catch {
 		return 'counterpart';
 	}
@@ -88,7 +85,8 @@ export const parseDisplayPreferences = (
 			scheme,
 			textSize,
 			contrast: parseContrastLevel(value.contrast),
-			darkBrand: parseDarkBrand(value.darkBrand)
+			darkBrand:
+				value.darkBrand === 'original' ? 'original' : 'counterpart'
 		};
 	} catch {
 		return DEFAULT_DISPLAY;

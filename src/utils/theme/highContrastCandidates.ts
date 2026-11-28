@@ -234,8 +234,8 @@ export const computeHighContrastTokens = (
 	const fill = fillOk(seedHex)
 		? seedHex
 		: lightestTone(brand, seedTone, fillOk);
-	// --m3-primary-container is the fill of the selected topic tag (white text
-	// on it) AND the text colour of a mention on the own-bubble tint, so it
+	// The selected topic tag fill and the mention ink on the own-bubble tint
+	// share the same colour here, so it
 	// has to reach the target against both. For a dark seed on a light tint
 	// that is a step darker than the button fill, which keeps the seed.
 	const containerFill = reaches(fill, [own], target)
@@ -295,7 +295,11 @@ export const computeHighContrastTokens = (
 		],
 		fill
 	);
-	tokens['--m3-primary-container'] = containerFill;
+	mirror(
+		tokens,
+		['--m3-primary-container', '--oriso-fixed-accent-ink'],
+		containerFill
+	);
 	mirror(tokens, ['--m3-on-primary', '--m3-on-primary-container'], WHITE);
 	mirror(
 		tokens,
@@ -474,10 +478,10 @@ export const evaluateContrastPairs = (
 			group: 'Chat',
 			label: 'Mention (@name) in a message',
 			kind: 'text',
-			foreground: token('--m3-primary-container'),
+			foreground: token('--oriso-fixed-accent-ink'),
 			background: own,
 			enforced: true,
-			note: 'message.styles.scss: .messageItem__mention is --m3-primary-container text on a --m3-primary-fixed chip.'
+			note: 'message.styles.scss: .messageItem__mention is --oriso-fixed-accent-ink text on a --m3-primary-fixed chip.'
 		},
 		{
 			id: 'status-delivery',

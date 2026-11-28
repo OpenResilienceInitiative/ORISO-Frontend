@@ -118,6 +118,8 @@ describe('Personal display in the counsellor profile', () => {
 				'150'
 			);
 
+			cy.contains(card + ' label', /^Original$/).click();
+
 			cy.get(card).then(($card) => {
 				const panel = $card[0];
 				const styles = panel.ownerDocument.defaultView;
@@ -133,7 +135,13 @@ describe('Personal display in the counsellor profile', () => {
 						return label;
 					}
 				);
-				expect(groupLabels).to.have.length(2);
+				expect(
+					groupLabels.map((label) => label.textContent)
+				).to.deep.equal([
+					'Farbschema',
+					'Kontrast',
+					'Markenfarbe im Dunkelmodus'
+				]);
 				const nodes = [
 					...panel.querySelectorAll(
 						'h5, legend, label, button, output'
@@ -151,7 +159,7 @@ describe('Personal display in the counsellor profile', () => {
 						contrast: wcagContrast(computed.color, background)
 					};
 				});
-				expect(measurements).to.have.length(14);
+				expect(measurements).to.have.length(17);
 				for (const { label, contrast } of measurements)
 					expect(contrast, label).to.be.at.least(7);
 				expect(
@@ -214,6 +222,9 @@ describe('Personal display in the counsellor profile', () => {
 				.find('input')
 				.should('be.checked');
 			cy.contains(card + ' label', /^Hoch$/)
+				.find('input')
+				.should('be.checked');
+			cy.contains(card + ' label', /^Original$/)
 				.find('input')
 				.should('be.checked');
 			cy.contains(card + ' label', /^Standard$/).click();
