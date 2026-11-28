@@ -161,6 +161,13 @@ describe('calm dark mode (FE#1134)', () => {
 					calm['--oriso-stage-brand']
 				)
 			).toBeGreaterThanOrEqual(7);
+			expect(calm['--oriso-stage-hero']).toBe('#59302b');
+			expect(original['--oriso-stage-hero']).toBe(
+				original['--m3-primary-container']
+			);
+			expect(light['--oriso-stage-hero']).toBe(
+				light['--m3-primary-container']
+			);
 			for (const role of ['', '-on', '-container', '-edge']) {
 				expect(original[`--oriso-stage-brand${role}`]).toBe(
 					light[`--oriso-stage-brand${role}`]

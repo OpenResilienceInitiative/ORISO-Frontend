@@ -346,8 +346,14 @@
 	// A single brand surface keeps the overlapping login sheet clean in both
 	// schemes. The language switch sits on the same container as the claim.
 	.stageMobileHero--branding {
-		background: var(--m3-primary-container, #ffdad6);
-		color: var(--m3-on-primary-container, #410002);
+		background: var(
+			--oriso-stage-hero,
+			var(--m3-primary-container, #ffdad6)
+		);
+		color: var(
+			--oriso-stage-hero-on,
+			var(--m3-on-primary-container, #410002)
+		);
 
 		.stageMobileHero__actions {
 			margin-inline-start: auto;

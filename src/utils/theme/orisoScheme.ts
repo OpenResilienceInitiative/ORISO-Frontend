@@ -491,15 +491,15 @@ export const computeOrisoPalette = (
 				: darkBrandFamily(primaryPalette);
 	// The sign-in and entry stages follow the dark choice too (FE#1134): the
 	// calm counterpart as a gradient around the fill, or the original brand.
-	const stage =
-		scheme === 'dark' && options.darkBrand !== 'original'
-			? calmStage(darkFill, brand.onFixed)
-			: {
-					role: stageBrand.role,
-					onRole: stageBrand.onRole,
-					container: stageBrand.container,
-					edge: stageBrand.hover
-				};
+	const calmDarkStage = scheme === 'dark' && options.darkBrand !== 'original';
+	const stage = calmDarkStage
+		? calmStage(darkFill, brand.onFixed)
+		: {
+				role: stageBrand.role,
+				onRole: stageBrand.onRole,
+				container: stageBrand.container,
+				edge: stageBrand.hover
+			};
 
 	const secondaryPalette = accentSeed
 		? harmonizedAccentPalette(accentSeed, primarySeed)
@@ -552,6 +552,12 @@ export const computeOrisoPalette = (
 		'--oriso-stage-brand-on': stage.onRole,
 		'--oriso-stage-brand-container': stage.container,
 		'--oriso-stage-brand-edge': stage.edge,
+		// The phone sign-in head: the brand container, or in calm dark the
+		// counterpart fill with its ink (FE#1134).
+		'--oriso-stage-hero': calmDarkStage ? darkFill : brand.container,
+		'--oriso-stage-hero-on': calmDarkStage
+			? brand.onFixed
+			: brand.onContainer,
 		'--oriso-primary-text': brand.text,
 		'--oriso-primary-text-hover': brand.textHover,
 		'--oriso-primary-text-on-fixed': textOnFixed(brand),
