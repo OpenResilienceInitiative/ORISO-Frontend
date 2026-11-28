@@ -25,6 +25,7 @@ function RuntimeNavigationRail({
 	railHeightPx,
 	fullMobileShell = false,
 	liveChatViaSidebar = true,
+	hasAssignedConsultant = false,
 	languageOptions,
 	tenantSettings
 }: {
@@ -32,6 +33,7 @@ function RuntimeNavigationRail({
 	layout?: 'desktop' | 'mobile';
 	/** Profile preference "Live Chat über Menü Leiste aktivieren". */
 	liveChatViaSidebar?: boolean;
+	hasAssignedConsultant?: boolean;
 	languageOptions?: string[];
 	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
 	railHeightPx?: number;
@@ -50,6 +52,7 @@ function RuntimeNavigationRail({
 		<NavigationStoryShell
 			role={role}
 			liveChatViaSidebar={liveChatViaSidebar}
+			hasAssignedConsultant={hasAssignedConsultant}
 			languageOptions={languageOptions}
 			tenantSettings={tenantSettings}
 			onLogout={() => setLogoutClicked(true)}
@@ -320,6 +323,28 @@ export const RuntimeAskerRail: Story = {
 		router: {
 			initialPath: '/sessions/user/view/session/123'
 		}
+	}
+};
+
+/** An assigned advice seeker sees the calendar directly before Profile. */
+export const RuntimeAskerRailWithAppointments: Story = {
+	args: {
+		role: 'asker',
+		layout: 'desktop',
+		hasAssignedConsultant: true
+	},
+	parameters: {
+		router: {
+			initialPath: '/sessions/user/view/session/123'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const links = Array.from(
+			canvasElement.querySelectorAll<HTMLAnchorElement>('a[href]')
+		).map((link) => link.getAttribute('href'));
+		const calendar = links.indexOf('/booking/events');
+		await expect(calendar).toBeGreaterThanOrEqual(0);
+		await expect(links[calendar + 1]).toBe('/profile');
 	}
 };
 

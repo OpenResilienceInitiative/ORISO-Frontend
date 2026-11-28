@@ -31,6 +31,13 @@ describe('Sessions', () => {
 		// select; the owner offers it to a colleague via "Beratung weitergeben".
 		it('should show confirmation forwarding the session', () => {
 			generateMultipleConsultantSessions(5);
+			// Keep unrelated shell polling off the missing local API proxy while
+			// the case header and its handover dialog settle.
+			cy.intercept('GET', '**/sessions/consultants/deleted-askers*', []);
+			cy.intercept('GET', '**/call-knocks*', []);
+			cy.intercept('GET', '**/appointments/upcoming*', []);
+			cy.intercept('GET', '**/sessions/*/supervisors*', []);
+			cy.intercept('GET', '**/sessions/*/appointments*', []);
 			cy.intercept('GET', '**/case-handover/recipients', [
 				{ consultantId: 'colleague-1', displayName: 'Kim Kollegin' }
 			]).as('handoverRecipients');
@@ -40,7 +47,7 @@ describe('Sessions', () => {
 					label: 'Planned absence',
 					clientConsentRequired: false
 				}
-			]);
+			]).as('handoverReasons');
 			cy.intercept('POST', '**/case-handover/offers', (req) =>
 				req.reply({
 					requestId: 1,
@@ -72,10 +79,10 @@ describe('Sessions', () => {
 			cy.get('#flyout').should('be.visible');
 			cy.get('[data-cy=session-menu-group-handover]').click();
 			cy.get('[data-cy=session-menu-case-handover]').click();
+			cy.wait(['@handoverRecipients', '@handoverReasons']);
 			cy.get('[data-testid=supervisor-dialog-person]').should(
 				'be.visible'
 			);
-			cy.wait('@handoverRecipients');
 
 			cy.get('[data-testid=supervisor-dialog-person]').click();
 			cy.contains('[role=option]', 'Kim Kollegin').click();

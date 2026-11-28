@@ -3,7 +3,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { DeletedAskerListItem } from './DeletedAskerListItem';
-import type { DeletedAskerRow } from './deletedAskerRows';
+import {
+	listGroupEdges,
+	type DeletedAskerPlacement,
+	type DeletedAskerRow
+} from './deletedAskerRows';
 import {
 	RuntimeSessionCard,
 	RuntimeSessionProviders,
@@ -73,9 +77,25 @@ type ListEntry =
 
 const GroupedList = ({ entries }: { entries: ListEntry[] }) => {
 	const { t, i18n } = useTranslation();
-	const active = entries.map(
-		(entry) => entry.kind === 'deleted' && !!entry.active
+	const before: DeletedAskerRow[][] = [];
+	let pending: DeletedAskerRow[] = [];
+	const activeRows = new Set<string>();
+	entries.forEach((entry) => {
+		if (entry.kind === 'session') {
+			before.push(pending);
+			pending = [];
+		} else {
+			pending.push(entry.row);
+			if (entry.active) activeRows.add(entry.row.key);
+		}
+	});
+	const placement: DeletedAskerPlacement = { before, trailing: pending };
+	const edges = listGroupEdges(
+		placement,
+		before.map(() => false),
+		(row) => activeRows.has(row.key)
 	);
+	let sessionIndex = 0;
 	return (
 		<RuntimeSessionProviders sessions={[runtimeSession]}>
 			<div
@@ -89,14 +109,10 @@ const GroupedList = ({ entries }: { entries: ListEntry[] }) => {
 						aria-label="Conversations"
 					>
 						{entries.map((entry, index) => {
-							const edges = {
-								isGroupStart: index === 0 || active[index - 1],
-								isGroupEnd:
-									index === entries.length - 1 ||
-									active[index + 1],
-								isBeforeActive: !!active[index + 1],
-								isAfterActive: !!active[index - 1]
-							};
+							const cardEdges =
+								entry.kind === 'deleted'
+									? edges.rows.get(entry.row.key)!
+									: edges.sessions[sessionIndex++];
 							return entry.kind === 'deleted' ? (
 								<DeletedAskerListItem
 									key={entry.row.key}
@@ -105,7 +121,7 @@ const GroupedList = ({ entries }: { entries: ListEntry[] }) => {
 									translate={t}
 									isActive={entry.active}
 									grouped
-									edges={edges}
+									edges={cardEdges}
 									onOpen={() => undefined}
 								/>
 							) : (
@@ -114,7 +130,7 @@ const GroupedList = ({ entries }: { entries: ListEntry[] }) => {
 									session={runtimeSession}
 									index={index}
 									grouped
-									{...edges}
+									{...cardEdges}
 								/>
 							);
 						})}

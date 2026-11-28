@@ -122,16 +122,9 @@ const internalGroup: ListItemInterface = {
 	}
 };
 
-it('removes an internal group when search has no results after filtering colliding case and chat IDs', async () => {
-	// A numeric case ID and a numeric group-chat ID belong to different namespaces.
-	const sessions = [
-		internalGroup,
-		makeCase(41, 'First client', 2),
-		makeCase(42, 'Second client', 1)
-	];
-	getList.mockResolvedValue({ sessions, total: sessions.length });
-	const view = render(
-		<MemoryRouter initialEntries={['/sessions/consultant/sessionView']}>
+const renderList = (sessions: ListItemInterface[], route: string) =>
+	render(
+		<MemoryRouter initialEntries={[route]}>
 			<UserDataContext.Provider
 				value={
 					{
@@ -176,6 +169,16 @@ it('removes an internal group when search has no results after filtering collidi
 			</UserDataContext.Provider>
 		</MemoryRouter>
 	);
+
+it('removes an internal group when search has no results after filtering colliding case and chat IDs', async () => {
+	// A numeric case ID and a numeric group-chat ID belong to different namespaces.
+	const sessions = [
+		internalGroup,
+		makeCase(41, 'First client', 2),
+		makeCase(42, 'Second client', 1)
+	];
+	getList.mockResolvedValue({ sessions, total: sessions.length });
+	const view = renderList(sessions, '/sessions/consultant/sessionView');
 	await waitFor(() =>
 		expect(view.container.querySelector('.skeleton')).toBeNull()
 	);
@@ -209,4 +212,32 @@ it('removes an internal group when search has no results after filtering collidi
 	expect(
 		screen.queryByText('sessionList.toolbar.emptyFilterResult')
 	).toBeNull();
+});
+
+it('parts a deleted card from its active neighbouring group chat', async () => {
+	const deleted = makeCase(
+		52,
+		'Former client',
+		Date.parse('2026-10-09T12:00:00Z')
+	);
+	deleted.user = { ...deleted.user, deleted: true };
+	const sessions = [deleted, internalGroup];
+	getList.mockResolvedValue({ sessions, total: sessions.length });
+	const view = renderList(
+		sessions,
+		'/sessions/consultant/sessionView/chat/41'
+	);
+	await waitFor(() =>
+		expect(view.container.querySelector('.skeleton')).toBeNull()
+	);
+	const deletedCard = view.container.querySelector(
+		'[data-cy="sessions-list-deleted-asker-item"]'
+	);
+	expect(deletedCard).toBeTruthy();
+	expect(
+		deletedCard?.classList.contains('sessionsListItem--beforeActive')
+	).toBe(true);
+	expect(deletedCard?.classList.contains('sessionsListItem--groupEnd')).toBe(
+		true
+	);
 });

@@ -1803,7 +1803,8 @@ export const SessionsList = ({
 			isActive({
 				groupId: session?.item?.matrixRoomId,
 				rid: session?.rid,
-				sessionId: session?.item?.id
+				sessionId: session?.item?.id,
+				chatId: session?.isGroup ? session?.item?.id : undefined
 			}),
 		[isActive]
 	);
