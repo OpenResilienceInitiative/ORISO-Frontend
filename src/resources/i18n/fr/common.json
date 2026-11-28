@@ -12,6 +12,11 @@
 			"medium": "Moyen",
 			"high": "Élevé"
 		},
+		"darkBrandLabel": "Couleur de marque en mode sombre",
+		"darkBrand": {
+			"counterpart": "Atténuée",
+			"original": "Originale"
+		},
 		"schemeLabel": "Thème de couleurs",
 		"scheme": {
 			"system": "Système",
@@ -6325,7 +6330,9 @@
 			"back": "Retour",
 			"confirm": "Compris",
 			"loading": "Chargement du texte juridique…",
-			"loadError": { "text": "Le texte juridique n'a pas pu être chargé. Veuillez réessayer plus tard." },
+			"loadError": {
+				"text": "Le texte juridique n'a pas pu être chargé. Veuillez réessayer plus tard."
+			},
 			"missing": {
 				"text": "Aucun texte juridique n'a été enregistré ici pour cette offre.",
 				"link": "Vers l'adresse enregistrée"

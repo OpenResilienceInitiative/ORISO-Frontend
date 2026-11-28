@@ -274,7 +274,10 @@ $room-actions-gap: 12px;
 
 		// On a `-fixed` fill the ink must be an `on-*-fixed` role: the fill
 		// stays light in dark mode, `secondary` does not.
-		color: var(--m3-on-secondary-fixed-variant, #3f4852);
+		color: var(
+			--oriso-fixed-quiet-ink,
+			var(--m3-on-secondary-fixed-variant, #3f4852)
+		);
 		font-family: inherit;
 		font-size: 12px;
 		font-weight: 500;
@@ -420,7 +423,10 @@ $room-actions-gap: 12px;
 		font-weight: 500;
 		line-height: 16px;
 		letter-spacing: 0.5px;
-		color: var(--m3-on-secondary-fixed-variant, #3f4852);
+		color: var(
+			--oriso-fixed-quiet-ink,
+			var(--m3-on-secondary-fixed-variant, #3f4852)
+		);
 		background: var(--m3-primary-fixed, #ffdad5);
 		white-space: nowrap;
 	}

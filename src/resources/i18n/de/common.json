@@ -12,6 +12,11 @@
 			"medium": "Mittel",
 			"high": "Hoch"
 		},
+		"darkBrandLabel": "Markenfarbe im Dunkelmodus",
+		"darkBrand": {
+			"counterpart": "Ruhig",
+			"original": "Original"
+		},
 		"schemeLabel": "Farbschema",
 		"scheme": {
 			"system": "System",

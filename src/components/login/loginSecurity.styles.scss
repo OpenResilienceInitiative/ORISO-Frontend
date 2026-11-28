@@ -157,7 +157,7 @@
 		max-width: 100%;
 		margin: 20px auto 0;
 		padding: 12px 18px;
-		border: 1px solid var(--m3-primary-fixed-dim, #ffb4aa);
+		border: 1px solid var(--oriso-outline-rest, #ffb4aa);
 		border-radius: 16px;
 		background: var(--m3-hover-layer, #f9eff0);
 	}
@@ -167,7 +167,7 @@
 		bottom: 50%;
 		width: 44px;
 		height: 72px;
-		color: var(--m3-primary-fixed-dim, #ffb4aa);
+		color: var(--oriso-primary-text, #a5000a);
 		pointer-events: none;
 
 		&--left {

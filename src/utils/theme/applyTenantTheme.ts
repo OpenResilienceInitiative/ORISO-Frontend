@@ -9,6 +9,7 @@
  */
 import {
 	type ContrastLevel,
+	type DarkBrandMode,
 	OrisoSchemeName,
 	OrisoSeeds,
 	computeOrisoPalette,
@@ -34,6 +35,8 @@ export interface TenantThemingSeedFields {
 	secondaryColor?: string | null;
 	accent?: string | null;
 	signal?: string | null;
+	/** Träger override for the dark accent fill (FE#1134); computed when unset. */
+	primaryDarkColor?: string | null;
 }
 
 /**
@@ -69,7 +72,8 @@ export const readTenantSeeds = (
 	return {
 		primary,
 		accent: absentIfBlank(theming?.accent),
-		signal: absentIfBlank(theming?.signal)
+		signal: absentIfBlank(theming?.signal),
+		primaryDark: absentIfBlank(theming?.primaryDarkColor)
 	};
 };
 
@@ -221,6 +225,21 @@ const resolveTenantPalette = (
 		}
 	}
 
+	if (seeds.primaryDark !== undefined) {
+		const darkResult = tryComputePalette(
+			{ primary: seeds.primary, primaryDark: seeds.primaryDark },
+			(error) => {
+				warn(
+					'Tenant theming: dark accent override is invalid, computing it.',
+					error
+				);
+			}
+		);
+		if (darkResult) {
+			resolved.primaryDark = seeds.primaryDark;
+		}
+	}
+
 	const { tokens } =
 		resolved.accent === undefined && resolved.signal === undefined
 			? primaryResult
@@ -235,6 +254,9 @@ const resolveTenantPalette = (
 			}),
 			...(resolved.signal !== undefined && {
 				signal: normalizeHex(resolved.signal, 'signal')
+			}),
+			...(resolved.primaryDark !== undefined && {
+				primaryDark: normalizeHex(resolved.primaryDark, 'primaryDark')
 			})
 		},
 		tokens
@@ -268,7 +290,8 @@ export const applyTenantPalette = (
 	theming: TenantThemingSeedFields | null | undefined,
 	root: HTMLElement = document.documentElement,
 	scheme: 'light' | 'dark' = 'light',
-	contrast: ContrastLevel = 'standard'
+	contrast: ContrastLevel = 'standard',
+	darkBrand: DarkBrandMode = 'counterpart'
 ): boolean => {
 	const palette = resolveTenantPalette(theming, (...args) => {
 		// eslint-disable-next-line no-console
@@ -280,7 +303,8 @@ export const applyTenantPalette = (
 			: computeOrisoPalette(
 					palette?.seeds ?? { primary: '#A5000A' },
 					scheme,
-					contrast
+					contrast,
+					{ darkBrand }
 				).tokens;
 	if (!tokens) return false;
 	setPaletteTokens(root, tokens, appliedTokens);

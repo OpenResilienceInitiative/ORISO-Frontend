@@ -18,6 +18,7 @@ import {
 } from '../../utils/authenticatedTenant';
 import {
 	DEFAULT_DISPLAY,
+	DEVICE_DARK_BRAND_KEY,
 	DisplayPreferences,
 	displayStorageKey,
 	parseDisplayPreferences
@@ -137,6 +138,11 @@ export const PersonalDisplayProvider = ({
 			getAuthenticatedPreferenceIdentity() !== current.identity
 		)
 			return;
+		try {
+			window.localStorage.setItem(DEVICE_DARK_BRAND_KEY, value.darkBrand);
+		} catch {
+			// Only the sign-in page reads this; the personal save goes on.
+		}
 		try {
 			if (key) {
 				window.localStorage.setItem(key, JSON.stringify(value));

@@ -26,6 +26,8 @@ import {
 	CONTRAST_AA,
 	HOVER_TONE_SHIFT,
 	DARK_BRAND_TONES,
+	DARK_CALM_ACCENT,
+	DARK_DEEP_NEUTRAL_TONES,
 	DARK_NEUTRAL_TONES,
 	DEFAULT_SIGNAL,
 	HIGH_CONTRAST_INK_TONES,
@@ -53,6 +55,23 @@ export interface OrisoSeeds {
 	accent?: string;
 	/** Optional signal/error colour; Oriso default tones when unset. */
 	signal?: string;
+	/**
+	 * Optional Träger override for the dark accent fill (FE#1134). Unset, the
+	 * engine computes the calm dark counterpart from `primary`. An override
+	 * that cannot carry readable ink is ignored like a too-pale seed.
+	 */
+	primaryDark?: string;
+}
+
+/**
+ * How the dark scheme paints brand fills (FE#1134): `counterpart` is the calm
+ * dark counterpart of the brand colour (computed, or the Träger override);
+ * `original` keeps the brand colour itself, e.g. ORISO red.
+ */
+export type DarkBrandMode = 'counterpart' | 'original';
+
+export interface OrisoPaletteOptions {
+	darkBrand?: DarkBrandMode;
 }
 
 export interface OrisoPaletteResult {
@@ -238,6 +257,107 @@ const darkBrandFamily = (palette: TonalPalette): BrandFamily => {
 	};
 };
 
+/** Light or dark ink for a fill, whichever reads better (brand hue). */
+const inkOnFill = (
+	palette: TonalPalette,
+	fill: string,
+	threshold: number
+): string => {
+	const best = (a: string, b: string) =>
+		wcagContrast(a, fill) >= wcagContrast(b, fill) ? a : b;
+	const tinted = best(
+		hex(palette.tone(DARK_CALM_ACCENT.ink)),
+		hex(palette.tone(10))
+	);
+	// Mid-tone brands (e.g. a medium blue) need plain white or black.
+	return wcagContrast(tinted, fill) >= threshold
+		? tinted
+		: best('#ffffff', '#000000');
+};
+
+/**
+ * The dark accent fill as token logic (FE#1134): the computed calm
+ * counterpart of the brand colour (`DARK_CALM_ACCENT.fill` on the brand hue),
+ * the Träger's `primaryDark` override, or with `original` the brand colour
+ * itself. A candidate whose best ink misses the contrast level's threshold
+ * (4.5, 5.5 or 7) falls back to the computed counterpart, so neither an
+ * override nor the original colour can make text unreadable.
+ */
+export const darkAccentFill = (
+	primarySeed: string,
+	palette: TonalPalette,
+	mode: DarkBrandMode = 'counterpart',
+	override?: string,
+	threshold: number = CONTRAST_AA
+): string => {
+	const computed = hex(
+		Hct.from(
+			palette.hue,
+			Math.min(DARK_CALM_ACCENT.fill.chroma, palette.chroma),
+			DARK_CALM_ACCENT.fill.tone
+		).toInt()
+	);
+	const candidate = mode === 'original' ? primarySeed : override;
+	if (!candidate) return computed;
+	const fill = candidate.toLowerCase();
+	return wcagContrast(inkOnFill(palette, fill, threshold), fill) >= threshold
+		? fill
+		: computed;
+};
+
+/**
+ * The dark scheme's brand family around one accent fill (FE#1134): the soft
+ * fills take that fill instead of the pale rose, the ink follows the fill,
+ * and `fixed-dim` is one step away from the ink so text on it stays legible.
+ * Outlines get their own muted rose (`--oriso-outline-rest`).
+ */
+const calmDarkBrandFamily = (
+	palette: TonalPalette,
+	fill: string,
+	threshold: number
+): BrandFamily => {
+	const ink = inkOnFill(palette, fill, threshold);
+	const fillHct = Hct.fromInt(argbFromHex(fill));
+	const awayFromInk =
+		wcagContrast(ink, '#000000') > wcagContrast(ink, '#ffffff') ? -1 : 1;
+	return {
+		...darkBrandFamily(palette),
+		fixed: fill,
+		fixedDim: hex(
+			Hct.from(
+				fillHct.hue,
+				fillHct.chroma,
+				Math.min(
+					96,
+					Math.max(
+						4,
+						fillHct.tone + awayFromInk * DARK_CALM_ACCENT.dimStep
+					)
+				)
+			).toInt()
+		),
+		onFixed: ink,
+		onFixedVariant: ink
+	};
+};
+
+/** Stage gradient around a dark fill: lighter top, darker edge. */
+const calmStage = (fill: string, ink: string, threshold: number) => {
+	const h = Hct.fromInt(argbFromHex(fill));
+	const at = (tone: number) =>
+		hex(Hct.from(h.hue, h.chroma, Math.min(96, Math.max(4, tone))).toInt());
+	// The stage text sits on every part of the gradient: step back toward the
+	// fill until the ink still meets the selected contrast level on that stop.
+	const stop = (direction: 1 | -1) => {
+		for (let step = DARK_CALM_ACCENT.stageStep; step > 0; step -= 1) {
+			const colour = at(h.tone + direction * step);
+			if (wcagContrast(ink, colour) >= threshold) return colour;
+		}
+		return fill;
+	};
+	return { role: fill, onRole: ink, container: stop(1), edge: stop(-1) };
+};
+
 interface AccentFamily {
 	role: string;
 	onRole: string;
@@ -337,9 +457,14 @@ const harmonizedAccentPalette = (
 export const computeOrisoPalette = (
 	seeds: OrisoSeeds,
 	scheme: OrisoSchemeName,
-	contrast: ContrastLevel = 'standard'
+	contrast: ContrastLevel = 'standard',
+	options: OrisoPaletteOptions = {}
 ): OrisoPaletteResult => {
 	const primarySeed = normalizeHex(seeds.primary, 'primary');
+	const primaryDarkSeed =
+		seeds.primaryDark === undefined
+			? undefined
+			: normalizeHex(seeds.primaryDark, 'primaryDark');
 	const accentSeed =
 		seeds.accent === undefined
 			? undefined
@@ -363,8 +488,45 @@ export const computeOrisoPalette = (
 		primaryPalette,
 		brandContainer
 	);
+	const threshold =
+		contrast === 'high' ? 7 : contrast === 'medium' ? 5.5 : CONTRAST_AA;
+	const darkFill = darkAccentFill(
+		primarySeed,
+		primaryPalette,
+		options.darkBrand,
+		primaryDarkSeed,
+		threshold
+	);
 	const brand =
-		scheme === 'light' ? stageBrand : darkBrandFamily(primaryPalette);
+		scheme === 'light'
+			? stageBrand
+			: scheme === 'dark'
+				? calmDarkBrandFamily(primaryPalette, darkFill, threshold)
+				: darkBrandFamily(primaryPalette);
+	// The sign-in and entry stages follow the dark choice too (FE#1134): the
+	// calm counterpart as a gradient around the fill, or the original brand.
+	const calmDarkStage =
+		scheme === 'dark' &&
+		(options.darkBrand !== 'original' || darkFill !== primarySeed);
+	const originalStage = {
+		role: stageBrand.role,
+		onRole: stageBrand.onRole,
+		container: stageBrand.container,
+		edge: stageBrand.hover
+	};
+	const originalStageIsReadable = [
+		originalStage.role,
+		originalStage.container,
+		originalStage.edge
+	].every((fill) => wcagContrast(originalStage.onRole, fill) >= threshold);
+	const stage =
+		scheme === 'dark' && (calmDarkStage || !originalStageIsReadable)
+			? calmStage(darkFill, brand.onFixed, threshold)
+			: originalStage;
+	const calmDarkHero =
+		scheme === 'dark' &&
+		(calmDarkStage ||
+			wcagContrast(brand.onContainer, brand.container) < threshold);
 
 	const secondaryPalette = accentSeed
 		? harmonizedAccentPalette(accentSeed, primarySeed)
@@ -397,7 +559,9 @@ export const computeOrisoPalette = (
 		scheme === 'light'
 			? LIGHT_NEUTRAL_TONES
 			: scheme === 'dark'
-				? DARK_NEUTRAL_TONES
+				? contrast === 'high'
+					? DARK_DEEP_NEUTRAL_TONES
+					: DARK_NEUTRAL_TONES
 				: INVERTED_NEUTRAL_TONES;
 	const neutralTones =
 		contrast === 'high' && scheme !== 'inverted'
@@ -411,10 +575,16 @@ export const computeOrisoPalette = (
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
 		// The entry artwork keeps the tenant's brand across display modes.
-		'--oriso-stage-brand': stageBrand.role,
-		'--oriso-stage-brand-on': stageBrand.onRole,
-		'--oriso-stage-brand-container': stageBrand.container,
-		'--oriso-stage-brand-edge': stageBrand.hover,
+		'--oriso-stage-brand': stage.role,
+		'--oriso-stage-brand-on': stage.onRole,
+		'--oriso-stage-brand-container': stage.container,
+		'--oriso-stage-brand-edge': stage.edge,
+		// The phone sign-in head: the brand container, or in calm dark the
+		// counterpart fill with its ink (FE#1134).
+		'--oriso-stage-hero': calmDarkHero ? darkFill : brand.container,
+		'--oriso-stage-hero-on': calmDarkHero
+			? brand.onFixed
+			: brand.onContainer,
 		'--oriso-primary-text': brand.text,
 		'--oriso-primary-text-hover': brand.textHover,
 		'--oriso-primary-text-on-fixed': textOnFixed(brand),
@@ -423,7 +593,11 @@ export const computeOrisoPalette = (
 		'--m3-primary-fixed': brand.fixed,
 		// Dedicated focus/outline accent: keep it dark enough to stay visible
 		// on the light brand surfaces that use it for keyboard focus.
-		'--m3-primary-outline': brand.onFixedVariant,
+		// Dark keeps its own deep tone here: the calm family's ink is light.
+		'--m3-primary-outline':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(30))
+				: brand.onFixedVariant,
 		'--m3-primary-fixed-dim': brand.fixedDim,
 		'--m3-on-primary-fixed': brand.onFixed,
 		'--m3-on-primary-fixed-variant': brand.onFixedVariant,
@@ -517,7 +691,47 @@ export const computeOrisoPalette = (
 		);
 	}
 
+	// Resting outlines stay muted in dark and retain their light palette.
+	const outlineRest =
+		scheme === 'dark'
+			? hex(
+					Hct.from(
+						primaryPalette.hue,
+						Math.min(
+							DARK_CALM_ACCENT.mid.chroma,
+							primaryPalette.chroma
+						),
+						DARK_CALM_ACCENT.mid.tone
+					).toInt()
+				)
+			: tokens['--m3-primary-fixed-dim'];
+	const highlightFill =
+		scheme === 'dark'
+			? tokens['--m3-primary']
+			: tokens['--m3-primary-fixed-dim'];
+	const highlightInk =
+		scheme === 'dark'
+			? tokens['--m3-on-primary']
+			: tokens['--m3-on-primary-fixed'];
 	Object.assign(tokens, {
+		// Outgoing dark bubbles can be deep or bright. Invert their own fill
+		// and ink so the selected passage is visible on either kind of bubble.
+		'--oriso-highlight-fill': highlightFill,
+		'--oriso-highlight-ink': highlightInk,
+		'--oriso-own-highlight-fill':
+			scheme === 'dark' ? tokens['--m3-on-primary-fixed'] : highlightFill,
+		'--oriso-own-highlight-ink':
+			scheme === 'dark' ? tokens['--m3-primary-fixed'] : highlightInk,
+		// Text on the fixed fill (FE#1134). Light keeps the current inks; in
+		// dark the fill turned deep, so both take the fill's own ink.
+		'--oriso-fixed-accent-ink':
+			scheme === 'dark'
+				? tokens['--m3-on-primary-fixed-variant']
+				: tokens['--m3-primary-container'],
+		'--oriso-fixed-quiet-ink':
+			scheme === 'dark'
+				? tokens['--m3-on-primary-fixed-variant']
+				: tokens['--m3-on-secondary-fixed-variant'],
 		'--oriso-primary-fixed': tokens['--m3-primary-fixed'],
 		'--oriso-primary-fixed-dim': tokens['--m3-primary-fixed-dim'],
 		'--oriso-on-primary-fixed': tokens['--m3-on-primary-fixed'],
@@ -534,8 +748,30 @@ export const computeOrisoPalette = (
 						tokens['--m3-on-primary-container']
 				}
 			: topicTagTokens(brand)),
+		// Resting card dividers: white hairlines on the light grey page; in dark
+		// a quiet neutral instead of a white line (FE#1134).
+		'--oriso-card-divider':
+			scheme === 'light' ? '#ffffff' : tokens['--m3-outline-variant'],
+		'--oriso-outline-rest': outlineRest,
+		// Counter dots on the desktop rail: white with brand digits in light;
+		// in dark the calm accent fill, so the light digits stay readable.
+		'--oriso-rail-badge-surface':
+			scheme === 'dark' ? tokens['--m3-primary-fixed'] : '#ffffff',
+		// Active Live-Chat tile on the rail: a deep brand tile with light ink.
+		// In dark it must not follow on-primary-fixed, which is light ink there.
+		// Ink on the deep brand tile (Live-Chat tile, chosen calendar kind).
+		'--oriso-deep-brand-ink':
+			scheme === 'dark' ? hex(primaryPalette.tone(90)) : '#ffffff',
+		'--oriso-live-surface':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(10))
+				: tokens['--m3-on-primary-fixed'],
+		'--oriso-on-live-surface':
+			scheme === 'dark'
+				? hex(primaryPalette.tone(90))
+				: tokens['--m3-surface'],
 		'--oriso-app-action': tokens['--m3-primary'],
-		'--oriso-lottie-accent-color': tokens['--m3-primary-fixed-dim'],
+		'--oriso-lottie-accent-color': outlineRest,
 		'--oriso-lottie-secondary-color':
 			tokens[
 				scheme === 'dark' ? '--m3-outline' : '--m3-secondary-container'

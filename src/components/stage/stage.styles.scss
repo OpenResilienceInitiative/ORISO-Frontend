@@ -103,7 +103,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 				400px circle at var(--stage-mx, 32%) var(--stage-my, 24%),
 				color-mix(
 					in srgb,
-					var(--m3-primary-fixed-dim, #ffb4aa)
+					var(--oriso-outline-rest, #ffb4aa)
 						calc(var(--stage-glow-opacity, 0.18) * 100%),
 					transparent
 				),

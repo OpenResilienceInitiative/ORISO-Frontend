@@ -39,7 +39,7 @@
 	--cpd-color-icon-quaternary-alpha: #c4c7c8;
 	--cpd-color-icon-on-solid-primary: #ffffff;
 	--cpd-color-icon-accent-primary: #a5000a;
-	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-accent-tertiary: #a5000a;
 	--cpd-color-icon-critical-primary: #b1005e;
 	--cpd-color-icon-success-primary: #0a882f;
 	--cpd-color-icon-info-primary: #4d5660;
@@ -87,11 +87,11 @@
 }
 
 .cpd-theme-dark.cpd-theme-dark {
-	--cpd-color-bg-canvas-default: #131314;
-	--cpd-color-bg-canvas-disabled: #131314;
-	--cpd-color-bg-subtle-primary: #2a2a2b;
-	--cpd-color-bg-subtle-secondary: #1f1f20;
-	--cpd-color-theme-bg: #131314;
+	--cpd-color-bg-canvas-default: #1f1f20;
+	--cpd-color-bg-canvas-disabled: #1d1d1e;
+	--cpd-color-bg-subtle-primary: #2e2e2f;
+	--cpd-color-bg-subtle-secondary: #282828;
+	--cpd-color-theme-bg: #1f1f20;
 	--cpd-color-text-primary: #e4e2e2;
 	--cpd-color-text-secondary: #c4c7c8;
 	--cpd-color-text-placeholder: #8e9192; /* Not a Compound role, but the fork reads it in input/Input.module.css, where it would otherwise resolve to nothing. */
@@ -124,12 +124,12 @@
 	--cpd-color-bg-action-primary-hovered: #ffd3cd;
 	--cpd-color-bg-action-primary-pressed: #ffd3cd;
 	--cpd-color-bg-action-primary-disabled: #444748;
-	--cpd-color-bg-action-secondary-rest: #1b1b1c;
-	--cpd-color-bg-action-secondary-hovered: #1f1f20;
-	--cpd-color-bg-action-secondary-pressed: #2a2a2b;
-	--cpd-color-bg-action-tertiary-rest: #1b1b1c;
-	--cpd-color-bg-action-tertiary-hovered: #1f1f20;
-	--cpd-color-bg-action-tertiary-selected: #2a2a2b;
+	--cpd-color-bg-action-secondary-rest: #242424;
+	--cpd-color-bg-action-secondary-hovered: #282828;
+	--cpd-color-bg-action-secondary-pressed: #2e2e2f;
+	--cpd-color-bg-action-tertiary-rest: #242424;
+	--cpd-color-bg-action-tertiary-hovered: #282828;
+	--cpd-color-bg-action-tertiary-selected: #2e2e2f;
 	--cpd-color-bg-accent-rest: #ffb4aa;
 	--cpd-color-bg-accent-hovered: #ffd3cd;
 	--cpd-color-bg-accent-pressed: #ffd3cd;
@@ -140,7 +140,7 @@
 	--cpd-color-bg-critical-subtle-hovered: #8e004a;
 	--cpd-color-bg-success-subtle: color-mix(in srgb, #70dd78 16%, transparent); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
 	--cpd-color-bg-info-subtle: #3f4852;
-	--cpd-color-bg-badge-default: #2a2a2b;
+	--cpd-color-bg-badge-default: #2e2e2f;
 	--cpd-color-bg-badge-accent: #930008;
 	--cpd-color-bg-badge-info: #3f4852;
 	--cpd-color-border-interactive-primary: #8e9192;
@@ -148,7 +148,7 @@
 	--cpd-color-border-interactive-hovered: #c4c7c8;
 	--cpd-color-border-disabled: #444748;
 	--cpd-color-border-focused: #ffb4aa; /* Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both. */
-	--cpd-color-border-accent-subtle: #ffb4aa;
+	--cpd-color-border-accent-subtle: #a67973;
 	--cpd-color-border-critical-primary: #ffb1c8;
 	--cpd-color-border-critical-hovered: #ffb1c8;
 	--cpd-color-border-critical-subtle: #8e004a;
@@ -193,7 +193,7 @@
 	--cpd-color-icon-quaternary-alpha: #c4c7c8;
 	--cpd-color-icon-on-solid-primary: #ffffff;
 	--cpd-color-icon-accent-primary: #a5000a;
-	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-accent-tertiary: #a5000a;
 	--cpd-color-icon-critical-primary: #b1005e;
 	--cpd-color-icon-success-primary: #0a882f;
 	--cpd-color-icon-info-primary: #4d5660;
@@ -241,11 +241,11 @@
 }
 
 .cpd-theme-dark[data-oriso-contrast-level="medium"] {
-	--cpd-color-bg-canvas-default: #131314;
-	--cpd-color-bg-canvas-disabled: #131314;
-	--cpd-color-bg-subtle-primary: #2a2a2b;
-	--cpd-color-bg-subtle-secondary: #1f1f20;
-	--cpd-color-theme-bg: #131314;
+	--cpd-color-bg-canvas-default: #1f1f20;
+	--cpd-color-bg-canvas-disabled: #1d1d1e;
+	--cpd-color-bg-subtle-primary: #2e2e2f;
+	--cpd-color-bg-subtle-secondary: #282828;
+	--cpd-color-theme-bg: #1f1f20;
 	--cpd-color-text-primary: #e4e2e2;
 	--cpd-color-text-secondary: #c4c7c8;
 	--cpd-color-text-placeholder: #c4c7c8; /* Not a Compound role, but the fork reads it in input/Input.module.css, where it would otherwise resolve to nothing. */
@@ -278,12 +278,12 @@
 	--cpd-color-bg-action-primary-hovered: #ffd3cd;
 	--cpd-color-bg-action-primary-pressed: #ffd3cd;
 	--cpd-color-bg-action-primary-disabled: #444748;
-	--cpd-color-bg-action-secondary-rest: #1b1b1c;
-	--cpd-color-bg-action-secondary-hovered: #1f1f20;
-	--cpd-color-bg-action-secondary-pressed: #2a2a2b;
-	--cpd-color-bg-action-tertiary-rest: #1b1b1c;
-	--cpd-color-bg-action-tertiary-hovered: #1f1f20;
-	--cpd-color-bg-action-tertiary-selected: #2a2a2b;
+	--cpd-color-bg-action-secondary-rest: #242424;
+	--cpd-color-bg-action-secondary-hovered: #282828;
+	--cpd-color-bg-action-secondary-pressed: #2e2e2f;
+	--cpd-color-bg-action-tertiary-rest: #242424;
+	--cpd-color-bg-action-tertiary-hovered: #282828;
+	--cpd-color-bg-action-tertiary-selected: #2e2e2f;
 	--cpd-color-bg-accent-rest: #ffb4aa;
 	--cpd-color-bg-accent-hovered: #ffd3cd;
 	--cpd-color-bg-accent-pressed: #ffd3cd;
@@ -294,7 +294,7 @@
 	--cpd-color-bg-critical-subtle-hovered: #8e004a;
 	--cpd-color-bg-success-subtle: color-mix(in srgb, #70dd78 16%, transparent); /* ORISO has no success container; a tinted overlay keeps the subtle role subtle. */
 	--cpd-color-bg-info-subtle: #3f4852;
-	--cpd-color-bg-badge-default: #2a2a2b;
+	--cpd-color-bg-badge-default: #2e2e2f;
 	--cpd-color-bg-badge-accent: #930008;
 	--cpd-color-bg-badge-info: #3f4852;
 	--cpd-color-border-interactive-primary: #8e9192;
@@ -302,7 +302,7 @@
 	--cpd-color-border-interactive-hovered: #c4c7c8;
 	--cpd-color-border-disabled: #444748;
 	--cpd-color-border-focused: #ffb4aa; /* Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both. */
-	--cpd-color-border-accent-subtle: #ffb4aa;
+	--cpd-color-border-accent-subtle: #a67973;
 	--cpd-color-border-critical-primary: #ffb1c8;
 	--cpd-color-border-critical-hovered: #ffb1c8;
 	--cpd-color-border-critical-subtle: #8e004a;
@@ -347,7 +347,7 @@
 	--cpd-color-icon-quaternary-alpha: #747878;
 	--cpd-color-icon-on-solid-primary: #ffffff;
 	--cpd-color-icon-accent-primary: #a5000a;
-	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-accent-tertiary: #8a0007;
 	--cpd-color-icon-critical-primary: #ac005b;
 	--cpd-color-icon-success-primary: #0a882f;
 	--cpd-color-icon-info-primary: #4d5660;
@@ -424,7 +424,7 @@
 	--cpd-color-icon-quaternary-alpha: #8e9192;
 	--cpd-color-icon-on-solid-primary: #690004;
 	--cpd-color-icon-accent-primary: #ffb4aa;
-	--cpd-color-icon-accent-tertiary: #ffb4aa;
+	--cpd-color-icon-accent-tertiary: #ffbcb3;
 	--cpd-color-icon-critical-primary: #ffb1c8;
 	--cpd-color-icon-success-primary: #70dd78;
 	--cpd-color-icon-info-primary: #bec7d4;
@@ -456,7 +456,7 @@
 	--cpd-color-border-interactive-hovered: #e6e9e9;
 	--cpd-color-border-disabled: #8e9192;
 	--cpd-color-border-focused: #ffbcb3; /* Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both. */
-	--cpd-color-border-accent-subtle: #ffb4aa;
+	--cpd-color-border-accent-subtle: #a67973;
 	--cpd-color-border-critical-primary: #ffb1c8;
 	--cpd-color-border-critical-hovered: #ffb1c8;
 	--cpd-color-border-critical-subtle: #8e004a;

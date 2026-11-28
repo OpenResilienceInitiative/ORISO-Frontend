@@ -795,7 +795,7 @@ body.conversationCreate--active .navigation__wrapper {
 	&__panelMenu {
 		align-items: center;
 		background: var(--m3-surface, #ffffff);
-		border: 1px solid #ffd1d1;
+		border: 1px solid var(--m3-primary-fixed, #ffd1d1);
 		border-radius: 32px;
 		color: $cc-on-surface-variant;
 		cursor: pointer;

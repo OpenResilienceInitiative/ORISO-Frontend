@@ -104,7 +104,7 @@ describe('session list visual contracts', () => {
 		// follows the list's scroll thumb; the chevron toggle is gone. Nothing
 		// may reposition or resize it from the scroll offset.
 		expect(css).toMatch(
-			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--m3-primary-fixed-dim, #ffb4aa\);/s
+			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*width:\s*8px;[^}]*height:\s*48px;[^}]*background:\s*var\(--oriso-outline-rest, var\(--m3-primary-fixed-dim, #ffb4aa\)\);/s
 		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandlePill[^{}]*\{[^}]*top:\s*50%;[^}]*transform:\s*translateY\(-50%\);/s

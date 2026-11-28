@@ -22,7 +22,7 @@
 	&__animation {
 		width: var(--empty-state-animation-size);
 		height: var(--empty-state-animation-size);
-		border: 1px solid var(--oriso-primary-fixed-dim, #ffb4aa);
+		border: 1px solid var(--oriso-outline-rest, #ffb4aa);
 		border-radius: 50%;
 		background-color: var(--m3-surface-container-lowest, #ffffff);
 		overflow: hidden;

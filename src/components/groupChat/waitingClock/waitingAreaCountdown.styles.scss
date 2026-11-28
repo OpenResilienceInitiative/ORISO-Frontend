@@ -21,7 +21,7 @@
 $clock-face-top: var(--m3-surface-container-high, #eae7e8);
 $clock-face-bottom: var(--m3-surface-container-lowest, #fff);
 $clock-face-tint-top: var(--m3-primary-fixed, #ffdad5);
-$clock-face-tint-shadow: var(--m3-primary-fixed-dim, #ffb4aa);
+$clock-face-tint-shadow: var(--oriso-outline-rest, #ffb4aa);
 $clock-ink: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 
 .waitingClock {
@@ -220,7 +220,6 @@ $clock-ink: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		flex: 1;
 		display: flex;
 		align-items: center;
-		color: #fff;
 		line-height: 1.45;
 		text-wrap: pretty;
 	}
@@ -236,7 +235,6 @@ $clock-ink: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-size: 12px;
 		font-weight: 600;
 		letter-spacing: 0.08em;
-		color: rgba(255, 255, 255, 0.8);
 		font-variant-numeric: tabular-nums;
 	}
 

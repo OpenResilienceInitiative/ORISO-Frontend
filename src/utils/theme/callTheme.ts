@@ -109,7 +109,7 @@ export const CALL_TOKEN_MAP: Record<string, CallTokenMapping> = {
 	'--cpd-color-icon-quaternary-alpha': { m3: '--m3-outline-variant' },
 	'--cpd-color-icon-on-solid-primary': { m3: '--m3-on-primary' },
 	'--cpd-color-icon-accent-primary': { m3: '--m3-primary' },
-	'--cpd-color-icon-accent-tertiary': { m3: '--m3-primary-fixed-dim' },
+	'--cpd-color-icon-accent-tertiary': { m3: '--oriso-primary-text' },
 	'--cpd-color-icon-critical-primary': { m3: '--m3-error' },
 	'--cpd-color-icon-success-primary': { m3: '--m3-success' },
 	'--cpd-color-icon-info-primary': { m3: '--m3-secondary' },
@@ -166,7 +166,7 @@ export const CALL_TOKEN_MAP: Record<string, CallTokenMapping> = {
 		elevatedM3: '--oriso-primary-text',
 		note: 'Not --m3-primary-outline: that role is tuned to stay dark on light brand surfaces, which makes it invisible on a dark canvas (1.5:1). The primary role flips with the scheme and clears 3:1 in both.'
 	},
-	'--cpd-color-border-accent-subtle': { m3: '--m3-primary-fixed-dim' },
+	'--cpd-color-border-accent-subtle': { m3: '--oriso-outline-rest' },
 	'--cpd-color-border-critical-primary': { m3: '--m3-error' },
 	'--cpd-color-border-critical-hovered': { m3: '--m3-error' },
 	'--cpd-color-border-critical-subtle': { m3: '--m3-error-container' },

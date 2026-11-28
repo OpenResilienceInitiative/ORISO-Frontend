@@ -12,7 +12,9 @@ import './waitingAreaCountdown.styles';
 
 /** ORISO design palette for the waiting box, resolved through the M3 tokens. */
 const RED = 'var(--m3-primary-container, #cc1e1c)';
+const ON_RED = 'var(--m3-on-primary-container, #ffffff)';
 const DARK = 'var(--m3-secondary, #374151)';
+const ON_DARK = 'var(--m3-on-secondary, #ffffff)';
 const MUTED = 'var(--m3-on-surface-variant, #444748)';
 const INK = 'var(--m3-on-surface, #1a1c1e)';
 /**
@@ -20,7 +22,6 @@ const INK = 'var(--m3-on-surface, #1a1c1e)';
  * `$clock-face-tint-top` in waitingAreaCountdown.styles.scss (#1499).
  */
 const TINT = 'var(--m3-primary-fixed, #ffdad5)';
-const PINK = 'var(--m3-primary-fixed-dim, #ffb4aa)';
 
 /** Discomfort grows one emoji per waiting minute (design: emojiStepSec 60). */
 const OVERDUE_EMOJIS = ['😬', '😅', '🙄', '😳', '🫣', '😔', '😵‍💫', '🤯', '🫠'];
@@ -837,24 +838,22 @@ export const WaitingAreaCountdown = ({
 	   hier auch ein bisschen mehr Mühe geben im Design"). */
 	const textFont = Math.round(Math.min(30, Math.max(15, size * 0.62)));
 	const navButtonSx = {
-		'color': '#fff',
-		'&.Mui-disabled': { color: 'rgba(255,255,255,.35)' }
+		'color': 'inherit',
+		'&.Mui-disabled': { color: 'inherit', opacity: 0.35 }
 	} as const;
 
 	const backSide = currentPage && (
 		<div
 			className="waitingClock__back"
-			style={{ background: currentPage.greeting ? RED : DARK }}
+			style={{
+				background: currentPage.greeting ? RED : DARK,
+				color: currentPage.greeting ? ON_RED : ON_DARK
+			}}
 		>
 			<div className="waitingClock__backHead">
 				<span
 					className="waitingClock__backLabel"
-					style={{
-						fontSize: Math.max(10, geo.labelFont),
-						color: currentPage.greeting
-							? 'rgba(255,255,255,.78)'
-							: PINK
-					}}
+					style={{ fontSize: Math.max(10, geo.labelFont) }}
 				>
 					{currentPage.label}
 				</span>
@@ -865,7 +864,7 @@ export const WaitingAreaCountdown = ({
 					onClick={closeCard}
 					tabIndex={flipped ? 0 : -1}
 					sx={{
-						color: '#fff',
+						color: 'inherit',
 						flexShrink: 0,
 						fontSize: 12,
 						textTransform: 'none',

@@ -147,8 +147,15 @@ describe('personal display in the authenticated app', () => {
 		await screen.findByText('light 100');
 		fireEvent.click(screen.getByText('Dark'));
 		await screen.findByText('dark 150');
-		const keys = Object.keys(window.localStorage);
+		// One identity-keyed entry, plus the device's dark-brand choice for the
+		// sign-in page (FE#1134), which holds no identity.
+		const keys = Object.keys(window.localStorage).filter(
+			(name) => name !== 'oriso.dark-brand.v1'
+		);
 		expect(keys).toHaveLength(1);
+		expect(window.localStorage.getItem('oriso.dark-brand.v1')).toBe(
+			'counterpart'
+		);
 		first.unmount();
 		open();
 		await screen.findByText('dark 150');

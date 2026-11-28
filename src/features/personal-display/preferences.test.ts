@@ -20,14 +20,16 @@ describe('personal display values', () => {
 		).toEqual({
 			scheme: 'system',
 			textSize: 150,
-			contrast: 'standard'
+			contrast: 'standard',
+			darkBrand: 'counterpart'
 		});
 		expect(
 			parseDisplayPreferences('{"scheme":"dark","textSize":300}')
 		).toEqual({
 			scheme: 'dark',
 			textSize: 100,
-			contrast: 'standard'
+			contrast: 'standard',
+			darkBrand: 'counterpart'
 		});
 	});
 
@@ -46,7 +48,8 @@ describe('personal display values', () => {
 		).toEqual({
 			scheme: 'dark',
 			textSize: 150,
-			contrast: 'standard'
+			contrast: 'standard',
+			darkBrand: 'counterpart'
 		});
 	});
 
@@ -67,5 +70,19 @@ describe('personal display values', () => {
 		expect(a).not.toBe(
 			await displayStorageKey('["synthetic-account-a", 2]')
 		);
+	});
+});
+
+describe('dark brand choice (FE#1134)', () => {
+	it('defaults to the calm counterpart and keeps an explicit original', () => {
+		expect(parseDisplayPreferences(null).darkBrand).toBe('counterpart');
+		expect(
+			parseDisplayPreferences(JSON.stringify({ darkBrand: 'original' }))
+				.darkBrand
+		).toBe('original');
+		expect(
+			parseDisplayPreferences(JSON.stringify({ darkBrand: 'loud' }))
+				.darkBrand
+		).toBe('counterpart');
 	});
 });

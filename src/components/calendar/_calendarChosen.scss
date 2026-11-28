@@ -2,17 +2,24 @@
 // One place for the v17 maroon (review 4589304546). m3Sweep allows no
 // text role such as --m3-on-primary-fixed as a background and no M3
 // surface role has this colour, so the ORISO brand token stands in, as in
-// the navigation.
+// the navigation. In dark the deep tile is --oriso-live-surface, because
+// --oriso-on-primary-fixed is light ink there (FE#1134).
 @mixin calendar-chosen($border: false, $icons: false) {
 	@if $border {
-		border-color: var(--oriso-on-primary-fixed, #410001);
+		border-color: var(
+			--oriso-live-surface,
+			var(--oriso-on-primary-fixed, #410001)
+		);
 	}
-	background: var(--oriso-on-primary-fixed, #410001);
-	color: #ffffff;
+	background: var(
+		--oriso-live-surface,
+		var(--oriso-on-primary-fixed, #410001)
+	);
+	color: var(--oriso-deep-brand-ink, #ffffff);
 
 	@if $icons {
 		svg {
-			color: #ffffff;
+			color: var(--oriso-deep-brand-ink, #ffffff);
 		}
 	}
 }

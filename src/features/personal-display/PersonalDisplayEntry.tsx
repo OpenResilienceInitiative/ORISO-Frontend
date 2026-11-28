@@ -20,6 +20,7 @@ import { Button, BUTTON_TYPES } from '../../components/button/Button';
 import { M3Dialog } from '../../components/m3Dialog/M3Dialog';
 import {
 	CONTRAST_OPTIONS,
+	DARK_BRAND_OPTIONS,
 	DisplayPreferences,
 	getNextTextSize,
 	SchemePreference,
@@ -252,6 +253,42 @@ const PersonalDisplayFields = ({
 							disableTypography
 							onChange={() =>
 								onChange({ ...preferences, contrast })
+							}
+						/>
+					))}
+				</RadioGroup>
+			</div>
+			<div className="personalDisplayGroup">
+				<div id={`${fieldId}-darkBrand-label`}>
+					{t('personalDisplay.darkBrandLabel')}
+				</div>
+				<RadioGroup
+					row
+					className="personalDisplayChoices"
+					name={`${fieldId}-darkBrand`}
+					aria-labelledby={`${fieldId}-darkBrand-label`}
+					value={preferences.darkBrand}
+				>
+					{DARK_BRAND_OPTIONS.map((darkBrand) => (
+						<FormControlLabel
+							key={darkBrand}
+							value={darkBrand}
+							control={
+								<Radio
+									icon={<span aria-hidden />}
+									checkedIcon={<CheckIcon />}
+								/>
+							}
+							label={
+								<span className="personalDisplayChoiceLabel">
+									{t(
+										`personalDisplay.darkBrand.${darkBrand}`
+									)}
+								</span>
+							}
+							disableTypography
+							onChange={() =>
+								onChange({ ...preferences, darkBrand })
 							}
 						/>
 					))}

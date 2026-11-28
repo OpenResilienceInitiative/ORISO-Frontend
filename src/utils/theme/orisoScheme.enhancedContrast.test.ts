@@ -67,11 +67,17 @@ describe('enhanced contrast scheme', () => {
 			})
 		);
 		// The added brand roles and updated illustration stroke have separate tests.
-		// SHA-256 of the ordered maps on the Dev starting revision.
+		// SHA-256 of the ordered maps. FE#1134 changed only the dark roles: calm
+		// dark accent (computed counterpart, #59302b for ORISO red), lifted dark surfaces (tone 11–12
+		// instead of 4–6) and the new --oriso-card-divider, --oriso-outline-rest
+		// --oriso-rail-badge-surface, --oriso-(on-)live-surface and
+		// --oriso-stage-hero(-on), --oriso-fixed-accent-ink, --oriso-fixed-quiet-ink, --oriso-deep-brand-ink.
+		// Passage highlight roles apply in every scheme. Dark Lottie accents
+		// follow the resting outline.
 		expect(
 			createHash('sha256').update(JSON.stringify(standards)).digest('hex')
 		).toBe(
-			'1d4cce437db47d45b06773aca409bfd0239711b779fc62832a1c210326230ab8'
+			'ec8247a22060ad2f2766a89c464d7a8bc104f1b0416bfc7ddfd95f8314e72dd9'
 		);
 	});
 
@@ -98,8 +104,17 @@ describe('enhanced contrast scheme', () => {
 						}
 					};
 
+					// Dark + high keeps the deep surface ladder (FE#1134); the
+					// standard dark surfaces were lifted off near-black.
+					const deepDark = scheme === 'dark' && level === 'high';
+					if (deepDark) {
+						expect(tokens['--m3-surface']).toBe('#131314');
+						expect(tokens['--m3-surface-container-lowest']).toBe(
+							'#0e0e0f'
+						);
+					}
 					for (const fill of [
-						...neutralFills,
+						...(deepDark ? [] : neutralFills),
 						'--m3-surface-variant',
 						'--m3-inverse-surface',
 						...primaryFixed,

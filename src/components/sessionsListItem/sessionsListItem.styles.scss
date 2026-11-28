@@ -9,8 +9,9 @@ $session-card-bg: var(--m3-surface-container-high, #eae7e8);
 // unchanged — this only makes them the single canonical source.
 $session-card-selected-bg: var(--m3-surface-container-low, #f6f3f3);
 
-// No border role is white, and surface roles may not colour borders (m3Sweep).
-$session-light-border: #fff;
+// No border role is white, and surface roles may not colour borders (m3Sweep):
+// the engine's divider token is white in light and a quiet neutral in dark.
+$session-light-border: var(--oriso-card-divider, #fff);
 
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
@@ -584,7 +585,11 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		@media (hover: hover) {
 			&:hover {
-				background-color: rgba(255, 209, 209, 0.35);
+				background-color: color-mix(
+					in srgb,
+					var(--m3-primary-fixed, #ffd1d1) 35%,
+					transparent
+				);
 			}
 		}
 	}

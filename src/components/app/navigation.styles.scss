@@ -789,8 +789,14 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 		#930008
 	);
 	--oriso-nav-foreground: var(--m3-secondary, #4c555f);
-	--oriso-nav-on-dark: var(--m3-surface, #fcf9f9);
-	--oriso-nav-live-background: var(--oriso-on-primary-fixed, #410001);
+	--oriso-nav-on-dark: var(
+		--oriso-on-live-surface,
+		var(--m3-surface, #fcf9f9)
+	);
+	--oriso-nav-live-background: var(
+		--oriso-live-surface,
+		var(--oriso-on-primary-fixed, #410001)
+	);
 
 	/* M3 nav bar tokens (mobile bottom bar only) */
 	--oriso-nav-bar-background: var(--m3-surface-container, #f0edee);
@@ -1323,7 +1329,7 @@ $unreadBubbleAnimation: count 500ms ease 500ms forwards;
 			height: 18px;
 			padding: 0;
 			border: 2px solid var(--oriso-nav-active-border);
-			background-color: #fff;
+			background-color: var(--oriso-rail-badge-surface, #fff);
 			color: var(--oriso-nav-active-border);
 			font-weight: 700;
 		}

@@ -87,10 +87,10 @@ $list-item-active-menu-border-color: var(
 
 $list-group-radius: 24px !default;
 $list-group-active-gap: 6px !default; // Figma 8609-31260
-$list-group-divider-color: #fff !default;
+$list-group-divider-color: var(--oriso-card-divider, #fff) !default;
 $list-item-active-rest-border-color: var(
-	--m3-primary-fixed-dim,
-	#ffb4aa
+	--oriso-outline-rest,
+	var(--m3-primary-fixed-dim, #ffb4aa)
 ) !default;
 $list-item-focus-color: var(--m3-primary-container, #cc1e1c) !default;
 

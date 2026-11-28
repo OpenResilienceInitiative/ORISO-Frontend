@@ -11,7 +11,10 @@ $sessionShellSurface: var(--m3-surface-container-high, #eae7e8);
 $caseHandoverAction: var(--m3-primary, $primary);
 $caseHandoverActionDisabled: var(--m3-surface-variant, #d8dde3);
 $caseHandoverTextMuted: var(--m3-on-surface-variant, #6d747d);
-$caseHandoverPanelBorder: var(--m3-primary-fixed-dim, #ffb4aa);
+$caseHandoverPanelBorder: var(
+	--oriso-outline-rest,
+	var(--m3-primary-fixed-dim, #ffb4aa)
+);
 $caseHandoverPanelSurface: var(--m3-surface, #ffffff);
 $caseHandoverFieldSurface: var(--m3-surface-container-low, #f5f3f4);
 $caseHandoverBodyText: var(--m3-on-surface, #30343a);
@@ -494,7 +497,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		width: 8px;
 		height: 48px;
 		border-radius: 999px;
-		background: var(--m3-primary-fixed-dim, #ffb4aa);
+		background: var(
+			--oriso-outline-rest,
+			var(--m3-primary-fixed-dim, #ffb4aa)
+		);
 		transform: translateY(-50%);
 		transition:
 			background-color 140ms ease,
